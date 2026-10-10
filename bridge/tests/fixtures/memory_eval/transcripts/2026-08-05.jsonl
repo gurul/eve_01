@@ -1,0 +1,10 @@
+{"ts": "2026-08-05T07:15:00-07:00", "ch": "voice", "conv": "v-1785939300000-8ace", "who": "owner", "kind": "say", "text": "Thanks eve."}
+{"ts": "2026-08-05T07:15:53-07:00", "ch": "voice", "conv": "v-1785939300000-8ace", "who": "eve", "kind": "say", "text": "Anytime."}
+{"ts": "2026-08-05T07:19:56-07:00", "ch": "voice", "conv": "v-1785939300000-8ace", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-05T12:45:00-07:00", "ch": "telegram", "conv": "t-1785959100000-7079", "who": "owner", "kind": "say", "text": "Is it 'fewer' or 'less' for things you can count?"}
+{"ts": "2026-08-05T12:46:20-07:00", "ch": "telegram", "conv": "t-1785959100000-7079", "who": "eve", "kind": "say", "text": "Fewer, for things you can count."}
+{"ts": "2026-08-05T12:48:56-07:00", "ch": "telegram", "conv": "t-1785959100000-7079", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-05T19:40:00-07:00", "ch": "telegram", "conv": "t-1785984000000-62d5", "who": "owner", "kind": "say", "text": "I'm building a 65% mechanical keyboard. KeyHaven has milky yellow linear switches, a 70-pack for $38."}
+{"ts": "2026-08-05T19:40:51-07:00", "ch": "telegram", "conv": "t-1785984000000-62d5", "who": "eve", "kind": "say", "text": "A 65% board needs 68 switches, so the 70-pack leaves you 2 spares."}
+{"ts": "2026-08-05T19:42:30-07:00", "ch": "telegram", "conv": "t-1785984000000-62d5", "who": "owner", "kind": "say", "text": "Perfect, I'll grab them later this week."}
+{"ts": "2026-08-05T19:45:25-07:00", "ch": "telegram", "conv": "t-1785984000000-62d5", "who": "system", "kind": "close", "text": ""}

@@ -1,0 +1,15 @@
+{"ts": "2026-09-03T10:00:00-07:00", "ch": "telegram", "conv": "t-1788454800000-db73", "who": "owner", "kind": "say", "text": "Grandma's hip surgery went well yesterday, she's already joking with the nurses."}
+{"ts": "2026-09-03T10:00:43-07:00", "ch": "telegram", "conv": "t-1788454800000-db73", "who": "eve", "kind": "say", "text": "So glad to hear it."}
+{"ts": "2026-09-03T10:05:00-07:00", "ch": "telegram", "conv": "t-1788454800000-db73", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-03T11:30:00-07:00", "ch": "telegram", "conv": "t-1788460200000-552a", "who": "owner", "kind": "say", "text": "Dropping HIST 210. I added PHIL 220 Ethics of Technology instead, Fridays at 1 pm."}
+{"ts": "2026-09-03T11:30:45-07:00", "ch": "telegram", "conv": "t-1788460200000-552a", "who": "eve", "kind": "say", "text": "Schedule updated."}
+{"ts": "2026-09-03T11:33:35-07:00", "ch": "telegram", "conv": "t-1788460200000-552a", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-03T18:15:00-07:00", "ch": "telegram", "conv": "t-1788484500000-eac0", "who": "owner", "kind": "say", "text": "Is it 'fewer' or 'less' for things you can count?"}
+{"ts": "2026-09-03T18:16:20-07:00", "ch": "telegram", "conv": "t-1788484500000-eac0", "who": "eve", "kind": "say", "text": "Fewer, for things you can count."}
+{"ts": "2026-09-03T18:19:36-07:00", "ch": "telegram", "conv": "t-1788484500000-eac0", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-03T20:00:00-07:00", "ch": "voice", "conv": "v-1788490800000-7e37", "who": "owner", "kind": "say", "text": "I've started seeing a counselor on Tuesdays at 5."}
+{"ts": "2026-09-03T20:00:47-07:00", "ch": "voice", "conv": "v-1788490800000-7e37", "who": "eve", "kind": "say", "text": "Thanks for telling me."}
+{"ts": "2026-09-03T20:03:32-07:00", "ch": "voice", "conv": "v-1788490800000-7e37", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-03T22:20:00-07:00", "ch": "voice", "conv": "v-1788499200000-adfb", "who": "owner", "kind": "say", "text": "How long do I boil an egg for jammy yolks?"}
+{"ts": "2026-09-03T22:20:47-07:00", "ch": "voice", "conv": "v-1788499200000-adfb", "who": "eve", "kind": "say", "text": "About six and a half minutes, then an ice bath."}
+{"ts": "2026-09-03T22:23:25-07:00", "ch": "voice", "conv": "v-1788499200000-adfb", "who": "system", "kind": "close", "text": ""}

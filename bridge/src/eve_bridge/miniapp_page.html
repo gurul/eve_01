@@ -1,0 +1,1597 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>eve</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="iro.js"></script>
+<style>
+  :root {
+    --bg: var(--tg-theme-bg-color, #ffffff);
+    --text: var(--tg-theme-text-color, #1b1b1f);
+    --hint: var(--tg-theme-hint-color, #8a8a92);
+    --link: var(--tg-theme-link-color, #2f6fde);
+    --accent: var(--tg-theme-button-color, #2f6fde);
+    --accent-text: var(--tg-theme-button-text-color, #ffffff);
+    --bubble: var(--tg-theme-secondary-bg-color, #f1f1f4);
+    --code: rgba(127, 127, 127, 0.14);
+    --danger: var(--tg-theme-destructive-text-color, #d93838);
+    --sheet: var(--tg-theme-secondary-bg-color, #f1f1f4);
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: var(--tg-theme-bg-color, #17171b); --text: var(--tg-theme-text-color, #ececf1);
+      --hint: var(--tg-theme-hint-color, #8d8d96); --bubble: var(--tg-theme-secondary-bg-color, #232329);
+      --link: var(--tg-theme-link-color, #6ea2ff); --accent: var(--tg-theme-button-color, #3e7bf0);
+      --danger: var(--tg-theme-destructive-text-color, #ff6b6b); --sheet: var(--tg-theme-secondary-bg-color, #232329);
+    }
+  }
+  * { box-sizing: border-box; }
+  /* --app-h: the visible height (the phone's keyboard taken off), so a composer at the bottom stays above it */
+  html, body { margin: 0; height: var(--app-h, 100%); background: var(--bg); color: var(--text);
+    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif; }
+  body { display: flex; flex-direction: column; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 10px 16px; border-bottom: 1px solid var(--code); }
+  header .who { font-weight: 600; font-size: 17px; margin: 0; }
+  header .spent { color: var(--hint); font-size: 13px; font-variant-numeric: tabular-nums; text-align: right; }
+  header button { background: none; border: 0; color: var(--link); font: inherit; padding: 6px 0; }
+  .empty { color: var(--hint); text-align: center; margin-top: 30vh; }
+  form { display: flex; gap: 8px; align-items: flex-end; padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--code); background: var(--bg); }
+  textarea { flex: 1; resize: none; max-height: 40vh; border: 1px solid var(--code); border-radius: 18px;
+    padding: 9px 14px; background: var(--bubble); color: var(--text); font: inherit; }
+  textarea:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+  form button { border: 0; border-radius: 18px; background: var(--accent); color: var(--accent-text);
+    font: 600 15px system-ui, sans-serif; padding: 10px 16px; min-height: 40px; }
+  form button:focus-visible, header button:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+  form button:disabled { opacity: 0.5; }
+  [hidden] { display: none !important; }
+  #apps { flex: 1; overflow-y: auto; padding: 16px; }
+  .make { background: var(--bubble); border-radius: 16px; padding: 14px; margin-bottom: 18px; }
+  .make label { display: block; font-weight: 600; margin-bottom: 8px; }
+  .make textarea { width: 100%; min-height: 64px; background: var(--bg); }
+  .make .row { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 10px; }
+  .make .row span { color: var(--hint); font-size: 13px; }
+  .btn { border: 0; border-radius: 12px; background: var(--accent); color: var(--accent-text);
+    font: 600 15px system-ui, sans-serif; padding: 10px 16px; min-height: 44px; }
+  .btn:disabled { opacity: .5; }
+  .btn:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+  .ideas { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .ideas button { border: 1px solid var(--code); background: var(--bg); color: var(--text); border-radius: 999px;
+    padding: 6px 12px; font: 14px system-ui, sans-serif; min-height: 34px; }
+  h2.section { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--hint); margin: 0 0 8px; }
+  .app { display: flex; align-items: center; gap: 4px; padding: 10px 4px 10px 12px; border-radius: 14px;
+    background: var(--bubble); margin-bottom: 8px; }
+  .icon { width: 44px; height: 44px; border-radius: 12px; background: var(--bg); color: var(--text);
+    display: grid; place-items: center; font: 24px/1 system-ui, sans-serif; flex: none; }
+  .icon.letter { background: var(--accent); color: var(--accent-text); font: 700 19px system-ui, sans-serif; }
+  .app .text { display: block; min-width: 0; }
+  .app .name { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .app .desc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    color: var(--hint); font-size: 14px; line-height: 1.35; }
+  .app .when { display: block; color: var(--hint); font-size: 12px; margin-top: 2px; }
+  .app .open { flex: 1; min-width: 0; background: none; border: 0; text-align: left; color: inherit; font: inherit;
+    display: flex; align-items: center; gap: 12px; padding: 0; min-height: 44px; border-radius: 10px; }
+  .app .more { flex: none; width: 44px; height: 44px; border: 0; border-radius: 22px; background: none;
+    color: var(--link); font: 700 20px/1 system-ui, sans-serif; letter-spacing: 1px; }
+  .app .open:focus-visible, .app .more:focus-visible,
+  .sheet button:focus-visible, .sheet input:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+  .none { color: var(--hint); }
+  .make[aria-busy="true"] textarea { opacity: .7; }
+  .notice-row { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; }
+  .notice-row:has(.notice:empty) { display: none; }
+  .notice { color: var(--hint); font-size: 14px; margin: 0; flex: 1; min-width: 0; }
+  .notice:empty { display: none; }
+  .notice-row button { background: none; border: 0; color: var(--link); font: 600 15px system-ui, sans-serif;
+    min-height: 44px; padding: 0 8px; }
+  .result { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .result .btn.plain { background: none; color: var(--link); padding: 10px 8px; }
+  .app .more:disabled { color: var(--hint); }
+  .sheet[aria-busy="true"] .actions button, .sheet[aria-busy="true"] .rename .btn { opacity: .5; }
+  .notice-row button:focus-visible, .result .btn:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  /* the "…" action sheet: a native <dialog> (focus trapped, Escape closes), laid out like a phone's sheet */
+  dialog.sheet { margin: auto auto 0; width: 100%; max-width: 520px; border: 0; padding: 0; background: transparent;
+    color: var(--text); }
+  dialog.sheet::backdrop { background: rgba(0, 0, 0, .35); }
+  .sheet .panel { background: var(--bg); border-radius: 16px 16px 0 0;
+    padding: 14px 12px calc(12px + env(safe-area-inset-bottom)); box-shadow: 0 -4px 24px rgba(0,0,0,.18); }
+  .sheet .head { display: flex; align-items: center; gap: 12px; padding: 2px 4px 12px; }
+  .sheet h2 { font-size: 17px; margin: 0; overflow-wrap: anywhere; }
+  .sheet .actions { background: var(--sheet); border-radius: 12px; overflow: hidden; }
+  .sheet .actions button { display: block; width: 100%; min-height: 50px; border: 0; background: none;
+    color: var(--link); font: 17px system-ui, sans-serif; text-align: center; }
+  .sheet .actions button + button { border-top: 1px solid var(--code); }
+  .sheet .actions button.danger { color: var(--danger); }
+  .sheet .cancel { display: block; width: 100%; min-height: 50px; margin-top: 8px; border: 0; border-radius: 12px;
+    background: var(--sheet); color: var(--link); font: 600 17px system-ui, sans-serif; }
+  .sheet .rename { background: var(--sheet); border-radius: 12px; padding: 12px; }
+  .sheet .rename label { display: block; font-weight: 600; margin-bottom: 8px; }
+  .sheet .rename input { width: 100%; min-height: 44px; border: 1px solid var(--code); border-radius: 10px;
+    padding: 8px 12px; background: var(--bg); color: var(--text); font: inherit; }
+  .sheet .rename .row { display: flex; justify-content: flex-end; margin-top: 10px; }
+  .sheet .error { color: var(--danger); font-size: 14px; margin: 8px 4px 0; }
+  .sheet .error:empty { display: none; }
+  /* one app's change chat (?chat=<slug>): what was asked of it, how each build went, and the next change */
+  body.chatting > header, body.chatting #apps { display: none; }
+  #chat { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .chat-head { display: flex; align-items: center; gap: 10px; padding: 6px 12px 6px 4px;
+    border-bottom: 1px solid var(--code); }
+  .chat-head .back { flex: none; width: 44px; height: 44px; border: 0; border-radius: 22px; background: none;
+    color: var(--link); font: 32px/1 system-ui, sans-serif; padding: 0 0 4px; }
+  .chat-head .icon { width: 36px; height: 36px; border-radius: 10px; font-size: 20px; }
+  .chat-head .icon.letter { font-size: 16px; }
+  .chat-name { flex: 1; min-width: 0; }
+  .chat-name h1 { font-size: 17px; line-height: 1.3; margin: 0; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; outline: none; }
+  .chat-name span { display: block; color: var(--hint); font-size: 13px; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .chat-head .btn { flex: none; padding: 8px 14px; }
+  .thread { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; list-style: none; margin: 0;
+    padding: 14px 12px 10px; display: flex; flex-direction: column; gap: 8px; }
+  .thread .quiet { color: var(--hint); text-align: center; margin: auto 16px; font-size: 15px; }
+  .msg { max-width: 86%; padding: 8px 12px; border-radius: 18px; overflow-wrap: anywhere; line-height: 1.4; }
+  .msg.asked { align-self: flex-end; background: var(--accent); color: var(--accent-text);
+    border-bottom-right-radius: 6px; white-space: pre-wrap; }
+  .msg.built { align-self: flex-start; background: var(--bubble); border-bottom-left-radius: 6px; }
+  .msg.built.failed .line { color: var(--danger); }
+  .msg.built[aria-busy="true"] .line { color: var(--hint); font-variant-numeric: tabular-nums; }
+  .msg .line { display: block; }
+  .msg .more-line { display: block; font-size: 14px; color: var(--hint); margin-top: 2px; }
+  .msg .when { display: block; font-size: 12px; margin-top: 3px; opacity: .72; font-variant-numeric: tabular-nums; }
+  .msg.built .when { color: var(--hint); opacity: 1; }
+  .msg.note { align-self: center; max-width: 92%; background: none; color: var(--hint); font-size: 13px;
+    text-align: center; padding: 2px 8px; }
+  .msg .btn { margin: 8px 6px 0 0; }
+  .msg .btn.plain { background: none; color: var(--link); padding: 10px 8px; }
+  .chat-hint { margin: 0; padding: 6px 16px 0; color: var(--hint); font-size: 13px; }
+  .chat-hint:empty { display: none; }
+  .chat-head .back:focus-visible, .chat-head .btn:focus-visible, .msg .btn:focus-visible {
+    outline: 2px solid var(--link); outline-offset: 2px; }
+  /* the Spending view: opened from the header's "$X spent today" */
+  header .spent { background: none; border: 0; font: inherit; font-size: 13px; color: var(--link); min-height: 44px;
+    padding: 0 0 0 8px; cursor: pointer; }
+  header .spent:disabled { color: var(--hint); cursor: default; }
+  header .spent:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+  body.spending > header, body.spending #apps { display: none; }
+  #spending { flex: 1; min-height: 0; overflow-y: auto; padding: 0 16px calc(24px + env(safe-area-inset-bottom)); }
+  #spending .chat-head { margin: 0 -16px 12px; }
+  .hero { margin: 4px 0 18px; }
+  .hero .big { font: 700 34px/1.1 system-ui, sans-serif; font-variant-numeric: tabular-nums; margin: 0; }
+  .hero .sub { color: var(--hint); font-size: 14px; margin: 4px 0 0; }
+  .card { background: var(--bubble); border-radius: 14px; padding: 12px 14px; margin-bottom: 14px; }
+  .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--hint); margin: 0 0 8px; }
+  .split { list-style: none; margin: 0; padding: 0; }
+  .split li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; padding: 5px 0; }
+  .split .name { overflow-wrap: anywhere; }
+  .split .val { font-variant-numeric: tabular-nums; text-align: right; }
+  .split .bar { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--code); overflow: hidden; }
+  .split .bar span { display: block; height: 100%; border-radius: 3px; background: var(--accent); }
+  .chart svg { display: block; width: 100%; height: 140px; }
+  .chart .bar-mark { fill: var(--accent); }
+  .chart .bar-mark.today { fill: var(--link); }
+  .chart .base { stroke: var(--code); stroke-width: 1; }
+  .chart .axis { fill: var(--hint); font: 11px system-ui, sans-serif; }
+  .chart .hit { fill: transparent; cursor: pointer; }
+  .chart .hit:focus-visible { outline: none; stroke: var(--link); stroke-width: 2; }
+  .chart .readout { color: var(--hint); font-size: 13px; min-height: 1.4em; margin: 6px 0 0; font-variant-numeric: tabular-nums; }
+  .rows { display: grid; gap: 10px; }
+  .prov .head { display: flex; justify-content: space-between; gap: 10px; font-weight: 600; }
+  .prov p { margin: 2px 0 0; color: var(--hint); font-size: 14px; font-variant-numeric: tabular-nums; }
+  .note { color: var(--hint); font-size: 13px; margin: 6px 0 0; }
+  @media (prefers-reduced-motion: no-preference) {
+    dialog.sheet[open] .panel { animation: rise .18s ease-out; }
+    @keyframes rise { from { transform: translateY(24px); opacity: .6; } to { transform: none; opacity: 1; } }
+  }
+  /* Call eve (phone_call.py): a button in the header, then a full-screen call */
+  header .ends { display: flex; align-items: center; gap: 12px; }
+  header .call-btn { background: var(--accent); color: var(--accent-text); border-radius: 999px; padding: 6px 14px;
+    font-weight: 600; font-size: 14px; min-height: 36px; }
+  header .call-btn:disabled { opacity: .5; }
+  /* The Lights card (lights.py via /api/lights): which lights, on/off, a colour, a level */
+  .lights .head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .lights h2 { margin: 0; font-size: 16px; }
+  .lights .power { display: flex; gap: 6px; }
+  .lights .power button { min-width: 56px; }
+  .lights .ideas { margin-top: 0; }
+  .lights .ideas button[aria-checked="true"] { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 8px; margin: 12px 0; }
+  .swatches button { aspect-ratio: 1; min-height: 44px; border-radius: 50%; border: 2px solid var(--code); padding: 0; }
+  .swatches button:focus-visible, .lights .ideas button:focus-visible, .lights .power button:focus-visible {
+    outline: 2px solid var(--link); outline-offset: 2px; }
+  .swatches button.custom { background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red); }
+  .swatches button.custom[aria-expanded="true"] { border-color: var(--link); }
+  /* the colour wheel (iro.js, served by eve): hue round the ring, white at the centre */
+  .wheel-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 0 12px; }
+  .wheel { border-radius: 50%; touch-action: none; }
+  .wheel:focus-visible { outline: 2px solid var(--link); outline-offset: 3px; }
+  .wheel-wrap .picked { font-size: 13px; color: var(--hint); font-variant-numeric: tabular-nums; }
+  .lights .level { display: flex; align-items: center; gap: 10px; }
+  .lights .level label { font-weight: 400; margin: 0; font-size: 14px; color: var(--hint); flex: none; }
+  .lights input[type="range"] { flex: 1; accent-color: var(--accent); min-height: 44px; }
+  .lights .level output { font-variant-numeric: tabular-nums; min-width: 3.2em; text-align: right; font-size: 14px; }
+  .lights .said { color: var(--hint); font-size: 13px; margin: 6px 0 0; min-height: 1.5em; }
+  /* The Music card (spotify.py via /api/spotify): spotKnob's face — the track, prev / play-pause / next, volume,
+     and where it plays */
+  .music .now { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; min-height: 64px; }
+  .music .art { width: 64px; height: 64px; border-radius: 8px; object-fit: cover; flex: none; background: var(--code); }
+  .music .art[hidden] { display: none; }
+  .music .titles { min-width: 0; }
+  .music h2 { margin: 0 0 2px; font-size: 16px; }
+  .music .track { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .music .by { color: var(--hint); font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .music .transport { display: flex; justify-content: center; gap: 12px; margin: 4px 0 8px; }
+  .music .transport button { min-width: 56px; min-height: 44px; font-size: 18px; }
+  .music .transport button:focus-visible, .music select:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+  .music .level { display: flex; align-items: center; gap: 10px; }
+  .music .level label { font-weight: 400; margin: 0; font-size: 14px; color: var(--hint); flex: none; }
+  .music input[type="range"] { flex: 1; accent-color: var(--accent); min-height: 44px; }
+  .music .level output { font-variant-numeric: tabular-nums; min-width: 3.2em; text-align: right; font-size: 14px; }
+  .music .where { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+  .music .where label { font-weight: 400; margin: 0; font-size: 14px; color: var(--hint); flex: none; }
+  .music select { flex: 1; min-height: 44px; font: inherit; color: var(--text); background: var(--bubble);
+    border: 1px solid var(--code); border-radius: 10px; padding: 0 10px; min-width: 0; }
+  .music .key { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 8px; font-size: 13px; color: var(--hint); }
+  .music .key span { display: inline-flex; align-items: center; gap: 6px; }
+  .music .key i { width: 10px; height: 10px; border-radius: 50%; flex: none; border: 1px solid var(--code); }
+  .music .vpe { margin-top: 8px; width: 100%; min-height: 44px; }
+  .music .vpe[aria-pressed="true"] { background: #1ed760; color: #000; border-color: #1ed760; }
+  .music .vpe:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+  .music .said { color: var(--hint); font-size: 13px; margin: 6px 0 0; min-height: 1.5em; }
+  /* The TV remote card (firetv.py via /api/firetv): a Fire TV remote on the phone. Every target is 44 px or more,
+     a press lights up at once (.hit) while the TV takes its second, and the line under it says what the TV did. */
+  .tv .head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .tv h2 { margin: 0; font-size: 16px; }
+  .tv .now { margin: 2px 0 0; color: var(--hint); font-size: 14px; font-variant-numeric: tabular-nums; }
+  .tv button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none;
+    -webkit-user-select: none; font: 600 15px system-ui, sans-serif; color: var(--text); cursor: pointer; }
+  .tv button:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+  .tv svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round;
+    stroke-linejoin: round; pointer-events: none; }
+  .tv .power { flex: none; width: 52px; height: 52px; border-radius: 50%; border: 0; background: var(--bg);
+    color: var(--hint); display: grid; place-items: center; box-shadow: inset 0 0 0 1px var(--code); }
+  .tv .power[aria-pressed="true"] { background: var(--danger); color: #fff; box-shadow: none; }
+  .tv .chips { display: flex; gap: 6px; overflow-x: auto; margin: 0 -14px 14px; padding: 2px 14px 4px;
+    scrollbar-width: none; scroll-snap-type: x proximity; scroll-padding-inline: 14px; }
+  .tv .chips::-webkit-scrollbar { display: none; }
+  .tv .chips button { flex: none; min-height: 44px; padding: 0 16px; border-radius: 999px; scroll-snap-align: start;
+    border: 1px solid var(--code); background: var(--bg); font-weight: 500; }
+  .tv .chips button[aria-current="true"] { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  .tv .pad { position: relative; width: min(232px, 70vw); aspect-ratio: 1; margin: 0 auto 14px; border-radius: 50%;
+    background: var(--bg); box-shadow: inset 0 0 0 1px var(--code); }
+  .tv .pad .dir { position: absolute; border: 0; background: none; color: var(--hint); display: grid; place-items: center;
+    width: 34%; height: 34%; border-radius: 50%; }
+  .tv .pad .dir svg { width: 28px; height: 28px; stroke-width: 2.4; }
+  .tv .pad .up { top: 0; left: 33%; } .tv .pad .down { bottom: 0; left: 33%; }
+  .tv .pad .left { left: 0; top: 33%; } .tv .pad .right { right: 0; top: 33%; }
+  .tv .pad .ok { position: absolute; inset: 31%; border-radius: 50%; border: 0; background: var(--accent);
+    color: var(--accent-text); font-size: 17px; letter-spacing: .02em; }
+  .tv .keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px; }
+  .tv .keys button { min-height: 48px; border-radius: 14px; border: 0; background: var(--bg); display: grid;
+    place-items: center; box-shadow: inset 0 0 0 1px var(--code); }
+  .tv .keys button[aria-pressed="true"] { color: var(--danger); }
+  .tv button.hit, .tv button:active { transform: scale(.94); filter: brightness(.9); }
+  .tv .pad .dir.hit, .tv .pad .dir:active { background: var(--code); color: var(--text); }
+  @media (prefers-reduced-motion: no-preference) { .tv button { transition: transform .08s ease-out, background .12s; } }
+  .tv .level { display: flex; align-items: center; gap: 10px; }
+  .tv .level label { font-weight: 400; margin: 0; font-size: 14px; color: var(--hint); flex: none; }
+  .tv input[type="range"] { flex: 1; accent-color: var(--accent); min-height: 44px; }
+  .tv .level output { font-variant-numeric: tabular-nums; min-width: 3.2em; text-align: right; font-size: 14px; }
+  .tv .said { color: var(--hint); font-size: 13px; margin: 6px 0 0; min-height: 1.5em; }
+  .tv .said.err { color: var(--danger); }
+  .call { position: fixed; inset: 0; z-index: 50; background: var(--bg); display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 18px; padding: 24px 16px calc(24px + env(safe-area-inset-bottom)); }
+  .call .face { width: 132px; height: 132px; border-radius: 50%; background: var(--accent); color: var(--accent-text);
+    display: grid; place-items: center; font: 700 40px system-ui, sans-serif; transition: transform .2s; }
+  .call[data-state="speaking"] .face { animation: talk 0.9s ease-in-out infinite; }
+  .call[data-state="thinking"] .face { opacity: .75; }
+  @keyframes talk { 50% { transform: scale(1.07); } }
+  @media (prefers-reduced-motion: reduce) { .call[data-state="speaking"] .face { animation: none; } }
+  .call h2 { margin: 0; font-size: 22px; }
+  .call .status { color: var(--hint); min-height: 1.5em; text-align: center; max-width: 30ch; }
+  .call .time { font-variant-numeric: tabular-nums; color: var(--hint); font-size: 14px; }
+  .call .heard { min-height: 3em; max-width: 34ch; text-align: center; font-size: 15px; }
+  .call .controls { display: flex; flex-direction: column; align-items: center; gap: 22px; margin-top: 12px; }
+  .call .controls button { border: 0; font: 600 15px system-ui, sans-serif; }
+  .call .controls button:focus-visible { outline: 3px solid var(--link); outline-offset: 3px; }
+  .call .talk { width: 132px; height: 132px; border-radius: 50%; background: var(--bubble); color: var(--text);
+    touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  .call .talk[aria-pressed="true"] { background: var(--accent); color: var(--accent-text); transform: scale(1.06); }
+  .call .end { background: #d93a3a; color: #fff; border-radius: 999px; padding: 10px 26px; }
+</style>
+</head>
+<body>
+<header>
+  <h1 class="who">Your apps</h1>
+  <div class="ends">
+    <button type="button" class="spent" id="spent" aria-label="Spent today. Open spending" disabled></button>
+    <button type="button" class="call-btn" id="call-open">Call eve</button>
+  </div>
+</header>
+<div class="call" id="call" data-state="idle" role="dialog" aria-modal="true" aria-labelledby="call-title" hidden>
+  <div class="face" aria-hidden="true">b</div>
+  <h2 id="call-title">eve</h2>
+  <p class="status" id="call-status" role="status" aria-live="polite">Calling…</p>
+  <span class="time" id="call-time">0:00</span>
+  <p class="heard" id="call-heard" aria-live="polite"></p>
+  <div class="controls">
+    <button type="button" class="talk" id="call-talk" aria-pressed="false">Hold to talk</button>
+    <button type="button" class="end" id="call-end">End</button>
+  </div>
+</div>
+<section id="apps">
+  <div class="make lights" id="lights-card" role="region" aria-labelledby="lights-title" hidden>
+    <div class="head"><h2 id="lights-title">Lights</h2>
+      <div class="power"><button type="button" class="btn" id="lights-on">On</button>
+        <button type="button" class="btn" id="lights-off">Off</button></div></div>
+    <div class="ideas" id="light-targets" role="radiogroup" aria-label="Which lights"></div>
+    <div class="swatches" id="swatches" role="group" aria-label="Colour"></div>
+    <div class="wheel-wrap" id="wheel-wrap" hidden>
+      <div class="wheel" id="wheel" role="slider" tabindex="0" aria-label="Colour wheel: arrow keys turn the hue,
+        up and down set how deep the colour is" aria-valuemin="0" aria-valuemax="359" aria-valuenow="0"></div>
+      <div class="picked" id="wheel-picked"></div></div>
+    <div class="level"><label for="level">Brightness</label>
+      <input type="range" id="level" min="1" max="100" step="1" value="100"><output id="level-out" for="level">100%</output></div>
+    <p class="said" id="lights-said" role="status" aria-live="polite"></p>
+  </div>
+  <div class="make music" id="music-card" role="region" aria-labelledby="music-title" hidden>
+    <div class="now" id="music-now">
+      <div class="titles"><h2 id="music-title">Music</h2>
+        <div class="track" id="music-track">Nothing playing</div><div class="by" id="music-by"></div></div></div>
+    <div class="transport" role="group" aria-label="Playback">
+      <button type="button" class="btn" id="music-prev" aria-label="Previous track">⏮</button>
+      <button type="button" class="btn" id="music-play" aria-label="Play">▶</button>
+      <button type="button" class="btn" id="music-next" aria-label="Next track">⏭</button></div>
+    <div class="level"><label for="music-volume">Volume</label>
+      <input type="range" id="music-volume" min="0" max="100" step="2" value="50"><output id="music-volume-out" for="music-volume">50%</output></div>
+    <div class="where"><label for="music-device">Playing on</label><select id="music-device"></select></div>
+    <div class="key" id="music-key" aria-label="Each device's colour on the Voice PE"></div>
+    <button type="button" class="btn vpe" id="music-mode" aria-pressed="false" hidden>Voice PE Spotify mode</button>
+    <p class="said" id="music-said" role="status" aria-live="polite"></p>
+  </div>
+  <div class="make tv" id="tv-card" role="region" aria-labelledby="tv-title" hidden>
+    <div class="head"><div><h2 id="tv-title">TV</h2><p class="now" id="tv-now">Reading the TV…</p></div>
+      <button type="button" class="power" id="tv-power" aria-pressed="false" aria-label="Turn the TV on"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v8"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></svg></button></div>
+    <div class="chips" id="tv-apps" role="group" aria-label="Open an app"></div>
+    <div class="pad" role="group" aria-label="Direction pad">
+      <button type="button" class="dir up" data-tv="up" aria-label="Up"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg></button>
+      <button type="button" class="dir left" data-tv="left" aria-label="Left"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button>
+      <button type="button" class="dir right" data-tv="right" aria-label="Right"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+      <button type="button" class="dir down" data-tv="down" aria-label="Down"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <button type="button" class="ok" data-tv="select" aria-label="OK">OK</button></div>
+    <div class="keys">
+      <button type="button" data-tv="back" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
+      <button type="button" data-tv="home" aria-label="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 9-7 9 7"/><path d="M5 10v10h14V10"/></svg></button>
+      <button type="button" data-tv="menu" aria-label="Menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      <button type="button" data-tv="rewind" aria-label="Rewind"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 6 4 12l7 6z"/><path d="M20 6l-7 6 7 6z"/></svg></button>
+      <button type="button" data-tv="play_pause" aria-label="Play or pause"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l8 7-8 7z"/><path d="M16 6v12M20 6v12"/></svg></button>
+      <button type="button" data-tv="fast_forward" aria-label="Fast-forward"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 6l7 6-7 6z"/><path d="M4 6l7 6-7 6z"/></svg></button>
+      <button type="button" id="tv-quieter" aria-label="Volume down"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 12h4"/></svg></button>
+      <button type="button" id="tv-mute" aria-pressed="false" aria-label="Mute"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="m17 9 4 6M21 9l-4 6"/></svg></button>
+      <button type="button" id="tv-louder" aria-label="Volume up"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 12h4M19 10v4"/></svg></button></div>
+    <div class="level"><label for="tv-volume">Volume</label>
+      <input type="range" id="tv-volume" min="0" max="100" step="1" value="0"><output id="tv-volume-out" for="tv-volume">–</output></div>
+    <p class="said" id="tv-said" role="status" aria-live="polite"></p>
+  </div>
+  <div class="make" id="make-card">
+    <label for="want" id="want-label">What should I build?</label>
+    <textarea id="want" rows="2" placeholder="A habit tracker with daily check-ins and streaks"></textarea>
+    <div class="ideas" id="ideas">
+      <button type="button">Habit tracker with streaks</button>
+      <button type="button">Workout log</button>
+      <button type="button">Reading list</button>
+      <button type="button">Expense splitter</button>
+    </div>
+    <div class="row"><span id="make-status"></span>
+      <button class="btn" id="make" type="button">Build it</button></div>
+    <div class="result" id="make-result" hidden></div>
+    <div class="sr" id="make-live" role="status" aria-live="polite"></div>
+  </div>
+  <h2 class="section" id="apps-heading" tabindex="-1">Your apps</h2>
+  <div class="notice-row"><p class="notice" id="apps-notice" role="status" aria-live="polite"></p>
+    <button type="button" id="notice-undo" hidden>Undo</button></div>
+  <div id="app-list"><div class="none">Nothing yet. Describe one above.</div></div>
+</section>
+<section id="chat" aria-labelledby="chat-title" hidden>
+  <div class="chat-head">
+    <button type="button" class="back" id="chat-back" aria-label="Back to your apps"><span aria-hidden="true">‹</span></button>
+    <span class="icon" id="chat-icon" aria-hidden="true"></span>
+    <div class="chat-name"><h1 id="chat-title" tabindex="-1"></h1><span id="chat-sub"></span></div>
+    <button type="button" class="btn" id="chat-open">Open</button>
+  </div>
+  <ol class="thread" id="thread" aria-label="What was asked of this app and how each change went"></ol>
+  <p class="chat-hint" id="chat-hint"></p>
+  <form id="composer">
+    <label class="sr" for="ask">What should change?</label>
+    <textarea id="ask" rows="1" maxlength="4000" enterkeyhint="send" placeholder="What should change?"></textarea>
+    <button type="submit" id="ask-send">Change</button>
+  </form>
+  <div class="sr" id="chat-live" role="status" aria-live="polite"></div>
+</section>
+<section id="spending" aria-labelledby="spend-title" hidden>
+  <div class="chat-head">
+    <button type="button" class="back" id="spend-back" aria-label="Back to your apps"><span aria-hidden="true">‹</span></button>
+    <div class="chat-name"><h1 id="spend-title" tabindex="-1">Spending</h1><span>What eve has spent, by its own meter</span></div>
+  </div>
+  <div id="spend-body"><p class="note" role="status">Loading…</p></div>
+</section>
+<dialog class="sheet" id="sheet" aria-labelledby="sheet-title">
+  <div class="panel">
+    <div class="head"><span class="icon" id="sheet-icon" aria-hidden="true"></span><h2 id="sheet-title"></h2></div>
+    <div class="actions" id="sheet-actions">
+      <button type="button" data-act="change">Change</button>
+      <button type="button" data-act="rename">Rename</button>
+      <button type="button" data-act="undo" id="act-undo">Undo last change</button>
+      <button type="button" data-act="delete" class="danger">Delete</button>
+    </div>
+    <form class="rename" id="sheet-rename" hidden>
+      <label for="rename-input">New name</label>
+      <input id="rename-input" maxlength="60" autocomplete="off" enterkeyhint="done">
+      <div class="row"><button class="btn" type="submit" id="rename-save">Save</button></div>
+    </form>
+    <p class="error" id="sheet-error" role="alert"></p>
+    <button type="button" class="cancel" id="sheet-cancel">Cancel</button>
+  </div>
+</dialog>
+<script>
+(() => {
+  const tg = window.Telegram && window.Telegram.WebApp;
+  const initData = tg ? tg.initData : "";
+  if (tg) { tg.ready(); tg.expand(); }
+  const $ = (id) => document.getElementById(id);
+  const spent = $("spent");
+  const can = (v) => !!(tg && tg.isVersionAtLeast && tg.isVersionAtLeast(v));
+  // What today's building has cost. Spend is tracked, not capped, unless a cap was set.
+  // The header's figure is ALL of eve's spend today (spend.py's meter), not only the app builds. With a build
+  // cap set, the builds' share is shown against it. A tap opens the Spending view.
+  function showSpent(d) {
+    if (!d || typeof d.spent_today !== "number") return;
+    const capped = typeof d.cap === "number" && typeof d.apps_today === "number"
+      ? " · builds $" + d.apps_today.toFixed(2) + " of $" + d.cap.toFixed(2) : "";
+    spent.textContent = "$" + d.spent_today.toFixed(2) + " spent today" + capped;
+    spent.setAttribute("aria-label", spent.textContent + ". Open spending");
+    spent.disabled = false;
+  }
+
+  if (!initData) { spent.textContent = "Open this from eve's pinned message in Telegram."; spent.disabled = true; $("make").disabled = true; }
+  else fetch("api/me", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ initData }) })
+    .then((r) => r.json()).then((j) => {
+      if (j.error) { spent.textContent = j.error; return; }
+      showSpent(j);
+      if (Array.isArray(j.lights) && j.lights.length) showLights(j.lights);
+      if (j.spotify === true) showMusic();
+      if (j.firetv === true) showTv();
+    }).catch(() => {});
+
+  // ---- the Lights card: every light at once by default (owner, 2026-09-27: "usually i set all the lights to be
+  // same color"), or one light or room. Names come from the owner's own lights file; still textContent only.
+  const SWATCHES = [["red", "#ff2a2a"], ["orange", "#ff7a1a"], ["yellow", "#ffd21a"], ["green", "#1ed760"],
+    ["cyan", "#1ae0ff"], ["blue", "#2a5cff"], ["purple", "#8c2aff"], ["pink", "#ff4fa3"],
+    ["warm white", "#ffd9a0"], ["white", "#fff6ea"]];
+  let lightTarget = "all";
+  function showLights(list) {
+    const card = $("lights-card"), targets = $("light-targets"), said = $("lights-said");
+    const choices = [["all", "All"]];
+    const rooms = [...new Set(list.map((l) => l.room).filter(Boolean))];
+    if (list.length > 1) rooms.forEach((r) => choices.push([r, r[0].toUpperCase() + r.slice(1)]));
+    if (list.length > 1) list.forEach((l) => choices.push([l.name, l.name[0].toUpperCase() + l.name.slice(1)]));
+    targets.hidden = choices.length < 2;
+    choices.forEach(([value, label]) => {
+      const b = el("button", "", label);
+      b.type = "button"; b.setAttribute("role", "radio"); b.setAttribute("aria-checked", String(value === lightTarget));
+      b.onclick = () => {
+        lightTarget = value;
+        targets.querySelectorAll("button").forEach((x) => x.setAttribute("aria-checked", String(x === b)));
+      };
+      targets.append(b);
+    });
+    const swatches = $("swatches");
+    SWATCHES.forEach(([name, hex]) => {
+      const b = el("button", "");
+      b.type = "button"; b.style.background = hex; b.setAttribute("aria-label", name); b.title = name;
+      b.onclick = () => setLights({ color: name });
+      swatches.append(b);
+    });
+    const custom = el("button", "custom");
+    custom.type = "button"; custom.setAttribute("aria-label", "Pick any colour"); custom.title = "Pick any colour";
+    custom.setAttribute("aria-expanded", "false"); custom.setAttribute("aria-controls", "wheel-wrap");
+    custom.onclick = () => {
+      const open = $("wheel-wrap").hidden;
+      $("wheel-wrap").hidden = !open; custom.setAttribute("aria-expanded", String(open));
+      if (open) paintWheel();
+    };
+    if (wireWheel()) swatches.append(custom);
+    const level = $("level"), out = $("level-out");
+    level.oninput = () => { out.textContent = level.value + "%"; };
+    level.onchange = () => setLights({ brightness: Number(level.value) });
+    $("lights-on").onclick = () => setLights({ power: true });
+    $("lights-off").onclick = () => setLights({ power: false });
+    card.hidden = false;
+    // what they are now: the first light that answers sets the slider
+    post("api/lights", { action: "status" }).then(reply).then((j) => {
+      const seen = (j.lights || []).filter((l) => l.reachable);
+      if (seen.length && typeof seen[0].brightness === "number") {
+        level.value = Math.max(1, seen[0].brightness); out.textContent = level.value + "%";
+      }
+      said.textContent = (j.lights || []).map((l) => l.name + ": " + (!l.reachable ? "not answering"
+        : !l.on ? "off" : [l.color || (l.white_kelvin ? "white" : ""), typeof l.brightness === "number" ? l.brightness + "%" : ""]
+          .filter(Boolean).join(" "))).join(" · ");
+    }).catch(() => {});
+  }
+  // ---- the colour wheel: iro.js (vendored, served at /iro.js). Hue is the angle, red at the top; saturation the
+  // distance from the centre. Brightness stays on the slider, so the wheel's value is always full.
+  let wheel = null, wheelBusy = false, wheelNext = null;
+  function paintWheel() {
+    const c = wheel.color, hex = c.hexString, w = $("wheel");
+    w.setAttribute("aria-valuenow", String(Math.round(c.hue)));
+    w.setAttribute("aria-valuetext", hex + ", " + Math.round(c.saturation) + "% deep");
+    $("wheel-picked").textContent = hex;
+    return hex;
+  }
+  // while a drag goes on, one request is in flight and only the newest colour waits behind it: a Bluetooth
+  // light takes a moment, and a queue of every colour passed on the way would replay the whole drag
+  async function sendWheel(hex, done) {
+    if (wheelBusy) { wheelNext = { hex, done: done || (wheelNext && wheelNext.done) }; return; }
+    wheelBusy = true;
+    try {
+      const j = await reply(await post("api/lights", { action: "set", target: lightTarget, color: hex }));
+      $("lights-said").textContent = j.line || j.error || "Something went wrong.";
+      if (done && tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred(j.ok ? "success" : "error");
+    } catch (e) {
+      $("lights-said").textContent = "eve didn't answer. Is the Mac awake?";
+    } finally {
+      wheelBusy = false;
+      const n = wheelNext; wheelNext = null;
+      if (n) sendWheel(n.hex, n.done);
+    }
+  }
+  function wireWheel() {
+    const w = $("wheel");
+    if (typeof window.iro === "undefined") return false;       // an older eve that does not serve iro.js yet
+    const size = Math.min(240, Math.round(window.innerWidth * 0.7));
+    wheel = new window.iro.ColorPicker(w, { width: size, color: { h: 0, s: 100, v: 100 }, borderWidth: 2,
+      borderColor: getComputedStyle(document.body).getPropertyValue("--code").trim() || "#8884",
+      handleRadius: 12, wheelDirection: "clockwise", wheelAngle: 270, layout: [{ component: window.iro.ui.Wheel }] });
+    wheel.on("input:start", () => { if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred("light"); });
+    wheel.on("input:move", () => sendWheel(paintWheel(), false));
+    wheel.on("input:end", () => sendWheel(paintWheel(), true));
+    w.addEventListener("keydown", (e) => {
+      const step = { ArrowRight: [10, 0], ArrowLeft: [-10, 0], ArrowUp: [0, 10], ArrowDown: [0, -10] }[e.key];
+      if (!step) return;
+      e.preventDefault();
+      const c = wheel.color;
+      c.hsv = { h: (c.hue + step[0] + 360) % 360, s: Math.max(0, Math.min(100, c.saturation + step[1])), v: 100 };
+      sendWheel(paintWheel(), true);
+    });
+    paintWheel();
+    return true;
+  }
+  async function setLights(change) {
+    const said = $("lights-said");
+    said.textContent = "…";
+    if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred("light");
+    try {
+      const j = await reply(await post("api/lights", Object.assign({ action: "set", target: lightTarget }, change)));
+      said.textContent = j.line || j.error || "Something went wrong.";
+      if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred(j.ok ? "success" : "error");
+    } catch (e) {
+      said.textContent = "eve didn't answer. Is the Mac awake?";
+    }
+  }
+
+  // ---- the Music card: spotKnob on the phone (owner, 2026-09-27: "give eve spotKnob capabilities"). Track,
+  // artist and device names come from Spotify, so they only ever reach the page as textContent.
+  let musicPlaying = false;
+  function paintMusic(j) {
+    if (!j || j.ok === false) return;
+    // the art <img> is made only when there is art: the page holds no <img> of its own otherwise
+    let art = $("music-art");
+    if (!art) { art = el("img", "art"); art.id = "music-art"; art.alt = ""; art.hidden = true; $("music-now").prepend(art); }
+    $("music-track").textContent = j.track || "Nothing playing";
+    $("music-by").textContent = (j.artists || []).join(", ") + (j.album ? " · " + j.album : "");
+    if (typeof j.art === "string" && j.art.indexOf("https://i.scdn.co/") === 0) { art.src = j.art; art.hidden = false; }
+    else art.hidden = true;
+    musicPlaying = !!j.playing;
+    const play = $("music-play");
+    play.textContent = musicPlaying ? "⏸" : "▶";
+    play.setAttribute("aria-label", musicPlaying ? "Pause" : "Play");
+    const vol = $("music-volume");
+    if (j.device && typeof j.device.volume === "number" && document.activeElement !== vol) {
+      vol.value = j.device.volume; $("music-volume-out").textContent = j.device.volume + "%";
+    }
+    // Spotify mode on the Voice PE (music_mode.py): only when the board is eve's controller (mode is a bool)
+    const mode = $("music-mode");
+    if (typeof j.mode === "boolean") {
+      mode.hidden = false;
+      mode.setAttribute("aria-pressed", String(j.mode));
+      mode.textContent = j.mode ? "Voice PE Spotify mode: on" : "Voice PE Spotify mode: off";
+    }
+    const pick = $("music-device");
+    if (Array.isArray(j.devices)) {
+      pick.textContent = "";
+      const active = j.devices.find((d) => d.active);
+      if (!active) { const o = el("option", "", "No device playing"); o.value = ""; o.selected = true; pick.append(o); }
+      j.devices.forEach((d) => {
+        const o = el("option", "", d.name + (d.restricted ? " (no remote control)" : ""));
+        o.value = d.name; o.disabled = !!d.restricted; o.selected = !!d.active;
+        pick.append(o);
+      });
+      if (!j.devices.length) { const o = el("option", "", "Open Spotify somewhere"); o.value = ""; pick.append(o); }
+      // each device's colour, as the Voice PE's ring shows it in the picker (spotify.DeviceColors)
+      const key = $("music-key");
+      key.textContent = "";
+      j.devices.forEach((d) => {
+        if (!/^#[0-9a-f]{6}$/.test(d.color || "")) return;
+        const chip = el("span", ""), dot = el("i", "");
+        dot.style.background = d.color;
+        chip.append(dot, document.createTextNode(d.name));
+        key.append(chip);
+      });
+    }
+  }
+  function showMusic() {
+    $("music-card").hidden = false;
+    $("music-play").onclick = () => music({ action: musicPlaying ? "pause" : "play" });
+    $("music-next").onclick = () => music({ action: "next" });
+    $("music-prev").onclick = () => music({ action: "previous" });
+    const vol = $("music-volume"), out = $("music-volume-out");
+    vol.oninput = () => { out.textContent = vol.value + "%"; };
+    vol.onchange = () => music({ action: "volume", volume: Number(vol.value) });
+    $("music-mode").onclick = () => music({ action: "mode", on: $("music-mode").getAttribute("aria-pressed") !== "true" });
+    $("music-device").onchange = (e) => { if (e.target.value) music({ action: "transfer", device: e.target.value }); };
+    post("api/spotify", { action: "status" }).then(reply).then((j) => {
+      paintMusic(j);
+      if (j.ok === false) $("music-said").textContent = j.reason || j.line || "";
+    }).catch(() => {});
+  }
+  async function music(body) {
+    const said = $("music-said");
+    said.textContent = "…";
+    if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred("light");
+    try {
+      const j = await reply(await post("api/spotify", body));
+      paintMusic(j);
+      said.textContent = j.line || j.reason || j.error || "Something went wrong.";
+      if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred(j.ok ? "success" : "error");
+    } catch (e) {
+      said.textContent = "eve didn't answer. Is the Mac awake?";
+    }
+  }
+
+  // ---- the TV remote card: the Fire TV's remote on the phone (owner, 2026-10-04: "build tv remote into mini app").
+  // A press lights up at once; the TV takes about a second, so presses wait in line in the order they were made
+  // (the TV gets them in that order) and taps on the same key while one is on its way go as one press with a count.
+  // App names and the TV's lines only ever reach the page as textContent.
+  const TV_STEP = 10;                                   // the − and + buttons, in percent (firetv.VOLUME_STEP)
+  const TV_KEYS = ["up", "down", "left", "right", "select", "back", "home", "menu"];
+  let tvPower = "unknown", tvMuted = null, tvNowText = "", tvSliding = null, tvDragging = false, tvSentVol = null;
+  const tvLine = [];                                    // presses not yet sent; tvLine[0] while one is on its way
+  let tvSending = false;
+  function haptic(kind) { if (tg && tg.HapticFeedback) { if (kind === "error") tg.HapticFeedback.notificationOccurred("error"); else tg.HapticFeedback.impactOccurred("light"); } }
+  function paintTv(j) {
+    if (typeof j.now === "string" && j.now) tvNowText = j.now;
+    // also puts back a "Turning the TV on…" that failed
+    if (tvNowText) $("tv-now").textContent = tvNowText; else if (j.ok === false) $("tv-now").textContent = "TV not answering";
+    if (typeof j.power === "string") tvPower = j.power;
+    const on = tvPower === "on" || tvPower === "screensaver", pw = $("tv-power");
+    pw.setAttribute("aria-pressed", String(on));
+    pw.setAttribute("aria-label", on ? "Turn the TV off" : "Turn the TV on");
+    if (typeof j.volume === "number" && !tvDragging) {
+      $("tv-volume").value = j.volume; $("tv-volume-out").textContent = j.volume + "%"; tvSentVol = j.volume;
+    }
+    if (typeof j.muted === "boolean") tvMuted = j.muted;
+    const mute = $("tv-mute");
+    mute.setAttribute("aria-pressed", String(tvMuted === true));
+    mute.setAttribute("aria-label", tvMuted ? "Unmute" : "Mute");
+    const chips = $("tv-apps");
+    if (Array.isArray(j.apps) && !chips.childElementCount) {
+      j.apps.forEach((name) => {
+        const b = el("button", "", String(name));
+        b.type = "button"; b.dataset.app = String(name);
+        b.onclick = () => tvPress({ action: "open_app", app: String(name) }, b);
+        chips.append(b);
+      });
+    }
+    if ("app" in j) chips.querySelectorAll("button").forEach((b) => b.setAttribute("aria-current", String(b.dataset.app === j.app)));
+  }
+  function tvPress(body, btn) {
+    haptic("light");
+    if (btn) { btn.classList.remove("hit"); void btn.offsetWidth; btn.classList.add("hit"); setTimeout(() => btn.classList.remove("hit"), 160); }
+    const last = tvLine.length > (tvSending ? 1 : 0) ? tvLine[tvLine.length - 1] : null;
+    if (last && last.action === body.action && TV_KEYS.includes(body.action)) last.repeat = (last.repeat || 1) + 1;
+    else if (last && last.action === "volume" && body.action === "volume") last.volume = body.volume;
+    else tvLine.push(Object.assign({}, body));
+    tvNext();
+  }
+  async function tvNext() {
+    if (tvSending || !tvLine.length) return;
+    tvSending = true;
+    const body = tvLine[0], said = $("tv-said");
+    try {
+      const j = await reply(await post("api/firetv", body));
+      paintTv(j);
+      const line = j.line || j.error || "Something went wrong.";
+      said.classList.toggle("err", j.ok !== true);
+      // a d-pad press says nothing when it worked: the screen is the answer
+      said.textContent = j.ok === true && TV_KEYS.includes(body.action) ? "" : line;
+      if (j.ok !== true) {
+        haptic("error");
+        if ((body.action === "mute" || body.action === "unmute") && typeof j.muted !== "boolean") { tvMuted = body.action === "unmute"; paintTv({}); }
+      }
+    } catch (e) {
+      said.classList.add("err");
+      said.textContent = "eve didn't answer. Is the Mac awake?";
+    } finally {
+      tvLine.shift();
+      tvSending = false;
+      tvNext();
+    }
+  }
+  function showTv() {
+    $("tv-card").hidden = false;
+    document.querySelectorAll("#tv-card [data-tv]").forEach((b) => { b.onclick = () => tvPress({ action: b.dataset.tv }, b); });
+    $("tv-power").onclick = (e) => {
+      const on = tvPower === "on" || tvPower === "screensaver";
+      $("tv-now").textContent = on ? "Turning the TV off…" : "Turning the TV on…";
+      tvPress({ action: on ? "power_off" : "power_on" }, e.currentTarget);
+    };
+    $("tv-mute").onclick = (e) => {
+      const mute = tvMuted !== true;
+      tvMuted = mute; e.currentTarget.setAttribute("aria-pressed", String(mute));      // optimistic; the reply corrects it
+      tvPress({ action: mute ? "mute" : "unmute" }, e.currentTarget);
+    };
+    const vol = $("tv-volume"), out = $("tv-volume-out");
+    const nudge = (sign, btn) => {
+      const v = Math.max(0, Math.min(100, Number(vol.value) + sign * TV_STEP));
+      vol.value = v; out.textContent = v + "%";
+      tvSentVol = null;
+      tvPress({ action: "volume_change", change: sign * TV_STEP }, btn);
+    };
+    $("tv-quieter").onclick = (e) => nudge(-1, e.currentTarget);
+    $("tv-louder").onclick = (e) => nudge(1, e.currentTarget);
+    // the slider: one volume per pause in the drag (350 ms), and the value let go on always sent
+    const setVol = () => {
+      const v = Number(vol.value);
+      if (v !== tvSentVol) { tvSentVol = v; tvPress({ action: "volume", volume: v }); }
+    };
+    vol.oninput = () => {
+      tvDragging = true; out.textContent = vol.value + "%";
+      clearTimeout(tvSliding);
+      tvSliding = setTimeout(setVol, 350);
+    };
+    vol.onchange = () => { clearTimeout(tvSliding); tvDragging = false; setVol(); };
+    post("api/firetv", { action: "status" }).then(reply).then((j) => {
+      paintTv(j);
+      if (j.ok !== true) $("tv-said").textContent = j.line || j.error || "";
+    }).catch(() => { $("tv-now").textContent = "eve didn't answer. Is the Mac awake?"; });
+  }
+
+  // ---- apps ----
+  // App titles and descriptions come from pages Claude wrote, so they only ever reach the page as textContent.
+  const want = $("want"), makeBtn = $("make"), makeStatus = $("make-status"), makeLive = $("make-live");
+  const notice = $("apps-notice"), sheet = $("sheet"), noticeUndo = $("notice-undo"), result = $("make-result");
+  let building = false, apps = [], running = [], poll = null;
+  const query = new URLSearchParams(location.search);
+  const opening = query.get("open");                    // an Open button from the chat
+  const chatting = query.get("chat");                   // a Change button, or an app's pencil or Settings item
+  const ago = (iso) => { const d = new Date(iso); return isNaN(d) ? "" : d.toLocaleDateString(undefined, { month: "short", day: "numeric" }); };
+  async function post(path, body) {
+    return fetch(path, { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(Object.assign({ initData }, body || {})) });
+  }
+  async function reply(r) { let j = {}; try { j = await r.json(); } catch (e) {} return j; }
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function iconFor(a, node) {                           // the app's emoji, else its first letter on a tile
+    const emoji = (a.icon || "").trim();
+    node.textContent = emoji || (a.title || "?").trim().charAt(0).toUpperCase() || "?";
+    node.classList.toggle("letter", !emoji);
+    return node;
+  }
+  function haptic(kind) { try { if (can("6.1")) tg.HapticFeedback.notificationOccurred(kind); } catch (e) {} }
+  // Yes/no before anything that cannot be undone from here: Telegram's popup with the action named on a red
+  // button, else Telegram's plain confirm, else the browser's.
+  function ask(text, yes) {
+    return new Promise((resolve) => {
+      if (can("6.2") && tg.showPopup) {
+        try { tg.showPopup({ message: text, buttons: [{ id: "yes", type: "destructive", text: yes }, { id: "no", type: "cancel" }] },
+          (id) => resolve(id === "yes")); return; } catch (e) {}
+      }
+      if (can("6.2") && tg.showConfirm) { try { tg.showConfirm(text, (ok) => resolve(!!ok)); return; } catch (e) {} }
+      resolve(window.confirm(text));
+    });
+  }
+  // An app opens sandboxed with its own app token (the server's "open" address), never with the owner's
+  // initData. Telegram's script in it reads its version, platform and theme from the address, as Telegram
+  // passes them to a Mini App, and the owner's first name for a greeting: nothing signed.
+  function tgHash() {
+    if (!tg) return "";
+    const p = [], put = (k, v) => p.push(k + "=" + encodeURIComponent(v));
+    const user = tg.initDataUnsafe && tg.initDataUnsafe.user;
+    if (user && user.first_name) put("tgWebAppData", "user=" + encodeURIComponent(JSON.stringify({ first_name: user.first_name })));
+    if (tg.version) put("tgWebAppVersion", tg.version);
+    if (tg.platform) put("tgWebAppPlatform", tg.platform);
+    if (tg.themeParams) put("tgWebAppThemeParams", JSON.stringify(tg.themeParams));
+    return p.length ? "#" + p.join("&") : "";
+  }
+  const openApp = (url, replace) => { const to = url.replace(/^\//, "") + tgHash(); if (replace) location.replace(to); else location.href = to; };
+
+  const changingNow = () => new Set(running.map((b) => b.app).filter(Boolean));
+  function renderApps() {
+    const list = $("app-list"); list.textContent = "";
+    if (!apps.length) { list.appendChild(el("div", "none", "Nothing yet. Describe one above.")); return; }
+    const busy = changingNow();
+    apps.forEach((a) => {
+      const row = el("div", "app"); row.dataset.slug = a.slug;
+      const open = el("button", "open"); open.type = "button";
+      open.appendChild(iconFor(a, el("span", "icon"))).setAttribute("aria-hidden", "true");
+      const text = el("span", "text");
+      text.appendChild(el("span", "name", a.title));
+      if (a.description) text.appendChild(el("span", "desc", a.description));
+      text.appendChild(el("span", "when", busy.has(a.slug) ? "Being changed…" : "Updated " + ago(a.updated)));
+      open.appendChild(text);
+      open.onclick = () => openApp(a.open);
+      const more = el("button", "more", "…"); more.type = "button";
+      more.setAttribute("aria-label", "More for " + a.title + (busy.has(a.slug) ? " (being changed)" : ""));
+      more.setAttribute("aria-haspopup", "dialog");
+      more.disabled = busy.has(a.slug);                  // Change, Undo and Delete wait for its build
+      more.onclick = () => openSheet(a, more);
+      row.append(open, more);
+      list.appendChild(row);
+    });
+  }
+  async function loadApps() {
+    if (!initData) return;
+    try {
+      const j = await reply(await post("api/apps"));
+      if (Array.isArray(j.apps)) { apps = j.apps; running = Array.isArray(j.building) ? j.building : []; renderApps(); watchRunning(); paintComposer(); }
+    } catch (e) {}
+  }
+  // A build this page did not start, or whose stream dropped (a locked phone): it keeps running on the Mac,
+  // and its result goes to the chat with eve. Until it ends, the page says so and Build waits for it.
+  function watchRunning() {
+    const mine = running.find((b) => b.secs != null);
+    if (building) return;
+    if (mine) {
+      const t0 = Date.now() - mine.secs * 1000, what = mine.request ? "“" + mine.request + "”" : "a change";
+      const paint = () => { makeStatus.textContent = "Still building " + what + "… " + clock(Date.now() - t0); };
+      paint(); makeBtn.disabled = true;
+      if (!poll) poll = setInterval(() => { paint(); loadApps(); }, 4000);
+    } else if (poll) {
+      clearInterval(poll); poll = null; makeBtn.disabled = !initData;
+      makeStatus.textContent = "Finished. eve sent the result to the chat.";
+    }
+  }
+
+  // ---- the "…" sheet: Change, Rename, Undo last change, Delete ----
+  let current = null, trigger = null;
+  function openSheet(a, from) {
+    current = a; trigger = from;
+    $("sheet-title").textContent = a.title;
+    iconFor(a, $("sheet-icon"));
+    $("act-undo").hidden = !(a.versions > 0);
+    $("sheet-actions").hidden = false; $("sheet-rename").hidden = true; $("sheet-error").textContent = "";
+    if (sheet.showModal) sheet.showModal(); else sheet.setAttribute("open", "");
+    sheet.querySelector("[data-act]").focus();
+    if (can("6.1")) { tg.BackButton.onClick(closeSheet); tg.BackButton.show(); }
+  }
+  function closeSheet() { if (sheet.open) { if (sheet.close) sheet.close(); else sheet.removeAttribute("open"); } }
+  sheet.addEventListener("close", () => {
+    // The close event comes after Change has opened the app's chat, whose Back button stays.
+    if (can("6.1")) { tg.BackButton.offClick(closeSheet); if (!chat) tg.BackButton.hide(); }
+    // Focus goes back to the "…" that opened the sheet, or to the list when that row is gone.
+    const back = trigger && document.body.contains(trigger) && !trigger.disabled ? trigger : $("apps-heading");
+    if (sheet.dataset.keepFocus) delete sheet.dataset.keepFocus; else back.focus();
+  });
+  sheet.addEventListener("click", (e) => { if (e.target === sheet) closeSheet(); });   // a tap on the backdrop
+  $("sheet-cancel").onclick = closeSheet;
+  function sheetError(text) { $("sheet-error").textContent = text; haptic("error"); }
+  // One action at a time: while it is on its way over the tunnel the sheet's buttons wait, so a second tap
+  // cannot send a second undo (an undo is a pop; the server also refuses a stale one by its version count).
+  async function act(path, body, fail, doing) {
+    const buttons = sheet.querySelectorAll("#sheet-actions button, #rename-save");
+    buttons.forEach((b) => { b.disabled = true; }); sheet.setAttribute("aria-busy", "true");
+    $("sheet-error").textContent = doing || "";
+    try {
+      const r = await post("api/apps/" + encodeURIComponent(current.slug) + "/" + path, body);
+      const j = await reply(r);
+      if (!r.ok) { sheetError(j.error || fail); if (r.status === 409 || r.status === 404) loadApps(); return null; }
+      $("sheet-error").textContent = "";
+      return j;
+    } catch (e) { sheetError("The connection dropped. Try again."); return null; }
+    finally { buttons.forEach((b) => { b.disabled = false; }); sheet.removeAttribute("aria-busy"); }
+  }
+  let undoTimer = null;
+  function done(text, undo) {
+    closeSheet(); notice.textContent = text; haptic("success"); loadApps();
+    clearTimeout(undoTimer); noticeUndo.hidden = !undo; noticeUndo.onclick = undo || null;
+    if (undo) undoTimer = setTimeout(() => { noticeUndo.hidden = true; }, 15000);
+  }
+
+  $("sheet-actions").addEventListener("click", async (e) => {
+    const b = e.target.closest("button[data-act]"); if (!b || !current || b.disabled) return;
+    const a = current, which = b.dataset.act;
+    if (which === "change") {
+      sheet.dataset.keepFocus = "1"; closeSheet(); openChat(a.slug, true); return;
+    }
+    if (which === "rename") {
+      $("sheet-actions").hidden = true; $("sheet-rename").hidden = false;
+      const input = $("rename-input"); input.value = a.title; input.focus(); input.select(); return;
+    }
+    if (which === "undo") {
+      const older = a.undo_warning ? " Entries saved since that change may not open in the older version." : "";
+      if (!(await ask("Undo the last change to " + a.title + "? The version you have now is not kept." + older, "Undo"))) return;
+      if (await act("revert", { versions: a.versions }, "Couldn't undo that.", "Undoing…")) done(a.title + " is back to how it was before its last change.");
+      return;
+    }
+    if (which === "delete") {
+      if (!(await ask("Delete " + a.title + "? It goes to eve's trash on the Mac, with its data, and Undo brings it back.", "Delete"))) return;
+      if (await act("delete", {}, "Couldn't delete that.", "Deleting…")) {
+        done("Deleted " + a.title + ".", async () => {
+          noticeUndo.hidden = true;
+          try {
+            const r = await post("api/apps/" + encodeURIComponent(a.slug) + "/restore");
+            const j = await reply(r);
+            notice.textContent = r.ok ? a.title + " is back." : (j.error || "Couldn't bring it back.");
+            haptic(r.ok ? "success" : "error");
+          } catch (x) { notice.textContent = "The connection dropped. Try again."; }
+          loadApps();
+        });
+      }
+    }
+  });
+  $("sheet-rename").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const title = $("rename-input").value.trim(); if (!title || !current) return;
+    const j = await act("rename", { title }, "Couldn't rename that.", "Renaming…");
+    if (j) done("Renamed to " + j.app.title + ".");
+  });
+
+  // ---- building a new app ----
+  $("ideas").querySelectorAll("button").forEach((b) => { b.onclick = () => { want.value = b.textContent; want.focus(); }; });
+
+  // A build streams apps_maker's stages: thinking, writing (characters so far), testing, fixing (how many
+  // problems the phone check found), saving. The words change at each stage; the clock runs beside them.
+  const STAGES = {
+    thinking: () => "Thinking it through…",
+    writing: (n) => "Writing it…" + (n >= 1000 ? " " + Math.round(n / 1000) + "k" : ""),
+    testing: () => "Testing it on a phone…",
+    fixing: (n) => "Fixing " + n + (n === 1 ? " problem…" : " problems…"),
+    saving: () => "Saving…",
+  };
+  const clock = (ms) => { const s = Math.floor(ms / 1000); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+  // The finished build's line: plain words, the first thing that may not work named (the check's counts go to
+  // the log, not here).
+  function readyLine(r) {
+    const title = r.app.title;
+    if (!r.problems) return "Ready: " + title + (r.tested === false ? ". It could not be tested on a phone this time." : ". Tested on a phone.");
+    const n = r.problems === 1 ? "1 thing" : r.problems + " things";
+    return "Ready: " + title + ", but " + n + " may not work: " + ((r.issues && r.issues[0]) || "") ;
+  }
+  // The Open button under the line when the page does not open the new app by itself.
+  function showResult(r) {
+    result.textContent = "";
+    const open = el("button", "btn", "Open " + r.app.title); open.type = "button";
+    open.onclick = () => openApp(r.url);
+    result.appendChild(open);
+    result.hidden = false;
+  }
+  // One build or change over /api/make, its stream read to the end; say(words) hears each stage in words. The
+  // answer is {got} (the done event), {failed} (the build's own error line), {refused, status} (it never
+  // started: another build is running, the app was deleted, a cap), or {dropped} (the stream broke; the build
+  // goes on on the Mac and its result goes to the chat with eve).
+  async function runBuild(body, say) {
+    let r;
+    try { r = await post("api/make", body); } catch (e) { return { dropped: true }; }
+    if (!r.ok || !r.body) return { refused: await reply(r), status: r.status };
+    try {
+      const reader = r.body.getReader(), dec = new TextDecoder(); let buf = "", got = null, failed = "";
+      for (;;) {
+        const { value, done: end } = await reader.read(); if (end) break;
+        buf += dec.decode(value, { stream: true }); let cut;
+        while ((cut = buf.indexOf("\n\n")) >= 0) {
+          const ev = buf.slice(0, cut); buf = buf.slice(cut + 2);
+          if (!ev.startsWith("data: ")) continue;
+          const d = JSON.parse(ev.slice(6));
+          if (d.s && STAGES[d.s]) say(STAGES[d.s](Number(d.p) || 0));
+          if (d.error) { failed = d.error; showSpent(d); }
+          if (d.done) { got = d; showSpent(d); }
+        }
+      }
+      return got ? { got } : failed ? { failed } : { dropped: true };
+    } catch (e) { return { dropped: true }; }
+  }
+  // The server runs one build per owner at a time, so Build it and an app's Change wait for each other.
+  function setBuilding(on) { building = on; makeBtn.disabled = on || !initData; paintComposer(); }
+
+  makeBtn.onclick = async () => {
+    const text = want.value.trim(); if (!text || building || !initData) return;
+    setBuilding(true); $("make-card").setAttribute("aria-busy", "true"); notice.textContent = "";
+    result.hidden = true;
+    const t0 = Date.now(); let words = "Starting…", spoken = "";
+    const paint = () => { makeStatus.textContent = words + " " + clock(Date.now() - t0); };
+    // The live region hears each stage once (not every character count); the visible line has the numbers.
+    const say = (w) => { words = w; paint(); const plain = w.replace(/ \d+k$/, ""); if (plain !== spoken) { spoken = plain; makeLive.textContent = plain; } };
+    const timer = setInterval(paint, 1000);
+    const finish = (line) => { clearInterval(timer); makeStatus.textContent = line; makeLive.textContent = line; };
+    say("Starting…");
+    const out = await runBuild({ request: text }, say);
+    clearInterval(timer);
+    setBuilding(false); $("make-card").removeAttribute("aria-busy");
+    if (out.got) {
+      const got = out.got;
+      finish(readyLine(got));
+      if (want.value.trim() === text) want.value = "";    // words typed meanwhile for the next one are kept
+      haptic(got.problems ? "warning" : "success");
+      await loadApps();
+      // Straight into the app only when it is clean and the owner is still here and not in the middle of
+      // something else (an app's change chat, the sheet, words typed for the next build); otherwise the Open
+      // button waits, so nothing they typed is lost.
+      const here = () => !!initData && !sheet.open && document.visibilityState === "visible"
+        && !chat && !want.value.trim();
+      if (!got.problems && here()) setTimeout(() => { if (here()) openApp(got.url); else showResult(got); }, 1200);
+      else showResult(got);
+    } else if (out.failed) {
+      finish(out.failed); haptic("error");
+    } else if (out.refused) {
+      finish(out.refused.error || "Something went wrong."); haptic("error");
+    } else {
+      finish("The connection dropped. The build goes on on the Mac; its result will come to the chat with eve.");
+      haptic("error"); loadApps();
+    }
+  };
+
+  // ---- one app's change chat ----
+  // Owner, 2026-09-24: "a chat box for each app where you keep refining it (make the buttons bigger, add
+  // categories)". Opened by ?chat=<slug> (the Change button eve sends after a change, and inside the app its
+  // pencil or Telegram's Settings item) and by Change in the "…" sheet. It shows what was asked of the app and
+  // how each build went (/api/apps/<slug>/history) and takes the next change. Requests, check lines and
+  // problems are text people and Claude wrote, so they reach the page as textContent only.
+  const thread = $("thread"), askBox = $("ask"), askSend = $("ask-send"), chatHint = $("chat-hint"), chatLive = $("chat-live");
+  let chat = null;            // the open chat: { slug, app, thread, running, gone, fresh }
+  let pending = null;         // this page's change while it runs: { slug, request, words, t0 }; its app's chat
+                              // may not be the one open, so it is only ever read through mine()
+  let chatPoll = null, chatTick = null;
+  let drawn = "";             // what the thread was last drawn from: a poll that brings nothing new redraws nothing
+  const mine = () => (pending && chat && pending.slug === chat.slug ? pending : null);
+  const when = (iso) => { const d = new Date(iso); return isNaN(d) ? "" : d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); };
+  const money = (usd) => (typeof usd === "number" && usd > 0 ? "$" + usd.toFixed(2) : "");
+  const took = (secs) => (typeof secs !== "number" || secs <= 0 ? "" : secs < 60 ? secs + " s" : Math.round(secs / 60) + " min");
+  const joined = (parts) => parts.filter(Boolean).join(" · ");
+  function bubble(cls, line, more, meta) {
+    const li = el("li", "msg " + cls);
+    li.appendChild(el("span", "line", line));
+    (more || []).filter(Boolean).forEach((m) => li.appendChild(el("span", "more-line", m)));
+    if (meta) li.appendChild(el("span", "when", meta));
+    return li;
+  }
+  // How one build went, in words: the version it made, what the phone check and Jev's journeys found, the
+  // first thing that may still not work, and what it cost.
+  function checkWords(res) {
+    if (!res.tested) return "It could not be tested on a phone this time.";
+    const j = res.journeys;
+    if (j && j.not_run && j.ran) return "Tested on a phone; " + j.passed + " of " + j.total + " journeys passed, " + (j.total - j.ran) + " did not run.";
+    if (j && j.not_run) return "Tested on a phone; its journeys did not run this time.";
+    if (j) return "Tested on a phone; " + j.passed + " of " + j.total + " journeys passed.";
+    return "Tested on a phone.";
+  }
+  function builtBubble(res) {
+    const cost = joined([money(res.usd), took(res.secs)]);
+    if (!res.ok) return bubble("built failed", "Couldn't change it: " + (res.reason || "the build did not finish") + ".", ["The app is unchanged."], cost);
+    const line = res.version === 1 ? "Built. This is version 1." : res.version ? "Changed. This is version " + res.version + "." : "Changed.";
+    const n = res.problems === 1 ? "1 thing" : res.problems + " things";
+    return bubble("built", line, [checkWords(res), res.problems ? n + " may not work: " + ((res.issues && res.issues[0]) || "") : ""], cost);
+  }
+  function progressWords() {
+    const p = mine();
+    if (p) return p.words + " " + clock(Date.now() - p.t0);
+    const run = chat && chat.running;
+    if (!run) return "";
+    if (run.secs == null) return "Being changed from the chat with eve…";
+    return (STAGES[run.stage] ? STAGES[run.stage](0) : "Changing it…") + " " + clock(Date.now() - run.t0);
+  }
+  // Redrawn only when what it shows changed (a poll every 4 s while a change runs must not throw away the
+  // owner's place or focus), and scrolled to the newest only when the owner was already there or just sent one.
+  function renderChat(toEnd) {
+    if (!chat) return;
+    const a = chat.app;
+    $("chat-title").textContent = a.title || "This app";
+    iconFor(a, $("chat-icon"));
+    const asked = chat.thread.filter((i) => i.kind === "request").length;
+    const spentOn = chat.thread.reduce((n, i) => n + ((i.result && i.result.usd) || 0), 0);
+    $("chat-sub").textContent = chat.gone ? "Deleted" : joined([asked === 1 ? "1 request" : asked + " requests", money(spentOn) && money(spentOn) + " spent on it"]);
+    $("chat-open").disabled = chat.gone || !a.open;
+    $("chat-open").setAttribute("aria-label", "Open " + (a.title || "this app"));
+    const run = mine() || chat.running;
+    const key = JSON.stringify([chat.slug, chat.thread, chat.gone, chat.fresh, !!a.open, a.versions, run ? run.request || "" : null]);
+    if (key === drawn) { paintComposer(); tickWhile(run); return; }      // (the Open link's token is new each time)
+    drawn = key;
+    const atEnd = toEnd || !thread.childElementCount || thread.scrollHeight - thread.scrollTop - thread.clientHeight < 40;
+    const focused = thread.contains(document.activeElement) ? document.activeElement.dataset.focus : "";
+    thread.textContent = "";
+    if (!chat.thread.length && !run) {
+      thread.appendChild(el("li", "quiet", chat.gone ? "" : "Nothing asked of it yet. Say what should change: bigger buttons, categories, a chart."));
+    }
+    let last = null, lastRes = null, older = false;
+    chat.thread.forEach((i) => {
+      if (i.kind === "undo") { thread.appendChild(bubble("note", "Undone: back to the version before its last change.", [], when(i.at))); last = null; return; }
+      // a change from before results were kept: said once, so its request does not read as never answered
+      if (!i.result && !older) { older = true; thread.appendChild(bubble("note", "Earlier changes show only what was asked: their results were not kept then.", [], "")); }
+      thread.appendChild(bubble("asked", i.text, [], when(i.at)));
+      last = null;
+      if (i.result) { last = builtBubble(i.result); lastRes = i.result; thread.appendChild(last); }
+    });
+    // After a change made here: Open goes straight back into the app, and a change that may have broken
+    // something can be undone on the spot.
+    if (chat.fresh && last && lastRes.ok && a.open && !run) {
+      const open = el("button", "btn", "Open " + a.title); open.type = "button"; open.dataset.focus = "open";
+      open.onclick = () => openApp(a.open);
+      last.appendChild(open);
+      if (lastRes.problems && a.versions > 0) {
+        const undo = el("button", "btn plain", "Undo this change"); undo.type = "button"; undo.dataset.focus = "undo";
+        undo.onclick = async () => {
+          if (!(await ask("Undo this change to " + a.title + "?", "Undo"))) return;
+          undo.disabled = true;
+          try {
+            const res = await post("api/apps/" + encodeURIComponent(a.slug) + "/revert", { versions: a.versions });
+            const j = await reply(res);
+            if (chat) chat.fresh = !res.ok;
+            tell(res.ok ? a.title + " is back to how it was." : (j.error || "Couldn't undo that."));
+          } catch (e) { tell("The connection dropped. Try again."); undo.disabled = false; }
+          loadChat(); loadApps();
+        };
+        last.appendChild(undo);
+      }
+    }
+    if (run) {
+      if (run.request) thread.appendChild(bubble("asked", run.request, [], ""));
+      const b = bubble("built", progressWords(), [], ""); b.id = "chat-progress"; b.setAttribute("aria-busy", "true");
+      thread.appendChild(b);
+    }
+    if (atEnd) thread.scrollTop = thread.scrollHeight;
+    const back = focused && thread.querySelector('[data-focus="' + focused + '"]');
+    if (back) back.focus();
+    paintComposer();
+    tickWhile(run);
+  }
+  function tickWhile(run) {
+    if (run && chatTick) return;
+    clearInterval(chatTick); chatTick = null;
+    if (run) chatTick = setInterval(() => { const p = $("chat-progress"); if (p) p.querySelector(".line").textContent = progressWords(); }, 1000);
+  }
+  function paintComposer() {
+    if (!chat) return;
+    const busyHere = !!(mine() || chat.running);         // a change of another app from here is "another build"
+    const busyElse = !busyHere && (building || running.some((b) => b.secs != null));
+    askSend.disabled = !initData || chat.gone || busyHere || busyElse;
+    askBox.disabled = chat.gone;
+    chatHint.textContent = !initData ? "Open this from eve's pinned message in Telegram."
+      : chat.gone ? (chat.app.title || "This app") + " was deleted. Describe it again on your apps screen to build a new one."
+      : busyElse ? "Another build is running. Change waits for it." : chatHint.dataset.say || "";
+  }
+  function tell(line) { chatHint.dataset.say = line; chatLive.textContent = line; paintComposer(); }
+  async function loadChat(toEnd) {
+    if (!chat || !initData) { paintComposer(); return; }
+    const slug = chat.slug, was = !!chat.running;
+    let r, j;
+    try { r = await post("api/apps/" + encodeURIComponent(slug) + "/history"); j = await reply(r); }
+    catch (e) { tell("The connection dropped. Try again."); return; }
+    if (!chat || chat.slug !== slug) return;
+    if (r.status === 404) { chat.gone = true; chat.running = null; }
+    else if (!r.ok) { tell(j.error || "Couldn't load this app's changes."); return; }
+    else {
+      chat.app = j.app; chat.thread = Array.isArray(j.thread) ? j.thread : []; showSpent(j);
+      chat.running = mine() ? null : (j.building || null);
+      if (chat.running) chat.running.t0 = Date.now() - (chat.running.secs || 0) * 1000;
+    }
+    renderChat(toEnd);
+    // A change this page did not start (from the chat with eve, or before a reload): follow it until it ends.
+    const waiting = !!chat.running;
+    if (waiting && !chatPoll) chatPoll = setInterval(loadChat, 4000);
+    if (!waiting && chatPoll) { clearInterval(chatPoll); chatPoll = null; }
+    if (was && !waiting) { tell("Finished. The newest result is at the bottom."); loadApps(); }
+  }
+  function openChat(slug, typing) {
+    const known = apps.find((x) => x.slug === slug);
+    chat = { slug, app: known ? Object.assign({}, known) : { slug, title: "", icon: "" }, thread: [], running: null, gone: false, fresh: false };
+    drawn = ""; clearInterval(chatTick); chatTick = null;
+    delete chatHint.dataset.say;
+    document.body.classList.add("chatting"); $("chat").hidden = false;
+    try { history.replaceState(null, "", "?chat=" + encodeURIComponent(slug) + location.hash); } catch (e) {}
+    if (can("6.1")) { tg.BackButton.onClick(closeChat); tg.BackButton.show(); }
+    renderChat();
+    (typing ? askBox : $("chat-title")).focus();
+    return loadChat();
+  }
+  function closeChat() {
+    if (!chat) return;
+    const slug = chat.slug;
+    chat = null; clearInterval(chatPoll); chatPoll = null; clearInterval(chatTick); chatTick = null;
+    document.body.classList.remove("chatting"); $("chat").hidden = true;
+    try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) {}
+    if (can("6.1")) { tg.BackButton.offClick(closeChat); tg.BackButton.hide(); }
+    loadApps().then(() => {
+      const back = document.querySelector('.app[data-slug="' + CSS.escape(slug) + '"] .more');
+      (back && !back.disabled ? back : $("apps-heading")).focus();
+    });
+  }
+  $("chat-back").onclick = closeChat;
+  $("chat-open").onclick = () => { if (chat && chat.app.open && !chat.gone) openApp(chat.app.open); };
+  function fitAsk() { askBox.style.height = "auto"; askBox.style.height = Math.min(askBox.scrollHeight + 2, 160) + "px"; }
+  askBox.addEventListener("input", fitAsk);
+  askBox.addEventListener("focus", () => setTimeout(() => { thread.scrollTop = thread.scrollHeight; }, 250));
+  // Enter sends (the keyboard's key says "send"); Shift+Enter is a new line.
+  askBox.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); sendChange(); }
+  });
+  $("composer").addEventListener("submit", (e) => { e.preventDefault(); sendChange(); });
+  async function sendChange() {
+    if (!chat || !initData || chat.gone || askSend.disabled) return;
+    const text = askBox.value.trim(); if (!text) { askBox.focus(); return; }
+    const slug = chat.slug, title = chat.app.title;
+    pending = { slug, request: text, words: "Changing it…", t0: Date.now() };
+    chat.fresh = false; delete chatHint.dataset.say;
+    askBox.value = ""; fitAsk();
+    setBuilding(true); renderChat(true);
+    let spoken = "";
+    const hear = (w) => {
+      if (!pending) return;
+      pending.words = w;
+      if (!mine()) return;                               // another app's chat is open: not its news
+      const p = $("chat-progress"); if (p) p.querySelector(".line").textContent = progressWords();
+      const plain = w.replace(/ \d+k$/, ""); if (plain !== spoken) { spoken = plain; chatLive.textContent = plain; }
+    };
+    hear("Changing it…");
+    const out = await runBuild({ request: text, app: slug }, hear);
+    pending = null; setBuilding(false);
+    const here = !!chat && chat.slug === slug;
+    let line;
+    if (out.got) {
+      line = readyLine(out.got).replace(/^Ready/, "Changed");
+      haptic(out.got.problems ? "warning" : "success");
+      if (here) chat.fresh = true;
+    } else if (out.refused && out.refused.gone) {
+      line = (title || "The app") + " was deleted meanwhile, so nothing was changed.";
+      if (here) chat.gone = true;
+      haptic("error");
+    } else if (out.refused) {
+      line = out.refused.error || "Something went wrong.";
+      if (here && !askBox.value.trim()) { askBox.value = text; fitAsk(); }   // it never started: the words come back
+      haptic("error");
+    } else if (out.failed) {
+      line = out.failed; haptic("error");
+    } else {
+      line = "The connection dropped. The change goes on on the Mac; its result will come to the chat with eve.";
+      haptic("error");
+    }
+    if (here) {
+      chatLive.textContent = line;
+      // why it did not happen stays in sight under the thread (a refused key, a rate limit: the owner knows
+      // whether to wait or to fix something before trying again)
+      if ((out.refused && !out.refused.gone) || out.failed) chatHint.dataset.say = line;
+      await loadChat(true);
+    } else {
+      notice.textContent = line;
+      if (chat) renderChat();                            // another app's chat: its composer is free again
+    }
+    loadApps();
+  }
+  // The phone's keyboard shrinks the visible area; the page follows it so the composer stays above the keys.
+  const vv = window.visualViewport;
+  if (vv) {
+    const fit = () => document.documentElement.style.setProperty("--app-h", Math.round(vv.height * (vv.scale || 1)) + "px");
+    vv.addEventListener("resize", fit); fit();
+  }
+  // Settings in Telegram's "…" menu belongs to an app (it leads to the app's change chat); not here.
+  try { if (can("7.0") && tg.SettingsButton) tg.SettingsButton.hide(); } catch (e) {}
+
+  // ---- the Spending view: every figure comes from /api/spend (aggregates only) and reaches the page as
+  // textContent or as numbers in SVG attributes; nothing from the server is ever parsed as HTML ----
+  const usdText = (v) => typeof v !== "number" || !isFinite(v) ? "–" : "$" + (v >= 0.1 || v === 0 ? v.toFixed(2) : v.toFixed(3));
+  const shortDay = (iso) => { const d = new Date(iso + "T12:00:00"); return isNaN(d) ? iso : d.toLocaleDateString(undefined, { month: "short", day: "numeric" }); };
+  const SVGNS = "http://www.w3.org/2000/svg";
+  function svgEl(tag, attrs) { const e = document.createElementNS(SVGNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; }
+  let spending = false;
+  function card(title) { const c = el("section", "card"); c.appendChild(el("h2", null, title)); return c; }
+  function splitList(obj, total) {
+    const ul = el("ul", "split"), rows = Object.entries(obj || {}).filter((kv) => typeof kv[1] === "number" && kv[1] > 0);
+    if (!rows.length) { const li = el("li"); li.appendChild(el("span", "name", "Nothing yet today.")); ul.appendChild(li); return ul; }
+    const top = Math.max.apply(null, rows.map((kv) => kv[1]));
+    rows.forEach(([name, usd]) => {
+      const li = el("li"); li.appendChild(el("span", "name", name));
+      li.appendChild(el("span", "val", usdText(usd) + (total > 0 ? " · " + Math.round(usd / total * 100) + "%" : "")));
+      const bar = el("span", "bar"), fill = el("span"); fill.style.width = Math.max(2, usd / top * 100) + "%";
+      bar.setAttribute("aria-hidden", "true"); bar.appendChild(fill); li.appendChild(bar); ul.appendChild(li);
+    });
+    return ul;
+  }
+  function dayChart(days) {
+    const wrap = el("div", "chart"), W = 300, H = 140, pad = 16, n = days.length || 1;
+    const top = Math.max(0.01, ...days.map((d) => d.usd || 0)), step = W / n, bw = Math.max(2, step - 2);
+    const total = days.reduce((a, d) => a + (d.usd || 0), 0), peak = days.reduce((a, d) => (d.usd || 0) > (a.usd || 0) ? d : a, days[0] || {});
+    const svg = svgEl("svg", { viewBox: "0 0 " + W + " " + H, role: "img", preserveAspectRatio: "none" });
+    const label = "Last " + n + " days, " + usdText(total) + " in all" + (peak && peak.usd ? "; the most was " + usdText(peak.usd) + " on " + shortDay(peak.date) : "") + ".";
+    svg.setAttribute("aria-label", label);
+    const readout = el("p", "readout"); readout.setAttribute("aria-live", "polite");
+    const show = (d) => { readout.textContent = shortDay(d.date) + ": " + usdText(d.usd); };
+    days.forEach((d, i) => {
+      const h = d.usd > 0 ? Math.max(2, (d.usd / top) * (H - pad - 4)) : 0, x = i * step + 1, y = H - pad - h;
+      if (h > 0) {
+        const r = Math.min(4, bw / 2, h);             // a 4px rounded data end, anchored flat on the baseline
+        svg.appendChild(svgEl("path", { class: "bar-mark" + (i === n - 1 ? " today" : ""),
+          d: "M" + x + "," + (H - pad) + "V" + (y + r) + "Q" + x + "," + y + " " + (x + r) + "," + y + "H" + (x + bw - r)
+            + "Q" + (x + bw) + "," + y + " " + (x + bw) + "," + (y + r) + "V" + (H - pad) + "Z" }));
+      }
+      const hit = svgEl("rect", { class: "hit", x: i * step, y: 0, width: step, height: H - pad, tabindex: "-1" });
+      const t = svgEl("title", {}); t.textContent = shortDay(d.date) + ": " + usdText(d.usd); hit.appendChild(t);
+      hit.addEventListener("pointerenter", () => show(d)); hit.addEventListener("click", () => show(d));
+      svg.appendChild(hit);
+    });
+    svg.appendChild(svgEl("line", { class: "base", x1: 0, x2: W, y1: H - pad + 0.5, y2: H - pad + 0.5 }));
+    if (days.length) {
+      const a = svgEl("text", { class: "axis", x: 0, y: H - 3 }); a.textContent = shortDay(days[0].date);
+      const b = svgEl("text", { class: "axis", x: W, y: H - 3, "text-anchor": "end" }); b.textContent = "today";
+      svg.append(a, b);
+    }
+    wrap.appendChild(svg); wrap.appendChild(readout);
+    // the same numbers as a list, for a screen reader
+    const table = el("ul", "sr"); days.forEach((d) => table.appendChild(el("li", null, shortDay(d.date) + ": " + usdText(d.usd))));
+    wrap.appendChild(table);
+    readout.textContent = "Tap a bar for its day. " + label;
+    return wrap;
+  }
+  function providerRows(p, today) {
+    const box = el("div", "rows"), mine = (today && today.by_provider) || {};
+    const row = (name, lines) => { const r = el("div", "prov"), h = el("div", "head"); h.appendChild(el("span", null, name));
+      r.appendChild(h); lines.forEach((l) => r.appendChild(el("p", null, l))); box.appendChild(r); };
+    const or = (p && p.openrouter) || {};
+    if (or.status === "ok") {
+      const lines = ["Eve's key today (UTC day): " + usdText(or.key_today) + " · eve's meter: " + usdText(mine.openrouter || 0)];
+      if (typeof or.account_today === "number") lines.push("Whole account today, every key: " + usdText(or.account_today) + (or.account_partial ? " (since the first check today)" : ""));
+      if (typeof or.key_month === "number") lines.push("Eve's key this month (UTC): " + usdText(or.key_month));
+      row("OpenRouter", lines);
+    } else if (or.status === "error") row("OpenRouter", ["Its own figure could not be read (" + (or.error || "error") + ")."]);
+    else if (or.status === "pending") row("OpenRouter", ["Checked hourly; the first check has not come back yet."]);
+    [["openai", "OpenAI", "EVE_OPENAI_ADMIN_KEY"], ["anthropic", "Anthropic", "EVE_ANTHROPIC_ADMIN_KEY"]].forEach(([k, name, env]) => {
+      const r = (p && p[k]) || {};
+      if (r.status === "ok") row(name, ["Account today (UTC day): " + usdText(r.today) + " · eve's meter: " + usdText(mine[k] || 0),
+        "This month: " + usdText(r.month)]);
+      else if (r.status === "error") row(name, ["Its own figure could not be read (" + (r.error || "error") + ")."]);
+      else if (r.status === "pending") row(name, ["Checked hourly; the first check has not come back yet."]);
+      else row(name, ["Eve's meter today: " + usdText(mine[k] || 0) + ". Add " + env + " (an admin key) on the Mac to see " + name + "'s own total."]);
+    });
+    return box;
+  }
+  function renderSpending(j) {
+    const body = $("spend-body"); body.textContent = "";
+    const t = j.today || {}, hero = el("div", "hero");
+    hero.appendChild(el("p", "big", usdText(t.usd)));
+    hero.appendChild(el("p", "sub", "today · " + (t.calls || 0) + " metered call" + (t.calls === 1 ? "" : "s")
+      + (t.unpriced ? " · " + t.unpriced + " without a price, not in the total" : "")));
+    hero.appendChild(el("p", "sub", "Yesterday " + usdText((j.yesterday || {}).usd) + " · this month " + usdText((j.month || {}).usd)));
+    body.appendChild(hero);
+    const byP = card("Today by provider"); byP.appendChild(splitList(t.by_provider, t.usd)); body.appendChild(byP);
+    const byF = card("Today by feature"); byF.appendChild(splitList(t.by_feature, t.usd)); body.appendChild(byF);
+    const days = card("Last 30 days"); days.appendChild(dayChart(Array.isArray(j.days) ? j.days : [])); body.appendChild(days);
+    const prov = card("What the providers say"); prov.appendChild(providerRows(j.providers, t));
+    prov.appendChild(el("p", "note", "Providers count in UTC days; eve's meter counts your local day, so the two can differ near midnight."));
+    body.appendChild(prov);
+    const gaps = card("Not tracked");
+    gaps.appendChild(el("p", "note", "Codex runs on your ChatGPT plan: its tasks are counted but have no per-call price. Composio bills on its own account. Other keys show up only in a provider's own figure above."));
+    if (Array.isArray(t.unpriced_models) && t.unpriced_models.length) gaps.appendChild(el("p", "note", "No price today for: " + t.unpriced_models.join(", ") + "."));
+    body.appendChild(gaps);
+  }
+  async function loadSpending() {
+    try {
+      const r = await post("api/spend"), j = await reply(r);
+      if (!r.ok) { $("spend-body").textContent = ""; $("spend-body").appendChild(el("p", "note", j.error || "Couldn't load spending.")); return; }
+      if (spending) renderSpending(j);
+    } catch (e) { $("spend-body").textContent = ""; $("spend-body").appendChild(el("p", "note", "The connection dropped. Try again.")); }
+  }
+  function openSpending() {
+    if (!initData || spending) return;
+    spending = true; document.body.classList.add("spending"); $("spending").hidden = false;
+    $("spend-title").focus();
+    if (can("6.1")) { tg.BackButton.onClick(closeSpending); tg.BackButton.show(); }
+    loadSpending();
+  }
+  function closeSpending() {
+    if (!spending) return;
+    spending = false; document.body.classList.remove("spending"); $("spending").hidden = true;
+    if (can("6.1")) { tg.BackButton.offClick(closeSpending); tg.BackButton.hide(); }
+    spent.focus();
+  }
+  spent.onclick = openSpending;
+  $("spend-back").onclick = closeSpending;
+
+  loadApps().then(() => {
+    if (chatting) { openChat(chatting, false); return; }
+    if (!opening) return;
+    const a = apps.find((x) => x.slug === opening);
+    if (a) openApp(a.open, true);
+    else notice.textContent = "That app is no longer here. It may have been deleted.";
+  });
+  window.addEventListener("pageshow", (e) => { if (e.persisted) { loadApps(); if (chat) loadChat(); } });
+
+})();
+</script>
+<script>
+// Call eve (phone_call.py): push to talk. While the button is held, the microphone goes to eve as 24 kHz
+// 16-bit PCM over a WebSocket; on release eve transcribes it and handles it exactly like a text in the chat,
+// then reads every reply back the same way. A press while eve talks interrupts it.
+(() => {
+  const tg = window.Telegram && window.Telegram.WebApp;
+  const initData = tg ? tg.initData : "";
+  const $ = (id) => document.getElementById(id);
+  const RATE = 24000, BLOCK = 2400;                  // 100 ms blocks, as the desk's ears hand them out
+  const box = $("call"), status = $("call-status"), timer = $("call-time"), talkBtn = $("call-talk");
+  const heard = $("call-heard");
+  const openBtn = $("call-open");
+  const words = { connected: "Connected. Hold the button and talk.", listening: "Hold the button and talk.",
+                  thinking: "Thinking…", speaking: "eve is talking. Hold to interrupt." };
+  let ws = null, ctx = null, stream = null, proc = null, source = null, talking = false, started = 0, tick = null;
+  let playhead = 0, playing = [], wake = null, ending = false, beat = null;
+
+  if (!initData || !navigator.mediaDevices || !window.WebSocket || !(window.AudioContext || window.webkitAudioContext)) {
+    openBtn.disabled = true;
+    openBtn.title = !initData ? "Open this from eve's pinned message in Telegram." : "This browser can't make calls.";
+  }
+
+  function say(text, state) {
+    status.textContent = text;
+    if (state) box.dataset.state = state;
+  }
+
+  function flush() {
+    for (const s of playing) { try { s.stop(); } catch (e) {} }
+    playing = []; playhead = 0;
+  }
+
+  function play(buf) {
+    const pcm = new Int16Array(buf);
+    if (!pcm.length || !ctx) return;
+    const audio = ctx.createBuffer(1, pcm.length, RATE);
+    const ch = audio.getChannelData(0);
+    for (let i = 0; i < pcm.length; i++) ch[i] = pcm[i] / 32768;
+    const src = ctx.createBufferSource();
+    src.buffer = audio; src.connect(ctx.destination);
+    const at = Math.max(ctx.currentTime + 0.06, playhead);
+    src.start(at); playhead = at + audio.duration;
+    playing.push(src);
+    src.onended = () => { playing = playing.filter((s) => s !== src); };
+  }
+
+  // The microphone, resampled from the device's rate to 24 kHz, sent in 100 ms blocks.
+  function capture() {
+    source = ctx.createMediaStreamSource(stream);
+    proc = ctx.createScriptProcessor(4096, 1, 1);
+    const step = ctx.sampleRate / RATE;
+    let pos = 0, out = new Int16Array(BLOCK), n = 0, last = 0;
+    proc.onaudioprocess = (e) => {
+      const input = e.inputBuffer.getChannelData(0);
+      e.outputBuffer.getChannelData(0).fill(0);
+      if (!ws || ws.readyState !== 1 || !talking) { last = input[input.length - 1]; pos = 0; n = 0; return; }
+      while (pos < input.length) {
+        const i = Math.floor(pos), f = pos - i;
+        const a = i === 0 ? last : input[i - 1], b = input[i];
+        const v = Math.max(-1, Math.min(1, a + (b - a) * f));
+        out[n++] = v < 0 ? v * 32768 : v * 32767;
+        if (n === BLOCK) { ws.send(out.buffer.slice(0)); n = 0; }
+        pos += step;
+      }
+      pos -= input.length; last = input[input.length - 1];
+    };
+    source.connect(proc); proc.connect(ctx.destination);
+  }
+
+  async function start() {
+    ending = false;
+    box.hidden = false; say("Calling…", "idle"); timer.textContent = "0:00";
+    talking = false; talkBtn.setAttribute("aria-pressed", "false"); heard.textContent = "";
+    talkBtn.focus();
+    try {
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      await ctx.resume();
+      stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true,
+        autoGainControl: true, channelCount: 1 } });
+    } catch (e) {
+      finish("eve can't hear you: the microphone isn't allowed here. Allow it for Telegram in your phone's settings.");
+      return;
+    }
+    try { wake = navigator.wakeLock && await navigator.wakeLock.request("screen"); } catch (e) { wake = null; }
+    const url = new URL("api/call", location.href);
+    url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+    ws = new WebSocket(url.href);
+    ws.binaryType = "arraybuffer";
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ initData })); capture();
+      // a heartbeat: eve ends a call it has not heard from in 30 s (a page closed without saying goodbye)
+      beat = setInterval(() => { if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: "ping" })); }, 10000);
+    };
+    ws.onmessage = (e) => {
+      if (typeof e.data !== "string") { if (!talking) play(e.data); return; }
+      let m = {}; try { m = JSON.parse(e.data); } catch (err) { return; }
+      if (m.type === "state") {
+        if (m.state === "connected") { started = Date.now(); tick = setInterval(showTime, 1000); }
+        if (!talking) say(m.note || words[m.state] || "", m.state);
+      } else if (m.type === "heard") heard.textContent = "“" + m.text + "”";
+      else if (m.type === "flush") flush();
+      else if (m.type === "ended") finish(m.reason || "Call ended.");
+    };
+    ws.onclose = () => { if (!ending) finish(started ? "Call ended." : "eve couldn't be reached. Is the Mac awake?"); };
+  }
+
+  function showTime() {
+    const s = Math.floor((Date.now() - started) / 1000);
+    timer.textContent = Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+  }
+
+  function finish(reason) {
+    ending = true;
+    if (ws && ws.readyState <= 1) { try { ws.send(JSON.stringify({ type: "end" })); } catch (e) {} ws.close(); }
+    ws = null;
+    if (proc) { proc.disconnect(); proc.onaudioprocess = null; proc = null; }
+    if (source) { source.disconnect(); source = null; }
+    if (stream) { stream.getTracks().forEach((t) => t.stop()); stream = null; }
+    flush();
+    if (ctx) { ctx.close().catch(() => {}); ctx = null; }
+    if (wake) { wake.release().catch(() => {}); wake = null; }
+    clearInterval(tick); tick = null; started = 0;
+    clearInterval(beat); beat = null;
+    say(reason, "idle");
+    setTimeout(() => { if (!ws) { box.hidden = true; openBtn.focus(); } }, 2500);
+  }
+
+  // Hold to talk: pointer or touch, and the space bar for a keyboard. A press interrupts eve.
+  function press() {
+    if (talking || !ws || ws.readyState !== 1) return;
+    talking = true; flush();
+    talkBtn.setAttribute("aria-pressed", "true"); talkBtn.textContent = "Listening…";
+    say("Listening… let go when you're done.", "listening");
+    ws.send(JSON.stringify({ type: "talk" }));
+    if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred("light");
+  }
+  // A soft two-note blip the moment the button is let go: eve has it (the answer takes a few seconds more).
+  function blip() {
+    if (!ctx) return;
+    try {
+      const t = ctx.currentTime, g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.12, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+      g.connect(ctx.destination);
+      [660, 880].forEach((f, i) => {
+        const o = ctx.createOscillator();
+        o.type = "sine"; o.frequency.value = f; o.connect(g);
+        o.start(t + i * 0.09); o.stop(t + 0.1 + i * 0.09);
+      });
+    } catch (e) {}
+  }
+  function release() {
+    if (!talking) return;
+    talking = false;
+    blip();
+    talkBtn.setAttribute("aria-pressed", "false"); talkBtn.textContent = "Hold to talk";
+    if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: "done" }));
+  }
+  talkBtn.addEventListener("pointerdown", (e) => { e.preventDefault(); talkBtn.setPointerCapture(e.pointerId); press(); });
+  talkBtn.addEventListener("pointerup", release);
+  talkBtn.addEventListener("pointercancel", release);
+  talkBtn.addEventListener("contextmenu", (e) => e.preventDefault());
+  talkBtn.addEventListener("keydown", (e) => { if ((e.key === " " || e.key === "Enter") && !e.repeat) { e.preventDefault(); press(); } });
+  talkBtn.addEventListener("keyup", (e) => { if (e.key === " " || e.key === "Enter") release(); });
+  openBtn.onclick = start;
+  $("call-end").onclick = () => finish("Call ended.");
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !box.hidden) finish("Call ended."); });
+  window.addEventListener("pagehide", () => { if (ws) finish("Call ended."); });
+})();
+</script>
+</body>
+</html>

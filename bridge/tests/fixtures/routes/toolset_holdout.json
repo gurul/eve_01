@@ -1,0 +1,938 @@
+{
+  "note": "Holdout set, writer B, written blind to toolset_tuning.json. Labels follow the policy below; follow-ups are labelled by the toolsets the follow-up job itself must call (a file to send that lives in Drive keeps drive). This set decides whether the router ships; do not tune against it.",
+  "policy": "TOOLSETS (multi-label; a message gets EVERY toolset its job needs, possibly none):\n- calendar: the owner's own Google Calendar — events, classes/lectures, meetings, schedule, free time, creating/moving/deleting events, answering invites, \"what's next\", \"my day\".\n- maps: places and getting around — a place's address or Google Maps link, directions, travel time, routes, traffic, places nearby (cafés, restaurants to visit), weather/forecast.\n- gmail: the owner's own email — finding, reading, counting mail; what someone sent; receipts in mail. (Read only.)\n- drive: the owner's Google Drive — finding/reading a doc, sheet, slides, PDF stored there; creating a doc there.\n- github: the owner's GitHub — repos, issues, PRs, commits, branches, CI/build status.\n- doordash: ordering food, groceries or retail delivery/pickup through DoorDash — finding what's open to order, menus, carts, placing/reordering/tracking an order, past orders.\n- share: sending a file from the owner's Mac TO ANOTHER PERSON by iMessage or email (\"send the deck to Ana\"). Sending a file to the owner themself in this chat is NOT share.\n- workspace: the owner's Slack, Notion or Linear (messages, channels, pages, tickets).\nNot a toolset (label none of the above for these): general chat, web facts/news/opening hours of a business from the web, math, coding questions, memory (\"what did I say about…\"), controlling the Mac screen (\"close my tabs\"), lights/TV/music, reminders the assistant keeps itself, sending a file to the owner themself.\nCompound jobs get several labels (\"my next class and a maps link\" -> calendar+maps; \"email Ana the PDF from my drive\" -> drive+share; \"order lunch to my 2pm meeting's room\" -> doordash+calendar).",
+  "cases": [
+    {
+      "id": "h001",
+      "previous": "",
+      "text": "whens my thing w the advisor this week",
+      "toolsets": [
+        "calendar"
+      ]
+    },
+    {
+      "id": "h002",
+      "previous": "",
+      "text": "is tues afternoon open or am i booked solid",
+      "toolsets": [
+        "calendar"
+      ]
+    },
+    {
+      "id": "h003",
+      "previous": "",
+      "text": "push my 1:1 with priya to thursday same time",
+      "toolsets": [
+        "calendar"
+      ]
+    },
+    {
+      "id": "h004",
+      "previous": "",
+      "text": "kill the gym block tmrw morning",
+      "toolsets": [
+        "calendar"
+      ]
+    },
+    {
+      "id": "h005",
+      "previous": "",
+      "text": "say yes to the robotics club invite",
+      "toolsets": [
+        "calendar"
+      ]
+    },
+    {
+      "id": "h006",
+      "previous": "",
+      "text": "map out the rest of my week for me",
+      "toolsets": [
+        "calendar"
+      ]
+    },
+    {
+      "id": "h007",
+      "previous": "",
+      "text": "what do i have after lunch",
+      "toolsets": [
+        "calendar"
+      ]
+    },
+    {
+      "id": "h008",
+      "previous": "",
+      "text": "pencil in stats midterm studying sat 2 to 5",
+      "toolsets": [
+        "calendar"
+      ]
+    },
+    {
+      "id": "h009",
+      "previous": "",
+      "text": "how far is the dentist on 45th from here",
+      "toolsets": [
+        "maps"
+      ]
+    },
+    {
+      "id": "h010",
+      "previous": "",
+      "text": "running late to cse 446 how long if i bike",
+      "toolsets": [
+        "calendar",
+        "maps"
+      ]
+    },
+    {
+      "id": "h011",
+      "previous": "",
+      "text": "is it gonna rain on my walk to campus around 8",
+      "toolsets": [
+        "maps"
+      ]
+    },
+    {
+      "id": "h012",
+      "previous": "",
+      "text": "whats lisbon weather usually like in march",
+      "toolsets": [
+        "maps"
+      ]
+    },
+    {
+      "id": "h013",
+      "previous": "",
+      "text": "any decent ramen near capitol hill",
+      "toolsets": [
+        "maps"
+      ]
+    },
+    {
+      "id": "h014",
+      "previous": "",
+      "text": "traffic on i-5 south rn?",
+      "toolsets": [
+        "maps"
+      ]
+    },
+    {
+      "id": "h015",
+      "previous": "",
+      "text": "drop me a pin for the boathouse at greenlake",
+      "toolsets": [
+        "maps"
+      ]
+    },
+    {
+      "id": "h016",
+      "previous": "",
+      "text": "did the landlord ever write back about the leak",
+      "toolsets": [
+        "gmail"
+      ]
+    },
+    {
+      "id": "h017",
+      "previous": "",
+      "text": "how many unread from prof okafor",
+      "toolsets": [
+        "gmail"
+      ]
+    },
+    {
+      "id": "h018",
+      "previous": "",
+      "text": "find the amtrak receipt from last month",
+      "toolsets": [
+        "gmail"
+      ]
+    },
+    {
+      "id": "h019",
+      "previous": "",
+      "text": "what was in kenji's mail yesterday",
+      "toolsets": [
+        "gmail"
+      ]
+    },
+    {
+      "id": "h020",
+      "previous": "",
+      "text": "anything from the intl student office in my inbox",
+      "toolsets": [
+        "gmail"
+      ]
+    },
+    {
+      "id": "h021",
+      "previous": "",
+      "text": "pull up my thesis outline doc",
+      "toolsets": [
+        "drive"
+      ]
+    },
+    {
+      "id": "h022",
+      "previous": "",
+      "text": "whats left in the hackathon budget sheet",
+      "toolsets": [
+        "drive"
+      ]
+    },
+    {
+      "id": "h023",
+      "previous": "",
+      "text": "start a new google doc called lab 4 writeup",
+      "toolsets": [
+        "drive"
+      ]
+    },
+    {
+      "id": "h024",
+      "previous": "",
+      "text": "find the slides i made for journal club",
+      "toolsets": [
+        "drive"
+      ]
+    },
+    {
+      "id": "h025",
+      "previous": "",
+      "text": "the lease pdf i saved in drive, whats the move out notice period",
+      "toolsets": [
+        "drive"
+      ]
+    },
+    {
+      "id": "h026",
+      "previous": "",
+      "text": "did the build go green",
+      "toolsets": [
+        "github"
+      ]
+    },
+    {
+      "id": "h027",
+      "previous": "",
+      "text": "any prs waiting on my review",
+      "toolsets": [
+        "github"
+      ]
+    },
+    {
+      "id": "h028",
+      "previous": "",
+      "text": "whats the last commit on the scraper repo",
+      "toolsets": [
+        "github"
+      ]
+    },
+    {
+      "id": "h029",
+      "previous": "",
+      "text": "list the bug-labelled issues on eve",
+      "toolsets": [
+        "github"
+      ]
+    },
+    {
+      "id": "h030",
+      "previous": "",
+      "text": "is ci still red on the feature branch",
+      "toolsets": [
+        "github"
+      ]
+    },
+    {
+      "id": "h031",
+      "previous": "",
+      "text": "get me the usual from thai basil",
+      "toolsets": [
+        "doordash"
+      ]
+    },
+    {
+      "id": "h032",
+      "previous": "",
+      "text": "wheres my food at",
+      "toolsets": [
+        "doordash"
+      ]
+    },
+    {
+      "id": "h033",
+      "previous": "",
+      "text": "starving, what can i get delivered rn",
+      "toolsets": [
+        "doordash"
+      ]
+    },
+    {
+      "id": "h034",
+      "previous": "",
+      "text": "redo the poke bowl order from last friday",
+      "toolsets": [
+        "doordash"
+      ]
+    },
+    {
+      "id": "h035",
+      "previous": "",
+      "text": "can i get oat milk and bananas brought over from safeway",
+      "toolsets": [
+        "doordash"
+      ]
+    },
+    {
+      "id": "h036",
+      "previous": "",
+      "text": "throw a garlic naan in the cart too",
+      "toolsets": [
+        "doordash"
+      ]
+    },
+    {
+      "id": "h037",
+      "previous": "",
+      "text": "shoot the resume to my mom",
+      "toolsets": [
+        "share"
+      ]
+    },
+    {
+      "id": "h038",
+      "previous": "",
+      "text": "text dev the screenshot on my desktop",
+      "toolsets": [
+        "share"
+      ]
+    },
+    {
+      "id": "h039",
+      "previous": "",
+      "text": "email the signed add/drop form to the registrar",
+      "toolsets": [
+        "share"
+      ]
+    },
+    {
+      "id": "h040",
+      "previous": "",
+      "text": "send the pitch deck to ana",
+      "toolsets": [
+        "share"
+      ]
+    },
+    {
+      "id": "h041",
+      "previous": "",
+      "text": "imessage maya the trip itinerary pdf from downloads",
+      "toolsets": [
+        "share"
+      ]
+    },
+    {
+      "id": "h042",
+      "previous": "",
+      "text": "anything new in #ml-reading",
+      "toolsets": [
+        "workspace"
+      ]
+    },
+    {
+      "id": "h043",
+      "previous": "",
+      "text": "whats on my plate in linear this cycle",
+      "toolsets": [
+        "workspace"
+      ]
+    },
+    {
+      "id": "h044",
+      "previous": "",
+      "text": "open the notion page for the club budget",
+      "toolsets": [
+        "workspace"
+      ]
+    },
+    {
+      "id": "h045",
+      "previous": "",
+      "text": "did anyone @ me on slack today",
+      "toolsets": [
+        "workspace"
+      ]
+    },
+    {
+      "id": "h046",
+      "previous": "",
+      "text": "move ENG-212 to in progress",
+      "toolsets": [
+        "workspace"
+      ]
+    },
+    {
+      "id": "h047",
+      "previous": "",
+      "text": "add 'thinking fast and slow' to my notion reading list",
+      "toolsets": [
+        "workspace"
+      ]
+    },
+    {
+      "id": "h048",
+      "previous": "",
+      "text": "next lecture + a maps link to the building",
+      "toolsets": [
+        "calendar",
+        "maps"
+      ]
+    },
+    {
+      "id": "h049",
+      "previous": "",
+      "text": "email ana the pdf from my drive",
+      "toolsets": [
+        "drive",
+        "share"
+      ]
+    },
+    {
+      "id": "h050",
+      "previous": "",
+      "text": "get burritos sent to wherever my 12:30 study group is meeting",
+      "toolsets": [
+        "calendar",
+        "doordash"
+      ]
+    },
+    {
+      "id": "h051",
+      "previous": "",
+      "text": "when should i leave for the career fair",
+      "toolsets": [
+        "calendar",
+        "maps"
+      ]
+    },
+    {
+      "id": "h052",
+      "previous": "",
+      "text": "find the flight confirmation in my email and put the flight on my cal",
+      "toolsets": [
+        "gmail",
+        "calendar"
+      ]
+    },
+    {
+      "id": "h053",
+      "previous": "",
+      "text": "grab the q3 report from drive and text it to my manager",
+      "toolsets": [
+        "drive",
+        "share"
+      ]
+    },
+    {
+      "id": "h054",
+      "previous": "",
+      "text": "is there a pr for linear ticket ENG-88 yet",
+      "toolsets": [
+        "github",
+        "workspace"
+      ]
+    },
+    {
+      "id": "h055",
+      "previous": "",
+      "text": "did jordan email the meeting notes? if so block fri am for the followups",
+      "toolsets": [
+        "gmail",
+        "calendar"
+      ]
+    },
+    {
+      "id": "h056",
+      "previous": "",
+      "text": "forecast at the trailhead for saturdays hike thats on my calendar",
+      "toolsets": [
+        "calendar",
+        "maps"
+      ]
+    },
+    {
+      "id": "h057",
+      "previous": "",
+      "text": "post in #eng whether ci passed on main",
+      "toolsets": [
+        "github",
+        "workspace"
+      ]
+    },
+    {
+      "id": "h058",
+      "previous": "",
+      "text": "find the venue from the wedding invite email and get me directions",
+      "toolsets": [
+        "gmail",
+        "maps"
+      ]
+    },
+    {
+      "id": "h059",
+      "previous": "",
+      "text": "send ravi the notion export i saved on my desktop",
+      "toolsets": [
+        "share"
+      ]
+    },
+    {
+      "id": "h060",
+      "previous": "",
+      "text": "block 30 min before my interview and link the prep doc from drive in it",
+      "toolsets": [
+        "calendar",
+        "drive"
+      ]
+    },
+    {
+      "id": "h061",
+      "previous": "",
+      "text": "any coffee spots on the way to my 10am",
+      "toolsets": [
+        "calendar",
+        "maps"
+      ]
+    },
+    {
+      "id": "h062",
+      "previous": "",
+      "text": "did the reviewer comment on my pr, and did they email me about it too",
+      "toolsets": [
+        "github",
+        "gmail"
+      ]
+    },
+    {
+      "id": "h063",
+      "previous": "",
+      "text": "make a doc in drive summarizing todays meetings",
+      "toolsets": [
+        "calendar",
+        "drive"
+      ]
+    },
+    {
+      "id": "h064",
+      "previous": "",
+      "text": "how long a drive to the restaurant for dinner w sam tonight",
+      "toolsets": [
+        "calendar",
+        "maps"
+      ]
+    },
+    {
+      "id": "h065",
+      "previous": "",
+      "text": "is the bug alex filed in linear actually fixed in the repo",
+      "toolsets": [
+        "workspace",
+        "github"
+      ]
+    },
+    {
+      "id": "h066",
+      "previous": "",
+      "text": "pull the syllabus from drive and put every exam date on my calendar",
+      "toolsets": [
+        "drive",
+        "calendar"
+      ]
+    },
+    {
+      "id": "h067",
+      "previous": "",
+      "text": "get pizza delivered to the address in the party invite email",
+      "toolsets": [
+        "gmail",
+        "doordash"
+      ]
+    },
+    {
+      "id": "h068",
+      "previous": "",
+      "text": "slack the team the link to the design spec in my drive",
+      "toolsets": [
+        "drive",
+        "workspace"
+      ]
+    },
+    {
+      "id": "h069",
+      "previous": "",
+      "text": "whats my commute tmrw given when my first meeting is",
+      "toolsets": [
+        "calendar",
+        "maps"
+      ]
+    },
+    {
+      "id": "h070",
+      "previous": "",
+      "text": "send my mom the boarding pass on my desktop and check traffic to sea-tac",
+      "toolsets": [
+        "share",
+        "maps"
+      ]
+    },
+    {
+      "id": "h071",
+      "previous": "",
+      "text": "find the email about the failed deploy and tell me which commit did it",
+      "toolsets": [
+        "gmail",
+        "github"
+      ]
+    },
+    {
+      "id": "h072",
+      "previous": "",
+      "text": "reorder last weeks sushi, will it get here before my 7pm call",
+      "toolsets": [
+        "doordash",
+        "calendar"
+      ]
+    },
+    {
+      "id": "h073",
+      "previous": "",
+      "text": "offsite notion page - whats the address and how long to get there",
+      "toolsets": [
+        "workspace",
+        "maps"
+      ]
+    },
+    {
+      "id": "h074",
+      "previous": "",
+      "text": "decline everything clashing w the hackathon and tell the team on slack im out",
+      "toolsets": [
+        "calendar",
+        "workspace"
+      ]
+    },
+    {
+      "id": "h075",
+      "previous": "",
+      "text": "find the signed nda in drive and email it to the recruiter",
+      "toolsets": [
+        "drive",
+        "share"
+      ]
+    },
+    {
+      "id": "h076",
+      "previous": "",
+      "text": "check my inbox for the airbnb check-in time and add it to my calendar",
+      "toolsets": [
+        "gmail",
+        "calendar"
+      ]
+    },
+    {
+      "id": "h077",
+      "previous": "find my resume in drive",
+      "text": "and send it to ana",
+      "toolsets": [
+        "drive",
+        "share"
+      ]
+    },
+    {
+      "id": "h078",
+      "previous": "whats my last class today",
+      "text": "and directions there from the library",
+      "toolsets": [
+        "calendar",
+        "maps"
+      ]
+    },
+    {
+      "id": "h079",
+      "previous": "what did the ta email about the regrade",
+      "text": "ok remind me friday to follow up",
+      "toolsets": []
+    },
+    {
+      "id": "h080",
+      "previous": "any thai places open near me",
+      "text": "ok order pad see ew from the closest one",
+      "toolsets": [
+        "doordash"
+      ]
+    },
+    {
+      "id": "h081",
+      "previous": "is the build passing on main",
+      "text": "who broke it",
+      "toolsets": [
+        "github"
+      ]
+    },
+    {
+      "id": "h082",
+      "previous": "show me the standup notes doc in drive",
+      "text": "make a new doc with just the action items",
+      "toolsets": [
+        "drive"
+      ]
+    },
+    {
+      "id": "h083",
+      "previous": "when is my flight friday",
+      "text": "how long to the airport at that time",
+      "toolsets": [
+        "calendar",
+        "maps"
+      ]
+    },
+    {
+      "id": "h084",
+      "previous": "send me the pdf",
+      "text": "actually send it to priya instead",
+      "toolsets": [
+        "share"
+      ]
+    },
+    {
+      "id": "h085",
+      "previous": "whats the linear ticket for the login bug",
+      "text": "is there a branch for it on github",
+      "toolsets": [
+        "github"
+      ]
+    },
+    {
+      "id": "h086",
+      "previous": "what time is my dentist thing tmrw",
+      "text": "cool and is it gonna be cold out",
+      "toolsets": [
+        "maps"
+      ]
+    },
+    {
+      "id": "h087",
+      "previous": "set the lights to warm",
+      "text": "and whats on my plate today",
+      "toolsets": [
+        "calendar"
+      ]
+    },
+    {
+      "id": "h088",
+      "previous": "draft a reply to the recruiter i can paste",
+      "text": "make it shorter",
+      "toolsets": []
+    },
+    {
+      "id": "h089",
+      "previous": "how many emails from venmo this week",
+      "text": "and from chase",
+      "toolsets": [
+        "gmail"
+      ]
+    },
+    {
+      "id": "h090",
+      "previous": "whats in my doordash cart",
+      "text": "take out the soda",
+      "toolsets": [
+        "doordash"
+      ]
+    },
+    {
+      "id": "h091",
+      "previous": "",
+      "text": "i finally finished",
+      "toolsets": []
+    },
+    {
+      "id": "h092",
+      "previous": "",
+      "text": "draft a reply i can paste saying i cant make it thursday",
+      "toolsets": []
+    },
+    {
+      "id": "h093",
+      "previous": "",
+      "text": "build me a habit app",
+      "toolsets": []
+    },
+    {
+      "id": "h094",
+      "previous": "",
+      "text": "pull request etiquette for first time contributors?",
+      "toolsets": []
+    },
+    {
+      "id": "h095",
+      "previous": "",
+      "text": "send me the pdf of the lab manual",
+      "toolsets": []
+    },
+    {
+      "id": "h096",
+      "previous": "",
+      "text": "close all my chrome tabs",
+      "toolsets": []
+    },
+    {
+      "id": "h097",
+      "previous": "",
+      "text": "dim the bedroom lights",
+      "toolsets": []
+    },
+    {
+      "id": "h098",
+      "previous": "",
+      "text": "whats 18% tip on 64.50",
+      "toolsets": []
+    },
+    {
+      "id": "h099",
+      "previous": "",
+      "text": "what did i tell you about my sisters birthday",
+      "toolsets": []
+    },
+    {
+      "id": "h100",
+      "previous": "",
+      "text": "remind me at 9 to take my meds",
+      "toolsets": []
+    },
+    {
+      "id": "h101",
+      "previous": "",
+      "text": "explain git rebase vs merge like im 5",
+      "toolsets": []
+    },
+    {
+      "id": "h102",
+      "previous": "",
+      "text": "what time does trader joes close tonight",
+      "toolsets": []
+    },
+    {
+      "id": "h103",
+      "previous": "",
+      "text": "who won the warriors game",
+      "toolsets": []
+    },
+    {
+      "id": "h104",
+      "previous": "",
+      "text": "put on some lofi",
+      "toolsets": []
+    },
+    {
+      "id": "h105",
+      "previous": "",
+      "text": "write a python fn to dedupe a list keeping order",
+      "toolsets": []
+    },
+    {
+      "id": "h106",
+      "previous": "",
+      "text": "turn off the tv",
+      "toolsets": []
+    },
+    {
+      "id": "h107",
+      "previous": "",
+      "text": "my calendar app keeps crashing on ios any fix",
+      "toolsets": []
+    },
+    {
+      "id": "h108",
+      "previous": "",
+      "text": "how do i set up gmail filters",
+      "toolsets": []
+    },
+    {
+      "id": "h109",
+      "previous": "",
+      "text": "whats a good name for a slack bot",
+      "toolsets": []
+    },
+    {
+      "id": "h110",
+      "previous": "",
+      "text": "is that news about doordash dasher pay true",
+      "toolsets": []
+    },
+    {
+      "id": "h111",
+      "previous": "",
+      "text": "translate see you soon to korean",
+      "toolsets": []
+    },
+    {
+      "id": "h112",
+      "previous": "",
+      "text": "tldr of what i just pasted pls",
+      "toolsets": []
+    },
+    {
+      "id": "h113",
+      "previous": "",
+      "text": "whats failing in the actions run for my portfolio site",
+      "toolsets": [
+        "github"
+      ]
+    },
+    {
+      "id": "h114",
+      "previous": "",
+      "text": "im so done with this week lol",
+      "toolsets": []
+    },
+    {
+      "id": "h115",
+      "previous": "",
+      "text": "drop that screenshot here for me",
+      "toolsets": []
+    },
+    {
+      "id": "h116",
+      "previous": "",
+      "text": "whats the capital of mongolia",
+      "toolsets": []
+    },
+    {
+      "id": "h117",
+      "previous": "",
+      "text": "help me map out my argument for the essay",
+      "toolsets": []
+    },
+    {
+      "id": "h118",
+      "previous": "",
+      "text": "how do i fork a repo",
+      "toolsets": []
+    },
+    {
+      "id": "h119",
+      "previous": "",
+      "text": "groceries for the week from whole foods, same as last time",
+      "toolsets": [
+        "doordash"
+      ]
+    },
+    {
+      "id": "h120",
+      "previous": "",
+      "text": "nah no schedule stuff, how was your day",
+      "toolsets": []
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+ "about": "A small dev set for tools/intent_eval.py (2026-10-08): checks the harness end to end on production routing. Written by the builder, so it is not evidence of how the brain does; a blind set is scored separately.",
+ "cases": [
+  {"id": "dev-movie-1", "text": "i want to watch a movie tonight", "primary": "ask", "expect": ["web_search", "tv_control"]},
+  {"id": "dev-table-1", "text": "book us a table for 4 at an italian place friday 7pm", "primary": "restaurant_booking", "expect": []},
+  {"id": "dev-events-1", "text": "any good concerts in seattle this weekend", "primary": "events", "expect": []},
+  {"id": "dev-jobs-1", "text": "what are you working on for me right now", "primary": "jobs_and_reminders", "expect": []},
+  {"id": "dev-neg-1", "text": "don't join the standup call today", "primary": "none", "expect": ["ask"]},
+  {"id": "dev-neg-2", "text": "how does the claude relay thing work?", "primary": "none", "expect": ["ask"]},
+  {"id": "dev-codex-1", "text": "open codex in the eve folder", "primary": "codex", "expect": []},
+  {"id": "dev-spend-1", "text": "what did you spend on models today", "primary": "spend_report", "expect": []},
+  {"id": "dev-stealth-1", "text": "go to sleep for a bit, i'm on a call", "primary": "stealth", "expect": []},
+  {"id": "dev-weather-1", "text": "what's the weather in portland tomorrow", "primary": "maps_directions", "expect": ["web_search"]},
+  {"id": "dev-lights-1", "text": "turn the living room lights blue", "primary": "lights", "expect": []},
+  {"id": "dev-music-1", "text": "put on some lofi", "primary": "music", "expect": []},
+  {"id": "dev-web-1", "text": "who won the mariners game last night", "primary": "web_search", "expect": []},
+  {"id": "dev-none-1", "text": "thanks, that's it", "primary": "none", "expect": []},
+  {"id": "dev-remind-1", "text": "remind me thursday to call the dentist", "primary": "jobs_and_reminders", "expect": []}
+ ]
+}

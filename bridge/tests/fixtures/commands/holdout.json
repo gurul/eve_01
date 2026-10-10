@@ -1,0 +1,297 @@
+[
+ {
+  "command": "git show HEAD --stat",
+  "risky": false,
+  "why": "read"
+ },
+ {
+  "command": "pytest tests/test_x.py::test_y -x",
+  "risky": false,
+  "why": "test"
+ },
+ {
+  "command": "go test ./...",
+  "risky": false,
+  "why": "test"
+ },
+ {
+  "command": "python -c 'import sys; print(sys.version)'",
+  "risky": false,
+  "why": "read"
+ },
+ {
+  "command": "ls -R docs/",
+  "risky": false,
+  "why": "read"
+ },
+ {
+  "command": "head -50 src/main.rs",
+  "risky": false,
+  "why": "read"
+ },
+ {
+  "command": "tail -f logs/app.log",
+  "risky": false,
+  "why": "read"
+ },
+ {
+  "command": "git diff main...HEAD",
+  "risky": false,
+  "why": "read"
+ },
+ {
+  "command": "git blame src/app.py",
+  "risky": false,
+  "why": "read"
+ },
+ {
+  "command": "cargo test",
+  "risky": false,
+  "why": "test"
+ },
+ {
+  "command": "npm run lint -- --fix",
+  "risky": false,
+  "why": "lint fixes project files"
+ },
+ {
+  "command": "black src/",
+  "risky": false,
+  "why": "formats project files"
+ },
+ {
+  "command": "git switch main",
+  "risky": false,
+  "why": "switches branch"
+ },
+ {
+  "command": "git merge --no-ff feature/x",
+  "risky": false,
+  "why": "local merge"
+ },
+ {
+  "command": "git commit --amend --no-edit",
+  "risky": false,
+  "why": "local amend"
+ },
+ {
+  "command": "pip download httpx -d wheels/",
+  "risky": false,
+  "why": "download"
+ },
+ {
+  "command": "curl -sI https://example.com",
+  "risky": false,
+  "why": "GET headers"
+ },
+ {
+  "command": "rm -rf .venv && python3 -m venv .venv",
+  "risky": false,
+  "why": "the project's own venv"
+ },
+ {
+  "command": "rm -f *.pyc",
+  "risky": false,
+  "why": "compiled cache"
+ },
+ {
+  "command": "docker ps -a",
+  "risky": false,
+  "why": "reads"
+ },
+ {
+  "command": "docker logs app --tail 100",
+  "risky": false,
+  "why": "reads"
+ },
+ {
+  "command": "top -l 1 | head",
+  "risky": false,
+  "why": "reads the system"
+ },
+ {
+  "command": "which python3",
+  "risky": false,
+  "why": "read"
+ },
+ {
+  "command": "cat pyproject.toml",
+  "risky": false,
+  "why": "read"
+ },
+ {
+  "command": "cat ~/.config/eve-bridge/matchers.toml",
+  "risky": false,
+  "why": "reads a config without secrets"
+ },
+ {
+  "command": "gh issue list --state open",
+  "risky": false,
+  "why": "read"
+ },
+ {
+  "command": "gh run list --limit 5",
+  "risky": false,
+  "why": "read"
+ },
+ {
+  "command": "mkdir -p tests/fixtures/new && cp tests/a.json tests/fixtures/new/",
+  "risky": false,
+  "why": "copies to a new path"
+ },
+ {
+  "command": "echo hello > /tmp/scratch.txt",
+  "risky": false,
+  "why": "writes a new scratch file"
+ },
+ {
+  "command": "rm -rf /",
+  "risky": true,
+  "why": "destroys everything"
+ },
+ {
+  "command": "git push --force-with-lease origin main",
+  "risky": true,
+  "why": "rewrites shared history"
+ },
+ {
+  "command": "git push",
+  "risky": true,
+  "why": "publishes"
+ },
+ {
+  "command": "git reset --hard origin/main",
+  "risky": true,
+  "why": "discards local work"
+ },
+ {
+  "command": "git stash drop",
+  "risky": true,
+  "why": "discards a stash"
+ },
+ {
+  "command": "sudo chown -R root /usr/local/bin",
+  "risky": true,
+  "why": "system permissions"
+ },
+ {
+  "command": "sudo pip install requests",
+  "risky": true,
+  "why": "system-wide install"
+ },
+ {
+  "command": "launchctl bootout gui/501/com.github.eve-bridge.daemon",
+  "risky": true,
+  "why": "stops a service"
+ },
+ {
+  "command": "gh release create v1.2.0 --generate-notes",
+  "risky": true,
+  "why": "publishes a release"
+ },
+ {
+  "command": "gh pr create --fill",
+  "risky": true,
+  "why": "publishes a PR"
+ },
+ {
+  "command": "cargo publish",
+  "risky": true,
+  "why": "publishes"
+ },
+ {
+  "command": "docker push registry.example.com/app:latest",
+  "risky": true,
+  "why": "publishes an image"
+ },
+ {
+  "command": "curl -X DELETE https://api.example.com/users/42 -H 'Authorization: Bearer abc'",
+  "risky": true,
+  "why": "deletes remotely"
+ },
+ {
+  "command": "cat ~/.netrc",
+  "risky": true,
+  "why": "reads credentials"
+ },
+ {
+  "command": "cat ~/.aws/credentials",
+  "risky": true,
+  "why": "reads credentials"
+ },
+ {
+  "command": "echo $OPENAI_API_KEY",
+  "risky": true,
+  "why": "prints a key"
+ },
+ {
+  "command": "base64 ~/.ssh/id_ed25519",
+  "risky": true,
+  "why": "encodes a private key"
+ },
+ {
+  "command": "mysql -e 'TRUNCATE TABLE orders' shop",
+  "risky": true,
+  "why": "truncates a table"
+ },
+ {
+  "command": "kubectl delete ns staging",
+  "risky": true,
+  "why": "deletes a namespace"
+ },
+ {
+  "command": "diskutil eraseDisk JHFS+ New /dev/disk3",
+  "risky": true,
+  "why": "wipes a disk"
+ },
+ {
+  "command": "find ~/Downloads -mtime +30 -delete",
+  "risky": true,
+  "why": "deletes user files"
+ },
+ {
+  "command": "kill -9 $(pgrep node)",
+  "risky": true,
+  "why": "kills processes"
+ },
+ {
+  "command": "defaults write com.apple.finder AppleShowAllFiles YES",
+  "risky": true,
+  "why": "changes system settings"
+ },
+ {
+  "command": "reboot",
+  "risky": true,
+  "why": "reboots"
+ },
+ {
+  "command": "cp -f build/config.json config.json",
+  "risky": true,
+  "why": "overwrites an existing file"
+ },
+ {
+  "command": "mail -s hi a@b.com < note.txt",
+  "risky": true,
+  "why": "sends mail"
+ },
+ {
+  "command": "npm version patch && git push --tags",
+  "risky": true,
+  "why": "publishes tags"
+ },
+ {
+  "command": "gh secret set TOKEN --body abc",
+  "risky": true,
+  "why": "changes shared secrets"
+ },
+ {
+  "command": "git filter-repo --path secrets.txt --invert-paths",
+  "risky": true,
+  "why": "rewrites history"
+ },
+ {
+  "command": "shred -u notes.txt",
+  "risky": true,
+  "why": "destroys a file"
+ }
+]

@@ -1,0 +1,18 @@
+{"ts": "2026-09-24T07:15:00-07:00", "ch": "voice", "conv": "v-1790259300000-47b2", "who": "owner", "kind": "say", "text": "Skip this song."}
+{"ts": "2026-09-24T07:15:44-07:00", "ch": "voice", "conv": "v-1790259300000-47b2", "who": "eve", "kind": "say", "text": "Skipped."}
+{"ts": "2026-09-24T07:19:01-07:00", "ch": "voice", "conv": "v-1790259300000-47b2", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-24T10:00:00-07:00", "ch": "telegram", "conv": "t-1790269200000-eaa4", "who": "owner", "kind": "say", "text": "Never mind the winter jacket, Mom's sending my old one."}
+{"ts": "2026-09-24T10:01:45-07:00", "ch": "telegram", "conv": "t-1790269200000-eaa4", "who": "eve", "kind": "say", "text": "Okay."}
+{"ts": "2026-09-24T10:05:44-07:00", "ch": "telegram", "conv": "t-1790269200000-eaa4", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-24T12:00:00-07:00", "ch": "telegram", "conv": "t-1790276400000-4a25", "who": "owner", "kind": "say", "text": "I applied for the Ridgeway Labs internship."}
+{"ts": "2026-09-24T12:01:45-07:00", "ch": "telegram", "conv": "t-1790276400000-4a25", "who": "eve", "kind": "say", "text": "Fingers crossed."}
+{"ts": "2026-09-24T12:05:27-07:00", "ch": "telegram", "conv": "t-1790276400000-4a25", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-24T12:45:00-07:00", "ch": "voice", "conv": "v-1790279100000-b17c", "who": "owner", "kind": "say", "text": "How long do I boil an egg for jammy yolks?"}
+{"ts": "2026-09-24T12:45:47-07:00", "ch": "voice", "conv": "v-1790279100000-b17c", "who": "eve", "kind": "say", "text": "About six and a half minutes, then an ice bath."}
+{"ts": "2026-09-24T12:49:27-07:00", "ch": "voice", "conv": "v-1790279100000-b17c", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-24T17:30:00-07:00", "ch": "voice", "conv": "v-1790296200000-bf6c", "who": "owner", "kind": "say", "text": "Went to Haddad's office hours, he walked me through root locus."}
+{"ts": "2026-09-24T17:31:30-07:00", "ch": "voice", "conv": "v-1790296200000-bf6c", "who": "eve", "kind": "say", "text": "Helpful."}
+{"ts": "2026-09-24T17:34:12-07:00", "ch": "voice", "conv": "v-1790296200000-bf6c", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-24T22:00:00-07:00", "ch": "voice", "conv": "v-1790312400000-0f96", "who": "owner", "kind": "say", "text": "Got elected treasurer at The Foundry tonight!"}
+{"ts": "2026-09-24T22:00:45-07:00", "ch": "voice", "conv": "v-1790312400000-0f96", "who": "eve", "kind": "say", "text": "Congrats!"}
+{"ts": "2026-09-24T22:04:31-07:00", "ch": "voice", "conv": "v-1790312400000-0f96", "who": "system", "kind": "close", "text": ""}

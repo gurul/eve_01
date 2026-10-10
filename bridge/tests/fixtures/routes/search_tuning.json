@@ -1,0 +1,475 @@
+{
+ "note": "Search-routing TUNING set, authored 2026-09-29 by the search router's writer; it fits search_router's cut-offs and is not evidence. search_holdout.json, written blind by another agent, decides (tools/route_eval.py --search).",
+ "reader_note": "Labelling policy. Each request is labelled with the cheapest provider that still answers it well. tinyfish: the whole answer sits on one or two ordinary public pages (one fact, hours, a definition, a price a page shows, what one named page or doc says, a simple comparison from a few spec pages), and a page up to an hour old is fresh enough. perplexity: anything that needs many sources weighed together (reviews, 'best', pros and cons), news or events of today or this week, anything changing by the minute (a live score, a coin price), several searches one after another, or a vague request; and every doubt, because it is the safe default. firecrawl: live structured data a data service holds and is asked with fields: fares or hotel prices for a route or place AND dates, or a lookup in an official register or records database. A flight fact with no dates (a flight's length) is a page read; a fare with no route and dates (an average fare) is perplexity. 'surface' says whether the text is a query the brain wrote (brain) or the owner's task for the web reader (reader); 'tricky' marks the borderline cases.",
+ "cases": [
+  {
+   "goal": "opening hours of the Exploratorium on Sunday",
+   "provider": "tinyfish",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "what is the boiling point of water at 2000 meters altitude",
+   "provider": "tinyfish",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "define the word petrichor",
+   "provider": "tinyfish",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "phone number for the Seattle Public Library central branch",
+   "provider": "tinyfish",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "what does the Python documentation say about frozen dataclasses",
+   "provider": "tinyfish",
+   "tricky": false,
+   "surface": "reader",
+   "source": "authored"
+  },
+  {
+   "goal": "price of the Raspberry Pi 5 8GB on the official Raspberry Pi site",
+   "provider": "tinyfish",
+   "tricky": false,
+   "surface": "reader",
+   "source": "authored"
+  },
+  {
+   "goal": "how tall is the Space Needle",
+   "provider": "tinyfish",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "what is IKEA's return policy for opened mattresses",
+   "provider": "tinyfish",
+   "tricky": false,
+   "surface": "reader",
+   "source": "authored"
+  },
+  {
+   "goal": "latest stable version of Node.js listed on nodejs.org",
+   "provider": "tinyfish",
+   "tricky": false,
+   "surface": "reader",
+   "source": "authored"
+  },
+  {
+   "goal": "compare the battery capacity of the iPhone 17 and the Pixel 10 from their spec pages",
+   "provider": "tinyfish",
+   "tricky": true,
+   "surface": "reader",
+   "source": "authored"
+  },
+  {
+   "goal": "what time does the Trader Joe's on Market Street in San Francisco close",
+   "provider": "tinyfish",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "summarize the README of the requests library on GitHub",
+   "provider": "tinyfish",
+   "tricky": false,
+   "surface": "reader",
+   "source": "authored"
+  },
+  {
+   "goal": "address of the Louvre museum",
+   "provider": "tinyfish",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "who wrote the novel Middlemarch",
+   "provider": "tinyfish",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "how many fluid ounces are in a cup",
+   "provider": "tinyfish",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "what does HTTP status code 418 mean",
+   "provider": "tinyfish",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "per-seat monthly price of Linear's Business plan on its pricing page",
+   "provider": "tinyfish",
+   "tricky": false,
+   "surface": "reader",
+   "source": "authored"
+  },
+  {
+   "goal": "capital of Mongolia and its population",
+   "provider": "tinyfish",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "what the Rust book says about lifetime elision rules",
+   "provider": "tinyfish",
+   "tricky": false,
+   "surface": "reader",
+   "source": "authored"
+  },
+  {
+   "goal": "GitHub REST API rate limit for authenticated requests",
+   "provider": "tinyfish",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "what year did the Golden Gate Bridge open",
+   "provider": "tinyfish",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "melting point of gallium",
+   "provider": "tinyfish",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "Costco Executive membership annual fee",
+   "provider": "tinyfish",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "what does the FastAPI docs page say about background tasks",
+   "provider": "tinyfish",
+   "tricky": false,
+   "surface": "reader",
+   "source": "authored"
+  },
+  {
+   "goal": "weather forecast for Denver this Saturday",
+   "provider": "tinyfish",
+   "tricky": true,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "how long is the flight from San Francisco to New York",
+   "provider": "tinyfish",
+   "tricky": true,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "is the Golden Gate Park Conservatory of Flowers open on Mondays",
+   "provider": "tinyfish",
+   "tricky": true,
+   "surface": "reader",
+   "source": "authored"
+  },
+  {
+   "goal": "what happened in the news today",
+   "provider": "perplexity",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "best noise cancelling headphones of 2026 according to reviews",
+   "provider": "perplexity",
+   "tricky": false,
+   "surface": "reader",
+   "source": "authored"
+  },
+  {
+   "goal": "who won last night's Warriors game and how did Curry play",
+   "provider": "perplexity",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "what are people saying about the new MacBook Pro keyboard",
+   "provider": "perplexity",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "research the pros and cons of heat pumps versus gas furnaces in a cold climate",
+   "provider": "perplexity",
+   "tricky": false,
+   "surface": "reader",
+   "source": "authored"
+  },
+  {
+   "goal": "latest updates on the Starship launch",
+   "provider": "perplexity",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "why is the stock market down today",
+   "provider": "perplexity",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "summarize the current state of the housing market in Austin",
+   "provider": "perplexity",
+   "tricky": false,
+   "surface": "reader",
+   "source": "authored"
+  },
+  {
+   "goal": "recommend a good beginner road bike under 1000 dollars",
+   "provider": "perplexity",
+   "tricky": false,
+   "surface": "reader",
+   "source": "authored"
+  },
+  {
+   "goal": "what is the scientific consensus on intermittent fasting for longevity",
+   "provider": "perplexity",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "which electric car has the best real-world range across several reviews",
+   "provider": "perplexity",
+   "tricky": false,
+   "surface": "reader",
+   "source": "authored"
+  },
+  {
+   "goal": "what did the Federal Reserve decide at its meeting this week",
+   "provider": "perplexity",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "tell me about quantum computing",
+   "provider": "perplexity",
+   "tricky": true,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "compare the top five project management tools for a small team",
+   "provider": "perplexity",
+   "tricky": false,
+   "surface": "reader",
+   "source": "authored"
+  },
+  {
+   "goal": "best things to do in Lisbon over three days",
+   "provider": "perplexity",
+   "tricky": false,
+   "surface": "reader",
+   "source": "authored"
+  },
+  {
+   "goal": "is now a good time to buy a TV",
+   "provider": "perplexity",
+   "tricky": true,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "who founded the company that makes the Framework laptop and what did they do before",
+   "provider": "perplexity",
+   "tricky": true,
+   "surface": "reader",
+   "source": "authored"
+  },
+  {
+   "goal": "what's going on with the election results in Germany",
+   "provider": "perplexity",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "AI model releases this week",
+   "provider": "perplexity",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "what caused the major cloud outage yesterday",
+   "provider": "perplexity",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "history of the Silk Road",
+   "provider": "perplexity",
+   "tricky": true,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "what is the author of Project Hail Mary working on next",
+   "provider": "perplexity",
+   "tricky": true,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "is the new Zelda game worth buying",
+   "provider": "perplexity",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "things to know before adopting a cat",
+   "provider": "perplexity",
+   "tricky": false,
+   "surface": "reader",
+   "source": "authored"
+  },
+  {
+   "goal": "current price of bitcoin",
+   "provider": "perplexity",
+   "tricky": true,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "score of the Seahawks game right now",
+   "provider": "perplexity",
+   "tricky": true,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "which airlines fly nonstop from Seattle to Reykjavik",
+   "provider": "perplexity",
+   "tricky": true,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "average price of a flight to Hawaii",
+   "provider": "perplexity",
+   "tricky": true,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "cheapest flight from SFO to JFK next Friday",
+   "provider": "firecrawl",
+   "tricky": false,
+   "surface": "reader",
+   "source": "authored"
+  },
+  {
+   "goal": "flights from Seattle to Tokyo on October 12 returning October 20, cheapest fare",
+   "provider": "firecrawl",
+   "tricky": false,
+   "surface": "reader",
+   "source": "authored"
+  },
+  {
+   "goal": "compare fares from Boston to London in the first week of November",
+   "provider": "firecrawl",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "cheapest nonstop from LAX to Honolulu on December 3",
+   "provider": "firecrawl",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "look up the company registration for Acme Robotics Ltd in the UK Companies House register",
+   "provider": "firecrawl",
+   "tricky": false,
+   "surface": "reader",
+   "source": "authored"
+  },
+  {
+   "goal": "check the state contractor license record for a company called Blue Oak Builders in California",
+   "provider": "firecrawl",
+   "tricky": false,
+   "surface": "reader",
+   "source": "authored"
+  },
+  {
+   "goal": "hotel prices in Chicago for the weekend of October 17",
+   "provider": "firecrawl",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "cheapest one-way fare from Denver to Austin tomorrow",
+   "provider": "firecrawl",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "official property tax record for 100 Main Street, Springfield",
+   "provider": "firecrawl",
+   "tricky": true,
+   "surface": "reader",
+   "source": "authored"
+  },
+  {
+   "goal": "search federal court records for a case called Doe v. Example Corp",
+   "provider": "firecrawl",
+   "tricky": true,
+   "surface": "reader",
+   "source": "authored"
+  },
+  {
+   "goal": "Skyscanner prices for Paris to Rome in mid November",
+   "provider": "firecrawl",
+   "tricky": false,
+   "surface": "brain",
+   "source": "authored"
+  },
+  {
+   "goal": "latest 10-Q filing for Tesla in the SEC EDGAR database",
+   "provider": "firecrawl",
+   "tricky": true,
+   "surface": "reader",
+   "source": "authored"
+  }
+ ]
+}

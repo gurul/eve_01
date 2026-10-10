@@ -1,0 +1,545 @@
+{
+ "note": "Written blind on 2026-09-29 by a Claude subagent for a second scoring of search routing after a wording change: no router code, tools, prompts or earlier search_*.json sets were read while writing it; browser_holdout2.json was opened only to copy its JSON shape. Labels are the provider judged to give the best answer; when torn between tinyfish and perplexity the label is perplexity.",
+ "cases": [
+  {
+   "goal": "what time does the Trader Joe's on Masonic open tomorrow",
+   "provider": "tinyfish",
+   "why": "opening hours on one public store page",
+   "tricky": false
+  },
+  {
+   "goal": "whats the boiling point of water at sea level in fahrenheit",
+   "provider": "tinyfish",
+   "why": "one stable fact any page states",
+   "tricky": false
+  },
+  {
+   "goal": "how tall is the eiffel tower",
+   "provider": "tinyfish",
+   "why": "stable single fact",
+   "tricky": false
+  },
+  {
+   "goal": "define 'sonder' for me",
+   "provider": "tinyfish",
+   "why": "a definition from a dictionary page",
+   "tricky": false
+  },
+  {
+   "goal": "what year did the berlin wall come down",
+   "provider": "tinyfish",
+   "why": "stable historical fact",
+   "tricky": false
+  },
+  {
+   "goal": "how much is the Anker 737 power bank on anker.com rn",
+   "provider": "tinyfish",
+   "why": "price shown on one named store page, not a fare service",
+   "tricky": true
+  },
+  {
+   "goal": "check the ikea site, how much is the kallax 4x4 shelf",
+   "provider": "tinyfish",
+   "why": "price on a specific named store page",
+   "tricky": true
+  },
+  {
+   "goal": "what does the python docs say str.removeprefix does",
+   "provider": "tinyfish",
+   "why": "what one specific doc says",
+   "tricky": false
+  },
+  {
+   "goal": "hey what are the hours for the SF MOMA on thursdays",
+   "provider": "tinyfish",
+   "why": "museum hours on its own page",
+   "tricky": false
+  },
+  {
+   "goal": "whats the capital of australia again",
+   "provider": "tinyfish",
+   "why": "stable single fact; sounds like it could be a trick but it never changes",
+   "tricky": true
+  },
+  {
+   "goal": "how many ounces in a cup",
+   "provider": "tinyfish",
+   "why": "stable conversion",
+   "tricky": false
+  },
+  {
+   "goal": "what does the MDN page say about css :has() selector",
+   "provider": "tinyfish",
+   "why": "what one doc page says",
+   "tricky": false
+  },
+  {
+   "goal": "who wrote pride and prejudice",
+   "provider": "tinyfish",
+   "why": "stable fact",
+   "tricky": false
+  },
+  {
+   "goal": "does the Blue Bottle on Mint Plaza have wifi, check their page",
+   "provider": "tinyfish",
+   "why": "one venue's own page",
+   "tricky": false
+  },
+  {
+   "goal": "what's the return window on REI's website",
+   "provider": "tinyfish",
+   "why": "policy stated on one public page",
+   "tricky": false
+  },
+  {
+   "goal": "how long do u boil a soft boiled egg",
+   "provider": "tinyfish",
+   "why": "simple how-to answered by a few pages",
+   "tricky": false
+  },
+  {
+   "goal": "whats the melting point of gallium",
+   "provider": "tinyfish",
+   "why": "stable single fact",
+   "tricky": false
+  },
+  {
+   "goal": "who was the first person to walk on the moon",
+   "provider": "tinyfish",
+   "why": "stable historical fact about a role holder; 'first' never changes, unlike 'current'",
+   "tricky": true
+  },
+  {
+   "goal": "what's the difference between baking soda and baking powder",
+   "provider": "tinyfish",
+   "why": "simple comparison a few pages settle",
+   "tricky": false
+  },
+  {
+   "goal": "what does the Home Depot page say the price of a Ryobi 18v drill kit is",
+   "provider": "tinyfish",
+   "why": "price on a specific named store page; answer is that page, not a market survey",
+   "tricky": true
+  },
+  {
+   "goal": "when was the golden gate bridge built",
+   "provider": "tinyfish",
+   "why": "stable fact",
+   "tricky": false
+  },
+  {
+   "goal": "what's the population of iceland roughly",
+   "provider": "tinyfish",
+   "why": "slow-moving figure; a rough number from a few pages is fine",
+   "tricky": true
+  },
+  {
+   "goal": "what are the ingredients in a classic negroni",
+   "provider": "tinyfish",
+   "why": "stable recipe fact",
+   "tricky": false
+  },
+  {
+   "goal": "look up what the stripe docs say about idempotency keys",
+   "provider": "tinyfish",
+   "why": "what one specific doc says",
+   "tricky": false
+  },
+  {
+   "goal": "hows a 401k different from a roth ira",
+   "provider": "tinyfish",
+   "why": "simple comparison from a few explainer pages",
+   "tricky": false
+  },
+  {
+   "goal": "whats the speed of light in km per second",
+   "provider": "tinyfish",
+   "why": "physical constant",
+   "tricky": false
+  },
+  {
+   "goal": "how much does the uniqlo airism tee cost on their site",
+   "provider": "tinyfish",
+   "why": "price on one named store page",
+   "tricky": true
+  },
+  {
+   "goal": "when does the Ferry Building farmers market run on saturdays",
+   "provider": "tinyfish",
+   "why": "hours on one public page",
+   "tricky": false
+  },
+  {
+   "goal": "what's the atomic number of tungsten",
+   "provider": "tinyfish",
+   "why": "stable fact",
+   "tricky": false
+  },
+  {
+   "goal": "how many players on a rugby union team",
+   "provider": "tinyfish",
+   "why": "stable rule",
+   "tricky": false
+  },
+  {
+   "goal": "whats the Apple page say the iPhone 17 Pro battery life is",
+   "provider": "tinyfish",
+   "why": "spec on one named product page; asks what the page says, not which is latest",
+   "tricky": true
+  },
+  {
+   "goal": "what is the official height of mount everest",
+   "provider": "tinyfish",
+   "why": "stable fact, one figure from reference pages",
+   "tricky": false
+  },
+  {
+   "goal": "who's the current prime minister of the UK",
+   "provider": "perplexity",
+   "why": "office holder changes over time",
+   "tricky": true
+  },
+  {
+   "goal": "whats the latest version of node",
+   "provider": "perplexity",
+   "why": "latest release changes",
+   "tricky": true
+  },
+  {
+   "goal": "who's leading the premier league right now",
+   "provider": "perplexity",
+   "why": "current standings",
+   "tricky": true
+  },
+  {
+   "goal": "what's bitcoin at rn",
+   "provider": "perplexity",
+   "why": "price that moves constantly; needs fresh multi-source",
+   "tricky": true
+  },
+  {
+   "goal": "who is the ceo of openai these days",
+   "provider": "perplexity",
+   "why": "current role holder, sounds like one fact",
+   "tricky": true
+  },
+  {
+   "goal": "what's the newest iphone",
+   "provider": "perplexity",
+   "why": "latest release changes yearly",
+   "tricky": true
+  },
+  {
+   "goal": "whats the current fed interest rate",
+   "provider": "perplexity",
+   "why": "changes with each meeting",
+   "tricky": true
+  },
+  {
+   "goal": "who is the mayor of new york city",
+   "provider": "perplexity",
+   "why": "sounds simple and stable but office changes",
+   "tricky": true
+  },
+  {
+   "goal": "latest macOS version number?",
+   "provider": "perplexity",
+   "why": "latest release changes",
+   "tricky": true
+  },
+  {
+   "goal": "how much is a gallon of gas in california right now on average",
+   "provider": "perplexity",
+   "why": "moving price, many sources",
+   "tricky": true
+  },
+  {
+   "goal": "who holds the men's 100m world record",
+   "provider": "perplexity",
+   "why": "records can be broken; torn -> perplexity",
+   "tricky": true
+  },
+  {
+   "goal": "whats the current USD to INR exchange rate",
+   "provider": "perplexity",
+   "why": "moving rate",
+   "tricky": true
+  },
+  {
+   "goal": "what's the most recent SpaceX starship test and how'd it go",
+   "provider": "perplexity",
+   "why": "recent event",
+   "tricky": false
+  },
+  {
+   "goal": "any news on the apple event this month",
+   "provider": "perplexity",
+   "why": "news",
+   "tricky": false
+  },
+  {
+   "goal": "whats going on with the writers strike or whatever",
+   "provider": "perplexity",
+   "why": "news, vague, open-ended",
+   "tricky": false
+  },
+  {
+   "goal": "who won the last world series",
+   "provider": "perplexity",
+   "why": "sounds like a stable fact but 'last' moves each year",
+   "tricky": true
+  },
+  {
+   "goal": "what's the latest claude model",
+   "provider": "perplexity",
+   "why": "latest release changes often",
+   "tricky": true
+  },
+  {
+   "goal": "compare the best noise cancelling headphones under 300 right now",
+   "provider": "perplexity",
+   "why": "comparison across many reviews, current market",
+   "tricky": true
+  },
+  {
+   "goal": "is it worth getting a heat pump in the bay area, pros cons costs",
+   "provider": "perplexity",
+   "why": "open-ended multi-source research",
+   "tricky": false
+  },
+  {
+   "goal": "why did the stock market drop today",
+   "provider": "perplexity",
+   "why": "news synthesis",
+   "tricky": false
+  },
+  {
+   "goal": "which EVs have the longest range this year",
+   "provider": "perplexity",
+   "why": "comparison needing many sources, changes yearly",
+   "tricky": true
+  },
+  {
+   "goal": "explain how the new EU AI act affects small startups",
+   "provider": "perplexity",
+   "why": "multi-hop, policy synthesis",
+   "tricky": false
+  },
+  {
+   "goal": "whats the best way to learn rust in 2026",
+   "provider": "perplexity",
+   "why": "open-ended, many sources",
+   "tricky": false
+  },
+  {
+   "goal": "what did the supreme court decide this week",
+   "provider": "perplexity",
+   "why": "news",
+   "tricky": false
+  },
+  {
+   "goal": "who is the richest person in the world rn",
+   "provider": "perplexity",
+   "why": "changes over time",
+   "tricky": true
+  },
+  {
+   "goal": "what's the tallest building in the world",
+   "provider": "perplexity",
+   "why": "sounds stable but a new one can top it; torn -> perplexity",
+   "tricky": true
+  },
+  {
+   "goal": "summarise the reviews for the new pixel phone across sites",
+   "provider": "perplexity",
+   "why": "many sources synthesised",
+   "tricky": false
+  },
+  {
+   "goal": "who directed the movie that won best picture this year",
+   "provider": "perplexity",
+   "why": "multi-hop plus recent",
+   "tricky": false
+  },
+  {
+   "goal": "whats nvidia stock doing today",
+   "provider": "perplexity",
+   "why": "moving price plus news",
+   "tricky": true
+  },
+  {
+   "goal": "what are the latest covid vaccine recommendations",
+   "provider": "perplexity",
+   "why": "guidance changes over time",
+   "tricky": true
+  },
+  {
+   "goal": "hey whats the current world chess champion",
+   "provider": "perplexity",
+   "why": "title holder changes",
+   "tricky": true
+  },
+  {
+   "goal": "compare costco vs sams club membership, which is better for a family of 4",
+   "provider": "perplexity",
+   "why": "comparison needing many sources and judgement",
+   "tricky": true
+  },
+  {
+   "goal": "whats happening with the israel gaza ceasefire talks",
+   "provider": "perplexity",
+   "why": "ongoing news",
+   "tricky": false
+  },
+  {
+   "goal": "what's the most popular programming language now",
+   "provider": "perplexity",
+   "why": "rankings change; many sources",
+   "tricky": true
+  },
+  {
+   "goal": "research the history of the dvorak keyboard and whether it's actually faster",
+   "provider": "perplexity",
+   "why": "open-ended, contested, many sources",
+   "tricky": false
+  },
+  {
+   "goal": "which airlines have the best on time performance this year",
+   "provider": "perplexity",
+   "why": "current stats synthesised from reports, not a fare lookup",
+   "tricky": true
+  },
+  {
+   "goal": "what's the latest on the housing market in austin",
+   "provider": "perplexity",
+   "why": "recent trends, many sources",
+   "tricky": false
+  },
+  {
+   "goal": "who's the current NBA MVP",
+   "provider": "perplexity",
+   "why": "award holder changes yearly",
+   "tricky": true
+  },
+  {
+   "goal": "what's the price of an ounce of gold today",
+   "provider": "perplexity",
+   "why": "moving price",
+   "tricky": true
+  },
+  {
+   "goal": "how do the new tariffs affect electronics prices",
+   "provider": "perplexity",
+   "why": "multi-hop, recent policy",
+   "tricky": false
+  },
+  {
+   "goal": "find me the cheapest flight sfo to tokyo in november",
+   "provider": "firecrawl",
+   "why": "fare service lookup",
+   "tricky": false
+  },
+  {
+   "goal": "how much r flights from oakland to vegas next friday",
+   "provider": "firecrawl",
+   "why": "fares from a fare service",
+   "tricky": false
+  },
+  {
+   "goal": "check skyscanner for round trip jfk to lisbon dec 12 to 20",
+   "provider": "firecrawl",
+   "why": "named fare service",
+   "tricky": false
+  },
+  {
+   "goal": "whats the price of a flight to denver this weekend",
+   "provider": "firecrawl",
+   "why": "sounds like a store price but it's a fare, needs a fare service",
+   "tricky": true
+  },
+  {
+   "goal": "is united cheaper than delta for sfo to chicago on the 15th",
+   "provider": "firecrawl",
+   "why": "fare comparison from Google Flights data, not many-source research",
+   "tricky": true
+  },
+  {
+   "goal": "look up the business registration for Acme Widgets LLC in delaware",
+   "provider": "firecrawl",
+   "why": "official government record",
+   "tricky": false
+  },
+  {
+   "goal": "pull the SEC filings for Rivian from last quarter",
+   "provider": "firecrawl",
+   "why": "official records service",
+   "tricky": false
+  },
+  {
+   "goal": "find the patent records for the dyson airwrap",
+   "provider": "firecrawl",
+   "why": "official record lookup",
+   "tricky": true
+  },
+  {
+   "goal": "check google flights for the cheapest day to fly to NYC in october",
+   "provider": "firecrawl",
+   "why": "fare calendar from Google Flights",
+   "tricky": false
+  },
+  {
+   "goal": "any nonstop flights LAX to honolulu under 300 bucks next month",
+   "provider": "firecrawl",
+   "why": "structured fare search",
+   "tricky": false
+  },
+  {
+   "goal": "look up the property tax records for 123 main st in san mateo county",
+   "provider": "firecrawl",
+   "why": "official county record",
+   "tricky": true
+  },
+  {
+   "goal": "what's the FAA registration on tail number N12345",
+   "provider": "firecrawl",
+   "why": "official registry lookup",
+   "tricky": true
+  },
+  {
+   "goal": "find the court docket for the case smith v jones in northern district of california",
+   "provider": "firecrawl",
+   "why": "official court records",
+   "tricky": true
+  },
+  {
+   "goal": "how much is a one way to london from boston in march",
+   "provider": "firecrawl",
+   "why": "fare service, sounds like a price question",
+   "tricky": true
+  },
+  {
+   "goal": "check if the trademark 'evebot' is taken",
+   "provider": "firecrawl",
+   "why": "USPTO trademark record",
+   "tricky": true
+  },
+  {
+   "goal": "look up the FDA recall list for peanut butter this year",
+   "provider": "firecrawl",
+   "why": "official government records",
+   "tricky": true
+  },
+  {
+   "goal": "compare fares for seattle to anchorage over thanksgiving week",
+   "provider": "firecrawl",
+   "why": "fare comparison across dates from a fare tool, not multi-source research",
+   "tricky": true
+  },
+  {
+   "goal": "find the census data for median income in alameda county",
+   "provider": "firecrawl",
+   "why": "official statistics dataset",
+   "tricky": true
+  }
+ ]
+}

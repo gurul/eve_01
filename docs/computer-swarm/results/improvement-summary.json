@@ -1,0 +1,92 @@
+{
+  "browser_before": {
+    "gpt-6-astra": {
+      "n": 18,
+      "goals": 18,
+      "autonomous": 14,
+      "p50_secs": 9.055,
+      "errors": 0
+    },
+    "gpt-6-luna": {
+      "n": 18,
+      "goals": 18,
+      "autonomous": 14,
+      "p50_secs": 5.640000000000001,
+      "errors": 0
+    },
+    "gpt-6-sol": {
+      "n": 18,
+      "goals": 18,
+      "autonomous": 14,
+      "p50_secs": 6.52,
+      "errors": 0
+    }
+  },
+  "browser_after": {
+    "gpt-6-astra": {
+      "n": 18,
+      "goals": 18,
+      "autonomous": 18,
+      "p50_secs": 6.33,
+      "errors": 0
+    },
+    "gpt-6-luna": {
+      "n": 18,
+      "goals": 18,
+      "autonomous": 18,
+      "p50_secs": 6.29,
+      "errors": 0
+    },
+    "gpt-6-sol": {
+      "n": 18,
+      "goals": 18,
+      "autonomous": 17,
+      "p50_secs": 6.4,
+      "errors": 0
+    }
+  },
+  "admission": {
+    "Guarded keyword": {
+      "n": 310,
+      "click_cases": 282,
+      "pressed": 98,
+      "correct_clicks": 98,
+      "wrong_clicks": 0,
+      "coverage": 0.3475177304964539,
+      "precision": 1.0,
+      "accuracy": 0.4064516129032258,
+      "abstentions": 212,
+      "errors": 0,
+      "p50_ms": 0.3268750151619315,
+      "p90_ms": 0.972625013673678,
+      "p50_model_ms": 0.0,
+      "p50_local_ms": 0.3268750151619315
+    },
+    "Guarded keyword \u2192 Decisions (AX only)": {
+      "n": 310,
+      "click_cases": 282,
+      "pressed": 128,
+      "correct_clicks": 128,
+      "wrong_clicks": 0,
+      "coverage": 0.45390070921985815,
+      "precision": 1.0,
+      "accuracy": 0.5032258064516129,
+      "abstentions": 182,
+      "errors": 0,
+      "p50_ms": 0.7892499852459878,
+      "p90_ms": 194.66516599641182,
+      "p50_model_ms": 0.0,
+      "p50_local_ms": 0.4251875070622191
+    }
+  },
+  "desktop_before": {
+    "observed_success_unverified": 1,
+    "failed_or_abstained": 4,
+    "safe_handoff": 3
+  },
+  "desktop_after": {
+    "verified_success": 1,
+    "failed_or_abstained": 4,
+    "safe_handoff": 3
+  }
+}

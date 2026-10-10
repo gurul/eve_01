@@ -1,0 +1,1030 @@
+{
+ "sha256": "2f3ee5958c59b1586df7d65c9466330e636cd0511fc8e912b06aeb50c9635d51",
+ "gate": 0.65,
+ "bar": {
+  "n": 100,
+  "think_only": 35,
+  "instant_only": 55,
+  "recall": 0.943,
+  "1": true,
+  "over_think": 0.0,
+  "2": true,
+  "p95_ms": 481.8,
+  "3": true,
+  "errors": 0.0,
+  "4": true,
+  "shipped": true
+ },
+ "rows": [
+  {
+   "id": 1,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.08,
+   "ms": 267.2,
+   "error": ""
+  },
+  {
+   "id": 2,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.06,
+   "ms": 316.5,
+   "error": ""
+  },
+  {
+   "id": 3,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.1,
+   "ms": 321.4,
+   "error": ""
+  },
+  {
+   "id": 4,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.11,
+   "ms": 285.5,
+   "error": ""
+  },
+  {
+   "id": 5,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.1,
+   "ms": 273.9,
+   "error": ""
+  },
+  {
+   "id": 6,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.11,
+   "ms": 345.9,
+   "error": ""
+  },
+  {
+   "id": 7,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.1,
+   "ms": 988.2,
+   "error": ""
+  },
+  {
+   "id": 8,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.08,
+   "ms": 243.1,
+   "error": ""
+  },
+  {
+   "id": 9,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.07,
+   "ms": 381.6,
+   "error": ""
+  },
+  {
+   "id": 10,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.13,
+   "ms": 275.9,
+   "error": ""
+  },
+  {
+   "id": 11,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.09,
+   "ms": 239.2,
+   "error": ""
+  },
+  {
+   "id": 12,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.11,
+   "ms": 284.9,
+   "error": ""
+  },
+  {
+   "id": 13,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.07,
+   "ms": 254.5,
+   "error": ""
+  },
+  {
+   "id": 14,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.05,
+   "ms": 270.1,
+   "error": ""
+  },
+  {
+   "id": 15,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.07,
+   "ms": 219.0,
+   "error": ""
+  },
+  {
+   "id": 16,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.28,
+   "ms": 305.4,
+   "error": ""
+  },
+  {
+   "id": 17,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.08,
+   "ms": 240.7,
+   "error": ""
+  },
+  {
+   "id": 18,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.08,
+   "ms": 283.4,
+   "error": ""
+  },
+  {
+   "id": 19,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.07,
+   "ms": 237.9,
+   "error": ""
+  },
+  {
+   "id": 20,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.05,
+   "ms": 285.4,
+   "error": ""
+  },
+  {
+   "id": 21,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.08,
+   "ms": 230.1,
+   "error": ""
+  },
+  {
+   "id": 22,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.09,
+   "ms": 293.1,
+   "error": ""
+  },
+  {
+   "id": 23,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.08,
+   "ms": 321.6,
+   "error": ""
+  },
+  {
+   "id": 24,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.08,
+   "ms": 262.1,
+   "error": ""
+  },
+  {
+   "id": 25,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.09,
+   "ms": 339.2,
+   "error": ""
+  },
+  {
+   "id": 26,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.05,
+   "ms": 481.8,
+   "error": ""
+  },
+  {
+   "id": 27,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.1,
+   "ms": 267.0,
+   "error": ""
+  },
+  {
+   "id": 28,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.07,
+   "ms": 427.0,
+   "error": ""
+  },
+  {
+   "id": 29,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.09,
+   "ms": 273.0,
+   "error": ""
+  },
+  {
+   "id": 30,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.05,
+   "ms": 251.0,
+   "error": ""
+  },
+  {
+   "id": 31,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.1,
+   "ms": 274.5,
+   "error": ""
+  },
+  {
+   "id": 32,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.12,
+   "ms": 250.1,
+   "error": ""
+  },
+  {
+   "id": 33,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.13,
+   "ms": 199.9,
+   "error": ""
+  },
+  {
+   "id": 34,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.16,
+   "ms": 324.3,
+   "error": ""
+  },
+  {
+   "id": 35,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.28,
+   "ms": 261.2,
+   "error": ""
+  },
+  {
+   "id": 36,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.08,
+   "ms": 1311.7,
+   "error": ""
+  },
+  {
+   "id": 37,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.07,
+   "ms": 256.2,
+   "error": ""
+  },
+  {
+   "id": 38,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.12,
+   "ms": 312.3,
+   "error": ""
+  },
+  {
+   "id": 39,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.09,
+   "ms": 328.6,
+   "error": ""
+  },
+  {
+   "id": 40,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.06,
+   "ms": 311.7,
+   "error": ""
+  },
+  {
+   "id": 41,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.13,
+   "ms": 218.3,
+   "error": ""
+  },
+  {
+   "id": 42,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.18,
+   "ms": 236.7,
+   "error": ""
+  },
+  {
+   "id": 43,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.12,
+   "ms": 240.0,
+   "error": ""
+  },
+  {
+   "id": 44,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.09,
+   "ms": 234.1,
+   "error": ""
+  },
+  {
+   "id": 45,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.22,
+   "ms": 310.4,
+   "error": ""
+  },
+  {
+   "id": 46,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.09,
+   "ms": 236.5,
+   "error": ""
+  },
+  {
+   "id": 47,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.08,
+   "ms": 245.6,
+   "error": ""
+  },
+  {
+   "id": 48,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.31,
+   "ms": 263.9,
+   "error": ""
+  },
+  {
+   "id": 49,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.23,
+   "ms": 305.8,
+   "error": ""
+  },
+  {
+   "id": 50,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.07,
+   "ms": 327.6,
+   "error": ""
+  },
+  {
+   "id": 51,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.21,
+   "ms": 367.0,
+   "error": ""
+  },
+  {
+   "id": 52,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.14,
+   "ms": 287.5,
+   "error": ""
+  },
+  {
+   "id": 53,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.14,
+   "ms": 416.4,
+   "error": ""
+  },
+  {
+   "id": 54,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.09,
+   "ms": 221.7,
+   "error": ""
+  },
+  {
+   "id": 55,
+   "acceptable": [
+    "instant"
+   ],
+   "grade": "instant",
+   "noul": 0.18,
+   "ms": 336.2,
+   "error": ""
+  },
+  {
+   "id": 56,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.9,
+   "ms": 329.5,
+   "error": ""
+  },
+  {
+   "id": 57,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.94,
+   "ms": 258.7,
+   "error": ""
+  },
+  {
+   "id": 58,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.88,
+   "ms": 972.8,
+   "error": ""
+  },
+  {
+   "id": 59,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.87,
+   "ms": 343.6,
+   "error": ""
+  },
+  {
+   "id": 60,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.96,
+   "ms": 268.2,
+   "error": ""
+  },
+  {
+   "id": 61,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.9,
+   "ms": 271.6,
+   "error": ""
+  },
+  {
+   "id": 62,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.93,
+   "ms": 230.0,
+   "error": ""
+  },
+  {
+   "id": 63,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.82,
+   "ms": 257.5,
+   "error": ""
+  },
+  {
+   "id": 64,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.87,
+   "ms": 212.2,
+   "error": ""
+  },
+  {
+   "id": 65,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.86,
+   "ms": 311.5,
+   "error": ""
+  },
+  {
+   "id": 66,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.74,
+   "ms": 320.8,
+   "error": ""
+  },
+  {
+   "id": 67,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.91,
+   "ms": 341.0,
+   "error": ""
+  },
+  {
+   "id": 68,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.91,
+   "ms": 388.1,
+   "error": ""
+  },
+  {
+   "id": 69,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.71,
+   "ms": 263.6,
+   "error": ""
+  },
+  {
+   "id": 70,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.87,
+   "ms": 259.9,
+   "error": ""
+  },
+  {
+   "id": 71,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.76,
+   "ms": 253.6,
+   "error": ""
+  },
+  {
+   "id": 72,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.85,
+   "ms": 270.6,
+   "error": ""
+  },
+  {
+   "id": 73,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.71,
+   "ms": 297.9,
+   "error": ""
+  },
+  {
+   "id": 74,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.89,
+   "ms": 299.9,
+   "error": ""
+  },
+  {
+   "id": 75,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.94,
+   "ms": 301.4,
+   "error": ""
+  },
+  {
+   "id": 76,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.83,
+   "ms": 243.2,
+   "error": ""
+  },
+  {
+   "id": 77,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.89,
+   "ms": 280.8,
+   "error": ""
+  },
+  {
+   "id": 78,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.92,
+   "ms": 277.6,
+   "error": ""
+  },
+  {
+   "id": 79,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.92,
+   "ms": 272.8,
+   "error": ""
+  },
+  {
+   "id": 80,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "instant",
+   "noul": 0.62,
+   "ms": 314.7,
+   "error": ""
+  },
+  {
+   "id": 81,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.96,
+   "ms": 332.6,
+   "error": ""
+  },
+  {
+   "id": 82,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.9,
+   "ms": 308.4,
+   "error": ""
+  },
+  {
+   "id": 83,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.81,
+   "ms": 244.6,
+   "error": ""
+  },
+  {
+   "id": 84,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.86,
+   "ms": 236.0,
+   "error": ""
+  },
+  {
+   "id": 85,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.86,
+   "ms": 287.4,
+   "error": ""
+  },
+  {
+   "id": 86,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.73,
+   "ms": 312.8,
+   "error": ""
+  },
+  {
+   "id": 87,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.88,
+   "ms": 259.7,
+   "error": ""
+  },
+  {
+   "id": 88,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "instant",
+   "noul": 0.19,
+   "ms": 305.4,
+   "error": ""
+  },
+  {
+   "id": 89,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.83,
+   "ms": 531.6,
+   "error": ""
+  },
+  {
+   "id": 90,
+   "acceptable": [
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.87,
+   "ms": 398.2,
+   "error": ""
+  },
+  {
+   "id": 91,
+   "acceptable": [
+    "instant",
+    "think"
+   ],
+   "grade": "instant",
+   "noul": 0.3,
+   "ms": 262.1,
+   "error": ""
+  },
+  {
+   "id": 92,
+   "acceptable": [
+    "instant",
+    "think"
+   ],
+   "grade": "instant",
+   "noul": 0.59,
+   "ms": 234.4,
+   "error": ""
+  },
+  {
+   "id": 93,
+   "acceptable": [
+    "instant",
+    "think"
+   ],
+   "grade": "think",
+   "noul": 0.9,
+   "ms": 289.7,
+   "error": ""
+  },
+  {
+   "id": 94,
+   "acceptable": [
+    "instant",
+    "think"
+   ],
+   "grade": "instant",
+   "noul": 0.42,
+   "ms": 299.8,
+   "error": ""
+  },
+  {
+   "id": 95,
+   "acceptable": [
+    "instant",
+    "think"
+   ],
+   "grade": "instant",
+   "noul": 0.25,
+   "ms": 226.3,
+   "error": ""
+  },
+  {
+   "id": 96,
+   "acceptable": [
+    "instant",
+    "think"
+   ],
+   "grade": "instant",
+   "noul": 0.2,
+   "ms": 234.7,
+   "error": ""
+  },
+  {
+   "id": 97,
+   "acceptable": [
+    "instant",
+    "think"
+   ],
+   "grade": "instant",
+   "noul": 0.47,
+   "ms": 288.0,
+   "error": ""
+  },
+  {
+   "id": 98,
+   "acceptable": [
+    "instant",
+    "think"
+   ],
+   "grade": "instant",
+   "noul": 0.39,
+   "ms": 223.2,
+   "error": ""
+  },
+  {
+   "id": 99,
+   "acceptable": [
+    "instant",
+    "think"
+   ],
+   "grade": "instant",
+   "noul": 0.14,
+   "ms": 301.3,
+   "error": ""
+  },
+  {
+   "id": 100,
+   "acceptable": [
+    "instant",
+    "think"
+   ],
+   "grade": "instant",
+   "noul": 0.57,
+   "ms": 271.9,
+   "error": ""
+  }
+ ]
+}

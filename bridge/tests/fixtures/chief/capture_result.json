@@ -1,0 +1,858 @@
+{
+ "scored": "2026-09-29",
+ "holdout_sha256": "7ec2a382e1c25a3591fc84e9095941833f263f6647df1a719773ff66e9132a25",
+ "model": "model gpt-6-luna, effort low",
+ "dispatched": 0,
+ "usd": 0.1182,
+ "shipped": true,
+ "rows": [
+  {
+   "i": 0,
+   "label": "card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "web_search",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 1,
+   "label": "card",
+   "took": true,
+   "kinds": [
+    "cited_pick"
+   ],
+   "question": true,
+   "tool": "take_on",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 2,
+   "label": "card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "memory_search",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 3,
+   "label": "card",
+   "took": true,
+   "kinds": [
+    "read_links",
+    "cited_pick"
+   ],
+   "question": false,
+   "tool": "take_on",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 4,
+   "label": "card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 5,
+   "label": "card",
+   "took": true,
+   "kinds": [
+    "cited_pick",
+    "read_links"
+   ],
+   "question": false,
+   "tool": "take_on",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 6,
+   "label": "card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "start_task",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 7,
+   "label": "card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "start_task",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 8,
+   "label": "card",
+   "took": true,
+   "kinds": [
+    "cited_pick",
+    "guru_says_done"
+   ],
+   "question": false,
+   "tool": "take_on",
+   "refused": "a job has no cue: its phases are its next actions",
+   "error": ""
+  },
+  {
+   "i": 9,
+   "label": "card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "COMPOSIO_SEARCH_TOOLS",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 10,
+   "label": "card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "watch_add",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 11,
+   "label": "card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "web_search",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 12,
+   "label": "card",
+   "took": true,
+   "kinds": [
+    "guru_says_done"
+   ],
+   "question": true,
+   "tool": "take_on",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 13,
+   "label": "card",
+   "took": true,
+   "kinds": [
+    "read_links"
+   ],
+   "question": false,
+   "tool": "take_on",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 14,
+   "label": "card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "memory_search",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 15,
+   "label": "card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "web_search",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 16,
+   "label": "card",
+   "took": true,
+   "kinds": [
+    "cited_pick"
+   ],
+   "question": false,
+   "tool": "take_on",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 17,
+   "label": "card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "start_task",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 18,
+   "label": "card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "start_task",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 19,
+   "label": "card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "web_search",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 20,
+   "label": "card",
+   "took": true,
+   "kinds": [
+    "cited_pick"
+   ],
+   "question": true,
+   "tool": "take_on",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 21,
+   "label": "card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "start_task",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 22,
+   "label": "card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "start_task",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 23,
+   "label": "card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "COMPOSIO_SEARCH_TOOLS",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 24,
+   "label": "card",
+   "took": true,
+   "kinds": [
+    "cited_pick",
+    "ui_seen"
+   ],
+   "question": false,
+   "tool": "take_on",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 25,
+   "label": "card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "memory_search",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 26,
+   "label": "card",
+   "took": true,
+   "kinds": [
+    "guru_says_done"
+   ],
+   "question": false,
+   "tool": "take_on",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 27,
+   "label": "card",
+   "took": true,
+   "kinds": [
+    "guru_says_done"
+   ],
+   "question": false,
+   "tool": "take_on",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 28,
+   "label": "card",
+   "took": true,
+   "kinds": [
+    "guru_says_done"
+   ],
+   "question": false,
+   "tool": "take_on",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 29,
+   "label": "card",
+   "took": true,
+   "kinds": [
+    "guru_says_done"
+   ],
+   "question": false,
+   "tool": "take_on",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 30,
+   "label": "card",
+   "took": true,
+   "kinds": [
+    "guru_says_done"
+   ],
+   "question": false,
+   "tool": "take_on",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 31,
+   "label": "card",
+   "took": true,
+   "kinds": [
+    "guru_says_done"
+   ],
+   "question": false,
+   "tool": "take_on",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 32,
+   "label": "card",
+   "took": true,
+   "kinds": [
+    "guru_says_done"
+   ],
+   "question": false,
+   "tool": "take_on",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 33,
+   "label": "card",
+   "took": true,
+   "kinds": [
+    "guru_says_done"
+   ],
+   "question": false,
+   "tool": "take_on",
+   "refused": "cue.at 'Every Sunday' is not a date in the form %Y-%m-%d %H:%M",
+   "error": ""
+  },
+  {
+   "i": 34,
+   "label": "card",
+   "took": true,
+   "kinds": [
+    "guru_says_done"
+   ],
+   "question": false,
+   "tool": "take_on",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 35,
+   "label": "card",
+   "took": true,
+   "kinds": [
+    "guru_says_done"
+   ],
+   "question": false,
+   "tool": "take_on",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 36,
+   "label": "card",
+   "took": true,
+   "kinds": [
+    "guru_says_done"
+   ],
+   "question": false,
+   "tool": "take_on",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 37,
+   "label": "card",
+   "took": true,
+   "kinds": [
+    "guru_says_done"
+   ],
+   "question": false,
+   "tool": "take_on",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 38,
+   "label": "card",
+   "took": true,
+   "kinds": [
+    "guru_says_done"
+   ],
+   "question": false,
+   "tool": "take_on",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 39,
+   "label": "card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "capture_note",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 40,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "web_search",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 41,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "lights_set",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 42,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "spotify_control",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 43,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 44,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 45,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "start_task",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 46,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "web_search",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 47,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "web_search",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 48,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "web_search",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 49,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "lights_set",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 50,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 51,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "memory_search",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 52,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "memory_search",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 53,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "screenshot",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 54,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 55,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "web_search",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 56,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "web_search",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 57,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "web_search",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 58,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "start_task",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 59,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 60,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "jobs_list",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 61,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 62,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "spotify_control",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 63,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 64,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 65,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "COMPOSIO_SEARCH_TOOLS",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 66,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "COMPOSIO_SEARCH_TOOLS",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 67,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 68,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 69,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "think_hard",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 70,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "start_task",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 71,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "lights_set",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 72,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "web_search",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 73,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "COMPOSIO_SEARCH_TOOLS",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 74,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 75,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "start_task",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 76,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "list_todos",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 77,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "watch_list",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 78,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "",
+   "refused": "",
+   "error": ""
+  },
+  {
+   "i": 79,
+   "label": "no_card",
+   "took": false,
+   "kinds": [],
+   "question": false,
+   "tool": "search_notes",
+   "refused": "",
+   "error": ""
+  }
+ ]
+}

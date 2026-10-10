@@ -1,0 +1,151 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eve-bridge"
+version = "0.1.2"
+description = "Bridge Claude Code CLI sessions to the claude-desktop-buddy BLE hardware (bypasses the desktop app)."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Snow" }]
+requires-python = ">=3.11"
+keywords = ["claude-code", "ble", "hardware-eve", "m5stick", "esp32"]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "bleak>=0.22",
+    "pyserial>=3.5",
+    "watchfiles>=0.21",
+    # Windows-only: used by EveBLE._try_reset_radio to power-cycle the BT
+    # radio when the WinRT advertisement watcher silently stops delivering
+    # callbacks. bleak pulls in some winrt-* packages transitively, but not
+    # Radios, so declare both we import from explicitly (gated to win32 so
+    # macOS/Linux installs don't try to pull Windows projection packages).
+    "winrt-Windows.Devices.Bluetooth>=2.0; sys_platform == 'win32'",
+    "winrt-Windows.Devices.Radios>=2.0; sys_platform == 'win32'",
+    # macOS-only: Quartz events and screen capture (key_tap.py, listen_key.py,
+    # the desktop helpers, vision.py). 12.2.1 current per `pip index versions`,
+    # 2026-08-04. ApplicationServices provides the AXIsProcessTrusted
+    # Accessibility check + prompt.
+    "pyobjc-framework-Quartz>=12.0; sys_platform == 'darwin'",
+    "pyobjc-framework-ApplicationServices>=12.0; sys_platform == 'darwin'",
+    # macOS-only: host face detection for the board's camera frames
+    # (vision.py) — VNDetectFaceRectanglesRequest over a CGImage. 12.2.2
+    # current per `pip index versions`, 2026-09-05.
+    "pyobjc-framework-Vision>=12.0; sys_platform == 'darwin'",
+    # macOS-only: the desktop notes widget (notes_widget.py) is an AppKit
+    # NSPanel. Cocoa bundles AppKit + Foundation. 12.2.2 current per
+    # `pip index versions`, 2026-09-05.
+    "pyobjc-framework-Cocoa>=12.0; sys_platform == 'darwin'",
+    # Idle explorer notes (explore.py), the gpt-6-astra computer agent
+    # (computer_agent.py) and the realtime voice session (voice_agent.py,
+    # needs the [realtime] extra's websockets). 3.8.0 current per PyPI,
+    # 2026-09-06. Imported lazily. Every model call goes to OpenRouter on OPENROUTER_API_KEY through this SDK
+    # (openrouter.py); its realtime client is the desk voice's, on OPENAI_API_KEY until wave 2 (docs/openrouter.md).
+    "openai[realtime]>=3.13",
+    # The Telegram text door (telegram.py) calls the Bot API with httpx directly.
+    # The openai SDK already brings it in; declared because it is imported by
+    # name. 0.28.1 current per PyPI, 2026-09-21. No Telegram library: four Bot
+    # API methods over long polling do not need one.
+    "httpx>=0.28",
+    # "hey eve" (ears.py): sherpa-onnx keyword spotting (1.13.7, 2026-09-01)
+    # with sentencepiece to tokenise the phrase; sounddevice (0.5.6,
+    # 2026-08-17, bundles PortAudio) for the mic and the speaker; numpy for
+    # PCM plumbing. All imported lazily — the daemon runs without them.
+    "sherpa-onnx>=1.13",
+    # sherpa-onnx 1.13.8 moved libonnxruntime into sherpa-onnx-core, but uv reads metadata
+    # without that requirement (1.13.8, 2026-10-09), so a fresh venv could not import it.
+    "sherpa-onnx-core>=1.13",
+    "sentencepiece>=0.2",
+    "sounddevice>=0.5.6",
+    "numpy>=2",
+    # Computer control (desktop_worker.py): PyAutoGUI 0.9.54 + Pillow, the
+    # same pair as openai/openai-cua-sample-app. Only the worker child
+    # process imports them.
+    "pyautogui>=0.9.54",
+    "pillow>=11",
+    # type_text() pastes through the clipboard (desktop_helpers.py); pyperclip
+    # 1.11 comes with PyAutoGUI's MouseInfo already, pinned explicitly here.
+    "pyperclip>=1.9; sys_platform == 'darwin'",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-xdist>=3.8,<4", "ruff>=0.6", "jsonschema>=4.26,<5"]   # xdist 3.8.0, 2026-10-09
+# The browser lane (browser_lane.py): Playwright drives the owner's Chrome (attach mode) for web goals.
+# 1.63.0 current per PyPI, 2026-09-21, Python >=3.10. Imported lazily; the daemon runs without it. Install with
+# `pip install -e ".[browser]"` then `python -m playwright install chromium` (~95 MB).
+browser = ["playwright>=1.63,<2"]
+# The owner's Sylvania Smart+ Wi-Fi lights (lights.py) are Tuya devices: tinytuya speaks Tuya's local protocol.
+# 1.20.0 current per PyPI, 2026-09-27. Imported lazily; Govee and HappyLighting need nothing extra.
+lights = ["tinytuya>=1.20,<2"]
+# The watcher's Chrome-like read (watch.py tls_request): libcurl that shakes hands as Chrome does, for shops that
+# refuse Python's TLS (LEGO 403, Best Buy no answer; measured 2026-09-26). 0.16.3 current per PyPI, 2026-09-26,
+# MIT, Python >=3.10; wheels bundle their own libcurl. Imported lazily; `pip install -e ".[tls]"`.
+tls = ["curl_cffi>=0.16,<0.17"]
+# Memory by meaning (mem0_memory.py): mem0's open-source library, self-hosted (local Qdrant on disk + a SQLite
+# history), OpenAI for extraction and embeddings. 2.2.0 current per PyPI, 2026-09-23, Apache-2.0, Python >=3.10.
+# Its PostHog telemetry is forced off before import. Imported lazily; `pip install -e ".[mem0]"`.
+mem0 = ["mem0ai>=2.2,<3"]
+# The local Laya model: laya-mlx runs the Laya typed-decision checkpoint natively on Apple
+# silicon (MLX) for the robot's live eye expressions (live_expressions.py, eye_model.py) and the laya arms of the routing evals (tools/head_eval.py,
+# tools/route_eval.py). 0.1.0 current per PyPI, mlx 0.32.2, 2026-09-21. Apple silicon only;
+# imported lazily, so the daemon runs without it. Install with `pip install -e ".[laya]"` and
+# copy the checkpoint to ~/.config/eve-bridge/models/laya-multilingual-mlx (see
+# docs/stackchan/laya-expressions/README.md).
+laya = ["laya-mlx>=0.1.0,<0.2; sys_platform == 'darwin' and platform_machine == 'arm64'"]
+# Composio, the text eve's "app hands" (composio_tools.py): one session per owner, its meta tools beside
+# eve's own in the Telegram brain. 0.22.0 current per PyPI, 2026-09-21 (composio-core is deprecated; do not
+# use it); composio-openai 0.22.0 shapes the tools for the Responses API. Imported lazily; the daemon runs
+# without it and with EVE_COMPOSIO off. Install with `pip install -e ".[composio]"`.
+composio = ["composio>=0.22,<0.23", "composio-openai>=0.22,<0.23"]
+# The "Ask Claude" Telegram Mini App (miniapp.py): the Anthropic SDK streams claude-opus-5-5 through OpenRouter with
+# the owner's OPENROUTER_API_KEY (openrouter.anthropic_client; docs/openrouter.md). 1.8.0 current per PyPI, 2026-09-24, Python >=3.10. Imported lazily; the daemon runs without it
+# and with EVE_MINIAPP off. Install with `pip install -e ".[miniapp]"` plus `brew install cloudflared`.
+miniapp = ["anthropic>=1.8,<2", "playwright>=1.63,<2"]   # playwright: app_check tries every build on a headless phone
+# Local memory embeddings, an experiment (mem0_memory.py, EVE_MEM0_EMBEDDER=gemma): EmbeddingGemma through
+# sentence-transformers, which mem0's huggingface embedder uses. 6.1.0 current per PyPI, 2026-09-18, Python >=3.10;
+# pulls torch 2.14.1 and transformers 5.19.0 (~0.8 GB of venv). The model (~1.27 GB) is fetched once by hand
+# (docs/stackchan/memory.md). Imported lazily; `pip install -e ".[mem0,gemma]"`.
+gemma = ["sentence-transformers>=6.1,<7"]
+
+[project.scripts]
+eve-bridge = "eve_bridge.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "tools"]
+testpaths = ["tests"]
+markers = ["live: touches a real service on this Mac (claude-mem, Chromium); runs only with EVE_LIVE=1"]
+# Passing tests' tmp_path folders go at teardown: pytest's mktemp scans the whole basetemp on every call, so a run
+# that keeps 6,000 of them slows as it goes (2026-10-09 review). A failed test's folder stays, to look at.
+tmp_path_retention_policy = "failed"
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+extend-exclude = ["build", "dist", ".venv"]
+
+[tool.ruff.lint]
+# Start narrow: catch real correctness/cleanliness issues without arguing about
+# style. Pyflakes (F) covers unused/undefined names; pycodestyle errors (E) catch
+# syntax issues; isort (I) keeps imports tidy. Add more rule sets later if they
+# pay off.
+select = ["F", "E", "W", "I", "B"]
+ignore = [
+    "E501",  # line too long — line-length is advisory; lots of long log strings on purpose
+    "B008",  # function call in argument default — used intentionally for Path() defaults
+]
+
+[tool.setuptools.package-data]
+eve_bridge = ["learning/web/*.html", "learning/web/*.css", "learning/web/*.js", "learning/web/fonts/*.woff2", "learning/web/fonts/OFL.txt",
+                   "learning/web/canvas/*", "learning/web/canvas/assets/**/*", "skills/*/SKILL.md",
+                   "miniapp_page.html", "miniapp_iro.min.js", "miniapp_iro.LICENSE.txt", "meet_page.js",
+                   "openui_prompt.txt"]

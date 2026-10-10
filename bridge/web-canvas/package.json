@@ -1,0 +1,25 @@
+{
+	"name": "eve-web-canvas",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vite --host",
+		"build": "tsc && vite build && node scripts/copy-assets.mjs",
+		"e2e": "node e2e/board.e2e.mjs"
+	},
+	"dependencies": {
+		"@tldraw/assets": "5.4.2",
+		"react": "^19.2.1",
+		"react-dom": "^19.2.1",
+		"tldraw": "5.4.2"
+	},
+	"devDependencies": {
+		"@types/react": "^19.2.7",
+		"@types/react-dom": "^19.2.3",
+		"@vitejs/plugin-react": "^6.0.1",
+		"playwright-core": "1.63.0",
+		"typescript": "^5.8.3",
+		"vite": "^8.0.16"
+	}
+}

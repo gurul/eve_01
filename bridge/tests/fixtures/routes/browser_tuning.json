@@ -1,0 +1,300 @@
+{
+ "note": "Browser-routing TUNING set, authored 2026-09-23 by the router's writer; it fits the cut-offs and is not evidence. browser_holdout.json, written blind, decides. (Labels renamed auto_browser -> isolated on 2026-09-23 when auto-browser was retired; meaning unchanged.)",
+ "cases": [
+  {
+   "goal": "research the best budget mechanical keyboards under $100 and give me the top three",
+   "body": "isolated",
+   "tricky": false,
+   "source": "authored",
+   "reader": "web"
+  },
+  {
+   "goal": "compare the M4 MacBook Air and the Dell XPS 13 specs and tell me which has better battery life",
+   "body": "isolated",
+   "tricky": false,
+   "source": "authored",
+   "reader": "web"
+  },
+  {
+   "goal": "find the opening hours of the Exploratorium this weekend",
+   "body": "isolated",
+   "tricky": false,
+   "source": "authored",
+   "reader": "web"
+  },
+  {
+   "goal": "look up the population of Lisbon and Porto and tell me the difference",
+   "body": "isolated",
+   "tricky": false,
+   "source": "authored",
+   "reader": "web"
+  },
+  {
+   "goal": "check what the latest version of FastAPI is on its docs site",
+   "body": "isolated",
+   "tricky": false,
+   "source": "authored",
+   "reader": "web"
+  },
+  {
+   "goal": "go through the first three pages of Hacker News and summarize anything about robotics",
+   "body": "isolated",
+   "tricky": false,
+   "source": "authored",
+   "reader": "web"
+  },
+  {
+   "goal": "find three highly rated ramen places in the Mission with their addresses",
+   "body": "isolated",
+   "tricky": false,
+   "source": "authored",
+   "reader": "web"
+  },
+  {
+   "goal": "test the signup form on localhost:3000 and tell me if it shows an error for an empty email",
+   "body": "isolated",
+   "tricky": false,
+   "source": "authored",
+   "reader": "codex"
+  },
+  {
+   "goal": "collect the prices of the Sony WH-1000XM6 on Best Buy, Target and B&H",
+   "body": "isolated",
+   "tricky": false,
+   "source": "authored",
+   "reader": "web"
+  },
+  {
+   "goal": "read the Python 3.14 what's new page and list the headline features",
+   "body": "isolated",
+   "tricky": false,
+   "source": "authored",
+   "reader": "web"
+  },
+  {
+   "goal": "what are the visa requirements for a US citizen visiting Japan, check the official site",
+   "body": "isolated",
+   "tricky": false,
+   "source": "authored",
+   "reader": "web"
+  },
+  {
+   "goal": "find the phone number for the DMV office in San Jose",
+   "body": "isolated",
+   "tricky": true,
+   "source": "authored",
+   "reader": "web"
+  },
+  {
+   "goal": "check whether the Golden Gate park tennis courts need a reservation",
+   "body": "isolated",
+   "tricky": true,
+   "source": "authored",
+   "reader": "web"
+  },
+  {
+   "goal": "fill out the public contact form on example.org saying my name is Sam and I'd like a quote",
+   "body": "isolated",
+   "tricky": true,
+   "source": "authored",
+   "reader": "codex"
+  },
+  {
+   "goal": "scan the pricing pages of Linear, Jira and Asana and put their team plan prices side by side",
+   "body": "isolated",
+   "tricky": true,
+   "source": "authored",
+   "reader": "web"
+  },
+  {
+   "goal": "see if the new Pixel is in stock at the Google Store in blue",
+   "body": "isolated",
+   "tricky": true,
+   "source": "authored",
+   "reader": "web"
+  },
+  {
+   "goal": "find a recipe for vegan lasagna that takes under an hour and list the ingredients",
+   "body": "isolated",
+   "tricky": true,
+   "source": "authored",
+   "reader": "web"
+  },
+  {
+   "goal": "look up the weather forecast for Tahoe this Saturday and tell me if it'll snow",
+   "body": "isolated",
+   "tricky": true,
+   "source": "authored",
+   "reader": "web"
+  },
+  {
+   "goal": "check my gmail for anything from the landlord",
+   "body": "codex",
+   "tricky": false,
+   "source": "authored",
+   "reader": "codex"
+  },
+  {
+   "goal": "what's on my calendar tomorrow afternoon",
+   "body": "codex",
+   "tricky": false,
+   "source": "authored",
+   "reader": "codex"
+  },
+  {
+   "goal": "reply to the last slack message from Priya saying sounds good",
+   "body": "codex",
+   "tricky": false,
+   "source": "authored",
+   "reader": "codex"
+  },
+  {
+   "goal": "did my amazon order ship yet",
+   "body": "codex",
+   "tricky": false,
+   "source": "authored",
+   "reader": "codex"
+  },
+  {
+   "goal": "play lofi beats on youtube",
+   "body": "codex",
+   "tricky": false,
+   "source": "authored",
+   "reader": "codex"
+  },
+  {
+   "goal": "open the keyboard review so I can read it",
+   "body": "codex",
+   "tricky": false,
+   "source": "authored",
+   "reader": "codex"
+  },
+  {
+   "goal": "download the tax form PDF to my desktop",
+   "body": "codex",
+   "tricky": false,
+   "source": "authored",
+   "reader": "codex"
+  },
+  {
+   "goal": "open System Settings and turn on dark mode",
+   "body": "codex",
+   "tricky": false,
+   "source": "authored",
+   "reader": "codex"
+  },
+  {
+   "goal": "find the invoice in my downloads folder and rename it",
+   "body": "codex",
+   "tricky": false,
+   "source": "authored",
+   "reader": "codex"
+  },
+  {
+   "goal": "show me the Hacker News front page",
+   "body": "codex",
+   "tricky": false,
+   "source": "authored",
+   "reader": "codex"
+  },
+  {
+   "goal": "pull up my github notifications",
+   "body": "codex",
+   "tricky": false,
+   "source": "authored",
+   "reader": "codex"
+  },
+  {
+   "goal": "pay my PG&E bill",
+   "body": "codex",
+   "tricky": false,
+   "source": "authored",
+   "reader": "codex"
+  },
+  {
+   "goal": "check my bank balance",
+   "body": "codex",
+   "tricky": false,
+   "source": "authored",
+   "reader": "codex"
+  },
+  {
+   "goal": "research the best budget keyboards and email me the list",
+   "body": "codex",
+   "tricky": true,
+   "source": "authored",
+   "reader": "codex"
+  },
+  {
+   "goal": "compare laptop prices and add the cheapest one to my amazon cart",
+   "body": "codex",
+   "tricky": true,
+   "source": "authored",
+   "reader": "codex"
+  },
+  {
+   "goal": "find a ramen place nearby and put a reservation for 7pm on my calendar",
+   "body": "codex",
+   "tricky": true,
+   "source": "authored",
+   "reader": "codex"
+  },
+  {
+   "goal": "look at the tab I have open and summarize it",
+   "body": "codex",
+   "tricky": true,
+   "source": "authored",
+   "reader": "codex"
+  },
+  {
+   "goal": "check my United flight status with my MileagePlus account",
+   "body": "codex",
+   "tricky": true,
+   "source": "authored",
+   "reader": "codex"
+  },
+  {
+   "goal": "find the dentist's number and text it to my wife",
+   "body": "codex",
+   "tricky": true,
+   "source": "authored",
+   "reader": "codex"
+  },
+  {
+   "goal": "open spotify web and play my discover weekly",
+   "body": "codex",
+   "tricky": true,
+   "source": "authored",
+   "reader": "codex"
+  },
+  {
+   "goal": "buy the cheapest pack of AA batteries on amazon",
+   "body": "codex",
+   "tricky": true,
+   "source": "authored",
+   "reader": "codex"
+  },
+  {
+   "goal": "look up the recipe and save it to my Notes app",
+   "body": "codex",
+   "tricky": true,
+   "source": "authored",
+   "reader": "codex"
+  },
+  {
+   "goal": "log in to the school portal and check my grades",
+   "body": "codex",
+   "tricky": true,
+   "source": "authored",
+   "reader": "codex"
+  },
+  {
+   "goal": "show me the weather radar for tonight",
+   "body": "codex",
+   "tricky": true,
+   "source": "authored",
+   "reader": "codex"
+  }
+ ],
+ "reader_note": "reader (2026-09-26): the body for the web-reader router. 'web' = a public-web job that is only reading pages and reporting text; every 'isolated' case that needs clicking, typing, a form, a local or staging site, or something only the owner knows is 'codex'. Labelled by capability before any model saw the holdout. 'body' is unchanged."
+}

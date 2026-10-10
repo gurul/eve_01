@@ -1,0 +1,479 @@
+{
+ "note": "Written by a Claude subagent on 2026-09-26, blind: no router code, prompts or prior eval sets were read while writing it. One case that repeated an earlier set's request was dropped before scoring (79 remain).",
+ "cases": [
+  {
+   "goal": "what time does the Costco on Harrison St close tonight",
+   "reader": "web",
+   "why": "store hours are public; 'the Costco' sounds personal but is not",
+   "tricky": true
+  },
+  {
+   "goal": "pull up the reviews for the Sony WH-1000XM6 and tell me if ppl like the noise cancelling",
+   "reader": "web",
+   "why": "action verb, but the job is reading public reviews and reporting",
+   "tricky": true
+  },
+  {
+   "goal": "go check the React docs and tell me what useEffectEvent does",
+   "reader": "web",
+   "why": "public docs read and summarized as text",
+   "tricky": true
+  },
+  {
+   "goal": "whats the weather gonna be in Seattle this weekend",
+   "reader": "web",
+   "why": "public forecast, named city, nothing typed",
+   "tricky": false
+  },
+  {
+   "goal": "who won the warriors game last night",
+   "reader": "web",
+   "why": "public sports result",
+   "tricky": false
+  },
+  {
+   "goal": "can u find the menu for Tartine Bakery and tell me if they have gluten free stuff",
+   "reader": "web",
+   "why": "public menu, text answer",
+   "tricky": false
+  },
+  {
+   "goal": "look up the return policy on Best Buy's site and summarize it",
+   "reader": "web",
+   "why": "general policy page is public; no order or account involved",
+   "tricky": true
+  },
+  {
+   "goal": "check if the Japanese Tea Garden in Golden Gate Park is open on mondays",
+   "reader": "web",
+   "why": "'check' is only reading public hours",
+   "tricky": true
+  },
+  {
+   "goal": "open up the python 3.14 release notes and tell me the big changes",
+   "reader": "web",
+   "why": "'open up' but wants a text summary, not the page shown",
+   "tricky": true
+  },
+  {
+   "goal": "how much is a Tesla Model Y in California rn",
+   "reader": "web",
+   "why": "public price lookup",
+   "tricky": false
+  },
+  {
+   "goal": "search for the best budget mechanical keyboards 2026 and give me the top 3",
+   "reader": "web",
+   "why": "web search and report",
+   "tricky": false
+  },
+  {
+   "goal": "what's bitcoin at right now",
+   "reader": "web",
+   "why": "public price",
+   "tricky": false
+  },
+  {
+   "goal": "go read the hacker news front page and tell me whats interesting",
+   "reader": "web",
+   "why": "public page read and summarized as text",
+   "tricky": true
+  },
+  {
+   "goal": "find out when the next SpaceX launch is",
+   "reader": "web",
+   "why": "public schedule",
+   "tricky": false
+  },
+  {
+   "goal": "does the trader joes on masonic have parking? check yelp or something",
+   "reader": "web",
+   "why": "sounds personal but is public info about a store",
+   "tricky": true
+  },
+  {
+   "goal": "pls look up how to descale a breville espresso machine",
+   "reader": "web",
+   "why": "public how-to",
+   "tricky": false
+  },
+  {
+   "goal": "what are the visa requirements for a US citizen going to Japan",
+   "reader": "web",
+   "why": "public government info",
+   "tricky": false
+  },
+  {
+   "goal": "check the github status page, is github down?",
+   "reader": "web",
+   "why": "sounds like testing but is reading a public status page",
+   "tricky": true
+  },
+  {
+   "goal": "summarize the latest post on the Anthropic blog",
+   "reader": "web",
+   "why": "public blog",
+   "tricky": false
+  },
+  {
+   "goal": "whats the phone number for the DMV office on Fell street",
+   "reader": "web",
+   "why": "public office listing, not the owner's appointment",
+   "tricky": true
+  },
+  {
+   "goal": "find me the ingredients list for oatly barista edition",
+   "reader": "web",
+   "why": "public product info",
+   "tricky": false
+  },
+  {
+   "goal": "go through the stripe api docs and tell me what the rate limits are",
+   "reader": "web",
+   "why": "action phrasing, public docs, text answer",
+   "tricky": true
+  },
+  {
+   "goal": "hey what movies are playing at the AMC Metreon tonight",
+   "reader": "web",
+   "why": "public showtimes for a named theater; no booking",
+   "tricky": true
+  },
+  {
+   "goal": "compare the iphone 17 pro and pixel 11 cameras based on reviews",
+   "reader": "web",
+   "why": "public reviews synthesized",
+   "tricky": false
+  },
+  {
+   "goal": "what does the SF recycling guide say about pizza boxes",
+   "reader": "web",
+   "why": "public city guide",
+   "tricky": false
+  },
+  {
+   "goal": "look into whether the caltrain weekend schedule changed",
+   "reader": "web",
+   "why": "public transit notices",
+   "tricky": false
+  },
+  {
+   "goal": "read me the top comments on that r/buildapc thread about 5090 power cables melting",
+   "reader": "web",
+   "why": "'read me' means report the text of a public thread",
+   "tricky": true
+  },
+  {
+   "goal": "can you see if patagonia has a sale on right now",
+   "reader": "web",
+   "why": "'see if' is only reading a public store page",
+   "tricky": true
+  },
+  {
+   "goal": "whats the population of lagos",
+   "reader": "web",
+   "why": "public fact",
+   "tricky": false
+  },
+  {
+   "goal": "grab the firefox changelog for the latest version and tell me whats new",
+   "reader": "web",
+   "why": "'grab' but just reading public release notes",
+   "tricky": true
+  },
+  {
+   "goal": "is the muir woods shuttle running this month? check the NPS site",
+   "reader": "web",
+   "why": "public park info",
+   "tricky": false
+  },
+  {
+   "goal": "what are people saying about the new nintendo console, like on the verge and ign",
+   "reader": "web",
+   "why": "public coverage summarized",
+   "tricky": false
+  },
+  {
+   "goal": "what did my landlord say about the lease renewal",
+   "reader": "codex",
+   "why": "sounds like reading, but it is in the owner's signed-in mail",
+   "tricky": true
+  },
+  {
+   "goal": "check my amazon order, when's it getting here",
+   "reader": "codex",
+   "why": "needs the owner's signed-in Amazon account",
+   "tricky": true
+  },
+  {
+   "goal": "open the wikipedia page on octopuses",
+   "reader": "codex",
+   "why": "public page, but wants it shown on the owner's screen",
+   "tricky": true
+  },
+  {
+   "goal": "look up my package, tracking number 1Z999AA10123456784",
+   "reader": "codex",
+   "why": "tracking number has to be typed into a carrier form",
+   "tricky": true
+  },
+  {
+   "goal": "see if my staging site loads",
+   "reader": "codex",
+   "why": "staging address is not public web; this is a test",
+   "tricky": true
+  },
+  {
+   "goal": "whats on my calendar tomorrow",
+   "reader": "codex",
+   "why": "owner's signed-in calendar",
+   "tricky": true
+  },
+  {
+   "goal": "play some lofi beats on youtube",
+   "reader": "codex",
+   "why": "plays on the owner's screen",
+   "tricky": false
+  },
+  {
+   "goal": "fill out the contact form on the plumber's website with my info and ask for a quote",
+   "reader": "codex",
+   "why": "form filling",
+   "tricky": false
+  },
+  {
+   "goal": "reply 'sounds good' to the last message in the design slack channel",
+   "reader": "codex",
+   "why": "typing into a signed-in app",
+   "tricky": false
+  },
+  {
+   "goal": "is localhost:3000 still up? check it real quick",
+   "reader": "codex",
+   "why": "local address on the Mac",
+   "tricky": true
+  },
+  {
+   "goal": "how much do i still owe on my chase card",
+   "reader": "codex",
+   "why": "a lookup, but only in the owner's bank account",
+   "tricky": true
+  },
+  {
+   "goal": "book a table for 2 at a thai place friday 7pm on opentable",
+   "reader": "codex",
+   "why": "booking with entered date and time",
+   "tricky": false
+  },
+  {
+   "goal": "whats the weather for zip 94110",
+   "reader": "codex",
+   "why": "a zip has to be entered into a site",
+   "tricky": true
+  },
+  {
+   "goal": "check if the signup flow on our landing page actually works",
+   "reader": "codex",
+   "why": "public site, but the job is testing a flow",
+   "tricky": true
+  },
+  {
+   "goal": "pull up the new dune trailer",
+   "reader": "codex",
+   "why": "wants a video played on screen, not a text report",
+   "tricky": true
+  },
+  {
+   "goal": "check my gmail for anything from the bank",
+   "reader": "codex",
+   "why": "signed-in mail",
+   "tricky": false
+  },
+  {
+   "goal": "whats in my google drive folder called taxes",
+   "reader": "codex",
+   "why": "owner's private files",
+   "tricky": false
+  },
+  {
+   "goal": "add oat milk to my instacart cart",
+   "reader": "codex",
+   "why": "clicking in a signed-in store",
+   "tricky": false
+  },
+  {
+   "goal": "unsubscribe me from that newsletter that keeps emailing me",
+   "reader": "codex",
+   "why": "acts on the owner's mail",
+   "tricky": false
+  },
+  {
+   "goal": "look up flights SFO to JFK on oct 12 on google flights",
+   "reader": "codex",
+   "why": "sounds like a lookup, but dates and airports get typed into a form",
+   "tricky": true
+  },
+  {
+   "goal": "whats my screen time today",
+   "reader": "codex",
+   "why": "data on the Mac",
+   "tricky": false
+  },
+  {
+   "goal": "open notion and find my packing list",
+   "reader": "codex",
+   "why": "owner's signed-in workspace, shown on screen",
+   "tricky": false
+  },
+  {
+   "goal": "check the linear board, whats assigned to me",
+   "reader": "codex",
+   "why": "reading, but only the signed-in owner can see it",
+   "tricky": true
+  },
+  {
+   "goal": "go to my linkedin and see who viewed my profile",
+   "reader": "codex",
+   "why": "signed-in account",
+   "tricky": false
+  },
+  {
+   "goal": "screenshot the error in my terminal and tell me whats wrong",
+   "reader": "codex",
+   "why": "on the Mac",
+   "tricky": false
+  },
+  {
+   "goal": "can u check what my kid's school portal says about the field trip",
+   "reader": "codex",
+   "why": "reading, but behind the owner's school login",
+   "tricky": true
+  },
+  {
+   "goal": "sign me up for the REI kayaking class on saturday",
+   "reader": "codex",
+   "why": "registration form",
+   "tricky": false
+  },
+  {
+   "goal": "search zillow for 2br apartments under 3500 in 94117",
+   "reader": "codex",
+   "why": "sounds like a lookup, but needs a zip and filters typed into the site",
+   "tricky": true
+  },
+  {
+   "goal": "turn off dark mode in chrome",
+   "reader": "codex",
+   "why": "changes a setting on the Mac",
+   "tricky": false
+  },
+  {
+   "goal": "how much did i spend on doordash last month",
+   "reader": "codex",
+   "why": "a question, but the answer is in the owner's account",
+   "tricky": true
+  },
+  {
+   "goal": "check my venmo requests",
+   "reader": "codex",
+   "why": "signed-in account",
+   "tricky": false
+  },
+  {
+   "goal": "open that pdf in my downloads and read me the first page",
+   "reader": "codex",
+   "why": "'read me' but the file is on the Mac",
+   "tricky": true
+  },
+  {
+   "goal": "test whether the password reset email on our app actually sends",
+   "reader": "codex",
+   "why": "testing",
+   "tricky": false
+  },
+  {
+   "goal": "whats the status of my DMV appointment",
+   "reader": "codex",
+   "why": "sounds public, but it is the owner's own booking",
+   "tricky": true
+  },
+  {
+   "goal": "log into the PG&E site and pay the bill",
+   "reader": "codex",
+   "why": "login and payment",
+   "tricky": false
+  },
+  {
+   "goal": "look at 192.168.1.1 and tell me which devices are on the wifi",
+   "reader": "codex",
+   "why": "reading, but a local address",
+   "tricky": true
+  },
+  {
+   "goal": "how much to ship a 5 lb box to 10001, check the usps site",
+   "reader": "codex",
+   "why": "sounds like a lookup, but weight and zip go into a calculator form",
+   "tricky": true
+  },
+  {
+   "goal": "put the warriors game on",
+   "reader": "codex",
+   "why": "plays on the owner's screen",
+   "tricky": false
+  },
+  {
+   "goal": "tweet 'shipping day' from my account",
+   "reader": "codex",
+   "why": "posting from the owner's account",
+   "tricky": false
+  },
+  {
+   "goal": "whats in my chrome reading list",
+   "reader": "codex",
+   "why": "the owner's own browser data",
+   "tricky": true
+  },
+  {
+   "goal": "go through my github notifications and tell me what needs my review",
+   "reader": "codex",
+   "why": "reading-and-report phrasing, but the owner's signed-in notifications",
+   "tricky": true
+  },
+  {
+   "goal": "move all the screenshots on my desktop into a folder",
+   "reader": "codex",
+   "why": "files on the Mac",
+   "tricky": false
+  },
+  {
+   "goal": "check my uber eats order is the driver close",
+   "reader": "codex",
+   "why": "signed-in account",
+   "tricky": false
+  },
+  {
+   "goal": "paste this paragraph into google translate and tell me what it says in spanish: the meeting moved to thursday",
+   "reader": "codex",
+   "why": "text gets typed into a site",
+   "tricky": false
+  },
+  {
+   "goal": "what's my car worth on kelley blue book, VIN is 1HGCM82633A004352",
+   "reader": "codex",
+   "why": "sounds like a public lookup, but a VIN gets entered into a form",
+   "tricky": true
+  },
+  {
+   "goal": "read my unread imessages",
+   "reader": "codex",
+   "why": "messages on the Mac",
+   "tricky": false
+  },
+  {
+   "goal": "check the vercel dashboard, did the last deploy fail",
+   "reader": "codex",
+   "why": "reading, but a signed-in dashboard",
+   "tricky": true
+  }
+ ]
+}

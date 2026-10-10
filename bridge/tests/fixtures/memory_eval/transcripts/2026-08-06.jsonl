@@ -1,0 +1,15 @@
+{"ts": "2026-08-06T07:55:00-07:00", "ch": "telegram", "conv": "t-1786028100000-d015", "who": "owner", "kind": "say", "text": "Weighed in at 172 this morning."}
+{"ts": "2026-08-06T07:56:25-07:00", "ch": "telegram", "conv": "t-1786028100000-d015", "who": "eve", "kind": "say", "text": "Logged."}
+{"ts": "2026-08-06T08:00:57-07:00", "ch": "telegram", "conv": "t-1786028100000-d015", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-06T08:10:00-07:00", "ch": "telegram", "conv": "t-1786029000000-68ba", "who": "owner", "kind": "say", "text": "My gym locker combo is 12-34-08, in case I forget it."}
+{"ts": "2026-08-06T08:10:36-07:00", "ch": "telegram", "conv": "t-1786029000000-68ba", "who": "eve", "kind": "say", "text": "Got it."}
+{"ts": "2026-08-06T08:13:03-07:00", "ch": "telegram", "conv": "t-1786029000000-68ba", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-06T12:45:00-07:00", "ch": "telegram", "conv": "t-1786045500000-f6d4", "who": "owner", "kind": "say", "text": "Convert 30 miles to kilometers."}
+{"ts": "2026-08-06T12:45:53-07:00", "ch": "telegram", "conv": "t-1786045500000-f6d4", "who": "eve", "kind": "say", "text": "About 48 kilometers."}
+{"ts": "2026-08-06T12:49:47-07:00", "ch": "telegram", "conv": "t-1786045500000-f6d4", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-06T13:40:00-07:00", "ch": "telegram", "conv": "t-1786048800000-1438", "who": "owner", "kind": "say", "text": "Give me a word that rhymes with orange, if any."}
+{"ts": "2026-08-06T13:41:01-07:00", "ch": "telegram", "conv": "t-1786048800000-1438", "who": "eve", "kind": "say", "text": "Nothing perfect. Door hinge is the usual cheat."}
+{"ts": "2026-08-06T13:45:13-07:00", "ch": "telegram", "conv": "t-1786048800000-1438", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-07T00:20:00-07:00", "ch": "voice", "conv": "v-1786087200000-9f54", "who": "owner", "kind": "say", "text": "Can't sleep. Say something calming."}
+{"ts": "2026-08-07T00:21:08-07:00", "ch": "voice", "conv": "v-1786087200000-9f54", "who": "eve", "kind": "say", "text": "Breathe in for four, hold for four, out for six. Again, slower this time."}
+{"ts": "2026-08-07T00:25:09-07:00", "ch": "voice", "conv": "v-1786087200000-9f54", "who": "system", "kind": "close", "text": ""}

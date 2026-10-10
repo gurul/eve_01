@@ -1,0 +1,65 @@
+{
+ "fold": {
+  "affection": "affection",
+  "happy": "happy",
+  "excited": "happy",
+  "wink": "happy",
+  "calm": "calm",
+  "skeptical": "calm",
+  "frustrated": "calm",
+  "sad": "calm",
+  "curious": "curious",
+  "surprised": "surprised",
+  "worried": "startled"
+ },
+ "elapsed_s": 21.6,
+ "results": [
+  {
+   "picker": "jev",
+   "sets": {
+    "scenarios-test": {
+     "n": 48,
+     "accuracy": 0.625,
+     "macro_f1": 0.5831418824839878,
+     "errors": 0,
+     "ms_p50": 199.70774999819696,
+     "ms_p95": 449.00374999269843
+    },
+    "confirmation": {
+     "n": 36,
+     "accuracy": 0.7222222222222222,
+     "macro_f1": 0.6786530463001051,
+     "errors": 0,
+     "ms_p50": 187.28808299056254,
+     "ms_p95": 276.73529100138694
+    }
+   },
+   "cost_usd": 0.0,
+   "calls": 84
+  },
+  {
+   "picker": "laya",
+   "sets": {
+    "scenarios-test": {
+     "n": 48,
+     "accuracy": 0.4791666666666667,
+     "macro_f1": 0.47117052881758764,
+     "errors": 0,
+     "ms_p50": 21.265999996103346,
+     "ms_p95": 32.978583010844886
+    },
+    "confirmation": {
+     "n": 36,
+     "accuracy": 0.5277777777777778,
+     "macro_f1": 0.49198632751264326,
+     "errors": 0,
+     "ms_p50": 21.370957998442464,
+     "ms_p95": 24.43058299832046
+    }
+   }
+  }
+ ],
+ "measured": "2026-09-24",
+ "tool": "bridge/tools/jev_eyes_eval.py --laya",
+ "cases": "bridge/tests/fixtures/emotion scenarios.json split=test (48) + confirmation.json (36)"
+}

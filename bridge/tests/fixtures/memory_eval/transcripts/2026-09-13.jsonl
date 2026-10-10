@@ -1,0 +1,15 @@
+{"ts": "2026-09-13T10:00:00-07:00", "ch": "telegram", "conv": "t-1789318800000-a054", "who": "owner", "kind": "say", "text": "Switched the weather station to report every 10 minutes to save battery."}
+{"ts": "2026-09-13T10:01:30-07:00", "ch": "telegram", "conv": "t-1789318800000-a054", "who": "eve", "kind": "say", "text": "Updated."}
+{"ts": "2026-09-13T10:04:28-07:00", "ch": "telegram", "conv": "t-1789318800000-a054", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-13T12:45:00-07:00", "ch": "telegram", "conv": "t-1789328700000-835d", "who": "owner", "kind": "say", "text": "Tell me a joke."}
+{"ts": "2026-09-13T12:46:11-07:00", "ch": "telegram", "conv": "t-1789328700000-835d", "who": "eve", "kind": "say", "text": "Why did the capacitor break up with the resistor? It needed space to recharge."}
+{"ts": "2026-09-13T12:49:44-07:00", "ch": "telegram", "conv": "t-1789328700000-835d", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-13T13:40:00-07:00", "ch": "telegram", "conv": "t-1789332000000-56cb", "who": "owner", "kind": "say", "text": "Quick: Ohm's law?"}
+{"ts": "2026-09-13T13:41:43-07:00", "ch": "telegram", "conv": "t-1789332000000-56cb", "who": "eve", "kind": "say", "text": "V equals I times R."}
+{"ts": "2026-09-13T13:46:05-07:00", "ch": "telegram", "conv": "t-1789332000000-56cb", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-13T16:40:00-07:00", "ch": "telegram", "conv": "t-1789342800000-6dac", "who": "owner", "kind": "say", "text": "Tell me a joke."}
+{"ts": "2026-09-13T16:41:11-07:00", "ch": "telegram", "conv": "t-1789342800000-6dac", "who": "eve", "kind": "say", "text": "Why did the capacitor break up with the resistor? It needed space to recharge."}
+{"ts": "2026-09-13T16:45:27-07:00", "ch": "telegram", "conv": "t-1789342800000-6dac", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-13T23:05:00-07:00", "ch": "voice", "conv": "v-1789365900000-8d75", "who": "owner", "kind": "say", "text": "Pause the music."}
+{"ts": "2026-09-13T23:06:44-07:00", "ch": "voice", "conv": "v-1789365900000-8d75", "who": "eve", "kind": "say", "text": "Paused."}
+{"ts": "2026-09-13T23:09:34-07:00", "ch": "voice", "conv": "v-1789365900000-8d75", "who": "system", "kind": "close", "text": ""}

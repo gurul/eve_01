@@ -1,0 +1,4665 @@
+{
+ "captured": {
+  "ax_candidates_sha": "96599e77c9620855df3314719f9bc3f8ef40a57293c021378302e525267a9fce",
+  "macos": "26.6.2",
+  "app_version": "16.0",
+  "at": "2026-09-21T02:44:39-07:00",
+  "truncated": false,
+  "redacted": true
+ },
+ "screen": [
+  1512,
+  982
+ ],
+ "raw": {
+  "app": "Calendar",
+  "bundle": "com.apple.iCal",
+  "pid": 50717,
+  "title": "Calendar",
+  "fullscreen": false,
+  "node_count": 124,
+  "truncated": false,
+  "secs": 0.079,
+  "root": {
+   "role": "AXWindow",
+   "subrole": "AXStandardWindow",
+   "title": "Calendar",
+   "description": "",
+   "value": null,
+   "frame": [
+    289.0,
+    98.0,
+    935.0,
+    598.0
+   ],
+   "actions": [],
+   "enabled": true,
+   "focused": false,
+   "children": [
+    {
+     "role": "AXSplitGroup",
+     "subrole": "",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      289.0,
+      98.0,
+      935.0,
+      598.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [
+      {
+       "role": "AXGroup",
+       "subrole": "",
+       "title": "",
+       "description": "Month Calendar Area",
+       "value": null,
+       "frame": [
+        289.0,
+        98.0,
+        935.0,
+        598.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": true,
+       "children": [
+        {
+         "role": "AXGrid",
+         "subrole": "",
+         "title": "",
+         "description": "",
+         "value": null,
+         "frame": [
+          289.0,
+          98.0,
+          935.0,
+          598.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Sunday, August 30",
+           "description": "",
+           "value": null,
+           "frame": [
+            289.0,
+            233.0,
+            134.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Stay at the Lakeside Cabin + Hot Tub. Starts on 8/28/26 and ends on 8/30/26, All-Day",
+             "value": null,
+             "frame": [
+              289.0,
+              266.0,
+              134.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            },
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Youth Tech Assembly committee meeting  at Youth Tech Assembly committee meeting  Sunday, August 30 · 10:00 – 11:00am Time zone: America/Los_Angeles Google Meet joining info Video call link: https://",
+             "value": null,
+             "frame": [
+              289.0,
+              283.0,
+              134.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Monday, August 31",
+           "description": "",
+           "value": null,
+           "frame": [
+            423.0,
+            233.0,
+            134.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Team Roadmap: Virtual Session. Starts on August 31, 2026 at 6:30 PM and ends at 7:00 PM., Needs action",
+             "value": null,
+             "frame": [
+              423.0,
+              266.0,
+              134.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Tuesday, September 1",
+           "description": "",
+           "value": null,
+           "frame": [
+            557.0,
+            233.0,
+            134.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Study Group. Starts on September 1, 2026 at 6:00 PM and ends at 7:00 PM.",
+             "value": null,
+             "frame": [
+              557.0,
+              266.0,
+              134.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Wednesday, September 2",
+           "description": "",
+           "value": null,
+           "frame": [
+            691.0,
+            233.0,
+            134.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Thursday, September 3",
+           "description": "",
+           "value": null,
+           "frame": [
+            825.0,
+            233.0,
+            133.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Friday, September 4",
+           "description": "",
+           "value": null,
+           "frame": [
+            958.0,
+            233.0,
+            133.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Robotics Club Core Team - Weekly Sync. Starts on September 4, 2026 at 12:00 PM and ends at 12:45 PM.",
+             "value": null,
+             "frame": [
+              958.0,
+              266.0,
+              133.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Saturday, September 5",
+           "description": "",
+           "value": null,
+           "frame": [
+            1091.0,
+            233.0,
+            133.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Sunday, September 6",
+           "description": "",
+           "value": null,
+           "frame": [
+            289.0,
+            310.0,
+            134.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Monday, September 7",
+           "description": "",
+           "value": null,
+           "frame": [
+            423.0,
+            310.0,
+            134.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Labor Day. September 7, 2026, All-Day",
+             "value": null,
+             "frame": [
+              423.0,
+              343.0,
+              134.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "All Day",
+               "value": null,
+               "frame": [
+                424.0,
+                345.0,
+                18.0,
+                12.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGrid",
+                "AXList",
+                "AXStaticText"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            },
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Labor Day. September 7, 2026, All-Day",
+             "value": null,
+             "frame": [
+              423.0,
+              360.0,
+              134.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "Holiday",
+               "value": null,
+               "frame": [
+                424.0,
+                362.0,
+                18.0,
+                12.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGrid",
+                "AXList",
+                "AXStaticText"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Tuesday, September 8",
+           "description": "",
+           "value": null,
+           "frame": [
+            557.0,
+            310.0,
+            134.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Study Group. Starts on September 8, 2026 at 6:00 PM and ends at 7:00 PM.",
+             "value": null,
+             "frame": [
+              557.0,
+              343.0,
+              134.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Wednesday, September 9",
+           "description": "",
+           "value": null,
+           "frame": [
+            691.0,
+            310.0,
+            134.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Thursday, September 10",
+           "description": "",
+           "value": null,
+           "frame": [
+            825.0,
+            310.0,
+            133.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Sam. Starts on September 10, 2026 at 8:00 PM and ends at 9:00 PM., All attendees accepted.",
+             "value": null,
+             "frame": [
+              825.0,
+              343.0,
+              133.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Friday, September 11",
+           "description": "",
+           "value": null,
+           "frame": [
+            958.0,
+            310.0,
+            133.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Course Orientation at https://example.zoom.us/webinar/register/WN_6NRTXJGpTyKarq43_3X3QA. Starts on September 11, 2026 at 1:30 PM and ends at 2:30 PM., Needs action",
+             "value": null,
+             "frame": [
+              958.0,
+              343.0,
+              133.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            },
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Interview Prep Course - Orientation at https://example.zoom.us/w/82329221273?tk=mB99ybkOM5Jh22nal5BA9TCm46Ow8QDcxwmpm8UM8WM.DQkAAAATKzQ4mRZJR3p3aERiZ1Q5dURnQnI0bVNsaGZ3AAAAAAAAAAAAAAAAAAA",
+             "value": null,
+             "frame": [
+              958.0,
+              360.0,
+              133.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Saturday, September 12",
+           "description": "",
+           "value": null,
+           "frame": [
+            1091.0,
+            310.0,
+            133.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Rosh Hashanah. September 12, 2026, All-Day",
+             "value": null,
+             "frame": [
+              1091.0,
+              343.0,
+              133.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "Holiday",
+               "value": null,
+               "frame": [
+                1092.0,
+                345.0,
+                18.0,
+                12.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGrid",
+                "AXList",
+                "AXStaticText"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            },
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Hardware demo. Starts on September 12, 2026 at 12:00 PM and ends at 1:00 PM.",
+             "value": null,
+             "frame": [
+              1091.0,
+              360.0,
+              133.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Sunday, September 13",
+           "description": "",
+           "value": null,
+           "frame": [
+            289.0,
+            387.0,
+            134.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Rosh Hashanah (day 2). September 13, 2026, All-Day",
+             "value": null,
+             "frame": [
+              289.0,
+              420.0,
+              134.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "Holiday",
+               "value": null,
+               "frame": [
+                290.0,
+                422.0,
+                18.0,
+                12.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGrid",
+                "AXList",
+                "AXStaticText"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Monday, September 14",
+           "description": "",
+           "value": null,
+           "frame": [
+            423.0,
+            387.0,
+            134.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Tuesday, September 15",
+           "description": "",
+           "value": null,
+           "frame": [
+            557.0,
+            387.0,
+            134.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Interview Prep Course. Starts on September 15, 2026 at 3:00 PM and ends at 5:00 PM.",
+             "value": null,
+             "frame": [
+              557.0,
+              420.0,
+              134.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            },
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Study Group. Starts on September 15, 2026 at 6:00 PM and ends at 7:00 PM.",
+             "value": null,
+             "frame": [
+              557.0,
+              437.0,
+              134.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Wednesday, September 16",
+           "description": "",
+           "value": null,
+           "frame": [
+            691.0,
+            387.0,
+            134.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Thursday, September 17",
+           "description": "",
+           "value": null,
+           "frame": [
+            825.0,
+            387.0,
+            133.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Interview Prep Course. Starts on September 17, 2026 at 3:00 PM and ends at 5:00 PM.",
+             "value": null,
+             "frame": [
+              825.0,
+              420.0,
+              133.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Friday, September 18",
+           "description": "",
+           "value": null,
+           "frame": [
+            958.0,
+            387.0,
+            133.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Saturday, September 19",
+           "description": "",
+           "value": null,
+           "frame": [
+            1091.0,
+            387.0,
+            133.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Sunday, September 20",
+           "description": "",
+           "value": null,
+           "frame": [
+            289.0,
+            464.0,
+            134.0,
+            78.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "meeting. Starts on September 20, 2026 at 5:00 PM and ends at 6:00 PM.",
+             "value": null,
+             "frame": [
+              289.0,
+              497.0,
+              134.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Today, Monday, September 21",
+           "description": "",
+           "value": null,
+           "frame": [
+            423.0,
+            464.0,
+            134.0,
+            78.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Yom Kippur. September 21, 2026, All-Day",
+             "value": null,
+             "frame": [
+              423.0,
+              497.0,
+              134.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "Holiday",
+               "value": null,
+               "frame": [
+                424.0,
+                499.0,
+                18.0,
+                12.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGrid",
+                "AXList",
+                "AXStaticText"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            },
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Flight to Denver (XY 1234) at Oakland OAK. Starts on September 21, 2026 at 5:37 PM and ends at 8:00 PM.",
+             "value": null,
+             "frame": [
+              423.0,
+              514.0,
+              134.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Tuesday, September 22",
+           "description": "",
+           "value": null,
+           "frame": [
+            557.0,
+            464.0,
+            134.0,
+            78.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "buy a desk lamp. September 22, 2026, All-Day",
+             "value": null,
+             "frame": [
+              557.0,
+              497.0,
+              134.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "All Day",
+               "value": null,
+               "frame": [
+                558.0,
+                499.0,
+                18.0,
+                12.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGrid",
+                "AXList",
+                "AXStaticText"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            },
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Interview Prep Course. Starts on September 22, 2026 at 3:00 PM and ends at 5:00 PM.",
+             "value": null,
+             "frame": [
+              289.0,
+              527.0,
+              100.0,
+              15.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            },
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Study Group. Starts on September 22, 2026 at 6:00 PM and ends at 7:00 PM.",
+             "value": null,
+             "frame": [
+              0.0,
+              967.0,
+              100.0,
+              15.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Wednesday, September 23",
+           "description": "",
+           "value": null,
+           "frame": [
+            691.0,
+            464.0,
+            134.0,
+            78.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Thursday, September 24",
+           "description": "",
+           "value": null,
+           "frame": [
+            825.0,
+            464.0,
+            133.0,
+            78.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Interview Prep Course. Starts on September 24, 2026 at 3:00 PM and ends at 5:00 PM.",
+             "value": null,
+             "frame": [
+              825.0,
+              497.0,
+              133.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Friday, September 25",
+           "description": "",
+           "value": null,
+           "frame": [
+            958.0,
+            464.0,
+            133.0,
+            78.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Saturday, September 26",
+           "description": "",
+           "value": null,
+           "frame": [
+            1091.0,
+            464.0,
+            133.0,
+            78.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Sunday, September 27",
+           "description": "",
+           "value": null,
+           "frame": [
+            289.0,
+            542.0,
+            134.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Youth Tech Assembly meeting. Starts on September 27, 2026 at 10:00 AM and ends at 11:00 AM.",
+             "value": null,
+             "frame": [
+              289.0,
+              575.0,
+              134.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Monday, September 28",
+           "description": "",
+           "value": null,
+           "frame": [
+            423.0,
+            542.0,
+            134.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Tuesday, September 29",
+           "description": "",
+           "value": null,
+           "frame": [
+            557.0,
+            542.0,
+            134.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Interview Prep Course. Starts on September 29, 2026 at 3:00 PM and ends at 5:00 PM.",
+             "value": null,
+             "frame": [
+              557.0,
+              575.0,
+              134.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            },
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Study Group. Starts on September 29, 2026 at 6:00 PM and ends at 7:00 PM.",
+             "value": null,
+             "frame": [
+              557.0,
+              592.0,
+              134.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Wednesday, September 30",
+           "description": "",
+           "value": null,
+           "frame": [
+            691.0,
+            542.0,
+            134.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "MATH 101 A - Linear Algebra (Lecture) at Hall 102. Starts on September 30, 2026 at 11:30 AM and ends at 12:20 PM.",
+             "value": null,
+             "frame": [
+              691.0,
+              575.0,
+              134.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            },
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "PHYS 202 A - Waves and Optics (Lecture) at MGH 389. Starts on September 30, 2026 at 3:30 PM and ends at 4:20 PM.",
+             "value": null,
+             "frame": [
+              691.0,
+              592.0,
+              134.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Thursday, October 1",
+           "description": "",
+           "value": null,
+           "frame": [
+            825.0,
+            542.0,
+            133.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "MATH 101 AB - Linear Algebra (Quiz) at Hall B109. Starts on October 1, 2026 at 9:30 AM and ends at 10:20 AM.",
+             "value": null,
+             "frame": [
+              825.0,
+              575.0,
+              133.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            },
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "PHYS 202 AA - Waves and Optics (Quiz) at LOW 105. Starts on October 1, 2026 at 1:30 PM and ends at 2:20 PM.",
+             "value": null,
+             "frame": [
+              289.0,
+              604.0,
+              100.0,
+              15.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            },
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Interview Prep Course. Starts on October 1, 2026 at 3:00 PM and ends at 5:00 PM.",
+             "value": null,
+             "frame": [
+              0.0,
+              967.0,
+              100.0,
+              15.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Friday, October 2",
+           "description": "",
+           "value": null,
+           "frame": [
+            958.0,
+            542.0,
+            133.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "MATH 101 A - Linear Algebra (Lecture) at Hall 102. Starts on October 2, 2026 at 11:30 AM and ends at 12:20 PM.",
+             "value": null,
+             "frame": [
+              958.0,
+              575.0,
+              133.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            },
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "BIO 310 A - Cell Biology (Seminar) at HST T639. Starts on October 2, 2026 at 12:30 PM and ends at 1:50 PM.",
+             "value": null,
+             "frame": [
+              289.0,
+              604.0,
+              100.0,
+              15.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            },
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "PHYS 202 A - Waves and Optics (Lecture) at MGH 389. Starts on October 2, 2026 at 3:30 PM and ends at 4:20 PM.",
+             "value": null,
+             "frame": [
+              0.0,
+              967.0,
+              100.0,
+              15.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Saturday, October 3",
+           "description": "",
+           "value": null,
+           "frame": [
+            1091.0,
+            542.0,
+            133.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Sunday, October 4",
+           "description": "",
+           "value": null,
+           "frame": [
+            289.0,
+            619.0,
+            134.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Monday, October 5",
+           "description": "",
+           "value": null,
+           "frame": [
+            423.0,
+            619.0,
+            134.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "MATH 101 A - Linear Algebra (Lecture) at Hall 102. Starts on October 5, 2026 at 11:30 AM and ends at 12:20 PM.",
+             "value": null,
+             "frame": [
+              423.0,
+              652.0,
+              134.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            },
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "PHYS 202 A - Waves and Optics (Lecture) at MGH 389. Starts on October 5, 2026 at 3:30 PM and ends at 4:20 PM.",
+             "value": null,
+             "frame": [
+              423.0,
+              669.0,
+              134.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Tuesday, October 6",
+           "description": "",
+           "value": null,
+           "frame": [
+            557.0,
+            619.0,
+            134.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Interview Prep Course. Starts on October 6, 2026 at 3:00 PM and ends at 5:00 PM.",
+             "value": null,
+             "frame": [
+              557.0,
+              652.0,
+              134.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            },
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Study Group. Starts on October 6, 2026 at 6:00 PM and ends at 7:00 PM.",
+             "value": null,
+             "frame": [
+              557.0,
+              669.0,
+              134.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Wednesday, October 7",
+           "description": "",
+           "value": null,
+           "frame": [
+            691.0,
+            619.0,
+            134.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "MATH 101 A - Linear Algebra (Lecture) at Hall 102. Starts on October 7, 2026 at 11:30 AM and ends at 12:20 PM.",
+             "value": null,
+             "frame": [
+              691.0,
+              652.0,
+              134.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            },
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "PHYS 202 A - Waves and Optics (Lecture) at MGH 389. Starts on October 7, 2026 at 3:30 PM and ends at 4:20 PM.",
+             "value": null,
+             "frame": [
+              691.0,
+              669.0,
+              134.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Thursday, October 8",
+           "description": "",
+           "value": null,
+           "frame": [
+            825.0,
+            619.0,
+            133.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "MATH 101 AB - Linear Algebra (Quiz) at Hall B109. Starts on October 8, 2026 at 9:30 AM and ends at 10:20 AM.",
+             "value": null,
+             "frame": [
+              825.0,
+              652.0,
+              133.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            },
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "PHYS 202 AA - Waves and Optics (Quiz) at LOW 105. Starts on October 8, 2026 at 1:30 PM and ends at 2:20 PM.",
+             "value": null,
+             "frame": [
+              289.0,
+              681.0,
+              100.0,
+              15.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            },
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Interview Prep Course. Starts on October 8, 2026 at 3:00 PM and ends at 5:00 PM.",
+             "value": null,
+             "frame": [
+              0.0,
+              967.0,
+              100.0,
+              15.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Friday, October 9",
+           "description": "",
+           "value": null,
+           "frame": [
+            958.0,
+            619.0,
+            133.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "MATH 101 A - Linear Algebra (Lecture) at Hall 102. Starts on October 9, 2026 at 11:30 AM and ends at 12:20 PM.",
+             "value": null,
+             "frame": [
+              958.0,
+              652.0,
+              133.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            },
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "BIO 310 A - Cell Biology (Seminar) at HST T639. Starts on October 9, 2026 at 12:30 PM and ends at 1:50 PM.",
+             "value": null,
+             "frame": [
+              289.0,
+              681.0,
+              100.0,
+              15.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            },
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "PHYS 202 A - Waves and Optics (Lecture) at MGH 389. Starts on October 9, 2026 at 3:30 PM and ends at 4:20 PM.",
+             "value": null,
+             "frame": [
+              0.0,
+              967.0,
+              100.0,
+              15.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "Saturday, October 10",
+           "description": "",
+           "value": null,
+           "frame": [
+            1091.0,
+            619.0,
+            133.0,
+            77.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Fellowship Application Deadline. October 10, 2026, All-Day",
+             "value": null,
+             "frame": [
+              1091.0,
+              652.0,
+              133.0,
+              16.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "All Day",
+               "value": null,
+               "frame": [
+                1092.0,
+                654.0,
+                18.0,
+                12.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGrid",
+                "AXList",
+                "AXStaticText"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          }
+         ],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXSplitGroup",
+          "AXGroup"
+         ]
+        },
+        {
+         "role": "AXButton",
+         "subrole": "",
+         "title": "",
+         "description": "previous month",
+         "value": null,
+         "frame": [
+          1086.0,
+          165.0,
+          27.0,
+          27.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXSplitGroup",
+          "AXGroup"
+         ]
+        },
+        {
+         "role": "AXButton",
+         "subrole": "",
+         "title": "Today",
+         "description": "",
+         "value": null,
+         "frame": [
+          1115.0,
+          165.0,
+          68.0,
+          27.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXSplitGroup",
+          "AXGroup"
+         ]
+        },
+        {
+         "role": "AXButton",
+         "subrole": "",
+         "title": "",
+         "description": "next month",
+         "value": null,
+         "frame": [
+          1185.0,
+          165.0,
+          27.0,
+          27.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXSplitGroup",
+          "AXGroup"
+         ]
+        },
+        {
+         "role": "AXStaticText",
+         "subrole": "",
+         "title": "",
+         "description": "",
+         "value": "September 2026",
+         "frame": [
+          304.0,
+          157.0,
+          249.0,
+          41.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXSplitGroup",
+          "AXGroup"
+         ]
+        }
+       ],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXSplitGroup"
+       ]
+      }
+     ],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXToolbar",
+     "subrole": "",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      289.0,
+      98.0,
+      935.0,
+      52.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [
+      {
+       "role": "AXGroup",
+       "subrole": "",
+       "title": "",
+       "description": "",
+       "value": null,
+       "frame": [
+        389.0,
+        98.0,
+        82.0,
+        52.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [
+        {
+         "role": "AXRadioGroup",
+         "subrole": "",
+         "title": "",
+         "description": "Calendars",
+         "value": null,
+         "frame": [
+          392.5,
+          105.0,
+          75.5,
+          38.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [
+          {
+           "role": "AXRadioButton",
+           "subrole": "AXSegment",
+           "title": "",
+           "description": "Calendars",
+           "value": 0,
+           "frame": [
+            393.5,
+            106.0,
+            36.0,
+            36.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXToolbar",
+            "AXGroup",
+            "AXRadioGroup"
+           ]
+          },
+          {
+           "role": "AXRadioButton",
+           "subrole": "AXSegment",
+           "title": "",
+           "description": "Inbox",
+           "value": 0,
+           "frame": [
+            430.5,
+            106.0,
+            36.5,
+            36.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXToolbar",
+            "AXGroup",
+            "AXRadioGroup"
+           ]
+          }
+         ],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXToolbar",
+          "AXGroup"
+         ]
+        }
+       ],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXToolbar"
+       ]
+      },
+      {
+       "role": "AXButton",
+       "subrole": "",
+       "title": "",
+       "description": "Add Event",
+       "value": null,
+       "frame": [
+        471.0,
+        98.0,
+        44.0,
+        52.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXToolbar"
+       ]
+      },
+      {
+       "role": "AXGroup",
+       "subrole": "",
+       "title": "",
+       "description": "",
+       "value": null,
+       "frame": [
+        631.5,
+        98.0,
+        251.0,
+        52.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [
+        {
+         "role": "AXRadioGroup",
+         "subrole": "",
+         "title": "",
+         "description": "View",
+         "value": null,
+         "frame": [
+          634.5,
+          105.0,
+          245.0,
+          38.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [
+          {
+           "role": "AXRadioButton",
+           "subrole": "AXSegment",
+           "title": "",
+           "description": "Day",
+           "value": 0,
+           "frame": [
+            635.5,
+            106.0,
+            60.0,
+            36.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXToolbar",
+            "AXGroup",
+            "AXRadioGroup"
+           ]
+          },
+          {
+           "role": "AXRadioButton",
+           "subrole": "AXSegment",
+           "title": "",
+           "description": "Week",
+           "value": 0,
+           "frame": [
+            696.5,
+            106.0,
+            60.0,
+            36.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXToolbar",
+            "AXGroup",
+            "AXRadioGroup"
+           ]
+          },
+          {
+           "role": "AXRadioButton",
+           "subrole": "AXSegment",
+           "title": "",
+           "description": "Month",
+           "value": 1,
+           "frame": [
+            757.5,
+            106.0,
+            60.0,
+            36.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXToolbar",
+            "AXGroup",
+            "AXRadioGroup"
+           ]
+          },
+          {
+           "role": "AXRadioButton",
+           "subrole": "AXSegment",
+           "title": "",
+           "description": "Year",
+           "value": 0,
+           "frame": [
+            818.5,
+            106.0,
+            60.0,
+            36.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXToolbar",
+            "AXGroup",
+            "AXRadioGroup"
+           ]
+          }
+         ],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXToolbar",
+          "AXGroup"
+         ]
+        }
+       ],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXToolbar"
+       ]
+      },
+      {
+       "role": "AXGroup",
+       "subrole": "",
+       "title": "",
+       "description": "",
+       "value": null,
+       "frame": [
+        1175.0,
+        98.0,
+        45.0,
+        52.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [
+        {
+         "role": "AXButton",
+         "subrole": "AXSearchField",
+         "title": "",
+         "description": "Search",
+         "value": null,
+         "frame": [
+          1178.5,
+          105.0,
+          38.5,
+          38.0
+         ],
+         "actions": [
+          "AXPress"
+         ],
+         "enabled": true,
+         "focused": false,
+         "children": [],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXToolbar",
+          "AXGroup"
+         ]
+        }
+       ],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXToolbar"
+       ]
+      }
+     ],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXButton",
+     "subrole": "AXCloseButton",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      307.0,
+      116.0,
+      16.0,
+      16.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXButton",
+     "subrole": "AXFullScreenButton",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      353.0,
+      116.0,
+      16.0,
+      16.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [
+      {
+       "role": "AXGroup",
+       "subrole": "",
+       "title": "",
+       "description": "",
+       "value": null,
+       "frame": [
+        354.0,
+        117.0,
+        14.0,
+        14.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [
+        {
+         "role": "AXGroup",
+         "subrole": "",
+         "title": "",
+         "description": "",
+         "value": null,
+         "frame": [
+          354.0,
+          117.0,
+          14.0,
+          14.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXButton",
+          "AXGroup"
+         ]
+        }
+       ],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXButton"
+       ]
+      }
+     ],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXButton",
+     "subrole": "AXMinimizeButton",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      330.0,
+      116.0,
+      16.0,
+      16.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    }
+   ],
+   "ancestor_roles": []
+  }
+ },
+ "snapshot": {
+  "seq": 1,
+  "app": "Calendar",
+  "bundle": "com.apple.iCal",
+  "title": "Calendar",
+  "pid": 50717,
+  "elements": [
+   {
+    "id": "0",
+    "role": "button",
+    "label": "Add Event",
+    "value": "",
+    "frame": [
+     471,
+     98,
+     44,
+     52
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "1",
+    "role": "search field",
+    "label": "Search",
+    "value": "",
+    "frame": [
+     1178,
+     105,
+     38,
+     38
+    ],
+    "actions": [
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": true
+   },
+   {
+    "id": "2",
+    "role": "radio button",
+    "label": "Calendars",
+    "value": "",
+    "frame": [
+     394,
+     106,
+     36,
+     36
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "3",
+    "role": "radio button",
+    "label": "Inbox",
+    "value": "",
+    "frame": [
+     430,
+     106,
+     36,
+     36
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "4",
+    "role": "radio button",
+    "label": "Day",
+    "value": "",
+    "frame": [
+     636,
+     106,
+     60,
+     36
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "5",
+    "role": "radio button",
+    "label": "Week",
+    "value": "",
+    "frame": [
+     696,
+     106,
+     60,
+     36
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "6",
+    "role": "radio button",
+    "label": "Month",
+    "value": "selected",
+    "frame": [
+     758,
+     106,
+     60,
+     36
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "7",
+    "role": "radio button",
+    "label": "Year",
+    "value": "",
+    "frame": [
+     818,
+     106,
+     60,
+     36
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "8",
+    "role": "static text",
+    "label": "September 2026",
+    "value": "",
+    "frame": [
+     304,
+     157,
+     249,
+     41
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "9",
+    "role": "button",
+    "label": "previous month",
+    "value": "",
+    "frame": [
+     1086,
+     165,
+     27,
+     27
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "10",
+    "role": "button",
+    "label": "Today",
+    "value": "",
+    "frame": [
+     1115,
+     165,
+     68,
+     27
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "11",
+    "role": "button",
+    "label": "next month",
+    "value": "",
+    "frame": [
+     1185,
+     165,
+     27,
+     27
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "12",
+    "role": "static text",
+    "label": "Stay at the Lakeside Cabin + Hot Tub. Starts on 8/28/26 and ends on 8/30/26, All-Day",
+    "value": "",
+    "frame": [
+     289,
+     266,
+     134,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "13",
+    "role": "static text",
+    "label": "Team Roadmap: Virtual Session. Starts on August 31, 2026 at 6:30 PM and ends at 7:00 PM., Needs action",
+    "value": "",
+    "frame": [
+     423,
+     266,
+     134,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "14",
+    "role": "static text",
+    "label": "Study Group. Starts on September 1, 2026 at 6:00 PM and ends at 7:00 PM.",
+    "value": "",
+    "frame": [
+     557,
+     266,
+     134,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "15",
+    "role": "static text",
+    "label": "Robotics Club Core Team - Weekly Sync. Starts on September 4, 2026 at 12:00 PM and ends at 12:45 PM.",
+    "value": "",
+    "frame": [
+     958,
+     266,
+     133,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "16",
+    "role": "static text",
+    "label": "Youth Tech Assembly committee meeting at Youth Tech Assembly committee meeting Sunday, August 30 · 10:00 – 11:00am Time zone: America/Los_Angeles Google Meet joining info Video call link: https://",
+    "value": "",
+    "frame": [
+     289,
+     283,
+     134,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "17",
+    "role": "static text",
+    "label": "Labor Day. September 7, 2026, All-Day",
+    "value": "",
+    "frame": [
+     423,
+     343,
+     134,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "18",
+    "role": "static text",
+    "label": "Study Group. Starts on September 8, 2026 at 6:00 PM and ends at 7:00 PM.",
+    "value": "",
+    "frame": [
+     557,
+     343,
+     134,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "19",
+    "role": "static text",
+    "label": "Sam. Starts on September 10, 2026 at 8:00 PM and ends at 9:00 PM., All attendees accepted.",
+    "value": "",
+    "frame": [
+     825,
+     343,
+     133,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "20",
+    "role": "static text",
+    "label": "Course Orientation at https://example.zoom.us/webinar/register/WN_6NRTXJGpTyKarq43_3X3QA. Starts on September 11, 2026 at 1:30 PM and ends at 2:30 PM., Needs action",
+    "value": "",
+    "frame": [
+     958,
+     343,
+     133,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "21",
+    "role": "static text",
+    "label": "Rosh Hashanah. September 12, 2026, All-Day",
+    "value": "",
+    "frame": [
+     1091,
+     343,
+     133,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "22",
+    "role": "image",
+    "label": "All Day",
+    "value": "",
+    "frame": [
+     424,
+     345,
+     18,
+     12
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "23",
+    "role": "image",
+    "label": "Holiday",
+    "value": "",
+    "frame": [
+     1092,
+     345,
+     18,
+     12
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "24",
+    "role": "static text",
+    "label": "Labor Day. September 7, 2026, All-Day",
+    "value": "",
+    "frame": [
+     423,
+     360,
+     134,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "25",
+    "role": "static text",
+    "label": "Interview Prep Course - Orientation at https://example.zoom.us/w/82329221273?tk=mB99ybkOM5Jh22nal5BA9TCm46Ow8QDcxwmpm8UM8WM.DQkAAAATKzQ4mRZJR3p3aERiZ1Q5dURnQnI0bVNsaGZ3AAAAAAAAAAAAAAAAAAA",
+    "value": "",
+    "frame": [
+     958,
+     360,
+     133,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "26",
+    "role": "static text",
+    "label": "Hardware demo. Starts on September 12, 2026 at 12:00 PM and ends at 1:00 PM.",
+    "value": "",
+    "frame": [
+     1091,
+     360,
+     133,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "27",
+    "role": "image",
+    "label": "Holiday",
+    "value": "",
+    "frame": [
+     424,
+     362,
+     18,
+     12
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "28",
+    "role": "static text",
+    "label": "Rosh Hashanah (day 2). September 13, 2026, All-Day",
+    "value": "",
+    "frame": [
+     289,
+     420,
+     134,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "29",
+    "role": "static text",
+    "label": "Interview Prep Course. Starts on September 15, 2026 at 3:00 PM and ends at 5:00 PM.",
+    "value": "",
+    "frame": [
+     557,
+     420,
+     134,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "30",
+    "role": "static text",
+    "label": "Interview Prep Course. Starts on September 17, 2026 at 3:00 PM and ends at 5:00 PM.",
+    "value": "",
+    "frame": [
+     825,
+     420,
+     133,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "31",
+    "role": "image",
+    "label": "Holiday",
+    "value": "",
+    "frame": [
+     290,
+     422,
+     18,
+     12
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "32",
+    "role": "static text",
+    "label": "Study Group. Starts on September 15, 2026 at 6:00 PM and ends at 7:00 PM.",
+    "value": "",
+    "frame": [
+     557,
+     437,
+     134,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "33",
+    "role": "static text",
+    "label": "meeting. Starts on September 20, 2026 at 5:00 PM and ends at 6:00 PM.",
+    "value": "",
+    "frame": [
+     289,
+     497,
+     134,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "34",
+    "role": "static text",
+    "label": "Yom Kippur. September 21, 2026, All-Day",
+    "value": "",
+    "frame": [
+     423,
+     497,
+     134,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "35",
+    "role": "static text",
+    "label": "buy a desk lamp. September 22, 2026, All-Day",
+    "value": "",
+    "frame": [
+     557,
+     497,
+     134,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "36",
+    "role": "static text",
+    "label": "Interview Prep Course. Starts on September 24, 2026 at 3:00 PM and ends at 5:00 PM.",
+    "value": "",
+    "frame": [
+     825,
+     497,
+     133,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "37",
+    "role": "image",
+    "label": "Holiday",
+    "value": "",
+    "frame": [
+     424,
+     499,
+     18,
+     12
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "38",
+    "role": "image",
+    "label": "All Day",
+    "value": "",
+    "frame": [
+     558,
+     499,
+     18,
+     12
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "39",
+    "role": "static text",
+    "label": "Flight to Denver (XY 1234) at Oakland OAK. Starts on September 21, 2026 at 5:37 PM and ends at 8:00 PM.",
+    "value": "",
+    "frame": [
+     423,
+     514,
+     134,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "40",
+    "role": "static text",
+    "label": "Interview Prep Course. Starts on September 22, 2026 at 3:00 PM and ends at 5:00 PM.",
+    "value": "",
+    "frame": [
+     289,
+     527,
+     100,
+     15
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "41",
+    "role": "static text",
+    "label": "Youth Tech Assembly meeting. Starts on September 27, 2026 at 10:00 AM and ends at 11:00 AM.",
+    "value": "",
+    "frame": [
+     289,
+     575,
+     134,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "42",
+    "role": "static text",
+    "label": "Interview Prep Course. Starts on September 29, 2026 at 3:00 PM and ends at 5:00 PM.",
+    "value": "",
+    "frame": [
+     557,
+     575,
+     134,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "43",
+    "role": "static text",
+    "label": "MATH 101 A - Linear Algebra (Lecture) at Hall 102. Starts on September 30, 2026 at 11:30 AM and ends at 12:20 PM.",
+    "value": "",
+    "frame": [
+     691,
+     575,
+     134,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "44",
+    "role": "static text",
+    "label": "MATH 101 AB - Linear Algebra (Quiz) at Hall B109. Starts on October 1, 2026 at 9:30 AM and ends at 10:20 AM.",
+    "value": "",
+    "frame": [
+     825,
+     575,
+     133,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "45",
+    "role": "static text",
+    "label": "MATH 101 A - Linear Algebra (Lecture) at Hall 102. Starts on October 2, 2026 at 11:30 AM and ends at 12:20 PM.",
+    "value": "",
+    "frame": [
+     958,
+     575,
+     133,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "46",
+    "role": "static text",
+    "label": "Study Group. Starts on September 29, 2026 at 6:00 PM and ends at 7:00 PM.",
+    "value": "",
+    "frame": [
+     557,
+     592,
+     134,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "47",
+    "role": "static text",
+    "label": "PHYS 202 A - Waves and Optics (Lecture) at MGH 389. Starts on September 30, 2026 at 3:30 PM and ends at 4:20 PM.",
+    "value": "",
+    "frame": [
+     691,
+     592,
+     134,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "48",
+    "role": "static text",
+    "label": "PHYS 202 AA - Waves and Optics (Quiz) at LOW 105. Starts on October 1, 2026 at 1:30 PM and ends at 2:20 PM.",
+    "value": "",
+    "frame": [
+     289,
+     604,
+     100,
+     15
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "49",
+    "role": "static text",
+    "label": "BIO 310 A - Cell Biology (Seminar) at HST T639. Starts on October 2, 2026 at 12:30 PM and ends at 1:50 PM.",
+    "value": "",
+    "frame": [
+     289,
+     604,
+     100,
+     15
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "50",
+    "role": "static text",
+    "label": "MATH 101 A - Linear Algebra (Lecture) at Hall 102. Starts on October 5, 2026 at 11:30 AM and ends at 12:20 PM.",
+    "value": "",
+    "frame": [
+     423,
+     652,
+     134,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "51",
+    "role": "static text",
+    "label": "Interview Prep Course. Starts on October 6, 2026 at 3:00 PM and ends at 5:00 PM.",
+    "value": "",
+    "frame": [
+     557,
+     652,
+     134,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "52",
+    "role": "static text",
+    "label": "MATH 101 A - Linear Algebra (Lecture) at Hall 102. Starts on October 7, 2026 at 11:30 AM and ends at 12:20 PM.",
+    "value": "",
+    "frame": [
+     691,
+     652,
+     134,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "53",
+    "role": "static text",
+    "label": "MATH 101 AB - Linear Algebra (Quiz) at Hall B109. Starts on October 8, 2026 at 9:30 AM and ends at 10:20 AM.",
+    "value": "",
+    "frame": [
+     825,
+     652,
+     133,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "54",
+    "role": "static text",
+    "label": "MATH 101 A - Linear Algebra (Lecture) at Hall 102. Starts on October 9, 2026 at 11:30 AM and ends at 12:20 PM.",
+    "value": "",
+    "frame": [
+     958,
+     652,
+     133,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "55",
+    "role": "static text",
+    "label": "Fellowship Application Deadline. October 10, 2026, All-Day",
+    "value": "",
+    "frame": [
+     1091,
+     652,
+     133,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "56",
+    "role": "image",
+    "label": "All Day",
+    "value": "",
+    "frame": [
+     1092,
+     654,
+     18,
+     12
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "57",
+    "role": "static text",
+    "label": "PHYS 202 A - Waves and Optics (Lecture) at MGH 389. Starts on October 5, 2026 at 3:30 PM and ends at 4:20 PM.",
+    "value": "",
+    "frame": [
+     423,
+     669,
+     134,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "58",
+    "role": "static text",
+    "label": "Study Group. Starts on October 6, 2026 at 6:00 PM and ends at 7:00 PM.",
+    "value": "",
+    "frame": [
+     557,
+     669,
+     134,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "59",
+    "role": "static text",
+    "label": "PHYS 202 A - Waves and Optics (Lecture) at MGH 389. Starts on October 7, 2026 at 3:30 PM and ends at 4:20 PM.",
+    "value": "",
+    "frame": [
+     691,
+     669,
+     134,
+     16
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "60",
+    "role": "static text",
+    "label": "PHYS 202 AA - Waves and Optics (Quiz) at LOW 105. Starts on October 8, 2026 at 1:30 PM and ends at 2:20 PM.",
+    "value": "",
+    "frame": [
+     289,
+     681,
+     100,
+     15
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "61",
+    "role": "static text",
+    "label": "BIO 310 A - Cell Biology (Seminar) at HST T639. Starts on October 9, 2026 at 12:30 PM and ends at 1:50 PM.",
+    "value": "",
+    "frame": [
+     289,
+     681,
+     100,
+     15
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "62",
+    "role": "static text",
+    "label": "Study Group. Starts on September 22, 2026 at 6:00 PM and ends at 7:00 PM.",
+    "value": "",
+    "frame": [
+     0,
+     967,
+     100,
+     15
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "63",
+    "role": "static text",
+    "label": "Interview Prep Course. Starts on October 1, 2026 at 3:00 PM and ends at 5:00 PM.",
+    "value": "",
+    "frame": [
+     0,
+     967,
+     100,
+     15
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "64",
+    "role": "static text",
+    "label": "PHYS 202 A - Waves and Optics (Lecture) at MGH 389. Starts on October 2, 2026 at 3:30 PM and ends at 4:20 PM.",
+    "value": "",
+    "frame": [
+     0,
+     967,
+     100,
+     15
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "65",
+    "role": "static text",
+    "label": "Interview Prep Course. Starts on October 8, 2026 at 3:00 PM and ends at 5:00 PM.",
+    "value": "",
+    "frame": [
+     0,
+     967,
+     100,
+     15
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "66",
+    "role": "static text",
+    "label": "PHYS 202 A - Waves and Optics (Lecture) at MGH 389. Starts on October 9, 2026 at 3:30 PM and ends at 4:20 PM.",
+    "value": "",
+    "frame": [
+     0,
+     967,
+     100,
+     15
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   }
+  ],
+  "context_lines": [
+   "title: Calendar",
+   "September 2026",
+   "Labor Day. September 7, 2026, All-Day",
+   "Rosh Hashanah. September 12, 2026, All-Day",
+   "Rosh Hashanah (day 2). September 13, 2026, All-Day",
+   "Yom Kippur. September 21, 2026, All-Day",
+   "buy a desk lamp. September 22, 2026, All-Day",
+   "Fellowship Application Deadline. October 10, 2026, All-Day"
+  ],
+  "focused": null,
+  "dialog_text": "",
+  "fullscreen": false,
+  "node_count": 124,
+  "truncated": false,
+  "secs": 0.079
+ },
+ "cases": [
+  {
+   "goal": "switch to week view",
+   "expected_id": "5",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "show the day view",
+   "expected_id": "4",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "show the whole year",
+   "expected_id": "7",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "jump to today",
+   "expected_id": "10",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "go to the next month",
+   "expected_id": "11",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "go to the previous month",
+   "expected_id": "9",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "add a new event",
+   "expected_id": "0",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "show my calendars list",
+   "expected_id": "2",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "open the inbox of invitations",
+   "expected_id": "3",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "open the flight details",
+   "expected_id": "39",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "open the fellowship deadline",
+   "expected_id": "55",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "see the holiday on september 21",
+   "expected_id": "34",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "put today's plan on the calendar",
+   "expected_id": "0",
+   "expected": "click",
+   "overlap": false,
+   "distractor": true,
+   "text": null,
+   "must_not_offer": [],
+   "note": "distractor: Today shares a token, Add Event none"
+  }
+ ]
+}

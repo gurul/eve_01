@@ -1,0 +1,16 @@
+{"ts": "2026-08-26T12:30:00-07:00", "ch": "telegram", "conv": "t-1787772600000-fc75", "who": "owner", "kind": "say", "text": "My lab partner in ECE 412 is Mina."}
+{"ts": "2026-08-26T12:31:38-07:00", "ch": "telegram", "conv": "t-1787772600000-fc75", "who": "owner", "kind": "say", "text": "Also had to buy the lab kit, $54."}
+{"ts": "2026-08-26T12:32:44-07:00", "ch": "telegram", "conv": "t-1787772600000-fc75", "who": "eve", "kind": "say", "text": "Logged both."}
+{"ts": "2026-08-26T12:36:10-07:00", "ch": "telegram", "conv": "t-1787772600000-fc75", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-26T16:40:00-07:00", "ch": "voice", "conv": "v-1787787600000-e463", "who": "owner", "kind": "say", "text": "Set a timer for 12 minutes."}
+{"ts": "2026-08-26T16:40:44-07:00", "ch": "voice", "conv": "v-1787787600000-e463", "who": "eve", "kind": "say", "text": "Timer set for 12 minutes."}
+{"ts": "2026-08-26T16:43:24-07:00", "ch": "voice", "conv": "v-1787787600000-e463", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-26T19:00:00-07:00", "ch": "telegram", "conv": "t-1787796000000-499f", "who": "owner", "kind": "say", "text": "Ironwood is raising the membership to $39 starting September 1."}
+{"ts": "2026-08-26T19:01:31-07:00", "ch": "telegram", "conv": "t-1787796000000-499f", "who": "eve", "kind": "say", "text": "Okay, $39 from September."}
+{"ts": "2026-08-26T19:04:33-07:00", "ch": "telegram", "conv": "t-1787796000000-499f", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-26T19:50:00-07:00", "ch": "telegram", "conv": "t-1787799000000-3fc4", "who": "owner", "kind": "say", "text": "How do you pronounce quinoa?"}
+{"ts": "2026-08-26T19:51:48-07:00", "ch": "telegram", "conv": "t-1787799000000-3fc4", "who": "eve", "kind": "say", "text": "KEEN-wah."}
+{"ts": "2026-08-26T19:55:47-07:00", "ch": "telegram", "conv": "t-1787799000000-3fc4", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-26T22:20:00-07:00", "ch": "voice", "conv": "v-1787808000000-c924", "who": "owner", "kind": "say", "text": "Thanks eve."}
+{"ts": "2026-08-26T22:20:53-07:00", "ch": "voice", "conv": "v-1787808000000-c924", "who": "eve", "kind": "say", "text": "Anytime."}
+{"ts": "2026-08-26T22:25:03-07:00", "ch": "voice", "conv": "v-1787808000000-c924", "who": "system", "kind": "close", "text": ""}

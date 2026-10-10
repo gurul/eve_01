@@ -1,0 +1,12 @@
+{"ts": "2026-08-16T13:40:00-07:00", "ch": "telegram", "conv": "t-1786912800000-f938", "who": "owner", "kind": "say", "text": "Is it 'fewer' or 'less' for things you can count?"}
+{"ts": "2026-08-16T13:41:20-07:00", "ch": "telegram", "conv": "t-1786912800000-f938", "who": "eve", "kind": "say", "text": "Fewer, for things you can count."}
+{"ts": "2026-08-16T13:44:33-07:00", "ch": "telegram", "conv": "t-1786912800000-f938", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-16T18:15:00-07:00", "ch": "voice", "conv": "v-1786929300000-6666", "who": "owner", "kind": "say", "text": "Volume down a bit."}
+{"ts": "2026-08-16T18:16:11-07:00", "ch": "voice", "conv": "v-1786929300000-6666", "who": "eve", "kind": "say", "text": "Done."}
+{"ts": "2026-08-16T18:20:10-07:00", "ch": "voice", "conv": "v-1786929300000-6666", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-16T19:00:00-07:00", "ch": "voice", "conv": "v-1786932000000-0cd7", "who": "owner", "kind": "say", "text": "Back from Denver. The ceremony at Cedar Hall was the best part of the trip."}
+{"ts": "2026-08-16T19:01:20-07:00", "ch": "voice", "conv": "v-1786932000000-0cd7", "who": "eve", "kind": "say", "text": "Welcome home."}
+{"ts": "2026-08-16T19:04:57-07:00", "ch": "voice", "conv": "v-1786932000000-0cd7", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-16T19:50:00-07:00", "ch": "voice", "conv": "v-1786935000000-5ee6", "who": "owner", "kind": "say", "text": "Play something chill."}
+{"ts": "2026-08-16T19:51:15-07:00", "ch": "voice", "conv": "v-1786935000000-5ee6", "who": "eve", "kind": "say", "text": "Playing a lo-fi mix."}
+{"ts": "2026-08-16T19:54:29-07:00", "ch": "voice", "conv": "v-1786935000000-5ee6", "who": "system", "kind": "close", "text": ""}

@@ -1,0 +1,181 @@
+{
+  "ax": {
+    "Keyword": {
+      "n": 310,
+      "click_cases": 282,
+      "pressed": 186,
+      "correct_clicks": 166,
+      "wrong_clicks": 20,
+      "coverage": 0.5886524822695035,
+      "precision": 0.8924731182795699,
+      "accuracy": 0.6129032258064516,
+      "abstentions": 124,
+      "errors": 0,
+      "p50_ms": 0.07406251097563654,
+      "p90_ms": 0.13591698370873928
+    },
+    "Jev": {
+      "n": 310,
+      "click_cases": 282,
+      "pressed": 183,
+      "correct_clicks": 182,
+      "wrong_clicks": 1,
+      "coverage": 0.6453900709219859,
+      "precision": 0.994535519125683,
+      "accuracy": 0.6774193548387096,
+      "abstentions": 127,
+      "errors": 0,
+      "p50_ms": 285.1877500070259,
+      "p90_ms": 373.07550001423806
+    },
+    "Decisions (AX only)": {
+      "n": 310,
+      "click_cases": 282,
+      "pressed": 78,
+      "correct_clicks": 78,
+      "wrong_clicks": 0,
+      "coverage": 0.2765957446808511,
+      "precision": 1.0,
+      "accuracy": 0.3419354838709677,
+      "abstentions": 232,
+      "errors": 4,
+      "p50_ms": 165.75516649754718,
+      "p90_ms": 325.873166002566
+    },
+    "Keyword \u2192 Jev": {
+      "n": 310,
+      "click_cases": 282,
+      "pressed": 233,
+      "correct_clicks": 213,
+      "wrong_clicks": 20,
+      "coverage": 0.7553191489361702,
+      "precision": 0.9141630901287554,
+      "accuracy": 0.7645161290322581,
+      "abstentions": 77,
+      "errors": 0,
+      "p50_ms": 0.12358298408798873,
+      "p90_ms": 323.3252069912851
+    },
+    "Keyword \u2192 Decisions": {
+      "n": 310,
+      "click_cases": 282,
+      "pressed": 206,
+      "correct_clicks": 186,
+      "wrong_clicks": 20,
+      "coverage": 0.6595744680851063,
+      "precision": 0.9029126213592233,
+      "accuracy": 0.6774193548387096,
+      "abstentions": 104,
+      "errors": 4,
+      "p50_ms": 0.12358298408798873,
+      "p90_ms": 198.58212501276284
+    }
+  },
+  "visual": {
+    "Decisions": {
+      "n": 72,
+      "targets": 48,
+      "target_clicks": 36,
+      "correct_clicks": 36,
+      "wrong_clicks": 0,
+      "coverage": 1.0,
+      "target_p50_ms": 190.53185450320598,
+      "verification_p50_ms": 195.19104200298898,
+      "verification_n": 24,
+      "verification_accuracy": 1.0,
+      "true_positive_rate": 1.0,
+      "false_positive_rate": 0.0,
+      "errors": 0
+    },
+    "Jev": {
+      "n": 72,
+      "targets": 48,
+      "target_clicks": 36,
+      "correct_clicks": 0,
+      "wrong_clicks": 0,
+      "coverage": 0.0,
+      "target_p50_ms": 278.40347950404976,
+      "verification_p50_ms": 271.76858301390894,
+      "verification_n": 24,
+      "verification_accuracy": 0.5,
+      "true_positive_rate": 0.0,
+      "false_positive_rate": 0.0,
+      "errors": 0
+    }
+  },
+  "browser": {
+    "gpt-6-astra": {
+      "n": 18,
+      "goal_reached": 18,
+      "autonomous_success": 14,
+      "handoffs": 4,
+      "errors": 0,
+      "p50_secs": 9.055,
+      "p90_secs": 12.32
+    },
+    "gpt-6-luna": {
+      "n": 18,
+      "goal_reached": 18,
+      "autonomous_success": 14,
+      "handoffs": 4,
+      "errors": 0,
+      "p50_secs": 5.640000000000001,
+      "p90_secs": 11.57
+    },
+    "gpt-6-sol": {
+      "n": 18,
+      "goal_reached": 18,
+      "autonomous_success": 14,
+      "handoffs": 4,
+      "errors": 0,
+      "p50_secs": 6.52,
+      "p90_secs": 10.68
+    }
+  },
+  "sources": {
+    "ax.json": "e26301e546d1a35a634d0b4f63b40705d9835c37cf5981d4788c811aa27b3350",
+    "visual.json": "1c0866b4568484b677c657979ce4c2cc8a98d27140d2629db24d44a360be883a",
+    "browser/runs-gpt-6-astra.jsonl": "a1e027a80bfde0a3676065392dfa11e870c199226aea59034a136f4d1293b880",
+    "browser/runs-gpt-6-luna.jsonl": "03f01a6f98595e5c427b733073f7bae62ab4e0475efe1c207ab6488fd12f9df2",
+    "browser/runs-gpt-6-sol.jsonl": "bee75d3e9cf40dc51cbb8d65071c647c372bba5b95f846df9d85efb1171bfa22",
+    "bridge/tests/fixtures/ax/select/calendar-month.json": "53dc9775f1cb61ee390c72f777432ccb6187f9ee58367a581f82cd999f377e68",
+    "bridge/tests/fixtures/ax/select/finder-downloads.json": "7d7c08021cd0e3c39c1392edc9b46da3b6b9a82d4257145e5eea5461602427a9",
+    "bridge/tests/fixtures/ax/select/music-main.json": "969a9e1416f0f192615be32fad4eb832b4f0d5fc5b00167d449553d6215c8ad9",
+    "bridge/tests/fixtures/ax/select/safari-wikipedia.json": "d1d6cf4afc8adf363dc0d22186e7c8734053157efa7af42e81aa68b2d618a28b",
+    "bridge/tests/fixtures/ax/select/settings-general.json": "b5903ed3fc49345cf7a60f5f1bdd43acdddec2fab7de607a4d6a93874177782e",
+    "bridge/tests/fixtures/ax/holdout/calendar-week.json": "96d488aa09104d197dc7a96b4cb975f77d15d764c35ddd25a795cfb51b4d2894",
+    "bridge/tests/fixtures/ax/holdout/mail-compose.json": "4a79e7cb98efa133203ebe9e8ccf6c0c80c969b03628c36ea2842266ed74ab0f",
+    "bridge/tests/fixtures/ax/holdout/notes-main.json": "1cdc75270e8c79b0fc6d2899f1bf43831d58f94031345b046ea591eb47cee75a",
+    "bridge/tests/fixtures/ax/holdout/photos-main.json": "d59ca97433f2330bde28096125d0034ce0a04442a9f3780478cb6b18e4712b11",
+    "bridge/tests/fixtures/ax/holdout/reminders-dialog.json": "e8aa00153761d7f5341fbf712577da6d2c068b6e6dfc35dd3c15989f6c5b02a4",
+    "bridge/tests/fixtures/ax/holdout/reminders-main.json": "7330ea19147c36b1f04284aa9fe01c19f2ebdc2f15e644087813ccc8b1f32ebd",
+    "bridge/tests/fixtures/ax/holdout/safari-distractor.json": "57ee6986d420beb3bbde8a7f1db5f259eea078e4588f523f6aa7b1135a83b761",
+    "bridge/tests/fixtures/ax/holdout/settings-appearance.json": "7aaefe468d2a79e660759556cbc443185b13c7322ba158492c1efc4bc7d40255"
+  },
+  "guarded_keyword_admission": {
+    "n": 155,
+    "engaged": 49,
+    "right": 49,
+    "precision": 1.0,
+    "wilson": [
+      0.9273021797160157,
+      1.0
+    ],
+    "wrong": [],
+    "engaged_on_abstain": 0,
+    "coverage": 0.3475177304964539,
+    "sensitive": 0,
+    "declined": {
+      "already_selected": 1,
+      "ambiguous_target": 22,
+      "confirm": 14,
+      "dialog_open": 2,
+      "names_app": 2,
+      "no_match": 27,
+      "question": 2,
+      "uncovered": 36
+    },
+    "cost_per_case": 1.1064516129032258,
+    "limitation": "Actual router with recording effectors; post-click change mocked. Admission only."
+  }
+}

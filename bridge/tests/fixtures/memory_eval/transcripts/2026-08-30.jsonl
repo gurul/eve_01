@@ -1,0 +1,10 @@
+{"ts": "2026-08-30T10:00:00-07:00", "ch": "telegram", "conv": "t-1788109200000-cb63", "who": "owner", "kind": "say", "text": "Front door code at Quarry Street is 7291."}
+{"ts": "2026-08-30T10:00:39-07:00", "ch": "telegram", "conv": "t-1788109200000-cb63", "who": "eve", "kind": "say", "text": "Got it."}
+{"ts": "2026-08-30T10:03:36-07:00", "ch": "telegram", "conv": "t-1788109200000-cb63", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-30T12:45:00-07:00", "ch": "voice", "conv": "v-1788119100000-3ed6", "who": "owner", "kind": "say", "text": "Skip this song."}
+{"ts": "2026-08-30T12:45:44-07:00", "ch": "voice", "conv": "v-1788119100000-3ed6", "who": "eve", "kind": "say", "text": "Skipped."}
+{"ts": "2026-08-30T12:49:02-07:00", "ch": "voice", "conv": "v-1788119100000-3ed6", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-30T14:00:00-07:00", "ch": "telegram", "conv": "t-1788123600000-0d57", "who": "owner", "kind": "say", "text": "Ines from high school is visiting next Saturday, September 5. Where should we get dinner?"}
+{"ts": "2026-08-30T14:01:38-07:00", "ch": "telegram", "conv": "t-1788123600000-0d57", "who": "eve", "kind": "tool", "text": "web_search: quiet dinner restaurants Port Alder", "tool": "web_search"}
+{"ts": "2026-08-30T14:03:15-07:00", "ch": "telegram", "conv": "t-1788123600000-0d57", "who": "eve", "kind": "say", "text": "Saffron Table on Dock Street: Persian food, and quiet enough to talk."}
+{"ts": "2026-08-30T14:06:05-07:00", "ch": "telegram", "conv": "t-1788123600000-0d57", "who": "system", "kind": "close", "text": ""}

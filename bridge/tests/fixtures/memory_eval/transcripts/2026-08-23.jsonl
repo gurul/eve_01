@@ -1,0 +1,16 @@
+{"ts": "2026-08-23T07:15:00-07:00", "ch": "voice", "conv": "v-1787494500000-26cf", "who": "owner", "kind": "say", "text": "Thanks eve."}
+{"ts": "2026-08-23T07:15:53-07:00", "ch": "voice", "conv": "v-1787494500000-26cf", "who": "eve", "kind": "say", "text": "Anytime."}
+{"ts": "2026-08-23T07:19:12-07:00", "ch": "voice", "conv": "v-1787494500000-26cf", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-23T08:55:00-07:00", "ch": "voice", "conv": "v-1787500500000-6e60", "who": "owner", "kind": "say", "text": "What's the weather tomorrow?"}
+{"ts": "2026-08-23T08:56:31-07:00", "ch": "voice", "conv": "v-1787500500000-6e60", "who": "eve", "kind": "tool", "text": "weather: Port Alder tomorrow, sunny, high 24 C", "tool": "weather"}
+{"ts": "2026-08-23T08:57:31-07:00", "ch": "voice", "conv": "v-1787500500000-6e60", "who": "eve", "kind": "say", "text": "Sunny tomorrow, high around 24."}
+{"ts": "2026-08-23T08:59:21-07:00", "ch": "voice", "conv": "v-1787500500000-6e60", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-23T17:00:00-07:00", "ch": "voice", "conv": "v-1787529600000-91b2", "who": "owner", "kind": "say", "text": "Mom called. She says Dad's retiring in December."}
+{"ts": "2026-08-23T17:01:40-07:00", "ch": "voice", "conv": "v-1787529600000-91b2", "who": "eve", "kind": "say", "text": "That's big news."}
+{"ts": "2026-08-23T17:04:13-07:00", "ch": "voice", "conv": "v-1787529600000-91b2", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-23T22:20:00-07:00", "ch": "voice", "conv": "v-1787548800000-a033", "who": "owner", "kind": "say", "text": "What's the capital of Australia?"}
+{"ts": "2026-08-23T22:21:28-07:00", "ch": "voice", "conv": "v-1787548800000-a033", "who": "eve", "kind": "say", "text": "Canberra."}
+{"ts": "2026-08-23T22:23:27-07:00", "ch": "voice", "conv": "v-1787548800000-a033", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-23T23:05:00-07:00", "ch": "voice", "conv": "v-1787551500000-750c", "who": "owner", "kind": "say", "text": "Volume down a bit."}
+{"ts": "2026-08-23T23:06:11-07:00", "ch": "voice", "conv": "v-1787551500000-750c", "who": "eve", "kind": "say", "text": "Done."}
+{"ts": "2026-08-23T23:10:06-07:00", "ch": "voice", "conv": "v-1787551500000-750c", "who": "system", "kind": "close", "text": ""}

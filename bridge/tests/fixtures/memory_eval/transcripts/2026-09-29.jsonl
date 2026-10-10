@@ -1,0 +1,10 @@
+{"ts": "2026-09-29T07:00:00-07:00", "ch": "bus", "conv": "b-1790690400000-1685", "who": "claude", "kind": "say", "text": "Grocery tracker: September spend $287.40."}
+{"ts": "2026-09-29T08:55:00-07:00", "ch": "voice", "conv": "v-1790697300000-8a8c", "who": "owner", "kind": "say", "text": "Volume down a bit."}
+{"ts": "2026-09-29T08:56:11-07:00", "ch": "voice", "conv": "v-1790697300000-8a8c", "who": "eve", "kind": "say", "text": "Done."}
+{"ts": "2026-09-29T08:59:31-07:00", "ch": "voice", "conv": "v-1790697300000-8a8c", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-29T15:00:00-07:00", "ch": "telegram", "conv": "t-1790719200000-2489", "who": "owner", "kind": "say", "text": "Tobias is joining my Cascade Hack team."}
+{"ts": "2026-09-29T15:00:59-07:00", "ch": "telegram", "conv": "t-1790719200000-2489", "who": "eve", "kind": "say", "text": "Nice."}
+{"ts": "2026-09-29T15:04:48-07:00", "ch": "telegram", "conv": "t-1790719200000-2489", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-29T21:00:00-07:00", "ch": "telegram", "conv": "t-1790740800000-7ee0", "who": "owner", "kind": "say", "text": "Lining up 3 Shelfie user interviews on October 2."}
+{"ts": "2026-09-29T21:01:37-07:00", "ch": "telegram", "conv": "t-1790740800000-7ee0", "who": "eve", "kind": "say", "text": "Good."}
+{"ts": "2026-09-29T21:05:54-07:00", "ch": "telegram", "conv": "t-1790740800000-7ee0", "who": "system", "kind": "close", "text": ""}

@@ -1,0 +1,2137 @@
+{
+ "captured": {
+  "ax_candidates_sha": "96599e77c9620855df3314719f9bc3f8ef40a57293c021378302e525267a9fce",
+  "macos": "26.6.2",
+  "app_version": "7.0",
+  "at": "2026-09-21T02:44:39-07:00",
+  "truncated": false,
+  "redacted": true
+ },
+ "screen": [
+  1512,
+  982
+ ],
+ "raw": {
+  "app": "Reminders",
+  "bundle": "com.apple.reminders",
+  "pid": 57891,
+  "title": "Reminders",
+  "fullscreen": false,
+  "node_count": 58,
+  "truncated": false,
+  "secs": 0.0578,
+  "root": {
+   "role": "AXWindow",
+   "subrole": "AXStandardWindow",
+   "title": "Reminders",
+   "description": "",
+   "value": null,
+   "frame": [
+    172.0,
+    215.0,
+    1235.0,
+    692.0
+   ],
+   "actions": [],
+   "enabled": true,
+   "focused": true,
+   "children": [
+    {
+     "role": "AXSplitGroup",
+     "subrole": "",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      172.0,
+      215.0,
+      1235.0,
+      692.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [
+      {
+       "role": "AXScrollArea",
+       "subrole": "",
+       "title": "",
+       "description": "",
+       "value": null,
+       "frame": [
+        180.0,
+        267.0,
+        359.0,
+        632.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [
+        {
+         "role": "AXOutline",
+         "subrole": "",
+         "title": "",
+         "description": "Account Lists",
+         "value": null,
+         "frame": [
+          179.0,
+          266.0,
+          361.0,
+          634.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [
+          {
+           "role": "AXRow",
+           "subrole": "AXOutlineRow",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            180.0,
+            267.0,
+            359.0,
+            137.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXCell",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              190.0,
+              267.0,
+              339.0,
+              137.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": true,
+             "children": [
+              {
+               "role": "AXGrid",
+               "subrole": "",
+               "title": "",
+               "description": "Pinned lists and system Smart Lists",
+               "value": null,
+               "frame": [
+                194.0,
+                270.0,
+                333.0,
+                126.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXButton",
+                 "subrole": "",
+                 "title": "",
+                 "description": "Today, 0 reminders",
+                 "value": null,
+                 "frame": [
+                  194.0,
+                  270.0,
+                  163.5,
+                  60.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell",
+                  "AXGrid"
+                 ]
+                },
+                {
+                 "role": "AXButton",
+                 "subrole": "",
+                 "title": "",
+                 "description": "Scheduled, 0 reminders",
+                 "value": null,
+                 "frame": [
+                  363.5,
+                  270.0,
+                  163.5,
+                  60.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell",
+                  "AXGrid"
+                 ]
+                },
+                {
+                 "role": "AXButton",
+                 "subrole": "",
+                 "title": "",
+                 "description": "All, 0 reminders",
+                 "value": null,
+                 "frame": [
+                  194.0,
+                  336.0,
+                  163.5,
+                  60.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell",
+                  "AXGrid"
+                 ]
+                },
+                {
+                 "role": "AXButton",
+                 "subrole": "",
+                 "title": "",
+                 "description": "Completed",
+                 "value": null,
+                 "frame": [
+                  363.5,
+                  336.0,
+                  163.5,
+                  60.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell",
+                  "AXGrid"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline",
+              "AXRow"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXScrollArea",
+            "AXOutline"
+           ]
+          },
+          {
+           "role": "AXRow",
+           "subrole": "AXOutlineRow",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            180.0,
+            417.0,
+            359.0,
+            127.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXCell",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              190.0,
+              417.0,
+              339.0,
+              127.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": true,
+             "children": [
+              {
+               "role": "AXGroup",
+               "subrole": "AXHostingView",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                194.0,
+                417.0,
+                333.0,
+                127.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXGroup",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  194.0,
+                  417.0,
+                  333.0,
+                  127.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [
+                  {
+                   "role": "AXHeading",
+                   "subrole": "",
+                   "title": "",
+                   "description": "Sync Reminders with iCloud",
+                   "value": null,
+                   "frame": [
+                    250.0,
+                    435.795654296875,
+                    180.5,
+                    16.0
+                   ],
+                   "actions": [],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXSplitGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell",
+                    "AXGroup",
+                    "AXGroup"
+                   ]
+                  },
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "To access your reminders on all of your devices, sign into iCloud and enable Reminders.",
+                   "frame": [
+                    250.0,
+                    455.795654296875,
+                    255.0,
+                    28.0
+                   ],
+                   "actions": [],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXSplitGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell",
+                    "AXGroup",
+                    "AXGroup"
+                   ]
+                  },
+                  {
+                   "role": "AXButton",
+                   "subrole": "",
+                   "title": "",
+                   "description": "Go to System Settings",
+                   "value": null,
+                   "frame": [
+                    210.0,
+                    500.0,
+                    301.0,
+                    28.0
+                   ],
+                   "actions": [],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXSplitGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell",
+                    "AXGroup",
+                    "AXGroup"
+                   ]
+                  },
+                  {
+                   "role": "AXButton",
+                   "subrole": "",
+                   "title": "",
+                   "description": "Close",
+                   "value": null,
+                   "frame": [
+                    489.5,
+                    434.5,
+                    20.0,
+                    20.0
+                   ],
+                   "actions": [],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXSplitGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell",
+                    "AXGroup",
+                    "AXGroup"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell",
+                  "AXGroup"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline",
+              "AXRow"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXScrollArea",
+            "AXOutline"
+           ]
+          },
+          {
+           "role": "AXRow",
+           "subrole": "AXOutlineRow",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            180.0,
+            557.0,
+            359.0,
+            22.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXCell",
+             "subrole": "",
+             "title": "",
+             "description": "My Lists",
+             "value": null,
+             "frame": [
+              190.0,
+              557.0,
+              339.0,
+              22.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": true,
+             "children": [
+              {
+               "role": "AXRow",
+               "subrole": "",
+               "title": "",
+               "description": "My Lists",
+               "value": null,
+               "frame": [
+                194.0,
+                557.0,
+                343.0,
+                22.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXUnknown",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "My Lists",
+                 "frame": [
+                  201.0,
+                  560.0,
+                  329.0,
+                  16.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline",
+              "AXRow"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXScrollArea",
+            "AXOutline"
+           ]
+          },
+          {
+           "role": "AXRow",
+           "subrole": "AXOutlineRow",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            180.0,
+            579.0,
+            359.0,
+            36.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXCell",
+             "subrole": "",
+             "title": "",
+             "description": "Reminders, 0 reminders, Blue",
+             "value": null,
+             "frame": [
+              190.0,
+              579.0,
+              339.0,
+              36.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": true,
+             "children": [
+              {
+               "role": "AXUnknown",
+               "subrole": "",
+               "title": "",
+               "description": "Reminders, 0 reminders, Blue",
+               "value": null,
+               "frame": [
+                196.0,
+                579.0,
+                327.0,
+                36.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXButton",
+                 "subrole": "",
+                 "title": "",
+                 "description": "Blue",
+                 "value": null,
+                 "frame": [
+                  198.0,
+                  585.0,
+                  24.0,
+                  24.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [
+                  {
+                   "role": "AXImage",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": null,
+                   "frame": [
+                    197.0,
+                    584.0,
+                    26.0,
+                    26.0
+                   ],
+                   "actions": [],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXSplitGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell",
+                    "AXUnknown",
+                    "AXButton"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell",
+                  "AXUnknown"
+                 ]
+                },
+                {
+                 "role": "AXTextField",
+                 "subrole": "",
+                 "title": "",
+                 "description": "Reminders",
+                 "value": "Reminders",
+                 "frame": [
+                  230.0,
+                  588.0,
+                  240.0,
+                  18.0
+                 ],
+                 "actions": [
+                  "AXShowMenu",
+                  "AXConfirm"
+                 ],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell",
+                  "AXUnknown"
+                 ]
+                },
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "0",
+                 "value": "0",
+                 "frame": [
+                  494.0,
+                  588.0,
+                  22.0,
+                  18.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell",
+                  "AXUnknown"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline",
+              "AXRow"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXScrollArea",
+            "AXOutline"
+           ]
+          },
+          {
+           "role": "AXColumn",
+           "subrole": "",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            190.0,
+            267.0,
+            339.0,
+            632.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXScrollArea",
+            "AXOutline"
+           ]
+          }
+         ],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXSplitGroup",
+          "AXScrollArea"
+         ]
+        }
+       ],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXSplitGroup"
+       ]
+      },
+      {
+       "role": "AXSplitter",
+       "subrole": "",
+       "title": "",
+       "description": "",
+       "value": 368.0,
+       "frame": [
+        540.0,
+        267.0,
+        0.0,
+        640.0
+       ],
+       "actions": [],
+       "enabled": false,
+       "focused": false,
+       "children": [],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXSplitGroup"
+       ]
+      },
+      {
+       "role": "AXLayoutArea",
+       "subrole": "",
+       "title": "",
+       "description": "",
+       "value": null,
+       "frame": [
+        172.0,
+        215.0,
+        1235.0,
+        692.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [
+        {
+         "role": "AXScrollArea",
+         "subrole": "",
+         "title": "",
+         "description": "",
+         "value": null,
+         "frame": [
+          540.0,
+          316.0,
+          867.0,
+          591.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [
+          {
+           "role": "AXOutline",
+           "subrole": "",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            539.0,
+            315.0,
+            869.0,
+            593.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXRow",
+             "subrole": "AXOutlineRow",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              540.0,
+              316.0,
+              867.0,
+              36.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": false,
+             "children": [
+              {
+               "role": "AXCell",
+               "subrole": "",
+               "title": "",
+               "description": "0 Completed, Hiding completed reminders",
+               "value": null,
+               "frame": [
+                540.0,
+                316.0,
+                867.0,
+                36.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": true,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "0 Completed, Hiding completed reminders",
+                 "value": null,
+                 "frame": [
+                  555.0,
+                  316.0,
+                  846.0,
+                  36.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "0 Completed",
+                   "frame": [
+                    555.0,
+                    325.0,
+                    78.5,
+                    18.0
+                   ],
+                   "actions": [],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXSplitGroup",
+                    "AXLayoutArea",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell",
+                    "AXCell"
+                   ]
+                  },
+                  {
+                   "role": "AXButton",
+                   "subrole": "",
+                   "title": "Show",
+                   "description": "",
+                   "value": null,
+                   "frame": [
+                    1355.0,
+                    325.0,
+                    39.0,
+                    18.0
+                   ],
+                   "actions": [],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [
+                    {
+                     "role": "AXButton",
+                     "subrole": "",
+                     "title": "Show",
+                     "description": "",
+                     "value": null,
+                     "frame": [
+                      1355.0,
+                      325.0,
+                      39.0,
+                      18.0
+                     ],
+                     "actions": [],
+                     "enabled": true,
+                     "focused": false,
+                     "children": [],
+                     "ancestor_roles": [
+                      "AXWindow",
+                      "AXSplitGroup",
+                      "AXLayoutArea",
+                      "AXScrollArea",
+                      "AXOutline",
+                      "AXRow",
+                      "AXCell",
+                      "AXCell",
+                      "AXButton"
+                     ]
+                    }
+                   ],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXSplitGroup",
+                    "AXLayoutArea",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell",
+                    "AXCell"
+                   ]
+                  },
+                  {
+                   "role": "AXMenuButton",
+                   "subrole": "",
+                   "title": "Clear",
+                   "description": "",
+                   "value": null,
+                   "frame": [
+                    647.5,
+                    325.0,
+                    33.5,
+                    18.0
+                   ],
+                   "actions": [],
+                   "enabled": false,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXSplitGroup",
+                    "AXLayoutArea",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXLayoutArea",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXLayoutArea",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXLayoutArea",
+              "AXScrollArea",
+              "AXOutline"
+             ]
+            },
+            {
+             "role": "AXRow",
+             "subrole": "AXOutlineRow",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              540.0,
+              352.0,
+              867.0,
+              0.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": false,
+             "children": [
+              {
+               "role": "AXCell",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                540.0,
+                352.0,
+                867.0,
+                0.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": true,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXLayoutArea",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXLayoutArea",
+              "AXScrollArea",
+              "AXOutline"
+             ]
+            },
+            {
+             "role": "AXColumn",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              540.0,
+              316.0,
+              867.0,
+              591.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXLayoutArea",
+              "AXScrollArea",
+              "AXOutline"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXLayoutArea",
+            "AXScrollArea"
+           ]
+          }
+         ],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXSplitGroup",
+          "AXLayoutArea"
+         ]
+        }
+       ],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXSplitGroup"
+       ]
+      },
+      {
+       "role": "AXTextArea",
+       "subrole": "",
+       "title": "",
+       "description": "Reminders ",
+       "value": null,
+       "frame": [
+        556.0,
+        267.0,
+        835.0,
+        40.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXSplitGroup"
+       ]
+      }
+     ],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXToolbar",
+     "subrole": "",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      172.0,
+      215.0,
+      1235.0,
+      52.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [
+      {
+       "role": "AXButton",
+       "subrole": "",
+       "title": "",
+       "description": "Add List",
+       "value": null,
+       "frame": [
+        452.0,
+        215.0,
+        44.0,
+        52.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXToolbar"
+       ]
+      },
+      {
+       "role": "AXButton",
+       "subrole": "",
+       "title": "",
+       "description": "Sidebar",
+       "value": null,
+       "frame": [
+        496.0,
+        215.0,
+        44.0,
+        52.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXToolbar"
+       ]
+      },
+      {
+       "role": "AXButton",
+       "subrole": "",
+       "title": "",
+       "description": "Add Reminder",
+       "value": null,
+       "frame": [
+        1127.0,
+        215.0,
+        44.0,
+        52.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXToolbar"
+       ]
+      },
+      {
+       "role": "AXGroup",
+       "subrole": "",
+       "title": "",
+       "description": "",
+       "value": null,
+       "frame": [
+        1171.0,
+        215.0,
+        232.0,
+        52.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [
+        {
+         "role": "AXTextField",
+         "subrole": "AXSearchField",
+         "title": "",
+         "description": "",
+         "value": "",
+         "frame": [
+          1174.0,
+          222.0,
+          226.0,
+          38.0
+         ],
+         "actions": [
+          "AXShowMenu",
+          "AXConfirm"
+         ],
+         "enabled": true,
+         "focused": false,
+         "children": [
+          {
+           "role": "AXButton",
+           "subrole": "",
+           "title": "",
+           "description": "Search",
+           "value": null,
+           "frame": [
+            1185.0,
+            237.0,
+            16.0,
+            9.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXToolbar",
+            "AXGroup",
+            "AXTextField"
+           ]
+          }
+         ],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXToolbar",
+          "AXGroup"
+         ]
+        }
+       ],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXToolbar"
+       ]
+      }
+     ],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXButton",
+     "subrole": "AXCloseButton",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      190.0,
+      233.0,
+      16.0,
+      16.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXButton",
+     "subrole": "AXFullScreenButton",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      236.0,
+      233.0,
+      16.0,
+      16.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [
+      {
+       "role": "AXGroup",
+       "subrole": "",
+       "title": "",
+       "description": "",
+       "value": null,
+       "frame": [
+        237.0,
+        234.0,
+        14.0,
+        14.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [
+        {
+         "role": "AXGroup",
+         "subrole": "",
+         "title": "",
+         "description": "",
+         "value": null,
+         "frame": [
+          237.0,
+          234.0,
+          14.0,
+          14.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXButton",
+          "AXGroup"
+         ]
+        }
+       ],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXButton"
+       ]
+      }
+     ],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXButton",
+     "subrole": "AXMinimizeButton",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      213.0,
+      233.0,
+      16.0,
+      16.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    }
+   ],
+   "ancestor_roles": []
+  }
+ },
+ "snapshot": {
+  "seq": 1,
+  "app": "Reminders",
+  "bundle": "com.apple.reminders",
+  "title": "Reminders",
+  "pid": 57891,
+  "elements": [
+   {
+    "id": "0",
+    "role": "button",
+    "label": "Add List",
+    "value": "",
+    "frame": [
+     452,
+     215,
+     44,
+     52
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "1",
+    "role": "button",
+    "label": "Sidebar",
+    "value": "",
+    "frame": [
+     496,
+     215,
+     44,
+     52
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "2",
+    "role": "button",
+    "label": "Add Reminder",
+    "value": "",
+    "frame": [
+     1127,
+     215,
+     44,
+     52
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "3",
+    "role": "search field",
+    "label": "Search",
+    "value": "",
+    "frame": [
+     1174,
+     222,
+     226,
+     38
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXConfirm"
+    ],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": true
+   },
+   {
+    "id": "4",
+    "role": "button",
+    "label": "Search",
+    "value": "",
+    "frame": [
+     1185,
+     237,
+     16,
+     9
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "5",
+    "role": "row",
+    "label": "Today, 0 reminders",
+    "value": "",
+    "frame": [
+     180,
+     267,
+     359,
+     137
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "6",
+    "role": "text area",
+    "label": "Reminders",
+    "value": "",
+    "frame": [
+     556,
+     267,
+     835,
+     40
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": true
+   },
+   {
+    "id": "7",
+    "role": "button",
+    "label": "Today, 0 reminders",
+    "value": "",
+    "frame": [
+     194,
+     270,
+     164,
+     60
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "8",
+    "role": "button",
+    "label": "Scheduled, 0 reminders",
+    "value": "",
+    "frame": [
+     364,
+     270,
+     164,
+     60
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "9",
+    "role": "row",
+    "label": "0 Completed",
+    "value": "",
+    "frame": [
+     540,
+     316,
+     867,
+     36
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "10",
+    "role": "cell",
+    "label": "0 Completed, Hiding completed reminders",
+    "value": "",
+    "frame": [
+     540,
+     316,
+     867,
+     36
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "11",
+    "role": "cell",
+    "label": "0 Completed, Hiding completed reminders",
+    "value": "",
+    "frame": [
+     555,
+     316,
+     846,
+     36
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "12",
+    "role": "static text",
+    "label": "0 Completed",
+    "value": "",
+    "frame": [
+     555,
+     325,
+     78,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "13",
+    "role": "menu button",
+    "label": "Clear",
+    "value": "",
+    "frame": [
+     648,
+     325,
+     34,
+     18
+    ],
+    "actions": [],
+    "enabled": false,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "14",
+    "role": "button",
+    "label": "Show",
+    "value": "",
+    "frame": [
+     1355,
+     325,
+     39,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "15",
+    "role": "button",
+    "label": "Show",
+    "value": "",
+    "frame": [
+     1355,
+     325,
+     39,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "16",
+    "role": "button",
+    "label": "All, 0 reminders",
+    "value": "",
+    "frame": [
+     194,
+     336,
+     164,
+     60
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "17",
+    "role": "button",
+    "label": "Completed",
+    "value": "",
+    "frame": [
+     364,
+     336,
+     164,
+     60
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "18",
+    "role": "row",
+    "label": "To access your reminders on all of your devices, sign into iCloud and enable Reminders.",
+    "value": "",
+    "frame": [
+     180,
+     417,
+     359,
+     127
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "19",
+    "role": "button",
+    "label": "Close",
+    "value": "",
+    "frame": [
+     490,
+     434,
+     20,
+     20
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "20",
+    "role": "static text",
+    "label": "To access your reminders on all of your devices, sign into iCloud and enable Reminders.",
+    "value": "",
+    "frame": [
+     250,
+     456,
+     255,
+     28
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "21",
+    "role": "button",
+    "label": "Go to System Settings",
+    "value": "",
+    "frame": [
+     210,
+     500,
+     301,
+     28
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "22",
+    "role": "cell",
+    "label": "My Lists",
+    "value": "",
+    "frame": [
+     190,
+     557,
+     339,
+     22
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "23",
+    "role": "row",
+    "label": "My Lists",
+    "value": "",
+    "frame": [
+     194,
+     557,
+     343,
+     22
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "24",
+    "role": "row",
+    "label": "Reminders",
+    "value": "",
+    "frame": [
+     180,
+     579,
+     359,
+     36
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "25",
+    "role": "cell",
+    "label": "Reminders, 0 reminders, Blue",
+    "value": "",
+    "frame": [
+     190,
+     579,
+     339,
+     36
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "26",
+    "role": "button",
+    "label": "Blue",
+    "value": "",
+    "frame": [
+     198,
+     585,
+     24,
+     24
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "27",
+    "role": "text field",
+    "label": "Reminders",
+    "value": "Reminders",
+    "frame": [
+     230,
+     588,
+     240,
+     18
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXConfirm"
+    ],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": true
+   },
+   {
+    "id": "28",
+    "role": "static text",
+    "label": "0",
+    "value": "",
+    "frame": [
+     494,
+     588,
+     22,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   }
+  ],
+  "context_lines": [
+   "title: Reminders",
+   "focused: cell 0 Completed, Hiding completed reminders",
+   "0 Completed",
+   "0"
+  ],
+  "focused": {
+   "id": "10",
+   "role": "cell",
+   "label": "0 Completed, Hiding completed reminders",
+   "value": "",
+   "frame": [
+    540,
+    316,
+    867,
+    36
+   ],
+   "actions": [],
+   "enabled": true,
+   "app": "Reminders",
+   "in_content": false,
+   "in_dialog": false,
+   "secure": false,
+   "editable": false
+  },
+  "dialog_text": "",
+  "fullscreen": false,
+  "node_count": 58,
+  "truncated": false,
+  "secs": 0.0578
+ },
+ "cases": [
+  {
+   "goal": "show today's reminders",
+   "expected_id": "7",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "show what is scheduled",
+   "expected_id": "8",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "add a reminder",
+   "expected_id": "2",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "see everything",
+   "expected_id": "16",
+   "expected": "click",
+   "overlap": false,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "show completed reminders",
+   "expected_id": "17",
+   "expected": "click",
+   "overlap": true,
+   "distractor": true,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "make a new list",
+   "expected_id": "0",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "hide the sidebar",
+   "expected_id": "1",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "open the reminders list",
+   "expected_id": "24",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "add a reminder to my list",
+   "expected_id": "2",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": "distractor: Add List shares two tokens"
+  },
+  {
+   "goal": "close the icloud banner",
+   "expected_id": "19",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  }
+ ]
+}

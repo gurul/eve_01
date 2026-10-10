@@ -1,0 +1,16 @@
+{"ts": "2026-09-26T07:15:00-07:00", "ch": "telegram", "conv": "t-1790432100000-5eef", "who": "owner", "kind": "say", "text": "Give me a word that rhymes with orange, if any."}
+{"ts": "2026-09-26T07:16:01-07:00", "ch": "telegram", "conv": "t-1790432100000-5eef", "who": "eve", "kind": "say", "text": "Nothing perfect. Door hinge is the usual cheat."}
+{"ts": "2026-09-26T07:20:04-07:00", "ch": "telegram", "conv": "t-1790432100000-5eef", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-26T11:00:00-07:00", "ch": "voice", "conv": "v-1790445600000-44c4", "who": "owner", "kind": "say", "text": "Weather station is mounted on the balcony."}
+{"ts": "2026-09-26T11:01:23-07:00", "ch": "voice", "conv": "v-1790445600000-44c4", "who": "eve", "kind": "say", "text": "Nice."}
+{"ts": "2026-09-26T11:05:08-07:00", "ch": "voice", "conv": "v-1790445600000-44c4", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-26T11:30:00-07:00", "ch": "bus", "conv": "b-1790447400000-6e2f", "who": "claude", "kind": "say", "text": "Weather station: first balcony reading 14.2 C, 71% humidity."}
+{"ts": "2026-09-26T15:00:00-07:00", "ch": "voice", "conv": "v-1790460000000-6a42", "who": "owner", "kind": "say", "text": "Sasha's pitching Shelfie at Founders Night on October 15."}
+{"ts": "2026-09-26T15:00:45-07:00", "ch": "voice", "conv": "v-1790460000000-6a42", "who": "eve", "kind": "say", "text": "Exciting."}
+{"ts": "2026-09-26T15:04:33-07:00", "ch": "voice", "conv": "v-1790460000000-6a42", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-26T19:00:00-07:00", "ch": "telegram", "conv": "t-1790474400000-c215", "who": "owner", "kind": "say", "text": "I told Haddad I'd TA Controls next spring."}
+{"ts": "2026-09-26T19:00:39-07:00", "ch": "telegram", "conv": "t-1790474400000-c215", "who": "eve", "kind": "say", "text": "Noted."}
+{"ts": "2026-09-26T19:03:33-07:00", "ch": "telegram", "conv": "t-1790474400000-c215", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-26T22:20:00-07:00", "ch": "voice", "conv": "v-1790486400000-8611", "who": "owner", "kind": "say", "text": "Pause the music."}
+{"ts": "2026-09-26T22:21:44-07:00", "ch": "voice", "conv": "v-1790486400000-8611", "who": "eve", "kind": "say", "text": "Paused."}
+{"ts": "2026-09-26T22:25:27-07:00", "ch": "voice", "conv": "v-1790486400000-8611", "who": "system", "kind": "close", "text": ""}

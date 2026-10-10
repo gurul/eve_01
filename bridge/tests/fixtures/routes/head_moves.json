@@ -1,0 +1,717 @@
+{
+ "note": "Written by Claude (Fable 5.1, an AI model) on 2026-09-21, working only from a written task description; the author saw no code, no classifier and no other fixture in this repository, so these labels are independent of any implementation. Labelling policy: an utterance gets a pose label only when it asks the robot to pose its own head, with 'look up' alone = up, 'look down at the desk/table' = desk, 'straight up / at the ceiling' = ceiling, 'look at me / face me / straight ahead / come back' = center, and a nudge or limit modifier anywhere in the utterance selecting the bit_* or far_* label. Everything else is none, including 'look up <something>' searches, looking at or finding a named object, looking around, computer actions and chit-chat that merely contain direction words, and stop/cancel words.",
+ "labels": [
+  "left",
+  "right",
+  "up",
+  "down",
+  "center",
+  "far_left",
+  "far_right",
+  "bit_left",
+  "bit_right",
+  "bit_up",
+  "bit_down",
+  "desk",
+  "ceiling",
+  "none"
+ ],
+ "cases": [
+  {
+   "text": "left",
+   "label": "left",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "turn your head to the left",
+   "label": "left",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "could you please look over to your left",
+   "label": "left",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "swivel leftwards",
+   "label": "left",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "um hey eve can you like pan to the left for me",
+   "label": "left",
+   "messy": true,
+   "trap": false
+  },
+  {
+   "text": "yeah that's right now turn left",
+   "label": "left",
+   "messy": true,
+   "trap": true,
+   "why": "'right' is an affirmation left over from the previous sentence; the command is left"
+  },
+  {
+   "text": "look right",
+   "label": "right",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "rotate your head to the right please",
+   "label": "right",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "face right",
+   "label": "right",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "and send it okay eve turn to the right",
+   "label": "right",
+   "messy": true,
+   "trap": false,
+   "why": "leading fragment belongs to an earlier dictation"
+  },
+  {
+   "text": "no not left I said look right",
+   "label": "right",
+   "messy": true,
+   "trap": true,
+   "why": "'left' is negated; the request is right"
+  },
+  {
+   "text": "up",
+   "label": "up",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "tilt your head up",
+   "label": "up",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "uh eve could you um look up",
+   "label": "up",
+   "messy": true,
+   "trap": false
+  },
+  {
+   "text": "look up for a second",
+   "label": "up",
+   "messy": false,
+   "trap": true,
+   "why": "'for a second' is a duration, not something to search for"
+  },
+  {
+   "text": "hey eve tilt it tilt your head upward",
+   "label": "up",
+   "messy": true,
+   "trap": false
+  },
+  {
+   "text": "look down",
+   "label": "down",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "tilt down",
+   "label": "down",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "would you mind pointing your head downwards",
+   "label": "down",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "hey body look down",
+   "label": "down",
+   "messy": true,
+   "trap": false,
+   "why": "'eve' misheard as 'body'"
+  },
+  {
+   "text": "so anyway look down not at the desk just down",
+   "label": "down",
+   "messy": true,
+   "trap": true,
+   "why": "the desk is explicitly excluded"
+  },
+  {
+   "text": "look at me",
+   "label": "center",
+   "messy": false,
+   "trap": false,
+   "why": "'look at <thing>' is normally none, but 'me' is the owner, so center"
+  },
+  {
+   "text": "face me",
+   "label": "center",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "eyes front",
+   "label": "center",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "come back to center",
+   "label": "center",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "look straight ahead",
+   "label": "center",
+   "messy": false,
+   "trap": true,
+   "why": "'straight' also starts 'straight up' (ceiling)"
+  },
+  {
+   "text": "okay okay um eve come back look at me",
+   "label": "center",
+   "messy": true,
+   "trap": false
+  },
+  {
+   "text": "the left one no wait just face forward again",
+   "label": "center",
+   "messy": true,
+   "trap": true,
+   "why": "'left' is a leftover fragment about something else"
+  },
+  {
+   "text": "turn all the way to the left",
+   "label": "far_left",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "look as far left as you can",
+   "label": "far_left",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "hard left",
+   "label": "far_left",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "um can you like go left like as far as it goes",
+   "label": "far_left",
+   "messy": true,
+   "trap": true,
+   "why": "extent modifier trails well after 'left'"
+  },
+  {
+   "text": "look left no further uh all the way",
+   "label": "far_left",
+   "messy": true,
+   "trap": true,
+   "why": "starts as a plain left, then is upgraded to the limit"
+  },
+  {
+   "text": "swivel all the way to the right",
+   "label": "far_right",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "hard right",
+   "label": "far_right",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "rotate fully right",
+   "label": "far_right",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "look right uh I mean all the way right",
+   "label": "far_right",
+   "messy": true,
+   "trap": true,
+   "why": "false start reads as plain right"
+  },
+  {
+   "text": "okay so eve keep going right as far as you can",
+   "label": "far_right",
+   "messy": true,
+   "trap": false
+  },
+  {
+   "text": "a little to the left",
+   "label": "bit_left",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "turn left just a touch",
+   "label": "bit_left",
+   "messy": false,
+   "trap": true,
+   "why": "nudge modifier trails the direction"
+  },
+  {
+   "text": "just a hair to the left",
+   "label": "bit_left",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "a bit more left please",
+   "label": "bit_left",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "uh no um a touch more to the left eve",
+   "label": "bit_left",
+   "messy": true,
+   "trap": false
+  },
+  {
+   "text": "a bit to the right",
+   "label": "bit_right",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "nudge your head slightly to the right",
+   "label": "bit_right",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "a little more right",
+   "label": "bit_right",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "look right just a hair",
+   "label": "bit_right",
+   "messy": false,
+   "trap": true,
+   "why": "nudge modifier trails the direction"
+  },
+  {
+   "text": "that's um that's too far left come a little to the right",
+   "label": "bit_right",
+   "messy": true,
+   "trap": true,
+   "why": "'too far left' is a complaint, not a far_left request"
+  },
+  {
+   "text": "tilt up a little",
+   "label": "bit_up",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "slightly up",
+   "label": "bit_up",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "look up a bit",
+   "label": "bit_up",
+   "messy": false,
+   "trap": true,
+   "why": "'a bit' is not a search object, and it is not a plain up"
+  },
+  {
+   "text": "hey eve um chin up like just a touch more up",
+   "label": "bit_up",
+   "messy": true,
+   "trap": false
+  },
+  {
+   "text": "tilt down a little",
+   "label": "bit_down",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "a bit lower",
+   "label": "bit_down",
+   "messy": false,
+   "trap": false,
+   "why": "'lower' stands in for down; no literal direction keyword"
+  },
+  {
+   "text": "slightly down please",
+   "label": "bit_down",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "so that was uh look down just a hair",
+   "label": "bit_down",
+   "messy": true,
+   "trap": true,
+   "why": "reads as plain down until the trailing modifier"
+  },
+  {
+   "text": "look down at the desk",
+   "label": "desk",
+   "messy": false,
+   "trap": true,
+   "why": "contains 'look down'"
+  },
+  {
+   "text": "look at the table",
+   "label": "desk",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "look at what's in front of you on the desk",
+   "label": "desk",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "point your head down at the table please",
+   "label": "desk",
+   "messy": false,
+   "trap": true,
+   "why": "contains 'down'"
+  },
+  {
+   "text": "um eve can you look down at the the desk",
+   "label": "desk",
+   "messy": true,
+   "trap": true,
+   "why": "contains 'look down'; repeated word"
+  },
+  {
+   "text": "look straight up",
+   "label": "ceiling",
+   "messy": false,
+   "trap": true,
+   "why": "invites up, and 'straight' invites center"
+  },
+  {
+   "text": "look at the ceiling",
+   "label": "ceiling",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "tilt all the way up to the ceiling",
+   "label": "ceiling",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "point your head straight up at the ceiling",
+   "label": "ceiling",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "okay now uh look up at the ceiling eve",
+   "label": "ceiling",
+   "messy": true,
+   "trap": true,
+   "why": "contains 'look up'"
+  },
+  {
+   "text": "scroll down",
+   "label": "none",
+   "messy": false,
+   "trap": true
+  },
+  {
+   "text": "hey eve um turn the volume up like a lot",
+   "label": "none",
+   "messy": true,
+   "trap": true
+  },
+  {
+   "text": "move the window to the left",
+   "label": "none",
+   "messy": false,
+   "trap": true
+  },
+  {
+   "text": "go to the next tab on the right",
+   "label": "none",
+   "messy": false,
+   "trap": true
+  },
+  {
+   "text": "look up the weather for tomorrow",
+   "label": "none",
+   "messy": false,
+   "trap": true,
+   "why": "'look up <something>' is a search"
+  },
+  {
+   "text": "look up that word",
+   "label": "none",
+   "messy": false,
+   "trap": true,
+   "why": "'look up <something>' is a search"
+  },
+  {
+   "text": "and then uh swipe left on that notification",
+   "label": "none",
+   "messy": true,
+   "trap": true
+  },
+  {
+   "text": "what's left on my list",
+   "label": "none",
+   "messy": false,
+   "trap": true
+  },
+  {
+   "text": "turn right at the next street in maps",
+   "label": "none",
+   "messy": false,
+   "trap": true
+  },
+  {
+   "text": "I feel down today",
+   "label": "none",
+   "messy": false,
+   "trap": true
+  },
+  {
+   "text": "things are looking up",
+   "label": "none",
+   "messy": false,
+   "trap": true
+  },
+  {
+   "text": "the left one is mine",
+   "label": "none",
+   "messy": false,
+   "trap": true
+  },
+  {
+   "text": "you were right",
+   "label": "none",
+   "messy": false,
+   "trap": true
+  },
+  {
+   "text": "look at this mug",
+   "label": "none",
+   "messy": false,
+   "trap": true,
+   "why": "look AT a named thing is the camera tool"
+  },
+  {
+   "text": "look around",
+   "label": "none",
+   "messy": false,
+   "trap": true,
+   "why": "scanning is a different tool"
+  },
+  {
+   "text": "turn down the brightness",
+   "label": "none",
+   "messy": false,
+   "trap": true
+  },
+  {
+   "text": "align the text to the center",
+   "label": "none",
+   "messy": false,
+   "trap": true
+  },
+  {
+   "text": "center the window on the screen",
+   "label": "none",
+   "messy": false,
+   "trap": true
+  },
+  {
+   "text": "look down the list and find the cheapest one",
+   "label": "none",
+   "messy": false,
+   "trap": true,
+   "why": "'look down the list' is reading a document, not a head tilt"
+  },
+  {
+   "text": "clean up my desktop folder",
+   "label": "none",
+   "messy": false,
+   "trap": true,
+   "why": "'desktop' contains 'desk', plus 'up'"
+  },
+  {
+   "text": "how much does a standing desk cost",
+   "label": "none",
+   "messy": false,
+   "trap": true
+  },
+  {
+   "text": "set a reminder to fix the ceiling fan",
+   "label": "none",
+   "messy": false,
+   "trap": true
+  },
+  {
+   "text": "um hey eve scroll up a little",
+   "label": "none",
+   "messy": true,
+   "trap": true,
+   "why": "looks like bit_up but the verb is scroll"
+  },
+  {
+   "text": "move the cursor a bit to the right",
+   "label": "none",
+   "messy": false,
+   "trap": true,
+   "why": "looks like bit_right but the object is the cursor"
+  },
+  {
+   "text": "drag it all the way to the left of the screen",
+   "label": "none",
+   "messy": false,
+   "trap": true,
+   "why": "looks like far_left but it is a window drag"
+  },
+  {
+   "text": "right click on that file",
+   "label": "none",
+   "messy": false,
+   "trap": true
+  },
+  {
+   "text": "yeah right like that would ever work",
+   "label": "none",
+   "messy": false,
+   "trap": true
+  },
+  {
+   "text": "is there any coffee left",
+   "label": "none",
+   "messy": false,
+   "trap": true
+  },
+  {
+   "text": "shut down the computer",
+   "label": "none",
+   "messy": false,
+   "trap": true
+  },
+  {
+   "text": "write that down",
+   "label": "none",
+   "messy": false,
+   "trap": true
+  },
+  {
+   "text": "turn it up it's my favorite song",
+   "label": "none",
+   "messy": false,
+   "trap": true
+  },
+  {
+   "text": "look I don't have time for this right now",
+   "label": "none",
+   "messy": false,
+   "trap": true,
+   "why": "'look' is a discourse marker and 'right now' is time"
+  },
+  {
+   "text": "can you find my keys on the desk",
+   "label": "none",
+   "messy": false,
+   "trap": true,
+   "why": "finding a named thing is the camera tool even though the desk is mentioned"
+  },
+  {
+   "text": "uh look up um how tall the eiffel tower is",
+   "label": "none",
+   "messy": true,
+   "trap": true,
+   "why": "filler splits 'look up' from its search object"
+  },
+  {
+   "text": "scan the room and tell me what you see",
+   "label": "none",
+   "messy": false,
+   "trap": false,
+   "why": "scanning is a different tool"
+  },
+  {
+   "text": "where is my phone",
+   "label": "none",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "what do you see",
+   "label": "none",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "stop",
+   "label": "none",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "cancel",
+   "label": "none",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "never mind",
+   "label": "none",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "what time is it",
+   "label": "none",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "tell me a joke",
+   "label": "none",
+   "messy": false,
+   "trap": false
+  },
+  {
+   "text": "so yeah um what's the weather like",
+   "label": "none",
+   "messy": true,
+   "trap": false
+  },
+  {
+   "text": "thanks eve that's all",
+   "label": "none",
+   "messy": false,
+   "trap": false
+  }
+ ]
+}

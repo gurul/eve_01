@@ -1,0 +1,11 @@
+{
+  "frozen_at_utc": "2026-10-10T01:52:13.512718+00:00",
+  "before_candidate_prompt_or_outputs_seen": true,
+  "sha256": {
+    "cases.json": "8146c4519b30ba76c292fd12a61313e81676bcf47cd8e2a690162ad337fea8d0",
+    "tools.json": "2d0b6dd93943ee08fd37dbc56d4778b28f0011f8ad107b7a0dda58eb3cedc154",
+    "baseline-instructions.txt": "f235cc6421fe71d31563a81d8fe7aa54402a56420aa2cd3ad03d397a11f3f0d2",
+    "BAR.md": "0c5ef95cccb314c1c57d7e3bc0c4614cd1ab8a840db856e5aa1e9eee10f03941",
+    "check.py": "97a65ad6ce5ba81ade41ca2d3a3770691151bc2ff28380c4a9f358b19fb63bc5"
+  }
+}

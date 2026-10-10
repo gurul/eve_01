@@ -1,0 +1,14 @@
+{"ts": "2026-08-12T13:40:00-07:00", "ch": "voice", "conv": "v-1786567200000-f62a", "who": "owner", "kind": "say", "text": "What's the capital of Australia?"}
+{"ts": "2026-08-12T13:41:28-07:00", "ch": "voice", "conv": "v-1786567200000-f62a", "who": "eve", "kind": "say", "text": "Canberra."}
+{"ts": "2026-08-12T13:43:54-07:00", "ch": "voice", "conv": "v-1786567200000-f62a", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-12T18:45:00-07:00", "ch": "voice", "conv": "v-1786585500000-fc4d", "who": "owner", "kind": "say", "text": "Big news from Kieran, he got a job in Chicago, so he's moving out at the end of the month."}
+{"ts": "2026-08-12T18:46:43-07:00", "ch": "voice", "conv": "v-1786585500000-fc4d", "who": "eve", "kind": "say", "text": "That lines up with your lease ending. Are you two doing anything before he goes?"}
+{"ts": "2026-08-12T18:48:18-07:00", "ch": "voice", "conv": "v-1786585500000-fc4d", "who": "owner", "kind": "say", "text": "Probably a dinner, I'll figure it out."}
+{"ts": "2026-08-12T18:52:21-07:00", "ch": "voice", "conv": "v-1786585500000-fc4d", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-12T21:00:00-07:00", "ch": "telegram", "conv": "t-1786593600000-dce9", "who": "owner", "kind": "say", "text": "Ugh, KeyHaven bumped the switch pack to $45. Ordered it anyway."}
+{"ts": "2026-08-12T21:01:18-07:00", "ch": "telegram", "conv": "t-1786593600000-dce9", "who": "eve", "kind": "say", "text": "Ordered at $45. I'll keep an eye out for the shipping note."}
+{"ts": "2026-08-12T21:04:21-07:00", "ch": "telegram", "conv": "t-1786593600000-dce9", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-12T22:20:00-07:00", "ch": "voice", "conv": "v-1786598400000-0038", "who": "owner", "kind": "say", "text": "What's the weather tomorrow?"}
+{"ts": "2026-08-12T22:21:31-07:00", "ch": "voice", "conv": "v-1786598400000-0038", "who": "eve", "kind": "tool", "text": "weather: Port Alder tomorrow, sunny, high 24 C", "tool": "weather"}
+{"ts": "2026-08-12T22:22:31-07:00", "ch": "voice", "conv": "v-1786598400000-0038", "who": "eve", "kind": "say", "text": "Sunny tomorrow, high around 24."}
+{"ts": "2026-08-12T22:25:30-07:00", "ch": "voice", "conv": "v-1786598400000-0038", "who": "system", "kind": "close", "text": ""}

@@ -1,0 +1,41 @@
+{
+  "note": "Synthetic persona for the eve memory eval. Invented person, places and numbers; no real data.",
+  "name": "Theo Marlow",
+  "age": 21,
+  "timezone_offset": "-07:00",
+  "first_day": "2026-08-02",
+  "last_day": "2026-09-30",
+  "days": 60,
+  "home_city": "Port Alder (invented)",
+  "hometown": "Millbrook (invented)",
+  "school": "Halden Institute of Technology (invented), senior in electrical engineering",
+  "classes_start": "2026-08-24",
+  "family": {
+    "mother": "Ruth",
+    "father": "Gabe",
+    "sister": "Lena",
+    "grandmother": "Odile",
+    "cousin": "Marisol",
+    "cousin_fiance": "Benji"
+  },
+  "friends": {
+    "Kieran": "roommate until the end of August",
+    "Jonah": "gym partner",
+    "Dev": "friend",
+    "Sasha": "Shelfie cofounder and designer",
+    "Ines": "friend from high school",
+    "Mina": "first lab partner",
+    "Tobias": "second lab partner",
+    "Hamid": "study group"
+  },
+  "hobby": "hardware: a 65% mechanical keyboard and an ESP32 weather station; The Foundry makerspace",
+  "side_project": "Shelfie, an app that tracks library due dates",
+  "budget": "monthly budget and grocery budget, both changed during the 60 days",
+  "gym": "Ironwood Gym, push pull legs, Monday Wednesday Friday",
+  "travel": "Denver for a cousin's wedding in August; Seattle hackathon and Thanksgiving booked for later",
+  "channels": {
+    "telegram": "texted",
+    "voice": "spoken",
+    "bus": "lines another program sent (who=claude)"
+  }
+}

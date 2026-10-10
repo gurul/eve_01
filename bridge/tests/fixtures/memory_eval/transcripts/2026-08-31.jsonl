@@ -1,0 +1,13 @@
+{"ts": "2026-08-31T07:15:00-07:00", "ch": "voice", "conv": "v-1788185700000-dae8", "who": "owner", "kind": "say", "text": "What's the weather tomorrow?"}
+{"ts": "2026-08-31T07:16:31-07:00", "ch": "voice", "conv": "v-1788185700000-dae8", "who": "eve", "kind": "tool", "text": "weather: Port Alder tomorrow, sunny, high 24 C", "tool": "weather"}
+{"ts": "2026-08-31T07:17:31-07:00", "ch": "voice", "conv": "v-1788185700000-dae8", "who": "eve", "kind": "say", "text": "Sunny tomorrow, high around 24."}
+{"ts": "2026-08-31T07:20:13-07:00", "ch": "voice", "conv": "v-1788185700000-dae8", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-31T09:00:00-07:00", "ch": "telegram", "conv": "t-1788192000000-bb43", "who": "owner", "kind": "say", "text": "Kieran flew to Chicago this morning. The apartment feels empty."}
+{"ts": "2026-08-31T09:01:15-07:00", "ch": "telegram", "conv": "t-1788192000000-bb43", "who": "eve", "kind": "say", "text": "End of an era."}
+{"ts": "2026-08-31T09:03:52-07:00", "ch": "telegram", "conv": "t-1788192000000-bb43", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-31T19:00:00-07:00", "ch": "telegram", "conv": "t-1788228000000-e22a", "who": "owner", "kind": "say", "text": "Raising my grocery budget to $300 a month, the new place is far from the dining hall."}
+{"ts": "2026-08-31T19:01:42-07:00", "ch": "telegram", "conv": "t-1788228000000-e22a", "who": "eve", "kind": "say", "text": "At $300 that's about $70 a week."}
+{"ts": "2026-08-31T19:04:36-07:00", "ch": "telegram", "conv": "t-1788228000000-e22a", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-31T20:00:00-07:00", "ch": "telegram", "conv": "t-1788231600000-1fc1", "who": "owner", "kind": "say", "text": "Thinking of signing up for intramural volleyball, it's Tuesday nights."}
+{"ts": "2026-08-31T20:01:08-07:00", "ch": "telegram", "conv": "t-1788231600000-1fc1", "who": "eve", "kind": "say", "text": "Could be a good break from labs."}
+{"ts": "2026-08-31T20:04:35-07:00", "ch": "telegram", "conv": "t-1788231600000-1fc1", "who": "system", "kind": "close", "text": ""}

@@ -1,0 +1,419 @@
+{
+ "note": "Quit TUNING set, authored 2026-09-23 by the rule-writer; it fits Jev's quit cut-offs and is not evidence. holdout_quit.json, written blind, decides.",
+ "apps": [
+  "Spotify",
+  "TV",
+  "Terminal",
+  "Claude",
+  "Safari",
+  "Slack",
+  "Google Chrome",
+  "System Settings",
+  "Notes",
+  "Photos",
+  "Mail",
+  "Music",
+  "Calendar",
+  "Finder",
+  "Warp",
+  "Messages",
+  "Reminders",
+  "Maps",
+  "Preview",
+  "Books"
+ ],
+ "cases": [
+  {
+   "goal": "Quit Music.",
+   "kind": "quit",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Music",
+   "tricky": false,
+   "source": "authored"
+  },
+  {
+   "goal": "quit slack",
+   "kind": "quit",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Slack",
+   "tricky": false,
+   "source": "authored"
+  },
+  {
+   "goal": "Please quit Mail.",
+   "kind": "quit",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Mail",
+   "tricky": false,
+   "source": "authored"
+  },
+  {
+   "goal": "can you quit Photos",
+   "kind": "quit",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Photos",
+   "tricky": false,
+   "source": "authored"
+  },
+  {
+   "goal": "quit out of Preview",
+   "kind": "quit",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Preview",
+   "tricky": false,
+   "source": "authored"
+  },
+  {
+   "goal": "hey eve quit Books",
+   "kind": "quit",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Books",
+   "tricky": false,
+   "source": "authored"
+  },
+  {
+   "goal": "Quit Maps for me.",
+   "kind": "quit",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Maps",
+   "tricky": false,
+   "source": "authored"
+  },
+  {
+   "goal": "quit the Reminders app",
+   "kind": "quit",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Reminders",
+   "tricky": false,
+   "source": "authored"
+  },
+  {
+   "goal": "quit chrome",
+   "kind": "quit",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Google Chrome",
+   "tricky": false,
+   "source": "authored"
+  },
+  {
+   "goal": "Quit iMessage please",
+   "kind": "quit",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Messages",
+   "tricky": false,
+   "source": "authored"
+  },
+  {
+   "goal": "could you quit calendar on my mac",
+   "kind": "quit",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Calendar",
+   "tricky": false,
+   "source": "authored"
+  },
+  {
+   "goal": "just quit Notes",
+   "kind": "quit",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Notes",
+   "tricky": false,
+   "source": "authored"
+  },
+  {
+   "goal": "Spotify, quit it.",
+   "kind": "quit",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Spotify",
+   "tricky": true,
+   "source": "authored"
+  },
+  {
+   "goal": "time to quit Slack for the day",
+   "kind": "quit",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Slack",
+   "tricky": true,
+   "source": "authored"
+  },
+  {
+   "goal": "quit settings",
+   "kind": "quit",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "System Settings",
+   "tricky": true,
+   "source": "authored"
+  },
+  {
+   "goal": "I'm done with Safari, quit it",
+   "kind": "quit",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Safari",
+   "tricky": true,
+   "source": "authored"
+  },
+  {
+   "goal": "quit all",
+   "kind": "quit_all",
+   "tiers": [
+    "reflex"
+   ],
+   "tricky": false,
+   "source": "authored"
+  },
+  {
+   "goal": "Quit everything.",
+   "kind": "quit_all",
+   "tiers": [
+    "reflex"
+   ],
+   "tricky": false,
+   "source": "authored"
+  },
+  {
+   "goal": "quit all apps please",
+   "kind": "quit_all",
+   "tiers": [
+    "reflex"
+   ],
+   "tricky": false,
+   "source": "authored"
+  },
+  {
+   "goal": "can you quit all my open apps",
+   "kind": "quit_all",
+   "tiers": [
+    "reflex"
+   ],
+   "tricky": false,
+   "source": "authored"
+  },
+  {
+   "goal": "quit all of them",
+   "kind": "quit_all",
+   "tiers": [
+    "reflex"
+   ],
+   "tricky": true,
+   "source": "authored"
+  },
+  {
+   "goal": "everything open, quit it all",
+   "kind": "quit_all",
+   "tiers": [
+    "reflex"
+   ],
+   "tricky": true,
+   "source": "authored"
+  },
+  {
+   "goal": "force quit Music",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "tricky": true,
+   "source": "authored"
+  },
+  {
+   "goal": "close Mail",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "tricky": true,
+   "source": "authored"
+  },
+  {
+   "goal": "exit Slack",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "tricky": true,
+   "source": "authored"
+  },
+  {
+   "goal": "kill Spotify",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "tricky": true,
+   "source": "authored"
+  },
+  {
+   "goal": "quit Music and play a podcast in Spotify",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "tricky": true,
+   "source": "authored"
+  },
+  {
+   "goal": "quit Safari, then open Chrome",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "tricky": true,
+   "source": "authored"
+  },
+  {
+   "goal": "quit Notes and Reminders",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "tricky": true,
+   "source": "authored"
+  },
+  {
+   "goal": "quit the tab",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "tricky": true,
+   "source": "authored"
+  },
+  {
+   "goal": "quit this window in Chrome",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "tricky": true,
+   "source": "authored"
+  },
+  {
+   "goal": "quit the game",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "tricky": true,
+   "source": "authored"
+  },
+  {
+   "goal": "quit the Zoom call",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "tricky": true,
+   "source": "authored"
+  },
+  {
+   "goal": "quit Xcode",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "tricky": true,
+   "source": "authored"
+  },
+  {
+   "goal": "is Mail still running?",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "tricky": true,
+   "source": "authored"
+  },
+  {
+   "goal": "why won't Slack quit?",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "tricky": true,
+   "source": "authored"
+  },
+  {
+   "goal": "I want to quit my job",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "tricky": true,
+   "source": "authored"
+  },
+  {
+   "goal": "don't quit Spotify",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "tricky": true,
+   "source": "authored"
+  },
+  {
+   "goal": "quit all the Safari tabs",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "tricky": true,
+   "source": "authored"
+  },
+  {
+   "goal": "quit all Chrome windows",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "tricky": true,
+   "source": "authored"
+  },
+  {
+   "goal": "google how to quit caffeine",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "source": "authored"
+  },
+  {
+   "goal": "search for tips to quit smoking",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "source": "authored"
+  }
+ ]
+}

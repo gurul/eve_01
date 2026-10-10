@@ -1,0 +1,14 @@
+{"ts": "2026-08-10T09:30:00-07:00", "ch": "telegram", "conv": "t-1786379400000-2a93", "who": "owner", "kind": "say", "text": "I signed the lease for 220 Quarry Street, unit 5! Move-in is August 29."}
+{"ts": "2026-08-10T09:31:15-07:00", "ch": "telegram", "conv": "t-1786379400000-2a93", "who": "owner", "kind": "say", "text": "Deposit was $900."}
+{"ts": "2026-08-10T09:32:34-07:00", "ch": "telegram", "conv": "t-1786379400000-2a93", "who": "eve", "kind": "say", "text": "Congrats! August 29 move-in and a $900 deposit, logged."}
+{"ts": "2026-08-10T09:36:24-07:00", "ch": "telegram", "conv": "t-1786379400000-2a93", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-10T13:40:00-07:00", "ch": "voice", "conv": "v-1786394400000-7274", "who": "owner", "kind": "say", "text": "Play something chill."}
+{"ts": "2026-08-10T13:41:15-07:00", "ch": "voice", "conv": "v-1786394400000-7274", "who": "eve", "kind": "say", "text": "Playing a lo-fi mix."}
+{"ts": "2026-08-10T13:43:45-07:00", "ch": "voice", "conv": "v-1786394400000-7274", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-10T16:40:00-07:00", "ch": "telegram", "conv": "t-1786405200000-67f2", "who": "owner", "kind": "say", "text": "What does 'idempotent' mean?"}
+{"ts": "2026-08-10T16:41:19-07:00", "ch": "telegram", "conv": "t-1786405200000-67f2", "who": "eve", "kind": "say", "text": "Doing it twice has the same effect as doing it once."}
+{"ts": "2026-08-10T16:44:58-07:00", "ch": "telegram", "conv": "t-1786405200000-67f2", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-10T20:15:00-07:00", "ch": "telegram", "conv": "t-1786418100000-b580", "who": "owner", "kind": "say", "text": "For Denver: I'm flying out August 14 and back on the 16th, staying at the Aspen Court Inn. Marisol's wedding is on the 15th."}
+{"ts": "2026-08-10T20:16:05-07:00", "ch": "telegram", "conv": "t-1786418100000-b580", "who": "eve", "kind": "say", "text": "Got it. Want a reminder to check in the day before?"}
+{"ts": "2026-08-10T20:17:49-07:00", "ch": "telegram", "conv": "t-1786418100000-b580", "who": "owner", "kind": "say", "text": "Sure."}
+{"ts": "2026-08-10T20:20:27-07:00", "ch": "telegram", "conv": "t-1786418100000-b580", "who": "system", "kind": "close", "text": ""}

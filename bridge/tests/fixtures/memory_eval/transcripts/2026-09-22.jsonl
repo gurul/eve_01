@@ -1,0 +1,18 @@
+{"ts": "2026-09-22T08:55:00-07:00", "ch": "telegram", "conv": "t-1790092500000-7497", "who": "owner", "kind": "say", "text": "What does 'idempotent' mean?"}
+{"ts": "2026-09-22T08:56:19-07:00", "ch": "telegram", "conv": "t-1790092500000-7497", "who": "eve", "kind": "say", "text": "Doing it twice has the same effect as doing it once."}
+{"ts": "2026-09-22T09:00:25-07:00", "ch": "telegram", "conv": "t-1790092500000-7497", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-22T10:00:00-07:00", "ch": "telegram", "conv": "t-1790096400000-e803", "who": "owner", "kind": "say", "text": "Controls midterm is October 1."}
+{"ts": "2026-09-22T10:01:38-07:00", "ch": "telegram", "conv": "t-1790096400000-e803", "who": "eve", "kind": "say", "text": "Saved."}
+{"ts": "2026-09-22T10:04:38-07:00", "ch": "telegram", "conv": "t-1790096400000-e803", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-22T18:00:00-07:00", "ch": "voice", "conv": "v-1790125200000-cd55", "who": "owner", "kind": "say", "text": "Bought a used bike for $140 at Spoke and Wheel."}
+{"ts": "2026-09-22T18:00:39-07:00", "ch": "voice", "conv": "v-1790125200000-cd55", "who": "eve", "kind": "say", "text": "Back on wheels."}
+{"ts": "2026-09-22T18:03:46-07:00", "ch": "voice", "conv": "v-1790125200000-cd55", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-22T19:50:00-07:00", "ch": "telegram", "conv": "t-1790131800000-f7a8", "who": "owner", "kind": "say", "text": "What's a good stretch after sitting all day?"}
+{"ts": "2026-09-22T19:50:40-07:00", "ch": "telegram", "conv": "t-1790131800000-f7a8", "who": "eve", "kind": "say", "text": "A hip flexor lunge stretch, 30 seconds a side."}
+{"ts": "2026-09-22T19:53:13-07:00", "ch": "telegram", "conv": "t-1790131800000-f7a8", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-22T21:00:00-07:00", "ch": "telegram", "conv": "t-1790136000000-44ae", "who": "owner", "kind": "say", "text": "Remind me to renew the Shelfie domain before October 3."}
+{"ts": "2026-09-22T21:01:22-07:00", "ch": "telegram", "conv": "t-1790136000000-44ae", "who": "eve", "kind": "say", "text": "Reminder set."}
+{"ts": "2026-09-22T21:05:35-07:00", "ch": "telegram", "conv": "t-1790136000000-44ae", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-22T23:05:00-07:00", "ch": "telegram", "conv": "t-1790143500000-b002", "who": "owner", "kind": "say", "text": "Tell me a joke."}
+{"ts": "2026-09-22T23:06:11-07:00", "ch": "telegram", "conv": "t-1790143500000-b002", "who": "eve", "kind": "say", "text": "Why did the capacitor break up with the resistor? It needed space to recharge."}
+{"ts": "2026-09-22T23:09:49-07:00", "ch": "telegram", "conv": "t-1790143500000-b002", "who": "system", "kind": "close", "text": ""}

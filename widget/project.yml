@@ -1,0 +1,84 @@
+# xcodegen spec — regenerate the .xcodeproj with `xcodegen generate` from this directory.
+# Team ID SJ8BKXTNUS comes from the OU of the "Apple Development" certificate; on macOS
+# an App Group must be prefixed with it.
+name: StackChanNotes
+options:
+  bundleIdPrefix: com.github.eve-bridge
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+  generateEmptySchemes: false
+settings:
+  base:
+    DEVELOPMENT_TEAM: SJ8BKXTNUS
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    ENABLE_HARDENED_RUNTIME: NO
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    GENERATE_INFOPLIST_FILE: NO
+targets:
+  StackChanNotes:
+    type: application
+    platform: macOS
+    sources:
+      - path: StackChanNotes
+      - path: Shared
+    info:
+      path: StackChanNotes/Info.plist
+      properties:
+        CFBundleDisplayName: StackChan Notes
+        CFBundleName: StackChanNotes
+        LSUIElement: true
+        LSMinimumSystemVersion: "14.0"
+        CFBundleURLTypes:
+          - CFBundleURLName: com.github.eve-bridge.StackChanNotes
+            CFBundleURLSchemes: [stackchan]
+        NSHumanReadableCopyright: MIT
+    entitlements:
+      path: StackChanNotes/StackChanNotes.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - SJ8BKXTNUS.com.github.eve-bridge
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.github.eve-bridge.StackChanNotes
+        PRODUCT_NAME: StackChanNotes
+    dependencies:
+      - target: StackChanNotesWidget
+        embed: true
+  StackChanNotesWidget:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: StackChanNotesWidget
+      - path: Shared
+    info:
+      path: StackChanNotesWidget/Info.plist
+      properties:
+        CFBundleDisplayName: StackChan notes
+        CFBundleName: StackChanNotesWidget
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: StackChanNotesWidget/StackChanNotesWidget.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.application-groups:
+          - SJ8BKXTNUS.com.github.eve-bridge
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.github.eve-bridge.StackChanNotes.Widget
+        PRODUCT_NAME: StackChanNotesWidget
+        SKIP_INSTALL: YES
+schemes:
+  StackChanNotes:
+    build:
+      targets:
+        StackChanNotes: all
+    run:
+      config: Debug
+    archive:
+      config: Release

@@ -1,0 +1,10 @@
+{"ts": "2026-08-14T05:20:00-07:00", "ch": "voice", "conv": "v-1786710000000-c909", "who": "owner", "kind": "say", "text": "Heading to the airport."}
+{"ts": "2026-08-14T05:20:47-07:00", "ch": "voice", "conv": "v-1786710000000-c909", "who": "eve", "kind": "say", "text": "Safe travels. Text me when you land."}
+{"ts": "2026-08-14T05:24:15-07:00", "ch": "voice", "conv": "v-1786710000000-c909", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-14T13:40:00-07:00", "ch": "voice", "conv": "v-1786740000000-2345", "who": "owner", "kind": "say", "text": "What's the capital of Australia?"}
+{"ts": "2026-08-14T13:41:28-07:00", "ch": "voice", "conv": "v-1786740000000-2345", "who": "eve", "kind": "say", "text": "Canberra."}
+{"ts": "2026-08-14T13:44:27-07:00", "ch": "voice", "conv": "v-1786740000000-2345", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-14T20:40:00-07:00", "ch": "voice", "conv": "v-1786765200000-cb6f", "who": "owner", "kind": "say", "text": "My uncle offered to let me drive his car while I'm here."}
+{"ts": "2026-08-14T20:41:30-07:00", "ch": "voice", "conv": "v-1786765200000-cb6f", "who": "owner", "kind": "say", "text": "Honestly I failed my driving test back in July."}
+{"ts": "2026-08-14T20:43:02-07:00", "ch": "voice", "conv": "v-1786765200000-cb6f", "who": "eve", "kind": "say", "text": "Okay, no driving then."}
+{"ts": "2026-08-14T20:46:56-07:00", "ch": "voice", "conv": "v-1786765200000-cb6f", "who": "system", "kind": "close", "text": ""}

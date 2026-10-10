@@ -1,0 +1,373 @@
+{
+  "responses": 57,
+  "passed_responses": 57,
+  "role_model_comparisons": 19,
+  "total_cost_usd": 0.03455292,
+  "total_cached_input_tokens": 0,
+  "summary": [
+    {
+      "role": "summary",
+      "model": "openai/gpt-5.4-nano",
+      "cases": 3,
+      "passed": 3,
+      "critical": 0,
+      "errors": 0,
+      "cost_usd": 0.0005577,
+      "median_seconds": 1.276
+    },
+    {
+      "role": "summary",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "cases": 3,
+      "passed": 3,
+      "critical": 0,
+      "errors": 0,
+      "cost_usd": 0.000726975,
+      "median_seconds": 2.984
+    },
+    {
+      "role": "summary",
+      "model": "anthropic/claude-haiku-5.5",
+      "cases": 3,
+      "passed": 3,
+      "critical": 0,
+      "errors": 0,
+      "cost_usd": 0.0004043,
+      "median_seconds": 2.471
+    },
+    {
+      "role": "summary",
+      "model": "openai/gpt-6-luna",
+      "cases": 3,
+      "passed": 3,
+      "critical": 0,
+      "errors": 0,
+      "cost_usd": 0.0002326,
+      "median_seconds": 1.811
+    },
+    {
+      "role": "watch",
+      "model": "google/gemini-3.1-flash-lite",
+      "cases": 3,
+      "passed": 3,
+      "critical": 0,
+      "errors": 0,
+      "cost_usd": 0.00059875,
+      "median_seconds": 1.256
+    },
+    {
+      "role": "watch",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "cases": 3,
+      "passed": 3,
+      "critical": 0,
+      "errors": 0,
+      "cost_usd": 0.000190545,
+      "median_seconds": 0.91
+    },
+    {
+      "role": "watch",
+      "model": "anthropic/claude-haiku-5.5",
+      "cases": 3,
+      "passed": 3,
+      "critical": 0,
+      "errors": 0,
+      "cost_usd": 0.000328,
+      "median_seconds": 2.01
+    },
+    {
+      "role": "watch",
+      "model": "openai/gpt-6-luna",
+      "cases": 3,
+      "passed": 3,
+      "critical": 0,
+      "errors": 0,
+      "cost_usd": 0.0001751,
+      "median_seconds": 1.709
+    },
+    {
+      "role": "task_assessment",
+      "model": "openai/gpt-6-astra",
+      "cases": 3,
+      "passed": 3,
+      "critical": 0,
+      "errors": 0,
+      "cost_usd": 0.0168,
+      "median_seconds": 2.176
+    },
+    {
+      "role": "task_assessment",
+      "model": "openai/gpt-6-luna",
+      "cases": 3,
+      "passed": 3,
+      "critical": 0,
+      "errors": 0,
+      "cost_usd": 0.0002475,
+      "median_seconds": 2.938
+    },
+    {
+      "role": "task_assessment",
+      "model": "openai/gpt-6.1-sol",
+      "cases": 3,
+      "passed": 3,
+      "critical": 0,
+      "errors": 0,
+      "cost_usd": 0.00336,
+      "median_seconds": 2.051
+    },
+    {
+      "role": "reflection",
+      "model": "google/gemini-3.1-flash-lite",
+      "cases": 3,
+      "passed": 3,
+      "critical": 0,
+      "errors": 0,
+      "cost_usd": 0.0007415,
+      "median_seconds": 1.49
+    },
+    {
+      "role": "reflection",
+      "model": "openai/gpt-6.1-sol",
+      "cases": 3,
+      "passed": 3,
+      "critical": 0,
+      "errors": 0,
+      "cost_usd": 0.004188,
+      "median_seconds": 2.265
+    },
+    {
+      "role": "reflection",
+      "model": "openai/gpt-6-luna",
+      "cases": 3,
+      "passed": 3,
+      "critical": 0,
+      "errors": 0,
+      "cost_usd": 0.0002819,
+      "median_seconds": 2.79
+    },
+    {
+      "role": "web_synthesis",
+      "model": "google/gemini-3.1-flash-lite",
+      "cases": 3,
+      "passed": 3,
+      "critical": 0,
+      "errors": 0,
+      "cost_usd": 0.00080275,
+      "median_seconds": 1.262
+    },
+    {
+      "role": "web_synthesis",
+      "model": "google/gemini-3.8-flash",
+      "cases": 3,
+      "passed": 3,
+      "critical": 0,
+      "errors": 0,
+      "cost_usd": 0.00385275,
+      "median_seconds": 3.671
+    },
+    {
+      "role": "web_synthesis",
+      "model": "openai/gpt-6-luna",
+      "cases": 3,
+      "passed": 3,
+      "critical": 0,
+      "errors": 0,
+      "cost_usd": 0.0002639,
+      "median_seconds": 2.094
+    },
+    {
+      "role": "memory_extraction",
+      "model": "openai/gpt-5.4-nano",
+      "cases": 3,
+      "passed": 3,
+      "critical": 0,
+      "errors": 0,
+      "cost_usd": 0.00058735,
+      "median_seconds": 2.074
+    },
+    {
+      "role": "memory_extraction",
+      "model": "openai/gpt-6-luna",
+      "cases": 3,
+      "passed": 3,
+      "critical": 0,
+      "errors": 0,
+      "cost_usd": 0.0002133,
+      "median_seconds": 2.052
+    }
+  ],
+  "winners": {
+    "memory_extraction": {
+      "selected": [
+        "openai/gpt-6-luna"
+      ],
+      "lowest_cost_usd": 0.0002133,
+      "cost_tie_group": [
+        "openai/gpt-6-luna"
+      ],
+      "eligible_with_missing_cost": []
+    },
+    "reflection": {
+      "selected": [
+        "openai/gpt-6-luna"
+      ],
+      "lowest_cost_usd": 0.0002819,
+      "cost_tie_group": [
+        "openai/gpt-6-luna"
+      ],
+      "eligible_with_missing_cost": []
+    },
+    "summary": {
+      "selected": [
+        "openai/gpt-6-luna"
+      ],
+      "lowest_cost_usd": 0.0002326,
+      "cost_tie_group": [
+        "openai/gpt-6-luna"
+      ],
+      "eligible_with_missing_cost": []
+    },
+    "task_assessment": {
+      "selected": [
+        "openai/gpt-6-luna"
+      ],
+      "lowest_cost_usd": 0.0002475,
+      "cost_tie_group": [
+        "openai/gpt-6-luna"
+      ],
+      "eligible_with_missing_cost": []
+    },
+    "watch": {
+      "selected": [
+        "deepseek/deepseek-v4.1-flash"
+      ],
+      "lowest_cost_usd": 0.0001751,
+      "cost_tie_group": [
+        "deepseek/deepseek-v4.1-flash",
+        "openai/gpt-6-luna"
+      ],
+      "eligible_with_missing_cost": []
+    },
+    "web_synthesis": {
+      "selected": [
+        "openai/gpt-6-luna"
+      ],
+      "lowest_cost_usd": 0.0002639,
+      "cost_tie_group": [
+        "openai/gpt-6-luna"
+      ],
+      "eligible_with_missing_cost": []
+    }
+  },
+  "configurations": {
+    "summary openai/gpt-5.4-nano": {
+      "max_tokens": 2048,
+      "reasoning": {
+        "effort": "low"
+      }
+    },
+    "summary deepseek/deepseek-v4.1-flash": {
+      "max_tokens": 2048,
+      "reasoning": {
+        "effort": "low"
+      }
+    },
+    "summary anthropic/claude-haiku-5.5": {
+      "max_tokens": 2048,
+      "reasoning": {
+        "effort": "low"
+      }
+    },
+    "summary openai/gpt-6-luna": {
+      "max_tokens": 2048,
+      "reasoning": {
+        "effort": "low"
+      }
+    },
+    "watch google/gemini-3.1-flash-lite": {
+      "max_tokens": 2048,
+      "temperature": 0
+    },
+    "watch deepseek/deepseek-v4.1-flash": {
+      "max_tokens": 2048,
+      "reasoning": {
+        "enabled": false
+      },
+      "temperature": 0
+    },
+    "watch anthropic/claude-haiku-5.5": {
+      "max_tokens": 2048,
+      "reasoning": {
+        "enabled": false
+      }
+    },
+    "watch openai/gpt-6-luna": {
+      "max_tokens": 2048,
+      "reasoning": {
+        "effort": "none"
+      }
+    },
+    "task_assessment openai/gpt-6-astra": {
+      "max_tokens": 2048,
+      "reasoning": {
+        "effort": "low"
+      }
+    },
+    "task_assessment openai/gpt-6-luna": {
+      "max_tokens": 2048,
+      "reasoning": {
+        "effort": "low"
+      }
+    },
+    "task_assessment openai/gpt-6.1-sol": {
+      "max_tokens": 2048,
+      "reasoning": {
+        "effort": "low"
+      }
+    },
+    "reflection google/gemini-3.1-flash-lite": {
+      "max_tokens": 2048,
+      "temperature": 0
+    },
+    "reflection openai/gpt-6.1-sol": {
+      "max_tokens": 2048,
+      "reasoning": {
+        "effort": "medium"
+      }
+    },
+    "reflection openai/gpt-6-luna": {
+      "max_tokens": 2048,
+      "reasoning": {
+        "effort": "medium"
+      }
+    },
+    "web_synthesis google/gemini-3.1-flash-lite": {
+      "max_tokens": 2048,
+      "temperature": 0
+    },
+    "web_synthesis google/gemini-3.8-flash": {
+      "max_tokens": 2048,
+      "reasoning": {
+        "effort": "low"
+      }
+    },
+    "web_synthesis openai/gpt-6-luna": {
+      "max_tokens": 2048,
+      "reasoning": {
+        "effort": "low"
+      }
+    },
+    "memory_extraction openai/gpt-5.4-nano": {
+      "max_tokens": 2048,
+      "reasoning": {
+        "effort": "low"
+      }
+    },
+    "memory_extraction openai/gpt-6-luna": {
+      "max_tokens": 2048,
+      "reasoning": {
+        "effort": "low"
+      }
+    }
+  }
+}

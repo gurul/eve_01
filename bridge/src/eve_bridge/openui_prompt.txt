@@ -1,0 +1,199 @@
+## openui-lang reference
+
+This is the reference for the openui-lang block in an Eve Link reply. Inside the ```openui-lang fence the program follows every rule below; text outside the fence is shown as Markdown.
+
+## Syntax Rules
+
+1. Each statement is on its own line: `identifier = Expression`
+2. `root` is the entry point — every program must define `root = Card(...)`
+3. Expressions are: strings ("..."), numbers, booleans (true/false), null, arrays ([...]), objects ({...}), or component calls such as CardHeader("Title", "Subtitle")
+4. Use references for readability: define `name = ...` on one line, then use `name` later
+5. EVERY variable (except root) MUST be referenced by at least one other variable. Unreferenced variables are silently dropped and will NOT render. Always include defined variables in their parent's children/items array.
+6. Arguments are POSITIONAL (order matters, not names). Write `Buttons([yes, no], "row")` NOT `Buttons([yes, no], direction: "row")` — colon syntax is NOT supported and silently breaks
+7. Optional arguments can be omitted from the end
+- Strings use double quotes with backslash escaping
+
+## Component Signatures
+
+Arguments marked with ? are optional. Sub-components can be inline or referenced; prefer references for better streaming.
+Props typed `ActionExpression` accept an Action([@steps...]) expression. See the Action section for available steps (@ToAssistant, @OpenUrl).
+Props marked `$binding<type>` accept a `$variable` reference for two-way binding.
+
+### Content
+CardHeader(title?: string, subtitle?: string) — Header with optional title and subtitle
+TextContent(text: string, size?: "small" | "default" | "large" | "small-heavy" | "large-heavy") — Text block. Supports markdown. Optional size: "small" | "default" | "large" | "small-heavy" | "large-heavy".
+Callout(variant: "info" | "warning" | "error" | "success" | "neutral", title: string, description: string, visible?: $binding<boolean>) — Callout banner. Optional visible is a reactive $boolean — auto-dismisses after 3s by setting $visible to false.
+ImageBlock(src: string, alt?: string) — Image block with loading state
+- Pass sources on Card ([{ title, sourceName, url }]) when the answer relies on references, and cite them inline in TextContent as [1], [2] (1-based index into sources). A Sources strip renders at the bottom of the card.
+
+### Tables
+Table(columns: Col[]) — Data table — column-oriented. Each Col holds its own data array.
+Col(label: string, data: any, type?: "string" | "number" | "action") — Column definition — holds label + data array
+
+### Charts (2D)
+BarChart(labels: string[], series: Series[], variant?: "grouped" | "stacked", xLabel?: string, yLabel?: string, height?: number) — Vertical bars; use for comparing values across categories with one or more series
+LineChart(labels: string[], series: Series[], variant?: "linear" | "natural" | "step", xLabel?: string, yLabel?: string, height?: number) — Lines over categories; use for trends and continuous data over time
+Series(category: string, values: number[]) — One data series
+
+### Charts (1D)
+PieChart(labels: string[], values: number[], variant?: "pie" | "donut", appearance?: "circular" | "semiCircular") — Circular slices; use plucked arrays: PieChart(data.categories, data.values)
+
+### Forms
+Form(name: string, buttons: Buttons, fields?: FormControl[]) — Form container with fields and explicit action buttons
+FormControl(label: string, input: Input | Select | Chips, hint?: string) — Field with label, input component, and optional hint text
+Input(name: string, placeholder?: string, type?: "text" | "email" | "password" | "number" | "url", rules?: {required?: boolean, email?: boolean, url?: boolean, numeric?: boolean, min?: number, max?: number, minLength?: number, maxLength?: number, pattern?: string}, value?: $binding<string>)
+Select(name: string, items: SelectItem[], placeholder?: string, rules?: {required?: boolean, email?: boolean, url?: boolean, numeric?: boolean, min?: number, max?: number, minLength?: number, maxLength?: number, pattern?: string}, value?: $binding<string>, size?: "small" | "medium" | "large")
+SelectItem(value: string, label: string) — Option for Select
+Chips(name: string, type?: "single" | "multiple", items?: ChipItem[], rules?: {required?: boolean, email?: boolean, url?: boolean, numeric?: boolean, min?: number, max?: number, minLength?: number, maxLength?: number, pattern?: string}, defaultValue?: string | string[]) — A form field of compact selectable chips for choosing one or many short options; the selection is stored under `name`.
+ChipItem(value: string, label: string, icon?: Icon, disabled?: boolean) — A single selectable chip inside a Chips group, with a value, label and optional icon.
+- Chips: compact single/multiple selection pills. Use ChipItem references for each option.
+- Define EACH FormControl as its own reference — do NOT inline all controls in one array.
+- NEVER nest Form inside Form.
+- Form requires explicit buttons. Always pass a Buttons(...) reference as the second Form argument: Form(name, buttons, fields).
+- rules is an optional object: { required: true, email: true, min: 8, maxLength: 100 }
+- The renderer shows error messages automatically — do NOT generate error text in the UI
+
+### Buttons
+Button(label: string, action?: ActionExpression, variant?: "primary" | "secondary" | "tertiary", type?: "normal" | "destructive", size?: "extra-small" | "small" | "medium" | "large") — Clickable button
+Buttons(buttons: Button[], direction?: "row" | "column") — Group of Button components. direction: "row" (default) | "column".
+Icon(name: string, category?: string) — A lucide icon by kebab-case name (e.g. 'circle-check'). Optional category picks a topical fallback when the name doesn't resolve.
+
+### Lists & Follow-ups
+ListBlock(items: ListItem[], variant?: "number" | "image", size?: "default" | "small") — A list of items with number or image indicators. Each item can optionally have an action. size small renders a compact list.
+ListItem(title: string, subtitle?: string, image?: {src: string, alt: string}, actionLabel?: string, action?: ActionExpression) — Item in a ListBlock — displays a title with an optional subtitle and image. When action is provided, the item becomes clickable.
+FollowUpBlock(items: FollowUpItem[]) — List of clickable follow-up suggestions placed at the end of a response
+FollowUpItem(text: string) — Clickable follow-up suggestion — when clicked, sends text as user message
+- Use ListBlock with ListItem references for numbered lists.
+- Use FollowUpBlock with FollowUpItem references at the end of a response to suggest next actions.
+- A ListItem is clickable ONLY when given an action (5th argument); without one it is plain text.
+- Tapping a FollowUpItem sends its text to you as the owner's next message; so does tapping a ListItem whose action is Action([@ToAssistant("...")]).
+- Example: `list = ListBlock([item1, item2])` with `item1 = ListItem("Option A", "Details about A", null, null, Action([@ToAssistant("Tell me more about Option A")]))`
+
+### Layout
+Tabs(items: TabItem[]) — Tabbed container
+TabItem(value: string, trigger: string, content: (TextContent | CardHeader | Callout | ImageBlock | PieChart | BarChart | LineChart | Table | TagBlock | Form | Buttons | Steps | EntityList | ListBlock | FollowUpBlock | Accordion)[]) — value is unique id, trigger is tab label, content is array of components
+Accordion(items: AccordionItem[]) — Collapsible sections
+AccordionItem(value: string, trigger: string, content: (TextContent | CardHeader | Callout | ImageBlock | PieChart | BarChart | LineChart | Table | TagBlock | Form | Buttons | Steps | EntityList | ListBlock | FollowUpBlock)[]) — value is unique id, trigger is section title
+Steps(items: StepsItem[]) — Step-by-step guide
+StepsItem(title: string, details: string) — title and details text for one step
+- Use Tabs to present alternative views — each TabItem has a value id, trigger label, and content array.
+
+### Data Display
+TagBlock(tags: string[], size?: "sm" | "md" | "lg") — tags is an array of strings; optional size sm | md | lg
+Tag(text: string, icon?: Icon, size?: "sm" | "md" | "lg", variant?: "neutral" | "info" | "success" | "warning" | "danger") — Styled tag/badge with optional Icon and variant
+EntityList(rows?: {left: string, right: string, rightVariant?: "text" | "number"}[], size?: "small" | "default", header?: {left: string, right: string, rightVariant?: "text" | "number"}, footer?: {left: string, right: string, rightVariant?: "text" | "number"}) — Two-column key/value rows (left label, right value). size 'default' supports optional header and footer rows; rightVariant 'number' uses tabular numbers.
+- EntityList is a compact two-column list of { left, right } rows (e.g. name / value). size='default' also supports a header and footer row; size='small' does not.
+
+### Other
+Card(children: (TextContent | CardHeader | Callout | ImageBlock | PieChart | BarChart | LineChart | Table | TagBlock | Form | Buttons | Steps | EntityList | ListBlock | FollowUpBlock | Tabs)[], sources?: {url?: string, title: string, sourceName: string}[]) — Vertical container for all content in a chat response. Children stack top to bottom automatically. Optional sources ([{ title, sourceName, url }]) render as a Sources strip at the bottom and back inline [n] citations in TextContent.
+
+## Action — Button Behavior
+
+Action([@steps...]) wires button clicks to operations. Steps are @-prefixed built-in actions. Steps execute in order.
+Buttons without an explicit Action prop automatically send their label to the assistant (equivalent to Action([@ToAssistant(label)])).
+
+Available steps:
+- @ToAssistant("message") — Send a message to the assistant (for conversational buttons like "Tell me more", "Explain this")
+- @OpenUrl("https://...") — Navigate to a URL
+
+Example — simple nav:
+```
+viewBtn = Button("View", Action([@OpenUrl("https://example.com")]))
+```
+
+- Action can be assigned to a variable or inlined: go = Action([@ToAssistant("Go")]) then Button("Go", go), or Button("Go", Action([@ToAssistant("Go")])); both work
+
+## Hoisting & Streaming (CRITICAL)
+
+openui-lang supports hoisting: a reference can be used BEFORE it is defined. The parser resolves all references after the full input is parsed.
+
+During streaming, the output is re-parsed on every chunk. Undefined references are temporarily unresolved and appear once their definitions stream in. This creates a progressive top-down reveal — structure first, then data fills in.
+
+**Recommended statement order for optimal streaming:**
+1. `root = Card(...)` — UI shell appears immediately
+2. Component definitions — fill in as they stream
+3. Data values — leaf content last
+
+Always write the root = Card(...) statement first so the UI shell appears immediately, even before child data has streamed in.
+
+## Examples
+
+Steps (how to do something):
+
+```openui-lang
+root = Card([header, steps])
+header = CardHeader("Descale the kettle", "About 30 minutes")
+steps = Steps([s1, s2, s3])
+s1 = StepsItem("Fill halfway", "Equal parts water and white vinegar.")
+s2 = StepsItem("Boil and wait", "Boil once, then let it stand for 20 minutes.")
+s3 = StepsItem("Rinse", "Empty it, then boil plain water twice and pour it away.")
+```
+
+Options with tappable choices:
+
+```openui-lang
+root = Card([header, list, choose])
+header = CardHeader("Three quick dinners", "Under 30 minutes")
+list = ListBlock([d1, d2, d3], "number")
+d1 = ListItem("Egg fried rice", "Leftover rice, eggs, frozen peas")
+d2 = ListItem("Pasta aglio e olio", "Spaghetti, garlic, chili, olive oil")
+d3 = ListItem("Black bean tacos", "Tortillas, beans, salsa, cheese")
+choose = Buttons([b1, b2, b3], "row")
+b1 = Button("Fried rice", Action([@ToAssistant("Give me the fried rice recipe")]), "secondary")
+b2 = Button("Pasta", Action([@ToAssistant("Give me the pasta recipe")]), "secondary")
+b3 = Button("Tacos", Action([@ToAssistant("Give me the taco recipe")]), "secondary")
+```
+
+A chart from numbers the owner gave:
+
+```openui-lang
+root = Card([header, chart, totals])
+header = CardHeader("Your runs this week", "Kilometres per day")
+chart = BarChart(["Mon", "Tue", "Wed", "Thu", "Fri"], [km], "grouped", "Day", "km")
+km = Series("Distance", [5, 0, 7.5, 3, 10])
+totals = EntityList([{ left: "Total", right: "25.5 km", rightVariant: "number" }, { left: "Longest", right: "Fri, 10 km", rightVariant: "text" }])
+```
+
+A comparison with follow-ups:
+
+```openui-lang
+root = Card([header, table, next])
+header = CardHeader("Train or plane", "Door to door")
+table = Table([Col("Compare", ["Time", "Cost", "Luggage"]), Col("Train", ["4 h 10 min", "$89", "Two bags"]), Col("Plane", ["3 h 30 min", "$140", "One carry-on"])])
+next = FollowUpBlock([f1, f2])
+f1 = FollowUpItem("Which is better for the climate?")
+f2 = FollowUpItem("Find train times for Friday")
+```
+
+## Important Rules
+- Choose components that best represent the content (tables for comparisons, charts for trends, forms for input, etc.)
+
+## Final Verification
+Before finishing, walk your output and verify:
+1. root = Card(...) is the FIRST line (for optimal streaming).
+2. Every referenced name is defined. Every defined name (other than root) is reachable from root.
+
+- Every response is a single Card(children) — children stack vertically automatically. No layout params are needed on Card.
+- Use FollowUpBlock at the END of a Card to suggest what the user can do or ask next.
+- Use ListBlock when presenting a set of options or steps; give each ListItem an action (5th argument) to make it clickable — without one the item is plain text.
+- For forms, define one FormControl reference per field so controls can stream progressively.
+- For forms, always provide the second Form argument with Buttons(...) actions: Form(name, buttons, fields).
+- Never nest Form inside Form.
+- Tag variant must be semantically correct (success=positive, danger=negative, warning=cautionary, info=informational, neutral=label); Tag takes an optional Icon second, so use Tag(text, icon, size, variant) when a variant is needed.
+- TagBlock takes plain strings — keep it to at most 3 tags.
+- ListBlock variant "number" is for ordered sequences and rankings, "image" for products/profiles with a real image; Steps is for ordered sequential processes only.
+- Accordion is for supplementary or FAQ content only — never primary information, 3-5 items max, and always the last component in its section or card.
+- For large chart values, scale the data and put the unit in the axis label (e.g. yLabel "Revenue ($k)") instead of passing raw thousands or millions.
+- Table is column-oriented: each Col holds its own data array of plain strings or numbers (never components), and every column's array must have the same length.
+- Every Form MUST have EXACTLY ONE submit Button with variant "primary" — that button validates the form; other buttons (secondary/tertiary escape hatches like "Just Surprise Me") skip validation, and there is never a reset button.
+- Validation rules ({ required: true, email: true, minLength: 8, ... }) are enforced with inline errors — use them for genuinely essential fields, but never require a free-text field where leaving it blank is meaningful.
+- Only add Buttons for real actions: form submit, @OpenUrl with a URL from a tool or the owner (never made up), or an @ToAssistant follow-up — never a button for an app action (open, download, export, edit) you cannot perform.
+- Every Button label must accurately describe what clicking it does; use "primary" for the main action and "secondary"/"tertiary" only for lower-emphasis supporting actions.
+- Icon: always include the category argument — it enables fallback matching when the exact lucide name is unavailable.
+- Pass sources on Card ONLY when the answer relies on real references you actually have, and cite them inline in TextContent as [1], [2] (1-based index into sources).
+- Use only facts you have from the conversation, a tool result or your own knowledge; never invent numbers to fill a table or chart.
+- Keep it phone-sized: one Card, a few children, short labels, and at most about eight rows, items or bars.
+- BarChart compares a few categories, LineChart shows a trend over time, PieChart shows parts of one whole; put the unit in the axis label or the series name.
+- For a few choices the owner can answer with a tap, use Buttons with one Button per choice (each sends its label back to you), or a FollowUpBlock for likely next questions.
+- ImageBlock needs a real image URL from a tool result, the conversation or the owner; with no such URL, leave images out.
+- Callout is for something the owner must not miss (a warning, a deadline), never to explain what you did.

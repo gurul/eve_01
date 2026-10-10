@@ -1,0 +1,1085 @@
+{
+ "captured": {
+  "ax_candidates_sha": "96599e77c9620855df3314719f9bc3f8ef40a57293c021378302e525267a9fce",
+  "macos": "26.6.2",
+  "app_version": "16.0",
+  "at": "2026-09-21T02:44:39-07:00",
+  "truncated": false,
+  "redacted": true
+ },
+ "screen": [
+  1512,
+  982
+ ],
+ "raw": {
+  "app": "Mail",
+  "bundle": "com.apple.mail",
+  "pid": 58341,
+  "title": "Hello there",
+  "fullscreen": false,
+  "node_count": 29,
+  "truncated": false,
+  "secs": 0.0302,
+  "root": {
+   "role": "AXWindow",
+   "subrole": "AXStandardWindow",
+   "title": "Hello there",
+   "description": "",
+   "value": null,
+   "frame": [
+    157.0,
+    37.0,
+    836.0,
+    779.0
+   ],
+   "actions": [],
+   "enabled": true,
+   "focused": false,
+   "children": [
+    {
+     "role": "AXStaticText",
+     "subrole": "",
+     "title": "",
+     "description": "",
+     "value": "To:",
+     "frame": [
+      180.0,
+      98.5,
+      20.5,
+      18.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXTextField",
+     "subrole": "",
+     "title": "",
+     "description": "",
+     "value": "￼",
+     "frame": [
+      203.5,
+      98.5,
+      750.5,
+      21.0
+     ],
+     "actions": [
+      "AXShowMenu",
+      "AXConfirm"
+     ],
+     "enabled": true,
+     "focused": false,
+     "children": [
+      {
+       "role": "AXTextField",
+       "subrole": "AXTextAttachment",
+       "title": "",
+       "description": "",
+       "value": "sam@example.com",
+       "frame": [
+        203.5,
+        98.5,
+        136.076171875,
+        19.0
+       ],
+       "actions": [
+        "AXShowMenu"
+       ],
+       "enabled": true,
+       "focused": false,
+       "children": [],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXTextField"
+       ]
+      }
+     ],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXButton",
+     "subrole": "",
+     "title": "",
+     "description": "add contacts",
+     "value": null,
+     "frame": [
+      950.0,
+      102.0,
+      20.0,
+      12.5
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXStaticText",
+     "subrole": "",
+     "title": "",
+     "description": "",
+     "value": "Cc:",
+     "frame": [
+      180.0,
+      138.5,
+      22.5,
+      18.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXTextField",
+     "subrole": "",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      205.5,
+      138.5,
+      748.5,
+      21.0
+     ],
+     "actions": [
+      "AXShowMenu",
+      "AXConfirm"
+     ],
+     "enabled": true,
+     "focused": false,
+     "children": [],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXButton",
+     "subrole": "",
+     "title": "",
+     "description": "add contacts",
+     "value": null,
+     "frame": [
+      950.0,
+      142.0,
+      20.0,
+      12.5
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXStaticText",
+     "subrole": "",
+     "title": "",
+     "description": "",
+     "value": "Subject:",
+     "frame": [
+      180.0,
+      178.5,
+      52.0,
+      18.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXTextField",
+     "subrole": "",
+     "title": "",
+     "description": "",
+     "value": "Hello there",
+     "frame": [
+      236.0,
+      178.5,
+      734.0,
+      18.0
+     ],
+     "actions": [
+      "AXShowMenu",
+      "AXConfirm"
+     ],
+     "enabled": true,
+     "focused": false,
+     "children": [],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXGroup",
+     "subrole": "",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      157.0,
+      249.0,
+      836.0,
+      567.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [
+      {
+       "role": "AXGroup",
+       "subrole": "",
+       "title": "",
+       "description": "",
+       "value": null,
+       "frame": [
+        157.0,
+        249.0,
+        836.0,
+        567.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [
+        {
+         "role": "AXScrollArea",
+         "subrole": "",
+         "title": "",
+         "description": "",
+         "value": "",
+         "frame": [
+          157.0,
+          249.0,
+          836.0,
+          567.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": true,
+         "children": [
+          {
+           "role": "AXWebArea",
+           "subrole": "",
+           "title": "",
+           "description": "",
+           "value": "",
+           "frame": [
+            157.0,
+            249.0,
+            819.0,
+            567.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": true,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXGroup",
+            "AXGroup",
+            "AXScrollArea"
+           ]
+          },
+          {
+           "role": "AXScrollBar",
+           "subrole": "",
+           "title": "",
+           "description": "",
+           "value": NaN,
+           "frame": [
+            976.0,
+            249.0,
+            17.0,
+            567.0
+           ],
+           "actions": [],
+           "enabled": false,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXGroup",
+            "AXGroup",
+            "AXScrollArea"
+           ]
+          }
+         ],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXGroup",
+          "AXGroup"
+         ]
+        }
+       ],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXGroup"
+       ]
+      }
+     ],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXStaticText",
+     "subrole": "",
+     "title": "",
+     "description": "",
+     "value": "From:",
+     "frame": [
+      180.0,
+      218.5,
+      37.0,
+      18.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXPopUpButton",
+     "subrole": "",
+     "title": "",
+     "description": "",
+     "value": "Sam Rivera – sam@example.org",
+     "frame": [
+      219.0,
+      214.5,
+      370.5,
+      26.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXToolbar",
+     "subrole": "",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      157.0,
+      37.0,
+      836.0,
+      52.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [
+      {
+       "role": "AXButton",
+       "subrole": "",
+       "title": "",
+       "description": "Reply",
+       "value": null,
+       "frame": [
+        446.0,
+        37.0,
+        42.0,
+        52.0
+       ],
+       "actions": [],
+       "enabled": false,
+       "focused": false,
+       "children": [],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXToolbar"
+       ]
+      },
+      {
+       "role": "AXButton",
+       "subrole": "",
+       "title": "",
+       "description": "Format",
+       "value": null,
+       "frame": [
+        488.0,
+        37.0,
+        41.0,
+        52.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXToolbar"
+       ]
+      },
+      {
+       "role": "AXButton",
+       "subrole": "",
+       "title": "",
+       "description": "Emoji & Symbols",
+       "value": null,
+       "frame": [
+        529.0,
+        37.0,
+        41.0,
+        52.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXToolbar"
+       ]
+      },
+      {
+       "role": "AXMenuButton",
+       "subrole": "",
+       "title": "",
+       "description": "Header Fields",
+       "value": null,
+       "frame": [
+        570.0,
+        37.0,
+        62.0,
+        52.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXToolbar"
+       ]
+      },
+      {
+       "role": "AXMenuButton",
+       "subrole": "",
+       "title": "",
+       "description": "Attach",
+       "value": null,
+       "frame": [
+        632.0,
+        37.0,
+        58.0,
+        52.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXToolbar"
+       ]
+      },
+      {
+       "role": "AXMenuButton",
+       "subrole": "",
+       "title": "",
+       "description": "Send Later",
+       "value": null,
+       "frame": [
+        690.0,
+        37.0,
+        58.0,
+        52.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXToolbar"
+       ]
+      },
+      {
+       "role": "AXButton",
+       "subrole": "",
+       "title": "",
+       "description": "Send",
+       "value": null,
+       "frame": [
+        945.0,
+        37.0,
+        44.0,
+        52.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXToolbar"
+       ]
+      }
+     ],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXButton",
+     "subrole": "AXCloseButton",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      175.0,
+      55.0,
+      16.0,
+      16.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXButton",
+     "subrole": "AXFullScreenButton",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      221.0,
+      55.0,
+      16.0,
+      16.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [
+      {
+       "role": "AXGroup",
+       "subrole": "",
+       "title": "",
+       "description": "",
+       "value": null,
+       "frame": [
+        222.0,
+        56.0,
+        14.0,
+        14.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXButton"
+       ]
+      }
+     ],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXButton",
+     "subrole": "AXMinimizeButton",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      198.0,
+      55.0,
+      16.0,
+      16.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    }
+   ],
+   "ancestor_roles": []
+  }
+ },
+ "snapshot": {
+  "seq": 1,
+  "app": "Mail",
+  "bundle": "com.apple.mail",
+  "title": "Hello there",
+  "pid": 58341,
+  "elements": [
+   {
+    "id": "0",
+    "role": "button",
+    "label": "Reply",
+    "value": "",
+    "frame": [
+     446,
+     37,
+     42,
+     52
+    ],
+    "actions": [],
+    "enabled": false,
+    "app": "Mail",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "1",
+    "role": "button",
+    "label": "Format",
+    "value": "",
+    "frame": [
+     488,
+     37,
+     41,
+     52
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Mail",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "2",
+    "role": "button",
+    "label": "Emoji & Symbols",
+    "value": "",
+    "frame": [
+     529,
+     37,
+     41,
+     52
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Mail",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "3",
+    "role": "menu button",
+    "label": "Header Fields",
+    "value": "",
+    "frame": [
+     570,
+     37,
+     62,
+     52
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Mail",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "4",
+    "role": "menu button",
+    "label": "Attach",
+    "value": "",
+    "frame": [
+     632,
+     37,
+     58,
+     52
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Mail",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "5",
+    "role": "menu button",
+    "label": "Send Later",
+    "value": "",
+    "frame": [
+     690,
+     37,
+     58,
+     52
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Mail",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "6",
+    "role": "button",
+    "label": "Send",
+    "value": "",
+    "frame": [
+     945,
+     37,
+     44,
+     52
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Mail",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "7",
+    "role": "static text",
+    "label": "To:",
+    "value": "",
+    "frame": [
+     180,
+     98,
+     20,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Mail",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "8",
+    "role": "text field",
+    "label": "sam@example.com",
+    "value": "￼",
+    "frame": [
+     204,
+     98,
+     750,
+     21
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXConfirm"
+    ],
+    "enabled": true,
+    "app": "Mail",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": true
+   },
+   {
+    "id": "9",
+    "role": "text field",
+    "label": "",
+    "value": "sam@example.com",
+    "frame": [
+     204,
+     98,
+     136,
+     19
+    ],
+    "actions": [
+     "AXShowMenu"
+    ],
+    "enabled": true,
+    "app": "Mail",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": true
+   },
+   {
+    "id": "10",
+    "role": "button",
+    "label": "add contacts",
+    "value": "",
+    "frame": [
+     950,
+     102,
+     20,
+     12
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Mail",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "11",
+    "role": "static text",
+    "label": "Cc:",
+    "value": "",
+    "frame": [
+     180,
+     138,
+     22,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Mail",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "12",
+    "role": "text field",
+    "label": "",
+    "value": "",
+    "frame": [
+     206,
+     138,
+     748,
+     21
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXConfirm"
+    ],
+    "enabled": true,
+    "app": "Mail",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": true
+   },
+   {
+    "id": "13",
+    "role": "button",
+    "label": "add contacts",
+    "value": "",
+    "frame": [
+     950,
+     142,
+     20,
+     12
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Mail",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "14",
+    "role": "static text",
+    "label": "Subject:",
+    "value": "",
+    "frame": [
+     180,
+     178,
+     52,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Mail",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "15",
+    "role": "text field",
+    "label": "",
+    "value": "Hello there",
+    "frame": [
+     236,
+     178,
+     734,
+     18
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXConfirm"
+    ],
+    "enabled": true,
+    "app": "Mail",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": true
+   },
+   {
+    "id": "16",
+    "role": "pop up button",
+    "label": "",
+    "value": "Sam Rivera – sam@example.org",
+    "frame": [
+     219,
+     214,
+     370,
+     26
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Mail",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "17",
+    "role": "static text",
+    "label": "From:",
+    "value": "",
+    "frame": [
+     180,
+     218,
+     37,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Mail",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   }
+  ],
+  "context_lines": [
+   "title: Hello there",
+   "To:",
+   "Cc:",
+   "Subject:",
+   "From:"
+  ],
+  "focused": null,
+  "dialog_text": "",
+  "fullscreen": false,
+  "node_count": 29,
+  "truncated": false,
+  "secs": 0.0302
+ },
+ "cases": [
+  {
+   "goal": "send the email",
+   "expected_id": null,
+   "expected": "abstain",
+   "overlap": false,
+   "distractor": true,
+   "text": null,
+   "must_not_offer": [],
+   "note": "Send is sensitive: confirm"
+  },
+  {
+   "goal": "attach a file",
+   "expected_id": "4",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "add an emoji",
+   "expected_id": "2",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "schedule it for later",
+   "expected_id": null,
+   "expected": "abstain",
+   "overlap": false,
+   "distractor": true,
+   "text": null,
+   "must_not_offer": [],
+   "note": "Send Later is sensitive"
+  },
+  {
+   "goal": "change the formatting",
+   "expected_id": "1",
+   "expected": "click",
+   "overlap": false,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "add a cc field",
+   "expected_id": "3",
+   "expected": "click",
+   "overlap": false,
+   "distractor": true,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "reply",
+   "expected_id": null,
+   "expected": "abstain",
+   "overlap": false,
+   "distractor": true,
+   "text": null,
+   "must_not_offer": [],
+   "note": "Reply is sensitive"
+  }
+ ]
+}

@@ -1,0 +1,24 @@
+{"ts": "2026-09-01T08:00:00-07:00", "ch": "telegram", "conv": "t-1788274800000-effe", "who": "owner", "kind": "say", "text": "Bumping my monthly budget to $1,700 since I'm not splitting utilities anymore."}
+{"ts": "2026-09-01T08:01:02-07:00", "ch": "telegram", "conv": "t-1788274800000-effe", "who": "eve", "kind": "say", "text": "Updated."}
+{"ts": "2026-09-01T08:03:01-07:00", "ch": "telegram", "conv": "t-1788274800000-effe", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-01T08:55:00-07:00", "ch": "voice", "conv": "v-1788278100000-f522", "who": "owner", "kind": "say", "text": "What's 15 percent of 48?"}
+{"ts": "2026-09-01T08:56:27-07:00", "ch": "voice", "conv": "v-1788278100000-f522", "who": "eve", "kind": "say", "text": "7.2."}
+{"ts": "2026-09-01T08:59:14-07:00", "ch": "voice", "conv": "v-1788278100000-f522", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-01T12:00:00-07:00", "ch": "telegram", "conv": "t-1788289200000-001e", "who": "owner", "kind": "say", "text": "Haddad's office hours are Wednesdays at 3 pm."}
+{"ts": "2026-09-01T12:01:23-07:00", "ch": "telegram", "conv": "t-1788289200000-001e", "who": "eve", "kind": "say", "text": "Saved."}
+{"ts": "2026-09-01T12:04:26-07:00", "ch": "telegram", "conv": "t-1788289200000-001e", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-01T12:45:00-07:00", "ch": "telegram", "conv": "t-1788291900000-a10c", "who": "owner", "kind": "say", "text": "What does 'idempotent' mean?"}
+{"ts": "2026-09-01T12:46:19-07:00", "ch": "telegram", "conv": "t-1788291900000-a10c", "who": "eve", "kind": "say", "text": "Doing it twice has the same effect as doing it once."}
+{"ts": "2026-09-01T12:49:55-07:00", "ch": "telegram", "conv": "t-1788291900000-a10c", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-01T17:00:00-07:00", "ch": "telegram", "conv": "t-1788307200000-133f", "who": "owner", "kind": "say", "text": "Sold the old desk for $40."}
+{"ts": "2026-09-01T17:01:10-07:00", "ch": "telegram", "conv": "t-1788307200000-133f", "who": "eve", "kind": "say", "text": "Nice."}
+{"ts": "2026-09-01T17:03:33-07:00", "ch": "telegram", "conv": "t-1788307200000-133f", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-01T19:30:00-07:00", "ch": "telegram", "conv": "t-1788316200000-586d", "who": "owner", "kind": "say", "text": "Shelfie beta launch is set for September 14."}
+{"ts": "2026-09-01T19:31:23-07:00", "ch": "telegram", "conv": "t-1788316200000-586d", "who": "eve", "kind": "say", "text": "Two weeks. Exciting."}
+{"ts": "2026-09-01T19:34:11-07:00", "ch": "telegram", "conv": "t-1788316200000-586d", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-01T21:00:00-07:00", "ch": "voice", "conv": "v-1788321600000-aab3", "who": "owner", "kind": "say", "text": "Spare key's under the blue planter by the stairs."}
+{"ts": "2026-09-01T21:00:56-07:00", "ch": "voice", "conv": "v-1788321600000-aab3", "who": "eve", "kind": "say", "text": "Okay."}
+{"ts": "2026-09-01T21:03:26-07:00", "ch": "voice", "conv": "v-1788321600000-aab3", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-01T23:05:00-07:00", "ch": "voice", "conv": "v-1788329100000-77be", "who": "owner", "kind": "say", "text": "Thanks eve."}
+{"ts": "2026-09-01T23:05:53-07:00", "ch": "voice", "conv": "v-1788329100000-77be", "who": "eve", "kind": "say", "text": "Anytime."}
+{"ts": "2026-09-01T23:09:15-07:00", "ch": "voice", "conv": "v-1788329100000-77be", "who": "system", "kind": "close", "text": ""}

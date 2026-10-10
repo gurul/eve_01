@@ -1,0 +1,7043 @@
+{
+ "captured": {
+  "ax_candidates_sha": "96599e77c9620855df3314719f9bc3f8ef40a57293c021378302e525267a9fce",
+  "macos": "26.6.2",
+  "app_version": "26.4",
+  "at": "2026-09-21T02:44:39-07:00",
+  "truncated": false,
+  "redacted": true
+ },
+ "screen": [
+  1512,
+  982
+ ],
+ "raw": {
+  "app": "Finder",
+  "bundle": "com.apple.finder",
+  "pid": 668,
+  "title": "Downloads",
+  "fullscreen": false,
+  "node_count": 186,
+  "truncated": false,
+  "secs": 0.0968,
+  "root": {
+   "role": "AXWindow",
+   "subrole": "AXStandardWindow",
+   "title": "Downloads",
+   "description": "",
+   "value": null,
+   "frame": [
+    286.0,
+    131.0,
+    923.0,
+    284.0
+   ],
+   "actions": [],
+   "enabled": true,
+   "focused": false,
+   "children": [
+    {
+     "role": "AXSplitGroup",
+     "subrole": "",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      286.0,
+      131.0,
+      923.0,
+      284.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [
+      {
+       "role": "AXScrollArea",
+       "subrole": "",
+       "title": "",
+       "description": "",
+       "value": null,
+       "frame": [
+        294.0,
+        183.0,
+        160.0,
+        224.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [
+        {
+         "role": "AXOutline",
+         "subrole": "",
+         "title": "",
+         "description": "sidebar",
+         "value": null,
+         "frame": [
+          293.0,
+          182.0,
+          145.0,
+          716.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [
+          {
+           "role": "AXRow",
+           "subrole": "AXOutlineRow",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            294.0,
+            183.0,
+            143.0,
+            32.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXCell",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              304.0,
+              183.0,
+              123.0,
+              32.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": true,
+             "children": [
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "Recents",
+               "frame": [
+                339.0,
+                190.0,
+                81.0,
+                18.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              },
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "clock",
+               "value": null,
+               "frame": [
+                312.0,
+                194.0,
+                22.0,
+                11.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline",
+              "AXRow"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXScrollArea",
+            "AXOutline"
+           ]
+          },
+          {
+           "role": "AXRow",
+           "subrole": "AXOutlineRow",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            294.0,
+            215.0,
+            143.0,
+            32.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXCell",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              304.0,
+              215.0,
+              123.0,
+              32.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": true,
+             "children": [
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "Shared",
+               "frame": [
+                339.0,
+                222.0,
+                81.0,
+                18.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              },
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "Shared Folder",
+               "value": null,
+               "frame": [
+                309.0,
+                226.0,
+                25.0,
+                11.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline",
+              "AXRow"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXScrollArea",
+            "AXOutline"
+           ]
+          },
+          {
+           "role": "AXRow",
+           "subrole": "AXOutlineRow",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            294.0,
+            260.0,
+            143.0,
+            19.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXCell",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              304.0,
+              260.0,
+              123.0,
+              19.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": true,
+             "children": [
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "Favorites",
+               "frame": [
+                309.0,
+                259.0,
+                125.0,
+                21.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline",
+              "AXRow"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXScrollArea",
+            "AXOutline"
+           ]
+          },
+          {
+           "role": "AXRow",
+           "subrole": "AXOutlineRow",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            294.0,
+            279.0,
+            143.0,
+            32.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXCell",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              304.0,
+              279.0,
+              123.0,
+              32.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": true,
+             "children": [
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "Applications",
+               "frame": [
+                339.0,
+                286.0,
+                81.0,
+                18.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              },
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                311.5,
+                290.0,
+                22.5,
+                11.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline",
+              "AXRow"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXScrollArea",
+            "AXOutline"
+           ]
+          },
+          {
+           "role": "AXRow",
+           "subrole": "AXOutlineRow",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            294.0,
+            311.0,
+            143.0,
+            32.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXCell",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              304.0,
+              311.0,
+              123.0,
+              32.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": true,
+             "children": [
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "Desktop",
+               "frame": [
+                339.0,
+                318.0,
+                81.0,
+                18.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              },
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                310.0,
+                322.0,
+                25.5,
+                11.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline",
+              "AXRow"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXScrollArea",
+            "AXOutline"
+           ]
+          },
+          {
+           "role": "AXRow",
+           "subrole": "AXOutlineRow",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            294.0,
+            343.0,
+            143.0,
+            32.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXCell",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              304.0,
+              343.0,
+              123.0,
+              32.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": true,
+             "children": [
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "Documents",
+               "frame": [
+                339.0,
+                350.0,
+                81.0,
+                18.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              },
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "document",
+               "value": null,
+               "frame": [
+                313.0,
+                354.0,
+                20.0,
+                11.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline",
+              "AXRow"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXScrollArea",
+            "AXOutline"
+           ]
+          },
+          {
+           "role": "AXRow",
+           "subrole": "AXOutlineRow",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            294.0,
+            375.0,
+            143.0,
+            32.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXCell",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              304.0,
+              375.0,
+              123.0,
+              32.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": true,
+             "children": [
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "Downloads",
+               "frame": [
+                339.0,
+                382.0,
+                81.0,
+                18.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              },
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "Arrow Down Circle",
+               "value": null,
+               "frame": [
+                312.0,
+                386.0,
+                22.0,
+                11.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline",
+              "AXRow"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXScrollArea",
+            "AXOutline"
+           ]
+          },
+          {
+           "role": "AXRow",
+           "subrole": "AXOutlineRow",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            294.0,
+            420.0,
+            143.0,
+            19.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXCell",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              304.0,
+              420.0,
+              123.0,
+              19.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": true,
+             "children": [
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "Locations",
+               "frame": [
+                309.0,
+                419.0,
+                125.0,
+                21.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline",
+              "AXRow"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXScrollArea",
+            "AXOutline"
+           ]
+          },
+          {
+           "role": "AXRow",
+           "subrole": "AXOutlineRow",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            294.0,
+            439.0,
+            143.0,
+            32.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXCell",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              304.0,
+              439.0,
+              123.0,
+              32.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": true,
+             "children": [
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "iCloud Drive",
+               "frame": [
+                333.0,
+                452.0,
+                211.0,
+                18.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              },
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "iCloud",
+               "value": null,
+               "frame": [
+                309.0,
+                448.5,
+                19.0,
+                25.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline",
+              "AXRow"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXScrollArea",
+            "AXOutline"
+           ]
+          },
+          {
+           "role": "AXRow",
+           "subrole": "AXOutlineRow",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            294.0,
+            471.0,
+            143.0,
+            32.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXCell",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              304.0,
+              471.0,
+              123.0,
+              32.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": true,
+             "children": [
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "sam",
+               "frame": [
+                333.0,
+                484.0,
+                211.0,
+                18.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              },
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "home",
+               "value": null,
+               "frame": [
+                309.0,
+                481.0,
+                18.5,
+                23.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline",
+              "AXRow"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXScrollArea",
+            "AXOutline"
+           ]
+          },
+          {
+           "role": "AXRow",
+           "subrole": "AXOutlineRow",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            294.0,
+            503.0,
+            143.0,
+            32.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXCell",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              304.0,
+              503.0,
+              123.0,
+              32.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": true,
+             "children": [
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "Macintosh HD",
+               "frame": [
+                333.0,
+                516.0,
+                211.0,
+                18.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              },
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                309.0,
+                511.0,
+                19.0,
+                26.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline",
+              "AXRow"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXScrollArea",
+            "AXOutline"
+           ]
+          },
+          {
+           "role": "AXRow",
+           "subrole": "AXOutlineRow",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            294.0,
+            535.0,
+            143.0,
+            32.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXCell",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              304.0,
+              535.0,
+              123.0,
+              32.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": true,
+             "children": [
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "AirDrop",
+               "frame": [
+                333.0,
+                548.0,
+                211.0,
+                18.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              },
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                309.0,
+                545.5,
+                19.0,
+                23.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline",
+              "AXRow"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXScrollArea",
+            "AXOutline"
+           ]
+          },
+          {
+           "role": "AXRow",
+           "subrole": "AXOutlineRow",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            294.0,
+            567.0,
+            143.0,
+            32.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXCell",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              304.0,
+              567.0,
+              123.0,
+              32.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": true,
+             "children": [
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "Trash",
+               "frame": [
+                333.0,
+                580.0,
+                211.0,
+                18.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              },
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "trash",
+               "value": null,
+               "frame": [
+                309.0,
+                578.0,
+                18.5,
+                22.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline",
+              "AXRow"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXScrollArea",
+            "AXOutline"
+           ]
+          },
+          {
+           "role": "AXRow",
+           "subrole": "AXOutlineRow",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            294.0,
+            612.0,
+            143.0,
+            19.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXCell",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              304.0,
+              612.0,
+              123.0,
+              19.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": true,
+             "children": [
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "Tags",
+               "frame": [
+                309.0,
+                611.0,
+                125.0,
+                21.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline",
+              "AXRow"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXScrollArea",
+            "AXOutline"
+           ]
+          },
+          {
+           "role": "AXRow",
+           "subrole": "AXOutlineRow",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            294.0,
+            631.0,
+            143.0,
+            32.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXCell",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              304.0,
+              631.0,
+              123.0,
+              32.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": true,
+             "children": [
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "Red",
+               "frame": [
+                333.0,
+                644.0,
+                211.0,
+                18.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              },
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                309.0,
+                638.5,
+                19.0,
+                27.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline",
+              "AXRow"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXScrollArea",
+            "AXOutline"
+           ]
+          },
+          {
+           "role": "AXRow",
+           "subrole": "AXOutlineRow",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            294.0,
+            663.0,
+            143.0,
+            32.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXCell",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              304.0,
+              663.0,
+              123.0,
+              32.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": true,
+             "children": [
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "Orange",
+               "frame": [
+                333.0,
+                676.0,
+                211.0,
+                18.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              },
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                309.0,
+                670.5,
+                19.0,
+                27.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline",
+              "AXRow"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXScrollArea",
+            "AXOutline"
+           ]
+          },
+          {
+           "role": "AXRow",
+           "subrole": "AXOutlineRow",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            294.0,
+            695.0,
+            143.0,
+            32.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXCell",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              304.0,
+              695.0,
+              123.0,
+              32.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": true,
+             "children": [
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "Yellow",
+               "frame": [
+                333.0,
+                708.0,
+                211.0,
+                18.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              },
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                309.0,
+                702.5,
+                19.0,
+                27.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline",
+              "AXRow"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXScrollArea",
+            "AXOutline"
+           ]
+          },
+          {
+           "role": "AXRow",
+           "subrole": "AXOutlineRow",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            294.0,
+            727.0,
+            143.0,
+            32.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXCell",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              304.0,
+              727.0,
+              123.0,
+              32.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": true,
+             "children": [
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "Green",
+               "frame": [
+                333.0,
+                740.0,
+                211.0,
+                18.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              },
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                309.0,
+                734.5,
+                19.0,
+                27.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline",
+              "AXRow"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXScrollArea",
+            "AXOutline"
+           ]
+          },
+          {
+           "role": "AXRow",
+           "subrole": "AXOutlineRow",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            294.0,
+            759.0,
+            143.0,
+            32.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXCell",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              304.0,
+              759.0,
+              123.0,
+              32.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": true,
+             "children": [
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "Blue",
+               "frame": [
+                339.0,
+                766.0,
+                81.0,
+                18.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              },
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                314.0,
+                770.0,
+                18.0,
+                11.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline",
+              "AXRow"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXScrollArea",
+            "AXOutline"
+           ]
+          },
+          {
+           "role": "AXRow",
+           "subrole": "AXOutlineRow",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            294.0,
+            791.0,
+            143.0,
+            32.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXCell",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              304.0,
+              791.0,
+              123.0,
+              32.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": true,
+             "children": [
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "Purple",
+               "frame": [
+                339.0,
+                798.0,
+                81.0,
+                18.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              },
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                314.0,
+                802.0,
+                18.0,
+                11.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline",
+              "AXRow"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXScrollArea",
+            "AXOutline"
+           ]
+          },
+          {
+           "role": "AXRow",
+           "subrole": "AXOutlineRow",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            294.0,
+            823.0,
+            143.0,
+            32.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXCell",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              304.0,
+              823.0,
+              123.0,
+              32.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": true,
+             "children": [
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "Gray",
+               "frame": [
+                339.0,
+                830.0,
+                81.0,
+                18.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              },
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                314.0,
+                834.0,
+                18.0,
+                11.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline",
+              "AXRow"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXScrollArea",
+            "AXOutline"
+           ]
+          },
+          {
+           "role": "AXRow",
+           "subrole": "AXOutlineRow",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            294.0,
+            855.0,
+            143.0,
+            32.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXCell",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              304.0,
+              855.0,
+              123.0,
+              32.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": true,
+             "children": [
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "All Tags…",
+               "frame": [
+                339.0,
+                862.0,
+                81.0,
+                18.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              },
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                314.0,
+                866.0,
+                17.5,
+                11.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow",
+                "AXCell"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline",
+              "AXRow"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXScrollArea",
+            "AXOutline"
+           ]
+          },
+          {
+           "role": "AXColumn",
+           "subrole": "",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            304.0,
+            183.0,
+            123.0,
+            714.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXScrollArea",
+            "AXOutline"
+           ]
+          }
+         ],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXSplitGroup",
+          "AXScrollArea"
+         ]
+        },
+        {
+         "role": "AXScrollBar",
+         "subrole": "",
+         "title": "",
+         "description": "",
+         "value": 0.0,
+         "frame": [
+          436.0,
+          182.0,
+          19.0,
+          216.5
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXSplitGroup",
+          "AXScrollArea"
+         ]
+        }
+       ],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXSplitGroup"
+       ]
+      },
+      {
+       "role": "AXSplitter",
+       "subrole": "",
+       "title": "",
+       "description": "",
+       "value": 168.0,
+       "frame": [
+        454.0,
+        183.0,
+        0.0,
+        232.0
+       ],
+       "actions": [],
+       "enabled": false,
+       "focused": false,
+       "children": [],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXSplitGroup"
+       ]
+      },
+      {
+       "role": "AXSplitGroup",
+       "subrole": "",
+       "title": "",
+       "description": "",
+       "value": null,
+       "frame": [
+        286.0,
+        131.0,
+        923.0,
+        284.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [
+        {
+         "role": "AXScrollArea",
+         "subrole": "",
+         "title": "",
+         "description": "",
+         "value": null,
+         "frame": [
+          454.0,
+          183.0,
+          755.0,
+          232.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [
+          {
+           "role": "AXOutline",
+           "subrole": "",
+           "title": "",
+           "description": "list view",
+           "value": null,
+           "frame": [
+            453.0,
+            182.0,
+            757.0,
+            234.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": true,
+           "children": [
+            {
+             "role": "AXRow",
+             "subrole": "AXOutlineRow",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              454.0,
+              188.0,
+              755.0,
+              28.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": false,
+             "children": [
+              {
+               "role": "AXCell",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                454.0,
+                188.0,
+                755.0,
+                28.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": true,
+               "children": [
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "Name",
+                 "frame": [
+                  500.0,
+                  188.0,
+                  34.0,
+                  16.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                },
+                {
+                 "role": "AXImage",
+                 "subrole": "",
+                 "title": "",
+                 "description": "go up",
+                 "value": null,
+                 "frame": [
+                  781.0,
+                  192.0,
+                  11.5,
+                  10.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                },
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "Size",
+                 "frame": [
+                  806.0,
+                  188.0,
+                  25.0,
+                  16.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                },
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "Kind",
+                 "frame": [
+                  903.0,
+                  188.0,
+                  26.0,
+                  16.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                },
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "Date Added",
+                 "frame": [
+                  1018.0,
+                  188.0,
+                  64.0,
+                  16.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline"
+             ]
+            },
+            {
+             "role": "AXRow",
+             "subrole": "AXOutlineRow",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              454.0,
+              216.0,
+              755.0,
+              20.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": false,
+             "children": [
+              {
+               "role": "AXCell",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                480.0,
+                216.0,
+                320.0,
+                20.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": true,
+               "children": [
+                {
+                 "role": "AXImage",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  480.0,
+                  218.0,
+                  16.0,
+                  16.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                },
+                {
+                 "role": "AXTextField",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "report-a1.pdf",
+                 "frame": [
+                  500.0,
+                  217.0,
+                  147.0,
+                  18.0
+                 ],
+                 "actions": [
+                  "AXOpen",
+                  "AXShowMenu",
+                  "AXConfirm"
+                 ],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow"
+               ]
+              },
+              {
+               "role": "AXCell",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                800.0,
+                216.0,
+                97.0,
+                20.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": true,
+               "children": [
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "227 KB",
+                 "frame": [
+                  844.0,
+                  217.0,
+                  47.0,
+                  18.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow"
+               ]
+              },
+              {
+               "role": "AXCell",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                897.0,
+                216.0,
+                115.0,
+                20.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": true,
+               "children": [
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "PDF Document",
+                 "frame": [
+                  903.0,
+                  217.0,
+                  97.0,
+                  18.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow"
+               ]
+              },
+              {
+               "role": "AXCell",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                1012.0,
+                216.0,
+                181.0,
+                20.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": true,
+               "children": [
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "Yesterday at 7:37 PM",
+                 "frame": [
+                  1018.0,
+                  217.0,
+                  169.0,
+                  18.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline"
+             ]
+            },
+            {
+             "role": "AXRow",
+             "subrole": "AXOutlineRow",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              454.0,
+              236.0,
+              755.0,
+              20.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": false,
+             "children": [
+              {
+               "role": "AXCell",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                480.0,
+                236.0,
+                320.0,
+                20.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": true,
+               "children": [
+                {
+                 "role": "AXImage",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  480.0,
+                  238.0,
+                  16.0,
+                  16.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                },
+                {
+                 "role": "AXTextField",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "report-b2.pdf",
+                 "frame": [
+                  500.0,
+                  237.0,
+                  150.0,
+                  18.0
+                 ],
+                 "actions": [
+                  "AXOpen",
+                  "AXShowMenu",
+                  "AXConfirm"
+                 ],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow"
+               ]
+              },
+              {
+               "role": "AXCell",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                800.0,
+                236.0,
+                97.0,
+                20.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": true,
+               "children": [
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "66 KB",
+                 "frame": [
+                  852.0,
+                  237.0,
+                  39.0,
+                  18.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow"
+               ]
+              },
+              {
+               "role": "AXCell",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                897.0,
+                236.0,
+                115.0,
+                20.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": true,
+               "children": [
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "PDF Document",
+                 "frame": [
+                  903.0,
+                  237.0,
+                  97.0,
+                  18.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow"
+               ]
+              },
+              {
+               "role": "AXCell",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                1012.0,
+                236.0,
+                181.0,
+                20.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": true,
+               "children": [
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "Yesterday at 7:37 PM",
+                 "frame": [
+                  1018.0,
+                  237.0,
+                  169.0,
+                  18.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline"
+             ]
+            },
+            {
+             "role": "AXRow",
+             "subrole": "AXOutlineRow",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              454.0,
+              256.0,
+              755.0,
+              20.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": false,
+             "children": [
+              {
+               "role": "AXCell",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                480.0,
+                256.0,
+                320.0,
+                20.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": true,
+               "children": [
+                {
+                 "role": "AXImage",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  480.0,
+                  258.0,
+                  16.0,
+                  16.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                },
+                {
+                 "role": "AXTextField",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "resume-draft.pdf",
+                 "frame": [
+                  500.0,
+                  257.0,
+                  109.0,
+                  18.0
+                 ],
+                 "actions": [
+                  "AXOpen",
+                  "AXShowMenu",
+                  "AXConfirm"
+                 ],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow"
+               ]
+              },
+              {
+               "role": "AXCell",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                800.0,
+                256.0,
+                97.0,
+                20.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": true,
+               "children": [
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "142 KB",
+                 "frame": [
+                  844.0,
+                  257.0,
+                  47.0,
+                  18.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow"
+               ]
+              },
+              {
+               "role": "AXCell",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                897.0,
+                256.0,
+                115.0,
+                20.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": true,
+               "children": [
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "PDF Document",
+                 "frame": [
+                  903.0,
+                  257.0,
+                  97.0,
+                  18.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow"
+               ]
+              },
+              {
+               "role": "AXCell",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                1012.0,
+                256.0,
+                181.0,
+                20.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": true,
+               "children": [
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "Yesterday at 8:04 PM",
+                 "frame": [
+                  1018.0,
+                  257.0,
+                  169.0,
+                  18.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline"
+             ]
+            },
+            {
+             "role": "AXRow",
+             "subrole": "AXOutlineRow",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              454.0,
+              276.0,
+              755.0,
+              20.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": false,
+             "children": [
+              {
+               "role": "AXCell",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                480.0,
+                276.0,
+                320.0,
+                20.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": true,
+               "children": [
+                {
+                 "role": "AXImage",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  480.0,
+                  278.0,
+                  16.0,
+                  16.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                },
+                {
+                 "role": "AXTextField",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "notes-app_1.2.0.dmg",
+                 "frame": [
+                  500.0,
+                  277.0,
+                  153.0,
+                  18.0
+                 ],
+                 "actions": [
+                  "AXOpen",
+                  "AXShowMenu",
+                  "AXConfirm"
+                 ],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow"
+               ]
+              },
+              {
+               "role": "AXCell",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                800.0,
+                276.0,
+                97.0,
+                20.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": true,
+               "children": [
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "6.2 MB",
+                 "frame": [
+                  846.0,
+                  277.0,
+                  46.0,
+                  18.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow"
+               ]
+              },
+              {
+               "role": "AXCell",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                897.0,
+                276.0,
+                115.0,
+                20.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": true,
+               "children": [
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "Disk Image",
+                 "frame": [
+                  903.0,
+                  277.0,
+                  69.0,
+                  18.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow"
+               ]
+              },
+              {
+               "role": "AXCell",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                1012.0,
+                276.0,
+                181.0,
+                20.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": true,
+               "children": [
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "Yesterday at 5:02 PM",
+                 "frame": [
+                  1018.0,
+                  277.0,
+                  169.0,
+                  18.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline"
+             ]
+            },
+            {
+             "role": "AXRow",
+             "subrole": "AXOutlineRow",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              454.0,
+              296.0,
+              755.0,
+              20.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": false,
+             "children": [
+              {
+               "role": "AXCell",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                480.0,
+                296.0,
+                334.0,
+                20.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": true,
+               "children": [
+                {
+                 "role": "AXImage",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  480.0,
+                  298.0,
+                  16.0,
+                  16.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                },
+                {
+                 "role": "AXTextField",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "recipes",
+                 "frame": [
+                  500.0,
+                  297.0,
+                  71.0,
+                  18.0
+                 ],
+                 "actions": [
+                  "AXOpen",
+                  "AXShowMenu",
+                  "AXConfirm"
+                 ],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                },
+                {
+                 "role": "AXDisclosureTriangle",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": 0,
+                 "frame": [
+                  465.0,
+                  295.0,
+                  15.0,
+                  22.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow"
+               ]
+              },
+              {
+               "role": "AXCell",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                800.0,
+                296.0,
+                97.0,
+                20.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": true,
+               "children": [
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "--",
+                 "frame": [
+                  877.0,
+                  297.0,
+                  15.0,
+                  18.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow"
+               ]
+              },
+              {
+               "role": "AXCell",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                897.0,
+                296.0,
+                115.0,
+                20.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": true,
+               "children": [
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "Folder",
+                 "frame": [
+                  903.0,
+                  297.0,
+                  41.0,
+                  18.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow"
+               ]
+              },
+              {
+               "role": "AXCell",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                1012.0,
+                296.0,
+                181.0,
+                20.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": true,
+               "children": [
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "Sep 18, 2026 at 6:45 PM",
+                 "frame": [
+                  1018.0,
+                  297.0,
+                  169.0,
+                  18.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXSplitGroup",
+                  "AXSplitGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow",
+                  "AXCell"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXRow"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline"
+             ]
+            },
+            {
+             "role": "AXColumn",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              464.0,
+              183.0,
+              336.0,
+              232.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline"
+             ]
+            },
+            {
+             "role": "AXColumn",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              800.0,
+              183.0,
+              97.0,
+              232.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline"
+             ]
+            },
+            {
+             "role": "AXColumn",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              897.0,
+              183.0,
+              115.0,
+              232.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline"
+             ]
+            },
+            {
+             "role": "AXColumn",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              1012.0,
+              183.0,
+              187.0,
+              232.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline"
+             ]
+            },
+            {
+             "role": "AXGroup",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              454.0,
+              183.0,
+              755.0,
+              0.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": false,
+             "children": [
+              {
+               "role": "AXButton",
+               "subrole": "AXSortButton",
+               "title": "Name",
+               "description": "",
+               "value": null,
+               "frame": [
+                464.0,
+                183.0,
+                336.0,
+                28.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXGroup"
+               ]
+              },
+              {
+               "role": "AXButton",
+               "subrole": "AXSortButton",
+               "title": "Size",
+               "description": "",
+               "value": null,
+               "frame": [
+                800.0,
+                183.0,
+                97.0,
+                28.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXGroup"
+               ]
+              },
+              {
+               "role": "AXButton",
+               "subrole": "AXSortButton",
+               "title": "Kind",
+               "description": "",
+               "value": null,
+               "frame": [
+                897.0,
+                183.0,
+                115.0,
+                28.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXGroup"
+               ]
+              },
+              {
+               "role": "AXButton",
+               "subrole": "AXSortButton",
+               "title": "Date Added",
+               "description": "",
+               "value": null,
+               "frame": [
+                1012.0,
+                183.0,
+                187.0,
+                28.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXSplitGroup",
+                "AXScrollArea",
+                "AXOutline",
+                "AXGroup"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXSplitGroup",
+              "AXScrollArea",
+              "AXOutline"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXSplitGroup",
+            "AXScrollArea"
+           ]
+          }
+         ],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXSplitGroup",
+          "AXSplitGroup"
+         ]
+        },
+        {
+         "role": "AXUnknown",
+         "subrole": "",
+         "title": "",
+         "description": "",
+         "value": null,
+         "frame": [
+          454.0,
+          415.0,
+          755.0,
+          28.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [
+          {
+           "role": "AXStaticText",
+           "subrole": "",
+           "title": "",
+           "description": "",
+           "value": "5 items, 655.38 GB available",
+           "frame": [
+            745.0,
+            421.0,
+            162.0,
+            16.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXSplitGroup",
+            "AXUnknown"
+           ]
+          }
+         ],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXSplitGroup",
+          "AXSplitGroup"
+         ]
+        }
+       ],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXSplitGroup"
+       ]
+      }
+     ],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXToolbar",
+     "subrole": "",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      286.0,
+      131.0,
+      923.0,
+      52.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [
+      {
+       "role": "AXGroup",
+       "subrole": "",
+       "title": "",
+       "description": "",
+       "value": null,
+       "frame": [
+        458.0,
+        131.0,
+        81.0,
+        52.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [
+        {
+         "role": "AXGroup",
+         "subrole": "",
+         "title": "",
+         "description": "Back/Forward",
+         "value": null,
+         "frame": [
+          461.0,
+          138.0,
+          75.0,
+          38.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [
+          {
+           "role": "AXButton",
+           "subrole": "AXSegment",
+           "title": "",
+           "description": "back",
+           "value": null,
+           "frame": [
+            462.0,
+            139.0,
+            36.0,
+            36.0
+           ],
+           "actions": [],
+           "enabled": false,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXToolbar",
+            "AXGroup",
+            "AXGroup"
+           ]
+          },
+          {
+           "role": "AXButton",
+           "subrole": "AXSegment",
+           "title": "",
+           "description": "forward",
+           "value": null,
+           "frame": [
+            499.0,
+            139.0,
+            36.0,
+            36.0
+           ],
+           "actions": [],
+           "enabled": false,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXToolbar",
+            "AXGroup",
+            "AXGroup"
+           ]
+          }
+         ],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXToolbar",
+          "AXGroup"
+         ]
+        }
+       ],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXToolbar"
+       ]
+      },
+      {
+       "role": "AXGroup",
+       "subrole": "",
+       "title": "",
+       "description": "",
+       "value": null,
+       "frame": [
+        800.0,
+        131.0,
+        156.0,
+        52.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [
+        {
+         "role": "AXRadioGroup",
+         "subrole": "",
+         "title": "",
+         "description": "",
+         "value": null,
+         "frame": [
+          803.0,
+          138.0,
+          150.0,
+          38.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [
+          {
+           "role": "AXRadioButton",
+           "subrole": "AXSegment",
+           "title": "",
+           "description": "icon view",
+           "value": 0,
+           "frame": [
+            804.0,
+            139.0,
+            37.0,
+            36.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXToolbar",
+            "AXGroup",
+            "AXRadioGroup"
+           ]
+          },
+          {
+           "role": "AXRadioButton",
+           "subrole": "AXSegment",
+           "title": "",
+           "description": "list view",
+           "value": 1,
+           "frame": [
+            842.0,
+            139.0,
+            36.0,
+            36.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXToolbar",
+            "AXGroup",
+            "AXRadioGroup"
+           ]
+          },
+          {
+           "role": "AXRadioButton",
+           "subrole": "AXSegment",
+           "title": "",
+           "description": "column view",
+           "value": 0,
+           "frame": [
+            879.0,
+            139.0,
+            36.0,
+            36.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXToolbar",
+            "AXGroup",
+            "AXRadioGroup"
+           ]
+          },
+          {
+           "role": "AXRadioButton",
+           "subrole": "AXSegment",
+           "title": "",
+           "description": "gallery view",
+           "value": 0,
+           "frame": [
+            916.0,
+            139.0,
+            36.0,
+            36.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXToolbar",
+            "AXGroup",
+            "AXRadioGroup"
+           ]
+          }
+         ],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXToolbar",
+          "AXGroup"
+         ]
+        }
+       ],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXToolbar"
+       ]
+      },
+      {
+       "role": "AXMenuButton",
+       "subrole": "",
+       "title": "",
+       "description": "Group",
+       "value": null,
+       "frame": [
+        964.0,
+        131.0,
+        58.0,
+        52.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXToolbar"
+       ]
+      },
+      {
+       "role": "AXButton",
+       "subrole": "",
+       "title": "",
+       "description": "Share",
+       "value": null,
+       "frame": [
+        1030.0,
+        131.0,
+        41.0,
+        52.0
+       ],
+       "actions": [],
+       "enabled": false,
+       "focused": false,
+       "children": [],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXToolbar"
+       ]
+      },
+      {
+       "role": "AXButton",
+       "subrole": "",
+       "title": "",
+       "description": "Edit Tags",
+       "value": null,
+       "frame": [
+        1071.0,
+        131.0,
+        40.0,
+        52.0
+       ],
+       "actions": [],
+       "enabled": false,
+       "focused": false,
+       "children": [],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXToolbar"
+       ]
+      },
+      {
+       "role": "AXMenuButton",
+       "subrole": "",
+       "title": "",
+       "description": "Action",
+       "value": null,
+       "frame": [
+        1111.0,
+        131.0,
+        41.0,
+        52.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXToolbar"
+       ]
+      },
+      {
+       "role": "AXGroup",
+       "subrole": "",
+       "title": "",
+       "description": "",
+       "value": null,
+       "frame": [
+        1160.0,
+        131.0,
+        45.0,
+        52.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [
+        {
+         "role": "AXButton",
+         "subrole": "AXSearchField",
+         "title": "",
+         "description": "Search",
+         "value": null,
+         "frame": [
+          1163.5,
+          138.0,
+          38.5,
+          38.0
+         ],
+         "actions": [
+          "AXPress"
+         ],
+         "enabled": true,
+         "focused": false,
+         "children": [],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXToolbar",
+          "AXGroup"
+         ]
+        }
+       ],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXToolbar"
+       ]
+      }
+     ],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXButton",
+     "subrole": "AXCloseButton",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      304.0,
+      149.0,
+      16.0,
+      16.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXButton",
+     "subrole": "AXFullScreenButton",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      350.0,
+      149.0,
+      16.0,
+      16.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [
+      {
+       "role": "AXGroup",
+       "subrole": "",
+       "title": "",
+       "description": "",
+       "value": null,
+       "frame": [
+        351.0,
+        150.0,
+        14.0,
+        14.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXButton"
+       ]
+      }
+     ],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXButton",
+     "subrole": "AXMinimizeButton",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      327.0,
+      149.0,
+      16.0,
+      16.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXStaticText",
+     "subrole": "",
+     "title": "",
+     "description": "",
+     "value": "Downloads",
+     "frame": [
+      539.0,
+      131.0,
+      261.0,
+      52.0
+     ],
+     "actions": [
+      "AXPress"
+     ],
+     "enabled": true,
+     "focused": false,
+     "children": [],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    }
+   ],
+   "ancestor_roles": []
+  }
+ },
+ "snapshot": {
+  "seq": 1,
+  "app": "Finder",
+  "bundle": "com.apple.finder",
+  "title": "Downloads",
+  "pid": 668,
+  "elements": [
+   {
+    "id": "0",
+    "role": "static text",
+    "label": "Downloads",
+    "value": "",
+    "frame": [
+     539,
+     131,
+     261,
+     52
+    ],
+    "actions": [
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "1",
+    "role": "menu button",
+    "label": "Group",
+    "value": "",
+    "frame": [
+     964,
+     131,
+     58,
+     52
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "2",
+    "role": "button",
+    "label": "Share",
+    "value": "",
+    "frame": [
+     1030,
+     131,
+     41,
+     52
+    ],
+    "actions": [],
+    "enabled": false,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "3",
+    "role": "button",
+    "label": "Edit Tags",
+    "value": "",
+    "frame": [
+     1071,
+     131,
+     40,
+     52
+    ],
+    "actions": [],
+    "enabled": false,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "4",
+    "role": "menu button",
+    "label": "Action",
+    "value": "",
+    "frame": [
+     1111,
+     131,
+     41,
+     52
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "5",
+    "role": "search field",
+    "label": "Search",
+    "value": "",
+    "frame": [
+     1164,
+     138,
+     38,
+     38
+    ],
+    "actions": [
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": true
+   },
+   {
+    "id": "6",
+    "role": "button",
+    "label": "back",
+    "value": "",
+    "frame": [
+     462,
+     139,
+     36,
+     36
+    ],
+    "actions": [],
+    "enabled": false,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "7",
+    "role": "button",
+    "label": "forward",
+    "value": "",
+    "frame": [
+     499,
+     139,
+     36,
+     36
+    ],
+    "actions": [],
+    "enabled": false,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "8",
+    "role": "radio button",
+    "label": "icon view",
+    "value": "",
+    "frame": [
+     804,
+     139,
+     37,
+     36
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "9",
+    "role": "radio button",
+    "label": "list view",
+    "value": "selected",
+    "frame": [
+     842,
+     139,
+     36,
+     36
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "10",
+    "role": "radio button",
+    "label": "column view",
+    "value": "",
+    "frame": [
+     879,
+     139,
+     36,
+     36
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "11",
+    "role": "radio button",
+    "label": "gallery view",
+    "value": "",
+    "frame": [
+     916,
+     139,
+     36,
+     36
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "12",
+    "role": "row",
+    "label": "Recents",
+    "value": "",
+    "frame": [
+     294,
+     183,
+     143,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "13",
+    "role": "button",
+    "label": "Name",
+    "value": "",
+    "frame": [
+     464,
+     183,
+     336,
+     28
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "14",
+    "role": "button",
+    "label": "Size",
+    "value": "",
+    "frame": [
+     800,
+     183,
+     97,
+     28
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "15",
+    "role": "button",
+    "label": "Kind",
+    "value": "",
+    "frame": [
+     897,
+     183,
+     115,
+     28
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "16",
+    "role": "button",
+    "label": "Date Added",
+    "value": "",
+    "frame": [
+     1012,
+     183,
+     187,
+     28
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "17",
+    "role": "row",
+    "label": "Name",
+    "value": "",
+    "frame": [
+     454,
+     188,
+     755,
+     28
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "18",
+    "role": "static text",
+    "label": "Name",
+    "value": "",
+    "frame": [
+     500,
+     188,
+     34,
+     16
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "19",
+    "role": "static text",
+    "label": "Size",
+    "value": "",
+    "frame": [
+     806,
+     188,
+     25,
+     16
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "20",
+    "role": "static text",
+    "label": "Kind",
+    "value": "",
+    "frame": [
+     903,
+     188,
+     26,
+     16
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "21",
+    "role": "static text",
+    "label": "Date Added",
+    "value": "",
+    "frame": [
+     1018,
+     188,
+     64,
+     16
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "22",
+    "role": "static text",
+    "label": "Recents",
+    "value": "",
+    "frame": [
+     339,
+     190,
+     81,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "23",
+    "role": "image",
+    "label": "go up",
+    "value": "",
+    "frame": [
+     781,
+     192,
+     12,
+     10
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "24",
+    "role": "image",
+    "label": "clock",
+    "value": "",
+    "frame": [
+     312,
+     194,
+     22,
+     11
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "25",
+    "role": "row",
+    "label": "Shared",
+    "value": "",
+    "frame": [
+     294,
+     215,
+     143,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "26",
+    "role": "row",
+    "label": "report-a1.pdf",
+    "value": "",
+    "frame": [
+     454,
+     216,
+     755,
+     20
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "27",
+    "role": "cell",
+    "label": "227 KB",
+    "value": "",
+    "frame": [
+     800,
+     216,
+     97,
+     20
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "28",
+    "role": "cell",
+    "label": "PDF Document",
+    "value": "",
+    "frame": [
+     897,
+     216,
+     115,
+     20
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "29",
+    "role": "cell",
+    "label": "Yesterday at 7:37 PM",
+    "value": "",
+    "frame": [
+     1012,
+     216,
+     181,
+     20
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "30",
+    "role": "text field",
+    "label": "",
+    "value": "report-a1.pdf",
+    "frame": [
+     500,
+     217,
+     147,
+     18
+    ],
+    "actions": [
+     "AXOpen",
+     "AXShowMenu",
+     "AXConfirm"
+    ],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": true
+   },
+   {
+    "id": "31",
+    "role": "static text",
+    "label": "227 KB",
+    "value": "",
+    "frame": [
+     844,
+     217,
+     47,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "32",
+    "role": "static text",
+    "label": "PDF Document",
+    "value": "",
+    "frame": [
+     903,
+     217,
+     97,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "33",
+    "role": "static text",
+    "label": "Yesterday at 7:37 PM",
+    "value": "",
+    "frame": [
+     1018,
+     217,
+     169,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "34",
+    "role": "static text",
+    "label": "Shared",
+    "value": "",
+    "frame": [
+     339,
+     222,
+     81,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "35",
+    "role": "image",
+    "label": "Shared Folder",
+    "value": "",
+    "frame": [
+     309,
+     226,
+     25,
+     11
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "36",
+    "role": "row",
+    "label": "report-b2.pdf",
+    "value": "",
+    "frame": [
+     454,
+     236,
+     755,
+     20
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "37",
+    "role": "cell",
+    "label": "66 KB",
+    "value": "",
+    "frame": [
+     800,
+     236,
+     97,
+     20
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "38",
+    "role": "cell",
+    "label": "PDF Document",
+    "value": "",
+    "frame": [
+     897,
+     236,
+     115,
+     20
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "39",
+    "role": "cell",
+    "label": "Yesterday at 7:37 PM",
+    "value": "",
+    "frame": [
+     1012,
+     236,
+     181,
+     20
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "40",
+    "role": "text field",
+    "label": "",
+    "value": "report-b2.pdf",
+    "frame": [
+     500,
+     237,
+     150,
+     18
+    ],
+    "actions": [
+     "AXOpen",
+     "AXShowMenu",
+     "AXConfirm"
+    ],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": true
+   },
+   {
+    "id": "41",
+    "role": "static text",
+    "label": "66 KB",
+    "value": "",
+    "frame": [
+     852,
+     237,
+     39,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "42",
+    "role": "static text",
+    "label": "PDF Document",
+    "value": "",
+    "frame": [
+     903,
+     237,
+     97,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "43",
+    "role": "static text",
+    "label": "Yesterday at 7:37 PM",
+    "value": "",
+    "frame": [
+     1018,
+     237,
+     169,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "44",
+    "role": "row",
+    "label": "resume-draft.pdf",
+    "value": "",
+    "frame": [
+     454,
+     256,
+     755,
+     20
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "45",
+    "role": "cell",
+    "label": "142 KB",
+    "value": "",
+    "frame": [
+     800,
+     256,
+     97,
+     20
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "46",
+    "role": "cell",
+    "label": "PDF Document",
+    "value": "",
+    "frame": [
+     897,
+     256,
+     115,
+     20
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "47",
+    "role": "cell",
+    "label": "Yesterday at 8:04 PM",
+    "value": "",
+    "frame": [
+     1012,
+     256,
+     181,
+     20
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "48",
+    "role": "text field",
+    "label": "",
+    "value": "resume-draft.pdf",
+    "frame": [
+     500,
+     257,
+     109,
+     18
+    ],
+    "actions": [
+     "AXOpen",
+     "AXShowMenu",
+     "AXConfirm"
+    ],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": true
+   },
+   {
+    "id": "49",
+    "role": "static text",
+    "label": "142 KB",
+    "value": "",
+    "frame": [
+     844,
+     257,
+     47,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "50",
+    "role": "static text",
+    "label": "PDF Document",
+    "value": "",
+    "frame": [
+     903,
+     257,
+     97,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "51",
+    "role": "static text",
+    "label": "Yesterday at 8:04 PM",
+    "value": "",
+    "frame": [
+     1018,
+     257,
+     169,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "52",
+    "role": "static text",
+    "label": "Favorites",
+    "value": "",
+    "frame": [
+     309,
+     259,
+     125,
+     21
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "53",
+    "role": "row",
+    "label": "Favorites",
+    "value": "",
+    "frame": [
+     294,
+     260,
+     143,
+     19
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "54",
+    "role": "row",
+    "label": "notes-app_1.2.0.dmg",
+    "value": "",
+    "frame": [
+     454,
+     276,
+     755,
+     20
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "55",
+    "role": "cell",
+    "label": "6.2 MB",
+    "value": "",
+    "frame": [
+     800,
+     276,
+     97,
+     20
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "56",
+    "role": "cell",
+    "label": "Disk Image",
+    "value": "",
+    "frame": [
+     897,
+     276,
+     115,
+     20
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "57",
+    "role": "cell",
+    "label": "Yesterday at 5:02 PM",
+    "value": "",
+    "frame": [
+     1012,
+     276,
+     181,
+     20
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "58",
+    "role": "text field",
+    "label": "",
+    "value": "notes-app_1.2.0.dmg",
+    "frame": [
+     500,
+     277,
+     153,
+     18
+    ],
+    "actions": [
+     "AXOpen",
+     "AXShowMenu",
+     "AXConfirm"
+    ],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": true
+   },
+   {
+    "id": "59",
+    "role": "static text",
+    "label": "6.2 MB",
+    "value": "",
+    "frame": [
+     846,
+     277,
+     46,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "60",
+    "role": "static text",
+    "label": "Disk Image",
+    "value": "",
+    "frame": [
+     903,
+     277,
+     69,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "61",
+    "role": "static text",
+    "label": "Yesterday at 5:02 PM",
+    "value": "",
+    "frame": [
+     1018,
+     277,
+     169,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "62",
+    "role": "row",
+    "label": "Applications",
+    "value": "",
+    "frame": [
+     294,
+     279,
+     143,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "63",
+    "role": "static text",
+    "label": "Applications",
+    "value": "",
+    "frame": [
+     339,
+     286,
+     81,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "64",
+    "role": "disclosure triangle",
+    "label": "",
+    "value": "collapsed",
+    "frame": [
+     465,
+     295,
+     15,
+     22
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "65",
+    "role": "row",
+    "label": "recipes",
+    "value": "",
+    "frame": [
+     454,
+     296,
+     755,
+     20
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "66",
+    "role": "cell",
+    "label": "--",
+    "value": "",
+    "frame": [
+     800,
+     296,
+     97,
+     20
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "67",
+    "role": "cell",
+    "label": "Folder",
+    "value": "",
+    "frame": [
+     897,
+     296,
+     115,
+     20
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "68",
+    "role": "cell",
+    "label": "Sep 18, 2026 at 6:45 PM",
+    "value": "",
+    "frame": [
+     1012,
+     296,
+     181,
+     20
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "69",
+    "role": "text field",
+    "label": "",
+    "value": "recipes",
+    "frame": [
+     500,
+     297,
+     71,
+     18
+    ],
+    "actions": [
+     "AXOpen",
+     "AXShowMenu",
+     "AXConfirm"
+    ],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": true
+   },
+   {
+    "id": "70",
+    "role": "static text",
+    "label": "--",
+    "value": "",
+    "frame": [
+     877,
+     297,
+     15,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "71",
+    "role": "static text",
+    "label": "Folder",
+    "value": "",
+    "frame": [
+     903,
+     297,
+     41,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "72",
+    "role": "static text",
+    "label": "Sep 18, 2026 at 6:45 PM",
+    "value": "",
+    "frame": [
+     1018,
+     297,
+     169,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "73",
+    "role": "row",
+    "label": "Desktop",
+    "value": "",
+    "frame": [
+     294,
+     311,
+     143,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "74",
+    "role": "static text",
+    "label": "Desktop",
+    "value": "",
+    "frame": [
+     339,
+     318,
+     81,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "75",
+    "role": "row",
+    "label": "Documents",
+    "value": "",
+    "frame": [
+     294,
+     343,
+     143,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "76",
+    "role": "static text",
+    "label": "Documents",
+    "value": "",
+    "frame": [
+     339,
+     350,
+     81,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "77",
+    "role": "image",
+    "label": "document",
+    "value": "",
+    "frame": [
+     313,
+     354,
+     20,
+     11
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "78",
+    "role": "row",
+    "label": "Downloads",
+    "value": "",
+    "frame": [
+     294,
+     375,
+     143,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "79",
+    "role": "static text",
+    "label": "Downloads",
+    "value": "",
+    "frame": [
+     339,
+     382,
+     81,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "80",
+    "role": "image",
+    "label": "Arrow Down Circle",
+    "value": "",
+    "frame": [
+     312,
+     386,
+     22,
+     11
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "81",
+    "role": "static text",
+    "label": "Locations",
+    "value": "",
+    "frame": [
+     309,
+     419,
+     125,
+     21
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "82",
+    "role": "row",
+    "label": "Locations",
+    "value": "",
+    "frame": [
+     294,
+     420,
+     143,
+     19
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "83",
+    "role": "static text",
+    "label": "5 items, 655.38 GB available",
+    "value": "",
+    "frame": [
+     745,
+     421,
+     162,
+     16
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "84",
+    "role": "row",
+    "label": "iCloud Drive",
+    "value": "",
+    "frame": [
+     294,
+     439,
+     143,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "85",
+    "role": "image",
+    "label": "iCloud",
+    "value": "",
+    "frame": [
+     309,
+     448,
+     19,
+     25
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "86",
+    "role": "static text",
+    "label": "iCloud Drive",
+    "value": "",
+    "frame": [
+     333,
+     452,
+     211,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "87",
+    "role": "row",
+    "label": "sam",
+    "value": "",
+    "frame": [
+     294,
+     471,
+     143,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "88",
+    "role": "image",
+    "label": "home",
+    "value": "",
+    "frame": [
+     309,
+     481,
+     18,
+     23
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "89",
+    "role": "static text",
+    "label": "sam",
+    "value": "",
+    "frame": [
+     333,
+     484,
+     211,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "90",
+    "role": "row",
+    "label": "Macintosh HD",
+    "value": "",
+    "frame": [
+     294,
+     503,
+     143,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "91",
+    "role": "static text",
+    "label": "Macintosh HD",
+    "value": "",
+    "frame": [
+     333,
+     516,
+     211,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "92",
+    "role": "row",
+    "label": "AirDrop",
+    "value": "",
+    "frame": [
+     294,
+     535,
+     143,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "93",
+    "role": "static text",
+    "label": "AirDrop",
+    "value": "",
+    "frame": [
+     333,
+     548,
+     211,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "94",
+    "role": "row",
+    "label": "Trash",
+    "value": "",
+    "frame": [
+     294,
+     567,
+     143,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "95",
+    "role": "image",
+    "label": "trash",
+    "value": "",
+    "frame": [
+     309,
+     578,
+     18,
+     22
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "96",
+    "role": "static text",
+    "label": "Trash",
+    "value": "",
+    "frame": [
+     333,
+     580,
+     211,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "97",
+    "role": "static text",
+    "label": "Tags",
+    "value": "",
+    "frame": [
+     309,
+     611,
+     125,
+     21
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "98",
+    "role": "row",
+    "label": "Tags",
+    "value": "",
+    "frame": [
+     294,
+     612,
+     143,
+     19
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "99",
+    "role": "row",
+    "label": "Red",
+    "value": "",
+    "frame": [
+     294,
+     631,
+     143,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "100",
+    "role": "static text",
+    "label": "Red",
+    "value": "",
+    "frame": [
+     333,
+     644,
+     211,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "101",
+    "role": "row",
+    "label": "Orange",
+    "value": "",
+    "frame": [
+     294,
+     663,
+     143,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "102",
+    "role": "static text",
+    "label": "Orange",
+    "value": "",
+    "frame": [
+     333,
+     676,
+     211,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "103",
+    "role": "row",
+    "label": "Yellow",
+    "value": "",
+    "frame": [
+     294,
+     695,
+     143,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "104",
+    "role": "static text",
+    "label": "Yellow",
+    "value": "",
+    "frame": [
+     333,
+     708,
+     211,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "105",
+    "role": "row",
+    "label": "Green",
+    "value": "",
+    "frame": [
+     294,
+     727,
+     143,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "106",
+    "role": "static text",
+    "label": "Green",
+    "value": "",
+    "frame": [
+     333,
+     740,
+     211,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "107",
+    "role": "row",
+    "label": "Blue",
+    "value": "",
+    "frame": [
+     294,
+     759,
+     143,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "108",
+    "role": "static text",
+    "label": "Blue",
+    "value": "",
+    "frame": [
+     339,
+     766,
+     81,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "109",
+    "role": "row",
+    "label": "Purple",
+    "value": "",
+    "frame": [
+     294,
+     791,
+     143,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "110",
+    "role": "static text",
+    "label": "Purple",
+    "value": "",
+    "frame": [
+     339,
+     798,
+     81,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "111",
+    "role": "row",
+    "label": "Gray",
+    "value": "",
+    "frame": [
+     294,
+     823,
+     143,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "112",
+    "role": "static text",
+    "label": "Gray",
+    "value": "",
+    "frame": [
+     339,
+     830,
+     81,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "113",
+    "role": "row",
+    "label": "All Tags…",
+    "value": "",
+    "frame": [
+     294,
+     855,
+     143,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "114",
+    "role": "static text",
+    "label": "All Tags…",
+    "value": "",
+    "frame": [
+     339,
+     862,
+     81,
+     18
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Finder",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   }
+  ],
+  "context_lines": [
+   "title: Downloads",
+   "focused: cell 227 KB",
+   "Name",
+   "Size",
+   "Kind",
+   "Date Added",
+   "Recents",
+   "227 KB"
+  ],
+  "focused": {
+   "id": "27",
+   "role": "cell",
+   "label": "227 KB",
+   "value": "",
+   "frame": [
+    800,
+    216,
+    97,
+    20
+   ],
+   "actions": [],
+   "enabled": true,
+   "app": "Finder",
+   "in_content": false,
+   "in_dialog": false,
+   "secure": false,
+   "editable": false
+  },
+  "dialog_text": "",
+  "fullscreen": false,
+  "node_count": 186,
+  "truncated": false,
+  "secs": 0.0968
+ },
+ "cases": [
+  {
+   "goal": "go to the desktop",
+   "expected_id": "73",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "open the documents folder",
+   "expected_id": "75",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "show applications",
+   "expected_id": "62",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "view as icons",
+   "expected_id": "8",
+   "expected": "click",
+   "overlap": false,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "view as columns",
+   "expected_id": "10",
+   "expected": "click",
+   "overlap": false,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "go back",
+   "expected_id": "6",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "open my home folder",
+   "expected_id": "87",
+   "expected": "click",
+   "overlap": false,
+   "distractor": true,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "open the recycle bin",
+   "expected_id": null,
+   "expected": "abstain",
+   "overlap": false,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": "Trash is sensitive: filtered, abstain"
+  },
+  {
+   "goal": "sort by size",
+   "expected_id": "14",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "sort by date added",
+   "expected_id": "16",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "open the shared folder",
+   "expected_id": "25",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "open recents",
+   "expected_id": "12",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "open icloud drive",
+   "expected_id": "84",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "see the red tagged files",
+   "expected_id": "99",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "open the recipes folder",
+   "expected_id": "65",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "open the resume draft",
+   "expected_id": "44",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "put the file in the trash",
+   "expected_id": null,
+   "expected": "abstain",
+   "overlap": false,
+   "distractor": true,
+   "text": null,
+   "must_not_offer": [],
+   "note": "distractor: Trash shares a token but is sensitive; abstain"
+  }
+ ]
+}

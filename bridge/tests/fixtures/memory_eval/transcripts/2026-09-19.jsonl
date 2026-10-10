@@ -1,0 +1,9 @@
+{"ts": "2026-09-19T09:00:00-07:00", "ch": "telegram", "conv": "t-1789833600000-8b59", "who": "owner", "kind": "say", "text": "Someone stole my bike from outside Kellner Hall."}
+{"ts": "2026-09-19T09:00:46-07:00", "ch": "telegram", "conv": "t-1789833600000-8b59", "who": "eve", "kind": "say", "text": "I'm sorry. Look for a used bike under $150, and get a solid U-lock this time."}
+{"ts": "2026-09-19T09:02:43-07:00", "ch": "telegram", "conv": "t-1789833600000-8b59", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-19T19:00:00-07:00", "ch": "voice", "conv": "v-1789869600000-2a8c", "who": "owner", "kind": "say", "text": "Called Lena for her birthday. She loves the camera and is taking it to her homecoming dance first."}
+{"ts": "2026-09-19T19:01:33-07:00", "ch": "voice", "conv": "v-1789869600000-2a8c", "who": "eve", "kind": "say", "text": "That's sweet."}
+{"ts": "2026-09-19T19:04:41-07:00", "ch": "voice", "conv": "v-1789869600000-2a8c", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-19T23:05:00-07:00", "ch": "telegram", "conv": "t-1789884300000-cda5", "who": "owner", "kind": "say", "text": "Synonym for robust?"}
+{"ts": "2026-09-19T23:06:01-07:00", "ch": "telegram", "conv": "t-1789884300000-cda5", "who": "eve", "kind": "say", "text": "Sturdy."}
+{"ts": "2026-09-19T23:09:38-07:00", "ch": "telegram", "conv": "t-1789884300000-cda5", "who": "system", "kind": "close", "text": ""}

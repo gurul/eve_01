@@ -1,0 +1,709 @@
+{
+ "note": "Written blind on 2026-09-29 by a Claude subagent for a one-time scoring of chief capture (card vs no_card, kind, acceptable done-check kinds). No capture code, prompts or tests were read while writing it; browser_holdout2.json was opened for JSON shape only. Score once; do not tune against it.",
+ "source": "authored",
+ "cases": [
+  {
+   "text": "find me a good air purifier under 300 for the bedroom and tell me which one to get",
+   "label": "card",
+   "kind": "job",
+   "acceptable_done": [
+    "read_links",
+    "cited_pick"
+   ],
+   "tricky": false,
+   "why": "multi-source research ending in a pick"
+  },
+  {
+   "text": "compare the 3 cheapest flights to denver for thanksgiving weekend and pick one for me",
+   "label": "card",
+   "kind": "job",
+   "acceptable_done": [
+    "read_links",
+    "cited_pick"
+   ],
+   "tricky": false,
+   "why": "several fares read and compared, then a pick"
+  },
+  {
+   "text": "watch the price on that ps5 bundle and ping me if it drops under 400",
+   "label": "card",
+   "kind": "job",
+   "acceptable_done": [
+    "watch_armed"
+   ],
+   "tricky": false,
+   "why": "price watch with a later follow-up"
+  },
+  {
+   "text": "is there any way u could look into which 3d printer is actually best for a beginner? read a bunch of reviews and tell me the winner",
+   "label": "card",
+   "kind": "job",
+   "acceptable_done": [
+    "read_links",
+    "cited_pick"
+   ],
+   "tricky": true,
+   "why": "phrased as a question but asks for multi-review research and a pick"
+  },
+  {
+   "text": "could u keep an eye on tickets for the comedy show next month and tell me when they go below 60",
+   "label": "card",
+   "kind": "job",
+   "acceptable_done": [
+    "watch_armed"
+   ],
+   "tricky": true,
+   "why": "polite question form, really a ticket watch"
+  },
+  {
+   "text": "research robot vacuums for a house with a dog, read reviews on a few sites, shortlist 3 and pick one",
+   "label": "card",
+   "kind": "job",
+   "acceptable_done": [
+    "read_links",
+    "cited_pick"
+   ],
+   "tricky": false,
+   "why": "explicit multi-source research with a pick"
+  },
+  {
+   "text": "open numbers, make a sheet of all my monthly subscriptions and save it in documents as subs",
+   "label": "card",
+   "kind": "job",
+   "acceptable_done": [
+    "file_exists",
+    "ui_seen"
+   ],
+   "tricky": false,
+   "why": "several Mac steps with a file to check afterwards"
+  },
+  {
+   "text": "go thru my downloads, move all the pdfs into a new folder called receipts 2026 on the desktop",
+   "label": "card",
+   "kind": "job",
+   "acceptable_done": [
+    "file_exists",
+    "ui_seen"
+   ],
+   "tricky": true,
+   "why": "sounds like one Mac action but is many file moves with an outcome to verify"
+  },
+  {
+   "text": "find a plumber near me with good reviews and then remind me friday to call whichever one u pick",
+   "label": "card",
+   "kind": "job",
+   "acceptable_done": [
+    "read_links",
+    "cited_pick"
+   ],
+   "tricky": true,
+   "why": "research plus a later follow-up; buddy does the research part"
+  },
+  {
+   "text": "can you figure out which of the two standing desks i bookmarked is better and then order it",
+   "label": "card",
+   "kind": "job",
+   "acceptable_done": [
+    "read_links",
+    "cited_pick",
+    "ui_seen"
+   ],
+   "tricky": true,
+   "why": "question form, but it is compare then a purchase act"
+  },
+  {
+   "text": "track aapl and tell me if it falls below 200",
+   "label": "card",
+   "kind": "job",
+   "acceptable_done": [
+    "watch_armed"
+   ],
+   "tricky": false,
+   "why": "stock watch"
+  },
+  {
+   "text": "whats the best espresso machine under 500? like actually dig into it, check a few review sites, dont just give me the first result",
+   "label": "card",
+   "kind": "job",
+   "acceptable_done": [
+    "read_links",
+    "cited_pick"
+   ],
+   "tricky": true,
+   "why": "reads like a quick question, owner asks for multi-source research with a pick"
+  },
+  {
+   "text": "book me a table somewhere nice saturday 7pm for 2, compare a few places first",
+   "label": "card",
+   "kind": "job",
+   "acceptable_done": [
+    "read_links",
+    "cited_pick",
+    "ui_seen"
+   ],
+   "tricky": false,
+   "why": "compare then a booking act"
+  },
+  {
+   "text": "by tonight find out the transit visa rules for a layover in frankfurt on a us passport, check a couple official sources not blogs",
+   "label": "card",
+   "kind": "job",
+   "acceptable_done": [
+    "read_links"
+   ],
+   "tricky": true,
+   "why": "could look like one lookup, but deadline and several official sources make it tracked research"
+  },
+  {
+   "text": "set up a watch on the saturday concert tickets, under 120 lemme know, and check the resale sites now too",
+   "label": "card",
+   "kind": "job",
+   "acceptable_done": [
+    "watch_armed",
+    "read_links"
+   ],
+   "tricky": false,
+   "why": "watch plus a research read"
+  },
+  {
+   "text": "compare phone plans from the big carriers for 2 lines and tell me which saves the most",
+   "label": "card",
+   "kind": "job",
+   "acceptable_done": [
+    "read_links",
+    "cited_pick"
+   ],
+   "tricky": false,
+   "why": "multi-source comparison with a pick"
+  },
+  {
+   "text": "need a bday gift for my sister, shes into pottery, budget 80. find some options and pick the best by wed",
+   "label": "card",
+   "kind": "job",
+   "acceptable_done": [
+    "read_links",
+    "cited_pick"
+   ],
+   "tricky": false,
+   "why": "research with a pick and a deadline"
+  },
+  {
+   "text": "clean up my desktop: screenshots into a screenshots folder, everything else into misc",
+   "label": "card",
+   "kind": "job",
+   "acceptable_done": [
+    "file_exists",
+    "ui_seen"
+   ],
+   "tricky": true,
+   "why": "one sentence, but many Mac file moves with a result to check"
+  },
+  {
+   "text": "find the cheapest way to renew my car registration online and fill in the form but dont submit it",
+   "label": "card",
+   "kind": "job",
+   "acceptable_done": [
+    "read_links",
+    "ui_seen"
+   ],
+   "tricky": false,
+   "why": "research then a multi-step Mac act"
+  },
+  {
+   "text": "keep checking if the switch 2 is back in stock and tell me the moment it is",
+   "label": "card",
+   "kind": "job",
+   "acceptable_done": [
+    "watch_armed"
+   ],
+   "tricky": false,
+   "why": "stock watch"
+  },
+  {
+   "text": "should i refinance? read up on current rates from a few lenders and give me a recommendation",
+   "label": "card",
+   "kind": "job",
+   "acceptable_done": [
+    "read_links",
+    "cited_pick"
+   ],
+   "tricky": true,
+   "why": "opens as a yes/no question but asks for multi-lender research and a pick"
+  },
+  {
+   "text": "put together a doc comparing the three daycare options' prices from their websites and save it on my desktop",
+   "label": "card",
+   "kind": "job",
+   "acceptable_done": [
+    "read_links",
+    "file_exists"
+   ],
+   "tricky": false,
+   "why": "reads several sites and produces a file"
+  },
+  {
+   "text": "export last weekends hike photos into a folder called hike on the desktop and make sure theyre all there",
+   "label": "card",
+   "kind": "job",
+   "acceptable_done": [
+    "file_exists",
+    "ui_seen"
+   ],
+   "tricky": false,
+   "why": "multi-step Mac work with an explicit verify"
+  },
+  {
+   "text": "find a dentist near me that takes my insurance then book the earliest cleaning",
+   "label": "card",
+   "kind": "job",
+   "acceptable_done": [
+    "read_links",
+    "ui_seen"
+   ],
+   "tricky": false,
+   "why": "research then a booking act"
+  },
+  {
+   "text": "research which ergonomic chair to get and order it if its under 400",
+   "label": "card",
+   "kind": "job",
+   "acceptable_done": [
+    "read_links",
+    "cited_pick",
+    "ui_seen"
+   ],
+   "tricky": false,
+   "why": "research, pick, conditional purchase"
+  },
+  {
+   "text": "lemme know if the monitor i looked at yesterday goes on sale this week",
+   "label": "card",
+   "kind": "job",
+   "acceptable_done": [
+    "watch_armed"
+   ],
+   "tricky": true,
+   "why": "sounds like a casual ask, it is a price watch over days"
+  },
+  {
+   "text": "remind me tmrw at 9 to send the invoice to the client",
+   "label": "card",
+   "kind": "commitment",
+   "acceptable_done": [
+    "guru_says_done"
+   ],
+   "tricky": false,
+   "why": "owner acts; buddy holds a timed cue"
+  },
+  {
+   "text": "i need to renew my passport before march, nag me about it",
+   "label": "card",
+   "kind": "commitment",
+   "acceptable_done": [
+    "guru_says_done"
+   ],
+   "tricky": false,
+   "why": "owner's task with a deadline, buddy cues"
+  },
+  {
+   "text": "dont let me forget to call the vet about the dogs meds on monday",
+   "label": "card",
+   "kind": "commitment",
+   "acceptable_done": [
+    "guru_says_done"
+   ],
+   "tricky": false,
+   "why": "reminder phrased without the word remind"
+  },
+  {
+   "text": "i told the landlord id send the lease back by friday, hold me to that",
+   "label": "card",
+   "kind": "commitment",
+   "acceptable_done": [
+    "guru_says_done"
+   ],
+   "tricky": true,
+   "why": "no reminder verb; a promise with a deadline the owner must keep"
+  },
+  {
+   "text": "gotta file quarterly taxes by the 15th, ping me a few days before",
+   "label": "card",
+   "kind": "commitment",
+   "acceptable_done": [
+    "guru_says_done"
+   ],
+   "tricky": false,
+   "why": "deadline plus requested cue"
+  },
+  {
+   "text": "remind me in 2 hours to take the laundry out",
+   "label": "card",
+   "kind": "commitment",
+   "acceptable_done": [
+    "guru_says_done"
+   ],
+   "tricky": true,
+   "why": "short and trivial, but it is a later cue, not an immediate action"
+  },
+  {
+   "text": "i promised to review the firmware pr this week, keep me honest",
+   "label": "card",
+   "kind": "commitment",
+   "acceptable_done": [
+    "guru_says_done"
+   ],
+   "tricky": true,
+   "why": "sounds like chat, actually asks buddy to hold a commitment"
+  },
+  {
+   "text": "remind me to water the plants every sunday",
+   "label": "card",
+   "kind": "commitment",
+   "acceptable_done": [
+    "guru_says_done"
+   ],
+   "tricky": false,
+   "why": "recurring owner reminder"
+  },
+  {
+   "text": "sunday evening make sure ive booked the oil change",
+   "label": "card",
+   "kind": "commitment",
+   "acceptable_done": [
+    "guru_says_done"
+   ],
+   "tricky": true,
+   "why": "looks like buddy should book it, but asks for a check on the owner's own action"
+  },
+  {
+   "text": "need to cancel the gym before billing on the 3rd, remind me the day before",
+   "label": "card",
+   "kind": "commitment",
+   "acceptable_done": [
+    "guru_says_done"
+   ],
+   "tricky": false,
+   "why": "deadline plus cue"
+  },
+  {
+   "text": "when i get home tonight remind me to charge the robot",
+   "label": "card",
+   "kind": "commitment",
+   "acceptable_done": [
+    "guru_says_done"
+   ],
+   "tricky": false,
+   "why": "cue tied to a later time"
+  },
+  {
+   "text": "follow up with me next week about whether i actually started the running plan",
+   "label": "card",
+   "kind": "commitment",
+   "acceptable_done": [
+    "guru_says_done"
+   ],
+   "tricky": true,
+   "why": "a follow-up only the owner can close"
+  },
+  {
+   "text": "i have to answer the school email by wednesday, bug me tmrw afternoon",
+   "label": "card",
+   "kind": "commitment",
+   "acceptable_done": [
+    "guru_says_done"
+   ],
+   "tricky": false,
+   "why": "deadline plus cue"
+  },
+  {
+   "text": "put it on my list: pick up the prescription before saturday",
+   "label": "card",
+   "kind": "commitment",
+   "acceptable_done": [
+    "guru_says_done"
+   ],
+   "tricky": true,
+   "why": "list phrasing, but it is a dated owner commitment"
+  },
+  {
+   "text": "whats the weather tmrw",
+   "label": "no_card",
+   "kind": null,
+   "tricky": false,
+   "why": "one-shot lookup"
+  },
+  {
+   "text": "turn the desk lamp blue",
+   "label": "no_card",
+   "kind": null,
+   "tricky": false,
+   "why": "light command"
+  },
+  {
+   "text": "play some lofi",
+   "label": "no_card",
+   "kind": null,
+   "tricky": false,
+   "why": "music command"
+  },
+  {
+   "text": "thanks buddy thats perfect",
+   "label": "no_card",
+   "kind": null,
+   "tricky": false,
+   "why": "chit-chat"
+  },
+  {
+   "text": "how many ounces in a cup",
+   "label": "no_card",
+   "kind": null,
+   "tricky": false,
+   "why": "one-shot question"
+  },
+  {
+   "text": "open spotify",
+   "label": "no_card",
+   "kind": null,
+   "tricky": false,
+   "why": "single immediate Mac action"
+  },
+  {
+   "text": "what time does the hardware store close tonight",
+   "label": "no_card",
+   "kind": null,
+   "tricky": false,
+   "why": "single quick lookup"
+  },
+  {
+   "text": "can you research what year the eiffel tower was built",
+   "label": "no_card",
+   "kind": null,
+   "tricky": true,
+   "why": "says research, but it is one fact answered in the turn"
+  },
+  {
+   "text": "should i bring an umbrella today",
+   "label": "no_card",
+   "kind": null,
+   "tricky": false,
+   "why": "one-shot question"
+  },
+  {
+   "text": "dim the lights to 30 percent",
+   "label": "no_card",
+   "kind": null,
+   "tricky": false,
+   "why": "light command"
+  },
+  {
+   "text": "whats a good name for a robot dog",
+   "label": "no_card",
+   "kind": null,
+   "tricky": false,
+   "why": "one-shot creative question"
+  },
+  {
+   "text": "remind me what the wifi password was",
+   "label": "no_card",
+   "kind": null,
+   "tricky": true,
+   "why": "uses remind, but asks to recall a fact now"
+  },
+  {
+   "text": "remind me, what did we decide about the lamp colors yesterday",
+   "label": "no_card",
+   "kind": null,
+   "tricky": true,
+   "why": "remind means recall; answered in the turn"
+  },
+  {
+   "text": "take a screenshot",
+   "label": "no_card",
+   "kind": null,
+   "tricky": false,
+   "why": "single immediate Mac action"
+  },
+  {
+   "text": "what does apr mean on a credit card",
+   "label": "no_card",
+   "kind": null,
+   "tricky": false,
+   "why": "one-shot question"
+  },
+  {
+   "text": "can u find a good pizza place near me for tonight",
+   "label": "no_card",
+   "kind": null,
+   "tricky": true,
+   "why": "find sounds like research, but it is one quick local lookup answered now"
+  },
+  {
+   "text": "whats aapl at right now",
+   "label": "no_card",
+   "kind": null,
+   "tricky": true,
+   "why": "stock name like a watch ask, but it is a single current quote"
+  },
+  {
+   "text": "is the ps5 bundle on sale anywhere today",
+   "label": "no_card",
+   "kind": null,
+   "tricky": true,
+   "why": "sounds like the price watch, but it is a one-time check now"
+  },
+  {
+   "text": "open my calendar and show me whats on friday",
+   "label": "no_card",
+   "kind": null,
+   "tricky": true,
+   "why": "two verbs, still one immediate look"
+  },
+  {
+   "text": "how long do i boil an egg for soft",
+   "label": "no_card",
+   "kind": null,
+   "tricky": false,
+   "why": "one-shot question"
+  },
+  {
+   "text": "finally finished the bom export btw",
+   "label": "no_card",
+   "kind": null,
+   "tricky": true,
+   "why": "task words, but it is a status report, not a new ask"
+  },
+  {
+   "text": "i sent the invoice already",
+   "label": "no_card",
+   "kind": null,
+   "tricky": true,
+   "why": "status statement, no new work"
+  },
+  {
+   "text": "next song",
+   "label": "no_card",
+   "kind": null,
+   "tricky": false,
+   "why": "music command"
+  },
+  {
+   "text": "translate where is the train station into japanese",
+   "label": "no_card",
+   "kind": null,
+   "tricky": false,
+   "why": "one-shot answer"
+  },
+  {
+   "text": "lol that robot video was hilarious",
+   "label": "no_card",
+   "kind": null,
+   "tricky": false,
+   "why": "chit-chat"
+  },
+  {
+   "text": "can you look up the tracking on my package",
+   "label": "no_card",
+   "kind": null,
+   "tricky": true,
+   "why": "look up sounds like a job, it is one lookup answered in the turn"
+  },
+  {
+   "text": "summarize this article for me https://example.com/post",
+   "label": "no_card",
+   "kind": null,
+   "tricky": true,
+   "why": "reads a page, but one page answered in the turn is not a card"
+  },
+  {
+   "text": "whats 18 percent tip on 64 bucks",
+   "label": "no_card",
+   "kind": null,
+   "tricky": false,
+   "why": "arithmetic"
+  },
+  {
+   "text": "how do ppl usually figure out which ergonomic chair is good",
+   "label": "no_card",
+   "kind": null,
+   "tricky": true,
+   "why": "about chair buying like the research job, but asks for general advice only"
+  },
+  {
+   "text": "is refinancing ever worth it for like a 1 point drop",
+   "label": "no_card",
+   "kind": null,
+   "tricky": true,
+   "why": "money topic like the research job, but a general knowledge question"
+  },
+  {
+   "text": "close all my chrome tabs",
+   "label": "no_card",
+   "kind": null,
+   "tricky": false,
+   "why": "single immediate Mac action"
+  },
+  {
+   "text": "make the lamp warm white and play jazz",
+   "label": "no_card",
+   "kind": null,
+   "tricky": true,
+   "why": "two commands, still light and music"
+  },
+  {
+   "text": "whos playing tonight in the nba",
+   "label": "no_card",
+   "kind": null,
+   "tricky": false,
+   "why": "one-shot lookup"
+  },
+  {
+   "text": "what did i spend on groceries last month",
+   "label": "no_card",
+   "kind": null,
+   "tricky": false,
+   "why": "one answer from records"
+  },
+  {
+   "text": "good morning",
+   "label": "no_card",
+   "kind": null,
+   "tricky": false,
+   "why": "greeting"
+  },
+  {
+   "text": "empty the trash on my mac",
+   "label": "no_card",
+   "kind": null,
+   "tricky": false,
+   "why": "single immediate Mac action"
+  },
+  {
+   "text": "whats on my todo list",
+   "label": "no_card",
+   "kind": null,
+   "tricky": false,
+   "why": "read-back question"
+  },
+  {
+   "text": "hey did the price watch for the monitor fire yet",
+   "label": "no_card",
+   "kind": null,
+   "tricky": true,
+   "why": "mentions a watch, but asks status of an existing one"
+  },
+  {
+   "text": "i should probably get a new mattress at some point",
+   "label": "no_card",
+   "kind": null,
+   "tricky": true,
+   "why": "musing with no ask, no deadline, no request to track"
+  },
+  {
+   "text": "cancel the reminder about the plants",
+   "label": "no_card",
+   "kind": null,
+   "tricky": true,
+   "why": "reminder words, but it changes an existing card rather than creating one"
+  }
+ ]
+}

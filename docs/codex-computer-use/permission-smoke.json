@@ -1,0 +1,19 @@
+{
+  "grant": "com.apple.calculator",
+  "authorization": "User explicitly approved Always allow Calculator",
+  "transport": "public app-server; native persistence, no direct approval-file writes",
+  "sessions": [
+    {
+      "phase": 1,
+      "permission_requests": 1,
+      "native_ui_observed": true,
+      "result": "Calculator displays **4**, verified from fresh UI state. No clicks or typing performed."
+    },
+    {
+      "phase": 2,
+      "permission_requests": 0,
+      "native_ui_observed": true,
+      "result": "Calculator displays **4**, verified from fresh UI state. No clicks or typing performed."
+    }
+  ]
+}

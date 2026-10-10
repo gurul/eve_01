@@ -1,0 +1,18 @@
+{"ts": "2026-08-28T07:30:00-07:00", "ch": "telegram", "conv": "t-1787927400000-e785", "who": "owner", "kind": "say", "text": "Resting heart rate was 58 this morning."}
+{"ts": "2026-08-28T07:30:36-07:00", "ch": "telegram", "conv": "t-1787927400000-e785", "who": "eve", "kind": "say", "text": "Noted."}
+{"ts": "2026-08-28T07:32:41-07:00", "ch": "telegram", "conv": "t-1787927400000-e785", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-28T11:00:00-07:00", "ch": "telegram", "conv": "t-1787940000000-c079", "who": "owner", "kind": "say", "text": "Dev's in for Tahoe too."}
+{"ts": "2026-08-28T11:00:54-07:00", "ch": "telegram", "conv": "t-1787940000000-c079", "who": "eve", "kind": "say", "text": "So it's you, Jonah and Dev."}
+{"ts": "2026-08-28T11:03:30-07:00", "ch": "telegram", "conv": "t-1787940000000-c079", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-28T13:40:00-07:00", "ch": "voice", "conv": "v-1787949600000-5073", "who": "owner", "kind": "say", "text": "Skip this song."}
+{"ts": "2026-08-28T13:40:44-07:00", "ch": "voice", "conv": "v-1787949600000-5073", "who": "eve", "kind": "say", "text": "Skipped."}
+{"ts": "2026-08-28T13:44:00-07:00", "ch": "voice", "conv": "v-1787949600000-5073", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-28T18:15:00-07:00", "ch": "telegram", "conv": "t-1787966100000-9025", "who": "owner", "kind": "say", "text": "How many grams in a cup of flour?"}
+{"ts": "2026-08-28T18:16:39-07:00", "ch": "telegram", "conv": "t-1787966100000-9025", "who": "eve", "kind": "say", "text": "About 120 grams."}
+{"ts": "2026-08-28T18:19:22-07:00", "ch": "telegram", "conv": "t-1787966100000-9025", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-28T22:20:00-07:00", "ch": "telegram", "conv": "t-1787980800000-4a35", "who": "owner", "kind": "say", "text": "Good name for a houseplant?"}
+{"ts": "2026-08-28T22:20:48-07:00", "ch": "telegram", "conv": "t-1787980800000-4a35", "who": "eve", "kind": "say", "text": "Fernando, if it's a fern."}
+{"ts": "2026-08-28T22:24:46-07:00", "ch": "telegram", "conv": "t-1787980800000-4a35", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-28T23:30:00-07:00", "ch": "voice", "conv": "v-1787985000000-5550", "who": "owner", "kind": "say", "text": "Kieran's dinner was perfect, just us at the apartment."}
+{"ts": "2026-08-28T23:31:12-07:00", "ch": "voice", "conv": "v-1787985000000-5550", "who": "eve", "kind": "say", "text": "Glad it went well."}
+{"ts": "2026-08-28T23:35:09-07:00", "ch": "voice", "conv": "v-1787985000000-5550", "who": "system", "kind": "close", "text": ""}

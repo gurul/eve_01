@@ -1,0 +1,6 @@
+{"t": 177075.539, "goal": "What is the population of Riverton in the table on https://data.eve-eval.test/towns?", "model": "gpt-6-astra"}
+{"t": 177078.736, "turn": 0, "plan": {"steps": [{"kind": "open_url", "target": "https://data.eve-eval.test/towns", "label_hint": "", "text": "", "text_source": "utterance", "key": "", "consequential": false, "expect": null}], "final_say": "", "source": "astra", "needs_eyes": false, "success": null, "app": "browser", "secs": 3.2, "attempt": 0, "outline_lines": 0}}
+{"t": 177079.258, "turn": 0, "ledger": {"status": "complete", "next_index": 1, "reason": "", "confirm": "", "sentence": "Done: open url https://data.eve-eval.test/towns.", "ms": 519.4, "ledger": [{"index": 1, "step": "open url https://data.eve-eval.test/towns", "effect": "confirmed", "how": "helper", "note": "opened https://data.eve-eval.test/towns", "ms": 519.4}]}}
+{"t": 177087.856, "turn": 0, "read": {"url": "https://data.eve-eval.test/towns", "chars": 275, "answer": "Riverton’s population is 48,213."}}
+{"t": 177087.856, "final": "Riverton’s population is 48,213.", "browser_only": true, "handed_on": false}
+{"t": 177087.856, "bill": {"model": "gpt-6-astra", "calls": 2, "tokens": {"in": 1166, "cached": 0, "out": 89}, "usd": 0.01611, "jev": {"calls": 0, "input_tokens": 0, "ms": 0, "errors": 0, "usd": 0.0}, "total_usd": 0.01611, "secs": 12.32}}

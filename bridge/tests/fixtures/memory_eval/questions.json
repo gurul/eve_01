@@ -1,0 +1,4413 @@
+{
+ "version": 1,
+ "persona": "persona.json",
+ "transcripts": "transcripts/<YYYY-MM-DD>.jsonl, the line format of cc_buddy_bridge/transcripts.py; a day runs 04:00 to 04:00 local (-07:00)",
+ "split_rule": "split = 'dev' when the first hex digit of sha256(str(id)) is 0-4 (5 of 16, about 31%), else 'holdout'. The 'split' field on each question is that rule, precomputed.",
+ "evidence": "a list of {day, line}: the transcript file transcripts/<day>.jsonl and the 0-based index of the line in it (every line counts, close markers too). Empty for abstention questions.",
+ "answer_keys": "a list; every element must be found in the answer. A list element means any one of its strings will do. Matching (tools/memory_eval.py): both sides lowercased, dates written as dates turned to YYYY-MM-DD, '$' and thousands commas dropped, punctuation to spaces except a '.' or ':' between digits, whitespace collapsed; a key starts at a word start, a key ending in a digit ends where the number ends ('4' is not in '14' or '4.5'; '12.6' is in '12.60'), a key ending in a letter may run on ('cashew' is in 'cashews'). Empty when abstain is true.",
+ "abstain": "true when the honest answer is that it was never said (or, for forget questions, is no longer known).",
+ "forget": "forget questions only: {day, line}, the transcript line the harness forgets (through buddy's real forget, on that question's own copy of memory) before asking: once with the line's whole text, then once per leak key as a quoted phrase. The answer must then abstain, and must contain none of leak_keys (same matching rule).",
+ "asked_on": "the date the question is asked (at 20:00 in the data's time zone), after the last line it needs. The harness gives each question memory as it stood then: the records and mem0 dreamt through the night before, and the transcripts up to the asking moment.",
+ "categories": [
+  "extraction",
+  "multi_session",
+  "temporal",
+  "knowledge_update",
+  "abstention",
+  "cross_channel",
+  "buddy_said",
+  "plans",
+  "forget"
+ ],
+ "questions": [
+  {
+   "id": "q001",
+   "category": "extraction",
+   "asked_on": "2026-08-26",
+   "question": "What food am I allergic to?",
+   "answer_keys": [
+    "cashew"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-22",
+     "line": 9
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q002",
+   "category": "extraction",
+   "asked_on": "2026-08-19",
+   "question": "What's my usual coffee order?",
+   "answer_keys": [
+    "oat flat white"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-11",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q003",
+   "category": "extraction",
+   "asked_on": "2026-08-12",
+   "question": "Which cafe do I get my coffee from?",
+   "answer_keys": [
+    "grindhouse"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-11",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q004",
+   "category": "extraction",
+   "asked_on": "2026-08-20",
+   "question": "What was my flight number to Denver?",
+   "answer_keys": [
+    "482"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-13",
+     "line": 13
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q005",
+   "category": "extraction",
+   "asked_on": "2026-09-24",
+   "question": "What's my landlord's name?",
+   "answer_keys": [
+    "carla"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-15",
+     "line": 12
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q006",
+   "category": "extraction",
+   "asked_on": "2026-09-03",
+   "question": "What's the makerspace I found called?",
+   "answer_keys": [
+    "foundry"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-27",
+     "line": 10
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q007",
+   "category": "extraction",
+   "asked_on": "2026-08-28",
+   "question": "What day and time is Circuit Night?",
+   "answer_keys": [
+    "thursday",
+    [
+     "7 pm",
+     "19:00",
+     "7pm",
+     "7 p.m."
+    ]
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-27",
+     "line": 10
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q008",
+   "category": "extraction",
+   "asked_on": "2026-08-28",
+   "question": "Who teaches my Control Systems class?",
+   "answer_keys": [
+    "haddad"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-20",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q009",
+   "category": "extraction",
+   "asked_on": "2026-08-05",
+   "question": "What does Shelfie do?",
+   "answer_keys": [
+    "library",
+    "due"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-04",
+     "line": 6
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q010",
+   "category": "extraction",
+   "asked_on": "2026-08-05",
+   "question": "Who does the design for Shelfie?",
+   "answer_keys": [
+    "sasha"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-04",
+     "line": 7
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q011",
+   "category": "extraction",
+   "asked_on": "2026-08-10",
+   "question": "Which shop did I order my keyboard switches from?",
+   "answer_keys": [
+    "keyhaven"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-05",
+     "line": 6
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q012",
+   "category": "extraction",
+   "asked_on": "2026-08-30",
+   "question": "What's my grandmother's name?",
+   "answer_keys": [
+    "odile"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-21",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q013",
+   "category": "extraction",
+   "asked_on": "2026-08-17",
+   "question": "What are my parents' names?",
+   "answer_keys": [
+    "ruth",
+    "gabe"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-09",
+     "line": 9
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q014",
+   "category": "extraction",
+   "asked_on": "2026-09-17",
+   "question": "How old is my sister turning this September?",
+   "answer_keys": [
+    "17"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-14",
+     "line": 3
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q015",
+   "category": "extraction",
+   "asked_on": "2026-08-19",
+   "question": "Which cousin got married in Denver?",
+   "answer_keys": [
+    "marisol"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-10",
+     "line": 10
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q016",
+   "category": "extraction",
+   "asked_on": "2026-08-18",
+   "question": "What's the name of Marisol's husband, the one who gave the toast?",
+   "answer_keys": [
+    "benji"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-15",
+     "line": 6
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q017",
+   "category": "extraction",
+   "asked_on": "2026-08-16",
+   "question": "Where did I grow up?",
+   "answer_keys": [
+    "millbrook"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-09",
+     "line": 9
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q018",
+   "category": "extraction",
+   "asked_on": "2026-08-20",
+   "question": "How much am I trying to save for the Japan trip?",
+   "answer_keys": [
+    "3000"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-15",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q019",
+   "category": "extraction",
+   "asked_on": "2026-08-11",
+   "question": "What's the name of my gym?",
+   "answer_keys": [
+    "ironwood"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-03",
+     "line": 7
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q020",
+   "category": "extraction",
+   "asked_on": "2026-08-08",
+   "question": "What workout split do Jonah and I do?",
+   "answer_keys": [
+    "push",
+    "pull",
+    "legs"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-03",
+     "line": 7
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q021",
+   "category": "extraction",
+   "asked_on": "2026-09-05",
+   "question": "Why was Lucky Noodle closed?",
+   "answer_keys": [
+    "renovation"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-27",
+     "line": 3
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q022",
+   "category": "extraction",
+   "asked_on": "2026-08-08",
+   "question": "What size is the mechanical keyboard I'm building?",
+   "answer_keys": [
+    "65"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-05",
+     "line": 6
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q023",
+   "category": "extraction",
+   "asked_on": "2026-08-17",
+   "question": "What wattage is my soldering iron?",
+   "answer_keys": [
+    "65"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-08",
+     "line": 3
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q024",
+   "category": "extraction",
+   "asked_on": "2026-08-18",
+   "question": "Which microcontroller runs my weather station?",
+   "answer_keys": [
+    "esp32"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-17",
+     "line": 3
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q025",
+   "category": "extraction",
+   "asked_on": "2026-09-21",
+   "question": "Where was my bike stolen from?",
+   "answer_keys": [
+    "kellner hall"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-19",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q026",
+   "category": "extraction",
+   "asked_on": "2026-09-17",
+   "question": "Who's in my probability study group?",
+   "answer_keys": [
+    "hamid"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-10",
+     "line": 10
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q027",
+   "category": "extraction",
+   "asked_on": "2026-09-12",
+   "question": "What's the full name of the class that replaced HIST 210?",
+   "answer_keys": [
+    "ethics of technology"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-03",
+     "line": 3
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q028",
+   "category": "extraction",
+   "asked_on": "2026-09-18",
+   "question": "What's the name of the hackathon I registered for?",
+   "answer_keys": [
+    "cascade hack"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-16",
+     "line": 3
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q029",
+   "category": "extraction",
+   "asked_on": "2026-08-27",
+   "question": "How much did I pay for the Probability textbook?",
+   "answer_keys": [
+    "118"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-25",
+     "line": 3
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q030",
+   "category": "multi_session",
+   "asked_on": "2026-09-03",
+   "question": "How much did the movers and the apartment deposit cost together?",
+   "answer_keys": [
+    "1320"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-29",
+     "line": 9
+    },
+    {
+     "day": "2026-08-10",
+     "line": 1
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q031",
+   "category": "multi_session",
+   "asked_on": "2026-08-17",
+   "question": "How much more per month is my new rent than my share at Birch Lane?",
+   "answer_keys": [
+    "240"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-03",
+     "line": 0
+    },
+    {
+     "day": "2026-08-10",
+     "line": 0
+    },
+    {
+     "day": "2026-08-07",
+     "line": 6
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q032",
+   "category": "multi_session",
+   "asked_on": "2026-08-14",
+   "question": "What did I spend in total on the switches and the soldering iron?",
+   "answer_keys": [
+    "77"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-12",
+     "line": 7
+    },
+    {
+     "day": "2026-08-08",
+     "line": 3
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q033",
+   "category": "multi_session",
+   "asked_on": "2026-09-23",
+   "question": "By how many pounds did my bench PR go up between the two PRs I told you about?",
+   "answer_keys": [
+    "10"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-13",
+     "line": 3
+    },
+    {
+     "day": "2026-09-18",
+     "line": 9
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q034",
+   "category": "multi_session",
+   "asked_on": "2026-08-29",
+   "question": "Who was going to come on the Tahoe trip with me?",
+   "answer_keys": [
+    "jonah",
+    "dev"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-27",
+     "line": 7
+    },
+    {
+     "day": "2026-08-28",
+     "line": 3
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q035",
+   "category": "multi_session",
+   "asked_on": "2026-08-27",
+   "question": "After the gym's price change, how much more will the membership cost me per year?",
+   "answer_keys": [
+    "60"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-03",
+     "line": 7
+    },
+    {
+     "day": "2026-08-26",
+     "line": 7
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q036",
+   "category": "multi_session",
+   "asked_on": "2026-09-04",
+   "question": "How many classes am I taking now, after the drop and add?",
+   "answer_keys": [
+    "4"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-20",
+     "line": 0
+    },
+    {
+     "day": "2026-09-03",
+     "line": 3
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q037",
+   "category": "multi_session",
+   "asked_on": "2026-10-02",
+   "question": "How much did my savings grow between my two savings check-ins?",
+   "answer_keys": [
+    "330"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-15",
+     "line": 0
+    },
+    {
+     "day": "2026-09-30",
+     "line": 0
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q038",
+   "category": "multi_session",
+   "asked_on": "2026-09-30",
+   "question": "By how much was my September grocery spending under my grocery budget?",
+   "answer_keys": [
+    "12.6"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-29",
+     "line": 0
+    },
+    {
+     "day": "2026-08-31",
+     "line": 7
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q039",
+   "category": "multi_session",
+   "asked_on": "2026-08-29",
+   "question": "How much did the Probability textbook and the ECE 412 lab kit cost together?",
+   "answer_keys": [
+    "172"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-25",
+     "line": 3
+    },
+    {
+     "day": "2026-08-26",
+     "line": 1
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q040",
+   "category": "multi_session",
+   "asked_on": "2026-09-17",
+   "question": "How much did I spend on Lena's birthday present including the film?",
+   "answer_keys": [
+    "105"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-14",
+     "line": 5
+    },
+    {
+     "day": "2026-09-15",
+     "line": 3
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q041",
+   "category": "multi_session",
+   "asked_on": "2026-10-02",
+   "question": "Who is my Shelfie cofounder, and where is she pitching it?",
+   "answer_keys": [
+    "sasha",
+    "founders night"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-04",
+     "line": 6
+    },
+    {
+     "day": "2026-09-26",
+     "line": 7
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q042",
+   "category": "multi_session",
+   "asked_on": "2026-10-01",
+   "question": "What's the average of my Embedded quiz score and my Probability problem set 3 score?",
+   "answer_keys": [
+    "90"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-18",
+     "line": 0
+    },
+    {
+     "day": "2026-09-25",
+     "line": 3
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q043",
+   "category": "multi_session",
+   "asked_on": "2026-09-30",
+   "question": "How much have I spent on the Thanksgiving flight and the Seattle train ticket combined?",
+   "answer_keys": [
+    "376"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-27",
+     "line": 4
+    },
+    {
+     "day": "2026-09-16",
+     "line": 4
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q044",
+   "category": "multi_session",
+   "asked_on": "2026-08-31",
+   "question": "How many grams of protein a day am I short of the target you gave me?",
+   "answer_keys": [
+    "25"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-13",
+     "line": 5
+    },
+    {
+     "day": "2026-08-22",
+     "line": 6
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q045",
+   "category": "multi_session",
+   "asked_on": "2026-09-08",
+   "question": "My high school friend who visited in September: where did she fly in from?",
+   "answer_keys": [
+    "portland"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-30",
+     "line": 6
+    },
+    {
+     "day": "2026-09-04",
+     "line": 13
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q046",
+   "category": "multi_session",
+   "asked_on": "2026-09-09",
+   "question": "Which sensor died on my weather station and what did I replace it with?",
+   "answer_keys": [
+    "bme280",
+    "sht45"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-04",
+     "line": 3
+    },
+    {
+     "day": "2026-09-05",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q047",
+   "category": "multi_session",
+   "asked_on": "2026-09-29",
+   "question": "What do my phone plan and internet cost per month together now?",
+   "answer_keys": [
+    "80"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-20",
+     "line": 6
+    },
+    {
+     "day": "2026-09-15",
+     "line": 12
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q048",
+   "category": "multi_session",
+   "asked_on": "2026-10-04",
+   "question": "How much more do I need to save to hit my Japan goal?",
+   "answer_keys": [
+    "520"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-15",
+     "line": 0
+    },
+    {
+     "day": "2026-09-30",
+     "line": 0
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q049",
+   "category": "multi_session",
+   "asked_on": "2026-09-23",
+   "question": "At the current price, how much do I spend on coffee in a typical week?",
+   "answer_keys": [
+    "23"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-11",
+     "line": 0
+    },
+    {
+     "day": "2026-09-14",
+     "line": 7
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q050",
+   "category": "multi_session",
+   "asked_on": "2026-09-10",
+   "question": "Who teaches the class that moved to 11:30?",
+   "answer_keys": [
+    "okafor"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-20",
+     "line": 0
+    },
+    {
+     "day": "2026-09-08",
+     "line": 3
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q051",
+   "category": "multi_session",
+   "asked_on": "2026-08-18",
+   "question": "Where did I stay in Denver, and where was the wedding ceremony?",
+   "answer_keys": [
+    "aspen court inn",
+    "cedar hall"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-10",
+     "line": 10
+    },
+    {
+     "day": "2026-08-16",
+     "line": 6
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q052",
+   "category": "multi_session",
+   "asked_on": "2026-08-31",
+   "question": "What did moving cost me, counting the movers and one month of the new rent?",
+   "answer_keys": [
+    "1600"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-29",
+     "line": 9
+    },
+    {
+     "day": "2026-08-10",
+     "line": 0
+    },
+    {
+     "day": "2026-08-07",
+     "line": 6
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q053",
+   "category": "multi_session",
+   "asked_on": "2026-09-25",
+   "question": "Who have my ECE 412 lab partners been this semester?",
+   "answer_keys": [
+    "mina",
+    "tobias"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-26",
+     "line": 0
+    },
+    {
+     "day": "2026-09-17",
+     "line": 6
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q054",
+   "category": "multi_session",
+   "asked_on": "2026-09-07",
+   "question": "How many days after Kieran's going-away dinner did he leave for Chicago?",
+   "answer_keys": [
+    "3"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-28",
+     "line": 15
+    },
+    {
+     "day": "2026-08-31",
+     "line": 4
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q055",
+   "category": "multi_session",
+   "asked_on": "2026-09-24",
+   "question": "What did my replacement bike and the new lock cost together?",
+   "answer_keys": [
+    "175"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-22",
+     "line": 6
+    },
+    {
+     "day": "2026-09-23",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q056",
+   "category": "multi_session",
+   "asked_on": "2026-09-17",
+   "question": "Who teaches Probability, and when is its midterm?",
+   "answer_keys": [
+    "lindqvist",
+    "2026-10-06"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-20",
+     "line": 0
+    },
+    {
+     "day": "2026-09-10",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q057",
+   "category": "temporal",
+   "asked_on": "2026-08-15",
+   "question": "On what date did I sign the lease for my new apartment?",
+   "answer_keys": [
+    "2026-08-10"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-10",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q058",
+   "category": "temporal",
+   "asked_on": "2026-09-05",
+   "question": "On what date did I move into the new place?",
+   "answer_keys": [
+    "2026-08-29"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-29",
+     "line": 9
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q059",
+   "category": "temporal",
+   "asked_on": "2026-08-31",
+   "question": "How many days passed between signing the new lease and moving in?",
+   "answer_keys": [
+    "19"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-10",
+     "line": 0
+    },
+    {
+     "day": "2026-08-29",
+     "line": 9
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q060",
+   "category": "temporal",
+   "asked_on": "2026-08-24",
+   "question": "On what date did my keyboard switches arrive?",
+   "answer_keys": [
+    "2026-08-19"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-19",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q061",
+   "category": "temporal",
+   "asked_on": "2026-09-07",
+   "question": "On what date did the BME280 sensor die?",
+   "answer_keys": [
+    "2026-09-04"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-04",
+     "line": 3
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q062",
+   "category": "temporal",
+   "asked_on": "2026-09-23",
+   "question": "Did my 195 bench PR come before or after my bike was stolen?",
+   "answer_keys": [
+    "before"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-18",
+     "line": 9
+    },
+    {
+     "day": "2026-09-19",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q063",
+   "category": "temporal",
+   "asked_on": "2026-09-09",
+   "question": "On what date did I finish the keyboard?",
+   "answer_keys": [
+    "2026-09-05"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-05",
+     "line": 19
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q064",
+   "category": "temporal",
+   "asked_on": "2026-09-07",
+   "question": "How many days after classes started did I drop HIST 210?",
+   "answer_keys": [
+    "10"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-24",
+     "line": 0
+    },
+    {
+     "day": "2026-09-03",
+     "line": 3
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q065",
+   "category": "temporal",
+   "asked_on": "2026-08-18",
+   "question": "On what date did I fly to Denver?",
+   "answer_keys": [
+    "2026-08-14"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-10",
+     "line": 10
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q066",
+   "category": "temporal",
+   "asked_on": "2026-08-17",
+   "question": "On what date did I fly back from Denver?",
+   "answer_keys": [
+    "2026-08-16"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-10",
+     "line": 10
+    },
+    {
+     "day": "2026-08-16",
+     "line": 6
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q067",
+   "category": "temporal",
+   "asked_on": "2026-08-18",
+   "question": "On what date was Marisol's wedding?",
+   "answer_keys": [
+    "2026-08-15"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-10",
+     "line": 10
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q068",
+   "category": "temporal",
+   "asked_on": "2026-09-25",
+   "question": "On what date did I get the 87 on my Embedded quiz?",
+   "answer_keys": [
+    "2026-09-18"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-18",
+     "line": 0
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q069",
+   "category": "temporal",
+   "asked_on": "2026-09-30",
+   "question": "How many days later than first planned did Shelfie's beta launch?",
+   "answer_keys": [
+    "7"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-01",
+     "line": 15
+    },
+    {
+     "day": "2026-09-21",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q070",
+   "category": "temporal",
+   "asked_on": "2026-09-19",
+   "question": "On what date did I register for the Seattle hackathon?",
+   "answer_keys": [
+    "2026-09-16"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-16",
+     "line": 3
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q071",
+   "category": "temporal",
+   "asked_on": "2026-09-30",
+   "question": "On what date did I book my Thanksgiving flight?",
+   "answer_keys": [
+    "2026-09-27"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-27",
+     "line": 4
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q072",
+   "category": "temporal",
+   "asked_on": "2026-09-12",
+   "question": "Did the dinner with Ines happen before or after I called off Tahoe?",
+   "answer_keys": [
+    "before"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-05",
+     "line": 13
+    },
+    {
+     "day": "2026-09-09",
+     "line": 7
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q073",
+   "category": "temporal",
+   "asked_on": "2026-08-16",
+   "question": "On what date did Kieran tell me he got the job in Chicago?",
+   "answer_keys": [
+    "2026-08-12"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-12",
+     "line": 3
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q074",
+   "category": "temporal",
+   "asked_on": "2026-09-15",
+   "question": "How many days before Lena's birthday did I buy her present?",
+   "answer_keys": [
+    "5"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-14",
+     "line": 5
+    },
+    {
+     "day": "2026-09-14",
+     "line": 3
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q075",
+   "category": "temporal",
+   "asked_on": "2026-08-08",
+   "question": "On what date did I first tell you about Shelfie?",
+   "answer_keys": [
+    "2026-08-04"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-04",
+     "line": 6
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q076",
+   "category": "temporal",
+   "asked_on": "2026-08-30",
+   "question": "On what date did I buy the Probability textbook?",
+   "answer_keys": [
+    "2026-08-25"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-25",
+     "line": 3
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q077",
+   "category": "temporal",
+   "asked_on": "2026-08-24",
+   "question": "On what date did I squat 245?",
+   "answer_keys": [
+    "2026-08-20"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-20",
+     "line": 6
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q078",
+   "category": "temporal",
+   "asked_on": "2026-09-12",
+   "question": "On what date was Grandma's hip surgery?",
+   "answer_keys": [
+    "2026-09-02"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-21",
+     "line": 0
+    },
+    {
+     "day": "2026-09-03",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q079",
+   "category": "temporal",
+   "asked_on": "2026-09-23",
+   "question": "How many days was I without a bike between the theft and buying a replacement?",
+   "answer_keys": [
+    "3"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-19",
+     "line": 0
+    },
+    {
+     "day": "2026-09-22",
+     "line": 6
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q080",
+   "category": "temporal",
+   "asked_on": "2026-09-18",
+   "question": "What day of the week is Lena's birthday this year?",
+   "answer_keys": [
+    "saturday"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-14",
+     "line": 3
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q081",
+   "category": "temporal",
+   "asked_on": "2026-08-25",
+   "question": "How many days after I ordered the switches did they arrive?",
+   "answer_keys": [
+    "7"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-12",
+     "line": 7
+    },
+    {
+     "day": "2026-08-19",
+     "line": 0
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q082",
+   "category": "temporal",
+   "asked_on": "2026-08-30",
+   "question": "From what date does the gym charge the new price?",
+   "answer_keys": [
+    "2026-09-01"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-26",
+     "line": 7
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q083",
+   "category": "temporal",
+   "asked_on": "2026-09-11",
+   "question": "On what date did I tell you the Tahoe trip was off?",
+   "answer_keys": [
+    "2026-09-09"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-09",
+     "line": 7
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q084",
+   "category": "knowledge_update",
+   "asked_on": "2026-09-04",
+   "question": "What's my current address?",
+   "answer_keys": [
+    "220 quarry street"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-03",
+     "line": 0
+    },
+    {
+     "day": "2026-08-10",
+     "line": 0
+    },
+    {
+     "day": "2026-08-29",
+     "line": 9
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q085",
+   "category": "knowledge_update",
+   "asked_on": "2026-09-02",
+   "question": "How much is my rent now?",
+   "answer_keys": [
+    "1180"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-03",
+     "line": 0
+    },
+    {
+     "day": "2026-08-07",
+     "line": 6
+    },
+    {
+     "day": "2026-08-10",
+     "line": 0
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q086",
+   "category": "knowledge_update",
+   "asked_on": "2026-09-16",
+   "question": "What time is ECE 412 now?",
+   "answer_keys": [
+    "11:30"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-20",
+     "line": 0
+    },
+    {
+     "day": "2026-09-08",
+     "line": 3
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q087",
+   "category": "knowledge_update",
+   "asked_on": "2026-09-16",
+   "question": "Which room is ECE 412 in now?",
+   "answer_keys": [
+    "kellner 118"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-24",
+     "line": 0
+    },
+    {
+     "day": "2026-09-08",
+     "line": 3
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q088",
+   "category": "knowledge_update",
+   "asked_on": "2026-09-12",
+   "question": "Which class do I have on Fridays now?",
+   "answer_keys": [
+    "phil 220"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-20",
+     "line": 0
+    },
+    {
+     "day": "2026-09-03",
+     "line": 3
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q089",
+   "category": "knowledge_update",
+   "asked_on": "2026-09-19",
+   "question": "Who is my lab partner now?",
+   "answer_keys": [
+    "tobias"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-26",
+     "line": 0
+    },
+    {
+     "day": "2026-09-17",
+     "line": 6
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q090",
+   "category": "knowledge_update",
+   "asked_on": "2026-08-14",
+   "question": "What price did I end up paying for the switch pack?",
+   "answer_keys": [
+    "45"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-05",
+     "line": 6
+    },
+    {
+     "day": "2026-08-12",
+     "line": 7
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q091",
+   "category": "knowledge_update",
+   "asked_on": "2026-09-14",
+   "question": "How often does the weather station report now?",
+   "answer_keys": [
+    "10 min"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-17",
+     "line": 3
+    },
+    {
+     "day": "2026-09-13",
+     "line": 0
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q092",
+   "category": "knowledge_update",
+   "asked_on": "2026-09-10",
+   "question": "Which sensor is in the weather station now?",
+   "answer_keys": [
+    "sht45"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-17",
+     "line": 3
+    },
+    {
+     "day": "2026-09-04",
+     "line": 3
+    },
+    {
+     "day": "2026-09-05",
+     "line": 0
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q093",
+   "category": "knowledge_update",
+   "asked_on": "2026-08-19",
+   "question": "What framework is Shelfie built with now?",
+   "answer_keys": [
+    "react native"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-04",
+     "line": 7
+    },
+    {
+     "day": "2026-08-18",
+     "line": 12
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q094",
+   "category": "knowledge_update",
+   "asked_on": "2026-09-29",
+   "question": "How many beta users does Shelfie have at last count?",
+   "answer_keys": [
+    "37"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-23",
+     "line": 6
+    },
+    {
+     "day": "2026-09-28",
+     "line": 3
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q095",
+   "category": "knowledge_update",
+   "asked_on": "2026-09-08",
+   "question": "What's my grocery budget now?",
+   "answer_keys": [
+    "300"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-02",
+     "line": 8
+    },
+    {
+     "day": "2026-08-31",
+     "line": 7
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q096",
+   "category": "knowledge_update",
+   "asked_on": "2026-09-03",
+   "question": "How much is my gym membership now?",
+   "answer_keys": [
+    "39"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-03",
+     "line": 7
+    },
+    {
+     "day": "2026-08-26",
+     "line": 7
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q097",
+   "category": "knowledge_update",
+   "asked_on": "2026-09-04",
+   "question": "What time do I go to the gym now?",
+   "answer_keys": [
+    "6:30"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-03",
+     "line": 7
+    },
+    {
+     "day": "2026-09-02",
+     "line": 0
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q098",
+   "category": "knowledge_update",
+   "asked_on": "2026-09-22",
+   "question": "What's my current bench PR?",
+   "answer_keys": [
+    "195"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-13",
+     "line": 3
+    },
+    {
+     "day": "2026-09-18",
+     "line": 9
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q099",
+   "category": "knowledge_update",
+   "asked_on": "2026-09-29",
+   "question": "What did I weigh at my latest weigh-in?",
+   "answer_keys": [
+    "168"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-06",
+     "line": 0
+    },
+    {
+     "day": "2026-09-20",
+     "line": 3
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q100",
+   "category": "knowledge_update",
+   "asked_on": "2026-10-01",
+   "question": "When is my Controls midterm?",
+   "answer_keys": [
+    "2026-10-08"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-22",
+     "line": 3
+    },
+    {
+     "day": "2026-09-25",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q101",
+   "category": "knowledge_update",
+   "asked_on": "2026-10-01",
+   "question": "How much do I have in savings at the latest check?",
+   "answer_keys": [
+    "2480"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-15",
+     "line": 0
+    },
+    {
+     "day": "2026-09-30",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q102",
+   "category": "knowledge_update",
+   "asked_on": "2026-09-18",
+   "question": "How much does my oat flat white cost now?",
+   "answer_keys": [
+    "5.75"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-11",
+     "line": 0
+    },
+    {
+     "day": "2026-09-14",
+     "line": 7
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q103",
+   "category": "knowledge_update",
+   "asked_on": "2026-09-24",
+   "question": "How much is my phone plan now?",
+   "answer_keys": [
+    "25"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-09",
+     "line": 12
+    },
+    {
+     "day": "2026-09-20",
+     "line": 6
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q104",
+   "category": "knowledge_update",
+   "asked_on": "2026-09-27",
+   "question": "When are Haddad's office hours now?",
+   "answer_keys": [
+    "thursday",
+    [
+     "4 pm",
+     "16:00",
+     "4pm",
+     "4 p.m."
+    ]
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-01",
+     "line": 6
+    },
+    {
+     "day": "2026-09-21",
+     "line": 4
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q105",
+   "category": "knowledge_update",
+   "asked_on": "2026-09-02",
+   "question": "Kieran used to be my roommate. Which city does he live in now?",
+   "answer_keys": [
+    "chicago"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-12",
+     "line": 3
+    },
+    {
+     "day": "2026-08-31",
+     "line": 4
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q106",
+   "category": "knowledge_update",
+   "asked_on": "2026-09-30",
+   "question": "Who is on my Cascade Hack team?",
+   "answer_keys": [
+    "tobias"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-16",
+     "line": 3
+    },
+    {
+     "day": "2026-09-29",
+     "line": 4
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q107",
+   "category": "knowledge_update",
+   "asked_on": "2026-09-22",
+   "question": "What time is the probability study group now?",
+   "answer_keys": [
+    [
+     "6 pm",
+     "18:00",
+     "6pm",
+     "6 p.m."
+    ]
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-10",
+     "line": 10
+    },
+    {
+     "day": "2026-09-20",
+     "line": 9
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q108",
+   "category": "knowledge_update",
+   "asked_on": "2026-09-06",
+   "question": "What's my monthly budget now, not counting rent?",
+   "answer_keys": [
+    "1700"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-02",
+     "line": 6
+    },
+    {
+     "day": "2026-09-01",
+     "line": 0
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q109",
+   "category": "knowledge_update",
+   "asked_on": "2026-10-04",
+   "question": "Where is my weather station now?",
+   "answer_keys": [
+    "balcony"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-17",
+     "line": 3
+    },
+    {
+     "day": "2026-09-26",
+     "line": 3
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q110",
+   "category": "knowledge_update",
+   "asked_on": "2026-09-15",
+   "question": "When is my dentist appointment?",
+   "answer_keys": [
+    "2026-09-16"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-19",
+     "line": 3
+    },
+    {
+     "day": "2026-09-08",
+     "line": 6
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q111",
+   "category": "abstention",
+   "asked_on": "2026-09-02",
+   "question": "What's Mina's last name?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [],
+   "split": "holdout"
+  },
+  {
+   "id": "q112",
+   "category": "abstention",
+   "asked_on": "2026-09-01",
+   "question": "What job is my dad retiring from?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [],
+   "split": "holdout"
+  },
+  {
+   "id": "q113",
+   "category": "abstention",
+   "asked_on": "2026-08-20",
+   "question": "How much per night was the Aspen Court Inn?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [],
+   "split": "holdout"
+  },
+  {
+   "id": "q114",
+   "category": "abstention",
+   "asked_on": "2026-09-08",
+   "question": "What color keycaps did I buy for the keyboard?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [],
+   "split": "holdout"
+  },
+  {
+   "id": "q115",
+   "category": "abstention",
+   "asked_on": "2026-09-03",
+   "question": "What is Sasha studying?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [],
+   "split": "holdout"
+  },
+  {
+   "id": "q116",
+   "category": "abstention",
+   "asked_on": "2026-09-20",
+   "question": "When is the PHIL 220 final exam?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [],
+   "split": "holdout"
+  },
+  {
+   "id": "q117",
+   "category": "abstention",
+   "asked_on": "2026-09-10",
+   "question": "What's my blood type?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [],
+   "split": "holdout"
+  },
+  {
+   "id": "q118",
+   "category": "abstention",
+   "asked_on": "2026-09-22",
+   "question": "What's the name of Lena's high school?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [],
+   "split": "holdout"
+  },
+  {
+   "id": "q119",
+   "category": "abstention",
+   "asked_on": "2026-09-12",
+   "question": "How much was shipping on the SHT45 order?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [],
+   "split": "holdout"
+  },
+  {
+   "id": "q120",
+   "category": "abstention",
+   "asked_on": "2026-09-20",
+   "question": "What's Carla's phone number?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [],
+   "split": "holdout"
+  },
+  {
+   "id": "q121",
+   "category": "abstention",
+   "asked_on": "2026-09-28",
+   "question": "What did I score on my first Controls quiz?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [],
+   "split": "dev"
+  },
+  {
+   "id": "q122",
+   "category": "abstention",
+   "asked_on": "2026-09-25",
+   "question": "What's Jonah's bench PR?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [],
+   "split": "holdout"
+  },
+  {
+   "id": "q123",
+   "category": "abstention",
+   "asked_on": "2026-10-01",
+   "question": "Which airline is my Thanksgiving flight on?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [],
+   "split": "dev"
+  },
+  {
+   "id": "q124",
+   "category": "abstention",
+   "asked_on": "2026-09-06",
+   "question": "What's the name of Grandma's surgeon?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [],
+   "split": "dev"
+  },
+  {
+   "id": "q125",
+   "category": "abstention",
+   "asked_on": "2026-09-29",
+   "question": "How many people signed up for Shelfie on launch day itself?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [],
+   "split": "holdout"
+  },
+  {
+   "id": "q126",
+   "category": "abstention",
+   "asked_on": "2026-09-30",
+   "question": "What's my GPA?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [],
+   "split": "holdout"
+  },
+  {
+   "id": "q127",
+   "category": "abstention",
+   "asked_on": "2026-09-08",
+   "question": "What did I order at Saffron Table?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [],
+   "split": "holdout"
+  },
+  {
+   "id": "q128",
+   "category": "abstention",
+   "asked_on": "2026-09-05",
+   "question": "Which company is Kieran working for in Chicago?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [],
+   "split": "holdout"
+  },
+  {
+   "id": "q129",
+   "category": "abstention",
+   "asked_on": "2026-09-15",
+   "question": "Which room is MATH 340 in?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [],
+   "split": "holdout"
+  },
+  {
+   "id": "q130",
+   "category": "abstention",
+   "asked_on": "2026-09-20",
+   "question": "Which ESP32 board model is in the weather station?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [],
+   "split": "holdout"
+  },
+  {
+   "id": "q131",
+   "category": "abstention",
+   "asked_on": "2026-09-18",
+   "question": "What's the name of my dentist's office?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [],
+   "split": "dev"
+  },
+  {
+   "id": "q132",
+   "category": "abstention",
+   "asked_on": "2026-09-15",
+   "question": "What's Dev's major?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [],
+   "split": "holdout"
+  },
+  {
+   "id": "q133",
+   "category": "abstention",
+   "asked_on": "2026-09-27",
+   "question": "What brand is the used bike I bought?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [],
+   "split": "holdout"
+  },
+  {
+   "id": "q134",
+   "category": "abstention",
+   "asked_on": "2026-09-11",
+   "question": "What time does Circuit Night end?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [],
+   "split": "dev"
+  },
+  {
+   "id": "q135",
+   "category": "abstention",
+   "asked_on": "2026-09-25",
+   "question": "When is my mom's birthday?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [],
+   "split": "holdout"
+  },
+  {
+   "id": "q136",
+   "category": "abstention",
+   "asked_on": "2026-10-05",
+   "question": "What gift did I pick out for Dad's birthday?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [],
+   "split": "dev"
+  },
+  {
+   "id": "q137",
+   "category": "abstention",
+   "asked_on": "2026-10-03",
+   "question": "How much is my hotel in Seattle for the hackathon?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [],
+   "split": "holdout"
+  },
+  {
+   "id": "q138",
+   "category": "cross_channel",
+   "asked_on": "2026-09-02",
+   "question": "Which room was my very first ECE 412 class in?",
+   "answer_keys": [
+    "kellner 204"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-24",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q139",
+   "category": "cross_channel",
+   "asked_on": "2026-09-03",
+   "question": "How many tests passed in the Shelfie CI run on the beta-prep branch?",
+   "answer_keys": [
+    "142"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-25",
+     "line": 12
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q140",
+   "category": "cross_channel",
+   "asked_on": "2026-09-03",
+   "question": "Which moving company moved me?",
+   "answer_keys": [
+    "hilltop"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-29",
+     "line": 9
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q141",
+   "category": "cross_channel",
+   "asked_on": "2026-09-24",
+   "question": "What did I get on the first Embedded quiz?",
+   "answer_keys": [
+    "87"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-18",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q142",
+   "category": "cross_channel",
+   "asked_on": "2026-09-04",
+   "question": "What kind of surgery did Grandma have?",
+   "answer_keys": [
+    "hip"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-21",
+     "line": 0
+    },
+    {
+     "day": "2026-09-03",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q143",
+   "category": "cross_channel",
+   "asked_on": "2026-09-11",
+   "question": "Which firmware version is the weather station running?",
+   "answer_keys": [
+    "0.4"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-09",
+     "line": 0
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q144",
+   "category": "cross_channel",
+   "asked_on": "2026-09-29",
+   "question": "Which Shelfie beta build went out to testers?",
+   "answer_keys": [
+    "1.0.0-beta.3"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-21",
+     "line": 3
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q145",
+   "category": "cross_channel",
+   "asked_on": "2026-08-20",
+   "question": "Where was Marisol's wedding ceremony?",
+   "answer_keys": [
+    "cedar hall"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-16",
+     "line": 6
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q146",
+   "category": "cross_channel",
+   "asked_on": "2026-09-13",
+   "question": "Who did I go with to the restaurant you recommended?",
+   "answer_keys": [
+    "ines"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-30",
+     "line": 8
+    },
+    {
+     "day": "2026-09-05",
+     "line": 13
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q147",
+   "category": "cross_channel",
+   "asked_on": "2026-09-13",
+   "question": "Which climbing gym did we go to instead of Tahoe?",
+   "answer_keys": [
+    "basecamp"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-12",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q148",
+   "category": "cross_channel",
+   "asked_on": "2026-09-27",
+   "question": "Where is Lena taking her camera first?",
+   "answer_keys": [
+    "homecoming"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-19",
+     "line": 3
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q149",
+   "category": "cross_channel",
+   "asked_on": "2026-09-30",
+   "question": "What role was I elected to at The Foundry?",
+   "answer_keys": [
+    "treasurer"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-24",
+     "line": 15
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q150",
+   "category": "cross_channel",
+   "asked_on": "2026-08-18",
+   "question": "Where did Kieran get his new job?",
+   "answer_keys": [
+    "chicago"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-12",
+     "line": 3
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q151",
+   "category": "cross_channel",
+   "asked_on": "2026-08-25",
+   "question": "What weight did I squat in August?",
+   "answer_keys": [
+    "245"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-20",
+     "line": 6
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q152",
+   "category": "cross_channel",
+   "asked_on": "2026-09-27",
+   "question": "On what date is Sasha pitching Shelfie at Founders Night?",
+   "answer_keys": [
+    "2026-10-15"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-26",
+     "line": 7
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q153",
+   "category": "cross_channel",
+   "asked_on": "2026-10-08",
+   "question": "How much did I spend on groceries in September?",
+   "answer_keys": [
+    "287.4"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-29",
+     "line": 0
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q154",
+   "category": "cross_channel",
+   "asked_on": "2026-08-30",
+   "question": "When is Dad retiring?",
+   "answer_keys": [
+    "december"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-23",
+     "line": 7
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q155",
+   "category": "cross_channel",
+   "asked_on": "2026-09-09",
+   "question": "How much did the replacement sensors cost me in total?",
+   "answer_keys": [
+    "19"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-05",
+     "line": 0
+    },
+    {
+     "day": "2026-09-05",
+     "line": 3
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q156",
+   "category": "cross_channel",
+   "asked_on": "2026-09-27",
+   "question": "How much did my replacement bike cost, and where did I buy it?",
+   "answer_keys": [
+    "140",
+    "spoke"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-22",
+     "line": 6
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q157",
+   "category": "cross_channel",
+   "asked_on": "2026-09-17",
+   "question": "Why was the Tahoe trip called off?",
+   "answer_keys": [
+    "smoke"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-09",
+     "line": 7
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q158",
+   "category": "cross_channel",
+   "asked_on": "2026-08-16",
+   "question": "Besides Quarry Street, which other apartment did I look at, and what was its rent?",
+   "answer_keys": [
+    "fenwick",
+    "1050"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-07",
+     "line": 7
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q159",
+   "category": "cross_channel",
+   "asked_on": "2026-10-03",
+   "question": "What did Haddad walk me through at office hours?",
+   "answer_keys": [
+    "root locus"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-24",
+     "line": 12
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q160",
+   "category": "cross_channel",
+   "asked_on": "2026-08-27",
+   "question": "Which branch holds the old Flutter code for Shelfie?",
+   "answer_keys": [
+    "legacy-flutter"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-18",
+     "line": 15
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q161",
+   "category": "cross_channel",
+   "asked_on": "2026-09-27",
+   "question": "What humidity did the weather station read on its first balcony reading?",
+   "answer_keys": [
+    "71"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-26",
+     "line": 6
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q162",
+   "category": "cross_channel",
+   "asked_on": "2026-08-17",
+   "question": "What does Benji do for work?",
+   "answer_keys": [
+    "firefighter"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-15",
+     "line": 6
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q163",
+   "category": "buddy_said",
+   "asked_on": "2026-08-14",
+   "question": "How many switches did you say my 65% board needs?",
+   "answer_keys": [
+    "68"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-05",
+     "line": 7
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q164",
+   "category": "buddy_said",
+   "asked_on": "2026-08-17",
+   "question": "What soldering temperature did you suggest for leaded solder?",
+   "answer_keys": [
+    "340"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-08",
+     "line": 4
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q165",
+   "category": "buddy_said",
+   "asked_on": "2026-09-07",
+   "question": "When I raised my grocery budget, how much per week did you say that was?",
+   "answer_keys": [
+    "70"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-31",
+     "line": 8
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q166",
+   "category": "buddy_said",
+   "asked_on": "2026-08-14",
+   "question": "How much protein per day did you tell me to aim for?",
+   "answer_keys": [
+    "135"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-13",
+     "line": 5
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q167",
+   "category": "buddy_said",
+   "asked_on": "2026-09-06",
+   "question": "Which restaurant did you recommend for dinner with Ines?",
+   "answer_keys": [
+    "saffron table"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-30",
+     "line": 8
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q168",
+   "category": "buddy_said",
+   "asked_on": "2026-09-13",
+   "question": "What I2C address did you say the BME280 usually uses?",
+   "answer_keys": [
+    "0x76"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-04",
+     "line": 4
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q169",
+   "category": "buddy_said",
+   "asked_on": "2026-08-28",
+   "question": "Which beginner electronics book did you recommend?",
+   "answer_keys": [
+    "practical electronics for inventors"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-21",
+     "line": 8
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q170",
+   "category": "buddy_said",
+   "asked_on": "2026-09-12",
+   "question": "How many hours of study did you say 45 minutes a day until the Probability midterm adds up to?",
+   "answer_keys": [
+    "19.5"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-10",
+     "line": 2
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q171",
+   "category": "buddy_said",
+   "asked_on": "2026-08-16",
+   "question": "What time did you tell me to leave for the airport for the Denver flight?",
+   "answer_keys": [
+    "5:15"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-13",
+     "line": 14
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q172",
+   "category": "buddy_said",
+   "asked_on": "2026-08-13",
+   "question": "How much more per month did you say Quarry Street was than Fenwick?",
+   "answer_keys": [
+    "130"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-07",
+     "line": 8
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q173",
+   "category": "buddy_said",
+   "asked_on": "2026-09-23",
+   "question": "What kind of gift did you suggest for Lena?",
+   "answer_keys": [
+    "instant camera"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-14",
+     "line": 4
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q174",
+   "category": "buddy_said",
+   "asked_on": "2026-09-21",
+   "question": "What time did you say the train gets into Seattle?",
+   "answer_keys": [
+    "11:05"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-16",
+     "line": 5
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q175",
+   "category": "buddy_said",
+   "asked_on": "2026-09-24",
+   "question": "What tagline did you suggest for the Shelfie launch post?",
+   "answer_keys": [
+    "never pay a late fee again"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-20",
+     "line": 22
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q176",
+   "category": "buddy_said",
+   "asked_on": "2026-09-09",
+   "question": "Which bus route did you say gets me to campus, and how long does it take?",
+   "answer_keys": [
+    "9",
+    "22"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-02",
+     "line": 5
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q177",
+   "category": "buddy_said",
+   "asked_on": "2026-08-18",
+   "question": "How many days did you say the weather station battery lasts at 10-minute intervals?",
+   "answer_keys": [
+    "41"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-17",
+     "line": 4
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q178",
+   "category": "buddy_said",
+   "asked_on": "2026-08-22",
+   "question": "How much each did you say pizza night came to?",
+   "answer_keys": [
+    "15.95"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-19",
+     "line": 13
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q179",
+   "category": "buddy_said",
+   "asked_on": "2026-09-12",
+   "question": "What time did you say Saffron Table closes on Saturdays?",
+   "answer_keys": [
+    [
+     "22:00",
+     "10 pm",
+     "10pm",
+     "10 p.m."
+    ]
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-05",
+     "line": 8
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q180",
+   "category": "buddy_said",
+   "asked_on": "2026-09-27",
+   "question": "What price limit did you suggest for a replacement bike?",
+   "answer_keys": [
+    "150"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-19",
+     "line": 1
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q181",
+   "category": "buddy_said",
+   "asked_on": "2026-08-29",
+   "question": "What did you say used copies of the Probability textbook cost?",
+   "answer_keys": [
+    "60"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-25",
+     "line": 4
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q182",
+   "category": "buddy_said",
+   "asked_on": "2026-10-02",
+   "question": "What average fare did you say you found for my Thanksgiving flight?",
+   "answer_keys": [
+    "340"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-27",
+     "line": 5
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q183",
+   "category": "buddy_said",
+   "asked_on": "2026-10-07",
+   "question": "How many new Shelfie users did you say I gained in five days?",
+   "answer_keys": [
+    "19"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-28",
+     "line": 4
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q184",
+   "category": "buddy_said",
+   "asked_on": "2026-09-14",
+   "question": "Which day of the week did you suggest for the Shelfie launch?",
+   "answer_keys": [
+    "monday"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-11",
+     "line": 7
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q185",
+   "category": "buddy_said",
+   "asked_on": "2026-09-29",
+   "question": "How many pounds did you say I'd lost since August 6?",
+   "answer_keys": [
+    "4"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-20",
+     "line": 4
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q186",
+   "category": "buddy_said",
+   "asked_on": "2026-09-01",
+   "question": "What hourly rate did you work out for the movers?",
+   "answer_keys": [
+    "140"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-29",
+     "line": 10
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q187",
+   "category": "buddy_said",
+   "asked_on": "2026-09-26",
+   "question": "Which chapter did you tell me to start with for the Controls review?",
+   "answer_keys": [
+    "5"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-17",
+     "line": 10
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q188",
+   "category": "buddy_said",
+   "asked_on": "2026-08-11",
+   "question": "How many days did you say I had before my Birch Lane lease ended?",
+   "answer_keys": [
+    "28"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-03",
+     "line": 1
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q189",
+   "category": "buddy_said",
+   "asked_on": "2026-10-05",
+   "question": "What percentage of my Japan goal did you say I'd reached?",
+   "answer_keys": [
+    "83"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-30",
+     "line": 1
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q190",
+   "category": "plans",
+   "asked_on": "2026-09-18",
+   "question": "Did the Tahoe camping trip happen?",
+   "answer_keys": [
+    [
+     "cancel",
+     "called off",
+     "called it off",
+     "call it off",
+     "did not happen",
+     "didn't happen",
+     "was off"
+    ]
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-27",
+     "line": 7
+    },
+    {
+     "day": "2026-09-09",
+     "line": 7
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q191",
+   "category": "plans",
+   "asked_on": "2026-08-28",
+   "question": "What dates was the Tahoe trip originally planned for?",
+   "answer_keys": [
+    "2026-09-12"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-27",
+     "line": 7
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q192",
+   "category": "plans",
+   "asked_on": "2026-09-01",
+   "question": "On what date did I first make the Tahoe plan?",
+   "answer_keys": [
+    "2026-08-27"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-27",
+     "line": 7
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q193",
+   "category": "plans",
+   "asked_on": "2026-09-22",
+   "question": "What did the dentist say at my appointment?",
+   "answer_keys": [
+    "no cavities"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-16",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q194",
+   "category": "plans",
+   "asked_on": "2026-09-09",
+   "question": "What was the original launch date for the Shelfie beta?",
+   "answer_keys": [
+    "2026-09-14"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-01",
+     "line": 15
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q195",
+   "category": "plans",
+   "asked_on": "2026-09-29",
+   "question": "When did the Shelfie beta actually launch?",
+   "answer_keys": [
+    "2026-09-21"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-11",
+     "line": 8
+    },
+    {
+     "day": "2026-09-21",
+     "line": 0
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q196",
+   "category": "plans",
+   "asked_on": "2026-09-09",
+   "question": "What happened with HIST 210?",
+   "answer_keys": [
+    "drop"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-03",
+     "line": 3
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q197",
+   "category": "plans",
+   "asked_on": "2026-09-24",
+   "question": "What date does Cascade Hack start?",
+   "answer_keys": [
+    "2026-10-23"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-16",
+     "line": 3
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q198",
+   "category": "plans",
+   "asked_on": "2026-10-06",
+   "question": "What date do I fly home for Thanksgiving?",
+   "answer_keys": [
+    "2026-11-25"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-27",
+     "line": 4
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q199",
+   "category": "plans",
+   "asked_on": "2026-09-11",
+   "question": "When is my Probability midterm?",
+   "answer_keys": [
+    "2026-10-06"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-10",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q200",
+   "category": "plans",
+   "asked_on": "2026-10-04",
+   "question": "By what date did I want to send Dad something?",
+   "answer_keys": [
+    "2026-10-12"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-28",
+     "line": 9
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q201",
+   "category": "plans",
+   "asked_on": "2026-08-21",
+   "question": "Which month is the Japan trip planned for?",
+   "answer_keys": [
+    "march"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-15",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q202",
+   "category": "plans",
+   "asked_on": "2026-09-03",
+   "question": "On what date did I make the dinner plan with Ines?",
+   "answer_keys": [
+    "2026-08-30"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-30",
+     "line": 6
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q203",
+   "category": "plans",
+   "asked_on": "2026-09-03",
+   "question": "Where was Kieran's going-away dinner held in the end?",
+   "answer_keys": [
+    [
+     "birch lane",
+     "apartment",
+     "your place",
+     "at home"
+    ]
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-27",
+     "line": 3
+    },
+    {
+     "day": "2026-08-27",
+     "line": 5
+    },
+    {
+     "day": "2026-08-28",
+     "line": 15
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q204",
+   "category": "plans",
+   "asked_on": "2026-09-09",
+   "question": "How much did I sell my old desk for?",
+   "answer_keys": [
+    "40"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-27",
+     "line": 13
+    },
+    {
+     "day": "2026-09-01",
+     "line": 12
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q205",
+   "category": "plans",
+   "asked_on": "2026-09-27",
+   "question": "Why did I drop the plan to buy a winter jacket?",
+   "answer_keys": [
+    "mom"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-16",
+     "line": 10
+    },
+    {
+     "day": "2026-09-24",
+     "line": 3
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q206",
+   "category": "plans",
+   "asked_on": "2026-09-09",
+   "question": "Which night was the intramural volleyball I decided against?",
+   "answer_keys": [
+    "tuesday"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-31",
+     "line": 10
+    },
+    {
+     "day": "2026-09-08",
+     "line": 12
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q207",
+   "category": "plans",
+   "asked_on": "2026-09-30",
+   "question": "On what date did I mount the weather station on the balcony?",
+   "answer_keys": [
+    "2026-09-26"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-21",
+     "line": 10
+    },
+    {
+     "day": "2026-09-26",
+     "line": 3
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q208",
+   "category": "plans",
+   "asked_on": "2026-09-13",
+   "question": "On what date was the first probability study group?",
+   "answer_keys": [
+    "2026-09-13"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-10",
+     "line": 10
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q209",
+   "category": "plans",
+   "asked_on": "2026-09-26",
+   "question": "Did I make it to Haddad's new office hours, and on what date?",
+   "answer_keys": [
+    "2026-09-24"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-21",
+     "line": 4
+    },
+    {
+     "day": "2026-09-24",
+     "line": 12
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q210",
+   "category": "plans",
+   "asked_on": "2026-09-18",
+   "question": "How much was the train ticket to Seattle?",
+   "answer_keys": [
+    "64"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-16",
+     "line": 4
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q211",
+   "category": "plans",
+   "asked_on": "2026-10-02",
+   "question": "On what date are the Shelfie user interviews, and how many?",
+   "answer_keys": [
+    "2026-10-02",
+    "3"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-29",
+     "line": 7
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q212",
+   "category": "plans",
+   "asked_on": "2026-10-07",
+   "question": "When are Mom and Lena visiting?",
+   "answer_keys": [
+    "2026-10-17"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-30",
+     "line": 3
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q213",
+   "category": "plans",
+   "asked_on": "2026-09-09",
+   "question": "On what date did Kieran leave for Chicago?",
+   "answer_keys": [
+    "2026-08-31"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-31",
+     "line": 4
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q214",
+   "category": "plans",
+   "asked_on": "2026-09-20",
+   "question": "What did we do instead of the Tahoe trip?",
+   "answer_keys": [
+    "climb"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-09",
+     "line": 8
+    },
+    {
+     "day": "2026-09-12",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q215",
+   "category": "plans",
+   "asked_on": "2026-10-01",
+   "question": "By what date do I need to renew the Shelfie domain?",
+   "answer_keys": [
+    "2026-10-03"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-22",
+     "line": 12
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q216",
+   "category": "plans",
+   "asked_on": "2026-08-27",
+   "question": "When did I originally book the dentist for?",
+   "answer_keys": [
+    "2026-09-09"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-19",
+     "line": 3
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q217",
+   "category": "forget",
+   "asked_on": "2026-08-10",
+   "question": "What's my gym locker combination?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-08-06",
+     "line": 3
+    }
+   ],
+   "forget": {
+    "day": "2026-08-06",
+    "line": 3
+   },
+   "leak_keys": [
+    "12-34-08"
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q218",
+   "category": "forget",
+   "asked_on": "2026-08-15",
+   "question": "What's my bike lock code?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-08-09",
+     "line": 3
+    }
+   ],
+   "forget": {
+    "day": "2026-08-09",
+    "line": 3
+   },
+   "leak_keys": [
+    "4417"
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q219",
+   "category": "forget",
+   "asked_on": "2026-08-19",
+   "question": "How much does Kieran owe me for the electric bill?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-08-11",
+     "line": 3
+    }
+   ],
+   "forget": {
+    "day": "2026-08-11",
+    "line": 3
+   },
+   "leak_keys": [
+    "60"
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q220",
+   "category": "forget",
+   "asked_on": "2026-09-08",
+   "question": "What's the wifi password at my apartment?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-09-02",
+     "line": 7
+    }
+   ],
+   "forget": {
+    "day": "2026-09-02",
+    "line": 7
+   },
+   "leak_keys": [
+    "quarry-sunset-55"
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q221",
+   "category": "forget",
+   "asked_on": "2026-08-30",
+   "question": "What's my student ID number?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-08-24",
+     "line": 3
+    }
+   ],
+   "forget": {
+    "day": "2026-08-24",
+    "line": 3
+   },
+   "leak_keys": [
+    "90412377"
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q222",
+   "category": "forget",
+   "asked_on": "2026-09-13",
+   "question": "What's the code word for Dad's retirement party?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-09-06",
+     "line": 0
+    }
+   ],
+   "forget": {
+    "day": "2026-09-06",
+    "line": 0
+   },
+   "leak_keys": [
+    "pelican"
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q223",
+   "category": "forget",
+   "asked_on": "2026-09-07",
+   "question": "When do I see my counselor?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-09-03",
+     "line": 9
+    }
+   ],
+   "forget": {
+    "day": "2026-09-03",
+    "line": 9
+   },
+   "leak_keys": [
+    "tuesdays at 5"
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q224",
+   "category": "forget",
+   "asked_on": "2026-08-23",
+   "question": "Did I pass my driving test?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-08-14",
+     "line": 7
+    }
+   ],
+   "forget": {
+    "day": "2026-08-14",
+    "line": 7
+   },
+   "leak_keys": [
+    "failed"
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q225",
+   "category": "forget",
+   "asked_on": "2026-09-12",
+   "question": "Who do I have a crush on?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-09-06",
+     "line": 7
+    }
+   ],
+   "forget": {
+    "day": "2026-09-06",
+    "line": 7
+   },
+   "leak_keys": [
+    "noor"
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q226",
+   "category": "forget",
+   "asked_on": "2026-09-07",
+   "question": "What's the front door code at my building?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-08-30",
+     "line": 0
+    }
+   ],
+   "forget": {
+    "day": "2026-08-30",
+    "line": 0
+   },
+   "leak_keys": [
+    "7291"
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q227",
+   "category": "forget",
+   "asked_on": "2026-09-19",
+   "question": "How much do I owe Dev for the concert tickets?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-09-12",
+     "line": 9
+    }
+   ],
+   "forget": {
+    "day": "2026-09-12",
+    "line": 9
+   },
+   "leak_keys": [
+    "25"
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q228",
+   "category": "forget",
+   "asked_on": "2026-08-19",
+   "question": "What's my library PIN?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-08-17",
+     "line": 9
+    }
+   ],
+   "forget": {
+    "day": "2026-08-17",
+    "line": 9
+   },
+   "leak_keys": [
+    "2580"
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q229",
+   "category": "forget",
+   "asked_on": "2026-08-29",
+   "question": "What was my first dog's name?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-08-22",
+     "line": 0
+    }
+   ],
+   "forget": {
+    "day": "2026-08-22",
+    "line": 0
+   },
+   "leak_keys": [
+    "biscuit"
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q230",
+   "category": "forget",
+   "asked_on": "2026-09-17",
+   "question": "What was my Elm Street ticket for, and how much was it?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-09-15",
+     "line": 15
+    }
+   ],
+   "forget": {
+    "day": "2026-09-15",
+    "line": 15
+   },
+   "leak_keys": [
+    "75",
+    "sidewalk"
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q231",
+   "category": "forget",
+   "asked_on": "2026-09-03",
+   "question": "Which major was I thinking of switching to?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-08-27",
+     "line": 19
+    }
+   ],
+   "forget": {
+    "day": "2026-08-27",
+    "line": 19
+   },
+   "leak_keys": [
+    "computer science"
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q232",
+   "category": "forget",
+   "asked_on": "2026-08-30",
+   "question": "What was my resting heart rate?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-08-28",
+     "line": 0
+    }
+   ],
+   "forget": {
+    "day": "2026-08-28",
+    "line": 0
+   },
+   "leak_keys": [
+    "58"
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q233",
+   "category": "forget",
+   "asked_on": "2026-09-12",
+   "question": "What was my vitamin D level?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-09-08",
+     "line": 9
+    }
+   ],
+   "forget": {
+    "day": "2026-09-08",
+    "line": 9
+   },
+   "leak_keys": [
+    "18"
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q234",
+   "category": "forget",
+   "asked_on": "2026-09-16",
+   "question": "What happened to the multimeter Sasha lent me?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-09-10",
+     "line": 4
+    }
+   ],
+   "forget": {
+    "day": "2026-09-10",
+    "line": 4
+   },
+   "leak_keys": [
+    "lost"
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q235",
+   "category": "forget",
+   "asked_on": "2026-08-14",
+   "question": "What's my credit score?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-08-13",
+     "line": 7
+    }
+   ],
+   "forget": {
+    "day": "2026-08-13",
+    "line": 7
+   },
+   "leak_keys": [
+    "712"
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q236",
+   "category": "forget",
+   "asked_on": "2026-09-03",
+   "question": "Where's my spare key?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-09-01",
+     "line": 18
+    }
+   ],
+   "forget": {
+    "day": "2026-09-01",
+    "line": 18
+   },
+   "leak_keys": [
+    "planter"
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "q237",
+   "category": "forget",
+   "asked_on": "2026-10-02",
+   "question": "Which internship did I apply for?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-09-24",
+     "line": 6
+    }
+   ],
+   "forget": {
+    "day": "2026-09-24",
+    "line": 6
+   },
+   "leak_keys": [
+    "ridgeway"
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q238",
+   "category": "forget",
+   "asked_on": "2026-10-04",
+   "question": "What did I tell Haddad I'd do next spring?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-09-26",
+     "line": 10
+    }
+   ],
+   "forget": {
+    "day": "2026-09-26",
+    "line": 10
+   },
+   "leak_keys": [
+    "ta controls"
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q239",
+   "category": "forget",
+   "asked_on": "2026-09-23",
+   "question": "Who is Lena dating?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-09-20",
+     "line": 18
+    }
+   ],
+   "forget": {
+    "day": "2026-09-20",
+    "line": 18
+   },
+   "leak_keys": [
+    "rafi"
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "q240",
+   "category": "forget",
+   "asked_on": "2026-08-20",
+   "question": "What's Jonah's phone number?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-08-19",
+     "line": 9
+    }
+   ],
+   "forget": {
+    "day": "2026-08-19",
+    "line": 9
+   },
+   "leak_keys": [
+    "555-0143"
+   ],
+   "split": "holdout"
+  }
+ ]
+}

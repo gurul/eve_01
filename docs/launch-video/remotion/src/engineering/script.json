@@ -1,0 +1,155 @@
+{
+  "title": "eve, engineered",
+  "sections": [
+    {
+      "id": "what",
+      "kicker": "01 · what it is",
+      "title": "A desk robot with a Mac as its host",
+      "cues": [
+        "A technical tour of eve: how it is built, and why.",
+        "eve is a small robot on your desk, with a Mac as its host.",
+        "The robot is an M5Stack StackChan: an ESP32-S3 running custom Arduino firmware.",
+        "It talks to a Python daemon on the Mac in newline-delimited JSON, over USB serial.",
+        "The link watches itself: twenty seconds of silence means it is dead, and repeated silent opens pulse RTS to reset the board.",
+        "A reflashed Home Assistant Voice PE is a push-to-talk controller, with a light ring that shows what eve is doing.",
+        "Telegram is the pocket door. It long-polls over outbound HTTPS, so the Mac opens no port.",
+        "A Telegram Mini App builds small apps and carries push-to-talk calls, and a menu-bar app with a widget shows the diary."
+      ]
+    },
+    {
+      "id": "hub",
+      "kicker": "02 · the hub",
+      "title": "One daemon, one contract",
+      "cues": [
+        "Everything meets in one process: the daemon, one asyncio loop.",
+        "At start it launches tasks for IPC, the robot link, the controller, Telegram, the watcher, the Mini App and spend sync.",
+        "Blocking work, like the serial port, runs on worker threads, because the loop is shared with every door.",
+        "Shutdown is ordered: the camera stops before the transport, the lanes close, then every task is cancelled and gathered.",
+        "The nightly memory job is drained, not cancelled: it gets up to twelve seconds to finish.",
+        "Every computer-use agent shares one contract: run, steer, cancel and status.",
+        "Run takes a goal and returns the answer. Steer corrects a running task. Cancel stops it. Status says where it is.",
+        "While it works, an agent emits AgentEvents: a frozen dataclass with a kind, a text and a turn number.",
+        "The contract is duck-typed, not a formal protocol. The voice session, Telegram and the robot's screen all read the same events.",
+        "So the Firecrawl reader, the Chrome lane, Codex and Holo are interchangeable behind it."
+      ]
+    },
+    {
+      "id": "path",
+      "kicker": "03 · the request path",
+      "title": "Cheapest first. Each tier declines unless it is sure.",
+      "cues": [
+        "The path a request takes follows one rule: cheapest first, and each tier declines unless it is sure.",
+        "The measurement behind it: a quarter of requests are app launches, and through the planner each took eight to thirty-two seconds.",
+        "Tier one is the reflex. Rules in code turn \"open Spotify\" into one open command. No model, microseconds.",
+        "For wording the rules do not know, Jev, a hosted typed-decision model, may name an app. It counts only if the app is installed.",
+        "Anything consequential, like send, buy, pay or delete, skips the reflex and goes to a planner that can ask the owner.",
+        "Tier two is the body router. Jev fills in a typed form: is this a public reading job? Does it need accounts, the Mac, or interaction?",
+        "Code, not the model, applies the gates. Firecrawl gets the task only when every condition holds. An error falls back to the computer.",
+        "The gates were fitted, then scored once on a blind holdout: thirty routed, thirty right, zero unsafe.",
+        "Otherwise a code rule picks between eve's own Chrome, driven by Playwright in its own tab, and the desktop.",
+        "Tier three is the desktop floor: Codex computer use by default, or Holo by a switch. On the owner's Mac today, it is Holo.",
+        "The model proposes; allowlists, gates and consent checks in code decide."
+      ]
+    },
+    {
+      "id": "holo",
+      "kicker": "04 · worked example",
+      "title": "The Holo lane: wrap the vendor's client",
+      "cues": [
+        "The Holo lane is a worked example of one rule: wrap the vendor's client, do not reimplement it.",
+        "Holo's command-line tool ships its own Python, with fifteen dependencies. eve does not import it.",
+        "It starts a small driver script under Holo's own interpreter, as a subprocess, and they speak JSON lines.",
+        "eve writes one op per line: run, steer, or cancel. The driver answers with events: ready, session, progress, steered or refused, stopping, final, error.",
+        "The session request and the turn loop are the ones the vendor ships, not a copy that drifts.",
+        "Steer becomes a message on the running session. An early correction is queued; a conflict is retried four times, then reported as refused.",
+        "Cancel files the tool's own stop request, then pauses and cancels the session. A closed input pipe does the same, so nothing keeps clicking.",
+        "The runtime is kept warm: the daemon spawns it once with a random token, waits for its health check, and reuses it for every task.",
+        "The daemon owns it on purpose, because the runtime exits when the process that launched it exits.",
+        "Progress lines carry tool names, never arguments, so a typed password never reaches the chat or the robot's screen."
+      ]
+    },
+    {
+      "id": "brain",
+      "kicker": "05 · the chat brain",
+      "title": "Tools for the model, gates in code",
+      "cues": [
+        "The chat brain sits behind Telegram. Calls and the Voice PE button transcribe speech and hand it over as if typed.",
+        "It runs on the OpenAI Responses API with storage off, and up to six tool rounds a turn.",
+        "Its tools start, steer and stop computer tasks, take photos, move the robot's head, search memory and start coding sessions.",
+        "The door is an allowlist in code: numeric owner IDs, private chats only, no bots, and forwarded messages never reach a model.",
+        "Connected apps have a policy per toolkit: Gmail is read only, Calendar may write, Drive asks.",
+        "A Gmail write is refused, not asked. A Drive write asks the owner, and anything but a clear yes is a no.",
+        "The Mini App binds to localhost behind a tunnel, and checks Telegram's signed init data with an HMAC on every call."
+      ]
+    },
+    {
+      "id": "memory",
+      "kicker": "06 · memory",
+      "title": "Three stores, a dream, and a real forget",
+      "cues": [
+        "Memory is three stores, each with one job.",
+        "Transcripts are the source: every word, written the moment it is said.",
+        "Records are the truth: markdown about the owner, in a local git repository. The brains read records; they never write them.",
+        "mem0 is the index: search by meaning in a local Qdrant. Only fact extraction and embeddings leave the machine.",
+        "At four thirty each night the dream reconciles the day into the records, feeds mem0, and commits. Missed nights are caught up.",
+        "Forget is two steps. A preview returns only counts, plus a single-use token that lives ten minutes.",
+        "Apply runs only after the owner confirms in a new message, and git history is squashed.",
+        "A race where the dream could write forgotten lines back was caught by a Lean model, and fixed."
+      ]
+    },
+    {
+      "id": "watch",
+      "kicker": "07 · the watcher",
+      "title": "A ladder of readers, cheapest rung first",
+      "cues": [
+        "The watcher checks stock quotes, pages, web searches and Ticketmaster events on a schedule.",
+        "A condition fires when crossed, then re-arms. Nothing fires on the first reading.",
+        "Fetching starts plain, and switches to a Chrome-like TLS handshake when a site blocks it.",
+        "Then readers, cheapest first: structured data, a cheap model, headless Chromium with vision, Firecrawl, web search.",
+        "A page that once needed a higher rung goes straight there next time. One limiter holds everything to twelve requests a minute."
+      ]
+    },
+    {
+      "id": "proofs",
+      "kicker": "08 · verification",
+      "title": "Proofs of the bug, proofs of the fix",
+      "cues": [
+        "eve's state machines are modelled in Lean 4: twenty models, two hundred fifty theorems.",
+        "Each follows one pattern. \"Current violates\" is a concrete trace on the old code after which the property is false: the bug, proved.",
+        "\"Fixed invariant\" proves the property on the fixed code for every trace, by induction over any list of events.",
+        "Each counterexample is replayed as a pytest against the real Python. It failed before the fix, and passes now.",
+        "A checker rejects sorry, and any proof resting on an axiom beyond the standard three.",
+        "The worked example: on the twenty-eighth of September, three phone-call turns died on a bare TLS error.",
+        "Always retrying is wrong: the reply is read aloud as it streams, so a retry after speech repeats the sentence.",
+        "The model has three events: drop, text and done. The spec: never repeat text, and fail only after two drops, or a drop after text.",
+        "No retry breaks it on one drop. The naive retry breaks it on text, drop, text.",
+        "The fix retries once, only while nothing has been spoken. It holds for every trace, and replay tests pin both counterexamples.",
+        "Around the models, the Python suite stands at three thousand four hundred sixty-seven passing tests."
+      ]
+    },
+    {
+      "id": "privacy",
+      "kicker": "09 · spend and privacy",
+      "title": "One meter, and what leaves the Mac",
+      "cues": [
+        "Every model call goes through one meter: a line per call with provider, model, feature, dollars and tokens. Never a prompt or an answer.",
+        "Cost comes from the provider, or a price table, or stays empty when unknown, rather than guessed.",
+        "What leaves the Mac depends on the lane. Reflex rules send nothing. Jev sends the request's words, so it is the owner's switch.",
+        "Firecrawl gets a query of up to five hundred characters, and the pages go to a cheap model to answer.",
+        "The Chrome lane's planner gets screenshots and the prompt. Holo runs on a hosted model API; its local screenshot folders are deleted.",
+        "Telegram is not end-to-end encrypted, Mini App traffic crosses Cloudflare's tunnel, and mem0 sends extraction and embeddings to OpenAI."
+      ]
+    },
+    {
+      "id": "run",
+      "kicker": "10 · run it",
+      "title": "Switches, and where to read next",
+      "cues": [
+        "To run it, the switches are environment variables. Telegram, the Mini App and memory ship off; each is one switch.",
+        "The computer switch picks Codex or Holo. The router switch lets Jev word reflexes. The own-browser switch gives eve its own Chrome.",
+        "The Firecrawl reader turns on when its key is set.",
+        "Read next: the routing doc, the Holo doc, the memory docs, and the verification doc for all twenty models. Each model is a small, exact story of a bug and its fix."
+      ]
+    }
+  ]
+}

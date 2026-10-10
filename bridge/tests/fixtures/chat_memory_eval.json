@@ -1,0 +1,189 @@
+{
+  "about": "Recall eval for the Telegram chat (tools/chat_memory_eval.py). Sixteen scripted conversations: twelve written 2026-10-08 before any run, and four (live-*) added that evening from the owner's live failure (memory on, a brand-new chat log, \"before that\" answered with the message just quoted), written before the fix's first run on them. Each seeds a chat through the inlet's own code paths, then asks one recall question of the live brain. Scored by code: a knowable case passes when the reply holds one of `expect` (case-insensitive); a case with knowable=false passes when the reply says it does not have it (ABSTAIN in the tool). Every name and word here is made up.",
+  "cases": [
+    {
+      "id": "last-after-gap",
+      "what": "the last message, after a ten-minute quiet spell",
+      "steps": [
+        {"owner": "Can you find me a recipe for lentil soup?", "eve": "Sure: red lentils, carrots, onion and cumin, simmered for 25 minutes."},
+        {"gap": 700}
+      ],
+      "ask": "What was the last message I sent you?",
+      "knowable": true,
+      "expect": ["lentil soup"]
+    },
+    {
+      "id": "screenshot-with-earlier-talk",
+      "what": "the screenshot's exchange, with something said earlier that day",
+      "steps": [
+        {"owner": "Remind me to call the dentist at three", "eve": "I'll remind you at 3."},
+        {"gap": 7200},
+        {"owner": "Did you tell the agent?", "eve": "Which agent do you mean?"},
+        {"gap": 601},
+        {"owner": "What was the last message I sent you?", "eve": "You asked: Did you tell the agent?"},
+        {"gap": 601}
+      ],
+      "ask": "Before that",
+      "knowable": true,
+      "expect": ["dentist"]
+    },
+    {
+      "id": "screenshot-fresh",
+      "what": "the screenshot's exchange on a fresh chat: nothing came before it",
+      "steps": [
+        {"owner": "Did you tell the agent?", "eve": "Which agent do you mean?"},
+        {"gap": 601},
+        {"owner": "What was the last message I sent you?", "eve": "You asked: Did you tell the agent?"},
+        {"gap": 601}
+      ],
+      "ask": "Before that",
+      "knowable": false
+    },
+    {
+      "id": "restart-mid-chat",
+      "what": "a fact said just before a restart",
+      "steps": [
+        {"owner": "My flight is on the 14th at 7am", "eve": "Got it, the 14th at 7am."},
+        {"restart": true}
+      ],
+      "ask": "When did I say my flight was?",
+      "knowable": true,
+      "expect": ["14"]
+    },
+    {
+      "id": "restart-and-gap-before-that",
+      "what": "the message before another, across a restart and three hours",
+      "steps": [
+        {"owner": "Add coffee filters to my shopping list", "eve": "Added coffee filters."},
+        {"owner": "Also my flight is on the 14th", "eve": "Noted, the 14th."},
+        {"restart": true},
+        {"gap": 10800}
+      ],
+      "ask": "What did I ask you right before I told you about my flight?",
+      "knowable": true,
+      "expect": ["coffee filter"]
+    },
+    {
+      "id": "handoff-goal",
+      "what": "whether the computer agent was told something",
+      "steps": [
+        {"task": {"owner": "Open the budget spreadsheet and sort it by date", "goal": "Open the budget spreadsheet and sort it by date", "result": "The budget sheet is open and sorted by date."}}
+      ],
+      "ask": "Did you tell the agent to sort it by date?",
+      "knowable": true,
+      "expect": ["yes", "i did", "i told", "i asked"]
+    },
+    {
+      "id": "handoff-steer",
+      "what": "what the running task was told when the owner changed their mind",
+      "steps": [
+        {"task": {"owner": "Book a table for two at the Italian place for 8pm", "goal": "Book a table for two at the Italian place for 8pm", "steer_owner": "make it 7:30 instead", "steer": "Change the booking time to 7:30pm instead of 8pm", "result": "Booked a table for two at 7:30pm."}}
+      ],
+      "ask": "What exactly did you tell the agent when I changed the time?",
+      "knowable": true,
+      "expect": ["7:30"]
+    },
+    {
+      "id": "handoff-after-gap",
+      "what": "what the agent was asked, two hours later",
+      "steps": [
+        {"task": {"owner": "Check whether the printer is out of paper", "goal": "Check whether the printer is out of paper", "result": "The printer has paper; tray 2 is half full."}},
+        {"gap": 7200}
+      ],
+      "ask": "What did I have the computer agent do earlier?",
+      "knowable": true,
+      "expect": ["printer"]
+    },
+    {
+      "id": "message-before-last",
+      "what": "the message before the last one, in an open chat",
+      "steps": [
+        {"owner": "What's a good name for a grey cat?", "eve": "Pebble, Smokey or Ash."},
+        {"owner": "I like Pebble", "eve": "Pebble it is."},
+        {"owner": "How often should I feed a kitten?", "eve": "Three to four small meals a day."}
+      ],
+      "ask": "What was the message I sent before my last one?",
+      "knowable": true,
+      "expect": ["pebble"]
+    },
+    {
+      "id": "first-of-a-long-chat",
+      "what": "the first message of a chat longer than the history window",
+      "steps": [
+        {"owner": "Let's plan the garden: first, tomatoes along the south fence", "eve": "Tomatoes on the south fence, noted."},
+        {"many": 18}
+      ],
+      "ask": "What was the very first thing I said about the garden in this chat?",
+      "knowable": true,
+      "expect": ["tomato"]
+    },
+    {
+      "id": "fresh-nothing-earlier",
+      "what": "a fresh chat: nothing came before",
+      "steps": [],
+      "ask": "What did I text you before this?",
+      "knowable": false
+    },
+    {
+      "id": "never-said",
+      "what": "a topic the owner never raised",
+      "steps": [
+        {"owner": "Can you suggest a quick lunch?", "eve": "A wrap with hummus and veg."},
+        {"owner": "Thanks, that works", "eve": "Enjoy!"}
+      ],
+      "ask": "What did I tell you earlier about my sister's birthday?",
+      "knowable": false
+    },
+    {
+      "id": "live-before-that-seeded",
+      "what": "the live failure: memory on, the chat log brand new; the talk before it is in the transcripts only",
+      "memory": true,
+      "steps": [
+        {"before_log": {"owner": "Remind me to buy oat milk on the way home", "eve": "Will do: oat milk on the way home."}},
+        {"owner": "(memory test, just reply ok) my locker code is 4417", "eve": "Starred for good."}
+      ],
+      "asks": ["what was the last message I sent you?", "before that"],
+      "knowable": true,
+      "expect": ["oat milk"]
+    },
+    {
+      "id": "live-before-that-log-full",
+      "what": "the live failure with memory on and the earlier talk already in the chat log, from before a restart",
+      "memory": true,
+      "steps": [
+        {"owner": "Remind me to buy oat milk on the way home", "eve": "Will do: oat milk on the way home."},
+        {"restart": true},
+        {"owner": "(memory test, just reply ok) my locker code is 4417", "eve": "Starred for good."}
+      ],
+      "asks": ["what was the last message I sent you?", "before that"],
+      "knowable": true,
+      "expect": ["oat milk"]
+    },
+    {
+      "id": "live-before-that-across-a-gap",
+      "what": "the live failure with two quiet hours (a gap marker) between the earlier talk and the locker line",
+      "memory": true,
+      "steps": [
+        {"owner": "Remind me to buy oat milk on the way home", "eve": "Will do: oat milk on the way home."},
+        {"gap": 7200},
+        {"owner": "(memory test, just reply ok) my locker code is 4417", "eve": "Starred for good."}
+      ],
+      "asks": ["what was the last message I sent you?", "before that"],
+      "knowable": true,
+      "expect": ["oat milk"]
+    },
+    {
+      "id": "live-and-before-that-twice",
+      "what": "\"and before that?\" twice in a row after a recall answer: each steps back one message",
+      "memory": true,
+      "steps": [
+        {"owner": "Book the car service for Tuesday morning", "eve": "Car service, Tuesday morning: noted."},
+        {"owner": "Remind me to buy oat milk on the way home", "eve": "Will do: oat milk on the way home."},
+        {"owner": "(memory test, just reply ok) my locker code is 4417", "eve": "Starred for good."}
+      ],
+      "asks": ["what was the last message I sent you?", "and before that?", "and before that?"],
+      "knowable": true,
+      "expect": ["car service"]
+    }
+  ]
+}

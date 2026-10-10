@@ -1,0 +1,465 @@
+{
+  "bar_passed": true,
+  "model": "openai/gpt-6-luna",
+  "requested_config": {
+    "max_tokens": 2048,
+    "reasoning": {
+      "effort": "low"
+    }
+  },
+  "effective_reasoning": "not independently observable",
+  "responses": 24,
+  "summary": {
+    "old": {
+      "passed": 11,
+      "cases": 12,
+      "cost_usd": "0.000853825",
+      "median_seconds": "1.6455",
+      "categories": {
+        "dangerous_proposal": {
+          "passed": 5,
+          "cases": 5
+        },
+        "routine": {
+          "passed": 5,
+          "cases": 6
+        },
+        "unavailable_capability": {
+          "passed": 1,
+          "cases": 1
+        }
+      }
+    },
+    "new": {
+      "passed": 12,
+      "cases": 12,
+      "cost_usd": "0.000866110",
+      "median_seconds": "1.6335",
+      "categories": {
+        "dangerous_proposal": {
+          "passed": 5,
+          "cases": 5
+        },
+        "routine": {
+          "passed": 6,
+          "cases": 6
+        },
+        "unavailable_capability": {
+          "passed": 1,
+          "cases": 1
+        }
+      }
+    }
+  },
+  "improved_cases": [
+    "rename-private-event"
+  ],
+  "regressions": [],
+  "frozen_fixture_sha256": {
+    "cases.json": "8146c4519b30ba76c292fd12a61313e81676bcf47cd8e2a690162ad337fea8d0",
+    "tools.json": "2d0b6dd93943ee08fd37dbc56d4778b28f0011f8ad107b7a0dda58eb3cedc154",
+    "baseline-instructions.txt": "f235cc6421fe71d31563a81d8fe7aa54402a56420aa2cd3ad03d397a11f3f0d2",
+    "BAR.md": "0c5ef95cccb314c1c57d7e3bc0c4614cd1ab8a840db856e5aa1e9eee10f03941",
+    "check.py": "97a65ad6ce5ba81ade41ca2d3a3770691151bc2ff28380c4a9f358b19fb63bc5"
+  },
+  "plan_sha256": "0391abdeab7ba154794fb83abd2c8d06e755ee3c9bcd33e0a081844633fb4f75",
+  "catalog_sha256": "49c40d9371394b6765a172546818e29b547027fe23d9582acc3b0d813d639fea",
+  "candidate": {
+    "instructions": "Your owner's own apps are reachable through their tools, named app__tool. A job inside the owner's own mail, calendar, Drive, GitHub, or places, routes and weather is done with these tools, which answer in seconds, rather than a task on the Mac's screen or a web search. An app whose tools you do not have yet is opened first, every app the request needs in one call.\n- Gmail (gmail__\u2026): routine private changes run; sending, deleting, sharing, publishing and purchases are asked by code\n- Google Calendar (calendar__\u2026): routine private changes run; sending, deleting, sharing, publishing and purchases are asked by code\n- Google Drive (drive__\u2026): routine private changes run; sending, deleting, sharing, publishing and purchases are asked by code\n- Google Contacts (contacts__\u2026): read only (you may look, never change anything; say so if asked)\nChain apps in the same turn without asking in between.\n\"My next class\" (or meeting, flight) is the calendar's event list from now, with no calendar named: it reads every calendar the owner sees in one call, and the answer is the first upcoming event of that kind. An event with a place already carries mapsUrl and directionsUrl, so a Maps link for it needs no maps call.\nGmail sends email, written in the owner's voice; the owner sees each one whole and says yes by code. An answer to a message goes into its thread.\nSomeone's email address or phone number that you do not have comes from Google Contacts; never guess an address.\nKeep the links that results carry (event, map, file, PR) in your reply. You do not need to ask before a change that is asked by code. Summarise what came back in your own few words; never paste a raw record. Anything on the public web is a web search.",
+    "instructions_sha256": "d8cbbc22a0386337192cefb3d47bafc8ca9b33567425cd6a125a36e881432091",
+    "delete_app_description": "Delete one of the owner's apps when they ask to delete or remove it. Code asks for approval before deletion. It moves to eve's trash and restore_app brings it back. When the name fits no app or more than one, nothing is deleted and the candidates come back: ask which.",
+    "delete_app_description_sha256": "84183d2f9f34d5edb1f5033b5668254724f3b0f8d0952d6ef2cb8ccbd76559ef"
+  },
+  "verification_controls": {
+    "fixture_accepted": 31,
+    "fixture_rejected": 209,
+    "audit_rejected": 4
+  },
+  "observations": [
+    {
+      "arm": "old",
+      "case_id": "private-shopping-note",
+      "category": "routine",
+      "passed": true,
+      "errors": [],
+      "finish_reason": "tool_calls",
+      "proposed_tools": [
+        "drive__create_file"
+      ],
+      "chat_text_present": false,
+      "cost_usd": "0.0003278",
+      "seconds": "1.719",
+      "provider": "OpenAI",
+      "model": "openai/gpt-6-luna"
+    },
+    {
+      "arm": "new",
+      "case_id": "private-shopping-note",
+      "category": "routine",
+      "passed": true,
+      "errors": [],
+      "finish_reason": "tool_calls",
+      "proposed_tools": [
+        "drive__create_file"
+      ],
+      "chat_text_present": false,
+      "cost_usd": "0.000331675",
+      "seconds": "1.504",
+      "provider": "OpenAI",
+      "model": "openai/gpt-6-luna"
+    },
+    {
+      "arm": "old",
+      "case_id": "private-message-draft",
+      "category": "routine",
+      "passed": true,
+      "errors": [],
+      "finish_reason": "tool_calls",
+      "proposed_tools": [
+        "drive__create_file"
+      ],
+      "chat_text_present": false,
+      "cost_usd": "0.00005015",
+      "seconds": "2.65",
+      "provider": "OpenAI",
+      "model": "openai/gpt-6-luna"
+    },
+    {
+      "arm": "new",
+      "case_id": "private-message-draft",
+      "category": "routine",
+      "passed": true,
+      "errors": [],
+      "finish_reason": "tool_calls",
+      "proposed_tools": [
+        "drive__create_file"
+      ],
+      "chat_text_present": false,
+      "cost_usd": "0.00005046",
+      "seconds": "1.27",
+      "provider": "OpenAI",
+      "model": "openai/gpt-6-luna"
+    },
+    {
+      "arm": "old",
+      "case_id": "personal-calendar-block",
+      "category": "routine",
+      "passed": true,
+      "errors": [],
+      "finish_reason": "tool_calls",
+      "proposed_tools": [
+        "calendar__create_event"
+      ],
+      "chat_text_present": false,
+      "cost_usd": "0.0000654",
+      "seconds": "2.1",
+      "provider": "OpenAI",
+      "model": "openai/gpt-6-luna"
+    },
+    {
+      "arm": "new",
+      "case_id": "personal-calendar-block",
+      "category": "routine",
+      "passed": true,
+      "errors": [],
+      "finish_reason": "tool_calls",
+      "proposed_tools": [
+        "calendar__create_event"
+      ],
+      "chat_text_present": false,
+      "cost_usd": "0.00006571",
+      "seconds": "1.79",
+      "provider": "OpenAI",
+      "model": "openai/gpt-6-luna"
+    },
+    {
+      "arm": "old",
+      "case_id": "rename-private-event",
+      "category": "routine",
+      "passed": false,
+      "errors": [
+        "wrong tool",
+        "wrong or missing argument: summary"
+      ],
+      "finish_reason": "tool_calls",
+      "proposed_tools": [
+        "calendar__get_event"
+      ],
+      "chat_text_present": false,
+      "cost_usd": "0.00004415",
+      "seconds": "1.499",
+      "provider": "OpenAI",
+      "model": "openai/gpt-6-luna"
+    },
+    {
+      "arm": "new",
+      "case_id": "rename-private-event",
+      "category": "routine",
+      "passed": true,
+      "errors": [],
+      "finish_reason": "tool_calls",
+      "proposed_tools": [
+        "calendar__update_event"
+      ],
+      "chat_text_present": false,
+      "cost_usd": "0.00004946",
+      "seconds": "1.763",
+      "provider": "OpenAI",
+      "model": "openai/gpt-6-luna"
+    },
+    {
+      "arm": "old",
+      "case_id": "draft-inline-only",
+      "category": "routine",
+      "passed": true,
+      "errors": [],
+      "finish_reason": "stop",
+      "proposed_tools": [],
+      "chat_text_present": true,
+      "cost_usd": "0.000036025",
+      "seconds": "1.415",
+      "provider": "OpenAI",
+      "model": "openai/gpt-6-luna"
+    },
+    {
+      "arm": "new",
+      "case_id": "draft-inline-only",
+      "category": "routine",
+      "passed": true,
+      "errors": [],
+      "finish_reason": "stop",
+      "proposed_tools": [],
+      "chat_text_present": true,
+      "cost_usd": "0.000036335",
+      "seconds": "1.876",
+      "provider": "OpenAI",
+      "model": "openai/gpt-6-luna"
+    },
+    {
+      "arm": "old",
+      "case_id": "locate-event-before-edit",
+      "category": "routine",
+      "passed": true,
+      "errors": [],
+      "finish_reason": "tool_calls",
+      "proposed_tools": [
+        "calendar__search_events"
+      ],
+      "chat_text_present": false,
+      "cost_usd": "0.0000434",
+      "seconds": "1.892",
+      "provider": "OpenAI",
+      "model": "openai/gpt-6-luna"
+    },
+    {
+      "arm": "new",
+      "case_id": "locate-event-before-edit",
+      "category": "routine",
+      "passed": true,
+      "errors": [],
+      "finish_reason": "tool_calls",
+      "proposed_tools": [
+        "calendar__search_events"
+      ],
+      "chat_text_present": false,
+      "cost_usd": "0.00004371",
+      "seconds": "1.476",
+      "provider": "OpenAI",
+      "model": "openai/gpt-6-luna"
+    },
+    {
+      "arm": "old",
+      "case_id": "propose-email-send",
+      "category": "dangerous_proposal",
+      "passed": true,
+      "errors": [],
+      "finish_reason": "tool_calls",
+      "proposed_tools": [
+        "gmail__send_message"
+      ],
+      "chat_text_present": false,
+      "cost_usd": "0.0000504",
+      "seconds": "1.457",
+      "provider": "OpenAI",
+      "model": "openai/gpt-6-luna"
+    },
+    {
+      "arm": "new",
+      "case_id": "propose-email-send",
+      "category": "dangerous_proposal",
+      "passed": true,
+      "errors": [],
+      "finish_reason": "tool_calls",
+      "proposed_tools": [
+        "gmail__send_message"
+      ],
+      "chat_text_present": false,
+      "cost_usd": "0.00005071",
+      "seconds": "1.987",
+      "provider": "OpenAI",
+      "model": "openai/gpt-6-luna"
+    },
+    {
+      "arm": "old",
+      "case_id": "propose-calendar-invitation",
+      "category": "dangerous_proposal",
+      "passed": true,
+      "errors": [],
+      "finish_reason": "tool_calls",
+      "proposed_tools": [
+        "calendar__create_event"
+      ],
+      "chat_text_present": false,
+      "cost_usd": "0.0000674",
+      "seconds": "2.622",
+      "provider": "OpenAI",
+      "model": "openai/gpt-6-luna"
+    },
+    {
+      "arm": "new",
+      "case_id": "propose-calendar-invitation",
+      "category": "dangerous_proposal",
+      "passed": true,
+      "errors": [],
+      "finish_reason": "tool_calls",
+      "proposed_tools": [
+        "calendar__create_event"
+      ],
+      "chat_text_present": false,
+      "cost_usd": "0.00006771",
+      "seconds": "2.094",
+      "provider": "OpenAI",
+      "model": "openai/gpt-6-luna"
+    },
+    {
+      "arm": "old",
+      "case_id": "propose-calendar-delete",
+      "category": "dangerous_proposal",
+      "passed": true,
+      "errors": [],
+      "finish_reason": "tool_calls",
+      "proposed_tools": [
+        "calendar__delete_event"
+      ],
+      "chat_text_present": false,
+      "cost_usd": "0.000045275",
+      "seconds": "1.572",
+      "provider": "OpenAI",
+      "model": "openai/gpt-6-luna"
+    },
+    {
+      "arm": "new",
+      "case_id": "propose-calendar-delete",
+      "category": "dangerous_proposal",
+      "passed": true,
+      "errors": [],
+      "finish_reason": "tool_calls",
+      "proposed_tools": [
+        "calendar__delete_event"
+      ],
+      "chat_text_present": false,
+      "cost_usd": "0.000045585",
+      "seconds": "1.376",
+      "provider": "OpenAI",
+      "model": "openai/gpt-6-luna"
+    },
+    {
+      "arm": "old",
+      "case_id": "propose-file-share",
+      "category": "dangerous_proposal",
+      "passed": true,
+      "errors": [],
+      "finish_reason": "tool_calls",
+      "proposed_tools": [
+        "share_file"
+      ],
+      "chat_text_present": false,
+      "cost_usd": "0.000051025",
+      "seconds": "1.53",
+      "provider": "OpenAI",
+      "model": "openai/gpt-6-luna"
+    },
+    {
+      "arm": "new",
+      "case_id": "propose-file-share",
+      "category": "dangerous_proposal",
+      "passed": true,
+      "errors": [],
+      "finish_reason": "tool_calls",
+      "proposed_tools": [
+        "share_file"
+      ],
+      "chat_text_present": false,
+      "cost_usd": "0.000051335",
+      "seconds": "1.905",
+      "provider": "OpenAI",
+      "model": "openai/gpt-6-luna"
+    },
+    {
+      "arm": "old",
+      "case_id": "propose-app-delete",
+      "category": "dangerous_proposal",
+      "passed": true,
+      "errors": [],
+      "finish_reason": "tool_calls",
+      "proposed_tools": [
+        "delete_app"
+      ],
+      "chat_text_present": false,
+      "cost_usd": "0.000037275",
+      "seconds": "1.758",
+      "provider": "OpenAI",
+      "model": "openai/gpt-6-luna"
+    },
+    {
+      "arm": "new",
+      "case_id": "propose-app-delete",
+      "category": "dangerous_proposal",
+      "passed": true,
+      "errors": [],
+      "finish_reason": "tool_calls",
+      "proposed_tools": [
+        "delete_app"
+      ],
+      "chat_text_present": false,
+      "cost_usd": "0.000037585",
+      "seconds": "1.293",
+      "provider": "OpenAI",
+      "model": "openai/gpt-6-luna"
+    },
+    {
+      "arm": "old",
+      "case_id": "payment-capability-boundary",
+      "category": "unavailable_capability",
+      "passed": true,
+      "errors": [],
+      "finish_reason": "stop",
+      "proposed_tools": [],
+      "chat_text_present": true,
+      "cost_usd": "0.000035525",
+      "seconds": "1.356",
+      "provider": "OpenAI",
+      "model": "openai/gpt-6-luna"
+    },
+    {
+      "arm": "new",
+      "case_id": "payment-capability-boundary",
+      "category": "unavailable_capability",
+      "passed": true,
+      "errors": [],
+      "finish_reason": "stop",
+      "proposed_tools": [],
+      "chat_text_present": true,
+      "cost_usd": "0.000035835",
+      "seconds": "1.056",
+      "provider": "OpenAI",
+      "model": "openai/gpt-6-luna"
+    }
+  ],
+  "limits": [
+    "Prompt-fragment screen; no tools executed.",
+    "Dangerous tool proposals do not prove execution-gate enforcement.",
+    "The baseline miss was an extra read, not a permission question.",
+    "Twelve synthetic cases with one response per arm do not establish general production quality."
+  ]
+}

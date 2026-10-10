@@ -1,0 +1,18 @@
+{"ts": "2026-08-09T08:55:00-07:00", "ch": "telegram", "conv": "t-1786290900000-993f", "who": "owner", "kind": "say", "text": "Good name for a houseplant?"}
+{"ts": "2026-08-09T08:55:48-07:00", "ch": "telegram", "conv": "t-1786290900000-993f", "who": "eve", "kind": "say", "text": "Fernando, if it's a fern."}
+{"ts": "2026-08-09T08:59:15-07:00", "ch": "telegram", "conv": "t-1786290900000-993f", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-09T11:30:00-07:00", "ch": "voice", "conv": "v-1786300200000-700f", "who": "owner", "kind": "say", "text": "Bike lock code is 4417."}
+{"ts": "2026-08-09T11:31:30-07:00", "ch": "voice", "conv": "v-1786300200000-700f", "who": "eve", "kind": "say", "text": "Okay."}
+{"ts": "2026-08-09T11:33:54-07:00", "ch": "voice", "conv": "v-1786300200000-700f", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-09T13:40:00-07:00", "ch": "voice", "conv": "v-1786308000000-7e17", "who": "owner", "kind": "say", "text": "Thanks eve."}
+{"ts": "2026-08-09T13:40:53-07:00", "ch": "voice", "conv": "v-1786308000000-7e17", "who": "eve", "kind": "say", "text": "Anytime."}
+{"ts": "2026-08-09T13:45:29-07:00", "ch": "voice", "conv": "v-1786308000000-7e17", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-09T16:00:00-07:00", "ch": "telegram", "conv": "t-1786316400000-eaf0", "who": "owner", "kind": "say", "text": "For the record, my parents, Ruth and Gabe, still live in Millbrook, where I grew up."}
+{"ts": "2026-08-09T16:01:25-07:00", "ch": "telegram", "conv": "t-1786316400000-eaf0", "who": "eve", "kind": "say", "text": "Noted."}
+{"ts": "2026-08-09T16:05:03-07:00", "ch": "telegram", "conv": "t-1786316400000-eaf0", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-09T16:20:00-07:00", "ch": "telegram", "conv": "t-1786317600000-0f20", "who": "owner", "kind": "say", "text": "And my phone plan is $35 a month."}
+{"ts": "2026-08-09T16:21:36-07:00", "ch": "telegram", "conv": "t-1786317600000-0f20", "who": "eve", "kind": "say", "text": "Noted, $35 a month."}
+{"ts": "2026-08-09T16:23:56-07:00", "ch": "telegram", "conv": "t-1786317600000-0f20", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-09T19:50:00-07:00", "ch": "voice", "conv": "v-1786330200000-41c6", "who": "owner", "kind": "say", "text": "What's 15 percent of 48?"}
+{"ts": "2026-08-09T19:51:27-07:00", "ch": "voice", "conv": "v-1786330200000-41c6", "who": "eve", "kind": "say", "text": "7.2."}
+{"ts": "2026-08-09T19:55:43-07:00", "ch": "voice", "conv": "v-1786330200000-41c6", "who": "system", "kind": "close", "text": ""}

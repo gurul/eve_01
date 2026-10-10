@@ -1,0 +1,12 @@
+{"ts": "2026-08-17T08:55:00-07:00", "ch": "voice", "conv": "v-1786982100000-8767", "who": "owner", "kind": "say", "text": "Skip this song."}
+{"ts": "2026-08-17T08:55:44-07:00", "ch": "voice", "conv": "v-1786982100000-8767", "who": "eve", "kind": "say", "text": "Skipped."}
+{"ts": "2026-08-17T08:59:54-07:00", "ch": "voice", "conv": "v-1786982100000-8767", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-17T15:20:00-07:00", "ch": "telegram", "conv": "t-1787005200000-503b", "who": "owner", "kind": "say", "text": "Weather station v1 is alive: an ESP32 with a BME280, sitting on my desk, reporting every 5 minutes on a 2000 mAh cell."}
+{"ts": "2026-08-17T15:21:47-07:00", "ch": "telegram", "conv": "t-1787005200000-503b", "who": "eve", "kind": "say", "text": "At 5-minute intervals that cell should last about 23 days; at 10 minutes, about 41."}
+{"ts": "2026-08-17T15:24:53-07:00", "ch": "telegram", "conv": "t-1787005200000-503b", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-17T18:15:00-07:00", "ch": "telegram", "conv": "t-1787015700000-e1fa", "who": "owner", "kind": "say", "text": "Quick: Ohm's law?"}
+{"ts": "2026-08-17T18:16:43-07:00", "ch": "telegram", "conv": "t-1787015700000-e1fa", "who": "eve", "kind": "say", "text": "V equals I times R."}
+{"ts": "2026-08-17T18:20:49-07:00", "ch": "telegram", "conv": "t-1787015700000-e1fa", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-17T20:00:00-07:00", "ch": "voice", "conv": "v-1787022000000-66fe", "who": "owner", "kind": "say", "text": "My library PIN is 2580."}
+{"ts": "2026-08-17T20:00:49-07:00", "ch": "voice", "conv": "v-1787022000000-66fe", "who": "eve", "kind": "say", "text": "Got it."}
+{"ts": "2026-08-17T20:03:56-07:00", "ch": "voice", "conv": "v-1787022000000-66fe", "who": "system", "kind": "close", "text": ""}

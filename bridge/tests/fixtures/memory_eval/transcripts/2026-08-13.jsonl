@@ -1,0 +1,16 @@
+{"ts": "2026-08-13T07:15:00-07:00", "ch": "voice", "conv": "v-1786630500000-95b7", "who": "owner", "kind": "say", "text": "Thanks eve."}
+{"ts": "2026-08-13T07:15:53-07:00", "ch": "voice", "conv": "v-1786630500000-95b7", "who": "eve", "kind": "say", "text": "Anytime."}
+{"ts": "2026-08-13T07:18:49-07:00", "ch": "voice", "conv": "v-1786630500000-95b7", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-13T07:50:00-07:00", "ch": "telegram", "conv": "t-1786632600000-10a6", "who": "owner", "kind": "say", "text": "New bench PR, 185!"}
+{"ts": "2026-08-13T07:50:55-07:00", "ch": "telegram", "conv": "t-1786632600000-10a6", "who": "owner", "kind": "say", "text": "How much protein should I be eating at 172 pounds?"}
+{"ts": "2026-08-13T07:51:30-07:00", "ch": "telegram", "conv": "t-1786632600000-10a6", "who": "eve", "kind": "say", "text": "Around 0.8 grams per pound, so about 135 grams of protein a day."}
+{"ts": "2026-08-13T07:54:51-07:00", "ch": "telegram", "conv": "t-1786632600000-10a6", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-13T12:00:00-07:00", "ch": "telegram", "conv": "t-1786647600000-783b", "who": "owner", "kind": "say", "text": "My credit score came back at 712."}
+{"ts": "2026-08-13T12:00:36-07:00", "ch": "telegram", "conv": "t-1786647600000-783b", "who": "eve", "kind": "say", "text": "Okay, noted."}
+{"ts": "2026-08-13T12:03:40-07:00", "ch": "telegram", "conv": "t-1786647600000-783b", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-13T18:15:00-07:00", "ch": "telegram", "conv": "t-1786670100000-5c90", "who": "owner", "kind": "say", "text": "Good name for a houseplant?"}
+{"ts": "2026-08-13T18:15:48-07:00", "ch": "telegram", "conv": "t-1786670100000-5c90", "who": "eve", "kind": "say", "text": "Fernando, if it's a fern."}
+{"ts": "2026-08-13T18:18:23-07:00", "ch": "telegram", "conv": "t-1786670100000-5c90", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-13T21:30:00-07:00", "ch": "telegram", "conv": "t-1786681800000-036d", "who": "owner", "kind": "say", "text": "My flight tomorrow is Skylark Air 482, boards at 6:35."}
+{"ts": "2026-08-13T21:31:01-07:00", "ch": "telegram", "conv": "t-1786681800000-036d", "who": "eve", "kind": "say", "text": "Then leave by 5:15 so you clear security with time to spare."}
+{"ts": "2026-08-13T21:33:46-07:00", "ch": "telegram", "conv": "t-1786681800000-036d", "who": "system", "kind": "close", "text": ""}

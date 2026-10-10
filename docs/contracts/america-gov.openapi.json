@@ -1,0 +1,517 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "America.gov observed legacy chat protocol and Eve tool contract",
+    "version": "0.3.0",
+    "description": "Experimental first-turn America.gov protocol observed 2026-10-04, available only through explicitly selected browser/api transports. Eve defaults to Alexandria government-source retrieval; see america-alexandria.json. Own Chrome encountered Cloudflare verification; direct HTTP returned 418. Not a supported public API or an Eve REST server."
+  },
+  "servers": [
+    {
+      "url": "https://america.gov",
+      "description": "Observed upstream browser chat origin"
+    }
+  ],
+  "paths": {
+    "/api/chat": {
+      "post": {
+        "operationId": "americaChatObserved",
+        "summary": "Send one fresh English user message (observed first-turn subset)",
+        "description": "Legacy transport only; Alexandria default does not call this endpoint. Observed browser-generated first-turn subset. Browser mode submits once through verified normal chat controls and permits only one fresh user message before egress. Normal profile supplies ordinary browser state; no copied cookies or signed-history replay. Explicit api mode sends an ordinary request without redirects/retries.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              },
+              "example": {
+                "language": "en",
+                "id": "freshchatid12345",
+                "messages": [
+                  {
+                    "parts": [
+                      {
+                        "type": "text",
+                        "text": "Jurisdiction: U.S. federal\nQuestion: Where can I read the official United States Code?"
+                      }
+                    ],
+                    "id": "freshmessage1234",
+                    "role": "user"
+                  }
+                ],
+                "trigger": "submit-message"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Observed browser SSE: content-type text/event-stream, x-vercel-ai-ui-message-stream v1. Consume metadata after finish through [DONE].",
+            "headers": {
+              "x-vercel-ai-ui-message-stream": {
+                "schema": {
+                  "const": "v1"
+                },
+                "description": "Required version for this adapter."
+              }
+            },
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                },
+                "x-sse-event-schema": {
+                  "$ref": "#/components/schemas/StreamEvent"
+                },
+                "example": "data: {\"type\": \"data-search\", \"data\": {\"status\": \"done\", \"groundings\": [{\"title\": \"United States Code | GovInfo\", \"url\": \"https://www.govinfo.gov/help/uscode\", \"currency\": \"unverified\"}]}}\n\ndata: {\"type\": \"text-start\", \"id\": \"text\"}\n\ndata: {\"type\": \"text-delta\", \"id\": \"text\", \"delta\": \"Read [GovInfo](https://www.govinfo.gov/help/uscode).\"}\n\ndata: {\"type\": \"text-end\", \"id\": \"text\"}\n\ndata: {\"type\": \"finish\", \"messageMetadata\": {\"answerComplete\": true}}\n\ndata: {\"type\": \"message-metadata\", \"messageMetadata\": {\"safetyCard\": null}}\n\ndata: [DONE]\n\n"
+              }
+            }
+          },
+          "418": {
+            "description": "Observed rejection of a direct ordinary httpx request; cause not established. Adapter returns upstream_unavailable and /chat browser link."
+          },
+          "default": {
+            "description": "Other errors, redirects or transport/protocol failures are not specified by the observation. Adapter returns no answer or sources."
+          }
+        },
+        "x-observed-stream": {
+          "framing": "UTF-8 SSE data: JSON followed by a blank line; terminal data: [DONE].",
+          "answer": "text-start -> text-delta(id, delta string)* -> text-end -> finish.messageMetadata.answerComplete === true",
+          "groundings": "data-search.data.status=done and data-search.data.groundings[{title,url,currency}]. Duplicate events were observed.",
+          "trailing_metadata": "message-metadata events after finish may carry safetyCard, followUpSuggestions, diagnostics and historySignature. Read through [DONE].",
+          "ignored": [
+            "reasoning events",
+            "encrypted tool payloads",
+            "signatures",
+            "diagnostics",
+            "followUpSuggestions"
+          ]
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AskRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "question",
+          "jurisdiction"
+        ],
+        "properties": {
+          "question": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000,
+            "description": "The explicit question; omit personal identifiers, private history and attachments."
+          },
+          "jurisdiction": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "The U.S. state/city or U.S. federal law named by the user; null if unknown."
+          }
+        }
+      },
+      "TextPart": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "text"
+        ],
+        "properties": {
+          "type": {
+            "const": "text"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "ChatMessage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "parts",
+          "id",
+          "role"
+        ],
+        "properties": {
+          "parts": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/TextPart"
+            }
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "description": "Browser-generated identifier; observed length 16. Guard accepts a nonempty identifier bounded to 256 characters."
+          },
+          "role": {
+            "const": "user"
+          }
+        }
+      },
+      "ChatRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "language",
+          "id",
+          "messages",
+          "trigger"
+        ],
+        "properties": {
+          "language": {
+            "const": "en"
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "description": "Browser-generated identifier; observed length 16. Guard accepts a nonempty identifier bounded to 256 characters."
+          },
+          "messages": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/ChatMessage"
+            }
+          },
+          "trigger": {
+            "const": "submit-message"
+          }
+        },
+        "description": "Observed first-turn subset. Browser generates fresh identifiers; direct api mode creates them. Extra history/metadata and recently reused conversation IDs are rejected by the browser flow before egress. No signed multi-turn support."
+      },
+      "Source": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "title",
+          "url",
+          "currency"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "maxLength": 2000,
+            "description": "HTTPS .gov or .mil URL without credentials or a nonstandard port."
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "Provider value, observed as unverified. Not proof of current law."
+          }
+        }
+      },
+      "Answered": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "ok",
+          "status",
+          "provider",
+          "answer",
+          "sources",
+          "question",
+          "jurisdiction",
+          "america_url",
+          "legal_advice",
+          "retrieved_at"
+        ],
+        "properties": {
+          "ok": {
+            "const": true
+          },
+          "status": {
+            "const": "answered"
+          },
+          "provider": {
+            "const": "america_gov"
+          },
+          "answer": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 24000,
+            "description": "Complete answer Markdown, preserving links, decoded as UTF-8."
+          },
+          "sources": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/Source"
+            },
+            "description": "Search groundings deduplicated by URL; not a claim-by-claim citation map."
+          },
+          "question": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000,
+            "description": "The explicit question; omit personal identifiers, private history and attachments."
+          },
+          "jurisdiction": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "america_url": {
+            "const": "https://america.gov/chat"
+          },
+          "legal_advice": {
+            "const": false
+          },
+          "retrieved_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "UTC retrieval time, not the law effective date."
+          }
+        }
+      },
+      "StreamEvent": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true,
+        "description": "UI-message v1 JSON event inside an SSE data frame. Opaque metadata is deliberately not modeled or replayed."
+      },
+      "InvalidRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "ok",
+          "status",
+          "reason",
+          "america_url"
+        ],
+        "properties": {
+          "ok": {
+            "const": false
+          },
+          "status": {
+            "const": "invalid_request"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "america_url": {
+            "const": "https://america.gov/chat"
+          }
+        }
+      },
+      "NeedsJurisdiction": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "ok",
+          "status",
+          "reason",
+          "america_url"
+        ],
+        "properties": {
+          "ok": {
+            "const": false
+          },
+          "status": {
+            "const": "needs_jurisdiction"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "america_url": {
+            "const": "https://america.gov/chat"
+          }
+        }
+      },
+      "Unavailable": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "ok",
+          "status",
+          "reason",
+          "america_url"
+        ],
+        "properties": {
+          "ok": {
+            "const": false
+          },
+          "status": {
+            "const": "unavailable"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "america_url": {
+            "const": "https://america.gov/chat"
+          }
+        }
+      },
+      "UpstreamUnavailable": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "ok",
+          "status",
+          "reason",
+          "america_url"
+        ],
+        "properties": {
+          "ok": {
+            "const": false
+          },
+          "status": {
+            "const": "upstream_unavailable"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "america_url": {
+            "const": "https://america.gov/chat"
+          }
+        }
+      },
+      "AskResult": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/Answered"
+          },
+          {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          {
+            "$ref": "#/components/schemas/NeedsJurisdiction"
+          },
+          {
+            "$ref": "#/components/schemas/Unavailable"
+          },
+          {
+            "$ref": "#/components/schemas/UpstreamUnavailable"
+          }
+        ]
+      }
+    }
+  },
+  "x-america-gov": {
+    "api_status": "observed_unpublished_protocol",
+    "observed_on": "2026-10-04",
+    "evidence": "Earlier regular-browser question: HTTP 200 and sanitized HAR. Ordinary HTTP client: 418. Follow-up Eve own-Chrome live probe: Cloudflare Performing security verification, before Send. Forced Jev recovery abstained before Send. Offline tests do not establish live end-to-end success or a speedup.",
+    "chat_url": "https://america.gov/chat",
+    "terms_url": "https://america.gov/terms",
+    "privacy_url": "https://america.gov/privacy-policy",
+    "unsupported": [
+      "signed multi-turn replay",
+      "PDF uploads",
+      "non-English requests",
+      "browser challenge automation"
+    ],
+    "limits": {
+      "total_timeout_seconds": 60,
+      "max_stream_bytes": 1048576,
+      "timeout_scope": "Active caller question; queued calls serialized; existing Chrome/Jev timeouts may outlive caller until worker stops.",
+      "stream_scope": "Completed-response parser; not a Chrome download-buffer bound."
+    },
+    "transport_scope": "Explicit legacy browser/api; not the default Alexandria source-retrieval provider"
+  },
+  "x-eve-interface": {
+    "transport": "in_process_function",
+    "tool": {
+      "type": "function",
+      "name": "america_ask",
+      "strict": true,
+      "description": "Find official U.S. legal or government sources through Alexandria's government index. Returns source excerpts and available page text for a cited answer. Requires jurisdiction; source currency may be unverified. Information only, not legal advice or a filing service.",
+      "parameters": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "question",
+          "jurisdiction"
+        ],
+        "properties": {
+          "question": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000,
+            "description": "The explicit question; omit personal identifiers, private history and attachments."
+          },
+          "jurisdiction": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "The U.S. state/city or U.S. federal law named by the user; null if unknown."
+          }
+        }
+      }
+    },
+    "request_schema": {
+      "$ref": "#/components/schemas/AskRequest"
+    },
+    "result_schema": {
+      "$ref": "#/components/schemas/AskResult",
+      "description": "Legacy browser/api result only; Alexandria sources_found is defined in america-alexandria.json."
+    },
+    "result_schemas": {
+      "answered": "Answered",
+      "invalid_request": "InvalidRequest",
+      "needs_jurisdiction": "NeedsJurisdiction",
+      "unavailable": "Unavailable",
+      "upstream_unavailable": "UpstreamUnavailable"
+    },
+    "configuration": {
+      "EVE_AMERICA": "1 (default off)",
+      "EVE_AMERICA_TRANSPORT": "alexandria (default); browser/api explicitly select this legacy contract",
+      "EVE_BROWSER_OWN": "Legacy browser only: 1, or existing ordinary Chrome attach configuration",
+      "EVE_AMERICA_JEV": "Legacy browser only: 1 default with existing Jev route/key; 0 disables recovery"
+    },
+    "scope": "Owner-only /america menu and shared Telegram/Mac/Voice PE/phone/handheld chat/call brain; excludes separate wake-word voice backend.",
+    "browser_flow": {
+      "form": "form[data-slot=\"chat-input-shell\"][aria-label=\"Describe what you need\"]",
+      "input": "textarea[name=\"message\"]",
+      "send_accessible_name": [
+        "Send message",
+        "Send"
+      ],
+      "reuse": "Dedicated normal Chrome connection/tab and semantic recipes; uniqueness/visibility/type/state checked per question.",
+      "history": "Fresh document for each question; exact first-turn body guard before egress, no extra metadata, duplicate or last-128 reused chat IDs.",
+      "input_action": "One exact fill, verify input value, one submit click; no automatic resend.",
+      "jev": "Recovery only for supported controls inside the verified form; labels/roles/static objective/URL only, no values, question or answer.",
+      "completion": "Correlated requestfinished response with supported SSE header, complete-answer finish and terminal DONE, official sources.",
+      "cancellation": "Shielded worker with cooperative stop flag; page quarantined until it stops. Close disconnects own tab without closing owner Chrome."
+    },
+    "default_transport": "alexandria",
+    "legacy_transport_scope": [
+      "browser",
+      "api"
+    ],
+    "default_result_schema": {
+      "$ref": "america-alexandria.json"
+    }
+  }
+}

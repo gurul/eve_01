@@ -1,0 +1,12 @@
+{
+  "date": "2026-09-22 19:33:53 PDT",
+  "entrypoint": "TelegramInlet._tool(start_task) -> Daemon._make_agent -> CodexComputerAgent",
+  "transport": "public app-server stdio; actual installed cua_repl.js",
+  "telegram_transport": "in-memory test sink; no Telegram messages sent",
+  "user_authorization": "Calculator allowed for this test in task conversation",
+  "permission_requests_relayed": 10,
+  "progress_relayed": true,
+  "native_ui_verified": true,
+  "final": "Verified fresh Calculator UI: last expression **2 + 2**, result **4**. Used four Computer Use calls.",
+  "final_ui_state": "The following is a diff from the previous accessibility tree for Window: \"Calculator\" with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.\n+\t\t\t38 scroll area ID: StandardResultView, Secondary Actions: Copy\n+\t\t\t\t39 text Description: Last Expression, Value: 2 + 2\n~\t\t\t4 scroll area ID: StandardInputView;value:4, Secondary Actions: Copy\n~\t\t\t\t5 text Description: Edit field, Value: 4"
+}

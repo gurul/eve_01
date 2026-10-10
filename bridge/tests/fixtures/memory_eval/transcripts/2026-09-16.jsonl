@@ -1,0 +1,13 @@
+{"ts": "2026-09-16T11:30:00-07:00", "ch": "voice", "conv": "v-1789583400000-49ab", "who": "owner", "kind": "say", "text": "Dentist done. No cavities."}
+{"ts": "2026-09-16T11:30:47-07:00", "ch": "voice", "conv": "v-1789583400000-49ab", "who": "eve", "kind": "say", "text": "Nice."}
+{"ts": "2026-09-16T11:32:53-07:00", "ch": "voice", "conv": "v-1789583400000-49ab", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-16T14:00:00-07:00", "ch": "telegram", "conv": "t-1789592400000-0428", "who": "owner", "kind": "say", "text": "Registered for Cascade Hack in Seattle, October 23 to 25. Going solo for now."}
+{"ts": "2026-09-16T14:00:41-07:00", "ch": "telegram", "conv": "t-1789592400000-0428", "who": "owner", "kind": "say", "text": "Booked the train ticket too, $64."}
+{"ts": "2026-09-16T14:02:14-07:00", "ch": "telegram", "conv": "t-1789592400000-0428", "who": "eve", "kind": "say", "text": "The 7:40 train gets into Seattle at 11:05."}
+{"ts": "2026-09-16T14:06:31-07:00", "ch": "telegram", "conv": "t-1789592400000-0428", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-16T18:15:00-07:00", "ch": "voice", "conv": "v-1789607700000-c429", "who": "owner", "kind": "say", "text": "Volume down a bit."}
+{"ts": "2026-09-16T18:16:11-07:00", "ch": "voice", "conv": "v-1789607700000-c429", "who": "eve", "kind": "say", "text": "Done."}
+{"ts": "2026-09-16T18:20:03-07:00", "ch": "voice", "conv": "v-1789607700000-c429", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-16T20:00:00-07:00", "ch": "telegram", "conv": "t-1789614000000-47e7", "who": "owner", "kind": "say", "text": "I want a winter jacket, something under $120."}
+{"ts": "2026-09-16T20:01:37-07:00", "ch": "telegram", "conv": "t-1789614000000-47e7", "who": "eve", "kind": "say", "text": "I'll keep an eye out."}
+{"ts": "2026-09-16T20:04:54-07:00", "ch": "telegram", "conv": "t-1789614000000-47e7", "who": "system", "kind": "close", "text": ""}

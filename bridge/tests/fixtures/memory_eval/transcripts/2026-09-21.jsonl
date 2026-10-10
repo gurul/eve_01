@@ -1,0 +1,13 @@
+{"ts": "2026-09-21T09:00:00-07:00", "ch": "telegram", "conv": "t-1790006400000-39a1", "who": "owner", "kind": "say", "text": "Shelfie beta is live!"}
+{"ts": "2026-09-21T09:01:10-07:00", "ch": "telegram", "conv": "t-1790006400000-39a1", "who": "eve", "kind": "say", "text": "Congrats!"}
+{"ts": "2026-09-21T09:03:57-07:00", "ch": "telegram", "conv": "t-1790006400000-39a1", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-21T09:30:00-07:00", "ch": "bus", "conv": "b-1790008200000-8184", "who": "claude", "kind": "say", "text": "Shelfie: beta build 1.0.0-beta.3 published to testers."}
+{"ts": "2026-09-21T13:00:00-07:00", "ch": "telegram", "conv": "t-1790020800000-7659", "who": "owner", "kind": "say", "text": "Haddad moved his office hours to Thursdays at 4 pm. I'll go this week."}
+{"ts": "2026-09-21T13:01:36-07:00", "ch": "telegram", "conv": "t-1790020800000-7659", "who": "eve", "kind": "say", "text": "Updated."}
+{"ts": "2026-09-21T13:03:59-07:00", "ch": "telegram", "conv": "t-1790020800000-7659", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-21T13:40:00-07:00", "ch": "voice", "conv": "v-1790023200000-3b79", "who": "owner", "kind": "say", "text": "Thanks eve."}
+{"ts": "2026-09-21T13:40:53-07:00", "ch": "voice", "conv": "v-1790023200000-3b79", "who": "eve", "kind": "say", "text": "Anytime."}
+{"ts": "2026-09-21T13:44:51-07:00", "ch": "voice", "conv": "v-1790023200000-3b79", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-21T20:00:00-07:00", "ch": "telegram", "conv": "t-1790046000000-c50a", "who": "owner", "kind": "say", "text": "Saturday I'm mounting the weather station on the balcony."}
+{"ts": "2026-09-21T20:01:05-07:00", "ch": "telegram", "conv": "t-1790046000000-c50a", "who": "eve", "kind": "say", "text": "Good luck."}
+{"ts": "2026-09-21T20:04:51-07:00", "ch": "telegram", "conv": "t-1790046000000-c50a", "who": "system", "kind": "close", "text": ""}

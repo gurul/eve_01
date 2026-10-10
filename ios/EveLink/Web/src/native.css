@@ -1,0 +1,465 @@
+/* Native feel: the page must be indistinguishable from the rest of the app. */
+
+:root {
+  /* Where the native top bar and composer cover the page, set by native
+     (window.eveNative.setInsets, insets.ts). The web view fills the screen
+     under them; until native says, the safe areas stand in. */
+  --eve-inset-top: env(safe-area-inset-top);
+  --eve-inset-bottom: env(safe-area-inset-bottom);
+  color-scheme: light dark;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  font-family: -apple-system, system-ui, "SF Pro Text", "Helvetica Neue", sans-serif;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  /* The native view paints the background. */
+  background: transparent !important;
+}
+
+body {
+  position: fixed;
+  inset: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  height: 100%;
+}
+
+/* No tap flash, no long-press menus, no selection: except in message text. */
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.openui-agent-thread-message-assistant__content,
+.openui-agent-thread-message-assistant__content *,
+.openui-agent-thread-message-user__content,
+.openui-agent-thread-message-user__content *,
+.openui-shell-thread-message-user__content,
+.openui-shell-thread-message-user__content *,
+.openui-markdown-renderer,
+.openui-markdown-renderer *,
+input,
+textarea,
+[contenteditable="true"] {
+  -webkit-touch-callout: default;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Buttons and controls inside generated UI stay untouchable for selection. */
+.openui-agent-thread-message-assistant__content button,
+.openui-agent-thread-message-assistant__content [role="button"] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* No focus rings on touch. */
+@media (hover: none) {
+  *:focus,
+  *:focus-visible {
+    outline: none !important;
+  }
+}
+
+/* No web loading screen and no web error callout: history is retried
+   quietly (storage.ts), and the list simply fills when eve answers. */
+.openui-agent-thread-container__loading,
+.openui-agent-thread-error {
+  display: none !important;
+}
+
+/* Only the message list: OpenUI's own chrome is replaced by native views. */
+.openui-agent-sidebar-container,
+.openui-agent-sidebar-container__overlay,
+.openui-agent-mobile-header,
+.openui-agent-thread-header,
+.openui-agent-composer-slot {
+  display: none !important;
+}
+
+.openui-agent-container {
+  height: 100%;
+  width: 100%;
+  background: transparent;
+}
+
+/* The list starts below the native top bar and ends 16 px above the native
+   composer (on the keyboard when it is up). Smooth native scrolling inside
+   the list only. */
+.openui-agent-thread-scroll-area {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  scrollbar-width: none;
+  padding-top: calc(var(--eve-inset-top) + 8px) !important;
+  padding-bottom: calc(var(--eve-inset-bottom) + 16px) !important;
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  scroll-padding-top: calc(var(--eve-inset-top) + 8px) !important;
+  scroll-padding-bottom: calc(var(--eve-inset-bottom) + 16px) !important;
+}
+
+/* OpenUI's own fades at the top and bottom of the list: the bottom one sat
+   over the newest message. Native draws the only fade, under its top bar,
+   above the first message's resting place. */
+.openui-agent-thread-scroll-container::before,
+.openui-agent-thread-scroll-container::after {
+  display: none !important;
+}
+
+/* The scroll-to-latest arrow sits just above the composer. */
+.openui-agent-thread-scroll-latest {
+  bottom: calc(var(--eve-inset-bottom) + 12px) !important;
+}
+
+.openui-agent-welcome-screen {
+  padding-top: calc(var(--eve-inset-top) + 8px) !important;
+  padding-bottom: calc(var(--eve-inset-bottom) + 16px) !important;
+}
+
+.openui-agent-thread-scroll-area::-webkit-scrollbar {
+  display: none;
+}
+
+.openui-agent-thread-messages {
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+  gap: 14px !important;
+}
+
+/* Owner bubbles: iMessage shape and width. */
+.openui-agent-thread-message-user__content,
+.openui-shell-thread-message-user__content {
+  border-radius: 18px !important;
+  white-space: pre-wrap;
+}
+
+.openui-agent-thread-message-user__content,
+.openui-genui-user-message {
+  max-width: 78%;
+}
+
+/* A turn started elsewhere is in flight. */
+.eve-typing {
+  position: fixed;
+  left: calc(env(safe-area-inset-left) + 16px);
+  bottom: calc(var(--eve-inset-bottom) + 6px);
+  pointer-events: none;
+}
+
+/* The owner's photos and files (UserMessage.tsx, AttachmentList.tsx), above the bubble, right-aligned. */
+.eve-att-message {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.eve-att-message .openui-shell-thread-message-user,
+.eve-att-message .openui-genui-user-message {
+  max-width: 100%;
+}
+
+.eve-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.eve-att-thumb {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 14px;
+  -webkit-touch-callout: none;
+}
+
+.eve-att-thumb--solo {
+  width: auto;
+  height: auto;
+  max-width: 200px;
+  max-height: 240px;
+  border-radius: 18px;
+}
+
+.eve-att-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 240px;
+  padding: 9px 12px;
+  border-radius: 14px;
+  background: rgba(127, 127, 127, 0.16);
+  font-size: 15px;
+}
+
+.eve-att-icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+  opacity: 0.7;
+}
+
+.eve-att-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* eve's reaction on an owner bubble (UserMessage.tsx, reactions.ts): a
+   small badge over the bubble's bottom-left corner, as in Telegram, ringed in
+   the page's own background so it reads as sitting on the bubble. */
+.eve-reacted {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.eve-reaction {
+  position: absolute;
+  left: -8px;
+  bottom: -12px;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 5px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 13px;
+  font-size: 15px;
+  line-height: 1;
+  background: #e9e9eb;
+  box-shadow: 0 0 0 2px Canvas;
+  pointer-events: none;
+  animation: eve-reaction-in 260ms cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+}
+
+@media (prefers-color-scheme: dark) {
+  .eve-reaction {
+    background: #3a3a3c;
+  }
+}
+
+@keyframes eve-reaction-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eve-reaction {
+    animation: none;
+  }
+}
+
+/* eve's own pictures and files (AssistantMessage.tsx), above its caption, left-aligned. */
+.eve-attachments--eve {
+  justify-content: flex-start;
+  margin-bottom: 6px;
+}
+
+.eve-attachments--eve .eve-att-thumb--solo {
+  max-width: 240px;
+  max-height: 300px;
+}
+
+/* Each attachment is a button that opens it full size (native Quick Look). No
+   web button look: no border, background, outline or press tint. */
+.eve-att-open {
+  appearance: none;
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  border-radius: 14px;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+.eve-att-open img {
+  display: block;
+}
+
+.eve-att-open:focus {
+  outline: none;
+}
+
+.eve-att-open:active:not(:disabled) {
+  opacity: 0.6;
+}
+
+.eve-att-open:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+/* Sources under an eve reply (SourceList.tsx, sources.ts): the memory lines
+   it leaned on. At rest one small muted line; open, each source on its own
+   line with a small kind label and when it is from. No web button look. */
+.eve-sources {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.35;
+  color: rgba(60, 60, 67, 0.6);
+}
+
+.eve-sources-toggle {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  margin: 0;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+.eve-sources-toggle:focus {
+  outline: none;
+}
+
+.eve-sources-toggle:focus-visible {
+  outline: 2px solid rgba(0, 122, 255, 0.5);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.eve-sources-toggle:active {
+  opacity: 0.6;
+}
+
+.eve-sources-chevron {
+  width: 11px;
+  height: 11px;
+  margin-left: 4px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 160ms ease;
+}
+
+.eve-sources-chevron.is-open {
+  transform: rotate(90deg);
+}
+
+.eve-sources-list {
+  list-style: none;
+  margin: 2px 0 0;
+  padding: 0 0 0 10px;
+  border-left: 2px solid rgba(127, 127, 127, 0.22);
+}
+
+.eve-source {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 4px 0;
+}
+
+.eve-source-meta {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  font-size: 11px;
+}
+
+.eve-source-kind {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.eve-source-text {
+  color: rgba(60, 60, 67, 0.85);
+  overflow-wrap: anywhere;
+}
+
+@media (prefers-color-scheme: dark) {
+  .eve-sources {
+    color: rgba(235, 235, 245, 0.6);
+  }
+
+  .eve-source-text {
+    color: rgba(235, 235, 245, 0.85);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eve-sources-chevron {
+    transition: none;
+  }
+}
+
+/* Generated answers stay inside a phone-width message. Wide tables and
+   charts scroll within their card, never the entire conversation. */
+.eve-generated-card {
+  min-width: 0;
+  max-width: 100%;
+  margin-block: 8px;
+  overflow-wrap: anywhere;
+}
+.eve-generated-card__visual {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+.eve-generated-card__status,
+.eve-generated-card__caption {
+  color: light-dark(#636366, #AEAEB2);
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 8px 0;
+}
+.eve-generated-card__text {
+  white-space: pre-wrap;
+  font-size: 16px;
+  line-height: 1.55;
+  padding: 12px 16px;
+  border: 1px solid light-dark(#D1D1D6, #48484A);
+  border-radius: 14px;
+}
+.eve-generated-card__caption { white-space: normal; }
+.eve-generated-card__toggle {
+  display: block;
+  min-height: 44px;
+  padding: 8px 4px;
+  background: none;
+  border: 0;
+  color: light-dark(#007AFF, #0A84FF);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.eve-generated-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}

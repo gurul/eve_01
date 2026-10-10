@@ -1,0 +1,3034 @@
+{
+ "summary": {
+  "gpt-6-astra": {
+   "runs": 18,
+   "success": 18,
+   "finished": 18,
+   "finished_ok": 18,
+   "part_done": 0,
+   "nothing": 0,
+   "errors": 0,
+   "jev_calls": 40,
+   "priced": true,
+   "api_errors": [],
+   "by_task": {
+    "contact_form": [
+     2,
+     2
+    ],
+    "shop_filter_cart": [
+     2,
+     2
+    ],
+    "search_then_link": [
+     2,
+     2
+    ],
+    "table_read": [
+     2,
+     2
+    ],
+    "settings_tab_toggle": [
+     2,
+     2
+    ],
+    "cookie_banner": [
+     2,
+     2
+    ],
+    "below_the_fold": [
+     2,
+     2
+    ],
+    "reservation_form": [
+     2,
+     2
+    ],
+    "help_read_after_nav": [
+     2,
+     2
+    ]
+   },
+   "success_rate": 1.0,
+   "handoffs": 0,
+   "avg_secs": 7.21,
+   "median_secs": 6.49,
+   "avg_planner_usd": 0.016108,
+   "total_planner_usd": 0.289948,
+   "avg_jev_usd": 7.6e-05,
+   "avg_jev_calls": 2.22
+  },
+  "gpt-6-luna": {
+   "runs": 18,
+   "success": 18,
+   "finished": 18,
+   "finished_ok": 18,
+   "part_done": 0,
+   "nothing": 0,
+   "errors": 0,
+   "jev_calls": 41,
+   "priced": true,
+   "api_errors": [],
+   "by_task": {
+    "contact_form": [
+     2,
+     2
+    ],
+    "shop_filter_cart": [
+     2,
+     2
+    ],
+    "search_then_link": [
+     2,
+     2
+    ],
+    "table_read": [
+     2,
+     2
+    ],
+    "settings_tab_toggle": [
+     2,
+     2
+    ],
+    "cookie_banner": [
+     2,
+     2
+    ],
+    "below_the_fold": [
+     2,
+     2
+    ],
+    "reservation_form": [
+     2,
+     2
+    ],
+    "help_read_after_nav": [
+     2,
+     2
+    ]
+   },
+   "success_rate": 1.0,
+   "handoffs": 0,
+   "avg_secs": 6.63,
+   "median_secs": 6.82,
+   "avg_planner_usd": 0.000216,
+   "total_planner_usd": 0.003891,
+   "avg_jev_usd": 7.7e-05,
+   "avg_jev_calls": 2.28
+  },
+  "gpt-6-sol": {
+   "runs": 18,
+   "success": 18,
+   "finished": 17,
+   "finished_ok": 17,
+   "part_done": 1,
+   "nothing": 0,
+   "errors": 0,
+   "jev_calls": 42,
+   "priced": true,
+   "api_errors": [],
+   "by_task": {
+    "contact_form": [
+     2,
+     2
+    ],
+    "shop_filter_cart": [
+     2,
+     2
+    ],
+    "search_then_link": [
+     2,
+     2
+    ],
+    "table_read": [
+     2,
+     2
+    ],
+    "settings_tab_toggle": [
+     2,
+     2
+    ],
+    "cookie_banner": [
+     2,
+     2
+    ],
+    "below_the_fold": [
+     2,
+     2
+    ],
+    "reservation_form": [
+     2,
+     2
+    ],
+    "help_read_after_nav": [
+     2,
+     2
+    ]
+   },
+   "success_rate": 1.0,
+   "handoffs": 1,
+   "avg_secs": 6.67,
+   "median_secs": 6.49,
+   "avg_planner_usd": 0.003563,
+   "total_planner_usd": 0.064135,
+   "avg_jev_usd": 7.9e-05,
+   "avg_jev_calls": 2.33
+  }
+ },
+ "pick": "gpt-6-luna",
+ "total_usd": 0.3622,
+ "runs": [
+  {
+   "task": "contact_form",
+   "where": "local",
+   "model": "gpt-6-astra",
+   "answer": "I've filled in the form and sent your message.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 7.42,
+   "jev_calls": 4,
+   "jev_errors": 0,
+   "jev_usd": 0.000119,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-astra/2026-10-07-111245.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "forms/api/contact",
+      "data": {
+       "name": "Ada Lovelace",
+       "email": "ada@example.com",
+       "message": "Please call me back"
+      }
+     }
+    ]
+   },
+   "success": true,
+   "asks": [
+    "Should I go ahead: click Send message button?"
+   ],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 932,
+    "out": 182
+   },
+   "planner_usd": 0.01842,
+   "planner_secs": 5.69,
+   "events": [
+    "progress: type \"Ada Lovelace\" into Full name text field",
+    "progress: type \"ada@example.com\" into Email address text field",
+    "progress: type \"Please call me back\" into Your message text field",
+    "ask: Should I go ahead: click Send message button?",
+    "progress: click Send message button"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"The contact form is already open.\",\"steps\":[{\"kind\":\"type\",\"target\":\"Full name text field\",\"label_hint\":\"Full name\",\"text\":\"Ada Lovelace\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"type\",\"target\":\"Email address text field\",\"label_hint\":\"Email address\",\"text\":\"ada@example.com\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"type\",\"target\":\"Your message text field\",\"label_hint\":\"Your message\",\"text\":\"Please call me back\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"Send message button\",\"label_hint\":\"Send message\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":true}],\"final_say\":\"I've filled in the form and sent your message.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "needs_human",
+     "reason": "the plan marked this step consequential",
+     "last_effect": "unverifiable",
+     "last_note": "typed 19 characters into text field 'Your message'"
+    },
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Send message; pick=3 button \"Send message\"; text=none; key=none"
+    }
+   ],
+   "repeat": 1
+  },
+  {
+   "task": "shop_filter_cart",
+   "where": "local",
+   "model": "gpt-6-astra",
+   "answer": "Kitchen products are showing, and the Blue Ceramic Mug is in your cart.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 5.52,
+   "jev_calls": 3,
+   "jev_errors": 0,
+   "jev_usd": 0.00011,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-astra/2026-10-07-111253.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "shop/api/cart",
+      "data": {
+       "item": "Blue Ceramic Mug"
+      }
+     }
+    ]
+   },
+   "success": true,
+   "asks": [
+    "Should I go ahead: Add Blue Ceramic Mug to cart?"
+   ],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 969,
+    "out": 112
+   },
+   "planner_usd": 0.01529,
+   "planner_secs": 4.48,
+   "events": [
+    "progress: click Kitchen tab",
+    "ask: Should I go ahead: Add Blue Ceramic Mug to cart?",
+    "progress: click Add Blue Ceramic Mug to cart button"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"click\",\"target\":\"Kitchen tab\",\"label_hint\":\"Kitchen\",\"text\":\"\",\"key\":\"\",\"expect\":{\"kind\":\"text_visible\",\"value\":\"Blue Ceramic Mug\"},\"consequential\":false},{\"kind\":\"click\",\"target\":\"Add Blue Ceramic Mug to cart button\",\"label_hint\":\"\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false}],\"final_say\":\"Kitchen products are showing, and the Blue Ceramic Mug is in your cart.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "needs_human",
+     "reason": "a consequential control",
+     "last_effect": "refused",
+     "last_note": "confirm: \"Add Blue Ceramic Mug to cart\" needs the human's yes; app=\"browser\"; action=click; steps=0; last=none; text=none; key=none"
+    },
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Add Blue Ceramic Mug to cart; pick=6 button \"Add Blue Ceramic Mug to cart\"; text=none; key=none"
+    }
+   ],
+   "repeat": 1
+  },
+  {
+   "task": "search_then_link",
+   "where": "local",
+   "model": "gpt-6-astra",
+   "answer": "I did it; the one thing I couldn't confirm was: type \"solar panels\" into Search docs search field.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 6.49,
+   "jev_calls": 1,
+   "jev_errors": 0,
+   "jev_usd": 3.3e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-astra/2026-10-07-111258.jsonl",
+   "state": {
+    "visits": [
+     "docs/",
+     "docs/search",
+     "docs/article/solar-panel-guide"
+    ],
+    "posts": []
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 936,
+    "out": 155
+   },
+   "planner_usd": 0.01711,
+   "planner_secs": 4.84,
+   "events": [
+    "progress: opened https://docs.eve-eval.test",
+    "progress: type \"solar panels\" into Search docs search field",
+    "progress: press return",
+    "progress: click Solar Panel Installation Guide link"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"Search the open documentation site and open the named guide.\",\"steps\":[{\"kind\":\"type\",\"target\":\"Search docs search field\",\"label_hint\":\"Search docs\",\"text\":\"solar panels\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"press_key\",\"target\":\"Search docs search field\",\"label_hint\":\"Search docs\",\"text\":\"\",\"key\":\"return\",\"expect\":{\"kind\":\"text_visible\",\"value\":\"Solar Panel Installation Guide\"},\"consequential\":false},{\"kind\":\"click\",\"target\":\"Solar Panel Installation Guide link\",\"label_hint\":\"\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false}],\"final_say\":\"I opened the Solar Panel Installation Guide.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click link: Solar Panel Installation Guide; pick=2 link \"Solar Panel Installation Guide\"; text=none; key=none"
+    }
+   ],
+   "repeat": 1
+  },
+  {
+   "task": "table_read",
+   "where": "local",
+   "model": "gpt-6-astra",
+   "answer": "Riverton’s population is 48,213.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 11.28,
+   "jev_calls": 0,
+   "jev_errors": 0,
+   "jev_usd": 0.0,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-astra/2026-10-07-111305.jsonl",
+   "state": {
+    "visits": [],
+    "posts": []
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 2,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 1255,
+    "out": 77
+   },
+   "planner_usd": 0.0164,
+   "planner_secs": 5.12,
+   "events": [],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"The requested table page is already open; read its visible text to find Riverton’s population.\",\"steps\":[],\"final_say\":\"\",\"success\":{\"kind\":\"url_is\",\"value\":\"https://data.eve-eval.test/towns\"}}",
+    "Riverton’s population is 48,213."
+   ],
+   "trace": [],
+   "repeat": 1
+  },
+  {
+   "task": "settings_tab_toggle",
+   "where": "local",
+   "model": "gpt-6-astra",
+   "answer": "The weekly email digest is turned on and your changes are saved.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 6.17,
+   "jev_calls": 3,
+   "jev_errors": 0,
+   "jev_usd": 9.7e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-astra/2026-10-07-111317.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "settings/api/settings",
+      "data": {
+       "push": true,
+       "digest": true,
+       "sms": false,
+       "share": false
+      }
+     }
+    ]
+   },
+   "success": true,
+   "asks": [
+    "Should I go ahead: click Save changes button?"
+   ],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 919,
+    "out": 133
+   },
+   "planner_usd": 0.01584,
+   "planner_secs": 5.02,
+   "events": [
+    "progress: click Notifications tab",
+    "progress: click Weekly email digest checkbox or switch to turn it on",
+    "ask: Should I go ahead: click Save changes button?",
+    "progress: click Save changes button"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"click\",\"target\":\"Notifications tab\",\"label_hint\":\"Notifications\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"Weekly email digest checkbox or switch to turn it on\",\"label_hint\":\"\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"Save changes button\",\"label_hint\":\"Save changes\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":true}],\"final_say\":\"The weekly email digest is turned on and your changes are saved.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "needs_human",
+     "reason": "the plan marked this step consequential",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click switch: Weekly email digest; pick=4 switch \"Weekly email digest\"; text=none; key=none"
+    },
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Save changes; pick=6 button \"Save changes\"; text=none; key=none"
+    }
+   ],
+   "repeat": 1
+  },
+  {
+   "task": "cookie_banner",
+   "where": "local",
+   "model": "gpt-6-astra",
+   "answer": "The Lemon Tart recipe is open.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 5.1,
+   "jev_calls": 1,
+   "jev_errors": 0,
+   "jev_usd": 3e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-astra/2026-10-07-111323.jsonl",
+   "state": {
+    "visits": [
+     "recipes/r/lemon-tart"
+    ],
+    "posts": []
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 969,
+    "out": 116
+   },
+   "planner_usd": 0.01549,
+   "planner_secs": 3.76,
+   "events": [
+    "progress: click Lemon Tart link"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"The requested recipe link is on the current page.\",\"steps\":[{\"kind\":\"click\",\"target\":\"Lemon Tart link\",\"label_hint\":\"Lemon Tart\",\"text\":\"\",\"key\":\"\",\"expect\":{\"kind\":\"url_is\",\"value\":\"https://recipes.eve-eval.test/r/lemon-tart\"},\"consequential\":false}],\"final_say\":\"The Lemon Tart recipe is open.\",\"success\":{\"kind\":\"url_is\",\"value\":\"https://recipes.eve-eval.test/r/lemon-tart\"}}"
+   ],
+   "trace": [
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click link: Lemon Tart; pick=1 link \"Lemon Tart\"; text=none; key=none"
+    }
+   ],
+   "repeat": 1
+  },
+  {
+   "task": "below_the_fold",
+   "where": "local",
+   "model": "gpt-6-astra",
+   "answer": "I clicked Compare all plans.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 5.39,
+   "jev_calls": 1,
+   "jev_errors": 0,
+   "jev_usd": 2.9e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-astra/2026-10-07-111328.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "pricing/api/compare",
+      "data": {}
+     }
+    ]
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 920,
+    "out": 82
+   },
+   "planner_usd": 0.0133,
+   "planner_secs": 4.95,
+   "events": [
+    "progress: click Compare all plans button at the bottom"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"The pricing page is already open and the requested button is available.\",\"steps\":[{\"kind\":\"click\",\"target\":\"Compare all plans button at the bottom\",\"label_hint\":\"Compare all plans\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false}],\"final_say\":\"I clicked Compare all plans.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Compare all plans; pick=3 button \"Compare all plans\"; text=none; key=none"
+    }
+   ],
+   "repeat": 1
+  },
+  {
+   "task": "reservation_form",
+   "where": "local",
+   "model": "gpt-6-astra",
+   "answer": "Your reservation request for four on Friday at 7:00 pm under Grace Hopper has been submitted.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 7.81,
+   "jev_calls": 7,
+   "jev_errors": 0,
+   "jev_usd": 0.000269,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-astra/2026-10-07-111334.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "bistro/api/reserve",
+      "data": {
+       "party": "4",
+       "day": "Friday",
+       "time": "7:00 pm",
+       "name": "Grace Hopper"
+      }
+     }
+    ]
+   },
+   "success": true,
+   "asks": [
+    "Should I go ahead: click Request reservation button?"
+   ],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 987,
+    "out": 209
+   },
+   "planner_usd": 0.02032,
+   "planner_secs": 4.88,
+   "events": [
+    "progress: click 4 people radio button",
+    "progress: click Friday radio button",
+    "progress: click 7:00 pm radio button",
+    "progress: type \"Grace Hopper\" into Name for the booking",
+    "ask: Should I go ahead: click Request reservation button?",
+    "progress: click Request reservation button"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"click\",\"target\":\"4 people radio button\",\"label_hint\":\"4 people\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"Friday radio button\",\"label_hint\":\"Friday\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"7:00 pm radio button\",\"label_hint\":\"7:00 pm\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"type\",\"target\":\"Name for the booking\",\"label_hint\":\"Name for the booking\",\"text\":\"Grace Hopper\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"Request reservation button\",\"label_hint\":\"Request reservation\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":true}],\"final_say\":\"Your reservation request for four on Friday at 7:00 pm under Grace Hopper has been submitted.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "needs_human",
+     "reason": "the plan marked this step consequential",
+     "last_effect": "unverifiable",
+     "last_note": "typed 12 characters into text field 'Name for the booking'"
+    },
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Request reservation; pick=10 button \"Request reservation\"; text=none; key=none"
+    }
+   ],
+   "repeat": 1
+  },
+  {
+   "task": "help_read_after_nav",
+   "where": "local",
+   "model": "gpt-6-astra",
+   "answer": "Standard shipping takes 5 to 7 business days.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 12.22,
+   "jev_calls": 1,
+   "jev_errors": 0,
+   "jev_usd": 2.9e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-astra/2026-10-07-111342.jsonl",
+   "state": {
+    "visits": [
+     "help/",
+     "help/shipping"
+    ],
+    "posts": []
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 2,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 1275,
+    "out": 113
+   },
+   "planner_usd": 0.0184,
+   "planner_secs": 5.16,
+   "events": [
+    "progress: opened https://help.eve-eval.test",
+    "progress: click Shipping link"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"Open Shipping to read the standard shipping timeframe.\",\"steps\":[{\"kind\":\"click\",\"target\":\"Shipping link\",\"label_hint\":\"Shipping\",\"text\":\"\",\"key\":\"\",\"expect\":{\"kind\":\"url_is\",\"value\":\"https://help.eve-eval.test/shipping\"},\"consequential\":false}],\"final_say\":\"\",\"success\":{\"kind\":\"url_is\",\"value\":\"https://help.eve-eval.test/shipping\"}}",
+    "Standard shipping takes 5 to 7 business days."
+   ],
+   "trace": [
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click link: Shipping; pick=1 link \"Shipping\"; text=none; key=none"
+    }
+   ],
+   "repeat": 1
+  },
+  {
+   "task": "contact_form",
+   "where": "local",
+   "model": "gpt-6-astra",
+   "answer": "Your contact message has been sent.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 7.02,
+   "jev_calls": 4,
+   "jev_errors": 0,
+   "jev_usd": 0.000119,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-astra/2026-10-07-111355.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "forms/api/contact",
+      "data": {
+       "name": "Ada Lovelace",
+       "email": "ada@example.com",
+       "message": "Please call me back"
+      }
+     }
+    ]
+   },
+   "success": true,
+   "asks": [
+    "Should I go ahead: click Send message button?"
+   ],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 932,
+    "out": 179
+   },
+   "planner_usd": 0.01827,
+   "planner_secs": 5.25,
+   "events": [
+    "progress: type \"Ada Lovelace\" into Full name text field",
+    "progress: type \"ada@example.com\" into Email address text field",
+    "progress: type \"Please call me back\" into Your message text field",
+    "ask: Should I go ahead: click Send message button?",
+    "progress: click Send message button"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"The contact form is already open.\",\"steps\":[{\"kind\":\"type\",\"target\":\"Full name text field\",\"label_hint\":\"Full name\",\"text\":\"Ada Lovelace\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"type\",\"target\":\"Email address text field\",\"label_hint\":\"Email address\",\"text\":\"ada@example.com\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"type\",\"target\":\"Your message text field\",\"label_hint\":\"Your message\",\"text\":\"Please call me back\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"Send message button\",\"label_hint\":\"Send message\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":true}],\"final_say\":\"Your contact message has been sent.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "needs_human",
+     "reason": "the plan marked this step consequential",
+     "last_effect": "unverifiable",
+     "last_note": "typed 19 characters into text field 'Your message'"
+    },
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Send message; pick=3 button \"Send message\"; text=none; key=none"
+    }
+   ],
+   "repeat": 2
+  },
+  {
+   "task": "shop_filter_cart",
+   "where": "local",
+   "model": "gpt-6-astra",
+   "answer": "Kitchen products are filtered, and the Blue Ceramic Mug is added to your cart.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 5.06,
+   "jev_calls": 2,
+   "jev_errors": 0,
+   "jev_usd": 7.3e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-astra/2026-10-07-111402.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "shop/api/cart",
+      "data": {
+       "item": "Blue Ceramic Mug"
+      }
+     }
+    ]
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 969,
+    "out": 103
+   },
+   "planner_usd": 0.01484,
+   "planner_secs": 4.31,
+   "events": [
+    "progress: click Kitchen tab",
+    "progress: click Add Blue Ceramic Mug to cart button"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"click\",\"target\":\"Kitchen tab\",\"label_hint\":\"Kitchen\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"Add Blue Ceramic Mug to cart button\",\"label_hint\":\"\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false}],\"final_say\":\"Kitchen products are filtered, and the Blue Ceramic Mug is added to your cart.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Add Blue Ceramic Mug to cart; pick=6 button \"Add Blue Ceramic Mug to cart\"; text=none; key=none"
+    }
+   ],
+   "repeat": 2
+  },
+  {
+   "task": "search_then_link",
+   "where": "local",
+   "model": "gpt-6-astra",
+   "answer": "I did it; the one thing I couldn't confirm was: press return.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 5.23,
+   "jev_calls": 1,
+   "jev_errors": 0,
+   "jev_usd": 3.3e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-astra/2026-10-07-111407.jsonl",
+   "state": {
+    "visits": [
+     "docs/",
+     "docs/search",
+     "docs/article/solar-panel-guide"
+    ],
+    "posts": []
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 936,
+    "out": 123
+   },
+   "planner_usd": 0.01551,
+   "planner_secs": 3.65,
+   "events": [
+    "progress: opened https://docs.eve-eval.test",
+    "progress: type \"solar panels\" into Search docs",
+    "progress: press return",
+    "progress: click Solar Panel Installation Guide link"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"type\",\"target\":\"Search docs\",\"label_hint\":\"Search docs\",\"text\":\"solar panels\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"press_key\",\"target\":\"\",\"label_hint\":\"\",\"text\":\"\",\"key\":\"return\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"Solar Panel Installation Guide link\",\"label_hint\":\"\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false}],\"final_say\":\"I opened the Solar Panel Installation Guide.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click link: Solar Panel Installation Guide; pick=2 link \"Solar Panel Installation Guide\"; text=none; key=none"
+    }
+   ],
+   "repeat": 2
+  },
+  {
+   "task": "table_read",
+   "where": "local",
+   "model": "gpt-6-astra",
+   "answer": "Riverton’s population is 48,213.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 10.82,
+   "jev_calls": 0,
+   "jev_errors": 0,
+   "jev_usd": 0.0,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-astra/2026-10-07-111413.jsonl",
+   "state": {
+    "visits": [],
+    "posts": []
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 2,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 1255,
+    "out": 77
+   },
+   "planner_usd": 0.0164,
+   "planner_secs": 4.71,
+   "events": [],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"The requested table page is already open; read its visible text to find Riverton’s population.\",\"steps\":[],\"final_say\":\"\",\"success\":{\"kind\":\"url_is\",\"value\":\"https://data.eve-eval.test/towns\"}}",
+    "Riverton’s population is 48,213."
+   ],
+   "trace": [],
+   "repeat": 2
+  },
+  {
+   "task": "settings_tab_toggle",
+   "where": "local",
+   "model": "gpt-6-astra",
+   "answer": "Your weekly email digest is on and the changes are saved.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 5.4,
+   "jev_calls": 3,
+   "jev_errors": 0,
+   "jev_usd": 9.7e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-astra/2026-10-07-111424.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "settings/api/settings",
+      "data": {
+       "push": true,
+       "digest": true,
+       "sms": false,
+       "share": false
+      }
+     }
+    ]
+   },
+   "success": true,
+   "asks": [
+    "Should I go ahead: click Save changes button?"
+   ],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 919,
+    "out": 137
+   },
+   "planner_usd": 0.01604,
+   "planner_secs": 4.26,
+   "events": [
+    "progress: click Notifications tab",
+    "progress: click Weekly email digest checkbox or switch, only if off, to turn it on",
+    "ask: Should I go ahead: click Save changes button?",
+    "progress: click Save changes button"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"click\",\"target\":\"Notifications tab\",\"label_hint\":\"Notifications\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"Weekly email digest checkbox or switch, only if off, to turn it on\",\"label_hint\":\"\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"Save changes button\",\"label_hint\":\"Save changes\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":true}],\"final_say\":\"Your weekly email digest is on and the changes are saved.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "needs_human",
+     "reason": "the plan marked this step consequential",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click switch: Weekly email digest; pick=4 switch \"Weekly email digest\"; text=none; key=none"
+    },
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Save changes; pick=6 button \"Save changes\"; text=none; key=none"
+    }
+   ],
+   "repeat": 2
+  },
+  {
+   "task": "cookie_banner",
+   "where": "local",
+   "model": "gpt-6-astra",
+   "answer": "The Lemon Tart recipe is open.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 5.92,
+   "jev_calls": 1,
+   "jev_errors": 0,
+   "jev_usd": 3e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-astra/2026-10-07-111429.jsonl",
+   "state": {
+    "visits": [
+     "recipes/r/lemon-tart"
+    ],
+    "posts": []
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 969,
+    "out": 117
+   },
+   "planner_usd": 0.01554,
+   "planner_secs": 4.66,
+   "events": [
+    "progress: click Lemon Tart link"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"The Lemon Tart recipe link is on the current page.\",\"steps\":[{\"kind\":\"click\",\"target\":\"Lemon Tart link\",\"label_hint\":\"Lemon Tart\",\"text\":\"\",\"key\":\"\",\"expect\":{\"kind\":\"url_is\",\"value\":\"https://recipes.eve-eval.test/r/lemon-tart\"},\"consequential\":false}],\"final_say\":\"The Lemon Tart recipe is open.\",\"success\":{\"kind\":\"url_is\",\"value\":\"https://recipes.eve-eval.test/r/lemon-tart\"}}"
+   ],
+   "trace": [
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click link: Lemon Tart; pick=1 link \"Lemon Tart\"; text=none; key=none"
+    }
+   ],
+   "repeat": 2
+  },
+  {
+   "task": "below_the_fold",
+   "where": "local",
+   "model": "gpt-6-astra",
+   "answer": "I clicked Compare all plans.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 4.24,
+   "jev_calls": 1,
+   "jev_errors": 0,
+   "jev_usd": 2.9e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-astra/2026-10-07-111436.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "pricing/api/compare",
+      "data": {}
+     }
+    ]
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 920,
+    "out": 85
+   },
+   "planner_usd": 0.01345,
+   "planner_secs": 3.83,
+   "events": [
+    "progress: click Compare all plans button at the bottom of the page"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"The pricing page is already open and the requested button is available.\",\"steps\":[{\"kind\":\"click\",\"target\":\"Compare all plans button at the bottom of the page\",\"label_hint\":\"Compare all plans\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false}],\"final_say\":\"I clicked Compare all plans.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Compare all plans; pick=3 button \"Compare all plans\"; text=none; key=none"
+    }
+   ],
+   "repeat": 2
+  },
+  {
+   "task": "reservation_form",
+   "where": "local",
+   "model": "gpt-6-astra",
+   "answer": "Your reservation request for four on Friday at 7:00 pm under Grace Hopper has been submitted.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 7.42,
+   "jev_calls": 7,
+   "jev_errors": 0,
+   "jev_usd": 0.000269,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-astra/2026-10-07-111440.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "bistro/api/reserve",
+      "data": {
+       "party": "4",
+       "day": "Friday",
+       "time": "7:00 pm",
+       "name": "Grace Hopper"
+      }
+     }
+    ]
+   },
+   "success": true,
+   "asks": [
+    "Should I go ahead: click Request reservation button?"
+   ],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 987,
+    "out": 209
+   },
+   "planner_usd": 0.02032,
+   "planner_secs": 5.04,
+   "events": [
+    "progress: click 4 people radio button",
+    "progress: click Friday radio button",
+    "progress: click 7:00 pm radio button",
+    "progress: type \"Grace Hopper\" into Name for the booking",
+    "ask: Should I go ahead: click Request reservation button?",
+    "progress: click Request reservation button"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"click\",\"target\":\"4 people radio button\",\"label_hint\":\"4 people\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"Friday radio button\",\"label_hint\":\"Friday\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"7:00 pm radio button\",\"label_hint\":\"7:00 pm\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"type\",\"target\":\"Name for the booking\",\"label_hint\":\"Name for the booking\",\"text\":\"Grace Hopper\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"Request reservation button\",\"label_hint\":\"Request reservation\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":true}],\"final_say\":\"Your reservation request for four on Friday at 7:00 pm under Grace Hopper has been submitted.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "needs_human",
+     "reason": "the plan marked this step consequential",
+     "last_effect": "unverifiable",
+     "last_note": "typed 12 characters into text field 'Name for the booking'"
+    },
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Request reservation; pick=10 button \"Request reservation\"; text=none; key=none"
+    }
+   ],
+   "repeat": 2
+  },
+  {
+   "task": "help_read_after_nav",
+   "where": "local",
+   "model": "gpt-6-astra",
+   "answer": "Standard shipping takes 5 to 7 business days.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 11.26,
+   "jev_calls": 0,
+   "jev_errors": 0,
+   "jev_usd": 0.0,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-astra/2026-10-07-111448.jsonl",
+   "state": {
+    "visits": [
+     "help/",
+     "help/shipping"
+    ],
+    "posts": []
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 2,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 1275,
+    "out": 121
+   },
+   "planner_usd": 0.009008,
+   "planner_secs": 4.66,
+   "events": [
+    "progress: opened https://help.eve-eval.test",
+    "progress: open url https://help.eve-eval.test/shipping"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"The Shipping page will show the standard shipping timeframe.\",\"steps\":[{\"kind\":\"open_url\",\"target\":\"https://help.eve-eval.test/shipping\",\"label_hint\":\"\",\"text\":\"\",\"key\":\"\",\"expect\":{\"kind\":\"url_is\",\"value\":\"https://help.eve-eval.test/shipping\"},\"consequential\":false}],\"final_say\":\"\",\"success\":{\"kind\":\"url_is\",\"value\":\"https://help.eve-eval.test/shipping\"}}",
+    "Standard shipping takes 5 to 7 business days."
+   ],
+   "trace": [
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "opened https://help.eve-eval.test/shipping"
+    }
+   ],
+   "repeat": 2
+  },
+  {
+   "task": "contact_form",
+   "where": "local",
+   "model": "gpt-6-luna",
+   "answer": "The contact form has been sent.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 5.76,
+   "jev_calls": 4,
+   "jev_errors": 0,
+   "jev_usd": 0.000119,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-luna/2026-10-07-111704.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "forms/api/contact",
+      "data": {
+       "name": "Ada Lovelace",
+       "email": "ada@example.com",
+       "message": "Please call me back"
+      }
+     }
+    ]
+   },
+   "success": true,
+   "asks": [
+    "Should I go ahead: click button labelled Send message?"
+   ],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 932,
+    "out": 236
+   },
+   "planner_usd": 0.000211,
+   "planner_secs": 3.99,
+   "events": [
+    "progress: type \"Ada Lovelace\" into text field labelled Full name",
+    "progress: type \"ada@example.com\" into text field labelled Email address",
+    "progress: type \"Please call me back\" into text field labelled Your message",
+    "ask: Should I go ahead: click button labelled Send message?",
+    "progress: click button labelled Send message"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"type\",\"target\":\"text field labelled Full name\",\"label_hint\":\"Full name\",\"text\":\"Ada Lovelace\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"type\",\"target\":\"text field labelled Email address\",\"label_hint\":\"Email address\",\"text\":\"ada@example.com\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"type\",\"target\":\"text field labelled Your message\",\"label_hint\":\"Your message\",\"text\":\"Please call me back\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"button labelled Send message\",\"label_hint\":\"Send message\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":true}],\"final_say\":\"The contact form has been sent.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "needs_human",
+     "reason": "the plan marked this step consequential",
+     "last_effect": "unverifiable",
+     "last_note": "typed 19 characters into text field 'Your message'"
+    },
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Send message; pick=3 button \"Send message\"; text=none; key=none"
+    }
+   ],
+   "repeat": 1
+  },
+  {
+   "task": "shop_filter_cart",
+   "where": "local",
+   "model": "gpt-6-luna",
+   "answer": "The Blue Ceramic Mug has been added to your cart.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 6.99,
+   "jev_calls": 3,
+   "jev_errors": 0,
+   "jev_usd": 0.000109,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-luna/2026-10-07-111710.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "shop/api/cart",
+      "data": {
+       "item": "Blue Ceramic Mug"
+      }
+     }
+    ]
+   },
+   "success": true,
+   "asks": [
+    "Should I go ahead: click the Add Blue Ceramic Mug to cart button?"
+   ],
+   "planner_calls": 2,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 1970,
+    "out": 301
+   },
+   "planner_usd": 0.000348,
+   "planner_secs": 5.78,
+   "events": [
+    "progress: click the Kitchen tab",
+    "ask: Should I go ahead: click the Add Blue Ceramic Mug to cart button?",
+    "progress: click the Add Blue Ceramic Mug to cart button"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"click\",\"target\":\"the Kitchen tab\",\"label_hint\":\"Kitchen\",\"text\":\"\",\"key\":\"\",\"expect\":{\"kind\":\"text_visible\",\"value\":\"Kitchen\"},\"consequential\":false},{\"kind\":\"checkpoint\",\"target\":\"Inspect the Kitchen products for Blue Ceramic Mug\",\"label_hint\":\"\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false}],\"final_say\":\"I’ll show the Kitchen products and add the Blue Ceramic Mug to your cart.\",\"success\":null}",
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"click\",\"target\":\"the Add Blue Ceramic Mug to cart button\",\"label_hint\":\"Add Blue Ceramic Mug to cart\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":true}],\"final_say\":\"The Blue Ceramic Mug has been added to your cart.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "checkpoint",
+     "reason": "the planner asked to look again here",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click tab: Kitchen; pick=1 tab \"Kitchen\"; text=none; key=none"
+    },
+    {
+     "status": "needs_human",
+     "reason": "the plan marked this step consequential",
+     "last_effect": null,
+     "last_note": ""
+    },
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Add Blue Ceramic Mug to cart; pick=6 button \"Add Blue Ceramic Mug to cart\"; text=none; key=none"
+    }
+   ],
+   "repeat": 1
+  },
+  {
+   "task": "search_then_link",
+   "where": "local",
+   "model": "gpt-6-luna",
+   "answer": "I opened the Solar Panel Installation Guide.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 6.82,
+   "jev_calls": 1,
+   "jev_errors": 0,
+   "jev_usd": 3.3e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-luna/2026-10-07-111717.jsonl",
+   "state": {
+    "visits": [
+     "docs/",
+     "docs/search",
+     "docs/article/solar-panel-guide"
+    ],
+    "posts": []
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 2,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 2015,
+    "out": 335
+   },
+   "planner_usd": 0.000369,
+   "planner_secs": 5.12,
+   "events": [
+    "progress: opened https://docs.eve-eval.test",
+    "progress: type \"solar panels\" into the search field labelled Search docs",
+    "progress: press return",
+    "progress: click the link labelled Solar Panel Installation Guide"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"type\",\"target\":\"the search field labelled Search docs\",\"label_hint\":\"Search docs\",\"text\":\"solar panels\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"press_key\",\"target\":\"the Search docs field\",\"label_hint\":\"\",\"text\":\"\",\"key\":\"return\",\"expect\":null,\"consequential\":false},{\"kind\":\"checkpoint\",\"target\":\"Inspect the search results for Solar Panel Installation Guide\",\"label_hint\":\"\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false}],\"final_say\":\"I searched for solar panels and opened the Solar Panel Installation Guide.\",\"success\":null}",
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"click\",\"target\":\"the link labelled Solar Panel Installation Guide\",\"label_hint\":\"Solar Panel Installation Guide\",\"text\":\"\",\"key\":\"\",\"expect\":{\"kind\":\"url_is\",\"value\":\"https://docs.eve-eval.test/article/solar-panel-guide\"},\"consequential\":false}],\"final_say\":\"I opened the Solar Panel Installation Guide.\",\"success\":{\"kind\":\"url_is\",\"value\":\"https://docs.eve-eval.test/article/solar-panel-guide\"}}"
+   ],
+   "trace": [
+    {
+     "status": "checkpoint",
+     "reason": "the planner asked to look again here",
+     "last_effect": "unverifiable",
+     "last_note": "pressed return"
+    },
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click link: Solar Panel Installation Guide; pick=2 link \"Solar Panel Installation Guide\"; text=none; key=none"
+    }
+   ],
+   "repeat": 1
+  },
+  {
+   "task": "table_read",
+   "where": "local",
+   "model": "gpt-6-luna",
+   "answer": "Riverton’s population is 48,213.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 11.27,
+   "jev_calls": 0,
+   "jev_errors": 0,
+   "jev_usd": 0.0,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-luna/2026-10-07-111724.jsonl",
+   "state": {
+    "visits": [],
+    "posts": []
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 2,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 1255,
+    "out": 121
+   },
+   "planner_usd": 0.000186,
+   "planner_secs": 5.16,
+   "events": [],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[],\"final_say\":\"\",\"success\":{\"kind\":\"text_visible\",\"value\":\"Riverton\"}}",
+    "Riverton’s population is 48,213."
+   ],
+   "trace": [],
+   "repeat": 1
+  },
+  {
+   "task": "settings_tab_toggle",
+   "where": "local",
+   "model": "gpt-6-luna",
+   "answer": "I turned on the weekly email digest and saved your changes.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 4.88,
+   "jev_calls": 3,
+   "jev_errors": 0,
+   "jev_usd": 9.6e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-luna/2026-10-07-111736.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "settings/api/settings",
+      "data": {
+       "push": true,
+       "digest": true,
+       "sms": false,
+       "share": false
+      }
+     }
+    ]
+   },
+   "success": true,
+   "asks": [
+    "Should I go ahead: click Save changes button?"
+   ],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 919,
+    "out": 229
+   },
+   "planner_usd": 0.000206,
+   "planner_secs": 3.51,
+   "events": [
+    "progress: click Notifications tab",
+    "progress: click weekly email digest checkbox",
+    "ask: Should I go ahead: click Save changes button?",
+    "progress: click Save changes button"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"click\",\"target\":\"Notifications tab\",\"label_hint\":\"Notifications\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"weekly email digest checkbox\",\"label_hint\":\"\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"Save changes button\",\"label_hint\":\"Save changes\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":true}],\"final_say\":\"I turned on the weekly email digest and saved your changes.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "needs_human",
+     "reason": "the plan marked this step consequential",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click switch: Weekly email digest; pick=4 switch \"Weekly email digest\"; text=none; key=none"
+    },
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Save changes; pick=6 button \"Save changes\"; text=none; key=none"
+    }
+   ],
+   "repeat": 1
+  },
+  {
+   "task": "cookie_banner",
+   "where": "local",
+   "model": "gpt-6-luna",
+   "answer": "Opened the Lemon Tart recipe.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 3.78,
+   "jev_calls": 1,
+   "jev_errors": 0,
+   "jev_usd": 3e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-luna/2026-10-07-111741.jsonl",
+   "state": {
+    "visits": [
+     "recipes/r/lemon-tart"
+    ],
+    "posts": []
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 969,
+    "out": 105
+   },
+   "planner_usd": 0.000149,
+   "planner_secs": 2.6,
+   "events": [
+    "progress: click Lemon Tart link"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"click\",\"target\":\"Lemon Tart link\",\"label_hint\":\"Lemon Tart\",\"text\":\"\",\"key\":\"\",\"expect\":{\"kind\":\"url_is\",\"value\":\"https://recipes.eve-eval.test/r/lemon-tart\"},\"consequential\":false}],\"final_say\":\"Opened the Lemon Tart recipe.\",\"success\":{\"kind\":\"url_is\",\"value\":\"https://recipes.eve-eval.test/r/lemon-tart\"}}"
+   ],
+   "trace": [
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click link: Lemon Tart; pick=1 link \"Lemon Tart\"; text=none; key=none"
+    }
+   ],
+   "repeat": 1
+  },
+  {
+   "task": "below_the_fold",
+   "where": "local",
+   "model": "gpt-6-luna",
+   "answer": "I clicked Compare all plans.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 2.76,
+   "jev_calls": 1,
+   "jev_errors": 0,
+   "jev_usd": 2.9e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-luna/2026-10-07-111745.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "pricing/api/compare",
+      "data": {}
+     }
+    ]
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 920,
+    "out": 96
+   },
+   "planner_usd": 0.00014,
+   "planner_secs": 2.41,
+   "events": [
+    "progress: click the Compare all plans button"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"click\",\"target\":\"the Compare all plans button\",\"label_hint\":\"Compare all plans\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false}],\"final_say\":\"I clicked Compare all plans.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Compare all plans; pick=3 button \"Compare all plans\"; text=none; key=none"
+    }
+   ],
+   "repeat": 1
+  },
+  {
+   "task": "reservation_form",
+   "where": "local",
+   "model": "gpt-6-luna",
+   "answer": "Your reservation request for four at 7:00 pm on Friday is ready under Grace Hopper.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 8.02,
+   "jev_calls": 7,
+   "jev_errors": 0,
+   "jev_usd": 0.00027,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-luna/2026-10-07-111748.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "bistro/api/reserve",
+      "data": {
+       "party": "4",
+       "day": "Friday",
+       "time": "7:00 pm",
+       "name": "Grace Hopper"
+      }
+     }
+    ]
+   },
+   "success": true,
+   "asks": [
+    "Should I go ahead: click the Request reservation button?"
+   ],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 987,
+    "out": 308
+   },
+   "planner_usd": 0.000253,
+   "planner_secs": 3.9,
+   "events": [
+    "progress: click the 4 people radio button",
+    "progress: click the Friday radio button",
+    "progress: click the 7:00 pm radio button",
+    "progress: type \"Grace Hopper\" into the Name for the booking text field",
+    "ask: Should I go ahead: click the Request reservation button?",
+    "progress: click the Request reservation button"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"click\",\"target\":\"the 4 people radio button\",\"label_hint\":\"4 people\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"the Friday radio button\",\"label_hint\":\"Friday\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"the 7:00 pm radio button\",\"label_hint\":\"7:00 pm\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"type\",\"target\":\"the Name for the booking text field\",\"label_hint\":\"Name for the booking\",\"text\":\"Grace Hopper\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"the Request reservation button\",\"label_hint\":\"Request reservation\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":true}],\"final_say\":\"Your reservation request for four at 7:00 pm on Friday is ready under Grace Hopper.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "needs_human",
+     "reason": "the plan marked this step consequential",
+     "last_effect": "unverifiable",
+     "last_note": "typed 12 characters into text field 'Name for the booking'"
+    },
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Request reservation; pick=10 button \"Request reservation\"; text=none; key=none"
+    }
+   ],
+   "repeat": 1
+  },
+  {
+   "task": "help_read_after_nav",
+   "where": "local",
+   "model": "gpt-6-luna",
+   "answer": "Standard shipping takes 5 to 7 business days.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 12.51,
+   "jev_calls": 1,
+   "jev_errors": 0,
+   "jev_usd": 2.9e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-luna/2026-10-07-111756.jsonl",
+   "state": {
+    "visits": [
+     "help/",
+     "help/shipping"
+    ],
+    "posts": []
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 2,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 1275,
+    "out": 138
+   },
+   "planner_usd": 0.000197,
+   "planner_secs": 5.33,
+   "events": [
+    "progress: opened https://help.eve-eval.test",
+    "progress: click Shipping link"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"click\",\"target\":\"Shipping link\",\"label_hint\":\"Shipping\",\"text\":\"\",\"key\":\"\",\"expect\":{\"kind\":\"url_is\",\"value\":\"https://help.eve-eval.test/shipping\"},\"consequential\":false}],\"final_say\":\"\",\"success\":{\"kind\":\"url_is\",\"value\":\"https://help.eve-eval.test/shipping\"}}",
+    "Standard shipping takes 5 to 7 business days."
+   ],
+   "trace": [
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click link: Shipping; pick=1 link \"Shipping\"; text=none; key=none"
+    }
+   ],
+   "repeat": 1
+  },
+  {
+   "task": "contact_form",
+   "where": "local",
+   "model": "gpt-6-luna",
+   "answer": "I’ve sent your contact form.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 5.51,
+   "jev_calls": 4,
+   "jev_errors": 0,
+   "jev_usd": 0.000119,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-luna/2026-10-07-111809.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "forms/api/contact",
+      "data": {
+       "name": "Ada Lovelace",
+       "email": "ada@example.com",
+       "message": "Please call me back"
+      }
+     }
+    ]
+   },
+   "success": true,
+   "asks": [
+    "Should I go ahead: click button labelled Send message?"
+   ],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 932,
+    "out": 229
+   },
+   "planner_usd": 0.000208,
+   "planner_secs": 3.51,
+   "events": [
+    "progress: type \"Ada Lovelace\" into text field labelled Full name",
+    "progress: type \"ada@example.com\" into text field labelled Email address",
+    "progress: type \"Please call me back\" into text field labelled Your message",
+    "ask: Should I go ahead: click button labelled Send message?",
+    "progress: click button labelled Send message"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"type\",\"target\":\"text field labelled Full name\",\"label_hint\":\"Full name\",\"text\":\"Ada Lovelace\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"type\",\"target\":\"text field labelled Email address\",\"label_hint\":\"Email address\",\"text\":\"ada@example.com\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"type\",\"target\":\"text field labelled Your message\",\"label_hint\":\"Your message\",\"text\":\"Please call me back\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"button labelled Send message\",\"label_hint\":\"Send message\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":true}],\"final_say\":\"I’ve sent your contact form.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "needs_human",
+     "reason": "the plan marked this step consequential",
+     "last_effect": "unverifiable",
+     "last_note": "typed 19 characters into text field 'Your message'"
+    },
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Send message; pick=3 button \"Send message\"; text=none; key=none"
+    }
+   ],
+   "repeat": 2
+  },
+  {
+   "task": "shop_filter_cart",
+   "where": "local",
+   "model": "gpt-6-luna",
+   "answer": "I’ve filtered the shop to Kitchen and added the Blue Ceramic Mug to your cart.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 3.94,
+   "jev_calls": 2,
+   "jev_errors": 0,
+   "jev_usd": 7.3e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-luna/2026-10-07-111815.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "shop/api/cart",
+      "data": {
+       "item": "Blue Ceramic Mug"
+      }
+     }
+    ]
+   },
+   "success": true,
+   "asks": [
+    "Should I go ahead: click Add Blue Ceramic Mug to cart button?"
+   ],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 969,
+    "out": 183
+   },
+   "planner_usd": 0.000188,
+   "planner_secs": 3.16,
+   "events": [
+    "progress: click Kitchen tab",
+    "ask: Should I go ahead: click Add Blue Ceramic Mug to cart button?",
+    "progress: click Add Blue Ceramic Mug to cart button"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"click\",\"target\":\"Kitchen tab\",\"label_hint\":\"Kitchen\",\"text\":\"\",\"key\":\"\",\"expect\":{\"kind\":\"text_visible\",\"value\":\"Blue Ceramic Mug\"},\"consequential\":false},{\"kind\":\"click\",\"target\":\"Add Blue Ceramic Mug to cart button\",\"label_hint\":\"\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":true}],\"final_say\":\"I’ve filtered the shop to Kitchen and added the Blue Ceramic Mug to your cart.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "needs_human",
+     "reason": "the plan marked this step consequential",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click tab: Kitchen; pick=1 tab \"Kitchen\"; text=none; key=none"
+    },
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Add Blue Ceramic Mug to cart; pick=6 button \"Add Blue Ceramic Mug to cart\"; text=none; key=none"
+    }
+   ],
+   "repeat": 2
+  },
+  {
+   "task": "search_then_link",
+   "where": "local",
+   "model": "gpt-6-luna",
+   "answer": "Opened the Solar Panel Installation Guide.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 8.64,
+   "jev_calls": 1,
+   "jev_errors": 0,
+   "jev_usd": 3.3e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-luna/2026-10-07-111819.jsonl",
+   "state": {
+    "visits": [
+     "docs/",
+     "docs/search",
+     "docs/article/solar-panel-guide"
+    ],
+    "posts": []
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 2,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 2012,
+    "out": 351
+   },
+   "planner_usd": 0.000377,
+   "planner_secs": 6.99,
+   "events": [
+    "progress: opened https://docs.eve-eval.test",
+    "progress: type \"solar panels\" into Search docs field",
+    "progress: press return",
+    "progress: click the link labelled Solar Panel Installation Guide"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"type\",\"target\":\"Search docs field\",\"label_hint\":\"Search docs\",\"text\":\"solar panels\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"press_key\",\"target\":\"Search docs field\",\"label_hint\":\"\",\"text\":\"\",\"key\":\"return\",\"expect\":null,\"consequential\":false},{\"kind\":\"checkpoint\",\"target\":\"Inspect the search results and open the Solar Panel Installation Guide\",\"label_hint\":\"\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false}],\"final_say\":\"I searched for solar panels and opened the Solar Panel Installation Guide.\",\"success\":null}",
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"click\",\"target\":\"the link labelled Solar Panel Installation Guide\",\"label_hint\":\"Solar Panel Installation Guide\",\"text\":\"\",\"key\":\"\",\"expect\":{\"kind\":\"url_is\",\"value\":\"https://docs.eve-eval.test/article/solar-panel-guide\"},\"consequential\":false}],\"final_say\":\"Opened the Solar Panel Installation Guide.\",\"success\":{\"kind\":\"url_is\",\"value\":\"https://docs.eve-eval.test/article/solar-panel-guide\"}}"
+   ],
+   "trace": [
+    {
+     "status": "checkpoint",
+     "reason": "the planner asked to look again here",
+     "last_effect": "unverifiable",
+     "last_note": "pressed return"
+    },
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click link: Solar Panel Installation Guide; pick=2 link \"Solar Panel Installation Guide\"; text=none; key=none"
+    }
+   ],
+   "repeat": 2
+  },
+  {
+   "task": "table_read",
+   "where": "local",
+   "model": "gpt-6-luna",
+   "answer": "Riverton’s population is 48,213.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 8.58,
+   "jev_calls": 0,
+   "jev_errors": 0,
+   "jev_usd": 0.0,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-luna/2026-10-07-111828.jsonl",
+   "state": {
+    "visits": [],
+    "posts": []
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 2,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 1255,
+    "out": 42
+   },
+   "planner_usd": 0.000146,
+   "planner_secs": 2.48,
+   "events": [],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[],\"final_say\":\"\",\"success\":null}",
+    "Riverton’s population is 48,213."
+   ],
+   "trace": [],
+   "repeat": 2
+  },
+  {
+   "task": "settings_tab_toggle",
+   "where": "local",
+   "model": "gpt-6-luna",
+   "answer": "The weekly email digest is turned on and your changes are saved.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 5.61,
+   "jev_calls": 3,
+   "jev_errors": 0,
+   "jev_usd": 9.6e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-luna/2026-10-07-111837.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "settings/api/settings",
+      "data": {
+       "push": true,
+       "digest": true,
+       "sms": false,
+       "share": false
+      }
+     }
+    ]
+   },
+   "success": true,
+   "asks": [
+    "Should I go ahead: click Save changes button?"
+   ],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 919,
+    "out": 333
+   },
+   "planner_usd": 0.000258,
+   "planner_secs": 4.45,
+   "events": [
+    "progress: click Notifications tab",
+    "progress: click Weekly email digest checkbox or switch",
+    "ask: Should I go ahead: click Save changes button?",
+    "progress: click Save changes button"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"click\",\"target\":\"Notifications tab\",\"label_hint\":\"Notifications\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"Weekly email digest checkbox or switch\",\"label_hint\":\"\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"Save changes button\",\"label_hint\":\"Save changes\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":true}],\"final_say\":\"The weekly email digest is turned on and your changes are saved.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "needs_human",
+     "reason": "the plan marked this step consequential",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click switch: Weekly email digest; pick=4 switch \"Weekly email digest\"; text=none; key=none"
+    },
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Save changes; pick=6 button \"Save changes\"; text=none; key=none"
+    }
+   ],
+   "repeat": 2
+  },
+  {
+   "task": "cookie_banner",
+   "where": "local",
+   "model": "gpt-6-luna",
+   "answer": "Opened the Lemon Tart recipe.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 3.75,
+   "jev_calls": 1,
+   "jev_errors": 0,
+   "jev_usd": 3e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-luna/2026-10-07-111843.jsonl",
+   "state": {
+    "visits": [
+     "recipes/r/lemon-tart"
+    ],
+    "posts": []
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 969,
+    "out": 105
+   },
+   "planner_usd": 0.000149,
+   "planner_secs": 2.42,
+   "events": [
+    "progress: click the Lemon Tart link"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"click\",\"target\":\"the Lemon Tart link\",\"label_hint\":\"Lemon Tart\",\"text\":\"\",\"key\":\"\",\"expect\":{\"kind\":\"url_is\",\"value\":\"https://recipes.eve-eval.test/r/lemon-tart\"},\"consequential\":false}],\"final_say\":\"Opened the Lemon Tart recipe.\",\"success\":{\"kind\":\"url_is\",\"value\":\"https://recipes.eve-eval.test/r/lemon-tart\"}}"
+   ],
+   "trace": [
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click link: Lemon Tart; pick=1 link \"Lemon Tart\"; text=none; key=none"
+    }
+   ],
+   "repeat": 2
+  },
+  {
+   "task": "below_the_fold",
+   "where": "local",
+   "model": "gpt-6-luna",
+   "answer": "I clicked Compare all plans.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 2.66,
+   "jev_calls": 1,
+   "jev_errors": 0,
+   "jev_usd": 2.9e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-luna/2026-10-07-111847.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "pricing/api/compare",
+      "data": {}
+     }
+    ]
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 920,
+    "out": 132
+   },
+   "planner_usd": 0.000158,
+   "planner_secs": 2.28,
+   "events": [
+    "progress: click the Compare all plans button"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"click\",\"target\":\"the Compare all plans button\",\"label_hint\":\"Compare all plans\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false}],\"final_say\":\"I clicked Compare all plans.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Compare all plans; pick=3 button \"Compare all plans\"; text=none; key=none"
+    }
+   ],
+   "repeat": 2
+  },
+  {
+   "task": "reservation_form",
+   "where": "local",
+   "model": "gpt-6-luna",
+   "answer": "I’ve submitted the reservation request for four at 7:00 pm Friday under Grace Hopper.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 7.27,
+   "jev_calls": 7,
+   "jev_errors": 0,
+   "jev_usd": 0.00027,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-luna/2026-10-07-111850.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "bistro/api/reserve",
+      "data": {
+       "party": "4",
+       "day": "Friday",
+       "time": "7:00 pm",
+       "name": "Grace Hopper"
+      }
+     }
+    ]
+   },
+   "success": true,
+   "asks": [
+    "Should I go ahead: click the Request reservation button?"
+   ],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 987,
+    "out": 343
+   },
+   "planner_usd": 0.00027,
+   "planner_secs": 4.38,
+   "events": [
+    "progress: click the 4 people radio button",
+    "progress: click the Friday radio button",
+    "progress: click the 7:00 pm radio button",
+    "progress: type \"Grace Hopper\" into the Name for the booking text field",
+    "ask: Should I go ahead: click the Request reservation button?",
+    "progress: click the Request reservation button"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"click\",\"target\":\"the 4 people radio button\",\"label_hint\":\"4 people\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"the Friday radio button\",\"label_hint\":\"Friday\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"the 7:00 pm radio button\",\"label_hint\":\"7:00 pm\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"type\",\"target\":\"the Name for the booking text field\",\"label_hint\":\"Name for the booking\",\"text\":\"Grace Hopper\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"the Request reservation button\",\"label_hint\":\"Request reservation\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":true}],\"final_say\":\"I’ve submitted the reservation request for four at 7:00 pm Friday under Grace Hopper.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "needs_human",
+     "reason": "the plan marked this step consequential",
+     "last_effect": "unverifiable",
+     "last_note": "typed 12 characters into text field 'Name for the booking'"
+    },
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Request reservation; pick=10 button \"Request reservation\"; text=none; key=none"
+    }
+   ],
+   "repeat": 2
+  },
+  {
+   "task": "help_read_after_nav",
+   "where": "local",
+   "model": "gpt-6-luna",
+   "answer": "Standard shipping takes 5 to 7 business days.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 10.57,
+   "jev_calls": 1,
+   "jev_errors": 0,
+   "jev_usd": 2.9e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-luna/2026-10-07-111857.jsonl",
+   "state": {
+    "visits": [
+     "help/",
+     "help/shipping"
+    ],
+    "posts": []
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 2,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 1275,
+    "out": 96
+   },
+   "planner_usd": 7.8e-05,
+   "planner_secs": 3.58,
+   "events": [
+    "progress: opened https://help.eve-eval.test",
+    "progress: click Shipping link"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"click\",\"target\":\"Shipping link\",\"label_hint\":\"Shipping\",\"text\":\"\",\"key\":\"\",\"expect\":{\"kind\":\"url_is\",\"value\":\"https://help.eve-eval.test/shipping\"},\"consequential\":false}],\"final_say\":\"\",\"success\":{\"kind\":\"text_visible\",\"value\":\"standard shipping\"}}",
+    "Standard shipping takes 5 to 7 business days."
+   ],
+   "trace": [
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click link: Shipping; pick=1 link \"Shipping\"; text=none; key=none"
+    }
+   ],
+   "repeat": 2
+  },
+  {
+   "task": "contact_form",
+   "where": "local",
+   "model": "gpt-6-sol",
+   "answer": "Your message has been sent.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 6.49,
+   "jev_calls": 4,
+   "jev_errors": 0,
+   "jev_usd": 0.000119,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-sol/2026-10-07-111459.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "forms/api/contact",
+      "data": {
+       "name": "Ada Lovelace",
+       "email": "ada@example.com",
+       "message": "Please call me back"
+      }
+     }
+    ]
+   },
+   "success": true,
+   "asks": [
+    "Should I go ahead: click Send message button?"
+   ],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 932,
+    "out": 171
+   },
+   "planner_usd": 0.003574,
+   "planner_secs": 3.18,
+   "events": [
+    "progress: type \"Ada Lovelace\" into Full name text field",
+    "progress: type \"ada@example.com\" into Email address text field",
+    "progress: type \"Please call me back\" into Your message text field",
+    "ask: Should I go ahead: click Send message button?",
+    "progress: click Send message button"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"type\",\"target\":\"Full name text field\",\"label_hint\":\"Full name\",\"text\":\"Ada Lovelace\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"type\",\"target\":\"Email address text field\",\"label_hint\":\"Email address\",\"text\":\"ada@example.com\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"type\",\"target\":\"Your message text field\",\"label_hint\":\"Your message\",\"text\":\"Please call me back\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"Send message button\",\"label_hint\":\"Send message\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":true}],\"final_say\":\"Your message has been sent.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "needs_human",
+     "reason": "the plan marked this step consequential",
+     "last_effect": "unverifiable",
+     "last_note": "typed 19 characters into text field 'Your message'"
+    },
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Send message; pick=3 button \"Send message\"; text=none; key=none"
+    }
+   ],
+   "repeat": 1
+  },
+  {
+   "task": "shop_filter_cart",
+   "where": "local",
+   "model": "gpt-6-sol",
+   "answer": "Kitchen products are showing, and the Blue Ceramic Mug is in your cart.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 4.47,
+   "jev_calls": 3,
+   "jev_errors": 0,
+   "jev_usd": 0.00011,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-sol/2026-10-07-111506.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "shop/api/cart",
+      "data": {
+       "item": "Blue Ceramic Mug"
+      }
+     }
+    ]
+   },
+   "success": true,
+   "asks": [
+    "Should I go ahead: Add Blue Ceramic Mug to cart?"
+   ],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 969,
+    "out": 167
+   },
+   "planner_usd": 0.003608,
+   "planner_secs": 3.25,
+   "events": [
+    "progress: click Kitchen tab",
+    "ask: Should I go ahead: Add Blue Ceramic Mug to cart?",
+    "progress: click Add Blue Ceramic Mug to cart button"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"click\",\"target\":\"Kitchen tab\",\"label_hint\":\"Kitchen\",\"text\":\"\",\"key\":\"\",\"expect\":{\"kind\":\"text_visible\",\"value\":\"Blue Ceramic Mug\"},\"consequential\":false},{\"kind\":\"click\",\"target\":\"Add Blue Ceramic Mug to cart button\",\"label_hint\":\"\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false}],\"final_say\":\"Kitchen products are showing, and the Blue Ceramic Mug is in your cart.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "needs_human",
+     "reason": "a consequential control",
+     "last_effect": "refused",
+     "last_note": "confirm: \"Add Blue Ceramic Mug to cart\" needs the human's yes; app=\"browser\"; action=click; steps=0; last=none; text=none; key=none"
+    },
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Add Blue Ceramic Mug to cart; pick=6 button \"Add Blue Ceramic Mug to cart\"; text=none; key=none"
+    }
+   ],
+   "repeat": 1
+  },
+  {
+   "task": "search_then_link",
+   "where": "local",
+   "model": "gpt-6-sol",
+   "answer": "I opened the Solar Panel Installation Guide.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 8.47,
+   "jev_calls": 1,
+   "jev_errors": 0,
+   "jev_usd": 3.3e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-sol/2026-10-07-111511.jsonl",
+   "state": {
+    "visits": [
+     "docs/",
+     "docs/search",
+     "docs/article/solar-panel-guide"
+    ],
+    "posts": []
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 2,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 2013,
+    "out": 275
+   },
+   "planner_usd": 0.006776,
+   "planner_secs": 6.76,
+   "events": [
+    "progress: opened https://docs.eve-eval.test",
+    "progress: type \"solar panels\" into Search docs search field",
+    "progress: press return",
+    "progress: click Solar Panel Installation Guide link"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"The search results need to be inspected before choosing the guide.\",\"steps\":[{\"kind\":\"type\",\"target\":\"Search docs search field\",\"label_hint\":\"Search docs\",\"text\":\"solar panels\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"press_key\",\"target\":\"Search docs search field\",\"label_hint\":\"\",\"text\":\"\",\"key\":\"return\",\"expect\":null,\"consequential\":false},{\"kind\":\"checkpoint\",\"target\":\"Search results for solar panels\",\"label_hint\":\"\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false}],\"final_say\":\"I found the Solar Panel Installation Guide.\",\"success\":null}",
+    "{\"needs_eyes\":false,\"why\":\"The requested guide is listed in the search results.\",\"steps\":[{\"kind\":\"click\",\"target\":\"Solar Panel Installation Guide link\",\"label_hint\":\"Solar Panel Installation Guide\",\"text\":\"\",\"key\":\"\",\"expect\":{\"kind\":\"url_is\",\"value\":\"https://docs.eve-eval.test/article/solar-panel-guide\"},\"consequential\":false}],\"final_say\":\"I opened the Solar Panel Installation Guide.\",\"success\":{\"kind\":\"url_is\",\"value\":\"https://docs.eve-eval.test/article/solar-panel-guide\"}}"
+   ],
+   "trace": [
+    {
+     "status": "checkpoint",
+     "reason": "the planner asked to look again here",
+     "last_effect": "unverifiable",
+     "last_note": "pressed return"
+    },
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click link: Solar Panel Installation Guide; pick=2 link \"Solar Panel Installation Guide\"; text=none; key=none"
+    }
+   ],
+   "repeat": 1
+  },
+  {
+   "task": "table_read",
+   "where": "local",
+   "model": "gpt-6-sol",
+   "answer": "Riverton’s population is 48,213.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 9.46,
+   "jev_calls": 0,
+   "jev_errors": 0,
+   "jev_usd": 0.0,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-sol/2026-10-07-111519.jsonl",
+   "state": {
+    "visits": [],
+    "posts": []
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 2,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 1255,
+    "out": 68
+   },
+   "planner_usd": 0.00319,
+   "planner_secs": 3.36,
+   "events": [],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"The requested table is already open.\",\"steps\":[],\"final_say\":\"\",\"success\":null}",
+    "Riverton’s population is 48,213."
+   ],
+   "trace": [],
+   "repeat": 1
+  },
+  {
+   "task": "settings_tab_toggle",
+   "where": "local",
+   "model": "gpt-6-sol",
+   "answer": "The weekly email digest is on and your changes are saved.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 4.32,
+   "jev_calls": 3,
+   "jev_errors": 0,
+   "jev_usd": 9.6e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-sol/2026-10-07-111529.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "settings/api/settings",
+      "data": {
+       "push": true,
+       "digest": true,
+       "sms": false,
+       "share": false
+      }
+     }
+    ]
+   },
+   "success": true,
+   "asks": [
+    "Should I go ahead: click Save changes button?"
+   ],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 919,
+    "out": 154
+   },
+   "planner_usd": 0.003378,
+   "planner_secs": 3.05,
+   "events": [
+    "progress: click Notifications tab",
+    "progress: click Weekly email digest switch or checkbox",
+    "ask: Should I go ahead: click Save changes button?",
+    "progress: click Save changes button"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"The settings page is already open.\",\"steps\":[{\"kind\":\"click\",\"target\":\"Notifications tab\",\"label_hint\":\"Notifications\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"Weekly email digest switch or checkbox\",\"label_hint\":\"\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"Save changes button\",\"label_hint\":\"Save changes\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":true}],\"final_say\":\"The weekly email digest is on and your changes are saved.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "needs_human",
+     "reason": "the plan marked this step consequential",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click switch: Weekly email digest; pick=4 switch \"Weekly email digest\"; text=none; key=none"
+    },
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Save changes; pick=6 button \"Save changes\"; text=none; key=none"
+    }
+   ],
+   "repeat": 1
+  },
+  {
+   "task": "cookie_banner",
+   "where": "local",
+   "model": "gpt-6-sol",
+   "answer": "The Lemon Tart recipe is open.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 4.82,
+   "jev_calls": 1,
+   "jev_errors": 0,
+   "jev_usd": 3e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-sol/2026-10-07-111534.jsonl",
+   "state": {
+    "visits": [
+     "recipes/r/lemon-tart"
+    ],
+    "posts": []
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 969,
+    "out": 117
+   },
+   "planner_usd": 0.003108,
+   "planner_secs": 3.37,
+   "events": [
+    "progress: click Lemon Tart link"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"The requested recipe link is visible on the open site.\",\"steps\":[{\"kind\":\"click\",\"target\":\"Lemon Tart link\",\"label_hint\":\"Lemon Tart\",\"text\":\"\",\"key\":\"\",\"expect\":{\"kind\":\"url_is\",\"value\":\"https://recipes.eve-eval.test/r/lemon-tart\"},\"consequential\":false}],\"final_say\":\"The Lemon Tart recipe is open.\",\"success\":{\"kind\":\"url_is\",\"value\":\"https://recipes.eve-eval.test/r/lemon-tart\"}}"
+   ],
+   "trace": [
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click link: Lemon Tart; pick=1 link \"Lemon Tart\"; text=none; key=none"
+    }
+   ],
+   "repeat": 1
+  },
+  {
+   "task": "below_the_fold",
+   "where": "local",
+   "model": "gpt-6-sol",
+   "answer": "I clicked Compare all plans.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 2.77,
+   "jev_calls": 1,
+   "jev_errors": 0,
+   "jev_usd": 2.9e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-sol/2026-10-07-111539.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "pricing/api/compare",
+      "data": {}
+     }
+    ]
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 920,
+    "out": 79
+   },
+   "planner_usd": 0.00263,
+   "planner_secs": 2.31,
+   "events": [
+    "progress: click Compare all plans button"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"The pricing page is already open and the requested button is available.\",\"steps\":[{\"kind\":\"click\",\"target\":\"Compare all plans button\",\"label_hint\":\"Compare all plans\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false}],\"final_say\":\"I clicked Compare all plans.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Compare all plans; pick=3 button \"Compare all plans\"; text=none; key=none"
+    }
+   ],
+   "repeat": 1
+  },
+  {
+   "task": "reservation_form",
+   "where": "local",
+   "model": "gpt-6-sol",
+   "answer": "Your reservation request for four on Friday at 7 pm under Grace Hopper has been submitted.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 6.31,
+   "jev_calls": 7,
+   "jev_errors": 0,
+   "jev_usd": 0.000269,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-sol/2026-10-07-111542.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "bistro/api/reserve",
+      "data": {
+       "party": "4",
+       "day": "Friday",
+       "time": "7:00 pm",
+       "name": "Grace Hopper"
+      }
+     }
+    ]
+   },
+   "success": true,
+   "asks": [
+    "Should I go ahead: click Request reservation button?"
+   ],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 987,
+    "out": 209
+   },
+   "planner_usd": 0.004064,
+   "planner_secs": 3.56,
+   "events": [
+    "progress: click 4 people radio button",
+    "progress: click Friday radio button",
+    "progress: click 7:00 pm radio button",
+    "progress: type \"Grace Hopper\" into Name for the booking text field",
+    "ask: Should I go ahead: click Request reservation button?",
+    "progress: click Request reservation button"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"click\",\"target\":\"4 people radio button\",\"label_hint\":\"4 people\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"Friday radio button\",\"label_hint\":\"Friday\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"7:00 pm radio button\",\"label_hint\":\"7:00 pm\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"type\",\"target\":\"Name for the booking text field\",\"label_hint\":\"Name for the booking\",\"text\":\"Grace Hopper\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"Request reservation button\",\"label_hint\":\"Request reservation\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":true}],\"final_say\":\"Your reservation request for four on Friday at 7 pm under Grace Hopper has been submitted.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "needs_human",
+     "reason": "the plan marked this step consequential",
+     "last_effect": "unverifiable",
+     "last_note": "typed 12 characters into text field 'Name for the booking'"
+    },
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Request reservation; pick=10 button \"Request reservation\"; text=none; key=none"
+    }
+   ],
+   "repeat": 1
+  },
+  {
+   "task": "help_read_after_nav",
+   "where": "local",
+   "model": "gpt-6-sol",
+   "answer": "Standard shipping takes 5 to 7 business days.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 11.27,
+   "jev_calls": 1,
+   "jev_errors": 0,
+   "jev_usd": 2.9e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-sol/2026-10-07-111548.jsonl",
+   "state": {
+    "visits": [
+     "help/",
+     "help/shipping"
+    ],
+    "posts": []
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 2,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 1275,
+    "out": 114
+   },
+   "planner_usd": 0.00369,
+   "planner_secs": 4.27,
+   "events": [
+    "progress: opened https://help.eve-eval.test",
+    "progress: click Shipping link"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"The Shipping page should show the standard shipping timeframe.\",\"steps\":[{\"kind\":\"click\",\"target\":\"Shipping link\",\"label_hint\":\"Shipping\",\"text\":\"\",\"key\":\"\",\"expect\":{\"kind\":\"url_is\",\"value\":\"https://help.eve-eval.test/shipping\"},\"consequential\":false}],\"final_say\":\"\",\"success\":{\"kind\":\"url_is\",\"value\":\"https://help.eve-eval.test/shipping\"}}",
+    "Standard shipping takes 5 to 7 business days."
+   ],
+   "trace": [
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click link: Shipping; pick=1 link \"Shipping\"; text=none; key=none"
+    }
+   ],
+   "repeat": 1
+  },
+  {
+   "task": "contact_form",
+   "where": "local",
+   "model": "gpt-6-sol",
+   "answer": "Your message has been sent.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 5.27,
+   "jev_calls": 4,
+   "jev_errors": 0,
+   "jev_usd": 0.000119,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-sol/2026-10-07-111600.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "forms/api/contact",
+      "data": {
+       "name": "Ada Lovelace",
+       "email": "ada@example.com",
+       "message": "Please call me back"
+      }
+     }
+    ]
+   },
+   "success": true,
+   "asks": [
+    "Should I go ahead: click Send message button?"
+   ],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 932,
+    "out": 178
+   },
+   "planner_usd": 0.003644,
+   "planner_secs": 3.64,
+   "events": [
+    "progress: type \"Ada Lovelace\" into Full name text field",
+    "progress: type \"ada@example.com\" into Email address text field",
+    "progress: type \"Please call me back\" into Your message text field",
+    "ask: Should I go ahead: click Send message button?",
+    "progress: click Send message button"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"The contact form is already open.\",\"steps\":[{\"kind\":\"type\",\"target\":\"Full name text field\",\"label_hint\":\"Full name\",\"text\":\"Ada Lovelace\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"type\",\"target\":\"Email address text field\",\"label_hint\":\"Email address\",\"text\":\"ada@example.com\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"type\",\"target\":\"Your message text field\",\"label_hint\":\"Your message\",\"text\":\"Please call me back\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"Send message button\",\"label_hint\":\"Send message\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":true}],\"final_say\":\"Your message has been sent.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "needs_human",
+     "reason": "the plan marked this step consequential",
+     "last_effect": "unverifiable",
+     "last_note": "typed 19 characters into text field 'Your message'"
+    },
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Send message; pick=3 button \"Send message\"; text=none; key=none"
+    }
+   ],
+   "repeat": 2
+  },
+  {
+   "task": "shop_filter_cart",
+   "where": "local",
+   "model": "gpt-6-sol",
+   "answer": "Kitchen products are showing, and the Blue Ceramic Mug is in your cart.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 4.36,
+   "jev_calls": 3,
+   "jev_errors": 0,
+   "jev_usd": 0.00011,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-sol/2026-10-07-111605.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "shop/api/cart",
+      "data": {
+       "item": "Blue Ceramic Mug"
+      }
+     }
+    ]
+   },
+   "success": true,
+   "asks": [
+    "Should I go ahead: Add Blue Ceramic Mug to cart?"
+   ],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 969,
+    "out": 165
+   },
+   "planner_usd": 0.003588,
+   "planner_secs": 3.18,
+   "events": [
+    "progress: click Kitchen tab",
+    "ask: Should I go ahead: Add Blue Ceramic Mug to cart?",
+    "progress: click Add Blue Ceramic Mug to cart button"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"The shop is open and has a Kitchen tab.\",\"steps\":[{\"kind\":\"click\",\"target\":\"Kitchen tab\",\"label_hint\":\"Kitchen\",\"text\":\"\",\"key\":\"\",\"expect\":{\"kind\":\"text_visible\",\"value\":\"Blue Ceramic Mug\"},\"consequential\":false},{\"kind\":\"click\",\"target\":\"Add Blue Ceramic Mug to cart button\",\"label_hint\":\"\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false}],\"final_say\":\"Kitchen products are showing, and the Blue Ceramic Mug is in your cart.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "needs_human",
+     "reason": "a consequential control",
+     "last_effect": "refused",
+     "last_note": "confirm: \"Add Blue Ceramic Mug to cart\" needs the human's yes; app=\"browser\"; action=click; steps=0; last=none; text=none; key=none"
+    },
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Add Blue Ceramic Mug to cart; pick=6 button \"Add Blue Ceramic Mug to cart\"; text=none; key=none"
+    }
+   ],
+   "repeat": 2
+  },
+  {
+   "task": "search_then_link",
+   "where": "local",
+   "model": "gpt-6-sol",
+   "answer": "Opened the Solar Panel Installation Guide.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 9.47,
+   "jev_calls": 1,
+   "jev_errors": 0,
+   "jev_usd": 3.3e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-sol/2026-10-07-111610.jsonl",
+   "state": {
+    "visits": [
+     "docs/",
+     "docs/search",
+     "docs/article/solar-panel-guide"
+    ],
+    "posts": []
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 2,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 2013,
+    "out": 278
+   },
+   "planner_usd": 0.004873,
+   "planner_secs": 7.91,
+   "events": [
+    "progress: opened https://docs.eve-eval.test",
+    "progress: type \"solar panels\" into Search docs search field",
+    "progress: press return",
+    "progress: click Solar Panel Installation Guide link"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"The guide must be identified from the search results.\",\"steps\":[{\"kind\":\"type\",\"target\":\"Search docs search field\",\"label_hint\":\"Search docs\",\"text\":\"solar panels\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"press_key\",\"target\":\"Search docs search field\",\"label_hint\":\"Search docs\",\"text\":\"\",\"key\":\"return\",\"expect\":null,\"consequential\":false},{\"kind\":\"checkpoint\",\"target\":\"Inspect search results for Solar Panel Installation Guide\",\"label_hint\":\"\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false}],\"final_say\":\"I’ve opened the Solar Panel Installation Guide.\",\"success\":null}",
+    "{\"needs_eyes\":false,\"why\":\"The requested guide is listed in the search results.\",\"steps\":[{\"kind\":\"click\",\"target\":\"Solar Panel Installation Guide link\",\"label_hint\":\"Solar Panel Installation Guide\",\"text\":\"\",\"key\":\"\",\"expect\":{\"kind\":\"url_is\",\"value\":\"https://docs.eve-eval.test/article/solar-panel-guide\"},\"consequential\":false}],\"final_say\":\"Opened the Solar Panel Installation Guide.\",\"success\":{\"kind\":\"url_is\",\"value\":\"https://docs.eve-eval.test/article/solar-panel-guide\"}}"
+   ],
+   "trace": [
+    {
+     "status": "checkpoint",
+     "reason": "the planner asked to look again here",
+     "last_effect": "unverifiable",
+     "last_note": "pressed return"
+    },
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click link: Solar Panel Installation Guide; pick=2 link \"Solar Panel Installation Guide\"; text=none; key=none"
+    }
+   ],
+   "repeat": 2
+  },
+  {
+   "task": "table_read",
+   "where": "local",
+   "model": "gpt-6-sol",
+   "answer": "Riverton’s population is 48,213.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 9.97,
+   "jev_calls": 0,
+   "jev_errors": 0,
+   "jev_usd": 0.0,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-sol/2026-10-07-111620.jsonl",
+   "state": {
+    "visits": [],
+    "posts": []
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 2,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 1255,
+    "out": 70
+   },
+   "planner_usd": 0.00321,
+   "planner_secs": 3.89,
+   "events": [],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"The requested table is already open.\",\"steps\":[],\"final_say\":\"\",\"success\":null}",
+    "Riverton’s population is 48,213."
+   ],
+   "trace": [],
+   "repeat": 2
+  },
+  {
+   "task": "settings_tab_toggle",
+   "where": "local",
+   "model": "gpt-6-sol",
+   "answer": "",
+   "note": "[note] Before you started, a plan already did, in order: click Notifications tab; click Weekly email digest switch or checkbox; click Save changes button. It stopped there (the plan ran but \"Changes saved\" is not on screen). Start from the screenshot; do not repeat those steps.",
+   "outcome": "part_done",
+   "secs": 6.97,
+   "jev_calls": 3,
+   "jev_errors": 0,
+   "jev_usd": 9.6e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-sol/2026-10-07-111630.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "settings/api/settings",
+      "data": {
+       "push": true,
+       "digest": true,
+       "sms": false,
+       "share": false
+      }
+     }
+    ]
+   },
+   "success": true,
+   "asks": [
+    "Should I go ahead: click Save changes button?"
+   ],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 919,
+    "out": 153
+   },
+   "planner_usd": 0.003368,
+   "planner_secs": 3.4,
+   "events": [
+    "progress: click Notifications tab",
+    "progress: click Weekly email digest switch or checkbox",
+    "ask: Should I go ahead: click Save changes button?",
+    "progress: click Save changes button"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"click\",\"target\":\"Notifications tab\",\"label_hint\":\"Notifications\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"Weekly email digest switch or checkbox\",\"label_hint\":\"\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"Save changes button\",\"label_hint\":\"Save changes\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":true}],\"final_say\":\"The weekly email digest is on and your changes are saved.\",\"success\":{\"kind\":\"text_visible\",\"value\":\"Changes saved\"}}"
+   ],
+   "trace": [
+    {
+     "status": "needs_human",
+     "reason": "the plan marked this step consequential",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click switch: Weekly email digest; pick=4 switch \"Weekly email digest\"; text=none; key=none"
+    },
+    {
+     "status": "partial",
+     "reason": "the plan ran but \"Changes saved\" is not on screen",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Save changes; pick=6 button \"Save changes\"; text=none; key=none"
+    }
+   ],
+   "repeat": 2
+  },
+  {
+   "task": "cookie_banner",
+   "where": "local",
+   "model": "gpt-6-sol",
+   "answer": "The Lemon Tart recipe is open.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 4.76,
+   "jev_calls": 1,
+   "jev_errors": 0,
+   "jev_usd": 3e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-sol/2026-10-07-111637.jsonl",
+   "state": {
+    "visits": [
+     "recipes/r/lemon-tart"
+    ],
+    "posts": []
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 969,
+    "out": 106
+   },
+   "planner_usd": 0.002998,
+   "planner_secs": 3.53,
+   "events": [
+    "progress: click Lemon Tart link"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"click\",\"target\":\"Lemon Tart link\",\"label_hint\":\"Lemon Tart\",\"text\":\"\",\"key\":\"\",\"expect\":{\"kind\":\"url_is\",\"value\":\"https://recipes.eve-eval.test/r/lemon-tart\"},\"consequential\":false}],\"final_say\":\"The Lemon Tart recipe is open.\",\"success\":{\"kind\":\"url_is\",\"value\":\"https://recipes.eve-eval.test/r/lemon-tart\"}}"
+   ],
+   "trace": [
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click link: Lemon Tart; pick=1 link \"Lemon Tart\"; text=none; key=none"
+    }
+   ],
+   "repeat": 2
+  },
+  {
+   "task": "below_the_fold",
+   "where": "local",
+   "model": "gpt-6-sol",
+   "answer": "I clicked Compare all plans.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 3.16,
+   "jev_calls": 1,
+   "jev_errors": 0,
+   "jev_usd": 2.9e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-sol/2026-10-07-111642.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "pricing/api/compare",
+      "data": {}
+     }
+    ]
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 920,
+    "out": 66
+   },
+   "planner_usd": 0.0025,
+   "planner_secs": 2.59,
+   "events": [
+    "progress: click Compare all plans button"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"click\",\"target\":\"Compare all plans button\",\"label_hint\":\"Compare all plans\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false}],\"final_say\":\"I clicked Compare all plans.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Compare all plans; pick=3 button \"Compare all plans\"; text=none; key=none"
+    }
+   ],
+   "repeat": 2
+  },
+  {
+   "task": "reservation_form",
+   "where": "local",
+   "model": "gpt-6-sol",
+   "answer": "Your reservation request for four on Friday at 7:00 pm is submitted under Grace Hopper.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 6.71,
+   "jev_calls": 7,
+   "jev_errors": 0,
+   "jev_usd": 0.000269,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-sol/2026-10-07-111646.jsonl",
+   "state": {
+    "visits": [],
+    "posts": [
+     {
+      "path": "bistro/api/reserve",
+      "data": {
+       "party": "4",
+       "day": "Friday",
+       "time": "7:00 pm",
+       "name": "Grace Hopper"
+      }
+     }
+    ]
+   },
+   "success": true,
+   "asks": [
+    "Should I go ahead: click Request reservation button?"
+   ],
+   "planner_calls": 1,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 987,
+    "out": 223
+   },
+   "planner_usd": 0.004204,
+   "planner_secs": 3.41,
+   "events": [
+    "progress: click 4 people radio button",
+    "progress: click Friday radio button",
+    "progress: click 7:00 pm radio button",
+    "progress: type \"Grace Hopper\" into Name for the booking text field",
+    "ask: Should I go ahead: click Request reservation button?",
+    "progress: click Request reservation button"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"\",\"steps\":[{\"kind\":\"click\",\"target\":\"4 people radio button\",\"label_hint\":\"4 people\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"Friday radio button\",\"label_hint\":\"Friday\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"7:00 pm radio button\",\"label_hint\":\"7:00 pm\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"type\",\"target\":\"Name for the booking text field\",\"label_hint\":\"Name for the booking\",\"text\":\"Grace Hopper\",\"key\":\"\",\"expect\":null,\"consequential\":false},{\"kind\":\"click\",\"target\":\"Request reservation button\",\"label_hint\":\"Request reservation\",\"text\":\"\",\"key\":\"\",\"expect\":null,\"consequential\":true}],\"final_say\":\"Your reservation request for four on Friday at 7:00 pm is submitted under Grace Hopper.\",\"success\":null}"
+   ],
+   "trace": [
+    {
+     "status": "needs_human",
+     "reason": "the plan marked this step consequential",
+     "last_effect": "unverifiable",
+     "last_note": "typed 12 characters into text field 'Name for the booking'"
+    },
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click button: Request reservation; pick=10 button \"Request reservation\"; text=none; key=none"
+    }
+   ],
+   "repeat": 2
+  },
+  {
+   "task": "help_read_after_nav",
+   "where": "local",
+   "model": "gpt-6-sol",
+   "answer": "Standard shipping takes 5 to 7 business days.",
+   "note": "",
+   "outcome": "finished",
+   "secs": 10.94,
+   "jev_calls": 1,
+   "jev_errors": 0,
+   "jev_usd": 2.9e-05,
+   "run_log": "docs/computer-swarm/results/browser/agent-runs/gpt-6-sol/2026-10-07-111653.jsonl",
+   "state": {
+    "visits": [
+     "help/",
+     "help/shipping"
+    ],
+    "posts": []
+   },
+   "success": true,
+   "asks": [],
+   "planner_calls": 2,
+   "planner_errors": [],
+   "planner_tokens": {
+    "in": 1275,
+    "out": 114
+   },
+   "planner_usd": 0.001732,
+   "planner_secs": 3.96,
+   "events": [
+    "progress: opened https://help.eve-eval.test",
+    "progress: click Shipping link"
+   ],
+   "plans": [
+    "{\"needs_eyes\":false,\"why\":\"The Shipping page should show the standard shipping time.\",\"steps\":[{\"kind\":\"click\",\"target\":\"Shipping link\",\"label_hint\":\"Shipping\",\"text\":\"\",\"key\":\"\",\"expect\":{\"kind\":\"url_is\",\"value\":\"https://help.eve-eval.test/shipping\"},\"consequential\":false}],\"final_say\":\"\",\"success\":{\"kind\":\"url_is\",\"value\":\"https://help.eve-eval.test/shipping\"}}",
+    "Standard shipping takes 5 to 7 business days."
+   ],
+   "trace": [
+    {
+     "status": "complete",
+     "reason": "",
+     "last_effect": "confirmed",
+     "last_note": "stopped: reason=one_step; steps=1; last=click link: Shipping; pick=1 link \"Shipping\"; text=none; key=none"
+    }
+   ],
+   "repeat": 2
+  }
+ ]
+}

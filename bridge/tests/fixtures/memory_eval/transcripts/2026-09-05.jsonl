@@ -1,0 +1,22 @@
+{"ts": "2026-09-05T10:00:00-07:00", "ch": "voice", "conv": "v-1788627600000-7c65", "who": "owner", "kind": "say", "text": "I'm replacing the dead sensor with an SHT45, two of them so I have a spare."}
+{"ts": "2026-09-05T10:00:53-07:00", "ch": "voice", "conv": "v-1788627600000-7c65", "who": "eve", "kind": "say", "text": "Good plan."}
+{"ts": "2026-09-05T10:03:52-07:00", "ch": "voice", "conv": "v-1788627600000-7c65", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-05T10:20:00-07:00", "ch": "telegram", "conv": "t-1788628800000-8b93", "who": "owner", "kind": "say", "text": "Ordered the SHT45s, $9.50 each."}
+{"ts": "2026-09-05T10:20:54-07:00", "ch": "telegram", "conv": "t-1788628800000-8b93", "who": "eve", "kind": "say", "text": "Ordered."}
+{"ts": "2026-09-05T10:24:23-07:00", "ch": "telegram", "conv": "t-1788628800000-8b93", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-05T17:00:00-07:00", "ch": "telegram", "conv": "t-1788652800000-9afe", "who": "owner", "kind": "say", "text": "What time does Saffron Table close tonight?"}
+{"ts": "2026-09-05T17:01:47-07:00", "ch": "telegram", "conv": "t-1788652800000-9afe", "who": "eve", "kind": "tool", "text": "web_search: Saffron Table Dock Street hours Saturday", "tool": "web_search"}
+{"ts": "2026-09-05T17:02:29-07:00", "ch": "telegram", "conv": "t-1788652800000-9afe", "who": "eve", "kind": "say", "text": "Saffron Table closes at 22:00 on Saturdays."}
+{"ts": "2026-09-05T17:06:28-07:00", "ch": "telegram", "conv": "t-1788652800000-9afe", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-05T19:50:00-07:00", "ch": "telegram", "conv": "t-1788663000000-4bfb", "who": "owner", "kind": "say", "text": "Quick: Ohm's law?"}
+{"ts": "2026-09-05T19:51:43-07:00", "ch": "telegram", "conv": "t-1788663000000-4bfb", "who": "eve", "kind": "say", "text": "V equals I times R."}
+{"ts": "2026-09-05T19:56:05-07:00", "ch": "telegram", "conv": "t-1788663000000-4bfb", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-05T21:30:00-07:00", "ch": "voice", "conv": "v-1788669000000-2017", "who": "owner", "kind": "say", "text": "Dinner with Ines at Saffron Table was great, good call."}
+{"ts": "2026-09-05T21:30:40-07:00", "ch": "voice", "conv": "v-1788669000000-2017", "who": "eve", "kind": "say", "text": "Glad you liked it."}
+{"ts": "2026-09-05T21:32:26-07:00", "ch": "voice", "conv": "v-1788669000000-2017", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-05T22:20:00-07:00", "ch": "voice", "conv": "v-1788672000000-ab66", "who": "owner", "kind": "say", "text": "Pause the music."}
+{"ts": "2026-09-05T22:21:44-07:00", "ch": "voice", "conv": "v-1788672000000-ab66", "who": "eve", "kind": "say", "text": "Paused."}
+{"ts": "2026-09-05T22:24:58-07:00", "ch": "voice", "conv": "v-1788672000000-ab66", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-05T22:50:00-07:00", "ch": "telegram", "conv": "t-1788673800000-b0ca", "who": "owner", "kind": "say", "text": "Keyboard's done! Every switch works."}
+{"ts": "2026-09-05T22:50:36-07:00", "ch": "telegram", "conv": "t-1788673800000-b0ca", "who": "eve", "kind": "say", "text": "Congrats on the build!"}
+{"ts": "2026-09-05T22:54:16-07:00", "ch": "telegram", "conv": "t-1788673800000-b0ca", "who": "system", "kind": "close", "text": ""}

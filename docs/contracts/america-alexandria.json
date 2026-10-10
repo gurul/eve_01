@@ -1,0 +1,272 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Eve Alexandria government-index source bundle",
+  "description": "Local in-process america_ask SourcesFound result. The existing shared chat/call brain synthesizes a cited answer from these sources. No America.gov-generated answer, Eve REST server or fabricated upstream endpoint.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ok",
+    "status",
+    "provider",
+    "question",
+    "jurisdiction",
+    "retrieved_at",
+    "legal_advice",
+    "sources"
+  ],
+  "properties": {
+    "ok": {
+      "const": true
+    },
+    "status": {
+      "const": "sources_found"
+    },
+    "provider": {
+      "const": "firecrawl_gov_index"
+    },
+    "question": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000,
+      "description": "The explicit question; omit personal identifiers, private history and attachments."
+    },
+    "jurisdiction": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "retrieved_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC bundle-retrieval time, not a law-effective date."
+    },
+    "legal_advice": {
+      "const": false
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "items": {
+        "$ref": "#/$defs/Source"
+      },
+      "description": "Canonical URLs deduplicated before at most three source reads; no answer field."
+    }
+  },
+  "$defs": {
+    "Source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "url",
+        "currency",
+        "excerpt",
+        "page_text",
+        "read_status",
+        "text_truncated",
+        "indexed_at",
+        "fetched_at"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Canonical official HTTPS .gov/.mil URL; runtime rejects credentials, private targets, malformed URLs and nonstandard ports.",
+          "maxLength": 2000
+        },
+        "currency": {
+          "const": "unverified",
+          "description": "Neither index metadata nor a live read proves current law."
+        },
+        "excerpt": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "Bounded indexed snippet; not necessarily current."
+        },
+        "page_text": {
+          "type": "string",
+          "maxLength": 6000,
+          "description": "Bounded successful source-page read, or empty when unavailable."
+        },
+        "read_status": {
+          "enum": [
+            "live",
+            "indexed_only"
+          ],
+          "description": "live denotes a successful current page read, not current-law validation. indexed_only retains the indexed excerpt when the read failed or was unsupported."
+        },
+        "text_truncated": {
+          "type": "boolean",
+          "description": "Indexed excerpt or page text was clipped to its character bound."
+        },
+        "indexed_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time",
+          "description": "Provider index metadata converted to UTC, if supplied. Not a law-effective date."
+        },
+        "fetched_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time",
+          "description": "UTC successful page-read time, or null without a successful read."
+        }
+      }
+    },
+    "AskRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "question",
+        "jurisdiction"
+      ],
+      "properties": {
+        "question": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000,
+          "description": "The explicit question; omit personal identifiers, private history and attachments."
+        },
+        "jurisdiction": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "The U.S. state/city or U.S. federal law named by the user; null if unknown."
+        }
+      }
+    },
+    "Failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ok",
+        "status",
+        "reason",
+        "america_url"
+      ],
+      "properties": {
+        "ok": {
+          "const": false
+        },
+        "status": {
+          "enum": [
+            "invalid_request",
+            "needs_jurisdiction",
+            "unavailable",
+            "upstream_unavailable"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "description": "Static owner-safe reason, never raw provider errors or a private question."
+        },
+        "america_url": {
+          "const": "https://america.gov/chat",
+          "description": "Retained legacy link, not an automatic fallback submission."
+        }
+      }
+    }
+  },
+  "x-eve-interface": {
+    "transport": "in_process_function",
+    "default_transport": "alexandria",
+    "tool": {
+      "type": "function",
+      "name": "america_ask",
+      "strict": true,
+      "description": "Find official U.S. legal or government sources through Alexandria's government index. Returns source excerpts and available page text for a cited answer. Requires jurisdiction; source currency may be unverified. Information only, not legal advice or a filing service.",
+      "parameters": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "question",
+          "jurisdiction"
+        ],
+        "properties": {
+          "question": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000,
+            "description": "The explicit question; omit personal identifiers, private history and attachments."
+          },
+          "jurisdiction": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "The U.S. state/city or U.S. federal law named by the user; null if unknown."
+          }
+        }
+      }
+    },
+    "request_schema": {
+      "$ref": "#/$defs/AskRequest"
+    },
+    "failure_schema": {
+      "$ref": "#/$defs/Failure"
+    },
+    "scope": "Configured owners; /america and shared Telegram/Mac/Voice PE/phone/handheld chat/call brain. Separate wake-word voice backend excluded.",
+    "synthesis": "Existing shared chat/call brain, with original-source Markdown citations. sources_found is not an America.gov-generated answer.",
+    "configuration": {
+      "EVE_AMERICA": "1 enables (default off)",
+      "EVE_AMERICA_TRANSPORT": "alexandria (default); browser/api explicit legacy options",
+      "FIRECRAWL_API_KEY": "Existing Firecrawl credential; never forwarded to source hosts",
+      "EVE_FIRECRAWL_PER_DAY": "Existing shared local-day call cap, default 5; persisted across restart",
+      "EVE_FIRECRAWL_USD": "Existing credit price; unset costs recorded unpriced"
+    },
+    "limits": {
+      "index_calls": 1,
+      "top_k": 5,
+      "full_content": false,
+      "max_sources": 3,
+      "max_excerpt_chars": 2000,
+      "max_page_text_chars": 6000,
+      "worker_timeout_seconds": 55,
+      "caller_timeout_seconds": 60,
+      "max_source_read_attempts": 3,
+      "max_read_seconds": 8,
+      "max_url_chars": 2000,
+      "max_title_chars": 500
+    },
+    "failure_behavior": "Static failure without automatic retry, browser/provider fallback, catalog/planner call or provider-terms acceptance. A failed source-page read retains indexed snippet with indexed_only.",
+    "data": "Only explicit question/jurisdiction enter the index query; no attachments, history or memory. Source requests carry neither provider authorization nor chat context.",
+    "legacy_contract": "america-gov.openapi.json"
+  },
+  "x-observed-capability": {
+    "provider": "firecrawl-gov-index",
+    "capability": "search",
+    "observed_on": "2026-10-04",
+    "invocation": "Existing firecrawl.run_tool adapter; capability catalog, not a guessed provider URL",
+    "catalog_credits": 2,
+    "metering": "Existing firecrawl.meter with feature='america'; shared daily cap applies",
+    "evidence": "Saved catalog identified query/top_k/full_content. Prior capability call returned HTTP 200 and three session-URL variants of one official U.S. Code source. Actual default adapter lookup on 2026-10-04 returned sources_found, three unique official URLs, one live truncated page and two indexed_only sources; shared Firecrawl call balance decreased by one and receipt reported 2 credits, unpriced. Currency remains unverified. Authorized daemon restart, effective enabled Alexandria config, checkout import, IPC and owner-scoped /america menu were verified; no outbound test message or live conversation claim."
+  },
+  "x-runtime-verification": {
+    "verified_on": "2026-10-04",
+    "daemon_restarted": true,
+    "ipc_get_state_ok": true,
+    "enabled": true,
+    "transport": "alexandria",
+    "editable_checkout_import_confirmed": true,
+    "owner_menu_registered": true,
+    "owner_menu_description": "Search U.S. law and government sources",
+    "offline_tests_passed": 260,
+    "lint": "passed",
+    "scope": "Saved actual library lookup, daemon software runtime and read-only owner-menu query; no outbound test message, end-to-end live conversation or hardware-health claim."
+  }
+}

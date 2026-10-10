@@ -1,0 +1,4471 @@
+{
+  "synthetic": true,
+  "deployment_holdout": false,
+  "modality": "Jev gets AX text; Decisions gets AX text and authored screen images",
+  "rows": [
+    {
+      "provider": "Decisions",
+      "case": 0,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-0.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "none",
+            "p": 0.77,
+            "margin": 0.76
+          },
+          "present": 0.08,
+          "covered": 0.06,
+          "risky": 0.0
+        },
+        "ms": 335.09174999198876,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 335.09174999198876,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 0,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-0.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.55,
+        "margin": 0.25000000000000006,
+        "present": 0.69,
+        "already_done": 0.21,
+        "risky": 0.02,
+        "ms": 314.3983330228366,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 314.3983330228366,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 1,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "2",
+      "picked": "2",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-1.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "2",
+            "p": 0.98,
+            "margin": 0.97
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 195.35920800990425,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 195.35920800990425,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 1,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "2",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-1.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.49,
+        "margin": 0.12,
+        "present": 0.72,
+        "already_done": 0.22,
+        "risky": 0.03,
+        "ms": 337.6285420090426,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 337.6285420090426,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 2,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "1",
+      "picked": "1",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-2.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "1",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 214.25016701687127,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 214.25016701687127,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 2,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "1",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-2.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.52,
+        "margin": 0.17000000000000004,
+        "present": 0.71,
+        "already_done": 0.2,
+        "risky": 0.03,
+        "ms": 233.7836250080727,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 233.7836250080727,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 3,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "1",
+      "picked": "1",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-3.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "1",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 153.9454160083551,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 153.9454160083551,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 3,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "1",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-3.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.52,
+        "margin": 0.2,
+        "present": 0.7,
+        "already_done": 0.2,
+        "risky": 0.03,
+        "ms": 237.8247499873396,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 237.8247499873396,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 4,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-4.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "none",
+            "p": 0.91,
+            "margin": 0.91
+          },
+          "present": 0.0,
+          "covered": 0.01,
+          "risky": 0.0
+        },
+        "ms": 203.23345801443793,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 203.23345801443793,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 4,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-4.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.52,
+        "margin": 0.2,
+        "present": 0.71,
+        "already_done": 0.2,
+        "risky": 0.02,
+        "ms": 227.74075000779703,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 227.74075000779703,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 5,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "1",
+      "picked": "1",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-5.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "1",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 211.09716698992997,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 211.09716698992997,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 5,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "1",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-5.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.49,
+        "margin": 0.14,
+        "present": 0.69,
+        "already_done": 0.21,
+        "risky": 0.02,
+        "ms": 237.65875000390224,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 237.65875000390224,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 6,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "2",
+      "picked": "2",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-6.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "2",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 164.21704101958312,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 164.21704101958312,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 6,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "2",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-6.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.5,
+        "margin": 0.15999999999999998,
+        "present": 0.71,
+        "already_done": 0.2,
+        "risky": 0.02,
+        "ms": 250.6555840082001,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 250.6555840082001,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 7,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "3",
+      "picked": "3",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-7.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "3",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 157.25004201522097,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 157.25004201522097,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 7,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "3",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-7.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.53,
+        "margin": 0.23000000000000004,
+        "present": 0.7,
+        "already_done": 0.2,
+        "risky": 0.03,
+        "ms": 420.13187499833293,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 420.13187499833293,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 8,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-8.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "none",
+            "p": 0.91,
+            "margin": 0.91
+          },
+          "present": 0.0,
+          "covered": 0.0,
+          "risky": 0.0
+        },
+        "ms": 190.7489169971086,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 190.7489169971086,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 8,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-8.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.51,
+        "margin": 0.16999999999999998,
+        "present": 0.72,
+        "already_done": 0.22,
+        "risky": 0.03,
+        "ms": 1519.7662090067752,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 1519.7662090067752,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 9,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "1",
+      "picked": "1",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-9.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "1",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 173.66695898817852,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 173.66695898817852,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 9,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "1",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-9.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.42,
+        "margin": 0.010000000000000009,
+        "present": 0.72,
+        "already_done": 0.21,
+        "risky": 0.03,
+        "ms": 264.64566701906733,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 264.64566701906733,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 10,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "0",
+      "picked": "0",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-10.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "0",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 191.32266601081938,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 191.32266601081938,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 10,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "0",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-10.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.5,
+        "margin": 0.15999999999999998,
+        "present": 0.71,
+        "already_done": 0.21,
+        "risky": 0.02,
+        "ms": 195.6975840148516,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 195.6975840148516,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 11,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "3",
+      "picked": "3",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-11.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "3",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 164.77087498060428,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 164.77087498060428,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 11,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "3",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-11.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.52,
+        "margin": 0.18,
+        "present": 0.72,
+        "already_done": 0.21,
+        "risky": 0.02,
+        "ms": 279.0142919984646,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 279.0142919984646,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 12,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-12.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "none",
+            "p": 0.9,
+            "margin": 0.89
+          },
+          "present": 0.0,
+          "covered": 0.01,
+          "risky": 0.0
+        },
+        "ms": 325.69108298048377,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 325.69108298048377,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 12,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-12.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.49,
+        "margin": 0.12,
+        "present": 0.7,
+        "already_done": 0.21,
+        "risky": 0.03,
+        "ms": 256.7143340129405,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 256.7143340129405,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 13,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "0",
+      "picked": "0",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-13.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "0",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 210.1393330085557,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 210.1393330085557,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 13,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "0",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-13.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.5,
+        "margin": 0.15999999999999998,
+        "present": 0.72,
+        "already_done": 0.2,
+        "risky": 0.03,
+        "ms": 344.49437499279156,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 344.49437499279156,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 14,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "2",
+      "picked": "2",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-14.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "2",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 485.82008402445354,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 485.82008402445354,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 14,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "2",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-14.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.52,
+        "margin": 0.2,
+        "present": 0.72,
+        "already_done": 0.19,
+        "risky": 0.02,
+        "ms": 316.4285000239033,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 316.4285000239033,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 15,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "2",
+      "picked": "2",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-15.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "2",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 264.674375008326,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 264.674375008326,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 15,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "2",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-15.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.55,
+        "margin": 0.26000000000000006,
+        "present": 0.73,
+        "already_done": 0.19,
+        "risky": 0.02,
+        "ms": 277.7926670096349,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 277.7926670096349,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 16,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-16.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "none",
+            "p": 0.85,
+            "margin": 0.84
+          },
+          "present": 0.0,
+          "covered": 0.0,
+          "risky": 0.0
+        },
+        "ms": 287.7425829938147,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 287.7425829938147,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 16,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-16.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.48,
+        "margin": 0.09999999999999998,
+        "present": 0.72,
+        "already_done": 0.19,
+        "risky": 0.02,
+        "ms": 379.76874999003485,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 379.76874999003485,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 17,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "0",
+      "picked": "0",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-17.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "0",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 1200.0283329980448,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 1200.0283329980448,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 17,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "0",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-17.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.55,
+        "margin": 0.23000000000000004,
+        "present": 0.7,
+        "already_done": 0.19,
+        "risky": 0.03,
+        "ms": 221.73429201939143,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 221.73429201939143,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 18,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "3",
+      "picked": "3",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-18.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "3",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 182.8371660085395,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 182.8371660085395,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 18,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "3",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-18.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.45,
+        "margin": 0.06,
+        "present": 0.73,
+        "already_done": 0.2,
+        "risky": 0.02,
+        "ms": 244.6696250117384,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 244.6696250117384,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 19,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "0",
+      "picked": "0",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-19.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "0",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 157.14816699619405,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 157.14816699619405,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 19,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "0",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-19.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.5,
+        "margin": 0.15000000000000002,
+        "present": 0.72,
+        "already_done": 0.21,
+        "risky": 0.03,
+        "ms": 280.4171669995412,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 280.4171669995412,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 20,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-20.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "none",
+            "p": 0.85,
+            "margin": 0.84
+          },
+          "present": 0.01,
+          "covered": 0.0,
+          "risky": 0.0
+        },
+        "ms": 170.85616698022932,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 170.85616698022932,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 20,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-20.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.54,
+        "margin": 0.22000000000000003,
+        "present": 0.72,
+        "already_done": 0.2,
+        "risky": 0.02,
+        "ms": 281.93341701989993,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 281.93341701989993,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 21,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "3",
+      "picked": "3",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-21.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "3",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 190.31479200930335,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 190.31479200930335,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 21,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "3",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-21.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.57,
+        "margin": 0.2899999999999999,
+        "present": 0.71,
+        "already_done": 0.2,
+        "risky": 0.03,
+        "ms": 322.8818330098875,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 322.8818330098875,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 22,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "0",
+      "picked": "0",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-22.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "0",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 170.76570898643695,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 170.76570898643695,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 22,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "0",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-22.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.57,
+        "margin": 0.2899999999999999,
+        "present": 0.72,
+        "already_done": 0.2,
+        "risky": 0.03,
+        "ms": 317.9280420008581,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 317.9280420008581,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 23,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "2",
+      "picked": "2",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-23.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "2",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 177.9464999854099,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 177.9464999854099,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 23,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "2",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-23.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.52,
+        "margin": 0.17000000000000004,
+        "present": 0.72,
+        "already_done": 0.19,
+        "risky": 0.02,
+        "ms": 317.6497500098776,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 317.6497500098776,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 24,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": true,
+      "picked": true,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-24-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-24-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 1.0
+        },
+        "ms": 196.34883300750516,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 196.34883300750516,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 24,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": true,
+      "picked": false,
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-24-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-24-after.png"
+      ],
+      "answer": {
+        "ms": 1413.4611659974325,
+        "error": "",
+        "probability": 0.21
+      },
+      "ms": 1413.4611659974325,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 25,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-25-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-25-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 0.0
+        },
+        "ms": 195.06725002429448,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 195.06725002429448,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 25,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-25-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-25-after.png"
+      ],
+      "answer": {
+        "ms": 221.77245901548304,
+        "error": "",
+        "probability": 0.22
+      },
+      "ms": 221.77245901548304,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 26,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": true,
+      "picked": true,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-26-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-26-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 1.0
+        },
+        "ms": 377.1192909916863,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 377.1192909916863,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 26,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": true,
+      "picked": false,
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-26-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-26-after.png"
+      ],
+      "answer": {
+        "ms": 229.32425001636147,
+        "error": "",
+        "probability": 0.21
+      },
+      "ms": 229.32425001636147,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 27,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-27-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-27-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 0.0
+        },
+        "ms": 193.80649999948218,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 193.80649999948218,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 27,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-27-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-27-after.png"
+      ],
+      "answer": {
+        "ms": 244.72312501166016,
+        "error": "",
+        "probability": 0.22
+      },
+      "ms": 244.72312501166016,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 28,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": true,
+      "picked": true,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-28-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-28-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 1.0
+        },
+        "ms": 203.15099999425001,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 203.15099999425001,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 28,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": true,
+      "picked": false,
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-28-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-28-after.png"
+      ],
+      "answer": {
+        "ms": 336.9879160018172,
+        "error": "",
+        "probability": 0.22
+      },
+      "ms": 336.9879160018172,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 29,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-29-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-29-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 0.0
+        },
+        "ms": 187.22533399704844,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 187.22533399704844,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 29,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-29-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-29-after.png"
+      ],
+      "answer": {
+        "ms": 325.5557910015341,
+        "error": "",
+        "probability": 0.21
+      },
+      "ms": 325.5557910015341,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 30,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": true,
+      "picked": true,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-30-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-30-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 1.0
+        },
+        "ms": 171.57008399954066,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 171.57008399954066,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 30,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": true,
+      "picked": false,
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-30-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-30-after.png"
+      ],
+      "answer": {
+        "ms": 264.62658401578665,
+        "error": "",
+        "probability": 0.2
+      },
+      "ms": 264.62658401578665,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 31,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-31-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-31-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 0.0
+        },
+        "ms": 192.94179198914208,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 192.94179198914208,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 31,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-31-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-31-after.png"
+      ],
+      "answer": {
+        "ms": 323.6009159882087,
+        "error": "",
+        "probability": 0.22
+      },
+      "ms": 323.6009159882087,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 32,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": true,
+      "picked": true,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-32-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-32-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 1.0
+        },
+        "ms": 244.30108300293796,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 244.30108300293796,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 32,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": true,
+      "picked": false,
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-32-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-32-after.png"
+      ],
+      "answer": {
+        "ms": 285.8340000093449,
+        "error": "",
+        "probability": 0.21
+      },
+      "ms": 285.8340000093449,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 33,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-33-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-33-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 0.0
+        },
+        "ms": 196.17962502525188,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 196.17962502525188,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 33,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-33-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-33-after.png"
+      ],
+      "answer": {
+        "ms": 224.3367920164019,
+        "error": "",
+        "probability": 0.2
+      },
+      "ms": 224.3367920164019,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 34,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": true,
+      "picked": true,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-34-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-34-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 1.0
+        },
+        "ms": 193.16154200350866,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 193.16154200350866,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 34,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": true,
+      "picked": false,
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-34-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-34-after.png"
+      ],
+      "answer": {
+        "ms": 265.08016700972803,
+        "error": "",
+        "probability": 0.23
+      },
+      "ms": 265.08016700972803,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 35,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-35-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-35-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 0.0
+        },
+        "ms": 247.5682089861948,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 247.5682089861948,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 35,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-35-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-35-after.png"
+      ],
+      "answer": {
+        "ms": 269.39070801017806,
+        "error": "",
+        "probability": 0.22
+      },
+      "ms": 269.39070801017806,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 0,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-0.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "none",
+            "p": 0.77,
+            "margin": 0.76
+          },
+          "present": 0.08,
+          "covered": 0.06,
+          "risky": 0.0
+        },
+        "ms": 175.3716670209542,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 175.3716670209542,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 0,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-0.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.58,
+        "margin": 0.32999999999999996,
+        "present": 0.71,
+        "already_done": 0.19,
+        "risky": 0.03,
+        "ms": 264.33441700646654,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 264.33441700646654,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 1,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "2",
+      "picked": "2",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-1.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "2",
+            "p": 0.98,
+            "margin": 0.97
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 336.8430830014404,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 336.8430830014404,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 1,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "2",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-1.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.53,
+        "margin": 0.2,
+        "present": 0.72,
+        "already_done": 0.2,
+        "risky": 0.02,
+        "ms": 247.40591700538062,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 247.40591700538062,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 2,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "1",
+      "picked": "1",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-2.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "1",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 195.8149999845773,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 195.8149999845773,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 2,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "1",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-2.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.53,
+        "margin": 0.18000000000000005,
+        "present": 0.73,
+        "already_done": 0.2,
+        "risky": 0.02,
+        "ms": 242.93149998993613,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 242.93149998993613,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 3,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "1",
+      "picked": "1",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-3.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "1",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 201.1121250106953,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 201.1121250106953,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 3,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "1",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-3.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.44,
+        "margin": 0.08000000000000002,
+        "present": 0.69,
+        "already_done": 0.19,
+        "risky": 0.02,
+        "ms": 243.60316700767726,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 243.60316700767726,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 4,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-4.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "none",
+            "p": 0.91,
+            "margin": 0.91
+          },
+          "present": 0.0,
+          "covered": 0.01,
+          "risky": 0.0
+        },
+        "ms": 260.0524589943234,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 260.0524589943234,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 4,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-4.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.52,
+        "margin": 0.16000000000000003,
+        "present": 0.71,
+        "already_done": 0.2,
+        "risky": 0.03,
+        "ms": 241.1248330026865,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 241.1248330026865,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 5,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "1",
+      "picked": "1",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-5.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "1",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 206.0445829993114,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 206.0445829993114,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 5,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "1",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-5.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.51,
+        "margin": 0.16000000000000003,
+        "present": 0.72,
+        "already_done": 0.21,
+        "risky": 0.03,
+        "ms": 318.36550001753494,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 318.36550001753494,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 6,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "2",
+      "picked": "2",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-6.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "2",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 196.58120899111964,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 196.58120899111964,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 6,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "2",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-6.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.48,
+        "margin": 0.10999999999999999,
+        "present": 0.73,
+        "already_done": 0.2,
+        "risky": 0.02,
+        "ms": 238.5437499906402,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 238.5437499906402,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 7,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "3",
+      "picked": "3",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-7.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "3",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 219.99058400979266,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 219.99058400979266,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 7,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "3",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-7.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.49,
+        "margin": 0.14999999999999997,
+        "present": 0.7,
+        "already_done": 0.19,
+        "risky": 0.02,
+        "ms": 288.0042089964263,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 288.0042089964263,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 8,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-8.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "none",
+            "p": 0.91,
+            "margin": 0.91
+          },
+          "present": 0.0,
+          "covered": 0.0,
+          "risky": 0.0
+        },
+        "ms": 240.75941598857753,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 240.75941598857753,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 8,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-8.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.52,
+        "margin": 0.18,
+        "present": 0.72,
+        "already_done": 0.2,
+        "risky": 0.03,
+        "ms": 231.36983401491307,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 231.36983401491307,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 9,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "1",
+      "picked": "1",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-9.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "1",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 163.04133299854584,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 163.04133299854584,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 9,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "1",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-9.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.5,
+        "margin": 0.14,
+        "present": 0.71,
+        "already_done": 0.21,
+        "risky": 0.02,
+        "ms": 245.49879197729751,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 245.49879197729751,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 10,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "0",
+      "picked": "0",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-10.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "0",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 170.12079199776053,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 170.12079199776053,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 10,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "0",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-10.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.52,
+        "margin": 0.15000000000000002,
+        "present": 0.73,
+        "already_done": 0.2,
+        "risky": 0.02,
+        "ms": 300.17408399726264,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 300.17408399726264,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 11,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "3",
+      "picked": "3",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-11.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "3",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 175.82429098547436,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 175.82429098547436,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 11,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "3",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-11.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.45,
+        "margin": 0.06,
+        "present": 0.7,
+        "already_done": 0.21,
+        "risky": 0.03,
+        "ms": 448.20245800656267,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 448.20245800656267,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 12,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-12.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "none",
+            "p": 0.9,
+            "margin": 0.89
+          },
+          "present": 0.0,
+          "covered": 0.01,
+          "risky": 0.0
+        },
+        "ms": 173.77441600547172,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 173.77441600547172,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 12,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-12.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.49,
+        "margin": 0.13,
+        "present": 0.71,
+        "already_done": 0.2,
+        "risky": 0.03,
+        "ms": 290.2575829939451,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 290.2575829939451,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 13,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "0",
+      "picked": "0",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-13.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "0",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 177.3240419861395,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 177.3240419861395,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 13,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "0",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-13.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.52,
+        "margin": 0.2,
+        "present": 0.7,
+        "already_done": 0.21,
+        "risky": 0.03,
+        "ms": 292.77533301501535,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 292.77533301501535,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 14,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "2",
+      "picked": "2",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-14.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "2",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 187.59820799459703,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 187.59820799459703,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 14,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "2",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-14.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.56,
+        "margin": 0.29000000000000004,
+        "present": 0.71,
+        "already_done": 0.2,
+        "risky": 0.02,
+        "ms": 302.656832995126,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 302.656832995126,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 15,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "2",
+      "picked": "2",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-15.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "2",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 176.46166699705645,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 176.46166699705645,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 15,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "2",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-15.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.5,
+        "margin": 0.15999999999999998,
+        "present": 0.71,
+        "already_done": 0.21,
+        "risky": 0.02,
+        "ms": 276.9125420018099,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 276.9125420018099,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 16,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-16.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "none",
+            "p": 0.85,
+            "margin": 0.84
+          },
+          "present": 0.0,
+          "covered": 0.0,
+          "risky": 0.0
+        },
+        "ms": 180.45066599734128,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 180.45066599734128,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 16,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-16.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.52,
+        "margin": 0.18,
+        "present": 0.73,
+        "already_done": 0.19,
+        "risky": 0.03,
+        "ms": 295.4762919980567,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 295.4762919980567,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 17,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "0",
+      "picked": "0",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-17.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "0",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 263.80395801970735,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 263.80395801970735,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 17,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "0",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-17.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.53,
+        "margin": 0.2,
+        "present": 0.73,
+        "already_done": 0.21,
+        "risky": 0.03,
+        "ms": 261.80141599616036,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 261.80141599616036,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 18,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "3",
+      "picked": "3",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-18.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "3",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 199.21304198214784,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 199.21304198214784,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 18,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "3",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-18.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.49,
+        "margin": 0.14999999999999997,
+        "present": 0.73,
+        "already_done": 0.21,
+        "risky": 0.02,
+        "ms": 283.79645801032893,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 283.79645801032893,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 19,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "0",
+      "picked": "0",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-19.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "0",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 179.73462500958703,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 179.73462500958703,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 19,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "0",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-19.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.54,
+        "margin": 0.24000000000000005,
+        "present": 0.72,
+        "already_done": 0.2,
+        "risky": 0.02,
+        "ms": 340.76116600772366,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 340.76116600772366,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 20,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-20.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "none",
+            "p": 0.85,
+            "margin": 0.84
+          },
+          "present": 0.01,
+          "covered": 0.0,
+          "risky": 0.0
+        },
+        "ms": 163.7486660038121,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 163.7486660038121,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 20,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-20.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.52,
+        "margin": 0.2,
+        "present": 0.7,
+        "already_done": 0.21,
+        "risky": 0.02,
+        "ms": 264.59245799924247,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 264.59245799924247,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 21,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "3",
+      "picked": "3",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-21.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "3",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 182.34241599566303,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 182.34241599566303,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 21,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "3",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-21.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.49,
+        "margin": 0.13,
+        "present": 0.71,
+        "already_done": 0.19,
+        "risky": 0.03,
+        "ms": 265.6269579892978,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 265.6269579892978,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 22,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "0",
+      "picked": "0",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-22.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "0",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 179.0458750037942,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 179.0458750037942,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 22,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "0",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-22.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.51,
+        "margin": 0.15000000000000002,
+        "present": 0.7,
+        "already_done": 0.2,
+        "risky": 0.03,
+        "ms": 293.59212500276044,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 293.59212500276044,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 23,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "2",
+      "picked": "2",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-23.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "2",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 194.42329197772779,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 194.42329197772779,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 23,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "2",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/target-23.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.51,
+        "margin": 0.2,
+        "present": 0.71,
+        "already_done": 0.21,
+        "risky": 0.02,
+        "ms": 263.91962499474175,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 263.91962499474175,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 24,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": true,
+      "picked": true,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-24-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-24-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 1.0
+        },
+        "ms": 245.89358398225158,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 245.89358398225158,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 24,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": true,
+      "picked": false,
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-24-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-24-after.png"
+      ],
+      "answer": {
+        "ms": 278.30741700017825,
+        "error": "",
+        "probability": 0.2
+      },
+      "ms": 278.30741700017825,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 25,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-25-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-25-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 0.0
+        },
+        "ms": 216.20808300212957,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 216.20808300212957,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 25,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-25-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-25-after.png"
+      ],
+      "answer": {
+        "ms": 297.49437497230247,
+        "error": "",
+        "probability": 0.21
+      },
+      "ms": 297.49437497230247,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 26,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": true,
+      "picked": true,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-26-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-26-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 1.0
+        },
+        "ms": 204.13349999580532,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 204.13349999580532,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 26,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": true,
+      "picked": false,
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-26-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-26-after.png"
+      ],
+      "answer": {
+        "ms": 415.3031670139171,
+        "error": "",
+        "probability": 0.22
+      },
+      "ms": 415.3031670139171,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 27,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-27-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-27-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 0.0
+        },
+        "ms": 185.49254201934673,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 185.49254201934673,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 27,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-27-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-27-after.png"
+      ],
+      "answer": {
+        "ms": 462.0210829889402,
+        "error": "",
+        "probability": 0.2
+      },
+      "ms": 462.0210829889402,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 28,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": true,
+      "picked": true,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-28-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-28-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 1.0
+        },
+        "ms": 176.12349998671561,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 176.12349998671561,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 28,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": true,
+      "picked": false,
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-28-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-28-after.png"
+      ],
+      "answer": {
+        "ms": 281.06141698663123,
+        "error": "",
+        "probability": 0.2
+      },
+      "ms": 281.06141698663123,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 29,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-29-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-29-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 0.0
+        },
+        "ms": 185.90016700909473,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 185.90016700909473,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 29,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-29-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-29-after.png"
+      ],
+      "answer": {
+        "ms": 245.30666699865833,
+        "error": "",
+        "probability": 0.22
+      },
+      "ms": 245.30666699865833,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 30,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": true,
+      "picked": true,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-30-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-30-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 1.0
+        },
+        "ms": 187.62958399020135,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 187.62958399020135,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 30,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": true,
+      "picked": false,
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-30-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-30-after.png"
+      ],
+      "answer": {
+        "ms": 246.9355840003118,
+        "error": "",
+        "probability": 0.21
+      },
+      "ms": 246.9355840003118,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 31,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-31-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-31-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 0.0
+        },
+        "ms": 184.65912499232218,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 184.65912499232218,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 31,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-31-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-31-after.png"
+      ],
+      "answer": {
+        "ms": 270.08045799448155,
+        "error": "",
+        "probability": 0.23
+      },
+      "ms": 270.08045799448155,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 32,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": true,
+      "picked": true,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-32-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-32-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 1.0
+        },
+        "ms": 221.54820800642483,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 221.54820800642483,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 32,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": true,
+      "picked": false,
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-32-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-32-after.png"
+      ],
+      "answer": {
+        "ms": 271.48150000721216,
+        "error": "",
+        "probability": 0.19
+      },
+      "ms": 271.48150000721216,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 33,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-33-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-33-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 0.0
+        },
+        "ms": 195.31483398168348,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 195.31483398168348,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 33,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-33-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-33-after.png"
+      ],
+      "answer": {
+        "ms": 321.4681249810383,
+        "error": "",
+        "probability": 0.19
+      },
+      "ms": 321.4681249810383,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 34,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": true,
+      "picked": true,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-34-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-34-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 1.0
+        },
+        "ms": 239.62354101240635,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 239.62354101240635,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 34,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": true,
+      "picked": false,
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-34-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-34-after.png"
+      ],
+      "answer": {
+        "ms": 272.0556660206057,
+        "error": "",
+        "probability": 0.2
+      },
+      "ms": 272.0556660206057,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 35,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-35-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-35-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 0.0
+        },
+        "ms": 177.54908298957162,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 177.54908298957162,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 35,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-35-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-protocol-eval/visual-inputs/verification-35-after.png"
+      ],
+      "answer": {
+        "ms": 227.09425000357442,
+        "error": "",
+        "probability": 0.21
+      },
+      "ms": 227.09425000357442,
+      "error": ""
+    }
+  ]
+}

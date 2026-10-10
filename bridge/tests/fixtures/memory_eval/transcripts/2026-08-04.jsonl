@@ -1,0 +1,16 @@
+{"ts": "2026-08-04T12:45:00-07:00", "ch": "telegram", "conv": "t-1785872700000-1ac1", "who": "owner", "kind": "say", "text": "Explain a Fourier transform in one sentence."}
+{"ts": "2026-08-04T12:46:40-07:00", "ch": "telegram", "conv": "t-1785872700000-1ac1", "who": "eve", "kind": "say", "text": "It rewrites a signal as a sum of sine waves at different frequencies."}
+{"ts": "2026-08-04T12:50:30-07:00", "ch": "telegram", "conv": "t-1785872700000-1ac1", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-04T16:40:00-07:00", "ch": "telegram", "conv": "t-1785886800000-730d", "who": "owner", "kind": "say", "text": "Quick: Ohm's law?"}
+{"ts": "2026-08-04T16:41:43-07:00", "ch": "telegram", "conv": "t-1785886800000-730d", "who": "eve", "kind": "say", "text": "V equals I times R."}
+{"ts": "2026-08-04T16:44:37-07:00", "ch": "telegram", "conv": "t-1785886800000-730d", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-04T21:15:00-07:00", "ch": "telegram", "conv": "t-1785903300000-eebc", "who": "owner", "kind": "say", "text": "Side project update: Sasha and I are building Shelfie, an app that tracks your library due dates so you never get fined."}
+{"ts": "2026-08-04T21:16:15-07:00", "ch": "telegram", "conv": "t-1785903300000-eebc", "who": "owner", "kind": "say", "text": "I'm writing it in Flutter and Sasha's doing all the design."}
+{"ts": "2026-08-04T21:18:04-07:00", "ch": "telegram", "conv": "t-1785903300000-eebc", "who": "eve", "kind": "say", "text": "Shelfie sounds useful. Flutter makes sense if you want both phones from one codebase."}
+{"ts": "2026-08-04T21:20:51-07:00", "ch": "telegram", "conv": "t-1785903300000-eebc", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-04T22:20:00-07:00", "ch": "telegram", "conv": "t-1785907200000-21ce", "who": "owner", "kind": "say", "text": "Is it 'fewer' or 'less' for things you can count?"}
+{"ts": "2026-08-04T22:21:20-07:00", "ch": "telegram", "conv": "t-1785907200000-21ce", "who": "eve", "kind": "say", "text": "Fewer, for things you can count."}
+{"ts": "2026-08-04T22:25:22-07:00", "ch": "telegram", "conv": "t-1785907200000-21ce", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-04T23:05:00-07:00", "ch": "voice", "conv": "v-1785909900000-45bf", "who": "owner", "kind": "say", "text": "Volume down a bit."}
+{"ts": "2026-08-04T23:06:11-07:00", "ch": "voice", "conv": "v-1785909900000-45bf", "who": "eve", "kind": "say", "text": "Done."}
+{"ts": "2026-08-04T23:10:22-07:00", "ch": "voice", "conv": "v-1785909900000-45bf", "who": "system", "kind": "close", "text": ""}

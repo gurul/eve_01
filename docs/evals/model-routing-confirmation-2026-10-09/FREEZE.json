@@ -1,0 +1,11 @@
+{
+  "frozen_at_utc": "2026-10-10T01:42:10.479710+00:00",
+  "before_confirmation_inference": true,
+  "sha256": {
+    "cases.json": "b803cd64505d61812d094d505c0f76e016cd6c483a4e4511688cc810d8440566",
+    "BAR.md": "018f5ae3dac446dfc88cace70695b57eb26445c11866f34f9867a4914b3feddc",
+    "check.py": "234a7bea5b1050f2f5942b671c73976000c6b9786806c764e9026675002fd085",
+    "REVIEW.md": "e167cae4c011c1e5c3bf9570e0abd6fac2f1c5e927effddf7bba321875b7050b",
+    "verify-freeze.py": "5d120420de8d43e5bd92cd3b89b03a85dfaf9c2aaf874ecedeabccf790b5d56f"
+  }
+}

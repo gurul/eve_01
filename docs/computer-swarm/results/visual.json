@@ -1,0 +1,4471 @@
+{
+  "synthetic": true,
+  "deployment_holdout": false,
+  "modality": "Jev gets AX text; Decisions gets AX text and authored screen images",
+  "rows": [
+    {
+      "provider": "Decisions",
+      "case": 0,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-0.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "none",
+            "p": 0.77,
+            "margin": 0.76
+          },
+          "present": 0.08,
+          "covered": 0.06,
+          "risky": 0.0
+        },
+        "ms": 277.6156249747146,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 277.6156249747146,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 0,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-0.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.52,
+        "margin": 0.18,
+        "present": 0.72,
+        "already_done": 0.22,
+        "risky": 0.02,
+        "ms": 241.88008400960825,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 241.88008400960825,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 1,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "2",
+      "picked": "2",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-1.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "2",
+            "p": 0.98,
+            "margin": 0.97
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 178.9000419958029,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 178.9000419958029,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 1,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "2",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-1.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.49,
+        "margin": 0.09999999999999998,
+        "present": 0.71,
+        "already_done": 0.21,
+        "risky": 0.03,
+        "ms": 334.6028749947436,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 334.6028749947436,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 2,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "1",
+      "picked": "1",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-2.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "1",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 174.0318340016529,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 174.0318340016529,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 2,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "1",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-2.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.52,
+        "margin": 0.2,
+        "present": 0.72,
+        "already_done": 0.21,
+        "risky": 0.03,
+        "ms": 279.3125419993885,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 279.3125419993885,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 3,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "1",
+      "picked": "1",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-3.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "1",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 275.273625011323,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 275.273625011323,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 3,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "1",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-3.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.49,
+        "margin": 0.13,
+        "present": 0.7,
+        "already_done": 0.2,
+        "risky": 0.02,
+        "ms": 218.29808299662545,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 218.29808299662545,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 4,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-4.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "none",
+            "p": 0.91,
+            "margin": 0.91
+          },
+          "present": 0.0,
+          "covered": 0.01,
+          "risky": 0.0
+        },
+        "ms": 183.48929198691621,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 183.48929198691621,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 4,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-4.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.54,
+        "margin": 0.25000000000000006,
+        "present": 0.71,
+        "already_done": 0.21,
+        "risky": 0.02,
+        "ms": 284.0003750170581,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 284.0003750170581,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 5,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "1",
+      "picked": "1",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-5.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "1",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 165.7433329964988,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 165.7433329964988,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 5,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "1",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-5.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.55,
+        "margin": 0.30000000000000004,
+        "present": 0.73,
+        "already_done": 0.22,
+        "risky": 0.02,
+        "ms": 239.96187499142252,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 239.96187499142252,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 6,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "2",
+      "picked": "2",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-6.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "2",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 174.60129098617472,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 174.60129098617472,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 6,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "2",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-6.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.51,
+        "margin": 0.16999999999999998,
+        "present": 0.71,
+        "already_done": 0.19,
+        "risky": 0.03,
+        "ms": 403.2012920069974,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 403.2012920069974,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 7,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "3",
+      "picked": "3",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-7.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "3",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 172.21712501486763,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 172.21712501486763,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 7,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "3",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-7.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.53,
+        "margin": 0.23000000000000004,
+        "present": 0.71,
+        "already_done": 0.21,
+        "risky": 0.02,
+        "ms": 257.3612080013845,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 257.3612080013845,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 8,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-8.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "none",
+            "p": 0.91,
+            "margin": 0.91
+          },
+          "present": 0.0,
+          "covered": 0.0,
+          "risky": 0.0
+        },
+        "ms": 164.22045798390172,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 164.22045798390172,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 8,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-8.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.5,
+        "margin": 0.16999999999999998,
+        "present": 0.7,
+        "already_done": 0.19,
+        "risky": 0.03,
+        "ms": 274.3883330258541,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 274.3883330258541,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 9,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "1",
+      "picked": "1",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-9.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "1",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 171.49354200228117,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 171.49354200228117,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 9,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "1",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-9.png"
+      ],
+      "answer": {
+        "target": "1",
+        "p_target": 0.45,
+        "margin": 0.020000000000000018,
+        "present": 0.74,
+        "already_done": 0.2,
+        "risky": 0.02,
+        "ms": 308.1734589941334,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 308.1734589941334,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 10,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "0",
+      "picked": "0",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-10.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "0",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 150.74558299966156,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 150.74558299966156,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 10,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "0",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-10.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.53,
+        "margin": 0.24000000000000005,
+        "present": 0.71,
+        "already_done": 0.2,
+        "risky": 0.03,
+        "ms": 236.25841701868922,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 236.25841701868922,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 11,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "3",
+      "picked": "3",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-11.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "3",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 191.54929200885817,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 191.54929200885817,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 11,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "3",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-11.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.47,
+        "margin": 0.08999999999999997,
+        "present": 0.69,
+        "already_done": 0.2,
+        "risky": 0.02,
+        "ms": 458.2757079915609,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 458.2757079915609,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 12,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-12.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "none",
+            "p": 0.9,
+            "margin": 0.89
+          },
+          "present": 0.0,
+          "covered": 0.01,
+          "risky": 0.0
+        },
+        "ms": 182.42429199744947,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 182.42429199744947,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 12,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-12.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.54,
+        "margin": 0.25000000000000006,
+        "present": 0.71,
+        "already_done": 0.21,
+        "risky": 0.02,
+        "ms": 438.21808401844464,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 438.21808401844464,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 13,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "0",
+      "picked": "0",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-13.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "0",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 172.17329199775122,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 172.17329199775122,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 13,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "0",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-13.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.47,
+        "margin": 0.09999999999999998,
+        "present": 0.71,
+        "already_done": 0.21,
+        "risky": 0.03,
+        "ms": 226.25695797614753,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 226.25695797614753,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 14,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "2",
+      "picked": "2",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-14.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "2",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 169.13583301356994,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 169.13583301356994,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 14,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "2",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-14.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.52,
+        "margin": 0.2,
+        "present": 0.71,
+        "already_done": 0.19,
+        "risky": 0.02,
+        "ms": 348.3972499961965,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 348.3972499961965,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 15,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "2",
+      "picked": "2",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-15.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "2",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 192.64224998187274,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 192.64224998187274,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 15,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "2",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-15.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.55,
+        "margin": 0.26000000000000006,
+        "present": 0.71,
+        "already_done": 0.2,
+        "risky": 0.03,
+        "ms": 237.22054201061837,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 237.22054201061837,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 16,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-16.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "none",
+            "p": 0.85,
+            "margin": 0.84
+          },
+          "present": 0.0,
+          "covered": 0.0,
+          "risky": 0.0
+        },
+        "ms": 195.75795897981152,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 195.75795897981152,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 16,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-16.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.52,
+        "margin": 0.2,
+        "present": 0.7,
+        "already_done": 0.22,
+        "risky": 0.02,
+        "ms": 254.0402919985354,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 254.0402919985354,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 17,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "0",
+      "picked": "0",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-17.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "0",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 175.63979199621826,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 175.63979199621826,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 17,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "0",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-17.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.52,
+        "margin": 0.18,
+        "present": 0.72,
+        "already_done": 0.22,
+        "risky": 0.03,
+        "ms": 338.6445000069216,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 338.6445000069216,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 18,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "3",
+      "picked": "3",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-18.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "3",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 186.18995801080018,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 186.18995801080018,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 18,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "3",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-18.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.51,
+        "margin": 0.15000000000000002,
+        "present": 0.71,
+        "already_done": 0.19,
+        "risky": 0.02,
+        "ms": 316.5193750173785,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 316.5193750173785,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 19,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "0",
+      "picked": "0",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-19.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "0",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 222.8335830150172,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 222.8335830150172,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 19,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "0",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-19.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.51,
+        "margin": 0.16999999999999998,
+        "present": 0.7,
+        "already_done": 0.2,
+        "risky": 0.03,
+        "ms": 456.68479200685397,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 456.68479200685397,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 20,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-20.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "none",
+            "p": 0.85,
+            "margin": 0.84
+          },
+          "present": 0.01,
+          "covered": 0.0,
+          "risky": 0.0
+        },
+        "ms": 257.70820799516514,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 257.70820799516514,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 20,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-20.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.45,
+        "margin": 0.030000000000000027,
+        "present": 0.72,
+        "already_done": 0.2,
+        "risky": 0.03,
+        "ms": 364.729459019145,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 364.729459019145,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 21,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "3",
+      "picked": "3",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-21.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "3",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 182.79216697555967,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 182.79216697555967,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 21,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "3",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-21.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.5,
+        "margin": 0.13,
+        "present": 0.72,
+        "already_done": 0.21,
+        "risky": 0.03,
+        "ms": 266.901124996366,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 266.901124996366,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 22,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "0",
+      "picked": "0",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-22.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "0",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 169.10591701162048,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 169.10591701162048,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 22,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "0",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-22.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.44,
+        "margin": 0.04999999999999999,
+        "present": 0.71,
+        "already_done": 0.21,
+        "risky": 0.03,
+        "ms": 231.77795897936448,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 231.77795897936448,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 23,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "2",
+      "picked": "2",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-23.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "2",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 182.258083979832,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 182.258083979832,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 23,
+      "repeat": 1,
+      "kind": "target",
+      "expected": "2",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-23.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.5,
+        "margin": 0.15000000000000002,
+        "present": 0.72,
+        "already_done": 0.2,
+        "risky": 0.02,
+        "ms": 233.84795800666325,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 233.84795800666325,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 24,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": true,
+      "picked": true,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-24-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-24-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 1.0
+        },
+        "ms": 278.58062501763925,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 278.58062501763925,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 24,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": true,
+      "picked": false,
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-24-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-24-after.png"
+      ],
+      "answer": {
+        "ms": 302.9207920189947,
+        "error": "",
+        "probability": 0.2
+      },
+      "ms": 302.9207920189947,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 25,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-25-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-25-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 0.0
+        },
+        "ms": 181.2220829888247,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 181.2220829888247,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 25,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-25-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-25-after.png"
+      ],
+      "answer": {
+        "ms": 229.03608399792574,
+        "error": "",
+        "probability": 0.22
+      },
+      "ms": 229.03608399792574,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 26,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": true,
+      "picked": true,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-26-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-26-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 1.0
+        },
+        "ms": 196.14958399324678,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 196.14958399324678,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 26,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": true,
+      "picked": false,
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-26-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-26-after.png"
+      ],
+      "answer": {
+        "ms": 286.8141660001129,
+        "error": "",
+        "probability": 0.22
+      },
+      "ms": 286.8141660001129,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 27,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-27-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-27-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 0.0
+        },
+        "ms": 188.47091699717566,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 188.47091699717566,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 27,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-27-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-27-after.png"
+      ],
+      "answer": {
+        "ms": 293.110416008858,
+        "error": "",
+        "probability": 0.2
+      },
+      "ms": 293.110416008858,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 28,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": true,
+      "picked": true,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-28-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-28-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 1.0
+        },
+        "ms": 222.48620897880755,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 222.48620897880755,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 28,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": true,
+      "picked": false,
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-28-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-28-after.png"
+      ],
+      "answer": {
+        "ms": 271.38987500802614,
+        "error": "",
+        "probability": 0.21
+      },
+      "ms": 271.38987500802614,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 29,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-29-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-29-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 0.0
+        },
+        "ms": 194.84149999334477,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 194.84149999334477,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 29,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-29-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-29-after.png"
+      ],
+      "answer": {
+        "ms": 257.41679201018997,
+        "error": "",
+        "probability": 0.22
+      },
+      "ms": 257.41679201018997,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 30,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": true,
+      "picked": true,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-30-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-30-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 1.0
+        },
+        "ms": 203.47816598950885,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 203.47816598950885,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 30,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": true,
+      "picked": false,
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-30-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-30-after.png"
+      ],
+      "answer": {
+        "ms": 290.6026249984279,
+        "error": "",
+        "probability": 0.21
+      },
+      "ms": 290.6026249984279,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 31,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-31-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-31-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 0.0
+        },
+        "ms": 233.39591699186713,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 233.39591699186713,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 31,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-31-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-31-after.png"
+      ],
+      "answer": {
+        "ms": 370.41079098707996,
+        "error": "",
+        "probability": 0.2
+      },
+      "ms": 370.41079098707996,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 32,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": true,
+      "picked": true,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-32-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-32-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 1.0
+        },
+        "ms": 224.77670898661017,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 224.77670898661017,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 32,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": true,
+      "picked": false,
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-32-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-32-after.png"
+      ],
+      "answer": {
+        "ms": 215.6265829980839,
+        "error": "",
+        "probability": 0.2
+      },
+      "ms": 215.6265829980839,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 33,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-33-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-33-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 0.0
+        },
+        "ms": 178.23225000756793,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 178.23225000756793,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 33,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-33-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-33-after.png"
+      ],
+      "answer": {
+        "ms": 274.3351250246633,
+        "error": "",
+        "probability": 0.21
+      },
+      "ms": 274.3351250246633,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 34,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": true,
+      "picked": true,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-34-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-34-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 1.0
+        },
+        "ms": 221.9460420019459,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 221.9460420019459,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 34,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": true,
+      "picked": false,
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-34-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-34-after.png"
+      ],
+      "answer": {
+        "ms": 417.8420840180479,
+        "error": "",
+        "probability": 0.21
+      },
+      "ms": 417.8420840180479,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 35,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-35-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-35-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 0.0
+        },
+        "ms": 178.75958399963565,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 178.75958399963565,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 35,
+      "repeat": 1,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-35-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-35-after.png"
+      ],
+      "answer": {
+        "ms": 235.82445899955928,
+        "error": "",
+        "probability": 0.2
+      },
+      "ms": 235.82445899955928,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 0,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-0.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "none",
+            "p": 0.77,
+            "margin": 0.76
+          },
+          "present": 0.08,
+          "covered": 0.06,
+          "risky": 0.0
+        },
+        "ms": 182.84433300141245,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 182.84433300141245,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 0,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-0.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.49,
+        "margin": 0.10999999999999999,
+        "present": 0.71,
+        "already_done": 0.2,
+        "risky": 0.03,
+        "ms": 328.35845899535343,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 328.35845899535343,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 1,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "2",
+      "picked": "2",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-1.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "2",
+            "p": 0.98,
+            "margin": 0.97
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 335.782084002858,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 335.782084002858,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 1,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "2",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-1.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.53,
+        "margin": 0.21000000000000002,
+        "present": 0.74,
+        "already_done": 0.2,
+        "risky": 0.02,
+        "ms": 333.7885419896338,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 333.7885419896338,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 2,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "1",
+      "picked": "1",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-2.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "1",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 171.56608300865628,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 171.56608300865628,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 2,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "1",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-2.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.5599999999999999,
+        "margin": 0.2799999999999999,
+        "present": 0.72,
+        "already_done": 0.21,
+        "risky": 0.02,
+        "ms": 325.48600001609884,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 325.48600001609884,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 3,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "1",
+      "picked": "1",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-3.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "1",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 206.20354200946167,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 206.20354200946167,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 3,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "1",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-3.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.57,
+        "margin": 0.32999999999999996,
+        "present": 0.7,
+        "already_done": 0.2,
+        "risky": 0.03,
+        "ms": 303.1208750035148,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 303.1208750035148,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 4,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-4.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "none",
+            "p": 0.91,
+            "margin": 0.91
+          },
+          "present": 0.0,
+          "covered": 0.01,
+          "risky": 0.0
+        },
+        "ms": 180.28133400366642,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 180.28133400366642,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 4,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-4.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.51,
+        "margin": 0.16999999999999998,
+        "present": 0.71,
+        "already_done": 0.22,
+        "risky": 0.02,
+        "ms": 280.4699169937521,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 280.4699169937521,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 5,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "1",
+      "picked": "1",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-5.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "1",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 499.4077089941129,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 499.4077089941129,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 5,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "1",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-5.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.49,
+        "margin": 0.14999999999999997,
+        "present": 0.73,
+        "already_done": 0.21,
+        "risky": 0.03,
+        "ms": 281.7623330047354,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 281.7623330047354,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 6,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "2",
+      "picked": "2",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-6.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "2",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 168.98566600866616,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 168.98566600866616,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 6,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "2",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-6.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.5,
+        "margin": 0.13,
+        "present": 0.71,
+        "already_done": 0.2,
+        "risky": 0.03,
+        "ms": 270.49808399169706,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 270.49808399169706,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 7,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "3",
+      "picked": "3",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-7.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "3",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 179.54366700723767,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 179.54366700723767,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 7,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "3",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-7.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.52,
+        "margin": 0.2,
+        "present": 0.73,
+        "already_done": 0.21,
+        "risky": 0.03,
+        "ms": 301.44437501439825,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 301.44437501439825,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 8,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-8.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "none",
+            "p": 0.91,
+            "margin": 0.91
+          },
+          "present": 0.0,
+          "covered": 0.0,
+          "risky": 0.0
+        },
+        "ms": 170.69091700250283,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 170.69091700250283,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 8,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-8.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.53,
+        "margin": 0.2,
+        "present": 0.71,
+        "already_done": 0.2,
+        "risky": 0.03,
+        "ms": 276.1299580160994,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 276.1299580160994,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 9,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "1",
+      "picked": "1",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-9.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "1",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 173.39329200331122,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 173.39329200331122,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 9,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "1",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-9.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.51,
+        "margin": 0.15000000000000002,
+        "present": 0.72,
+        "already_done": 0.2,
+        "risky": 0.03,
+        "ms": 255.03937501343898,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 255.03937501343898,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 10,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "0",
+      "picked": "0",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-10.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "0",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 159.97983299894258,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 159.97983299894258,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 10,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "0",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-10.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.54,
+        "margin": 0.23000000000000004,
+        "present": 0.71,
+        "already_done": 0.2,
+        "risky": 0.03,
+        "ms": 314.83695801580325,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 314.83695801580325,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 11,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "3",
+      "picked": "3",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-11.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "3",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 211.65129099972546,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 211.65129099972546,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 11,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "3",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-11.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.53,
+        "margin": 0.21000000000000002,
+        "present": 0.71,
+        "already_done": 0.2,
+        "risky": 0.02,
+        "ms": 339.02212500106543,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 339.02212500106543,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 12,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-12.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "none",
+            "p": 0.9,
+            "margin": 0.89
+          },
+          "present": 0.0,
+          "covered": 0.01,
+          "risky": 0.0
+        },
+        "ms": 202.7656249993015,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 202.7656249993015,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 12,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-12.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.52,
+        "margin": 0.19,
+        "present": 0.72,
+        "already_done": 0.21,
+        "risky": 0.02,
+        "ms": 296.279832982691,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 296.279832982691,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 13,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "0",
+      "picked": "0",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-13.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "0",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 156.50145799736492,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 156.50145799736492,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 13,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "0",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-13.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.5,
+        "margin": 0.14,
+        "present": 0.71,
+        "already_done": 0.2,
+        "risky": 0.03,
+        "ms": 297.84204199677333,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 297.84204199677333,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 14,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "2",
+      "picked": "2",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-14.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "2",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 231.32233301294036,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 231.32233301294036,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 14,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "2",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-14.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.54,
+        "margin": 0.23000000000000004,
+        "present": 0.71,
+        "already_done": 0.21,
+        "risky": 0.03,
+        "ms": 308.9578329818323,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 308.9578329818323,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 15,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "2",
+      "picked": "2",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-15.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "2",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 191.37029099510983,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 191.37029099510983,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 15,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "2",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-15.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.58,
+        "margin": 0.29999999999999993,
+        "present": 0.71,
+        "already_done": 0.2,
+        "risky": 0.03,
+        "ms": 354.62150000967085,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 354.62150000967085,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 16,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-16.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "none",
+            "p": 0.85,
+            "margin": 0.84
+          },
+          "present": 0.0,
+          "covered": 0.0,
+          "risky": 0.0
+        },
+        "ms": 173.68233398883604,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 173.68233398883604,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 16,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-16.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.5,
+        "margin": 0.14,
+        "present": 0.71,
+        "already_done": 0.2,
+        "risky": 0.03,
+        "ms": 252.784749987768,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 252.784749987768,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 17,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "0",
+      "picked": "0",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-17.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "0",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 172.40325000602752,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 172.40325000602752,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 17,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "0",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-17.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.5,
+        "margin": 0.15000000000000002,
+        "present": 0.71,
+        "already_done": 0.21,
+        "risky": 0.02,
+        "ms": 310.2286659996025,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 310.2286659996025,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 18,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "3",
+      "picked": "3",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-18.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "3",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 164.55695900367573,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 164.55695900367573,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 18,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "3",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-18.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.45,
+        "margin": 0.06,
+        "present": 0.72,
+        "already_done": 0.2,
+        "risky": 0.03,
+        "ms": 255.70891698589548,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 255.70891698589548,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 19,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "0",
+      "picked": "0",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-19.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "0",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 167.65133300214075,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 167.65133300214075,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 19,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "0",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-19.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.49,
+        "margin": 0.15999999999999998,
+        "present": 0.69,
+        "already_done": 0.21,
+        "risky": 0.02,
+        "ms": 451.7717080016155,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 451.7717080016155,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 20,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-20.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "none",
+            "p": 0.85,
+            "margin": 0.84
+          },
+          "present": 0.01,
+          "covered": 0.0,
+          "risky": 0.0
+        },
+        "ms": 193.39641701662913,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 193.39641701662913,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 20,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "none",
+      "picked": "none",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-20.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.52,
+        "margin": 0.2,
+        "present": 0.72,
+        "already_done": 0.21,
+        "risky": 0.03,
+        "ms": 307.75800000992604,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 307.75800000992604,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 21,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "3",
+      "picked": "3",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-21.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "3",
+            "p": 0.99,
+            "margin": 0.98
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 1693.1812499824446,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 1693.1812499824446,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 21,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "3",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-21.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.49,
+        "margin": 0.14,
+        "present": 0.7,
+        "already_done": 0.21,
+        "risky": 0.02,
+        "ms": 283.1731659825891,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 283.1731659825891,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 22,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "0",
+      "picked": "0",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-22.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "0",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 162.4703330162447,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 162.4703330162447,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 22,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "0",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-22.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.5,
+        "margin": 0.16999999999999998,
+        "present": 0.72,
+        "already_done": 0.2,
+        "risky": 0.02,
+        "ms": 329.5806249952875,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 329.5806249952875,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 23,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "2",
+      "picked": "2",
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-23.png"
+      ],
+      "answer": {
+        "values": {
+          "target": {
+            "id": "2",
+            "p": 1.0,
+            "margin": 1.0
+          },
+          "present": 1.0,
+          "covered": 1.0,
+          "risky": 0.0
+        },
+        "ms": 220.96949999104254,
+        "usage": {
+          "input_tokens": 1390,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1390
+        },
+        "error": ""
+      },
+      "ms": 220.96949999104254,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 23,
+      "repeat": 2,
+      "kind": "target",
+      "expected": "2",
+      "picked": "none",
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-23.png"
+      ],
+      "answer": {
+        "target": "none",
+        "p_target": 0.54,
+        "margin": 0.25000000000000006,
+        "present": 0.69,
+        "already_done": 0.2,
+        "risky": 0.03,
+        "ms": 345.48958399682306,
+        "k": 5,
+        "error": "",
+        "requests": 1
+      },
+      "ms": 345.48958399682306,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 24,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": true,
+      "picked": true,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-24-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-24-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 1.0
+        },
+        "ms": 348.5235419939272,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 348.5235419939272,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 24,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": true,
+      "picked": false,
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-24-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-24-after.png"
+      ],
+      "answer": {
+        "ms": 304.10262499935925,
+        "error": "",
+        "probability": 0.21
+      },
+      "ms": 304.10262499935925,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 25,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-25-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-25-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 0.0
+        },
+        "ms": 163.70095798629336,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 163.70095798629336,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 25,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-25-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-25-after.png"
+      ],
+      "answer": {
+        "ms": 298.42483400716446,
+        "error": "",
+        "probability": 0.19
+      },
+      "ms": 298.42483400716446,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 26,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": true,
+      "picked": true,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-26-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-26-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 1.0
+        },
+        "ms": 208.5854170145467,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 208.5854170145467,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 26,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": true,
+      "picked": false,
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-26-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-26-after.png"
+      ],
+      "answer": {
+        "ms": 323.25799998943694,
+        "error": "",
+        "probability": 0.2
+      },
+      "ms": 323.25799998943694,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 27,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-27-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-27-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 0.0
+        },
+        "ms": 223.4141249791719,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 223.4141249791719,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 27,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-27-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-27-after.png"
+      ],
+      "answer": {
+        "ms": 280.4475829761941,
+        "error": "",
+        "probability": 0.21
+      },
+      "ms": 280.4475829761941,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 28,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": true,
+      "picked": true,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-28-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-28-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 1.0
+        },
+        "ms": 170.79587499029003,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 170.79587499029003,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 28,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": true,
+      "picked": false,
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-28-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-28-after.png"
+      ],
+      "answer": {
+        "ms": 298.8837079901714,
+        "error": "",
+        "probability": 0.21
+      },
+      "ms": 298.8837079901714,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 29,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-29-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-29-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 0.0
+        },
+        "ms": 209.9125840177294,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 209.9125840177294,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 29,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-29-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-29-after.png"
+      ],
+      "answer": {
+        "ms": 358.87970798648894,
+        "error": "",
+        "probability": 0.2
+      },
+      "ms": 358.87970798648894,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 30,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": true,
+      "picked": true,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-30-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-30-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 1.0
+        },
+        "ms": 208.20837499923073,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 208.20837499923073,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 30,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": true,
+      "picked": false,
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-30-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-30-after.png"
+      ],
+      "answer": {
+        "ms": 373.2350829814095,
+        "error": "",
+        "probability": 0.22
+      },
+      "ms": 373.2350829814095,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 31,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-31-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-31-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 0.0
+        },
+        "ms": 213.53370801080018,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 213.53370801080018,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 31,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-31-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-31-after.png"
+      ],
+      "answer": {
+        "ms": 257.82683299621567,
+        "error": "",
+        "probability": 0.22
+      },
+      "ms": 257.82683299621567,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 32,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": true,
+      "picked": true,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-32-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-32-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 1.0
+        },
+        "ms": 177.9317079926841,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 177.9317079926841,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 32,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": true,
+      "picked": false,
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-32-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-32-after.png"
+      ],
+      "answer": {
+        "ms": 284.06012497725897,
+        "error": "",
+        "probability": 0.22
+      },
+      "ms": 284.06012497725897,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 33,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-33-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-33-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 0.0
+        },
+        "ms": 198.45820899354294,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 198.45820899354294,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 33,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-33-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-33-after.png"
+      ],
+      "answer": {
+        "ms": 330.7259999855887,
+        "error": "",
+        "probability": 0.21
+      },
+      "ms": 330.7259999855887,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 34,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": true,
+      "picked": true,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-34-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-34-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 1.0
+        },
+        "ms": 182.70958302309737,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 182.70958302309737,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 34,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": true,
+      "picked": false,
+      "correct": false,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-34-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-34-after.png"
+      ],
+      "answer": {
+        "ms": 247.36204202054068,
+        "error": "",
+        "probability": 0.21
+      },
+      "ms": 247.36204202054068,
+      "error": ""
+    },
+    {
+      "provider": "Decisions",
+      "case": 35,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-35-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-35-after.png"
+      ],
+      "answer": {
+        "values": {
+          "verified": 0.0
+        },
+        "ms": 184.78633399354294,
+        "usage": {
+          "input_tokens": 1120,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0
+          },
+          "output_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 1120
+        },
+        "error": ""
+      },
+      "ms": 184.78633399354294,
+      "error": ""
+    },
+    {
+      "provider": "Jev",
+      "case": 35,
+      "repeat": 2,
+      "kind": "verification",
+      "expected": false,
+      "picked": false,
+      "correct": true,
+      "images": [
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-35-before.png",
+        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-35-after.png"
+      ],
+      "answer": {
+        "ms": 376.12254099803977,
+        "error": "",
+        "probability": 0.2
+      },
+      "ms": 376.12254099803977,
+      "error": ""
+    }
+  ]
+}

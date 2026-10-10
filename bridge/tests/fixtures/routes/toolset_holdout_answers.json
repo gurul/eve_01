@@ -1,0 +1,1719 @@
+{
+ "asked": "2026-10-05 00:26",
+ "questions": {
+  "calendar": {
+   "type": "noul",
+   "instructions": "To do what the owner asks, must the assistant read or change the owner's own calendar: their events, classes, lectures, exams, meetings, appointments, free or busy time, invites, what is next or what their day or week holds? Yes too when the request points at one of their events by its time or name (\"my 3pm\", \"my next class\") and needs when or where it is, or when the request asks to put something on their calendar. No for general questions about dates or how calendars work."
+  },
+  "maps": {
+   "type": "noul",
+   "instructions": "To do what the owner asks, must the assistant look up places or getting around: a place's address or map link, directions, travel time, the route, traffic, places nearby to go to, or the weather or forecast somewhere? No for a business's opening hours, news, or general facts."
+  },
+  "gmail": {
+   "type": "noul",
+   "instructions": "To do what the owner asks, must the assistant read the owner's own email: find, read, count or summarize messages in their inbox, what someone emailed or sent them, or a receipt, code, link or confirmation that came by email? No when the request only sends something, and no for whether an email service is working."
+  },
+  "drive": {
+   "type": "noul",
+   "instructions": "To do what the owner asks, must the assistant find, open, read or create a document, spreadsheet, slide deck or PDF stored in the owner's cloud drive, or save something there? No for a file only on the computer's desktop or downloads folder."
+  },
+  "github": {
+   "type": "noul",
+   "instructions": "To do what the owner asks, must the assistant read or change the owner's code projects on GitHub: repositories, issues, pull requests, commits, branches, or build and CI status? No for general programming questions or advice."
+  },
+  "doordash": {
+   "type": "noul",
+   "instructions": "To do what the owner asks, must the assistant order food, groceries or other items for delivery or pickup, or look at such orders: what is open to order, a menu, the cart, placing, reordering or tracking an order, or past delivery orders and their cost? No for questions about a delivery company as a business, or for finding a place to go and eat in person."
+  },
+  "share": {
+   "type": "noul",
+   "instructions": "To do what the owner asks, must the assistant send a file (a document, deck, PDF, photo, screenshot or other file) to another person by text message or email? No when the file goes to the owner themself, and no for a plain message with no file."
+  },
+  "workspace": {
+   "type": "noul",
+   "instructions": "To do what the owner asks, must the assistant read or write in the owner's Slack, Notion or Linear: messages, channels, mentions, threads, pages, tickets or sprints? No for opening one of those apps on the computer screen, or for comparing such products."
+  }
+ },
+ "answers": {
+  "h001": {
+   "nouls": {
+    "calendar": 0.93,
+    "maps": 0.1,
+    "gmail": 0.21,
+    "drive": 0.19,
+    "github": 0.06,
+    "doordash": 0.01,
+    "share": 0.04,
+    "workspace": 0.22
+   },
+   "ms": 275.8,
+   "error": ""
+  },
+  "h002": {
+   "nouls": {
+    "calendar": 0.98,
+    "maps": 0.04,
+    "gmail": 0.06,
+    "drive": 0.17,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.02,
+    "workspace": 0.06
+   },
+   "ms": 226.4,
+   "error": ""
+  },
+  "h003": {
+   "nouls": {
+    "calendar": 0.98,
+    "maps": 0.03,
+    "gmail": 0.1,
+    "drive": 0.08,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.03,
+    "workspace": 0.11
+   },
+   "ms": 239.7,
+   "error": ""
+  },
+  "h004": {
+   "nouls": {
+    "calendar": 0.96,
+    "maps": 0.15,
+    "gmail": 0.06,
+    "drive": 0.18,
+    "github": 0.02,
+    "doordash": 0.03,
+    "share": 0.04,
+    "workspace": 0.14
+   },
+   "ms": 186.9,
+   "error": ""
+  },
+  "h005": {
+   "nouls": {
+    "calendar": 0.53,
+    "maps": 0.04,
+    "gmail": 0.05,
+    "drive": 0.04,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.03,
+    "workspace": 0.17
+   },
+   "ms": 212.4,
+   "error": ""
+  },
+  "h006": {
+   "nouls": {
+    "calendar": 0.96,
+    "maps": 0.25,
+    "gmail": 0.31,
+    "drive": 0.42,
+    "github": 0.03,
+    "doordash": 0.02,
+    "share": 0.06,
+    "workspace": 0.27
+   },
+   "ms": 170.2,
+   "error": ""
+  },
+  "h007": {
+   "nouls": {
+    "calendar": 0.97,
+    "maps": 0.12,
+    "gmail": 0.11,
+    "drive": 0.16,
+    "github": 0.04,
+    "doordash": 0.03,
+    "share": 0.04,
+    "workspace": 0.12
+   },
+   "ms": 270.3,
+   "error": ""
+  },
+  "h008": {
+   "nouls": {
+    "calendar": 0.96,
+    "maps": 0.05,
+    "gmail": 0.03,
+    "drive": 0.2,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.02,
+    "workspace": 0.06
+   },
+   "ms": 175.7,
+   "error": ""
+  },
+  "h009": {
+   "nouls": {
+    "calendar": 0.04,
+    "maps": 0.97,
+    "gmail": 0.02,
+    "drive": 0.04,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.03,
+    "workspace": 0.05
+   },
+   "ms": 204.6,
+   "error": ""
+  },
+  "h010": {
+   "nouls": {
+    "calendar": 0.61,
+    "maps": 0.96,
+    "gmail": 0.03,
+    "drive": 0.08,
+    "github": 0.02,
+    "doordash": 0.01,
+    "share": 0.03,
+    "workspace": 0.05
+   },
+   "ms": 152.6,
+   "error": ""
+  },
+  "h011": {
+   "nouls": {
+    "calendar": 0.14,
+    "maps": 0.98,
+    "gmail": 0.02,
+    "drive": 0.03,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.03,
+    "workspace": 0.03
+   },
+   "ms": 165.4,
+   "error": ""
+  },
+  "h012": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.94,
+    "gmail": 0.02,
+    "drive": 0.03,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.04,
+    "workspace": 0.03
+   },
+   "ms": 206.2,
+   "error": ""
+  },
+  "h013": {
+   "nouls": {
+    "calendar": 0.02,
+    "maps": 0.89,
+    "gmail": 0.02,
+    "drive": 0.04,
+    "github": 0.01,
+    "doordash": 0.05,
+    "share": 0.04,
+    "workspace": 0.04
+   },
+   "ms": 142.6,
+   "error": ""
+  },
+  "h014": {
+   "nouls": {
+    "calendar": 0.02,
+    "maps": 0.98,
+    "gmail": 0.02,
+    "drive": 0.03,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.04,
+    "workspace": 0.03
+   },
+   "ms": 233.2,
+   "error": ""
+  },
+  "h015": {
+   "nouls": {
+    "calendar": 0.04,
+    "maps": 0.91,
+    "gmail": 0.04,
+    "drive": 0.08,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.11,
+    "workspace": 0.07
+   },
+   "ms": 188.3,
+   "error": ""
+  },
+  "h016": {
+   "nouls": {
+    "calendar": 0.02,
+    "maps": 0.02,
+    "gmail": 0.53,
+    "drive": 0.13,
+    "github": 0.02,
+    "doordash": 0.01,
+    "share": 0.04,
+    "workspace": 0.16
+   },
+   "ms": 163.2,
+   "error": ""
+  },
+  "h017": {
+   "nouls": {
+    "calendar": 0.02,
+    "maps": 0.01,
+    "gmail": 0.82,
+    "drive": 0.05,
+    "github": 0.03,
+    "doordash": 0.01,
+    "share": 0.02,
+    "workspace": 0.26
+   },
+   "ms": 151.9,
+   "error": ""
+  },
+  "h018": {
+   "nouls": {
+    "calendar": 0.07,
+    "maps": 0.07,
+    "gmail": 0.7,
+    "drive": 0.59,
+    "github": 0.01,
+    "doordash": 0.02,
+    "share": 0.14,
+    "workspace": 0.12
+   },
+   "ms": 191.8,
+   "error": ""
+  },
+  "h019": {
+   "nouls": {
+    "calendar": 0.02,
+    "maps": 0.03,
+    "gmail": 0.18,
+    "drive": 0.18,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.08,
+    "workspace": 0.08
+   },
+   "ms": 137.1,
+   "error": ""
+  },
+  "h020": {
+   "nouls": {
+    "calendar": 0.02,
+    "maps": 0.01,
+    "gmail": 0.95,
+    "drive": 0.07,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.06,
+    "workspace": 0.09
+   },
+   "ms": 137.0,
+   "error": ""
+  },
+  "h021": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.01,
+    "gmail": 0.04,
+    "drive": 0.73,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.08,
+    "workspace": 0.29
+   },
+   "ms": 132.8,
+   "error": ""
+  },
+  "h022": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.02,
+    "gmail": 0.1,
+    "drive": 0.75,
+    "github": 0.02,
+    "doordash": 0.01,
+    "share": 0.09,
+    "workspace": 0.3
+   },
+   "ms": 268.1,
+   "error": ""
+  },
+  "h023": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.01,
+    "gmail": 0.02,
+    "drive": 0.97,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.05,
+    "workspace": 0.03
+   },
+   "ms": 246.6,
+   "error": ""
+  },
+  "h024": {
+   "nouls": {
+    "calendar": 0.06,
+    "maps": 0.02,
+    "gmail": 0.2,
+    "drive": 0.7,
+    "github": 0.02,
+    "doordash": 0.01,
+    "share": 0.12,
+    "workspace": 0.31
+   },
+   "ms": 224.8,
+   "error": ""
+  },
+  "h025": {
+   "nouls": {
+    "calendar": 0.02,
+    "maps": 0.03,
+    "gmail": 0.05,
+    "drive": 0.97,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.1,
+    "workspace": 0.05
+   },
+   "ms": 167.3,
+   "error": ""
+  },
+  "h026": {
+   "nouls": {
+    "calendar": 0.02,
+    "maps": 0.02,
+    "gmail": 0.12,
+    "drive": 0.12,
+    "github": 0.86,
+    "doordash": 0.01,
+    "share": 0.04,
+    "workspace": 0.28
+   },
+   "ms": 236.3,
+   "error": ""
+  },
+  "h027": {
+   "nouls": {
+    "calendar": 0.07,
+    "maps": 0.02,
+    "gmail": 0.52,
+    "drive": 0.4,
+    "github": 0.87,
+    "doordash": 0.01,
+    "share": 0.04,
+    "workspace": 0.75
+   },
+   "ms": 526.2,
+   "error": ""
+  },
+  "h028": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.01,
+    "gmail": 0.03,
+    "drive": 0.11,
+    "github": 0.91,
+    "doordash": 0.01,
+    "share": 0.04,
+    "workspace": 0.06
+   },
+   "ms": 157.2,
+   "error": ""
+  },
+  "h029": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.02,
+    "gmail": 0.05,
+    "drive": 0.15,
+    "github": 0.91,
+    "doordash": 0.01,
+    "share": 0.05,
+    "workspace": 0.79
+   },
+   "ms": 163.9,
+   "error": ""
+  },
+  "h030": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.01,
+    "gmail": 0.05,
+    "drive": 0.09,
+    "github": 0.93,
+    "doordash": 0.01,
+    "share": 0.04,
+    "workspace": 0.22
+   },
+   "ms": 201.9,
+   "error": ""
+  },
+  "h031": {
+   "nouls": {
+    "calendar": 0.03,
+    "maps": 0.32,
+    "gmail": 0.05,
+    "drive": 0.11,
+    "github": 0.01,
+    "doordash": 0.89,
+    "share": 0.04,
+    "workspace": 0.07
+   },
+   "ms": 140.4,
+   "error": ""
+  },
+  "h032": {
+   "nouls": {
+    "calendar": 0.02,
+    "maps": 0.25,
+    "gmail": 0.05,
+    "drive": 0.05,
+    "github": 0.01,
+    "doordash": 0.82,
+    "share": 0.03,
+    "workspace": 0.07
+   },
+   "ms": 177.7,
+   "error": ""
+  },
+  "h033": {
+   "nouls": {
+    "calendar": 0.04,
+    "maps": 0.73,
+    "gmail": 0.03,
+    "drive": 0.06,
+    "github": 0.01,
+    "doordash": 0.9,
+    "share": 0.05,
+    "workspace": 0.05
+   },
+   "ms": 205.4,
+   "error": ""
+  },
+  "h034": {
+   "nouls": {
+    "calendar": 0.11,
+    "maps": 0.17,
+    "gmail": 0.23,
+    "drive": 0.21,
+    "github": 0.01,
+    "doordash": 0.96,
+    "share": 0.06,
+    "workspace": 0.12
+   },
+   "ms": 139.8,
+   "error": ""
+  },
+  "h035": {
+   "nouls": {
+    "calendar": 0.02,
+    "maps": 0.49,
+    "gmail": 0.02,
+    "drive": 0.02,
+    "github": 0.01,
+    "doordash": 0.96,
+    "share": 0.03,
+    "workspace": 0.04
+   },
+   "ms": 135.9,
+   "error": ""
+  },
+  "h036": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.14,
+    "gmail": 0.03,
+    "drive": 0.04,
+    "github": 0.01,
+    "doordash": 0.91,
+    "share": 0.02,
+    "workspace": 0.04
+   },
+   "ms": 148.3,
+   "error": ""
+  },
+  "h037": {
+   "nouls": {
+    "calendar": 0.02,
+    "maps": 0.02,
+    "gmail": 0.1,
+    "drive": 0.43,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.94,
+    "workspace": 0.06
+   },
+   "ms": 239.9,
+   "error": ""
+  },
+  "h038": {
+   "nouls": {
+    "calendar": 0.02,
+    "maps": 0.02,
+    "gmail": 0.03,
+    "drive": 0.1,
+    "github": 0.05,
+    "doordash": 0.01,
+    "share": 0.68,
+    "workspace": 0.23
+   },
+   "ms": 155.5,
+   "error": ""
+  },
+  "h039": {
+   "nouls": {
+    "calendar": 0.05,
+    "maps": 0.03,
+    "gmail": 0.13,
+    "drive": 0.57,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.97,
+    "workspace": 0.08
+   },
+   "ms": 234.8,
+   "error": ""
+  },
+  "h040": {
+   "nouls": {
+    "calendar": 0.02,
+    "maps": 0.01,
+    "gmail": 0.11,
+    "drive": 0.74,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.96,
+    "workspace": 0.22
+   },
+   "ms": 182.4,
+   "error": ""
+  },
+  "h041": {
+   "nouls": {
+    "calendar": 0.04,
+    "maps": 0.04,
+    "gmail": 0.04,
+    "drive": 0.1,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.91,
+    "workspace": 0.04
+   },
+   "ms": 144.9,
+   "error": ""
+  },
+  "h042": {
+   "nouls": {
+    "calendar": 0.02,
+    "maps": 0.02,
+    "gmail": 0.04,
+    "drive": 0.08,
+    "github": 0.13,
+    "doordash": 0.01,
+    "share": 0.05,
+    "workspace": 0.84
+   },
+   "ms": 191.4,
+   "error": ""
+  },
+  "h043": {
+   "nouls": {
+    "calendar": 0.18,
+    "maps": 0.02,
+    "gmail": 0.05,
+    "drive": 0.16,
+    "github": 0.67,
+    "doordash": 0.01,
+    "share": 0.05,
+    "workspace": 0.89
+   },
+   "ms": 171.5,
+   "error": ""
+  },
+  "h044": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.01,
+    "gmail": 0.03,
+    "drive": 0.63,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.03,
+    "workspace": 0.29
+   },
+   "ms": 154.6,
+   "error": ""
+  },
+  "h045": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.01,
+    "gmail": 0.03,
+    "drive": 0.03,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.03,
+    "workspace": 0.93
+   },
+   "ms": 198.0,
+   "error": ""
+  },
+  "h046": {
+   "nouls": {
+    "calendar": 0.19,
+    "maps": 0.01,
+    "gmail": 0.04,
+    "drive": 0.22,
+    "github": 0.69,
+    "doordash": 0.01,
+    "share": 0.03,
+    "workspace": 0.8
+   },
+   "ms": 187.2,
+   "error": ""
+  },
+  "h047": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.01,
+    "gmail": 0.03,
+    "drive": 0.48,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.04,
+    "workspace": 0.86
+   },
+   "ms": 138.4,
+   "error": ""
+  },
+  "h048": {
+   "nouls": {
+    "calendar": 0.95,
+    "maps": 0.96,
+    "gmail": 0.14,
+    "drive": 0.32,
+    "github": 0.02,
+    "doordash": 0.01,
+    "share": 0.08,
+    "workspace": 0.28
+   },
+   "ms": 297.7,
+   "error": ""
+  },
+  "h049": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.01,
+    "gmail": 0.05,
+    "drive": 0.96,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.98,
+    "workspace": 0.06
+   },
+   "ms": 148.9,
+   "error": ""
+  },
+  "h050": {
+   "nouls": {
+    "calendar": 0.93,
+    "maps": 0.87,
+    "gmail": 0.08,
+    "drive": 0.1,
+    "github": 0.01,
+    "doordash": 0.96,
+    "share": 0.03,
+    "workspace": 0.2
+   },
+   "ms": 179.1,
+   "error": ""
+  },
+  "h051": {
+   "nouls": {
+    "calendar": 0.81,
+    "maps": 0.67,
+    "gmail": 0.12,
+    "drive": 0.22,
+    "github": 0.02,
+    "doordash": 0.01,
+    "share": 0.04,
+    "workspace": 0.12
+   },
+   "ms": 305.7,
+   "error": ""
+  },
+  "h052": {
+   "nouls": {
+    "calendar": 0.98,
+    "maps": 0.09,
+    "gmail": 0.97,
+    "drive": 0.11,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.03,
+    "workspace": 0.04
+   },
+   "ms": 159.0,
+   "error": ""
+  },
+  "h053": {
+   "nouls": {
+    "calendar": 0.02,
+    "maps": 0.01,
+    "gmail": 0.05,
+    "drive": 0.96,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.95,
+    "workspace": 0.11
+   },
+   "ms": 157.1,
+   "error": ""
+  },
+  "h054": {
+   "nouls": {
+    "calendar": 0.02,
+    "maps": 0.01,
+    "gmail": 0.11,
+    "drive": 0.22,
+    "github": 0.91,
+    "doordash": 0.01,
+    "share": 0.06,
+    "workspace": 0.88
+   },
+   "ms": 178.3,
+   "error": ""
+  },
+  "h055": {
+   "nouls": {
+    "calendar": 0.97,
+    "maps": 0.02,
+    "gmail": 0.72,
+    "drive": 0.26,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.06,
+    "workspace": 0.18
+   },
+   "ms": 356.5,
+   "error": ""
+  },
+  "h056": {
+   "nouls": {
+    "calendar": 0.97,
+    "maps": 0.97,
+    "gmail": 0.04,
+    "drive": 0.12,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.04,
+    "workspace": 0.07
+   },
+   "ms": 136.4,
+   "error": ""
+  },
+  "h057": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.01,
+    "gmail": 0.04,
+    "drive": 0.05,
+    "github": 0.91,
+    "doordash": 0.01,
+    "share": 0.04,
+    "workspace": 0.91
+   },
+   "ms": 214.7,
+   "error": ""
+  },
+  "h058": {
+   "nouls": {
+    "calendar": 0.21,
+    "maps": 0.97,
+    "gmail": 0.95,
+    "drive": 0.31,
+    "github": 0.01,
+    "doordash": 0.02,
+    "share": 0.06,
+    "workspace": 0.06
+   },
+   "ms": 162.9,
+   "error": ""
+  },
+  "h059": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.01,
+    "gmail": 0.05,
+    "drive": 0.13,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.95,
+    "workspace": 0.3
+   },
+   "ms": 150.8,
+   "error": ""
+  },
+  "h060": {
+   "nouls": {
+    "calendar": 0.96,
+    "maps": 0.04,
+    "gmail": 0.08,
+    "drive": 0.93,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.12,
+    "workspace": 0.35
+   },
+   "ms": 157.0,
+   "error": ""
+  },
+  "h061": {
+   "nouls": {
+    "calendar": 0.95,
+    "maps": 0.96,
+    "gmail": 0.04,
+    "drive": 0.05,
+    "github": 0.01,
+    "doordash": 0.04,
+    "share": 0.04,
+    "workspace": 0.06
+   },
+   "ms": 216.2,
+   "error": ""
+  },
+  "h062": {
+   "nouls": {
+    "calendar": 0.02,
+    "maps": 0.01,
+    "gmail": 0.89,
+    "drive": 0.18,
+    "github": 0.87,
+    "doordash": 0.01,
+    "share": 0.04,
+    "workspace": 0.55
+   },
+   "ms": 172.4,
+   "error": ""
+  },
+  "h063": {
+   "nouls": {
+    "calendar": 0.93,
+    "maps": 0.03,
+    "gmail": 0.15,
+    "drive": 0.97,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.11,
+    "workspace": 0.17
+   },
+   "ms": 162.3,
+   "error": ""
+  },
+  "h064": {
+   "nouls": {
+    "calendar": 0.51,
+    "maps": 0.97,
+    "gmail": 0.02,
+    "drive": 0.08,
+    "github": 0.01,
+    "doordash": 0.03,
+    "share": 0.03,
+    "workspace": 0.05
+   },
+   "ms": 190.1,
+   "error": ""
+  },
+  "h065": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.01,
+    "gmail": 0.04,
+    "drive": 0.15,
+    "github": 0.77,
+    "doordash": 0.01,
+    "share": 0.05,
+    "workspace": 0.77
+   },
+   "ms": 231.2,
+   "error": ""
+  },
+  "h066": {
+   "nouls": {
+    "calendar": 0.99,
+    "maps": 0.02,
+    "gmail": 0.04,
+    "drive": 0.96,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.05,
+    "workspace": 0.06
+   },
+   "ms": 293.1,
+   "error": ""
+  },
+  "h067": {
+   "nouls": {
+    "calendar": 0.46,
+    "maps": 0.57,
+    "gmail": 0.89,
+    "drive": 0.22,
+    "github": 0.01,
+    "doordash": 0.97,
+    "share": 0.06,
+    "workspace": 0.08
+   },
+   "ms": 184.8,
+   "error": ""
+  },
+  "h068": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.01,
+    "gmail": 0.05,
+    "drive": 0.91,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.11,
+    "workspace": 0.86
+   },
+   "ms": 197.0,
+   "error": ""
+  },
+  "h069": {
+   "nouls": {
+    "calendar": 0.95,
+    "maps": 0.96,
+    "gmail": 0.2,
+    "drive": 0.18,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.04,
+    "workspace": 0.13
+   },
+   "ms": 696.6,
+   "error": ""
+  },
+  "h070": {
+   "nouls": {
+    "calendar": 0.13,
+    "maps": 0.97,
+    "gmail": 0.35,
+    "drive": 0.14,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.94,
+    "workspace": 0.08
+   },
+   "ms": 155.5,
+   "error": ""
+  },
+  "h071": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.01,
+    "gmail": 0.92,
+    "drive": 0.17,
+    "github": 0.55,
+    "doordash": 0.01,
+    "share": 0.04,
+    "workspace": 0.15
+   },
+   "ms": 160.3,
+   "error": ""
+  },
+  "h072": {
+   "nouls": {
+    "calendar": 0.78,
+    "maps": 0.41,
+    "gmail": 0.2,
+    "drive": 0.16,
+    "github": 0.01,
+    "doordash": 0.97,
+    "share": 0.05,
+    "workspace": 0.08
+   },
+   "ms": 177.2,
+   "error": ""
+  },
+  "h073": {
+   "nouls": {
+    "calendar": 0.26,
+    "maps": 0.97,
+    "gmail": 0.11,
+    "drive": 0.56,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.05,
+    "workspace": 0.59
+   },
+   "ms": 142.7,
+   "error": ""
+  },
+  "h074": {
+   "nouls": {
+    "calendar": 0.88,
+    "maps": 0.05,
+    "gmail": 0.12,
+    "drive": 0.09,
+    "github": 0.05,
+    "doordash": 0.01,
+    "share": 0.03,
+    "workspace": 0.84
+   },
+   "ms": 164.5,
+   "error": ""
+  },
+  "h075": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.01,
+    "gmail": 0.09,
+    "drive": 0.97,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.97,
+    "workspace": 0.06
+   },
+   "ms": 217.8,
+   "error": ""
+  },
+  "h076": {
+   "nouls": {
+    "calendar": 0.98,
+    "maps": 0.09,
+    "gmail": 0.93,
+    "drive": 0.07,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.03,
+    "workspace": 0.05
+   },
+   "ms": 147.4,
+   "error": ""
+  },
+  "h077": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.01,
+    "gmail": 0.08,
+    "drive": 0.93,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.95,
+    "workspace": 0.08
+   },
+   "ms": 172.4,
+   "error": ""
+  },
+  "h078": {
+   "nouls": {
+    "calendar": 0.95,
+    "maps": 0.97,
+    "gmail": 0.04,
+    "drive": 0.2,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.03,
+    "workspace": 0.06
+   },
+   "ms": 204.7,
+   "error": ""
+  },
+  "h079": {
+   "nouls": {
+    "calendar": 0.71,
+    "maps": 0.01,
+    "gmail": 0.13,
+    "drive": 0.09,
+    "github": 0.02,
+    "doordash": 0.01,
+    "share": 0.03,
+    "workspace": 0.11
+   },
+   "ms": 157.3,
+   "error": ""
+  },
+  "h080": {
+   "nouls": {
+    "calendar": 0.02,
+    "maps": 0.75,
+    "gmail": 0.03,
+    "drive": 0.04,
+    "github": 0.01,
+    "doordash": 0.95,
+    "share": 0.04,
+    "workspace": 0.03
+   },
+   "ms": 170.5,
+   "error": ""
+  },
+  "h081": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.01,
+    "gmail": 0.06,
+    "drive": 0.16,
+    "github": 0.9,
+    "doordash": 0.01,
+    "share": 0.04,
+    "workspace": 0.31
+   },
+   "ms": 199.3,
+   "error": ""
+  },
+  "h082": {
+   "nouls": {
+    "calendar": 0.03,
+    "maps": 0.01,
+    "gmail": 0.04,
+    "drive": 0.96,
+    "github": 0.02,
+    "doordash": 0.01,
+    "share": 0.09,
+    "workspace": 0.1
+   },
+   "ms": 156.8,
+   "error": ""
+  },
+  "h083": {
+   "nouls": {
+    "calendar": 0.5,
+    "maps": 0.97,
+    "gmail": 0.15,
+    "drive": 0.09,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.03,
+    "workspace": 0.05
+   },
+   "ms": 169.0,
+   "error": ""
+  },
+  "h084": {
+   "nouls": {
+    "calendar": 0.02,
+    "maps": 0.01,
+    "gmail": 0.08,
+    "drive": 0.48,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.94,
+    "workspace": 0.14
+   },
+   "ms": 196.9,
+   "error": ""
+  },
+  "h085": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.01,
+    "gmail": 0.03,
+    "drive": 0.06,
+    "github": 0.91,
+    "doordash": 0.01,
+    "share": 0.04,
+    "workspace": 0.54
+   },
+   "ms": 187.9,
+   "error": ""
+  },
+  "h086": {
+   "nouls": {
+    "calendar": 0.14,
+    "maps": 0.94,
+    "gmail": 0.05,
+    "drive": 0.07,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.03,
+    "workspace": 0.05
+   },
+   "ms": 187.0,
+   "error": ""
+  },
+  "h087": {
+   "nouls": {
+    "calendar": 0.95,
+    "maps": 0.06,
+    "gmail": 0.31,
+    "drive": 0.2,
+    "github": 0.1,
+    "doordash": 0.09,
+    "share": 0.03,
+    "workspace": 0.44
+   },
+   "ms": 169.4,
+   "error": ""
+  },
+  "h088": {
+   "nouls": {
+    "calendar": 0.02,
+    "maps": 0.01,
+    "gmail": 0.13,
+    "drive": 0.08,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.04,
+    "workspace": 0.05
+   },
+   "ms": 182.5,
+   "error": ""
+  },
+  "h089": {
+   "nouls": {
+    "calendar": 0.02,
+    "maps": 0.01,
+    "gmail": 0.94,
+    "drive": 0.06,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.03,
+    "workspace": 0.03
+   },
+   "ms": 156.2,
+   "error": ""
+  },
+  "h090": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.02,
+    "gmail": 0.03,
+    "drive": 0.04,
+    "github": 0.01,
+    "doordash": 0.91,
+    "share": 0.03,
+    "workspace": 0.03
+   },
+   "ms": 163.5,
+   "error": ""
+  },
+  "h091": {
+   "nouls": {
+    "calendar": 0.07,
+    "maps": 0.06,
+    "gmail": 0.07,
+    "drive": 0.12,
+    "github": 0.07,
+    "doordash": 0.03,
+    "share": 0.08,
+    "workspace": 0.13
+   },
+   "ms": 208.0,
+   "error": ""
+  },
+  "h092": {
+   "nouls": {
+    "calendar": 0.09,
+    "maps": 0.02,
+    "gmail": 0.04,
+    "drive": 0.05,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.05,
+    "workspace": 0.05
+   },
+   "ms": 158.6,
+   "error": ""
+  },
+  "h093": {
+   "nouls": {
+    "calendar": 0.11,
+    "maps": 0.02,
+    "gmail": 0.03,
+    "drive": 0.17,
+    "github": 0.09,
+    "doordash": 0.02,
+    "share": 0.08,
+    "workspace": 0.09
+   },
+   "ms": 164.7,
+   "error": ""
+  },
+  "h094": {
+   "nouls": {
+    "calendar": 0.02,
+    "maps": 0.02,
+    "gmail": 0.04,
+    "drive": 0.07,
+    "github": 0.08,
+    "doordash": 0.01,
+    "share": 0.06,
+    "workspace": 0.09
+   },
+   "ms": 163.0,
+   "error": ""
+  },
+  "h095": {
+   "nouls": {
+    "calendar": 0.02,
+    "maps": 0.01,
+    "gmail": 0.17,
+    "drive": 0.61,
+    "github": 0.03,
+    "doordash": 0.01,
+    "share": 0.12,
+    "workspace": 0.22
+   },
+   "ms": 166.7,
+   "error": ""
+  },
+  "h096": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.01,
+    "gmail": 0.02,
+    "drive": 0.02,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.02,
+    "workspace": 0.02
+   },
+   "ms": 188.0,
+   "error": ""
+  },
+  "h097": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.01,
+    "gmail": 0.01,
+    "drive": 0.02,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.02,
+    "workspace": 0.02
+   },
+   "ms": 155.9,
+   "error": ""
+  },
+  "h098": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.01,
+    "gmail": 0.02,
+    "drive": 0.02,
+    "github": 0.01,
+    "doordash": 0.02,
+    "share": 0.03,
+    "workspace": 0.02
+   },
+   "ms": 207.2,
+   "error": ""
+  },
+  "h099": {
+   "nouls": {
+    "calendar": 0.27,
+    "maps": 0.03,
+    "gmail": 0.16,
+    "drive": 0.1,
+    "github": 0.01,
+    "doordash": 0.04,
+    "share": 0.03,
+    "workspace": 0.18
+   },
+   "ms": 286.2,
+   "error": ""
+  },
+  "h100": {
+   "nouls": {
+    "calendar": 0.1,
+    "maps": 0.01,
+    "gmail": 0.02,
+    "drive": 0.04,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.02,
+    "workspace": 0.03
+   },
+   "ms": 141.6,
+   "error": ""
+  },
+  "h101": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.02,
+    "gmail": 0.02,
+    "drive": 0.02,
+    "github": 0.03,
+    "doordash": 0.01,
+    "share": 0.03,
+    "workspace": 0.03
+   },
+   "ms": 147.0,
+   "error": ""
+  },
+  "h102": {
+   "nouls": {
+    "calendar": 0.02,
+    "maps": 0.07,
+    "gmail": 0.02,
+    "drive": 0.04,
+    "github": 0.01,
+    "doordash": 0.03,
+    "share": 0.03,
+    "workspace": 0.04
+   },
+   "ms": 245.2,
+   "error": ""
+  },
+  "h103": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.02,
+    "gmail": 0.02,
+    "drive": 0.03,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.03,
+    "workspace": 0.04
+   },
+   "ms": 144.2,
+   "error": ""
+  },
+  "h104": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.01,
+    "gmail": 0.02,
+    "drive": 0.03,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.02,
+    "workspace": 0.03
+   },
+   "ms": 141.6,
+   "error": ""
+  },
+  "h105": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.01,
+    "gmail": 0.02,
+    "drive": 0.04,
+    "github": 0.03,
+    "doordash": 0.01,
+    "share": 0.05,
+    "workspace": 0.03
+   },
+   "ms": 238.0,
+   "error": ""
+  },
+  "h106": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.01,
+    "gmail": 0.01,
+    "drive": 0.02,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.02,
+    "workspace": 0.02
+   },
+   "ms": 156.8,
+   "error": ""
+  },
+  "h107": {
+   "nouls": {
+    "calendar": 0.06,
+    "maps": 0.02,
+    "gmail": 0.04,
+    "drive": 0.05,
+    "github": 0.03,
+    "doordash": 0.01,
+    "share": 0.05,
+    "workspace": 0.06
+   },
+   "ms": 233.8,
+   "error": ""
+  },
+  "h108": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.02,
+    "gmail": 0.04,
+    "drive": 0.04,
+    "github": 0.02,
+    "doordash": 0.01,
+    "share": 0.05,
+    "workspace": 0.03
+   },
+   "ms": 150.7,
+   "error": ""
+  },
+  "h109": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.01,
+    "gmail": 0.02,
+    "drive": 0.03,
+    "github": 0.04,
+    "doordash": 0.01,
+    "share": 0.02,
+    "workspace": 0.06
+   },
+   "ms": 151.5,
+   "error": ""
+  },
+  "h110": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.04,
+    "gmail": 0.04,
+    "drive": 0.05,
+    "github": 0.02,
+    "doordash": 0.03,
+    "share": 0.03,
+    "workspace": 0.06
+   },
+   "ms": 222.3,
+   "error": ""
+  },
+  "h111": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.01,
+    "gmail": 0.02,
+    "drive": 0.02,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.03,
+    "workspace": 0.03
+   },
+   "ms": 171.8,
+   "error": ""
+  },
+  "h112": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.02,
+    "gmail": 0.08,
+    "drive": 0.08,
+    "github": 0.03,
+    "doordash": 0.01,
+    "share": 0.04,
+    "workspace": 0.17
+   },
+   "ms": 159.9,
+   "error": ""
+  },
+  "h113": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.01,
+    "gmail": 0.1,
+    "drive": 0.31,
+    "github": 0.8,
+    "doordash": 0.01,
+    "share": 0.08,
+    "workspace": 0.37
+   },
+   "ms": 191.3,
+   "error": ""
+  },
+  "h114": {
+   "nouls": {
+    "calendar": 0.07,
+    "maps": 0.04,
+    "gmail": 0.05,
+    "drive": 0.05,
+    "github": 0.02,
+    "doordash": 0.05,
+    "share": 0.05,
+    "workspace": 0.07
+   },
+   "ms": 154.4,
+   "error": ""
+  },
+  "h115": {
+   "nouls": {
+    "calendar": 0.02,
+    "maps": 0.02,
+    "gmail": 0.07,
+    "drive": 0.15,
+    "github": 0.04,
+    "doordash": 0.02,
+    "share": 0.11,
+    "workspace": 0.29
+   },
+   "ms": 143.2,
+   "error": ""
+  },
+  "h116": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.06,
+    "gmail": 0.01,
+    "drive": 0.02,
+    "github": 0.01,
+    "doordash": 0.01,
+    "share": 0.02,
+    "workspace": 0.03
+   },
+   "ms": 226.5,
+   "error": ""
+  },
+  "h117": {
+   "nouls": {
+    "calendar": 0.02,
+    "maps": 0.01,
+    "gmail": 0.05,
+    "drive": 0.25,
+    "github": 0.02,
+    "doordash": 0.01,
+    "share": 0.06,
+    "workspace": 0.13
+   },
+   "ms": 149.5,
+   "error": ""
+  },
+  "h118": {
+   "nouls": {
+    "calendar": 0.01,
+    "maps": 0.01,
+    "gmail": 0.02,
+    "drive": 0.04,
+    "github": 0.09,
+    "doordash": 0.01,
+    "share": 0.05,
+    "workspace": 0.05
+   },
+   "ms": 148.6,
+   "error": ""
+  },
+  "h119": {
+   "nouls": {
+    "calendar": 0.05,
+    "maps": 0.22,
+    "gmail": 0.16,
+    "drive": 0.34,
+    "github": 0.01,
+    "doordash": 0.98,
+    "share": 0.05,
+    "workspace": 0.06
+   },
+   "ms": 226.5,
+   "error": ""
+  },
+  "h120": {
+   "nouls": {
+    "calendar": 0.02,
+    "maps": 0.01,
+    "gmail": 0.02,
+    "drive": 0.02,
+    "github": 0.01,
+    "doordash": 0.02,
+    "share": 0.02,
+    "workspace": 0.04
+   },
+   "ms": 157.5,
+   "error": ""
+  }
+ }
+}

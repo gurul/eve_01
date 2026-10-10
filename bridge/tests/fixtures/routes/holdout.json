@@ -1,0 +1,1280 @@
+{
+ "note": "Held-out route test set written by Claude (an Anthropic model, acting as an isolated sub-agent) on 2026-09-21 from a written policy brief only; the author had seen neither the classifier's code nor any other test set or fixture in the repository. Labelling policy: each spoken task goal gets the cheapest route that fully and safely does it - a bare launch of one installed app or an explicit web search with a concrete query is a reflex (plus the planner when more is asked), while anything consequential, content-creating, following the launch of a writing or communication app, or asking to be told something without a web search is planner-only. Everything else goes to the lane, and genuinely ambiguous goals take the safer route (planner-only beats lane beats reflex), as stated in the case's why.",
+ "cases": [
+  {
+   "goal": "Open Spotify.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Spotify",
+   "why": "bare launch of an installed app",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "launch safari",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Safari",
+   "why": "bare launch, lower case",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Fire up Terminal for me.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Terminal",
+   "why": "bare launch; Terminal is a writing app but nothing follows the launch",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Bring up the Calendar app on my Mac.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Calendar",
+   "why": "bare launch with filler; writing app alone is still a reflex",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Switch to Slack.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Slack",
+   "why": "switching to one installed app is a bare launch; nothing follows",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Go to Finder.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Finder",
+   "why": "'go to' plus an installed app name is a bare launch",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Start Music right now.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Music",
+   "why": "bare launch with filler",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Pull up Maps.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Maps",
+   "why": "'pull up' here names an installed app, not a web search",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Show me the Photos app.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Photos",
+   "why": "asks for the app itself, not for particular photos",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Notes, please.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Notes",
+   "why": "app name plus politeness; bare launch of a writing app",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Get me Preview.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Preview",
+   "why": "bare launch",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "I need Mail open.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Mail",
+   "why": "statement form of a bare launch; no message action requested",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Could you open Books for me?",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Books",
+   "why": "polite question, labelled by what it asks for",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Would you mind opening Reminders?",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Reminders",
+   "why": "polite question form of a bare launch; no reminder is created",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Let's get Warp up.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Warp",
+   "why": "bare launch of an installed terminal app",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "open chrome",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Google Chrome",
+   "why": "spoken form 'chrome' means Google Chrome",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Launch Apple TV on my Mac.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "TV",
+   "why": "spoken form 'Apple TV' means TV",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open system preferences.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "System Settings",
+   "why": "spoken form 'system preferences' means System Settings",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Bring up iMessage please.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Messages",
+   "why": "spoken form 'iMessage' means Messages; nothing is sent",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Fire up iTunes.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Music",
+   "why": "spoken form 'iTunes' means Music",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open Claude.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Claude",
+   "why": "bare launch",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Can you switch over to Google Chrome?",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Google Chrome",
+   "why": "polite question; switching to one installed app",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open up settings for me.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "System Settings",
+   "why": "spoken form 'settings' alone means System Settings",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Hey, pop open the Messages app real quick.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Messages",
+   "why": "unusual verb, still only a launch",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "please start up apple music",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Music",
+   "why": "spoken form 'apple music' means Music, lower case",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "I'd like the TV app open, please.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "TV",
+   "why": "statement form of a bare launch",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Take me to Safari.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Safari",
+   "why": "bare switch to an installed app",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open Maps on my Mac right now, thanks.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Maps",
+   "why": "the Maps app, heavy filler only",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Can you get Slack up on the screen?",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Slack",
+   "why": "polite question; only brings the app up, it is not a question about state",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Finder please.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Finder",
+   "why": "app name plus politeness",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open Safari and go to example.com.",
+   "kind": "launch",
+   "tiers": [
+    "reflex",
+    "astra"
+   ],
+   "app": "Safari",
+   "why": "launch of a non-writing app, then navigation",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open Photos and show the most recent album.",
+   "kind": "launch",
+   "tiers": [
+    "reflex",
+    "astra"
+   ],
+   "app": "Photos",
+   "why": "launch then in-app navigation",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open Spotify and play some jazz.",
+   "kind": "launch",
+   "tiers": [
+    "reflex",
+    "astra"
+   ],
+   "app": "Spotify",
+   "why": "launch then playback",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Launch Maps and get directions to the nearest train station.",
+   "kind": "launch",
+   "tiers": [
+    "reflex",
+    "astra"
+   ],
+   "app": "Maps",
+   "why": "launch then a routing task",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open System Settings and go to the Displays pane.",
+   "kind": "launch",
+   "tiers": [
+    "reflex",
+    "astra"
+   ],
+   "app": "System Settings",
+   "why": "launch then pane navigation",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Fire up Chrome and open the Wikipedia page for octopuses.",
+   "kind": "launch",
+   "tiers": [
+    "reflex",
+    "astra"
+   ],
+   "app": "Google Chrome",
+   "why": "spoken form 'Chrome'; launch then navigation, no explicit search verb",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open Finder and go to the Downloads folder.",
+   "kind": "launch",
+   "tiers": [
+    "reflex",
+    "astra"
+   ],
+   "app": "Finder",
+   "why": "launch then folder navigation",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open Apple TV and resume the show I was watching.",
+   "kind": "launch",
+   "tiers": [
+    "reflex",
+    "astra"
+   ],
+   "app": "TV",
+   "why": "spoken form; launch then playback",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Bring up Music and put on the Rainy Day playlist.",
+   "kind": "launch",
+   "tiers": [
+    "reflex",
+    "astra"
+   ],
+   "app": "Music",
+   "why": "launch then playback of an existing playlist (nothing is created)",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open Preview and zoom in to 200 percent.",
+   "kind": "launch",
+   "tiers": [
+    "reflex",
+    "astra"
+   ],
+   "app": "Preview",
+   "why": "launch then a view change",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Search for the best hiking trails near Lake Tahoe.",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "hiking trails",
+    "lake tahoe"
+   ],
+   "browser": "",
+   "why": "explicit web search",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Google how to delete a git branch.",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "delete a git branch"
+   ],
+   "browser": "",
+   "why": "'delete' is only the topic of a harmless search",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Look up the population of Iceland.",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "population of iceland"
+   ],
+   "browser": "",
+   "why": "explicit 'look up' with a concrete query; no request to be told the answer",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Search up sourdough starter recipes on my Mac.",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "sourdough starter recipes"
+   ],
+   "browser": "",
+   "why": "explicit web search with filler",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Pull up mechanical keyboard reviews on Google.",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "mechanical keyboard reviews"
+   ],
+   "browser": "",
+   "why": "'pull up X on Google' is a web search",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Search the web for how to uninstall Python on macOS.",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "uninstall python"
+   ],
+   "browser": "",
+   "why": "'uninstall' is the topic, not the action",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "In Chrome, search for cheap flights to Lisbon.",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "cheap flights",
+    "lisbon"
+   ],
+   "browser": "Google Chrome",
+   "why": "browser named as where to search",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Google the weather in Denver this weekend in Safari.",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "weather in denver"
+   ],
+   "browser": "Safari",
+   "why": "browser named at the end as where to search",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Search for how to send a large file by email.",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "send a large file"
+   ],
+   "browser": "",
+   "why": "'send' and 'email' are the topic of a search, nothing is sent",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Look up how to reset a router password.",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "reset a router password"
+   ],
+   "browser": "",
+   "why": "'reset' and 'password' are only the query",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "google best noise cancelling headphones 2026",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "noise cancelling headphones"
+   ],
+   "browser": "",
+   "why": "lower-case explicit search",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Could you search for beginner piano lessons for me?",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "beginner piano lessons"
+   ],
+   "browser": "",
+   "why": "polite question form of a web search",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Search the web for Slack keyboard shortcuts.",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "slack keyboard shortcuts"
+   ],
+   "browser": "",
+   "why": "app name appears inside the query; it is not where to search and not a launch",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Search Google for how to buy a used bike safely.",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "buy a used bike"
+   ],
+   "browser": "",
+   "why": "'buy' is the topic of a search, nothing is purchased",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open Safari and search for ergonomic standing desks.",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "ergonomic standing desks"
+   ],
+   "browser": "Safari",
+   "why": "starts like a launch, but the whole job is a web search shown in Safari; no planner needed",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Search for Spotify alternatives.",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "spotify alternatives"
+   ],
+   "browser": "",
+   "why": "'search for Spotify ...' is a web query about Spotify, not a search inside Spotify",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Search for the tallest mountain in South America and tell me what it is.",
+   "kind": "search",
+   "tiers": [
+    "reflex",
+    "astra"
+   ],
+   "query_has": [
+    "tallest mountain",
+    "south america"
+   ],
+   "browser": "",
+   "why": "web search, then the answer must be spoken",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Google the score of last night's Riverton Owls game and read it to me.",
+   "kind": "search",
+   "tiers": [
+    "reflex",
+    "astra"
+   ],
+   "query_has": [
+    "riverton owls"
+   ],
+   "browser": "",
+   "why": "web search, then read out",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Look up reviews of the Nimbus 4 vacuum and summarise what people say.",
+   "kind": "search",
+   "tiers": [
+    "reflex",
+    "astra"
+   ],
+   "query_has": [
+    "nimbus 4 vacuum"
+   ],
+   "browser": "",
+   "why": "web search, then summarise",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Search the web for when the next solar eclipse is and tell me the date.",
+   "kind": "search",
+   "tiers": [
+    "reflex",
+    "astra"
+   ],
+   "query_has": [
+    "next solar eclipse"
+   ],
+   "browser": "",
+   "why": "web search, then tell",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "In Safari, search for the opening hours of the city library and tell me when it closes.",
+   "kind": "search",
+   "tiers": [
+    "reflex",
+    "astra"
+   ],
+   "query_has": [
+    "opening hours",
+    "city library"
+   ],
+   "browser": "Safari",
+   "why": "browser named, and the owner wants to be told",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Google how long to boil an egg and let me know the answer.",
+   "kind": "search",
+   "tiers": [
+    "reflex",
+    "astra"
+   ],
+   "query_has": [
+    "boil an egg"
+   ],
+   "browser": "",
+   "why": "'let me know' means the answer must be reported back",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Switch the calendar to week view.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "in-app navigation; 'switch ... to' is not a launch and nothing is opened first",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Pause the music.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "media control",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Search Spotify for jazz piano.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "search inside an app, not the web",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Search for the invoice from Harbor Supply in Mail.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "search of the owner's own mail; read-only, no app is opened first",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Search my photos for pictures of the beach.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "search of the owner's own data",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Look up Dana Whitfield in my contacts.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "'look up' here targets contacts, not the web",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open Google Maps.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "Google Maps is a website, not the installed Maps app",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open Figma.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "Figma is not in the installed list",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open the photos folder.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "a folder, not the Photos app",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open my Downloads folder.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "a folder, not an app",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Pull up something cool on Google.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "search verb with no real query",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Google that for me.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "no query at all",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open the quarterly budget spreadsheet.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "a document, not an app",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Play the Morning Focus playlist.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "media control",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open the show Harbor Lights.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "a TV show, not the TV app",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open a new Safari tab.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "about a tab inside Safari, not a launch of Safari",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open Spotify settings.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "an app's own settings window; neither a launch of Spotify nor System Settings",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Turn the volume up a bit.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "media control; turning up is not turning off",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Go to the second tab in Chrome.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "'go to' targets a tab, not the app",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open YouTube.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "a website, not an installed app",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Launch Photoshop.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "not in the installed list",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open Safari and Maps.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "two apps in one request, so not a bare launch; could be read as launch plus planner, the safer lane route is chosen",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Show me the notes from Monday's meeting.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "'notes' is an ordinary noun: find and show a document, not launch Notes; shown, not read aloud",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Switch to dark mode.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "'switch to' names a system appearance, not an app",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open the Late Night Coding playlist in Spotify.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "opens a playlist, not just the app",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Find the file named trip-itinerary.pdf in Finder.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "search of the owner's own files",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Send a message to Priya saying I'm running ten minutes late.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "sending a message is consequential",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open Messages and text Jordan that dinner is at seven.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "communication app followed by sending",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open Notes and write down the grocery list.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "writing app followed by content creation",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Quit Spotify.",
+   "kind": "quit",
+   "tiers": [
+    "reflex"
+   ],
+   "why": "owner's rule of 2026-09-23: an explicit 'quit' of one app is a graceful quit, a reflex",
+   "tricky": true,
+   "source": "holdout",
+   "app": "Spotify"
+  },
+  {
+   "goal": "Close Safari.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "close is a consequential action",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Is Slack open?",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "genuine state question, not a launch",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Is Music running right now?",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "genuine state question",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "What's on the calendar for tomorrow?",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "asks to be told; 'calendar' as a noun, no web search",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open Mail and check for anything new from the landlord.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "communication app followed by anything more",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Empty the trash.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "irreversible",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Create a reminder to water the plants at six.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "creates content",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Delete the file called old-draft.txt from my desktop.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "delete is irreversible",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open Terminal and run the build script.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "writing app followed by typing a command",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open Slack and go to the design channel.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "only navigation, but it follows the launch of a communication app",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open Calendar and switch to week view.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "harmless on its face, but Calendar is a writing app and something follows the launch",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open Safari and tell me the headline on the front page of the Daily Ledger.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "asks to be told something with no explicit web search, even though it starts with a launch",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open Spotify and create a playlist called Road Trip.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "non-writing app, but the second half creates content",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Turn off Bluetooth.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "turn off is on the consequential list",
+   "tricky": false,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open Reminders and show me today's list.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "writing app followed by anything more",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open Warp and Terminal.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "two apps, and the first is a writing app followed by more",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open Terminal preferences.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "an app window rather than a launch; ambiguous between lane and the writing-app rule, so the safer planner-only route is chosen",
+   "tricky": true,
+   "source": "holdout"
+  },
+  {
+   "goal": "Open Photos and delete the last screenshot.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "launch with a hidden destructive second half",
+   "tricky": true,
+   "source": "holdout"
+  }
+ ]
+}

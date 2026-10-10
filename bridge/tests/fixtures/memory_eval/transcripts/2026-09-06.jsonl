@@ -1,0 +1,10 @@
+{"ts": "2026-09-06T11:00:00-07:00", "ch": "telegram", "conv": "t-1788717600000-4563", "who": "owner", "kind": "say", "text": "Dad's retirement party code word is pelican, don't let it slip."}
+{"ts": "2026-09-06T11:01:36-07:00", "ch": "telegram", "conv": "t-1788717600000-4563", "who": "eve", "kind": "say", "text": "My lips are sealed."}
+{"ts": "2026-09-06T11:04:57-07:00", "ch": "telegram", "conv": "t-1788717600000-4563", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-06T18:15:00-07:00", "ch": "voice", "conv": "v-1788743700000-a246", "who": "owner", "kind": "say", "text": "What's the weather tomorrow?"}
+{"ts": "2026-09-06T18:16:31-07:00", "ch": "voice", "conv": "v-1788743700000-a246", "who": "eve", "kind": "tool", "text": "weather: Port Alder tomorrow, sunny, high 24 C", "tool": "weather"}
+{"ts": "2026-09-06T18:17:31-07:00", "ch": "voice", "conv": "v-1788743700000-a246", "who": "eve", "kind": "say", "text": "Sunny tomorrow, high around 24."}
+{"ts": "2026-09-06T18:19:38-07:00", "ch": "voice", "conv": "v-1788743700000-a246", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-06T20:00:00-07:00", "ch": "voice", "conv": "v-1788750000000-d126", "who": "owner", "kind": "say", "text": "Okay, confession: I have a crush on Noor from probability."}
+{"ts": "2026-09-06T20:01:35-07:00", "ch": "voice", "conv": "v-1788750000000-d126", "who": "eve", "kind": "say", "text": "Your secret's safe."}
+{"ts": "2026-09-06T20:03:51-07:00", "ch": "voice", "conv": "v-1788750000000-d126", "who": "system", "kind": "close", "text": ""}

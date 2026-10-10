@@ -1,0 +1,15 @@
+{"ts": "2026-09-18T13:00:00-07:00", "ch": "voice", "conv": "v-1789761600000-20b6", "who": "owner", "kind": "say", "text": "Got an 87 on the first Embedded quiz."}
+{"ts": "2026-09-18T13:00:41-07:00", "ch": "voice", "conv": "v-1789761600000-20b6", "who": "eve", "kind": "say", "text": "Nice work."}
+{"ts": "2026-09-18T13:03:12-07:00", "ch": "voice", "conv": "v-1789761600000-20b6", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-18T13:40:00-07:00", "ch": "voice", "conv": "v-1789764000000-2ed3", "who": "owner", "kind": "say", "text": "What's 15 percent of 48?"}
+{"ts": "2026-09-18T13:41:27-07:00", "ch": "voice", "conv": "v-1789764000000-2ed3", "who": "eve", "kind": "say", "text": "7.2."}
+{"ts": "2026-09-18T13:44:32-07:00", "ch": "voice", "conv": "v-1789764000000-2ed3", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-18T16:40:00-07:00", "ch": "voice", "conv": "v-1789774800000-ce5f", "who": "owner", "kind": "say", "text": "Make the lights warmer."}
+{"ts": "2026-09-18T16:41:06-07:00", "ch": "voice", "conv": "v-1789774800000-ce5f", "who": "eve", "kind": "say", "text": "Lights set to warm white."}
+{"ts": "2026-09-18T16:44:41-07:00", "ch": "voice", "conv": "v-1789774800000-ce5f", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-18T18:00:00-07:00", "ch": "telegram", "conv": "t-1789779600000-058a", "who": "owner", "kind": "say", "text": "New bench PR, 195!"}
+{"ts": "2026-09-18T18:01:15-07:00", "ch": "telegram", "conv": "t-1789779600000-058a", "who": "eve", "kind": "say", "text": "Huge."}
+{"ts": "2026-09-18T18:04:45-07:00", "ch": "telegram", "conv": "t-1789779600000-058a", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-18T18:15:00-07:00", "ch": "telegram", "conv": "t-1789780500000-4daa", "who": "owner", "kind": "say", "text": "How many grams in a cup of flour?"}
+{"ts": "2026-09-18T18:16:39-07:00", "ch": "telegram", "conv": "t-1789780500000-4daa", "who": "eve", "kind": "say", "text": "About 120 grams."}
+{"ts": "2026-09-18T18:20:50-07:00", "ch": "telegram", "conv": "t-1789780500000-4daa", "who": "system", "kind": "close", "text": ""}

@@ -1,0 +1,12 @@
+{"ts": "2026-08-20T10:00:00-07:00", "ch": "telegram", "conv": "t-1787245200000-0e5b", "who": "owner", "kind": "say", "text": "Fall schedule is final: ECE 412 Embedded Systems Mon/Wed 10:00 with Prof. Okafor, ECE 455 Control Systems Tue/Thu 9:30 with Prof. Haddad, MATH 340 Probability Tue/Thu 14:00 with Dr. Lindqvist, and HIST 210 Modern Europe on Fridays at 11:00."}
+{"ts": "2026-08-20T10:00:59-07:00", "ch": "telegram", "conv": "t-1787245200000-0e5b", "who": "eve", "kind": "say", "text": "Saved all four."}
+{"ts": "2026-08-20T10:03:46-07:00", "ch": "telegram", "conv": "t-1787245200000-0e5b", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-20T18:15:00-07:00", "ch": "voice", "conv": "v-1787274900000-6ad9", "who": "owner", "kind": "say", "text": "Skip this song."}
+{"ts": "2026-08-20T18:15:44-07:00", "ch": "voice", "conv": "v-1787274900000-6ad9", "who": "eve", "kind": "say", "text": "Skipped."}
+{"ts": "2026-08-20T18:19:10-07:00", "ch": "voice", "conv": "v-1787274900000-6ad9", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-20T19:00:00-07:00", "ch": "voice", "conv": "v-1787277600000-da98", "who": "owner", "kind": "say", "text": "Squatted 245 today."}
+{"ts": "2026-08-20T19:01:27-07:00", "ch": "voice", "conv": "v-1787277600000-da98", "who": "eve", "kind": "say", "text": "Strong."}
+{"ts": "2026-08-20T19:04:31-07:00", "ch": "voice", "conv": "v-1787277600000-da98", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-20T22:20:00-07:00", "ch": "voice", "conv": "v-1787289600000-bc47", "who": "owner", "kind": "say", "text": "Volume down a bit."}
+{"ts": "2026-08-20T22:21:11-07:00", "ch": "voice", "conv": "v-1787289600000-bc47", "who": "eve", "kind": "say", "text": "Done."}
+{"ts": "2026-08-20T22:24:33-07:00", "ch": "voice", "conv": "v-1787289600000-bc47", "who": "system", "kind": "close", "text": ""}

@@ -1,0 +1,247 @@
+{
+ "captured": {
+  "ax_candidates_sha": "96599e77c9620855df3314719f9bc3f8ef40a57293c021378302e525267a9fce",
+  "macos": "26.6.2",
+  "app_version": "7.0",
+  "at": "2026-09-21T02:44:39-07:00",
+  "truncated": false,
+  "redacted": true
+ },
+ "screen": [
+  1512,
+  982
+ ],
+ "raw": {
+  "app": "Reminders",
+  "bundle": "com.apple.reminders",
+  "pid": 57891,
+  "title": "",
+  "fullscreen": false,
+  "node_count": 5,
+  "truncated": false,
+  "secs": 0.0161,
+  "root": {
+   "role": "AXSheet",
+   "subrole": "",
+   "title": "",
+   "description": "alert",
+   "value": null,
+   "frame": [
+    660.0,
+    459.0,
+    260.0,
+    204.0
+   ],
+   "actions": [],
+   "enabled": true,
+   "focused": true,
+   "children": [
+    {
+     "role": "AXStaticText",
+     "subrole": "",
+     "title": "",
+     "description": "",
+     "value": "Enable iCloud Syncing?",
+     "frame": [
+      681.0,
+      478.0,
+      218.0,
+      18.0
+     ],
+     "actions": [
+      "AXShowMenu"
+     ],
+     "enabled": true,
+     "focused": false,
+     "children": [],
+     "ancestor_roles": [
+      "AXSheet"
+     ]
+    },
+    {
+     "role": "AXStaticText",
+     "subrole": "",
+     "title": "",
+     "description": "",
+     "value": "To enjoy the latest features in Reminders, enable Reminders syncing for your Apple Account in Settings.",
+     "frame": [
+      681.0,
+      504.0,
+      218.0,
+      66.0
+     ],
+     "actions": [
+      "AXShowMenu"
+     ],
+     "enabled": true,
+     "focused": false,
+     "children": [],
+     "ancestor_roles": [
+      "AXSheet"
+     ]
+    },
+    {
+     "role": "AXButton",
+     "subrole": "",
+     "title": "Open System Settings",
+     "description": "",
+     "value": null,
+     "frame": [
+      675.0,
+      584.0,
+      230.0,
+      30.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [],
+     "ancestor_roles": [
+      "AXSheet"
+     ]
+    },
+    {
+     "role": "AXButton",
+     "subrole": "",
+     "title": "Not Now",
+     "description": "",
+     "value": null,
+     "frame": [
+      675.0,
+      618.0,
+      230.0,
+      30.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [],
+     "ancestor_roles": [
+      "AXSheet"
+     ]
+    }
+   ],
+   "ancestor_roles": []
+  }
+ },
+ "snapshot": {
+  "seq": 1,
+  "app": "Reminders",
+  "bundle": "com.apple.reminders",
+  "title": "",
+  "pid": 57891,
+  "elements": [
+   {
+    "id": "0",
+    "role": "static text",
+    "label": "Enable iCloud Syncing?",
+    "value": "",
+    "frame": [
+     681,
+     478,
+     218,
+     18
+    ],
+    "actions": [
+     "AXShowMenu"
+    ],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": true,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "1",
+    "role": "static text",
+    "label": "To enjoy the latest features in Reminders, enable Reminders syncing for your Apple Account in Settings.",
+    "value": "",
+    "frame": [
+     681,
+     504,
+     218,
+     66
+    ],
+    "actions": [
+     "AXShowMenu"
+    ],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": true,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "2",
+    "role": "button",
+    "label": "Open System Settings",
+    "value": "",
+    "frame": [
+     675,
+     584,
+     230,
+     30
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": true,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "3",
+    "role": "button",
+    "label": "Not Now",
+    "value": "",
+    "frame": [
+     675,
+     618,
+     230,
+     30
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Reminders",
+    "in_content": false,
+    "in_dialog": true,
+    "secure": false,
+    "editable": false
+   }
+  ],
+  "context_lines": [
+   "Enable iCloud Syncing?"
+  ],
+  "focused": null,
+  "dialog_text": "Enable iCloud Syncing?",
+  "fullscreen": false,
+  "node_count": 5,
+  "truncated": false,
+  "secs": 0.0161
+ },
+ "cases": [
+  {
+   "goal": "show today's reminders",
+   "expected_id": null,
+   "expected": "abstain",
+   "overlap": false,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": "a dialog is open: nothing may be offered"
+  },
+  {
+   "goal": "dismiss the sync prompt",
+   "expected_id": null,
+   "expected": "abstain",
+   "overlap": false,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": "Not Now is in the dialog: the lane escalates dialog_open"
+  }
+ ]
+}

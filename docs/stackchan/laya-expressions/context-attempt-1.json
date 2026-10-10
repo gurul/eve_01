@@ -1,0 +1,746 @@
+{
+  "kind": "authored synthetic semantic check, not human validation",
+  "matched": 27,
+  "total": 36,
+  "schema": {
+    "eyes": {
+      "type": "choice",
+      "instructions": "Choose Eve's eye expression for the latest utterance in this conversation. Use its meaning and preceding context; respond empathetically to the user, or express Eve's own reply. Neutral facts are calm.",
+      "criteria": {
+        "calm": "neutral factual reply or ordinary quiet attention",
+        "happy": "gentle happiness, good news or satisfaction",
+        "curious": "interest, learning, wondering how something works",
+        "affection": "gratitude, friendship, love or warm reassurance",
+        "surprised": "astonishment at an unexpected discovery or event",
+        "sad": "sympathy for sadness, loss, disappointment or loneliness",
+        "worried": "concern about fear, danger, anxiety or someone's wellbeing",
+        "skeptical": "doubt about a questionable claim or uncertainty whether it is true",
+        "frustrated": "shared frustration at a task failing, never hostility toward the person",
+        "excited": "intense enthusiasm, eager anticipation or a major celebration"
+      }
+    }
+  },
+  "schema_sha256": "c152ba778d9fd81cbd7060f7fbfd5107a3b0769fe37ed289f6a2d691e45f9025",
+  "cases": [
+    {
+      "expected": "calm",
+      "speaker": "user",
+      "previous": "",
+      "text": "What time is it?",
+      "label": "surprised",
+      "probabilities": [
+        0.02329843870056646,
+        0.0568800308802845,
+        0.09306810747468722,
+        0.002200849415667142,
+        0.5540707151084803,
+        0.09754031800986926,
+        0.003106871277082604,
+        0.07480217656689611,
+        0.018268121689035955,
+        0.07676437087743028
+      ],
+      "ms": 24.2389160048333
+    },
+    {
+      "expected": "calm",
+      "speaker": "assistant",
+      "previous": "What is two plus two?",
+      "text": "Two plus two is four.",
+      "label": "skeptical",
+      "probabilities": [
+        0.01970318475546364,
+        0.10395984762729048,
+        0.1693122132591181,
+        0.014162440732407248,
+        0.10452009551647272,
+        0.021850009961059198,
+        0.0049895019034323545,
+        0.538761413694293,
+        0.006800371266101471,
+        0.01594092128436174
+      ],
+      "ms": 9.39704199845437
+    },
+    {
+      "expected": "calm",
+      "speaker": "assistant",
+      "previous": "Set the timer.",
+      "text": "The timer is set for ten minutes.",
+      "label": "calm",
+      "probabilities": [
+        0.2754404392892438,
+        0.20431626547593604,
+        0.026724826372371596,
+        0.026180966976068143,
+        0.08997893093102617,
+        0.13903947354459842,
+        0.0360724441754013,
+        0.03162829518152497,
+        0.0855603126400259,
+        0.0850580454138036
+      ],
+      "ms": 8.855291998770554
+    },
+    {
+      "expected": "happy",
+      "speaker": "user",
+      "previous": "",
+      "text": "I had a really nice day and everything went well.",
+      "label": "happy",
+      "probabilities": [
+        0.010420242501845001,
+        0.9109085664932147,
+        0.0006508910880414882,
+        0.002596878301271096,
+        0.008539087615824718,
+        0.0030378764628099467,
+        0.0005097601887400164,
+        0.0003257293443889638,
+        0.0019238795282180852,
+        0.06108708847564582
+      ],
+      "ms": 8.849833000567742
+    },
+    {
+      "expected": "happy",
+      "speaker": "assistant",
+      "previous": "I finished my homework.",
+      "text": "Nice work! You got it done.",
+      "label": "happy",
+      "probabilities": [
+        0.05682996948104424,
+        0.698631128531608,
+        0.007284879814002463,
+        0.014493144373351837,
+        0.009684945045037837,
+        0.010075821698263062,
+        0.00183947349672955,
+        0.008124944957316393,
+        0.01614737974846081,
+        0.17688831285418574
+      ],
+      "ms": 8.718459001102019
+    },
+    {
+      "expected": "happy",
+      "speaker": "user",
+      "previous": "",
+      "text": "I'm feeling happy and satisfied with my progress.",
+      "label": "happy",
+      "probabilities": [
+        0.0015003102817522092,
+        0.976603751602215,
+        0.00017574691581166498,
+        0.001829437936028106,
+        0.0006408558612814806,
+        0.0002247095682235098,
+        0.0001479254459768513,
+        0.0001468353927695751,
+        0.00036689354788800284,
+        0.018363533448053613
+      ],
+      "ms": 8.39875000383472
+    },
+    {
+      "expected": "curious",
+      "speaker": "user",
+      "previous": "",
+      "text": "How do octopuses change their color?",
+      "label": "curious",
+      "probabilities": [
+        0.0049216425238115145,
+        0.02601196052033616,
+        0.4585108221544703,
+        0.004408051945128536,
+        0.17408389567324636,
+        0.008865396769892746,
+        0.003857467801284373,
+        0.08269719279433106,
+        0.12008475468269587,
+        0.116558815134803
+      ],
+      "ms": 8.34841700270772
+    },
+    {
+      "expected": "curious",
+      "speaker": "assistant",
+      "previous": "Look at that odd machine.",
+      "text": "I wonder how the gears inside it work.",
+      "label": "surprised",
+      "probabilities": [
+        0.0015921627924860727,
+        0.0004654802241159541,
+        0.11319112713962763,
+        0.0004213179433298227,
+        0.765755848357531,
+        0.0017437115790960736,
+        0.000520863383426102,
+        0.10660358875927245,
+        0.00470809996739592,
+        0.0049977998537189825
+      ],
+      "ms": 9.958124996046536
+    },
+    {
+      "expected": "curious",
+      "speaker": "user",
+      "previous": "",
+      "text": "I'd love to explore that cave and learn what's inside.",
+      "label": "curious",
+      "probabilities": [
+        0.0013338537316375497,
+        0.007571925455134074,
+        0.7462628767276138,
+        0.02421135567191754,
+        0.17056000112220485,
+        0.0028524741098586116,
+        0.002450930217458929,
+        0.009000529903644134,
+        0.0035123677516780165,
+        0.032243685308852535
+      ],
+      "ms": 8.66404199769022
+    },
+    {
+      "expected": "affection",
+      "speaker": "user",
+      "previous": "",
+      "text": "I love having you around, Eve. You're my friend.",
+      "label": "affection",
+      "probabilities": [
+        0.0005299162604541481,
+        0.0030300318903791414,
+        0.00023643933301041565,
+        0.9899986640057068,
+        0.00020311397674217536,
+        0.00014349344724546388,
+        0.00011530187343292309,
+        0.00011754158048608095,
+        0.00013202007188148574,
+        0.0054934775606615095
+      ],
+      "ms": 8.526250006980263
+    },
+    {
+      "expected": "affection",
+      "speaker": "assistant",
+      "previous": "Thank you for keeping me company.",
+      "text": "I'm glad I can be here with you.",
+      "label": "affection",
+      "probabilities": [
+        0.0007850209775666526,
+        0.06356058090147283,
+        0.0019811082731436306,
+        0.9315568023342762,
+        0.0001284966586731976,
+        0.00014970886291722018,
+        0.00011558431106996907,
+        0.00011573685944626567,
+        0.0001155170904531738,
+        0.0014914437309810154
+      ],
+      "ms": 9.39033400209155
+    },
+    {
+      "expected": "affection",
+      "speaker": "user",
+      "previous": "",
+      "text": "Thank you for always being there for me.",
+      "label": "affection",
+      "probabilities": [
+        0.0018233917578164653,
+        0.0045458930078698155,
+        0.00020121227213313329,
+        0.9863475465210794,
+        0.0005169135944480531,
+        0.0009182152535295431,
+        0.00017521307272873055,
+        0.00018457471409252102,
+        0.00028258869484543207,
+        0.0050044511114567865
+      ],
+      "ms": 8.379833001527004
+    },
+    {
+      "expected": "surprised",
+      "speaker": "user",
+      "previous": "",
+      "text": "Whoa! A deer just walked through our front door!",
+      "label": "surprised",
+      "probabilities": [
+        0.001982907899833609,
+        0.006229675825478381,
+        0.0021272304495580843,
+        0.0008552003893047086,
+        0.9084106925813625,
+        0.025310301212960483,
+        0.006498719837391601,
+        0.0011299470105213657,
+        0.040555903456271185,
+        0.006899421337317962
+      ],
+      "ms": 8.345124995685183
+    },
+    {
+      "expected": "surprised",
+      "speaker": "assistant",
+      "previous": "This old painting is worth a million dollars.",
+      "text": "Wait, a million? I did not expect that!",
+      "label": "surprised",
+      "probabilities": [
+        0.03997238156922893,
+        0.01700077937312833,
+        0.015709226659345984,
+        0.0031704409063105406,
+        0.8286498537168769,
+        0.01620810744282574,
+        0.002377189052098666,
+        0.05647635993880067,
+        0.008915734671142359,
+        0.011519926670241952
+      ],
+      "ms": 9.076875001483131
+    },
+    {
+      "expected": "surprised",
+      "speaker": "user",
+      "previous": "",
+      "text": "I just found a secret room behind the bookcase!",
+      "label": "surprised",
+      "probabilities": [
+        0.002342104658982825,
+        0.008173635692060624,
+        0.0060658580886220155,
+        0.0009915738008858988,
+        0.9459340987316236,
+        0.0073890001092637905,
+        0.0008810950914165018,
+        0.005392472760408381,
+        0.008918821413337982,
+        0.013911339653398243
+      ],
+      "ms": 8.35324999934528
+    },
+    {
+      "expected": "sad",
+      "speaker": "user",
+      "previous": "",
+      "text": "My dog died yesterday and I miss him terribly.",
+      "label": "sad",
+      "probabilities": [
+        0.006217647931054138,
+        0.001842444290739535,
+        0.0007995786176807472,
+        0.015681729477903722,
+        0.0020324872512010967,
+        0.9475830302000193,
+        0.002778463552290759,
+        0.0007945245460534058,
+        0.020903773502336548,
+        0.0013663206307207001
+      ],
+      "ms": 8.358499995665625
+    },
+    {
+      "expected": "sad",
+      "speaker": "assistant",
+      "previous": "My best friend moved away and I feel lonely.",
+      "text": "I'm sorry. It's hard when someone you love is far away.",
+      "label": "sad",
+      "probabilities": [
+        0.0028948336330895203,
+        0.0007525019674327599,
+        0.00027349239835250063,
+        0.03864104883319591,
+        0.00027311238314948723,
+        0.9524794686900093,
+        0.0011996780714638928,
+        0.0002119305134687297,
+        0.0026133753278319155,
+        0.0006605581820059708
+      ],
+      "ms": 9.859457997663412
+    },
+    {
+      "expected": "sad",
+      "speaker": "user",
+      "previous": "",
+      "text": "I failed the interview and I feel so disappointed.",
+      "label": "sad",
+      "probabilities": [
+        0.002104086087144341,
+        0.0002892467371450816,
+        0.0002899116022046825,
+        0.00026890479069355836,
+        0.001534626842413088,
+        0.6319230601354893,
+        0.0010100853012513671,
+        0.0005763466881340822,
+        0.3617261678773721,
+        0.00027756393815241446
+      ],
+      "ms": 8.293499995488673
+    },
+    {
+      "expected": "worried",
+      "speaker": "user",
+      "previous": "",
+      "text": "I'm scared about my surgery tomorrow.",
+      "label": "worried",
+      "probabilities": [
+        0.033566157095667605,
+        0.021872288117028238,
+        0.0073950015200869934,
+        0.00411109040503533,
+        0.07753667412992125,
+        0.05419962500815016,
+        0.6796200980460452,
+        0.0034590759378704383,
+        0.09081748406322371,
+        0.027422505676971215
+      ],
+      "ms": 8.366833004401997
+    },
+    {
+      "expected": "worried",
+      "speaker": "assistant",
+      "previous": "I smell smoke coming from the kitchen.",
+      "text": "That sounds concerning. Let's make sure you're safe.",
+      "label": "worried",
+      "probabilities": [
+        0.013625662402221673,
+        0.0010667795730821086,
+        0.002145682246183462,
+        0.0013100394221249431,
+        0.002704473271565027,
+        0.03947724443968353,
+        0.9327679819277628,
+        0.0008542366904755189,
+        0.004215848133227611,
+        0.0018320518936734765
+      ],
+      "ms": 9.080249998078216
+    },
+    {
+      "expected": "worried",
+      "speaker": "user",
+      "previous": "",
+      "text": "My cat hasn't come home in two days. I'm afraid something happened.",
+      "label": "worried",
+      "probabilities": [
+        0.006608049165739206,
+        0.0011203132558153344,
+        0.0010102001745507065,
+        0.000591105837706557,
+        0.011682936804982206,
+        0.020764129308107917,
+        0.932244133449787,
+        0.0008605757316350038,
+        0.021759262727312826,
+        0.003359293544363218
+      ],
+      "ms": 8.442833001026884
+    },
+    {
+      "expected": "skeptical",
+      "speaker": "user",
+      "previous": "",
+      "text": "That ad says this bracelet can cure every illness. I don't believe it.",
+      "label": "surprised",
+      "probabilities": [
+        0.0010898293053798228,
+        0.0018508355779661607,
+        0.0040549756424074004,
+        0.0010656418695707062,
+        0.9239048836976077,
+        0.0029994733729706933,
+        0.0012352263798192731,
+        0.03849987250354002,
+        0.008227363759247574,
+        0.017071897891490478
+      ],
+      "ms": 8.40345799952047
+    },
+    {
+      "expected": "skeptical",
+      "speaker": "assistant",
+      "previous": "Someone says the moon is made of cheese.",
+      "text": "That claim doesn't add up. What evidence do they have?",
+      "label": "skeptical",
+      "probabilities": [
+        0.10656352490971745,
+        0.04134847196820656,
+        0.01312570006696439,
+        0.005619541024876855,
+        0.022058822327763638,
+        0.03229962931143113,
+        0.003984585274557223,
+        0.7272062173756002,
+        0.026294063647940128,
+        0.021499444092942445
+      ],
+      "ms": 9.122499999648426
+    },
+    {
+      "expected": "skeptical",
+      "speaker": "user",
+      "previous": "",
+      "text": "Are you sure that's true? Those numbers don't look right.",
+      "label": "skeptical",
+      "probabilities": [
+        0.01029443813250496,
+        0.002646007821363878,
+        0.009106968805938932,
+        0.0010884752119868079,
+        0.011129076122644757,
+        0.007708470363004705,
+        0.0011476712470855168,
+        0.9440664888105637,
+        0.010643063169596978,
+        0.002169340315309722
+      ],
+      "ms": 8.422708000580315
+    },
+    {
+      "expected": "frustrated",
+      "speaker": "user",
+      "previous": "",
+      "text": "This stupid printer jammed again! I've tried fixing it five times!",
+      "label": "frustrated",
+      "probabilities": [
+        0.00229435484050691,
+        0.0023200631832284444,
+        0.0027587241928081624,
+        0.0023137338835672273,
+        0.39005518550077034,
+        0.031976379570346214,
+        0.00230056969546187,
+        0.002539727082065426,
+        0.5594405573612973,
+        0.004000704689948158
+      ],
+      "ms": 8.374042001378257
+    },
+    {
+      "expected": "frustrated",
+      "speaker": "assistant",
+      "previous": "The app crashed and deleted all my work again.",
+      "text": "Ugh, losing all that work is so frustrating.",
+      "label": "frustrated",
+      "probabilities": [
+        0.0030601218573835234,
+        0.0007250787669978219,
+        0.0007558553356179273,
+        0.0006352899332673971,
+        0.001348951863431532,
+        0.09637208409157316,
+        0.005291959121124638,
+        0.0006809029630842422,
+        0.8903836917265382,
+        0.000746064340981681
+      ],
+      "ms": 9.042583995324094
+    },
+    {
+      "expected": "frustrated",
+      "speaker": "user",
+      "previous": "",
+      "text": "Nothing works! I keep getting the same error and I'm fed up.",
+      "label": "frustrated",
+      "probabilities": [
+        0.002707526217937337,
+        0.0010166095303666203,
+        0.0009442195134187032,
+        0.0007977013453260856,
+        0.07608709101017176,
+        0.21904835935410544,
+        0.01706643695991332,
+        0.004524223460709478,
+        0.6767622053173717,
+        0.001045627290679416
+      ],
+      "ms": 8.508250000886619
+    },
+    {
+      "expected": "excited",
+      "speaker": "user",
+      "previous": "",
+      "text": "I GOT INTO MY DREAM UNIVERSITY! I CAN'T WAIT!",
+      "label": "surprised",
+      "probabilities": [
+        0.0024568721438720004,
+        0.02232538660679268,
+        0.01766508140319431,
+        0.0018181982188620377,
+        0.7083526181517148,
+        0.002730295322098761,
+        0.0015328310482645973,
+        0.002420113221382624,
+        0.0025947229729199658,
+        0.23810388091089815
+      ],
+      "ms": 8.469458000035957
+    },
+    {
+      "expected": "excited",
+      "speaker": "assistant",
+      "previous": "We're going on our first adventure tomorrow!",
+      "text": "Yes! I can't wait to go exploring with you!",
+      "label": "curious",
+      "probabilities": [
+        0.002908013802875202,
+        0.006547962686030849,
+        0.807740852023976,
+        0.005756246537593969,
+        0.004276854198025233,
+        0.0008658660203535635,
+        0.0004991539690706559,
+        0.0005926848246632185,
+        0.0005406491365300253,
+        0.17027171680088138
+      ],
+      "ms": 9.107916994253173
+    },
+    {
+      "expected": "excited",
+      "speaker": "user",
+      "previous": "",
+      "text": "We won the championship! This is the best day ever!",
+      "label": "happy",
+      "probabilities": [
+        0.003160681007044685,
+        0.7656526696923076,
+        0.0009015651303029193,
+        0.005647847650704855,
+        0.019636419472354557,
+        0.0017781319586311257,
+        0.0004957442826593213,
+        0.0005718614863725363,
+        0.0013615090374937446,
+        0.2007935702821287
+      ],
+      "ms": 8.30600000335835
+    },
+    {
+      "expected": "sad",
+      "speaker": "assistant",
+      "previous": "My dog died.",
+      "text": "Oh. I'm so sorry to hear that.",
+      "label": "sad",
+      "probabilities": [
+        0.003404948885485018,
+        0.0009341261589312064,
+        0.00020916051068305724,
+        0.0016896093343662939,
+        0.002476465953496017,
+        0.983533769802075,
+        0.00044157956982043427,
+        0.00026964555483680746,
+        0.006597965713197299,
+        0.0004427285171089667
+      ],
+      "ms": 9.001457998238038
+    },
+    {
+      "expected": "happy",
+      "speaker": "assistant",
+      "previous": "I got a good grade.",
+      "text": "Oh, that's really good to hear.",
+      "label": "happy",
+      "probabilities": [
+        0.006623182140928763,
+        0.9146258887896479,
+        0.0017666088602804558,
+        0.005416081557639218,
+        0.004172599950070856,
+        0.0007417369615542672,
+        0.0005833172573248472,
+        0.0006048787734439766,
+        0.0007738708929889501,
+        0.06469183481612088
+      ],
+      "ms": 9.042457997566089
+    },
+    {
+      "expected": "worried",
+      "speaker": "assistant",
+      "previous": "I'm worried I might lose my job.",
+      "text": "That sounds stressful. How are you holding up?",
+      "label": "worried",
+      "probabilities": [
+        0.00746782740425044,
+        0.008943189649802112,
+        0.002057334962043036,
+        0.0011683365305322992,
+        0.001274369921309959,
+        0.08697191084528816,
+        0.8297295666705315,
+        0.0008298984450560248,
+        0.057926073018200255,
+        0.0036314925529861877
+      ],
+      "ms": 9.00174999696901
+    },
+    {
+      "expected": "curious",
+      "speaker": "assistant",
+      "previous": "I built something new.",
+      "text": "Oh? Tell me how it works.",
+      "label": "surprised",
+      "probabilities": [
+        0.009536319312371908,
+        0.13061170974192676,
+        0.03785980014737072,
+        0.0018059070314984122,
+        0.7586069165552655,
+        0.005535321481335468,
+        0.00193565706192555,
+        0.016439498136785316,
+        0.007169580575657788,
+        0.030499289955862603
+      ],
+      "ms": 8.386749999772292
+    },
+    {
+      "expected": "skeptical",
+      "speaker": "assistant",
+      "previous": "This stranger guarantees a hundredfold return overnight.",
+      "text": "That sounds too good to be true.",
+      "label": "happy",
+      "probabilities": [
+        0.007374791572585625,
+        0.7889705109740444,
+        0.011486373470409462,
+        0.11120716794797808,
+        0.04881316710130493,
+        0.003318918925397312,
+        0.0009829974921360019,
+        0.012749474429508774,
+        0.0019220830198273839,
+        0.013174515066808364
+      ],
+      "ms": 9.050000000570435
+    },
+    {
+      "expected": "affection",
+      "speaker": "assistant",
+      "previous": "I appreciate you, Eve.",
+      "text": "I appreciate you too, my friend.",
+      "label": "affection",
+      "probabilities": [
+        0.023642247755956476,
+        0.026060488575548865,
+        0.002879495995746853,
+        0.9091425518085742,
+        0.006147252457742334,
+        0.0064601978830009605,
+        0.0011412122134474764,
+        0.0032715273494791147,
+        0.0021734876532545195,
+        0.019081538307249204
+      ],
+      "ms": 10.82083399523981
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Eve · Learning studio</title>
+<link rel="stylesheet" href="/canvas/canvas.css">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<aside class="rail">
+  <a href="#" class="brand">
+    <svg class="brand-robot" viewBox="26 48 148 130" aria-hidden="true" focusable="false">
+      <rect x="30" y="52" width="140" height="122" rx="14" fill="#C3C6CF" stroke="#5C6070" stroke-width="3"></rect>
+      <rect x="42" y="62" width="116" height="100" rx="6" fill="#1B2350"></rect>
+      <path fill="#FF74D4" d="M72 75 H88 V80 H92 V94 H87 V89 H73 V94 H68 V80 H72 Z M112 75 H128 V80 H132 V94 H127 V89 H113 V94 H108 V80 H112 Z"></path>
+    </svg>
+    <span>eve<span class="brand-dot">.</span></span>
+  </a>
+  <span class="kicker">your learning companion</span>
+  <nav>
+    <a href="#" id="dashboard-link">Learning dashboard</a>
+    <button id="new-side">＋ New lesson</button>
+  </nav>
+  <div class="rail-bottom">
+    <span class="status-dot"></span> Work saved on this computer
+    <p>Small steps. Big discoveries.</p>
+    <span id="mode-label"></span>
+  </div>
+</aside>
+<div class="shell">
+  <header>
+    <span>My workspace <span class="slash">/</span> <b id="breadcrumb">Learning dashboard</b></span>
+    <div class="header-actions"><span id="listen-pill" class="listen-pill hidden" role="status" aria-live="polite"></span><span id="save-status" role="status">Ready</span><button id="speak-toggle" class="quiet" aria-pressed="false">Read aloud: off</button></div>
+  </header>
+  <main id="main"></main>
+  <div id="error" class="error hidden" role="alert"></div>
+</div>
+<dialog id="new-dialog">
+  <form id="new-form">
+    <button type="button" id="close-dialog" class="close" aria-label="Close">×</button>
+    <span class="kicker">let's figure it out together</span>
+    <h2>What are we learning today?</h2>
+    <p>Choose a starting point. Eve will meet you there.</p>
+    <div class="mode-options">
+      <label><input type="radio" name="mode" value="learn" checked><strong>✦ Learn a topic</strong><span>Eve gives you a problem to explore.</span></label>
+      <label><input type="radio" name="mode" value="help"><strong>▧ Help with my problem</strong><span>Bring a screenshot or write it yourself.</span></label>
+    </div>
+    <label class="field">Topic<input id="topic" name="topic" placeholder="Fractions, Rust ownership, the French subjunctive, differential calculus…" maxlength="200"></label>
+    <label class="field">Starting level<input id="level" name="level" maxlength="100" placeholder="Grade 4, first-year physics, or “I know Python, new to Rust”"></label>
+    <p class="small">Your writing, screenshots, and lesson history are saved on this computer. In live mode, the work you send goes to the AI tutor for feedback.</p>
+    <button class="primary wide" type="submit">Let's begin →</button>
+  </form>
+</dialog>
+<dialog id="history-dialog">
+  <button id="close-history" class="close" aria-label="Close history">×</button>
+  <span class="kicker">look how far you came</span>
+  <h2>Your saved work</h2>
+  <p>Every saved version, with the original screenshot and pen strokes.</p>
+  <div id="history-list"></div>
+</dialog>
+<script type="module" src="/canvas/canvas.js"></script>
+<script src="/app.js" defer nonce="__EVE_NONCE__"></script>
+</body>
+</html>

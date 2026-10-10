@@ -1,0 +1,30 @@
+{
+  "name": "eve-launch-video",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Remotion launch films for eve, the desktop sidekick.",
+  "scripts": {
+    "studio": "remotion studio src/index.tsx",
+    "render": "remotion render src/index.tsx EveLaunch out/eve-launch.mp4",
+    "render:lessons": "remotion render src/index.tsx LaunchVideo out/launch-video.mp4",
+    "render:still": "remotion still src/index.tsx EveLaunch out/eve-launch-still.png --frame=2760",
+    "timeline:engineering": "node ../../engineering-video/make-timeline.mjs",
+    "render:engineering": "npm run timeline:engineering && remotion render src/engineering-index.tsx EveEngineering out/eve-engineering.video.mp4 && ffmpeg -y -loglevel error -i out/eve-engineering.video.mp4 -i ../../engineering-video/eve-engineering.srt -map 0 -map 1 -c copy -c:s mov_text -metadata:s:s:0 language=eng out/eve-engineering.mp4 && rm out/eve-engineering.video.mp4",
+    "render:engineering:still": "remotion still src/engineering-index.tsx EveEngineering out/eve-engineering-still.png",
+    "sfx": "python3 scripts/make-chirps.py",
+    "typecheck": "tsc --noEmit -p .",
+    "verify": "node scripts/verify-launch-video.mjs && node scripts/verify-eve-launch.mjs",
+    "verify:render": "node scripts/verify-rendered-video.mjs out/eve-launch.mp4 93"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.524",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "remotion": "4.0.524"
+  },
+  "devDependencies": {
+    "@types/react": "19.1.10",
+    "@types/react-dom": "19.1.7",
+    "typescript": "5.9.2"
+  }
+}

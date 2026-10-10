@@ -1,0 +1,846 @@
+{
+ "note": "Computer-use requests with the route each one should take. 'log' cases are the owner's own requests from ~/.config/eve-bridge/agent-runs (2026-09), de-duplicated, with every personal detail replaced by a neutral one of the same shape; 'authored' cases are hard negatives and positives written to probe the rules. Labels are a human judgement of the cheapest tier that fully and safely does the request. This is the TUNING set: the rules were adjusted against it, so its score is not evidence. holdout.json, written by an author who had not seen the rules, makes the ship decision.",
+ "apps": [
+  "Spotify",
+  "TV",
+  "Terminal",
+  "Claude",
+  "Safari",
+  "Slack",
+  "Google Chrome",
+  "System Settings",
+  "Notes",
+  "Photos",
+  "Mail",
+  "Music",
+  "Calendar",
+  "Finder",
+  "Warp",
+  "Messages",
+  "Reminders",
+  "Maps",
+  "Preview",
+  "Books"
+ ],
+ "cases": [
+  {
+   "goal": "Open Spotify on the Mac and bring it to the front so you can start listening.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Spotify",
+   "source": "log"
+  },
+  {
+   "goal": "Open Spotify on the owner's Mac, so the app is launched and ready for use.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Spotify",
+   "source": "log"
+  },
+  {
+   "goal": "Open Spotify.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Spotify",
+   "source": "log"
+  },
+  {
+   "goal": "open Spotify on my laptop",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Spotify",
+   "source": "log"
+  },
+  {
+   "goal": "Open up Spotify on my laptop.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Spotify",
+   "source": "log"
+  },
+  {
+   "goal": "Open up Apple TV on my Mac.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "TV",
+   "source": "log"
+  },
+  {
+   "goal": "Open up a terminal.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Terminal",
+   "source": "log"
+  },
+  {
+   "goal": "Open up Claude.",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Claude",
+   "source": "log"
+  },
+  {
+   "goal": "Open Safari and go to google.com. Do not search for anything.",
+   "kind": "launch",
+   "tiers": [
+    "reflex",
+    "astra"
+   ],
+   "app": "Safari",
+   "source": "log"
+  },
+  {
+   "goal": "Open Spotify and play \"Don Toliver\"",
+   "kind": "launch",
+   "tiers": [
+    "reflex",
+    "astra"
+   ],
+   "app": "Spotify",
+   "source": "log"
+  },
+  {
+   "goal": "Open Slack and check who messaged me.",
+   "kind": "launch",
+   "tiers": [
+    "reflex",
+    "astra"
+   ],
+   "app": "Slack",
+   "source": "log"
+  },
+  {
+   "goal": "Search for the closest gym in San Francisco using Google.",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "closest",
+    "gym",
+    "san francisco"
+   ],
+   "browser": "",
+   "source": "log"
+  },
+  {
+   "goal": "Search the weather right now on Google",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "weather"
+   ],
+   "browser": "",
+   "source": "log"
+  },
+  {
+   "goal": "Search for \"creative coding\" in New York using a web search.",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "creative coding",
+    "new york"
+   ],
+   "browser": "",
+   "source": "log"
+  },
+  {
+   "goal": "Search Google for the closest budget-friendly restaurant under $15 to me.",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "budget-friendly",
+    "restaurant"
+   ],
+   "browser": "",
+   "source": "log"
+  },
+  {
+   "goal": "Search for the nearest restaurant on Google.",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "nearest restaurant"
+   ],
+   "browser": "",
+   "source": "log"
+  },
+  {
+   "goal": "Search up the OpenAI press contact on Google.",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "openai",
+    "press contact"
+   ],
+   "browser": "",
+   "source": "log"
+  },
+  {
+   "goal": "Search up what time it is.",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "what time"
+   ],
+   "browser": "",
+   "source": "log"
+  },
+  {
+   "goal": "Pull up a graph about the current stock market S&P 500 on Google right now.",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "s&p 500"
+   ],
+   "browser": "",
+   "source": "log"
+  },
+  {
+   "goal": "Pull up the weather in San Francisco on Google right now.",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "weather",
+    "san francisco"
+   ],
+   "browser": "",
+   "source": "log"
+  },
+  {
+   "goal": "Pull up an article on Google on my laptop right now about the two leaders meeting yesterday.",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "article",
+    "leaders"
+   ],
+   "browser": "",
+   "source": "log"
+  },
+  {
+   "goal": "Search up the latest news and put it up on Google right now on my Mac.",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "latest news"
+   ],
+   "browser": "",
+   "source": "log"
+  },
+  {
+   "goal": "Search up the news about the announced White House press ban on my computer.",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "white house",
+    "press ban"
+   ],
+   "browser": "",
+   "source": "log"
+  },
+  {
+   "goal": "In Safari, search Google for the weather in San Francisco and tell me the temperature you see.",
+   "kind": "search",
+   "tiers": [
+    "reflex",
+    "astra"
+   ],
+   "query_has": [
+    "weather",
+    "san francisco"
+   ],
+   "browser": "Safari",
+   "source": "log"
+  },
+  {
+   "goal": "Search for current weather conditions in San Francisco, including temperature and any notable alerts, and return what you find.",
+   "kind": "search",
+   "tiers": [
+    "reflex",
+    "astra"
+   ],
+   "query_has": [
+    "weather",
+    "san francisco"
+   ],
+   "browser": "",
+   "source": "log"
+  },
+  {
+   "goal": "show the year view and then go to the next year",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "in-app navigation",
+   "source": "log"
+  },
+  {
+   "goal": "open the General pane and then open Language & Region",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "in-app navigation",
+   "source": "log"
+  },
+  {
+   "goal": "switch to week view",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "in-app navigation",
+   "source": "authored"
+  },
+  {
+   "goal": "Take exactly one screenshot and tell me in one sentence what application is in front and what it shows.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "look and tell",
+   "source": "log"
+  },
+  {
+   "goal": "Look at the screen and tell me which application is frontmost and what its window is showing. Do not click.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "look and tell",
+   "source": "log"
+  },
+  {
+   "goal": "Tell me the current time as the Mac itself reports it. Read only; change nothing.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "look and tell",
+   "source": "log"
+  },
+  {
+   "goal": "Launch the Don Toliver Radio playback on the Mac, likely in a music app or streaming service, and start playing.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "no installed app is named; needs judgement",
+   "source": "log"
+  },
+  {
+   "goal": "Open Google in the default browser on your Mac. Do not load any other pages yet.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "Google is a site, not an app",
+   "source": "log"
+  },
+  {
+   "goal": "Pause Spotify.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "media control: not a launch",
+   "source": "log"
+  },
+  {
+   "goal": "Play Spotify",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "media control: not a launch",
+   "source": "log"
+  },
+  {
+   "goal": "Play Don Toliver on Spotify.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "needs a search inside the app",
+   "source": "log"
+  },
+  {
+   "goal": "Open Don Toliver Radio on Spotify",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "not an app: a station inside one",
+   "source": "log"
+  },
+  {
+   "goal": "Kill the Terminal app on my Mac.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "consequential",
+   "source": "log"
+  },
+  {
+   "goal": "Turn off the Terminal app on my Mac.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "consequential",
+   "source": "log"
+  },
+  {
+   "goal": "Order me something from DoorDash.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "consequential",
+   "source": "log"
+  },
+  {
+   "goal": "Optimize it better.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "no referent: the planner's",
+   "source": "log"
+  },
+  {
+   "goal": "Check what the weather is looking like in San Francisco.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "no search wording; the voice backend's web search should have taken it",
+   "source": "log"
+  },
+  {
+   "goal": "What's the weather",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "a question",
+   "source": "log"
+  },
+  {
+   "goal": "Open a new Astra 6 session.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "not an installed app's name",
+   "source": "log"
+  },
+  {
+   "goal": "Can you check if the build is ready?",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "look and tell",
+   "source": "log"
+  },
+  {
+   "goal": "Check my email for me",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "look and tell",
+   "source": "log"
+  },
+  {
+   "goal": "Play slither.io for me.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "a long task",
+   "source": "log"
+  },
+  {
+   "goal": "Go to Warp right now and ask the Claude session to build in computer vision.",
+   "kind": "launch",
+   "tiers": [
+    "reflex",
+    "astra"
+   ],
+   "why": "relabelled after the first run: bringing Warp forward is harmless and is what the planner did first; asking the session is the planner's",
+   "source": "log",
+   "app": "Warp"
+  },
+  {
+   "goal": "Search Apple TV for a good rom com movie for date night.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "KNOWN MISS: 'search <app> for' means inside the app; the rule googles it",
+   "source": "log"
+  },
+  {
+   "goal": "Open up a cool website on Google Chrome for me.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "vague: the planner picks",
+   "source": "log"
+  },
+  {
+   "goal": "Write this into the Warp session right now: \"Something warm and bouncy.\"",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "typing",
+   "source": "log"
+  },
+  {
+   "goal": "Send the text already typed into the Warp session.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "consequential",
+   "source": "log"
+  },
+  {
+   "goal": "Add to notes and highlight this: use the mic and camera to work out where I am.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "typing",
+   "source": "log"
+  },
+  {
+   "goal": "Use Claude code to make a cool visual.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "a long task",
+   "source": "log"
+  },
+  {
+   "goal": "Start taking notes: Alex is going to print the case by tomorrow.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "typing",
+   "source": "log"
+  },
+  {
+   "goal": "Search up some cool shit for me on Google right now. Put it up.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "vague query: the planner picks one",
+   "source": "log"
+  },
+  {
+   "goal": "Pull up some cool shit on Google right now.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "vague query",
+   "source": "log"
+  },
+  {
+   "goal": "Open up a news article on Google.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "vague",
+   "source": "log"
+  },
+  {
+   "goal": "Open up Slither.io on Google and play the game for me.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "a long task",
+   "source": "log"
+  },
+  {
+   "goal": "Open Mail and send the draft to Sam.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "consequential",
+   "source": "authored"
+  },
+  {
+   "goal": "Open the downloads folder.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "a folder, not an app",
+   "source": "authored"
+  },
+  {
+   "goal": "Open notes from yesterday's meeting.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "a document, not the Notes app",
+   "source": "authored"
+  },
+  {
+   "goal": "Show me photos of the trip.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "content, not the Photos app",
+   "source": "authored"
+  },
+  {
+   "goal": "Start a timer for ten minutes.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "not an app",
+   "source": "authored"
+  },
+  {
+   "goal": "Run the tests.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "not an app",
+   "source": "authored"
+  },
+  {
+   "goal": "Go to the settings page of this site.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "in-page navigation",
+   "source": "authored"
+  },
+  {
+   "goal": "Find my keys.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "not a web search",
+   "source": "authored"
+  },
+  {
+   "goal": "Pull up the budget.",
+   "kind": "lane",
+   "tiers": [
+    "lane",
+    "astra"
+   ],
+   "why": "a document, not a web search",
+   "source": "authored"
+  },
+  {
+   "goal": "Quit Spotify.",
+   "kind": "quit",
+   "tiers": [
+    "reflex"
+   ],
+   "why": "owner's rule of 2026-09-23: an explicit 'quit' of one app is a graceful quit, a reflex",
+   "source": "authored",
+   "app": "Spotify"
+  },
+  {
+   "goal": "Delete the Spotify app.",
+   "kind": "astra",
+   "tiers": [
+    "astra"
+   ],
+   "why": "consequential",
+   "source": "authored"
+  },
+  {
+   "goal": "Open Terminal and run rm -rf build.",
+   "kind": "launch",
+   "tiers": [
+    "reflex",
+    "astra"
+   ],
+   "why": "launch is harmless; the rest is the planner's, with ask_user",
+   "source": "authored",
+   "app": "Terminal"
+  },
+  {
+   "goal": "Search Google for how to reset my password.",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "why": "CONSERVATIVE MISS: 'password' and 'reset' trip the consequential gate; a search would have been fine",
+   "source": "authored",
+   "query_has": [
+    "reset my password"
+   ]
+  },
+  {
+   "goal": "launch Safari",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Safari",
+   "source": "authored"
+  },
+  {
+   "goal": "Could you please open Google Chrome for me",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Google Chrome",
+   "source": "authored"
+  },
+  {
+   "goal": "fire up system settings",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "System Settings",
+   "source": "authored"
+  },
+  {
+   "goal": "open settings",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "System Settings",
+   "source": "authored"
+  },
+  {
+   "goal": "bring up Notes",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Notes",
+   "source": "authored"
+  },
+  {
+   "goal": "Open Photos",
+   "kind": "launch",
+   "tiers": [
+    "reflex"
+   ],
+   "app": "Photos",
+   "source": "authored"
+  },
+  {
+   "goal": "look up the capital of Australia",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "capital",
+    "australia"
+   ],
+   "browser": "",
+   "source": "authored"
+  },
+  {
+   "goal": "google chrome extensions for tab management",
+   "kind": "search",
+   "tiers": [
+    "reflex"
+   ],
+   "query_has": [
+    "chrome extensions"
+   ],
+   "browser": "",
+   "source": "authored"
+  }
+ ]
+}

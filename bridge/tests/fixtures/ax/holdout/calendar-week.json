@@ -1,0 +1,2166 @@
+{
+ "captured": {
+  "ax_candidates_sha": "96599e77c9620855df3314719f9bc3f8ef40a57293c021378302e525267a9fce",
+  "macos": "26.6.2",
+  "app_version": "16.0",
+  "at": "2026-09-21T02:44:39-07:00",
+  "truncated": false,
+  "redacted": true
+ },
+ "screen": [
+  1512,
+  982
+ ],
+ "raw": {
+  "app": "Calendar",
+  "bundle": "com.apple.iCal",
+  "pid": 50717,
+  "title": "Calendar",
+  "fullscreen": false,
+  "node_count": 57,
+  "truncated": false,
+  "secs": 0.0478,
+  "root": {
+   "role": "AXWindow",
+   "subrole": "AXStandardWindow",
+   "title": "Calendar",
+   "description": "",
+   "value": null,
+   "frame": [
+    289.0,
+    98.0,
+    935.0,
+    598.0
+   ],
+   "actions": [],
+   "enabled": true,
+   "focused": false,
+   "children": [
+    {
+     "role": "AXSplitGroup",
+     "subrole": "",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      289.0,
+      98.0,
+      935.0,
+      598.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [
+      {
+       "role": "AXGroup",
+       "subrole": "",
+       "title": "",
+       "description": "Week Calendar Area",
+       "value": null,
+       "frame": [
+        289.0,
+        98.0,
+        935.0,
+        598.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [
+        {
+         "role": "AXGrid",
+         "subrole": "",
+         "title": "September 2026",
+         "description": "",
+         "value": null,
+         "frame": [
+          289.0,
+          98.0,
+          937.0,
+          598.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "",
+           "description": "Sunday",
+           "value": null,
+           "frame": [
+            349.0,
+            -162.0,
+            125.0,
+            858.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "meeting. Starts on September 20, 2026 at 5:00 PM and ends at 6:00 PM.",
+             "value": null,
+             "frame": [
+              348.0,
+              442.5,
+              125.0,
+              35.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "meeting",
+               "frame": [
+                356.5,
+                445.5,
+                111.5,
+                17.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGrid",
+                "AXList",
+                "AXStaticText"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "",
+           "description": "Monday",
+           "value": null,
+           "frame": [
+            474.0,
+            -162.0,
+            126.0,
+            858.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": true,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Yom Kippur. September 21, 2026, All-Day",
+             "value": null,
+             "frame": [
+              473.0,
+              241.0,
+              126.0,
+              22.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "Holiday",
+               "value": null,
+               "frame": [
+                475.0,
+                246.0,
+                18.0,
+                12.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGrid",
+                "AXList",
+                "AXStaticText"
+               ]
+              },
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "Yom Kippur",
+               "frame": [
+                494.0,
+                243.5,
+                70.0,
+                17.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGrid",
+                "AXList",
+                "AXStaticText"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            },
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Flight to Denver (XY 1234) at Oakland OAK. Starts on September 21, 2026 at 5:37 PM and ends at 8:00 PM.",
+             "value": null,
+             "frame": [
+              473.0,
+              464.0,
+              126.0,
+              83.5
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "Flight to Denver (DL 3707)",
+               "frame": [
+                481.5,
+                467.0,
+                112.5,
+                32.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGrid",
+                "AXList",
+                "AXStaticText"
+               ]
+              },
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "5:37 – 8PM",
+               "frame": [
+                496.0,
+                514.0,
+                61.0,
+                17.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGrid",
+                "AXList",
+                "AXStaticText"
+               ]
+              },
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                481.5,
+                517.0,
+                13.5,
+                10.5
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGrid",
+                "AXList",
+                "AXStaticText"
+               ]
+              },
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "Oakland OAK",
+               "frame": [
+                495.5,
+                498.0,
+                98.5,
+                17.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGrid",
+                "AXList",
+                "AXStaticText"
+               ]
+              },
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                481.5,
+                501.0,
+                13.0,
+                10.5
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGrid",
+                "AXList",
+                "AXStaticText"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "",
+           "description": "Tuesday",
+           "value": null,
+           "frame": [
+            600.0,
+            -162.0,
+            126.0,
+            858.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "buy a desk lamp. September 22, 2026, All-Day",
+             "value": null,
+             "frame": [
+              599.0,
+              241.0,
+              126.0,
+              22.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "All Day",
+               "value": null,
+               "frame": [
+                601.0,
+                246.0,
+                18.0,
+                12.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGrid",
+                "AXList",
+                "AXStaticText"
+               ]
+              },
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "buy a desk lamp",
+               "frame": [
+                620.0,
+                243.5,
+                88.0,
+                17.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGrid",
+                "AXList",
+                "AXStaticText"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            },
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Interview Prep Course. Starts on September 22, 2026 at 3:00 PM and ends at 5:00 PM.",
+             "value": null,
+             "frame": [
+              599.0,
+              372.5,
+              126.0,
+              70.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "Interview Prep Course",
+               "frame": [
+                607.5,
+                375.5,
+                97.0,
+                62.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGrid",
+                "AXList",
+                "AXStaticText"
+               ]
+              },
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "repeat 1",
+               "value": null,
+               "frame": [
+                705.5,
+                378.5,
+                14.5,
+                10.5
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGrid",
+                "AXList",
+                "AXStaticText"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            },
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Study Group. Starts on September 22, 2026 at 6:00 PM and ends at 7:00 PM.",
+             "value": null,
+             "frame": [
+              599.0,
+              477.5,
+              126.0,
+              35.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "DSP",
+               "frame": [
+                607.5,
+                480.5,
+                97.0,
+                17.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGrid",
+                "AXList",
+                "AXStaticText"
+               ]
+              },
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "repeat 1",
+               "value": null,
+               "frame": [
+                705.5,
+                483.5,
+                14.5,
+                10.5
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGrid",
+                "AXList",
+                "AXStaticText"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "",
+           "description": "Wednesday",
+           "value": null,
+           "frame": [
+            726.0,
+            -162.0,
+            125.0,
+            858.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "",
+           "description": "Thursday",
+           "value": null,
+           "frame": [
+            851.0,
+            -162.0,
+            125.0,
+            858.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXStaticText",
+             "subrole": "",
+             "title": "",
+             "description": "Interview Prep Course. Starts on September 24, 2026 at 3:00 PM and ends at 5:00 PM.",
+             "value": null,
+             "frame": [
+              850.0,
+              372.5,
+              125.0,
+              70.0
+             ],
+             "actions": [
+              "AXShowMenu",
+              "AXPress"
+             ],
+             "enabled": true,
+             "focused": false,
+             "children": [
+              {
+               "role": "AXStaticText",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": "Interview Prep Course",
+               "frame": [
+                858.5,
+                375.5,
+                96.0,
+                62.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGrid",
+                "AXList",
+                "AXStaticText"
+               ]
+              },
+              {
+               "role": "AXImage",
+               "subrole": "",
+               "title": "",
+               "description": "repeat 1",
+               "value": null,
+               "frame": [
+                955.5,
+                378.5,
+                14.5,
+                10.5
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGrid",
+                "AXList",
+                "AXStaticText"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGrid",
+              "AXList"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "",
+           "description": "Friday",
+           "value": null,
+           "frame": [
+            976.0,
+            -162.0,
+            125.0,
+            858.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          },
+          {
+           "role": "AXList",
+           "subrole": "",
+           "title": "",
+           "description": "Saturday",
+           "value": null,
+           "frame": [
+            1101.0,
+            -162.0,
+            125.0,
+            858.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXSplitGroup",
+            "AXGroup",
+            "AXGrid"
+           ]
+          }
+         ],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXSplitGroup",
+          "AXGroup"
+         ]
+        },
+        {
+         "role": "AXButton",
+         "subrole": "",
+         "title": "",
+         "description": "previous week",
+         "value": null,
+         "frame": [
+          1086.0,
+          165.0,
+          27.0,
+          27.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXSplitGroup",
+          "AXGroup"
+         ]
+        },
+        {
+         "role": "AXButton",
+         "subrole": "",
+         "title": "Today",
+         "description": "",
+         "value": null,
+         "frame": [
+          1115.0,
+          165.0,
+          68.0,
+          27.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXSplitGroup",
+          "AXGroup"
+         ]
+        },
+        {
+         "role": "AXButton",
+         "subrole": "",
+         "title": "",
+         "description": "next week",
+         "value": null,
+         "frame": [
+          1185.0,
+          165.0,
+          27.0,
+          27.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXSplitGroup",
+          "AXGroup"
+         ]
+        },
+        {
+         "role": "AXStaticText",
+         "subrole": "",
+         "title": "",
+         "description": "",
+         "value": "September 2026",
+         "frame": [
+          304.0,
+          157.0,
+          249.0,
+          41.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXSplitGroup",
+          "AXGroup"
+         ]
+        }
+       ],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXSplitGroup"
+       ]
+      }
+     ],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXToolbar",
+     "subrole": "",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      289.0,
+      98.0,
+      935.0,
+      52.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [
+      {
+       "role": "AXGroup",
+       "subrole": "",
+       "title": "",
+       "description": "",
+       "value": null,
+       "frame": [
+        389.0,
+        98.0,
+        82.0,
+        52.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [
+        {
+         "role": "AXRadioGroup",
+         "subrole": "",
+         "title": "",
+         "description": "Calendars",
+         "value": null,
+         "frame": [
+          392.5,
+          105.0,
+          75.5,
+          38.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [
+          {
+           "role": "AXRadioButton",
+           "subrole": "AXSegment",
+           "title": "",
+           "description": "Calendars",
+           "value": 0,
+           "frame": [
+            393.5,
+            106.0,
+            36.0,
+            36.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXToolbar",
+            "AXGroup",
+            "AXRadioGroup"
+           ]
+          },
+          {
+           "role": "AXRadioButton",
+           "subrole": "AXSegment",
+           "title": "",
+           "description": "Inbox",
+           "value": 0,
+           "frame": [
+            430.5,
+            106.0,
+            36.5,
+            36.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXToolbar",
+            "AXGroup",
+            "AXRadioGroup"
+           ]
+          }
+         ],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXToolbar",
+          "AXGroup"
+         ]
+        }
+       ],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXToolbar"
+       ]
+      },
+      {
+       "role": "AXButton",
+       "subrole": "",
+       "title": "",
+       "description": "Add Event",
+       "value": null,
+       "frame": [
+        471.0,
+        98.0,
+        44.0,
+        52.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXToolbar"
+       ]
+      },
+      {
+       "role": "AXGroup",
+       "subrole": "",
+       "title": "",
+       "description": "",
+       "value": null,
+       "frame": [
+        631.5,
+        98.0,
+        251.0,
+        52.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [
+        {
+         "role": "AXRadioGroup",
+         "subrole": "",
+         "title": "",
+         "description": "View",
+         "value": null,
+         "frame": [
+          634.5,
+          105.0,
+          245.0,
+          38.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [
+          {
+           "role": "AXRadioButton",
+           "subrole": "AXSegment",
+           "title": "",
+           "description": "Day",
+           "value": 0,
+           "frame": [
+            635.5,
+            106.0,
+            60.0,
+            36.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXToolbar",
+            "AXGroup",
+            "AXRadioGroup"
+           ]
+          },
+          {
+           "role": "AXRadioButton",
+           "subrole": "AXSegment",
+           "title": "",
+           "description": "Week",
+           "value": 1,
+           "frame": [
+            696.5,
+            106.0,
+            60.0,
+            36.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXToolbar",
+            "AXGroup",
+            "AXRadioGroup"
+           ]
+          },
+          {
+           "role": "AXRadioButton",
+           "subrole": "AXSegment",
+           "title": "",
+           "description": "Month",
+           "value": 0,
+           "frame": [
+            757.5,
+            106.0,
+            60.0,
+            36.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXToolbar",
+            "AXGroup",
+            "AXRadioGroup"
+           ]
+          },
+          {
+           "role": "AXRadioButton",
+           "subrole": "AXSegment",
+           "title": "",
+           "description": "Year",
+           "value": 0,
+           "frame": [
+            818.5,
+            106.0,
+            60.0,
+            36.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXToolbar",
+            "AXGroup",
+            "AXRadioGroup"
+           ]
+          }
+         ],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXToolbar",
+          "AXGroup"
+         ]
+        }
+       ],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXToolbar"
+       ]
+      },
+      {
+       "role": "AXGroup",
+       "subrole": "",
+       "title": "",
+       "description": "",
+       "value": null,
+       "frame": [
+        1175.0,
+        98.0,
+        45.0,
+        52.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [
+        {
+         "role": "AXButton",
+         "subrole": "AXSearchField",
+         "title": "",
+         "description": "Search",
+         "value": null,
+         "frame": [
+          1178.5,
+          105.0,
+          38.5,
+          38.0
+         ],
+         "actions": [
+          "AXPress"
+         ],
+         "enabled": true,
+         "focused": false,
+         "children": [],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXToolbar",
+          "AXGroup"
+         ]
+        }
+       ],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXToolbar"
+       ]
+      }
+     ],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXButton",
+     "subrole": "AXCloseButton",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      307.0,
+      116.0,
+      16.0,
+      16.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXButton",
+     "subrole": "AXFullScreenButton",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      353.0,
+      116.0,
+      16.0,
+      16.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [
+      {
+       "role": "AXGroup",
+       "subrole": "",
+       "title": "",
+       "description": "",
+       "value": null,
+       "frame": [
+        354.0,
+        117.0,
+        14.0,
+        14.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [
+        {
+         "role": "AXGroup",
+         "subrole": "",
+         "title": "",
+         "description": "",
+         "value": null,
+         "frame": [
+          354.0,
+          117.0,
+          14.0,
+          14.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXButton",
+          "AXGroup"
+         ]
+        }
+       ],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXButton"
+       ]
+      }
+     ],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXButton",
+     "subrole": "AXMinimizeButton",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      330.0,
+      116.0,
+      16.0,
+      16.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    }
+   ],
+   "ancestor_roles": []
+  }
+ },
+ "snapshot": {
+  "seq": 1,
+  "app": "Calendar",
+  "bundle": "com.apple.iCal",
+  "title": "Calendar",
+  "pid": 50717,
+  "elements": [
+   {
+    "id": "0",
+    "role": "button",
+    "label": "Add Event",
+    "value": "",
+    "frame": [
+     471,
+     98,
+     44,
+     52
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "1",
+    "role": "search field",
+    "label": "Search",
+    "value": "",
+    "frame": [
+     1178,
+     105,
+     38,
+     38
+    ],
+    "actions": [
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": true
+   },
+   {
+    "id": "2",
+    "role": "radio button",
+    "label": "Calendars",
+    "value": "",
+    "frame": [
+     394,
+     106,
+     36,
+     36
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "3",
+    "role": "radio button",
+    "label": "Inbox",
+    "value": "",
+    "frame": [
+     430,
+     106,
+     36,
+     36
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "4",
+    "role": "radio button",
+    "label": "Day",
+    "value": "",
+    "frame": [
+     636,
+     106,
+     60,
+     36
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "5",
+    "role": "radio button",
+    "label": "Week",
+    "value": "selected",
+    "frame": [
+     696,
+     106,
+     60,
+     36
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "6",
+    "role": "radio button",
+    "label": "Month",
+    "value": "",
+    "frame": [
+     758,
+     106,
+     60,
+     36
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "7",
+    "role": "radio button",
+    "label": "Year",
+    "value": "",
+    "frame": [
+     818,
+     106,
+     60,
+     36
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "8",
+    "role": "static text",
+    "label": "September 2026",
+    "value": "",
+    "frame": [
+     304,
+     157,
+     249,
+     41
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "9",
+    "role": "button",
+    "label": "previous week",
+    "value": "",
+    "frame": [
+     1086,
+     165,
+     27,
+     27
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "10",
+    "role": "button",
+    "label": "Today",
+    "value": "",
+    "frame": [
+     1115,
+     165,
+     68,
+     27
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "11",
+    "role": "button",
+    "label": "next week",
+    "value": "",
+    "frame": [
+     1185,
+     165,
+     27,
+     27
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "12",
+    "role": "static text",
+    "label": "Yom Kippur. September 21, 2026, All-Day",
+    "value": "",
+    "frame": [
+     473,
+     241,
+     126,
+     22
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "13",
+    "role": "static text",
+    "label": "buy a desk lamp. September 22, 2026, All-Day",
+    "value": "",
+    "frame": [
+     599,
+     241,
+     126,
+     22
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "14",
+    "role": "static text",
+    "label": "Yom Kippur",
+    "value": "",
+    "frame": [
+     494,
+     244,
+     70,
+     17
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "15",
+    "role": "static text",
+    "label": "buy a desk lamp",
+    "value": "",
+    "frame": [
+     620,
+     244,
+     88,
+     17
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "16",
+    "role": "image",
+    "label": "Holiday",
+    "value": "",
+    "frame": [
+     475,
+     246,
+     18,
+     12
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "17",
+    "role": "image",
+    "label": "All Day",
+    "value": "",
+    "frame": [
+     601,
+     246,
+     18,
+     12
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "18",
+    "role": "static text",
+    "label": "Interview Prep Course. Starts on September 22, 2026 at 3:00 PM and ends at 5:00 PM.",
+    "value": "",
+    "frame": [
+     599,
+     372,
+     126,
+     70
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "19",
+    "role": "static text",
+    "label": "Interview Prep Course. Starts on September 24, 2026 at 3:00 PM and ends at 5:00 PM.",
+    "value": "",
+    "frame": [
+     850,
+     372,
+     125,
+     70
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "20",
+    "role": "static text",
+    "label": "Interview Prep Course",
+    "value": "",
+    "frame": [
+     608,
+     376,
+     97,
+     62
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "21",
+    "role": "static text",
+    "label": "Interview Prep Course",
+    "value": "",
+    "frame": [
+     858,
+     376,
+     96,
+     62
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "22",
+    "role": "image",
+    "label": "repeat 1",
+    "value": "",
+    "frame": [
+     706,
+     378,
+     14,
+     10
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "23",
+    "role": "image",
+    "label": "repeat 1",
+    "value": "",
+    "frame": [
+     956,
+     378,
+     14,
+     10
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "24",
+    "role": "static text",
+    "label": "meeting. Starts on September 20, 2026 at 5:00 PM and ends at 6:00 PM.",
+    "value": "",
+    "frame": [
+     348,
+     442,
+     125,
+     35
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "25",
+    "role": "static text",
+    "label": "meeting",
+    "value": "",
+    "frame": [
+     356,
+     446,
+     112,
+     17
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "26",
+    "role": "static text",
+    "label": "Flight to Denver (XY 1234) at Oakland OAK. Starts on September 21, 2026 at 5:37 PM and ends at 8:00 PM.",
+    "value": "",
+    "frame": [
+     473,
+     464,
+     126,
+     84
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "27",
+    "role": "static text",
+    "label": "Flight to Denver (DL 3707)",
+    "value": "",
+    "frame": [
+     482,
+     467,
+     112,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "28",
+    "role": "static text",
+    "label": "Study Group. Starts on September 22, 2026 at 6:00 PM and ends at 7:00 PM.",
+    "value": "",
+    "frame": [
+     599,
+     478,
+     126,
+     35
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "29",
+    "role": "static text",
+    "label": "DSP",
+    "value": "",
+    "frame": [
+     608,
+     480,
+     97,
+     17
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "30",
+    "role": "image",
+    "label": "repeat 1",
+    "value": "",
+    "frame": [
+     706,
+     484,
+     14,
+     10
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "31",
+    "role": "static text",
+    "label": "Oakland OAK",
+    "value": "",
+    "frame": [
+     496,
+     498,
+     98,
+     17
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "32",
+    "role": "static text",
+    "label": "5:37 – 8PM",
+    "value": "",
+    "frame": [
+     496,
+     514,
+     61,
+     17
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "Calendar",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   }
+  ],
+  "context_lines": [
+   "title: Calendar",
+   "September 2026",
+   "Yom Kippur. September 21, 2026, All-Day",
+   "buy a desk lamp. September 22, 2026, All-Day",
+   "Yom Kippur",
+   "buy a desk lamp",
+   "Interview Prep Course",
+   "meeting"
+  ],
+  "focused": null,
+  "dialog_text": "",
+  "fullscreen": false,
+  "node_count": 57,
+  "truncated": false,
+  "secs": 0.0478
+ },
+ "cases": [
+  {
+   "goal": "show the whole month",
+   "expected_id": "6",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "go forward a week",
+   "expected_id": "11",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "step back one week",
+   "expected_id": "9",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "show only today",
+   "expected_id": "4",
+   "expected": "click",
+   "overlap": false,
+   "distractor": true,
+   "text": null,
+   "must_not_offer": [],
+   "note": "distractor: Today shares 'today'"
+  },
+  {
+   "goal": "return to today",
+   "expected_id": "10",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "show the year",
+   "expected_id": "7",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "put something on my calendar",
+   "expected_id": "0",
+   "expected": "click",
+   "overlap": false,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "open my flight",
+   "expected_id": "26",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "look at the study group event",
+   "expected_id": "28",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "open the inbox",
+   "expected_id": "3",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "show my calendars",
+   "expected_id": "2",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  }
+ ]
+}

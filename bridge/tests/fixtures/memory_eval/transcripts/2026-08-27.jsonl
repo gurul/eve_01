@@ -1,0 +1,22 @@
+{"ts": "2026-08-27T08:55:00-07:00", "ch": "telegram", "conv": "t-1787846100000-34ed", "who": "owner", "kind": "say", "text": "Is it 'fewer' or 'less' for things you can count?"}
+{"ts": "2026-08-27T08:56:20-07:00", "ch": "telegram", "conv": "t-1787846100000-34ed", "who": "eve", "kind": "say", "text": "Fewer, for things you can count."}
+{"ts": "2026-08-27T08:58:49-07:00", "ch": "telegram", "conv": "t-1787846100000-34ed", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-27T10:00:00-07:00", "ch": "telegram", "conv": "t-1787850000000-0677", "who": "owner", "kind": "say", "text": "Kieran's going-away dinner was going to be at Lucky Noodle tomorrow, but they're closed for renovation."}
+{"ts": "2026-08-27T10:00:47-07:00", "ch": "telegram", "conv": "t-1787850000000-0677", "who": "eve", "kind": "say", "text": "Want me to find another spot?"}
+{"ts": "2026-08-27T10:01:24-07:00", "ch": "telegram", "conv": "t-1787850000000-0677", "who": "owner", "kind": "say", "text": "Nah, we'll do it at our place on Birch Lane."}
+{"ts": "2026-08-27T10:04:31-07:00", "ch": "telegram", "conv": "t-1787850000000-0677", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-27T13:00:00-07:00", "ch": "telegram", "conv": "t-1787860800000-8110", "who": "owner", "kind": "say", "text": "Planning a Tahoe camping trip with Jonah for September 12 and 13."}
+{"ts": "2026-08-27T13:01:44-07:00", "ch": "telegram", "conv": "t-1787860800000-8110", "who": "eve", "kind": "say", "text": "Saved. Want a gear list closer to the date?"}
+{"ts": "2026-08-27T13:04:50-07:00", "ch": "telegram", "conv": "t-1787860800000-8110", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-27T15:30:00-07:00", "ch": "telegram", "conv": "t-1787869800000-3eb4", "who": "owner", "kind": "say", "text": "Found a makerspace, The Foundry. They do Circuit Night every Thursday at 7 pm. Going tonight."}
+{"ts": "2026-08-27T15:30:39-07:00", "ch": "telegram", "conv": "t-1787869800000-3eb4", "who": "eve", "kind": "say", "text": "Have fun."}
+{"ts": "2026-08-27T15:33:49-07:00", "ch": "telegram", "conv": "t-1787869800000-3eb4", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-27T16:00:00-07:00", "ch": "telegram", "conv": "t-1787871600000-aaec", "who": "owner", "kind": "say", "text": "I want to sell my old desk on Marketplace before the move."}
+{"ts": "2026-08-27T16:01:43-07:00", "ch": "telegram", "conv": "t-1787871600000-aaec", "who": "eve", "kind": "say", "text": "Good idea, one less thing to carry."}
+{"ts": "2026-08-27T16:05:03-07:00", "ch": "telegram", "conv": "t-1787871600000-aaec", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-27T16:40:00-07:00", "ch": "voice", "conv": "v-1787874000000-86c7", "who": "owner", "kind": "say", "text": "Make the lights warmer."}
+{"ts": "2026-08-27T16:41:06-07:00", "ch": "voice", "conv": "v-1787874000000-86c7", "who": "eve", "kind": "say", "text": "Lights set to warm white."}
+{"ts": "2026-08-27T16:43:39-07:00", "ch": "voice", "conv": "v-1787874000000-86c7", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-27T23:30:00-07:00", "ch": "voice", "conv": "v-1787898600000-2736", "who": "owner", "kind": "say", "text": "Keep this between us, I'm thinking about switching to computer science."}
+{"ts": "2026-08-27T23:31:37-07:00", "ch": "voice", "conv": "v-1787898600000-2736", "who": "eve", "kind": "say", "text": "Okay."}
+{"ts": "2026-08-27T23:35:38-07:00", "ch": "voice", "conv": "v-1787898600000-2736", "who": "system", "kind": "close", "text": ""}

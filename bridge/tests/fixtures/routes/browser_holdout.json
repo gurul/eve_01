@@ -1,0 +1,646 @@
+{
+ "note": "Browser-routing holdout written blind 2026-09-23 by an author who saw neither the code nor the router's questions; labels follow the owner's policy. (Labels renamed auto_browser -> isolated on 2026-09-23 when auto-browser was retired; meaning unchanged.)",
+ "cases": [
+  {
+   "goal": "compare prices for airpods pro across amazon, best buy, and walmart and tell me the cheapest",
+   "body": "isolated",
+   "why": "public product pages, no login, just wants the cheapest price reported back",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "web"
+  },
+  {
+   "goal": "can you check if the target on 5th ave has patio furniture in stock right now",
+   "body": "isolated",
+   "why": "public store-inventory page lookup, no account needed, just needs an answer",
+   "tricky": true,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "find me the phone number for Riverside Dental on Main St",
+   "body": "isolated",
+   "why": "public business info lookup, classic no-account research task",
+   "tricky": true,
+   "source": "holdout_browser",
+   "reader": "web"
+  },
+  {
+   "goal": "compare these three laptops - macbook air m3, dell xps 13, and thinkpad x1 - and tell me which is best for programming",
+   "body": "isolated",
+   "why": "public spec/review comparison ending in a recommendation, still just reported back as text",
+   "tricky": true,
+   "source": "holdout_browser",
+   "reader": "web"
+  },
+  {
+   "goal": "what are the hours for the DMV on tuesday",
+   "body": "isolated",
+   "why": "simple public info lookup",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "web"
+  },
+  {
+   "goal": "check my localhost:3000 site and tell me if the login page renders correctly",
+   "body": "isolated",
+   "why": "testing a public/dev web page in a browser, no Mac app or account involved despite being 'my' site",
+   "tricky": true,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "look up the return policy for REI online",
+   "body": "isolated",
+   "why": "public page content lookup",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "web"
+  },
+  {
+   "goal": "read through the top 3 reviews of the Sony WH-1000XM5 headphones on Best Buy and summarize what people are saying",
+   "body": "isolated",
+   "why": "public review reading and summarizing, no account needed",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "web"
+  },
+  {
+   "goal": "check if there's a Trader Joe's within 2 miles of downtown Austin",
+   "body": "isolated",
+   "why": "public store locator lookup",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "web"
+  },
+  {
+   "goal": "find the cheapest flight from SFO to JFK next friday using google flights, just tell me the price",
+   "body": "isolated",
+   "why": "public fare search with no login and no booking, result just reported back",
+   "tricky": true,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "look up the wikipedia page on quantum entanglement and give me a summary in plain english",
+   "body": "isolated",
+   "why": "public docs reading and summarizing",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "web"
+  },
+  {
+   "goal": "compare mortgage rates from three different lenders' public rate pages and tell me who's cheapest right now",
+   "body": "isolated",
+   "why": "sounds financial but these are public advertised-rate pages, no account or personal info required",
+   "tricky": true,
+   "source": "holdout_browser",
+   "reader": "web"
+  },
+  {
+   "goal": "fill out that newsletter signup form on the eff.org site with my test email, just to test it works",
+   "body": "isolated",
+   "why": "public form needing no account, explicitly a test",
+   "tricky": true,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "what's the showtime for the new dune movie at the regal theater tonight",
+   "body": "isolated",
+   "why": "public showtime lookup",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "web"
+  },
+  {
+   "goal": "check the public status page for AWS us-east-1 and tell me if anything's down",
+   "body": "isolated",
+   "why": "public status page, no login",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "web"
+  },
+  {
+   "goal": "look up definitions for 'ephemeral' and 'ubiquitous' from merriam webster and dictionary.com and compare them",
+   "body": "isolated",
+   "why": "public reference lookup across sites",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "web"
+  },
+  {
+   "goal": "research the differences between roth ira and traditional ira and summarize for me",
+   "body": "isolated",
+   "why": "public educational research, no account",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "web"
+  },
+  {
+   "goal": "check if my library's public catalog has 'project hail mary' available",
+   "body": "isolated",
+   "why": "public catalog search page, doesn't require logging into the library account to check availability",
+   "tricky": true,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "find three vegan restaurants near downtown seattle with good ratings and list them",
+   "body": "isolated",
+   "why": "public restaurant research and list-back",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "web"
+  },
+  {
+   "goal": "compare energy plan prices for my zip code on the state's public energy comparison site",
+   "body": "isolated",
+   "why": "public comparison tool, no account needed to view plan prices",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "check the weather forecast for the next 5 days in denver",
+   "body": "isolated",
+   "why": "public weather lookup",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "web"
+  },
+  {
+   "goal": "look up how many calories are in a chipotle burrito bowl with chicken",
+   "body": "isolated",
+   "why": "public nutrition info lookup",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "web"
+  },
+  {
+   "goal": "research three ergonomic office chairs under $300 and tell me which has the best reviews",
+   "body": "isolated",
+   "why": "public product research and comparison, reported back",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "web"
+  },
+  {
+   "goal": "check the public tracking page for a UPS package using this tracking number 1Z999AA10123456784, tell me the status",
+   "body": "isolated",
+   "why": "UPS tracking by number is a public lookup page, not tied to any account login",
+   "tricky": true,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "compare gym membership prices between planet fitness and la fitness near zip 90210",
+   "body": "isolated",
+   "why": "public pricing pages comparison",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "web"
+  },
+  {
+   "goal": "find the specs for the 2024 honda civic vs the 2024 toyota corolla",
+   "body": "isolated",
+   "why": "public spec comparison research",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "web"
+  },
+  {
+   "goal": "check whether nike.com has the pegasus 41 in stock in size 10",
+   "body": "isolated",
+   "why": "public stock-check page, no account needed",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "read the terms of service for that app I'm thinking of using, teslasolar.com, and tell me if there's anything concerning",
+   "body": "isolated",
+   "why": "public page reading and summarizing before any account is created",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "web"
+  },
+  {
+   "goal": "search zillow for home value estimates in my old neighborhood, just curious what houses are going for",
+   "body": "isolated",
+   "why": "public zestimate browsing, not the owner's own listing or account",
+   "tricky": true,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "compare hotel prices for a weekend in miami across three booking sites, just give me the cheapest option, don't book anything",
+   "body": "isolated",
+   "why": "explicitly research-only comparison with no booking, so no account is touched",
+   "tricky": true,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "check the public github repo for langchain and tell me how many open issues there are",
+   "body": "isolated",
+   "why": "public repo page, distinct from checking the owner's own GitHub notifications which would need their account",
+   "tricky": true,
+   "source": "holdout_browser",
+   "reader": "web"
+  },
+  {
+   "goal": "look up the public transit schedule for the 5 bus route downtown",
+   "body": "isolated",
+   "why": "public schedule lookup",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "web"
+  },
+  {
+   "goal": "test my staging site at staging.myeveapp.dev and tell me if the signup button actually works",
+   "body": "isolated",
+   "why": "a dev/staging website is still a public web page reachable in a browser, testing it needs no Mac access or account",
+   "tricky": true,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "find out what credit cards are offering the best public sign-up bonus right now, just researching, not applying",
+   "body": "isolated",
+   "why": "public comparison pages, explicitly research-only so no account or application is touched",
+   "tricky": true,
+   "source": "holdout_browser",
+   "reader": "web"
+  },
+  {
+   "goal": "check the score of the warriors game last night",
+   "body": "isolated",
+   "why": "public sports score lookup",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "web"
+  },
+  {
+   "goal": "look up my flight status on united using my confirmation number DL8X92Q, just want to know if it's on time",
+   "body": "isolated",
+   "why": "airline flight-status-by-confirmation-number pages are public lookups (like a tracking number), not a login to the owner's frequent-flyer account",
+   "tricky": true,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "check my gmail for anything from the accountant",
+   "body": "codex",
+   "why": "requires the owner's logged-in Gmail account",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "what's on my calendar tomorrow",
+   "body": "codex",
+   "why": "requires the owner's calendar account",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "did my amazon order ship yet",
+   "body": "codex",
+   "why": "order status is inside the owner's logged-in Amazon account",
+   "tricky": true,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "check my chase account balance",
+   "body": "codex",
+   "why": "bank account access, clearly requires login",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "any new messages in the #eng slack channel",
+   "body": "codex",
+   "why": "requires the owner's Slack login",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "check my github notifications",
+   "body": "codex",
+   "why": "requires the owner's logged-in GitHub account, unlike browsing a public repo",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "what's new on my youtube subscriptions",
+   "body": "codex",
+   "why": "requires the owner's logged-in YouTube account",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "play some jazz on spotify",
+   "body": "codex",
+   "why": "playing audio for the owner is outside plain web research and needs their account/app",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "put on the office on netflix",
+   "body": "codex",
+   "why": "playing video for the owner requires their account and shows on their screen",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "pull up that laptop review you found earlier so I can read it myself",
+   "body": "codex",
+   "why": "owner wants it shown on their own screen, not reported back as text",
+   "tricky": true,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "research the best noise cancelling headphones and email me the summary",
+   "body": "codex",
+   "why": "sending the result requires the owner's email account, even though the research itself is public",
+   "tricky": true,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "download that PDF invoice and save it to my desktop",
+   "body": "codex",
+   "why": "saving to the Mac desktop is a filesystem action outside a plain browser",
+   "tricky": true,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "open finder and clean up my downloads folder",
+   "body": "codex",
+   "why": "Mac filesystem/app task, no browser involved",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "turn on do not disturb for the next hour",
+   "body": "codex",
+   "why": "Mac settings change",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "log into my bank's website and check for a fraud alert",
+   "body": "codex",
+   "why": "login-walled account site likely to hit bot checks and needs the owner's real credentials",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "check my united account and see what my mileage balance is",
+   "body": "codex",
+   "why": "mileage balance is inside the owner's logged-in frequent-flyer account, unlike a confirmation-number status lookup",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "book me a table for 2 at that italian place tonight through opentable",
+   "body": "codex",
+   "why": "making a reservation under the owner's name/account, not just research",
+   "tricky": true,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "post an update on my linkedin saying I'm open to new roles",
+   "body": "codex",
+   "why": "posting requires the owner's logged-in LinkedIn account",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "check my texts and see if sarah replied",
+   "body": "codex",
+   "why": "Mac Messages app, not a browser task at all",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "take a screenshot of my current desktop and show me",
+   "body": "codex",
+   "why": "Mac desktop action shown on the owner's own screen",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "check my wifi settings, I think it dropped",
+   "body": "codex",
+   "why": "Mac system settings, not web research",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "reschedule my 3pm meeting to 4pm on my calendar",
+   "body": "codex",
+   "why": "modifying the owner's calendar account",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "reorder my usual coffee pods from amazon",
+   "body": "codex",
+   "why": "purchasing through the owner's logged-in Amazon account with saved payment",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "check my venmo, did jake pay me back",
+   "body": "codex",
+   "why": "requires the owner's logged-in Venmo account",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "open my notes app and read me my grocery list",
+   "body": "codex",
+   "why": "Mac app, not a browser task",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "print the boarding pass PDF",
+   "body": "codex",
+   "why": "Mac printing action outside a browser",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "set the volume to max, I can't hear it",
+   "body": "codex",
+   "why": "Mac system control",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "check my google drive for the budget spreadsheet and open it",
+   "body": "codex",
+   "why": "requires the owner's logged-in Drive account and opens a file for them to see",
+   "tricky": true,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "renew my adobe subscription, it says it's expiring",
+   "body": "codex",
+   "why": "account + payment action",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "check my linkedin messages",
+   "body": "codex",
+   "why": "requires the owner's logged-in LinkedIn account",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "compare these three laptops and just buy the cheapest one on amazon for me",
+   "body": "codex",
+   "why": "the comparison alone would be auto_browser but 'buy it for me' needs the owner's Amazon account and payment",
+   "tricky": true,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "open the article about the fed rate hike so I can read it myself",
+   "body": "codex",
+   "why": "owner wants it shown on their own screen, not summarized back",
+   "tricky": true,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "check my work slack for anything urgent from my manager",
+   "body": "codex",
+   "why": "requires the owner's logged-in Slack account",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "download the quarterly report and organize it into my reports folder",
+   "body": "codex",
+   "why": "downloading to and organizing the Mac filesystem is outside a plain browser task",
+   "tricky": true,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "put on a true crime podcast while I cook",
+   "body": "codex",
+   "why": "playing audio for the owner",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "check the nest app and see if the thermostat is set right",
+   "body": "codex",
+   "why": "Mac/smart-home app tied to the owner's account, not a public website",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "log into the reddit forum and reply to that comment thread for me",
+   "body": "codex",
+   "why": "requires the owner's logged-in Reddit account to post",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "check my twitter feed for replies to my last post",
+   "body": "codex",
+   "why": "requires the owner's logged-in account",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "look up my flight and text me the gate number when you find it",
+   "body": "codex",
+   "why": "texting the owner requires their Messages app on the Mac, mixing research with a Mac action",
+   "tricky": true,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "screen record my screen for the next 2 minutes, I want to show my team something",
+   "body": "codex",
+   "why": "Mac screen recording, not a browser task",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "check if my amazon package needs a signature and if so let me know",
+   "body": "codex",
+   "why": "order details live inside the owner's logged-in Amazon account",
+   "tricky": true,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "open chrome and pull up my last three open tabs",
+   "body": "codex",
+   "why": "uses the owner's own existing browser session/history",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "check my icloud storage, am I close to the limit",
+   "body": "codex",
+   "why": "requires the owner's logged-in Apple account",
+   "tricky": false,
+   "source": "holdout_browser",
+   "reader": "codex"
+  },
+  {
+   "goal": "find cheap flights to tokyo and then book the best one under my name",
+   "body": "codex",
+   "why": "the research alone would be auto_browser, but booking requires the owner's identity, payment, and account",
+   "tricky": true,
+   "source": "holdout_browser",
+   "reader": "codex"
+  }
+ ],
+ "reader_note": "reader (2026-09-26): the body for the web-reader router. 'web' = a public-web job that is only reading pages and reporting text; every 'isolated' case that needs clicking, typing, a form, a local or staging site, or something only the owner knows is 'codex'. Labelled by capability before any model saw the holdout. 'body' is unchanged."
+}

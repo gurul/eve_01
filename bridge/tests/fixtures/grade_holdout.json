@@ -1,0 +1,1019 @@
+{
+ "written": "2026-10-08",
+ "by": "a blind agent",
+ "cases": [
+  {
+   "id": 1,
+   "previous": [],
+   "message": "yo",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "greeting"
+  },
+  {
+   "id": 2,
+   "previous": [],
+   "message": "thanks!!",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "thanks"
+  },
+  {
+   "id": 3,
+   "previous": [],
+   "message": "ok bet",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "acknowledgement"
+  },
+  {
+   "id": 4,
+   "previous": [],
+   "message": "turn the lights off",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "simple lights command"
+  },
+  {
+   "id": 5,
+   "previous": [],
+   "message": "set a timer for 12 min",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "timer"
+  },
+  {
+   "id": 6,
+   "previous": [],
+   "message": "play lofi",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "music command"
+  },
+  {
+   "id": 7,
+   "previous": [],
+   "message": "whats on my cal today",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "calendar lookup"
+  },
+  {
+   "id": 8,
+   "previous": [],
+   "message": "remind me at 5 to call mom",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "simple reminder"
+  },
+  {
+   "id": 9,
+   "previous": [],
+   "message": "gm",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "greeting"
+  },
+  {
+   "id": 10,
+   "previous": [],
+   "message": "open spotify",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "open an app"
+  },
+  {
+   "id": 11,
+   "previous": [],
+   "message": "lights to purple",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "lights color"
+  },
+  {
+   "id": 12,
+   "previous": [],
+   "message": "pause",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "media control"
+  },
+  {
+   "id": 13,
+   "previous": [],
+   "message": "what time is it in tokyo",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "one-line fact"
+  },
+  {
+   "id": 14,
+   "previous": [],
+   "message": "how many grams in an ounce",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "one-line fact"
+  },
+  {
+   "id": 15,
+   "previous": [],
+   "message": "lol",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "small talk"
+  },
+  {
+   "id": 16,
+   "previous": [],
+   "message": "watch the price of the rtx 5070 and ping me if it drops under 500",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "set a price watch with a clear threshold"
+  },
+  {
+   "id": 17,
+   "previous": [],
+   "message": "add eggs milk and spinach to the grocery list",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "list add"
+  },
+  {
+   "id": 18,
+   "previous": [],
+   "message": "turn on the tv",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "TV command"
+  },
+  {
+   "id": 19,
+   "previous": [],
+   "message": "skip this song",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "media control"
+  },
+  {
+   "id": 20,
+   "previous": [],
+   "message": "who wrote 1984",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "one-line fact"
+  },
+  {
+   "id": 21,
+   "previous": [],
+   "message": "volume down a bit",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "media control"
+  },
+  {
+   "id": 22,
+   "previous": [],
+   "message": "remind me tmrw 9am to submit the lab report",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "simple reminder"
+  },
+  {
+   "id": 23,
+   "previous": [],
+   "message": "nvm",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "cancel/ack"
+  },
+  {
+   "id": 24,
+   "previous": [],
+   "message": "goodnight buddy",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "small talk"
+  },
+  {
+   "id": 25,
+   "previous": [],
+   "message": "whats the weather rn",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "quick lookup"
+  },
+  {
+   "id": 26,
+   "previous": [],
+   "message": "capital of australia?",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "one-line fact"
+  },
+  {
+   "id": 27,
+   "previous": [],
+   "message": "set an alarm 6:30",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "alarm"
+  },
+  {
+   "id": 28,
+   "previous": [],
+   "message": "dim the bedroom lights to 20%",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "lights command"
+  },
+  {
+   "id": 29,
+   "previous": [],
+   "message": "cancel the timer",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "timer"
+  },
+  {
+   "id": 30,
+   "previous": [],
+   "message": "how do u spell necessary",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "one-line fact"
+  },
+  {
+   "id": 31,
+   "previous": [],
+   "message": "whats 15% of 80",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "trivial arithmetic"
+  },
+  {
+   "id": 32,
+   "previous": [],
+   "message": "stop watching the airpods price",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "remove a watch"
+  },
+  {
+   "id": 33,
+   "previous": [],
+   "message": "text Priya im running 10 min late",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "simple send command"
+  },
+  {
+   "id": 34,
+   "previous": [],
+   "message": "when's my next class",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "calendar lookup"
+  },
+  {
+   "id": 35,
+   "previous": [],
+   "message": "30 usd to inr",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "quick conversion"
+  },
+  {
+   "id": 36,
+   "previous": [],
+   "message": "haha ok",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "acknowledgement"
+  },
+  {
+   "id": 37,
+   "previous": [],
+   "message": "what does PWM stand for",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "one-line fact"
+  },
+  {
+   "id": 38,
+   "previous": [],
+   "message": "put on the office on netflix",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "TV command"
+  },
+  {
+   "id": 39,
+   "previous": [],
+   "message": "add 'finish essay draft' to my todo",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "list add"
+  },
+  {
+   "id": 40,
+   "previous": [],
+   "message": "you there?",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "ping"
+  },
+  {
+   "id": 41,
+   "previous": [],
+   "message": "what's chief working on rn",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "status lookup"
+  },
+  {
+   "id": 42,
+   "previous": [],
+   "message": "next episode",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "TV control"
+  },
+  {
+   "id": 43,
+   "previous": [],
+   "message": "k",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "acknowledgement"
+  },
+  {
+   "id": 44,
+   "previous": [],
+   "message": "brb",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "small talk"
+  },
+  {
+   "id": 45,
+   "previous": [],
+   "message": "how much is the steam deck watch at now",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "read a watched price"
+  },
+  {
+   "id": 46,
+   "previous": [],
+   "message": "lights off in 10 min",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "scheduled lights command"
+  },
+  {
+   "id": 47,
+   "previous": [],
+   "message": "set the room to movie mode",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "scene command"
+  },
+  {
+   "id": 48,
+   "previous": [],
+   "message": "whats the date friday after next",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "one-line date fact"
+  },
+  {
+   "id": 49,
+   "previous": [
+    {
+     "role": "buddy",
+     "text": "Timer set for 25 minutes."
+    }
+   ],
+   "message": "make it 30",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "adjust the timer just set"
+  },
+  {
+   "id": 50,
+   "previous": [
+    {
+     "role": "owner",
+     "text": "turn on the living room lights"
+    },
+    {
+     "role": "buddy",
+     "text": "Done, living room is on."
+    }
+   ],
+   "message": "bedroom too",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "repeat the same light command for another room"
+  },
+  {
+   "id": 51,
+   "previous": [
+    {
+     "role": "buddy",
+     "text": "Your dentist appointment is Thursday at 3pm."
+    }
+   ],
+   "message": "wait what about tmrw",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "another calendar lookup"
+  },
+  {
+   "id": 52,
+   "previous": [
+    {
+     "role": "owner",
+     "text": "i have a study group sunday 4pm"
+    },
+    {
+     "role": "buddy",
+     "text": "Want me to add that to your calendar?"
+    }
+   ],
+   "message": "ya",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "confirmation"
+  },
+  {
+   "id": 53,
+   "previous": [
+    {
+     "role": "buddy",
+     "text": "Here's the draft to Professor Lee asking to move office hours to Friday. Send it?"
+    }
+   ],
+   "message": "perfect send it",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "approve and send an existing draft"
+  },
+  {
+   "id": 54,
+   "previous": [
+    {
+     "role": "buddy",
+     "text": "Playing Daft Punk on the living room speaker."
+    }
+   ],
+   "message": "louder",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "volume"
+  },
+  {
+   "id": 55,
+   "previous": [
+    {
+     "role": "owner",
+     "text": "how much is the jetson orin nano"
+    },
+    {
+     "role": "buddy",
+     "text": "It's $249 right now at the main retailer."
+    }
+   ],
+   "message": "ok watch it",
+   "acceptable": [
+    "instant"
+   ],
+   "why": "set a watch on the item just named"
+  },
+  {
+   "id": 56,
+   "previous": [],
+   "message": "help me write a cover letter for the robotics internship at that drone startup, i have the ros2 project and the line follower thing",
+   "acceptable": [
+    "think"
+   ],
+   "why": "careful writing for an application"
+  },
+  {
+   "id": 57,
+   "previous": [],
+   "message": "my react app rerenders like crazy when i type in the search box. it fetches in a useEffect on every change and sets state in the parent. how do i fix",
+   "acceptable": [
+    "think"
+   ],
+   "why": "debugging"
+  },
+  {
+   "id": 58,
+   "previous": [],
+   "message": "i need to email my prof asking for an extension on the capstone without sounding like im making excuses, my grandpa was in the hospital last week",
+   "acceptable": [
+    "think"
+   ],
+   "why": "delicate email"
+  },
+  {
+   "id": 59,
+   "previous": [],
+   "message": "bambu a1 vs prusa mk4s for mostly pla robot parts, budget 600, which one",
+   "acceptable": [
+    "think"
+   ],
+   "why": "trade-off comparison"
+  },
+  {
+   "id": 60,
+   "previous": [],
+   "message": "plan a 4 day trip to chicago for 3 of us under 900 total including the train",
+   "acceptable": [
+    "think"
+   ],
+   "why": "multi-step plan with a budget"
+  },
+  {
+   "id": 61,
+   "previous": [],
+   "message": "is it smarter to pay off my 1200 credit card at 24% or keep it in the hysa and pay minimums",
+   "acceptable": [
+    "think"
+   ],
+   "why": "money decision with consequences"
+  },
+  {
+   "id": 62,
+   "previous": [],
+   "message": "3 exams next week tues wed fri and a hackathon sat. make me a study plan that doesnt kill me",
+   "acceptable": [
+    "think"
+   ],
+   "why": "schedule planning with constraints"
+  },
+  {
+   "id": 63,
+   "previous": [],
+   "message": "should i take the internship that pays more or the one with the cooler team. honestly torn",
+   "acceptable": [
+    "think"
+   ],
+   "why": "advice with consequences"
+  },
+  {
+   "id": 64,
+   "previous": [],
+   "message": "esp32 keeps brownout resetting when wifi turns on. running off laptop usb with a 60 led neopixel strip on the same 5v",
+   "acceptable": [
+    "think"
+   ],
+   "why": "hardware debugging"
+  },
+  {
+   "id": 65,
+   "previous": [],
+   "message": "how should i structure the db for my habit tracker app? users, habits, streaks, reminders, maybe shared habits later",
+   "acceptable": [
+    "think"
+   ],
+   "why": "design reasoning"
+  },
+  {
+   "id": 66,
+   "previous": [],
+   "message": "read this lease clause and tell me if im on the hook for the carpet: 'Tenant shall be responsible for all damage beyond normal wear and tear, including but not limited to floor coverings, as determined by Landlord at move-out.'",
+   "acceptable": [
+    "think"
+   ],
+   "why": "document analysis with money at stake"
+  },
+  {
+   "id": 67,
+   "previous": [],
+   "message": "split the airbnb: 1280 for 4 nights, 4 of us, Sam only came for 2 nights, Maya paid the 150 cleaning fee on top. who owes who",
+   "acceptable": [
+    "think"
+   ],
+   "why": "money math with several constraints"
+  },
+  {
+   "id": 68,
+   "previous": [],
+   "message": "meal plan for the week, 70 bucks, 150g protein a day, no dairy",
+   "acceptable": [
+    "think"
+   ],
+   "why": "planning under constraints"
+  },
+  {
+   "id": 69,
+   "previous": [],
+   "message": "my friend keeps cancelling last minute and i want to say something without blowing up the friendship. what do i say",
+   "acceptable": [
+    "think"
+   ],
+   "why": "delicate interpersonal advice"
+  },
+  {
+   "id": 70,
+   "previous": [],
+   "message": "write me a 5k plan, i can run 2 miles now and the race is in 7 weeks",
+   "acceptable": [
+    "think"
+   ],
+   "why": "multi-week plan"
+  },
+  {
+   "id": 71,
+   "previous": [],
+   "message": "why does my pid loop oscillate MORE when i increase kd, isnt d supposed to damp it",
+   "acceptable": [
+    "think"
+   ],
+   "why": "control theory debugging"
+  },
+  {
+   "id": 72,
+   "previous": [],
+   "message": "go through my last 3 months of spending and tell me where im leaking money",
+   "acceptable": [
+    "think"
+   ],
+   "why": "analysis of data"
+  },
+  {
+   "id": 73,
+   "previous": [],
+   "message": "cs minor or ece minor if i want to end up doing embedded robotics? i already have 2 cs electives done",
+   "acceptable": [
+    "think"
+   ],
+   "why": "trade-off decision"
+  },
+  {
+   "id": 74,
+   "previous": [],
+   "message": "chief: find me 10 robotics summer internships still taking applications and rank them by fit for my resume",
+   "acceptable": [
+    "think"
+   ],
+   "why": "research and ranking job"
+  },
+  {
+   "id": 75,
+   "previous": [],
+   "message": "python script hangs on serial.readline() after the first few lines from the arduino, baud is 115200 on both sides",
+   "acceptable": [
+    "think"
+   ],
+   "why": "debugging"
+  },
+  {
+   "id": 76,
+   "previous": [],
+   "message": "draft a linkedin msg to a recruiter at a robotics company asking for a referral, i only met her once at the career fair",
+   "acceptable": [
+    "think"
+   ],
+   "why": "careful writing"
+  },
+  {
+   "id": 77,
+   "previous": [],
+   "message": "they offered 32/hr and i have another offer at 35 but i like them more. how do i negotiate without losing it",
+   "acceptable": [
+    "think"
+   ],
+   "why": "negotiation with consequences"
+  },
+  {
+   "id": 78,
+   "previous": [],
+   "message": "flight got cancelled. next one is tomorrow 6am or i can take a 9 hr bus tonight. i present at 2pm tomorrow. what do i do",
+   "acceptable": [
+    "think"
+   ],
+   "why": "time-critical decision"
+  },
+  {
+   "id": 79,
+   "previous": [],
+   "message": "power budget for my rover: 4 dc motors 1.2A stall each, a pi 5, a lidar, want 1hr runtime. what battery",
+   "acceptable": [
+    "think"
+   ],
+   "why": "engineering math"
+  },
+  {
+   "id": 80,
+   "previous": [],
+   "message": "rewrite my resume bullet so it shows impact: 'made a drone that flies with a camera'",
+   "acceptable": [
+    "think"
+   ],
+   "why": "careful writing"
+  },
+  {
+   "id": 81,
+   "previous": [],
+   "message": "my binary search returns the wrong index when there are duplicates, i want the first occurrence. lo=0 hi=n-1 while lo<=hi mid=(lo+hi)//2 if a[mid]<x lo=mid+1 else hi=mid-1 return mid",
+   "acceptable": [
+    "think"
+   ],
+   "why": "debugging code"
+  },
+  {
+   "id": 82,
+   "previous": [],
+   "message": "should i move my side project from firebase to supabase? ~2k users and the bill keeps climbing",
+   "acceptable": [
+    "think"
+   ],
+   "why": "trade-off decision"
+  },
+  {
+   "id": 83,
+   "previous": [],
+   "message": "help me reply to my mom about not coming home for thanksgiving bc of the deadline, shes gonna be upset",
+   "acceptable": [
+    "think"
+   ],
+   "why": "delicate message"
+  },
+  {
+   "id": 84,
+   "previous": [],
+   "message": "best order for errands today: costco, pharmacy closes at 6, package pickup before 5, and gym. i leave at 3:30",
+   "acceptable": [
+    "think"
+   ],
+   "why": "scheduling with constraints"
+  },
+  {
+   "id": 85,
+   "previous": [
+    {
+     "role": "owner",
+     "text": "i have 340 left for the month"
+    },
+    {
+     "role": "buddy",
+     "text": "Got it. Anything coming up you want to plan around?"
+    }
+   ],
+   "message": "ok so can i still do the concert (85) and the austin trip w jake if gas is like 60 split 3 ways and rent is due the 1st",
+   "acceptable": [
+    "think"
+   ],
+   "why": "budget math across turns"
+  },
+  {
+   "id": 86,
+   "previous": [
+    {
+     "role": "buddy",
+     "text": "Tomorrow: class 9-12, lab 1-4, shift 5-9."
+    }
+   ],
+   "message": "ok fit in gym 4x this week and 10 hrs of studying for the midterm somehow",
+   "acceptable": [
+    "think"
+   ],
+   "why": "schedule planning with constraints"
+  },
+  {
+   "id": 87,
+   "previous": [
+    {
+     "role": "owner",
+     "text": "TypeError: Cannot read properties of undefined (reading 'map') at TaskList.jsx:14"
+    },
+    {
+     "role": "buddy",
+     "text": "That usually means the list is undefined on first render."
+    }
+   ],
+   "message": "why tho its set in useEffect",
+   "acceptable": [
+    "think"
+   ],
+   "why": "debugging follow-up"
+  },
+  {
+   "id": 88,
+   "previous": [
+    {
+     "role": "buddy",
+     "text": "You have two offers: the startup at $28/hr remote, and the big company at $40/hr onsite in Seattle."
+    }
+   ],
+   "message": "which one",
+   "acceptable": [
+    "think"
+   ],
+   "why": "trade-off decision"
+  },
+  {
+   "id": 89,
+   "previous": [
+    {
+     "role": "owner",
+     "text": "my servo jitters when the motor kicks in"
+    },
+    {
+     "role": "buddy",
+     "text": "Could be a few things. How are you powering them?"
+    }
+   ],
+   "message": "both off the same 5v buck from a 2s lipo, servo signal from the esp32",
+   "acceptable": [
+    "think"
+   ],
+   "why": "hardware debugging"
+  },
+  {
+   "id": 90,
+   "previous": [
+    {
+     "role": "buddy",
+     "text": "Here's a draft to your landlord about the deposit."
+    }
+   ],
+   "message": "too aggressive. rewrite so he doesnt get defensive but i still get the deposit back",
+   "acceptable": [
+    "think"
+   ],
+   "why": "delicate rewrite"
+  },
+  {
+   "id": 91,
+   "previous": [
+    {
+     "role": "buddy",
+     "text": "Chief can take on jobs in the background. Want to hand it something?"
+    }
+   ],
+   "message": "ok have chief handle the internship apps this week, prioritize ones closing before the 20th",
+   "acceptable": [
+    "instant",
+    "think"
+   ],
+   "why": "a hand-off command, but it carries prioritization"
+  },
+  {
+   "id": 92,
+   "previous": [
+    {
+     "role": "owner",
+     "text": "whats that cheap high protein recipe"
+    },
+    {
+     "role": "buddy",
+     "text": "The chicken, rice and black bean bowl, about $2.10 a serving."
+    }
+   ],
+   "message": "how much do i buy for 5 days",
+   "acceptable": [
+    "instant",
+    "think"
+   ],
+   "why": "simple scaling or a shopping plan"
+  },
+  {
+   "id": 93,
+   "previous": [],
+   "message": "watch flights to denver dec 18-22 under 250, and tell me if flying out of the other airport is cheaper",
+   "acceptable": [
+    "instant",
+    "think"
+   ],
+   "why": "watch command plus a comparison"
+  },
+  {
+   "id": 94,
+   "previous": [],
+   "message": "good gift for my sister? she likes pottery, under 40",
+   "acceptable": [
+    "instant",
+    "think"
+   ],
+   "why": "light suggestion or considered pick"
+  },
+  {
+   "id": 95,
+   "previous": [],
+   "message": "tldr the email from my advisor",
+   "acceptable": [
+    "instant",
+    "think"
+   ],
+   "why": "summary may be quick or nuanced"
+  },
+  {
+   "id": 96,
+   "previous": [],
+   "message": "what should i eat for dinner",
+   "acceptable": [
+    "instant",
+    "think"
+   ],
+   "why": "casual or a real plan"
+  },
+  {
+   "id": 97,
+   "previous": [],
+   "message": "is a 3.4 gpa good enough for the nasa internship",
+   "acceptable": [
+    "instant",
+    "think"
+   ],
+   "why": "quick answer or real assessment"
+  },
+  {
+   "id": 98,
+   "previous": [],
+   "message": "move my 3pm to whenever im free thursday",
+   "acceptable": [
+    "instant",
+    "think"
+   ],
+   "why": "calendar command that needs a slot search"
+  },
+  {
+   "id": 99,
+   "previous": [],
+   "message": "explain what a mosfet does like im 5",
+   "acceptable": [
+    "instant",
+    "think"
+   ],
+   "why": "short explanation, quality may benefit from thought"
+  },
+  {
+   "id": 100,
+   "previous": [],
+   "message": "rate my day plan: gym at 6, class 8-12, work 1-5, study 7-10",
+   "acceptable": [
+    "instant",
+    "think"
+   ],
+   "why": "quick reaction or real critique"
+  }
+ ]
+}

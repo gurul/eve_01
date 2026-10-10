@@ -1,0 +1,15 @@
+{"ts": "2026-09-17T07:15:00-07:00", "ch": "voice", "conv": "v-1789654500000-b61e", "who": "owner", "kind": "say", "text": "Skip this song."}
+{"ts": "2026-09-17T07:15:44-07:00", "ch": "voice", "conv": "v-1789654500000-b61e", "who": "eve", "kind": "say", "text": "Skipped."}
+{"ts": "2026-09-17T07:18:39-07:00", "ch": "voice", "conv": "v-1789654500000-b61e", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-17T08:55:00-07:00", "ch": "voice", "conv": "v-1789660500000-3e1d", "who": "owner", "kind": "say", "text": "Thanks eve."}
+{"ts": "2026-09-17T08:55:53-07:00", "ch": "voice", "conv": "v-1789660500000-3e1d", "who": "eve", "kind": "say", "text": "Anytime."}
+{"ts": "2026-09-17T08:58:55-07:00", "ch": "voice", "conv": "v-1789660500000-3e1d", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-17T12:00:00-07:00", "ch": "telegram", "conv": "t-1789671600000-dbbd", "who": "owner", "kind": "say", "text": "Mina switched to the Thursday lab section, so my new lab partner is Tobias."}
+{"ts": "2026-09-17T12:01:01-07:00", "ch": "telegram", "conv": "t-1789671600000-dbbd", "who": "eve", "kind": "say", "text": "Updated."}
+{"ts": "2026-09-17T12:04:03-07:00", "ch": "telegram", "conv": "t-1789671600000-dbbd", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-17T20:00:00-07:00", "ch": "telegram", "conv": "t-1789700400000-a075", "who": "owner", "kind": "say", "text": "Where should I start reviewing for Controls?"}
+{"ts": "2026-09-17T20:00:56-07:00", "ch": "telegram", "conv": "t-1789700400000-a075", "who": "eve", "kind": "say", "text": "Start with the chapter 5 problems on root locus; they carry the most points."}
+{"ts": "2026-09-17T20:02:57-07:00", "ch": "telegram", "conv": "t-1789700400000-a075", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-17T22:20:00-07:00", "ch": "telegram", "conv": "t-1789708800000-037e", "who": "owner", "kind": "say", "text": "What's a good stretch after sitting all day?"}
+{"ts": "2026-09-17T22:20:40-07:00", "ch": "telegram", "conv": "t-1789708800000-037e", "who": "eve", "kind": "say", "text": "A hip flexor lunge stretch, 30 seconds a side."}
+{"ts": "2026-09-17T22:24:25-07:00", "ch": "telegram", "conv": "t-1789708800000-037e", "who": "system", "kind": "close", "text": ""}

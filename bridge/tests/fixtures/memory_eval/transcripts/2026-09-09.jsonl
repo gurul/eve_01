@@ -1,0 +1,17 @@
+{"ts": "2026-09-09T08:00:00-07:00", "ch": "bus", "conv": "b-1788966000000-750b", "who": "claude", "kind": "say", "text": "Weather station: firmware v0.4 flashed, SHT45 detected, readings OK."}
+{"ts": "2026-09-09T16:40:00-07:00", "ch": "voice", "conv": "v-1788997200000-c7cd", "who": "owner", "kind": "say", "text": "What's 15 percent of 48?"}
+{"ts": "2026-09-09T16:41:27-07:00", "ch": "voice", "conv": "v-1788997200000-c7cd", "who": "eve", "kind": "say", "text": "7.2."}
+{"ts": "2026-09-09T16:46:03-07:00", "ch": "voice", "conv": "v-1788997200000-c7cd", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-09T18:15:00-07:00", "ch": "telegram", "conv": "t-1789002900000-9553", "who": "owner", "kind": "say", "text": "What does 'idempotent' mean?"}
+{"ts": "2026-09-09T18:16:19-07:00", "ch": "telegram", "conv": "t-1789002900000-9553", "who": "eve", "kind": "say", "text": "Doing it twice has the same effect as doing it once."}
+{"ts": "2026-09-09T18:19:08-07:00", "ch": "telegram", "conv": "t-1789002900000-9553", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-09T19:00:00-07:00", "ch": "voice", "conv": "v-1789005600000-88f8", "who": "owner", "kind": "say", "text": "Tahoe's off. Wildfire smoke is everywhere up there."}
+{"ts": "2026-09-09T19:01:20-07:00", "ch": "voice", "conv": "v-1789005600000-88f8", "who": "owner", "kind": "say", "text": "We'll do the climbing gym Saturday instead."}
+{"ts": "2026-09-09T19:02:59-07:00", "ch": "voice", "conv": "v-1789005600000-88f8", "who": "eve", "kind": "say", "text": "Sorry about Tahoe. Saturday climbing it is."}
+{"ts": "2026-09-09T19:06:19-07:00", "ch": "voice", "conv": "v-1789005600000-88f8", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-09T19:50:00-07:00", "ch": "telegram", "conv": "t-1789008600000-54c7", "who": "owner", "kind": "say", "text": "Good name for a houseplant?"}
+{"ts": "2026-09-09T19:50:48-07:00", "ch": "telegram", "conv": "t-1789008600000-54c7", "who": "eve", "kind": "say", "text": "Fernando, if it's a fern."}
+{"ts": "2026-09-09T19:53:55-07:00", "ch": "telegram", "conv": "t-1789008600000-54c7", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-09T23:05:00-07:00", "ch": "telegram", "conv": "t-1789020300000-decd", "who": "owner", "kind": "say", "text": "What's a good stretch after sitting all day?"}
+{"ts": "2026-09-09T23:05:40-07:00", "ch": "telegram", "conv": "t-1789020300000-decd", "who": "eve", "kind": "say", "text": "A hip flexor lunge stretch, 30 seconds a side."}
+{"ts": "2026-09-09T23:08:30-07:00", "ch": "telegram", "conv": "t-1789020300000-decd", "who": "system", "kind": "close", "text": ""}

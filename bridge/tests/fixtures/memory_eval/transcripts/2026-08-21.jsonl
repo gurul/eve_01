@@ -1,0 +1,13 @@
+{"ts": "2026-08-21T18:00:00-07:00", "ch": "voice", "conv": "v-1787360400000-4484", "who": "owner", "kind": "say", "text": "Grandma Odile is getting hip surgery on September 2."}
+{"ts": "2026-08-21T18:01:41-07:00", "ch": "voice", "conv": "v-1787360400000-4484", "who": "eve", "kind": "say", "text": "I hope it goes smoothly. Want a reminder to call her that day?"}
+{"ts": "2026-08-21T18:02:42-07:00", "ch": "voice", "conv": "v-1787360400000-4484", "who": "owner", "kind": "say", "text": "Yes."}
+{"ts": "2026-08-21T18:06:52-07:00", "ch": "voice", "conv": "v-1787360400000-4484", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-21T19:50:00-07:00", "ch": "voice", "conv": "v-1787367000000-d6cd", "who": "owner", "kind": "say", "text": "Play something chill."}
+{"ts": "2026-08-21T19:51:15-07:00", "ch": "voice", "conv": "v-1787367000000-d6cd", "who": "eve", "kind": "say", "text": "Playing a lo-fi mix."}
+{"ts": "2026-08-21T19:55:07-07:00", "ch": "voice", "conv": "v-1787367000000-d6cd", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-21T21:00:00-07:00", "ch": "telegram", "conv": "t-1787371200000-a5fc", "who": "owner", "kind": "say", "text": "What's a good beginner electronics book?"}
+{"ts": "2026-08-21T21:00:59-07:00", "ch": "telegram", "conv": "t-1787371200000-a5fc", "who": "eve", "kind": "say", "text": "Try Practical Electronics for Inventors for the basics."}
+{"ts": "2026-08-21T21:04:42-07:00", "ch": "telegram", "conv": "t-1787371200000-a5fc", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-21T23:05:00-07:00", "ch": "telegram", "conv": "t-1787378700000-36f8", "who": "owner", "kind": "say", "text": "Convert 30 miles to kilometers."}
+{"ts": "2026-08-21T23:05:53-07:00", "ch": "telegram", "conv": "t-1787378700000-36f8", "who": "eve", "kind": "say", "text": "About 48 kilometers."}
+{"ts": "2026-08-21T23:10:20-07:00", "ch": "telegram", "conv": "t-1787378700000-36f8", "who": "system", "kind": "close", "text": ""}

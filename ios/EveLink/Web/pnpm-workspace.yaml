@@ -1,0 +1,7 @@
+# lang-core's postinstall only sends install telemetry; never run it.
+allowBuilds:
+  '@openuidev/lang-core': false
+minimumReleaseAgeExclude:
+  - '@openuidev/lang-core@0.3.2'
+  - '@openuidev/react-lang@0.3.2'
+  - vite@8.3.4

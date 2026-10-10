@@ -1,0 +1,16 @@
+{"ts": "2026-09-11T07:15:00-07:00", "ch": "voice", "conv": "v-1789136100000-1ef0", "who": "owner", "kind": "say", "text": "Pause the music."}
+{"ts": "2026-09-11T07:16:44-07:00", "ch": "voice", "conv": "v-1789136100000-1ef0", "who": "eve", "kind": "say", "text": "Paused."}
+{"ts": "2026-09-11T07:18:34-07:00", "ch": "voice", "conv": "v-1789136100000-1ef0", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-11T18:15:00-07:00", "ch": "voice", "conv": "v-1789175700000-ebc0", "who": "owner", "kind": "say", "text": "Skip this song."}
+{"ts": "2026-09-11T18:15:44-07:00", "ch": "voice", "conv": "v-1789175700000-ebc0", "who": "eve", "kind": "say", "text": "Skipped."}
+{"ts": "2026-09-11T18:18:27-07:00", "ch": "voice", "conv": "v-1789175700000-ebc0", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-11T19:00:00-07:00", "ch": "telegram", "conv": "t-1789178400000-9e0b", "who": "owner", "kind": "say", "text": "We have to push the Shelfie launch, the sync bug isn't fixed."}
+{"ts": "2026-09-11T19:00:50-07:00", "ch": "telegram", "conv": "t-1789178400000-9e0b", "who": "eve", "kind": "say", "text": "Consider launching on Monday the 21st; library traffic peaks early in the week."}
+{"ts": "2026-09-11T19:01:57-07:00", "ch": "telegram", "conv": "t-1789178400000-9e0b", "who": "owner", "kind": "say", "text": "Okay, September 21 it is."}
+{"ts": "2026-09-11T19:04:41-07:00", "ch": "telegram", "conv": "t-1789178400000-9e0b", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-11T22:20:00-07:00", "ch": "voice", "conv": "v-1789190400000-68c1", "who": "owner", "kind": "say", "text": "Good night."}
+{"ts": "2026-09-11T22:21:18-07:00", "ch": "voice", "conv": "v-1789190400000-68c1", "who": "eve", "kind": "say", "text": "Good night, sleep well."}
+{"ts": "2026-09-11T22:23:48-07:00", "ch": "voice", "conv": "v-1789190400000-68c1", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-11T23:05:00-07:00", "ch": "voice", "conv": "v-1789193100000-fa2a", "who": "owner", "kind": "say", "text": "How long do I boil an egg for jammy yolks?"}
+{"ts": "2026-09-11T23:05:47-07:00", "ch": "voice", "conv": "v-1789193100000-fa2a", "who": "eve", "kind": "say", "text": "About six and a half minutes, then an ice bath."}
+{"ts": "2026-09-11T23:08:46-07:00", "ch": "voice", "conv": "v-1789193100000-fa2a", "who": "system", "kind": "close", "text": ""}

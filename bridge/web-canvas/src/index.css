@@ -1,0 +1,7 @@
+/* tldraw's own stylesheet, bundled so the page loads nothing from another origin. */
+@import url('tldraw/tldraw.css');
+
+/* Keep the lesson board free of the SDK's watermark and licence prompt. */
+#board .tl-watermark_SEE-LICENSE {
+	display: none !important;
+}

@@ -1,0 +1,662 @@
+<title>Eve at the Whiteboard</title>
+<!-- mappedAt: 2026-09-12 · segments: 7 · sections: 7 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Gochi+Hand&family=Grandstander:wght@700;900&family=VT323&display=swap">
+<style>
+  /* Single deliberate look: eve's cut-paper kids brand. Colors are painted explicitly. */
+  :root {
+    --paper: #FBF5EC;
+    --sheet: #FFFDF8;
+    --ink: #1F3A78;
+    --ink-soft: #3E4F82;
+    --pink: #E68AAE;
+    --pink-soft: #F4C3D4;
+    --teal: #79C6B2;
+    --sun: #F1C85B;
+    --sky: #7FA2DE;
+    --screen: #1B2350;
+    --screen-pink: #FF74D4;
+    --display: "Grandstander", "Comic Sans MS", "Chalkboard SE", system-ui, sans-serif;
+    --body: "Andika", "Trebuchet MS", system-ui, sans-serif;
+    --hand: "Gochi Hand", "Chalkboard SE", "Comic Sans MS", cursive;
+    --pixel: "VT323", ui-monospace, monospace;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--paper); }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(circle at 12% 8%, rgba(241, 200, 91, 0.10), transparent 40%),
+      radial-gradient(circle at 90% 60%, rgba(127, 162, 222, 0.10), transparent 45%),
+      var(--paper);
+    color: var(--ink);
+    font: 400 17px/1.6 var(--body);
+    padding-inline: 16px;
+    padding-block: 24px 64px;
+  }
+  .page { max-width: 1000px; margin-inline: auto; display: grid; gap: 56px; }
+  h1, h2, h3 { font-family: var(--display); color: var(--ink); text-wrap: balance; margin: 0; }
+  h2 { font-size: clamp(28px, 4vw, 38px); font-weight: 900; line-height: 1.1; text-shadow: 3px 3px 0 var(--pink-soft); }
+  h3 { font-size: 21px; font-weight: 700; line-height: 1.2; }
+  p { margin: 0; max-width: 62ch; }
+  .kicker { font-family: var(--hand); font-size: 22px; color: var(--ink-soft); line-height: 1.2; }
+  .tag {
+    display: inline-block; font: 700 12px/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 6px 10px; border-radius: 999px; border: 2px solid var(--ink); color: var(--ink); background: var(--sheet);
+  }
+  .tag--today { background: var(--teal); }
+  .tag--planned { background: var(--sun); }
+  section { scroll-margin-top: 24px; transition: box-shadow 0.25s ease, background-color 0.25s ease; border-radius: 18px; }
+  section.is-speaking { box-shadow: 0 0 0 4px var(--sheet), 0 0 0 8px var(--pink); }
+  .section-head { display: grid; gap: 8px; margin-bottom: 24px; }
+
+  /* Narrator */
+  .narrator {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px;
+    background: var(--sheet); border: 2px solid var(--ink); border-radius: 14px;
+    padding: 10px 14px; box-shadow: 4px 4px 0 var(--sky);
+  }
+  .narrator__label { font-family: var(--hand); font-size: 20px; line-height: 1; }
+  .narrator__buttons { display: flex; gap: 8px; }
+  .btn {
+    font: 700 15px/1 var(--body); color: var(--ink); background: var(--sun);
+    border: 2px solid var(--ink); border-radius: 10px; padding: 9px 14px; cursor: pointer;
+    box-shadow: 3px 3px 0 var(--ink); transition: transform 0.1s ease, box-shadow 0.1s ease;
+  }
+  .btn:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--ink); }
+  .btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+  .btn:focus-visible { outline: 3px solid var(--pink); outline-offset: 3px; }
+  .btn--quiet { background: var(--sheet); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: 3px 3px 0 var(--ink); }
+  .narrator__status { font-size: 14px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+
+  /* Hero */
+  .hero {
+    position: relative; overflow: hidden; border-radius: 6px;
+    background: var(--paper);
+    box-shadow: 0 1px 0 rgba(31, 58, 120, 0.08), 0 18px 40px -24px rgba(31, 58, 120, 0.35);
+    min-height: 460px; display: grid; align-items: center;
+  }
+  .hero__decor { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .hero__inner {
+    position: relative; display: grid; grid-template-columns: 1.25fr 0.75fr; align-items: center; gap: 24px;
+    padding-inline: 15%; padding-block: 56px;
+  }
+  .wordmark {
+    font-family: var(--display); font-weight: 900; font-size: clamp(76px, 13vw, 132px); line-height: 0.9;
+    letter-spacing: 0.01em; color: var(--ink); text-shadow: 5px 5px 0 var(--pink-soft);
+  }
+  .hero__sub { font-family: var(--hand); font-size: 26px; margin-top: 10px; }
+  .hero__pitch { margin-top: 18px; font-size: 18px; max-width: 34ch; }
+  .hero__tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+  .robot { width: 100%; max-width: 230px; height: auto; justify-self: center; }
+
+  /* What eve does */
+  .section-head .tag { vertical-align: 2px; margin-left: 4px; }
+  .features { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+  .panel { background: var(--sheet); border: 2px solid var(--ink); border-radius: 4px; padding: 22px; display: grid; gap: 12px; align-content: start; }
+  .panel--talk { box-shadow: 6px 6px 0 var(--sky); }
+  .panel--hands { box-shadow: 6px 6px 0 var(--sun); }
+  .panel--eyes { box-shadow: 6px 6px 0 var(--teal); }
+  .panel--life { box-shadow: 6px 6px 0 var(--pink); }
+  .feats { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+  .feats li { padding-left: 16px; border-left: 3px solid var(--pink-soft); font-size: 16px; }
+  .feats strong { color: var(--ink); }
+  .newband {
+    display: flex; align-items: center; justify-content: center; gap: 16px; margin-block: -8px;
+    font-family: var(--display); font-weight: 900; font-size: clamp(30px, 5vw, 44px); color: var(--ink);
+    text-shadow: 3px 3px 0 var(--pink-soft);
+  }
+  .newband svg { max-width: 22vw; height: auto; }
+
+  /* Why it matters */
+  .why { margin-top: 32px; background: var(--sheet); border: 2px solid var(--ink); border-radius: 4px; padding: 22px; box-shadow: 6px 6px 0 var(--sky); display: grid; gap: 16px; }
+  .why__stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .why__stat { display: grid; gap: 4px; align-content: start; font-size: 15px; }
+  .why__num { font-family: var(--display); font-weight: 900; font-size: 44px; line-height: 1; text-shadow: 3px 3px 0 var(--pink-soft); font-variant-numeric: tabular-nums; }
+  .why__quote { margin: 0; font-family: var(--hand); font-size: 22px; line-height: 1.25; max-width: 62ch; }
+  .why__quote cite { display: block; font: 400 14px/1.4 var(--body); color: var(--ink-soft); margin-top: 6px; font-style: normal; }
+  .why__source { font-size: 13px; color: var(--ink-soft); }
+  @media (max-width: 760px) { .why__stats { grid-template-columns: 1fr; } }
+
+  /* Who it's for */
+  .who { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+  .note {
+    background: var(--sheet); border: 2px solid var(--ink); border-radius: 4px; padding: 22px 22px 24px;
+    display: grid; gap: 10px; align-content: start;
+  }
+  .note--kid { box-shadow: 6px 6px 0 var(--sun); transform: rotate(-0.6deg); }
+  .note--grownup { box-shadow: 6px 6px 0 var(--teal); transform: rotate(0.5deg); }
+  .note__who { font-family: var(--hand); font-size: 24px; line-height: 1; color: var(--ink-soft); }
+
+  /* Diagram */
+  figure { margin: 0; }
+  .flow { overflow-x: auto; background: var(--sheet); border: 2px solid var(--ink); border-radius: 6px; padding: 12px; }
+  .flow svg { display: block; width: 100%; min-width: 760px; height: auto; }
+  figcaption { font-size: 15px; color: var(--ink-soft); margin-top: 12px; max-width: 70ch; }
+
+  /* Help ladder */
+  .ladder { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+  .rung {
+    border: 2px solid var(--ink); border-radius: 4px; padding: 22px; display: grid; gap: 10px; align-content: start;
+    box-shadow: 5px 5px 0 var(--ink);
+  }
+  .rung--hint { background: var(--sun); transform: rotate(-0.8deg); }
+  .rung--check { background: var(--teal); }
+  .rung--step { background: var(--pink); transform: rotate(0.8deg); }
+  .rung__say { font-family: var(--hand); font-size: 22px; line-height: 1.15; }
+  .rung ol { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+  .rule {
+    margin-top: 24px; font-family: var(--display); font-weight: 700; font-size: clamp(20px, 2.6vw, 26px);
+    line-height: 1.25; max-width: 40ch; text-wrap: balance;
+  }
+  .rule mark { background: linear-gradient(transparent 55%, var(--pink-soft) 55%); color: inherit; padding-inline: 2px; }
+
+  /* Speaks first */
+  .first { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+  .first__col { background: var(--sheet); border: 2px solid var(--ink); border-radius: 4px; padding: 22px; display: grid; gap: 14px; align-content: start; }
+  .first__col h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .lines { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+  .lines li { display: grid; gap: 2px; padding-left: 16px; border-left: 3px solid var(--sky); }
+  .lines .when { font-size: 14px; color: var(--ink-soft); }
+  .lines .says { font-family: var(--hand); font-size: 21px; line-height: 1.2; }
+
+  /* Status */
+  .status { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 20px; align-items: start; }
+  .status__now { display: grid; gap: 12px; }
+  .status__row { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+  .open { background: var(--sheet); border: 2px dashed var(--ink); border-radius: 4px; padding: 22px; display: grid; gap: 12px; }
+  .open ul { margin: 0; padding-left: 20px; display: grid; gap: 10px; }
+  footer { font-size: 14px; color: var(--ink-soft); }
+  footer a { color: var(--ink); }
+
+  @media (max-width: 760px) {
+    .hero__inner { grid-template-columns: 1fr; padding-inline: 28px; text-align: left; }
+    .hero__decor { opacity: 0.5; }
+    .robot { max-width: 170px; justify-self: start; }
+    .who, .ladder, .first, .status, .features { grid-template-columns: 1fr; }
+    .note, .rung { transform: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .robot__head { animation: none; }
+    section, .btn { transition: none; }
+  }
+</style>
+
+<main class="page">
+  <div class="narrator" aria-label="Listen to this page">
+    <span class="narrator__label">listen along</span>
+    <div class="narrator__buttons">
+      <button class="btn" id="narr-play" type="button">Play</button>
+      <button class="btn btn--quiet" id="narr-stop" type="button" disabled>Stop</button>
+    </div>
+    <span class="narrator__status" id="narr-status" role="status" aria-live="polite">6 parts, about 3 minutes</span>
+  </div>
+
+  <!-- 0 -->
+  <section class="hero" id="s0" data-seg="0" aria-labelledby="t0">
+    <svg class="hero__decor" viewBox="0 0 1000 480" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        <pattern id="dots" width="16" height="16" patternUnits="userSpaceOnUse">
+          <rect x="4" y="4" width="6" height="6" rx="1" fill="#E7B44A"></rect>
+        </pattern>
+        <pattern id="waves" width="40" height="24" patternUnits="userSpaceOnUse">
+          <path d="M0 12 C10 0 20 0 20 12 S30 24 40 12" fill="none" stroke="#D97A9E" stroke-width="5"></path>
+        </pattern>
+        <pattern id="grid" width="22" height="22" patternUnits="userSpaceOnUse">
+          <rect x="5" y="5" width="11" height="11" fill="none" stroke="#9BB6E6" stroke-width="2"></rect>
+        </pattern>
+      </defs>
+      <circle cx="40" cy="60" r="130" fill="#7FA2DE"></circle>
+      <circle cx="40" cy="60" r="88" fill="none" stroke="#9BB6E6" stroke-width="16"></circle>
+      <circle cx="40" cy="60" r="46" fill="none" stroke="#9BB6E6" stroke-width="16"></circle>
+      <path d="M-20 130 C70 110 130 190 118 270 C108 330 40 340 -20 330 Z" fill="#79C6B2"></path>
+      <polygon points="120,80 190,24 212,62 270,14 292,54 340,16 330,46 278,96 256,58 206,104 184,68 132,116" fill="#F1C85B"></polygon>
+      <polygon points="-10,300 128,288 138,430 -10,440" fill="#F1C85B"></polygon>
+      <polygon points="-10,300 128,288 138,430 -10,440" fill="url(#dots)"></polygon>
+      <polygon points="80,490 150,370 196,440 300,404 250,490" fill="#E68AAE"></polygon>
+      <polygon points="690,-10 910,-10 950,84 856,152 704,112" fill="#E68AAE"></polygon>
+      <polygon points="690,-10 910,-10 950,84 856,152 704,112" fill="url(#waves)"></polygon>
+      <path d="M860 124 C930 90 1010 104 1010 150 L1010 320 C960 344 902 304 882 254 C852 204 820 154 860 124 Z" fill="#79C6B2"></path>
+      <polygon points="892,204 1010,180 1010,330 952,388 884,300" fill="#F1C85B"></polygon>
+      <polygon points="892,204 1010,180 1010,330 952,388 884,300" fill="url(#dots)"></polygon>
+      <polygon points="820,490 930,346 1010,364 1010,490" fill="#7FA2DE"></polygon>
+      <polygon points="820,490 930,346 1010,364 1010,490" fill="url(#grid)"></polygon>
+      <path d="M690 440 C750 366 858 350 904 382 L884 408 C842 388 772 400 730 460 Z" fill="#E68AAE"></path>
+    </svg>
+    <div class="hero__inner">
+      <div>
+        <h1 id="t0" class="wordmark">eve</h1>
+        <p class="hero__sub">your desktop sidekick</p>
+        <p class="hero__pitch">A little robot that lives on your desk. It listens, has moods, keeps a diary and helps at the computer. Now it helps kids with math too: a hint, a check, or one step, never the whole answer.</p>
+        <div class="hero__tags">
+          <span class="tag tag--today">Works today</span>
+          <span class="tag tag--planned">New for kids: math lessons</span>
+        </div>
+      </div>
+      <svg class="robot" viewBox="0 0 200 240" role="img" aria-label="eve, a small robot with a screen face that says Hey there!">
+        <defs>
+          <linearGradient id="lbl" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0" stop-color="#9DB3EE"></stop>
+            <stop offset="1" stop-color="#B98BD8"></stop>
+          </linearGradient>
+        </defs>
+        <rect x="68" y="168" width="64" height="30" fill="#8C90A0" stroke="#4D5160" stroke-width="2.5"></rect>
+        <rect x="46" y="194" width="108" height="38" rx="7" fill="#6F7384" stroke="#4D5160" stroke-width="2.5"></rect>
+        <circle cx="64" cy="220" r="5" fill="#4D5160"></circle>
+        <circle cx="136" cy="220" r="5" fill="#4D5160"></circle>
+        <g class="robot__head">
+          <rect x="22" y="10" width="156" height="34" rx="7" fill="url(#lbl)" stroke="#5E5F98" stroke-width="2.5"></rect>
+          <text x="100" y="35" text-anchor="middle" font-family="Grandstander, sans-serif" font-weight="700" font-size="22" fill="#F4F4FB">eve</text>
+          <rect x="12" y="42" width="176" height="14" rx="4" fill="#A487D0" stroke="#5E5F98" stroke-width="2.5"></rect>
+          <rect x="30" y="52" width="140" height="122" rx="14" fill="#C3C6CF" stroke="#5C6070" stroke-width="3"></rect>
+          <rect x="42" y="62" width="116" height="100" rx="6" fill="#1B2350"></rect>
+          <path fill="#FF74D4" d="M72 75 H88 V80 H92 V94 H87 V89 H73 V94 H68 V80 H72 Z M112 75 H128 V80 H132 V94 H127 V89 H113 V94 H108 V80 H112 Z"></path>
+          <text class="robot__greet" x="100" y="134" text-anchor="middle" font-family="VT323, monospace" font-size="22" fill="#FF74D4">Hey there!</text>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <!-- 1 -->
+  <section id="s1" data-seg="1" aria-labelledby="t1">
+    <div class="section-head">
+      <span class="kicker">what eve does</span>
+      <h2 id="t1">A robot with ears, hands and a memory</h2>
+      <p>eve is a small robot head with a camera, two motors, 12 lights, a speaker and a touch pad. An app on your Mac gives it ears, hands and a memory. <span class="tag tag--today">works today</span></p>
+    </div>
+    <div class="features">
+      <div class="panel panel--talk">
+        <h3>Talks with you</h3>
+        <ul class="feats">
+          <li><strong>Hears “hey eve.”</strong> The wake word is heard on the Mac, so nothing is sent anywhere until you speak.</li>
+          <li><strong>Answers on its own screen.</strong> Replies appear as captions under its eyes while it beeps and boops.</li>
+          <li><strong>Searches the web.</strong> It answers questions about today, like the weather, scores or prices, in one short line.</li>
+          <li><strong>Thinks hard when it has to.</strong> Math, code and planning questions go to a slower, stronger model.</li>
+          <li><strong>Remembers your talks.</strong> It keeps a few lines about each chat, never the words. Say “remember that” and it keeps the fact for good.</li>
+          <li><strong>Understands “bye” and “be quiet.”</strong> Say it however you like: it ends the chat, or goes silent and keeps moving.</li>
+        </ul>
+      </div>
+      <div class="panel panel--hands">
+        <h3>Uses your computer</h3>
+        <ul class="feats">
+          <li><strong>Does tasks on your Mac.</strong> “Open Spotify and play something.” It clicks and types, up to 25 steps. It asks before it sends, pays or deletes anything. You can change the plan midway or say “stop.”</li>
+          <li><strong>Keeps you company while you code.</strong> It naps when Claude Code is idle, looks busy while Claude works, and searches the room for you when a session needs you. Tap it to jump to that window. It wiggles when a task is done.</li>
+          <li><strong>Takes meeting notes.</strong> Start it from the Mac and it writes down what's said. Then it lists the decisions, the to-dos and the open questions.</li>
+        </ul>
+      </div>
+      <div class="panel panel--eyes">
+        <h3>Sees and moves</h3>
+        <ul class="feats">
+          <li><strong>Follows your face.</strong> It turns to look at you, learns where you usually sit, and knows you from a stranger.</li>
+          <li><strong>Looks where you ask.</strong> “What do you see?” “Look left.” “Where's my mug?” It searches the room and turns to face the mug.</li>
+          <li><strong>Dances.</strong> It can sway, bob, nod, wiggle and do a figure-8. For now you start a dance from the Mac, not by voice.</li>
+          <li><strong>Loves a head pat.</strong> Pat its head and its lights beat pink and it chirps happily.</li>
+        </ul>
+      </div>
+      <div class="panel panel--life">
+        <h3>Has a life of its own</h3>
+        <ul class="feats">
+          <li><strong>Explores.</strong> After 10 quiet minutes, or when you say “go explore,” it looks around the room and notices what's new.</li>
+          <li><strong>Has moods.</strong> It gets curious, happy, bored, lonely or startled, and you can see it in its eyes, lights, head and chirps.</li>
+          <li><strong>Keeps a diary.</strong> It only writes down thoughts that are new or interesting. At night it sleeps on the day and dreams.</li>
+          <li><strong>Takes photos of cool things.</strong> It takes pictures on its own, at most 2 an hour and 8 a day.</li>
+          <li><strong>Lives in a widget.</strong> A desktop widget shows its mood and latest thoughts. The diary app has 7 tabs, from Talking to Dreams.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <div class="newband" aria-hidden="true">
+    <svg viewBox="0 0 120 40" width="120" height="40"><polygon points="0,30 20,6 32,26 52,4 64,24 84,2 96,22 120,8 112,34 94,36 80,20 62,40 50,24 30,40 18,26 6,40" fill="#F1C85B"></polygon></svg>
+    <span>new for kids</span>
+    <svg viewBox="0 0 120 40" width="120" height="40"><polygon points="0,8 24,22 36,2 56,24 68,4 88,22 100,6 120,30 114,38 98,20 84,38 64,18 52,38 32,16 20,36 4,20" fill="#79C6B2"></polygon></svg>
+  </div>
+
+  <!-- 2 -->
+  <section id="s2" data-seg="2" aria-labelledby="t2">
+    <div class="section-head">
+      <span class="kicker">who it's for</span>
+      <h2 id="t2">Two people sit at the desk</h2>
+    </div>
+    <div class="who">
+      <div class="note note--kid">
+        <span class="note__who">the kid</span>
+        <h3>Stuck halfway through a problem</h3>
+        <p>They want help right at the line where they got lost. They don't want a lecture, and they don't want to start over.</p>
+      </div>
+      <div class="note note--grownup">
+        <span class="note__who">the grown-up</span>
+        <h3>Wants the kid to do the thinking</h3>
+        <p>They want a helper that won't do the homework. Every hint, check and step eve gives is small, and eve's work always looks different from the kid's.</p>
+      </div>
+    </div>
+    <div class="why" aria-labelledby="t2b">
+      <h3 id="t2b">Why it matters: fraction gaps don't fix themselves</h3>
+      <div class="why__stats">
+        <div class="why__stat"><span class="why__num">71%</span><span>of UC Berkeley Calculus I students tested ready or nearly ready, 2018–2020</span></div>
+        <div class="why__stat"><span class="why__num">44%</span><span>tested ready or nearly ready, 2021–2023</span></div>
+        <div class="why__stat"><span class="why__num">1 in 3+</span><span>had severe math gaps in 2022–23; the most common score was zero</span></div>
+      </div>
+      <blockquote class="why__quote">“Office hours that should be spent discussing integrals instead become lessons on fractions and basic algebra you would expect students to learn in middle school.” <cite>Zvezdelina Stankova, mathematics professor, UC Berkeley</cite></blockquote>
+      <p class="why__source">Source: Stankova's op-ed in the San Francisco Standard, reported by the California Post (Anthony Blair), Aug 16, 2026. Figures come from a diagnostic exam given to Calculus I students.</p>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section id="s3" data-seg="3" aria-labelledby="t3">
+    <div class="section-head">
+      <span class="kicker">the new feature</span>
+      <h2 id="t3">“Okay eve, I want to do a math lesson”</h2>
+      <p>There are two ways in. Both end up on a whiteboard, where the kid writes and eve waits to be asked for help.</p>
+    </div>
+    <figure>
+      <div class="flow">
+        <svg viewBox="0 0 960 620" role="img" aria-label="Lesson flow: the kid picks learn a topic or help with a problem, both lead to a whiteboard, the kid picks hint, check my work or show one step, a check asks if the writing is clear, the steps are valid and the work is finished, then eve wraps up.">
+          <defs>
+            <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 Z" fill="#1F3A78"></path>
+            </marker>
+          </defs>
+          <g fill="none" stroke="#1F3A78" stroke-width="2.2" marker-end="url(#arr)">
+            <path d="M400 68 V90 H200 V108"></path>
+            <path d="M560 68 V90 H760 V108"></path>
+            <path d="M200 170 V198"></path>
+            <path d="M760 170 V198"></path>
+            <path d="M200 260 V330 H328"></path>
+            <path d="M760 260 V330 H632"></path>
+            <path d="M440 360 V382 H210 V398"></path>
+            <path d="M480 360 V398"></path>
+            <path d="M520 360 V382 H750 V398"></path>
+            <path d="M480 460 V486 H290 V508"></path>
+            <path d="M370 532 H398"></path>
+            <path d="M560 532 H588"></path>
+            <path d="M750 532 H778"></path>
+          </g>
+          <g font-family="Andika, sans-serif" fill="#1F3A78" text-anchor="middle">
+            <!-- start -->
+            <rect x="330" y="20" width="300" height="48" rx="24" fill="#79C6B2" stroke="#1F3A78" stroke-width="2.2"></rect>
+            <text x="480" y="50" font-size="15" font-weight="700">“Okay eve, a math lesson!”</text>
+
+            <text x="300" y="84" font-size="12.5">learn</text>
+            <text x="660" y="84" font-size="12.5">get help</text>
+
+            <!-- left door -->
+            <rect x="64" y="114" width="280" height="60" rx="8" fill="#F4C3D4"></rect>
+            <rect x="60" y="110" width="280" height="60" rx="8" fill="#FFFDF8" stroke="#1F3A78" stroke-width="2.2"></rect>
+            <text x="200" y="136" font-size="15" font-weight="700">Learn a topic</text>
+            <text x="200" y="156" font-size="12.5">kid picks a topic and a level</text>
+            <rect x="64" y="204" width="280" height="60" rx="8" fill="#F4C3D4"></rect>
+            <rect x="60" y="200" width="280" height="60" rx="8" fill="#FFFDF8" stroke="#1F3A78" stroke-width="2.2"></rect>
+            <text x="200" y="226" font-size="15" font-weight="700">eve makes a problem</text>
+            <text x="200" y="246" font-size="12.5">pitched at that level</text>
+
+            <!-- right door -->
+            <rect x="624" y="114" width="280" height="60" rx="8" fill="#F4C3D4"></rect>
+            <rect x="620" y="110" width="280" height="60" rx="8" fill="#FFFDF8" stroke="#1F3A78" stroke-width="2.2"></rect>
+            <text x="760" y="136" font-size="15" font-weight="700">Help with a problem</text>
+            <text x="760" y="156" font-size="12.5">paste a screenshot, or write it out</text>
+            <rect x="624" y="204" width="280" height="60" rx="8" fill="#F4C3D4"></rect>
+            <rect x="620" y="200" width="280" height="60" rx="8" fill="#FFFDF8" stroke="#1F3A78" stroke-width="2.2"></rect>
+            <text x="760" y="226" font-size="15" font-weight="700">eve reads it back</text>
+            <text x="760" y="246" font-size="12.5">and asks if it got anything wrong</text>
+
+            <!-- whiteboard -->
+            <rect x="334" y="304" width="300" height="60" rx="8" fill="#7FA2DE"></rect>
+            <rect x="330" y="300" width="300" height="60" rx="8" fill="#FFFDF8" stroke="#1F3A78" stroke-width="2.2"></rect>
+            <text x="480" y="326" font-size="15" font-weight="700">The whiteboard</text>
+            <text x="480" y="346" font-size="12.5">kid writes with a mouse or a pen</text>
+            <text x="640" y="376" font-size="12.5" font-style="italic">kid picks</text>
+
+            <!-- help buttons -->
+            <rect x="120" y="400" width="180" height="60" rx="12" fill="#F1C85B" stroke="#1F3A78" stroke-width="2.2"></rect>
+            <text x="210" y="426" font-size="15" font-weight="700">Give me a hint</text>
+            <text x="210" y="446" font-size="12.5">never does a step</text>
+            <text x="210" y="484" font-size="12.5" font-style="italic">↺ back to the board</text>
+
+            <rect x="390" y="400" width="180" height="60" rx="12" fill="#79C6B2" stroke="#1F3A78" stroke-width="2.2"></rect>
+            <text x="480" y="426" font-size="15" font-weight="700">Check my work</text>
+            <text x="480" y="446" font-size="12.5">eve reviews it</text>
+
+            <rect x="660" y="400" width="180" height="60" rx="12" fill="#E68AAE" stroke="#1F3A78" stroke-width="2.2"></rect>
+            <text x="750" y="426" font-size="15" font-weight="700">Show one step</text>
+            <text x="750" y="446" font-size="12.5">exactly one, explained</text>
+            <text x="750" y="484" font-size="12.5" font-style="italic">↺ back to the board</text>
+
+            <!-- checks -->
+            <rect x="210" y="510" width="160" height="44" rx="22" fill="#FFFDF8" stroke="#1F3A78" stroke-width="2.2"></rect>
+            <text x="290" y="537" font-size="14" font-weight="700">Can I read it?</text>
+            <rect x="400" y="510" width="160" height="44" rx="22" fill="#FFFDF8" stroke="#1F3A78" stroke-width="2.2"></rect>
+            <text x="480" y="537" font-size="14" font-weight="700">Are the steps right?</text>
+            <rect x="590" y="510" width="160" height="44" rx="22" fill="#FFFDF8" stroke="#1F3A78" stroke-width="2.2"></rect>
+            <text x="670" y="537" font-size="14" font-weight="700">Is it finished?</text>
+            <text x="384" y="524" font-size="11.5">yes</text>
+            <text x="574" y="524" font-size="11.5">yes</text>
+            <text x="764" y="524" font-size="11.5">yes</text>
+            <text x="290" y="578" font-size="12.5">no: asks what it says</text>
+            <text x="480" y="578" font-size="12.5">no: explains the first slip</text>
+            <text x="670" y="578" font-size="12.5">no: keep writing</text>
+
+            <!-- wrap up -->
+            <rect x="784" y="504" width="160" height="60" rx="8" fill="#F1C85B"></rect>
+            <rect x="780" y="500" width="160" height="60" rx="8" fill="#FFFDF8" stroke="#1F3A78" stroke-width="2.2"></rect>
+            <text x="860" y="526" font-size="15" font-weight="700">Wrap up</text>
+            <text x="860" y="546" font-size="12.5">sums up the method</text>
+            <text x="860" y="590" font-size="12.5">then: another problem,</text>
+            <text x="860" y="607" font-size="12.5">a new topic, or finish</text>
+          </g>
+        </svg>
+      </div>
+      <figcaption>Every “no” sends the kid back to the whiteboard with one thing to fix. The kid can end the lesson at any point.</figcaption>
+    </figure>
+  </section>
+
+  <!-- 4 -->
+  <section id="s4" data-seg="4" aria-labelledby="t4">
+    <div class="section-head">
+      <span class="kicker">three kinds of help</span>
+      <h2 id="t4">Small help, one piece at a time</h2>
+    </div>
+    <div class="ladder">
+      <div class="rung rung--hint">
+        <h3>Give me a hint</h3>
+        <p class="rung__say">“What do both sides have in common?”</p>
+        <p>A nudge in the right direction. eve does not finish a step for the kid.</p>
+      </div>
+      <div class="rung rung--check">
+        <h3>Check my work</h3>
+        <p>eve reads the board and asks three questions, in this order:</p>
+        <ol>
+          <li>Can I read the writing?</li>
+          <li>Are the steps right?</li>
+          <li>Is it finished?</li>
+        </ol>
+        <p>If something is wrong, eve explains the <strong>first</strong> slip only and asks for another try.</p>
+      </div>
+      <div class="rung rung--step">
+        <h3>Show one step</h3>
+        <p class="rung__say">“Here's the next line, and why.”</p>
+        <p>eve writes exactly one step and explains it. Its writing looks different from the kid's. Tap again to see the next step.</p>
+      </div>
+    </div>
+    <p class="rule">The whole answer is <mark>never on the menu</mark>. The most eve gives at once is one step.</p>
+  </section>
+
+  <!-- 5 -->
+  <section id="s5" data-seg="5" aria-labelledby="t5">
+    <div class="section-head">
+      <span class="kicker">proactive</span>
+      <h2 id="t5">eve speaks first</h2>
+      <p>A worksheet waits for you. eve starts conversations, both during a lesson and the rest of the time it's on the desk.</p>
+    </div>
+    <div class="first">
+      <div class="first__col">
+        <h3>In a lesson <span class="tag tag--planned">designed</span></h3>
+        <ul class="lines">
+          <li><span class="when">when a problem is on the board</span><span class="says">“Write your ideas, or show me where you're stuck.”</span></li>
+          <li><span class="when">when it can't read a symbol</span><span class="says">“Is that a 7 or a 1?”</span></li>
+          <li><span class="when">when a step is wrong</span><span class="says">“Look at line two again. Want another go?”</span></li>
+          <li><span class="when">when the problem is done</span><span class="says">“So how did we do that?”</span></li>
+        </ul>
+      </div>
+      <div class="first__col">
+        <h3>At the desk <span class="tag tag--today">works today</span></h3>
+        <ul class="lines">
+          <li><span class="when">someone says “hey eve”</span><span class="says">Its head turns, it chirps, and its back glows blue.</span></li>
+          <li><span class="when">you walk back in</span><span class="says">It is glad to see you. Its lights beat pink.</span></li>
+          <li><span class="when">the next chat starts</span><span class="says">It picks up where you left off, with the thing it still owes you.</span></li>
+          <li><span class="when">no one needs it</span><span class="says">It looks around the room, gets curious, and writes in its diary.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section id="s6" data-seg="6" aria-labelledby="t6">
+    <div class="section-head">
+      <span class="kicker">where it stands</span>
+      <h2 id="t6">The robot runs. The lessons are on paper.</h2>
+    </div>
+    <div class="status">
+      <div class="status__now">
+        <div class="status__row"><span class="tag tag--today">works today</span><span>Everything under “What eve does”: the robot, an M5StackChan head, and the app on your Mac.</span></div>
+        <div class="status__row"><span class="tag tag--planned">designed</span><span>Math lessons for kids, as drawn above. They add to eve and replace nothing. They aren't built yet.</span></div>
+      </div>
+      <div class="open">
+        <h3>Still to decide</h3>
+        <ul>
+          <li><strong>Voice or captions.</strong> Today eve replies in captions on its screen. Kids who are just learning to read may need to hear it.</li>
+          <li><strong>Where the whiteboard lives.</strong> The family computer with a mouse, a tablet with a pen, or both.</li>
+          <li><strong>What stays from the grown-up version.</strong> Today eve can use the Mac when you ask it to. A kid's eve may need that switched off.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>eve is open source: <a href="https://github.com/gurul/eve">github.com/gurul/eve</a></footer>
+</main>
+
+<script>
+(() => {
+  const SEGMENTS = [
+    "This is eve, your desktop sidekick. It's a small robot with a screen for a face that lives on your desk. It listens, it has moods, it keeps a diary, and it helps at the computer. Now there's something new for kids too: math lessons, where eve gives a hint, checks the work, or shows one step, and never hands over the whole answer.",
+    "First, what eve already does today. It talks with you. Say hey eve, and it answers in captions on its screen. It can search the web, think hard about tough questions, and remember what you talked about. It uses your computer. Ask for a task, and it clicks and types, asking before anything big. It keeps you company while you code, and takes meeting notes. It sees and moves. It follows your face, finds things like your mug, dances, and loves a head pat. And it has a life of its own. It explores the room, has moods, keeps a diary, takes photos of cool things, and shows its thoughts in a desktop widget.",
+    "Now, the new part, for kids. Two people sit at the desk. The kid is stuck halfway through a problem and wants help right where they got lost. The grown-up wants the kid to learn it, not copy it. So all of eve's help is small, and eve's work always looks different from the kid's. Why does it matter? A math professor at U C Berkeley reports that seventy one percent of her Calculus One students tested ready from 2018 to 2020, but only forty four percent from 2021 to 2023, and her office hours turn into lessons on fractions. Fraction gaps don't fix themselves.",
+    "Here is the new feature, the math lesson. The kid says, okay eve, I want to do a math lesson, and picks one of two ways in. To learn a topic, they pick a topic and a level, and eve makes a problem to match. To get help, they paste a screenshot or write the problem out, and eve reads it back to make sure it understood. Both ways end up on a whiteboard, where the kid writes with a mouse or a pen.",
+    "On the whiteboard, the kid can ask for three kinds of help. A hint nudges them in the right direction, and never finishes a step. Check my work asks three questions in order. Can I read it? Are the steps right? Is it finished? If something is wrong, eve explains the first slip only, and asks for another try. Show one step writes exactly one step and explains it, set apart from the kid's own writing. The whole answer is never on the menu.",
+    "eve speaks first. In a lesson, it asks the kid to show where they're stuck. It asks about writing it can't read. When a step is wrong, it invites another try, and when the problem is done, it asks how they solved it. The robot already does this around the desk today. It turns when you say hey eve, it's glad when you come back, and it starts the next chat with the thing it still owes you.",
+    "Here's where it stands. Everything eve already does works today. The math lessons for kids add to that without replacing anything. They're designed, but not built yet. Three things are still to decide. First, whether eve talks out loud, since kids who are just learning to read may need to hear it. Second, where the whiteboard lives: a computer, a tablet with a pen, or both. Third, which grown-up features stay. Today eve can use the Mac for you, and a kid's eve may need that switched off."
+  ];
+
+  const playBtn = document.getElementById("narr-play");
+  const stopBtn = document.getElementById("narr-stop");
+  const statusEl = document.getElementById("narr-status");
+  const sections = SEGMENTS.map((_, i) => document.querySelector('[data-seg="' + i + '"]'));
+  const words = SEGMENTS.join(" ").split(/\s+/).length;
+  const minutes = Math.max(1, Math.round(words / 150));
+  const restText = SEGMENTS.length + " parts, about " + minutes + " minute" + (minutes === 1 ? "" : "s");
+  statusEl.textContent = restText;
+
+  const synth = window.speechSynthesis;
+  if (!synth || typeof window.SpeechSynthesisUtterance !== "function") {
+    playBtn.disabled = true;
+    stopBtn.disabled = true;
+    statusEl.textContent = "Listening isn't available in this browser.";
+    return;
+  }
+
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let state = "idle"; // idle | playing | paused
+  let index = 0;
+  let runId = 0;
+
+  function pickVoice() {
+    const voices = synth.getVoices() || [];
+    if (!voices.length) return null;
+    const en = voices.filter(v => /^en(-|_|$)/i.test(v.lang));
+    const pool = en.length ? en : voices;
+    return pool.find(v => /samantha|google us english|aria|jenny|natural/i.test(v.name)) || pool.find(v => v.default) || pool[0];
+  }
+
+  function mark(i) {
+    sections.forEach((s, j) => s && s.classList.toggle("is-speaking", j === i));
+    if (i >= 0 && sections[i]) {
+      sections[i].scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+    }
+  }
+
+  function setUi() {
+    playBtn.textContent = state === "playing" ? "Pause" : state === "paused" ? "Resume" : "Play";
+    stopBtn.disabled = state === "idle";
+  }
+
+  function finish(message) {
+    runId++;
+    state = "idle";
+    index = 0;
+    mark(-1);
+    setUi();
+    statusEl.textContent = message || restText;
+  }
+
+  function speak(i, id) {
+    if (id !== runId) return;
+    if (i >= SEGMENTS.length) { finish("Finished. " + restText); return; }
+    index = i;
+    mark(i);
+    statusEl.textContent = "Part " + (i + 1) + " of " + SEGMENTS.length;
+    const u = new SpeechSynthesisUtterance(SEGMENTS[i]);
+    const voice = pickVoice();
+    if (voice) u.voice = voice;
+    u.rate = 1;
+    u.pitch = 1.05;
+    u.onend = () => { if (id === runId && state === "playing") speak(i + 1, id); };
+    u.onerror = (e) => {
+      if (e.error === "interrupted" || e.error === "canceled") return;
+      if (id === runId) finish("Playback stopped: " + e.error + ". Press Play to try again.");
+    };
+    synth.speak(u);
+  }
+
+  playBtn.addEventListener("click", () => {
+    if (state === "idle") {
+      synth.cancel();
+      state = "playing";
+      setUi();
+      const id = ++runId;
+      speak(0, id);
+    } else if (state === "playing") {
+      synth.pause();
+      state = "paused";
+      setUi();
+      statusEl.textContent = "Paused on part " + (index + 1) + " of " + SEGMENTS.length;
+    } else {
+      synth.resume();
+      state = "playing";
+      setUi();
+      statusEl.textContent = "Part " + (index + 1) + " of " + SEGMENTS.length;
+    }
+  });
+
+  stopBtn.addEventListener("click", () => {
+    runId++;
+    synth.cancel();
+    finish();
+  });
+
+  if ("onvoiceschanged" in synth) synth.addEventListener("voiceschanged", () => {});
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && state !== "idle") {
+      runId++;
+      synth.cancel();
+      finish("Stopped because the tab was hidden. Press Play to start again.");
+    }
+  });
+
+  window.addEventListener("beforeunload", () => synth.cancel());
+  setUi();
+})();
+</script>

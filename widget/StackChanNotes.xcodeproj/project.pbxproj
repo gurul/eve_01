@@ -1,0 +1,568 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		034B90A58D5D77B652F052EF /* Andika-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CC5C119E441B8C5FE796F0EB /* Andika-Regular.ttf */; };
+		067C179C64BC0C1AADD49894 /* EvePower.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BDCCB5EA0C589C5C5FE8EAC /* EvePower.swift */; };
+		0D9D2B38517F4928E7660D15 /* StackChanNotesWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 90B0C584761D23A8F5B381DC /* StackChanNotesWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		10F996DECC3621CDBC0238EE /* OFL-vt323.txt in Resources */ = {isa = PBXBuildFile; fileRef = 3B6DC1423A552A4697862DF9 /* OFL-vt323.txt */; };
+		16A8EA1C124984DBD1E9E49B /* EveDaemon.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF97E4D3AD70892D4607419A /* EveDaemon.swift */; };
+		1AFEE56DD21647A645159D29 /* DiaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F62C19E6D654259E691D6474 /* DiaryView.swift */; };
+		222BCF384FF72B610420E7CD /* VT323-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DC9EE994781EFA1409635389 /* VT323-Regular.ttf */; };
+		2C0F57478F5F508B1FF7EEED /* GochiHand-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 2FE44DF443242C51DA997F4B /* GochiHand-Regular.ttf */; };
+		2C2CF0EC64D358349D815D07 /* Andika-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DC63BBE13F092096D0EA99B6 /* Andika-Bold.ttf */; };
+		2C823096CCE87292E218EC4B /* OFL-vt323.txt in Resources */ = {isa = PBXBuildFile; fileRef = 3B6DC1423A552A4697862DF9 /* OFL-vt323.txt */; };
+		2D2433E0A94FA265219B7ED8 /* Andika-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DC63BBE13F092096D0EA99B6 /* Andika-Bold.ttf */; };
+		3247FC1BCF25915A24723B1F /* Andika-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CC5C119E441B8C5FE796F0EB /* Andika-Regular.ttf */; };
+		35DF1F3E0A641A9204BC459C /* EveBrand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6123FC6BED038D450CCCA6D0 /* EveBrand.swift */; };
+		60A1428A6FE897347E2394B9 /* NoteStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AD72D4FED4488570BCA96ED /* NoteStore.swift */; };
+		61576D5572BCCEA5587116ED /* NoteStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AD72D4FED4488570BCA96ED /* NoteStore.swift */; };
+		618777E7701365F54EF07F8B /* OFL-gochihand.txt in Resources */ = {isa = PBXBuildFile; fileRef = 57D43F8C648A32C3F67687C1 /* OFL-gochihand.txt */; };
+		762C312A5CB5089AC73D19CE /* Grandstander-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F3A6DCDD52C01951B686501D /* Grandstander-Bold.ttf */; };
+		7EBD54E6D6885AAA13F3CFA6 /* StackChanNotesApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CAF58838BD7BD34C55C270A /* StackChanNotesApp.swift */; };
+		7EFAB9F7E653253C2DD5878F /* OFL-andika.txt in Resources */ = {isa = PBXBuildFile; fileRef = 130B9D4D7A7A5186D880DECF /* OFL-andika.txt */; };
+		7F505FC43B317BECFBCF1ED1 /* NotesMirror.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D991EA2CD7ADE334CFD65C9 /* NotesMirror.swift */; };
+		7FE9748D34775E716FC96487 /* Grandstander-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F3A6DCDD52C01951B686501D /* Grandstander-Bold.ttf */; };
+		85E0095C45F238556BAE6518 /* EveService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 387A8B1402D0F827CEDD1038 /* EveService.swift */; };
+		9D29263BD007A6F4D857F9EA /* EvePower.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BDCCB5EA0C589C5C5FE8EAC /* EvePower.swift */; };
+		9EF02456919C3BEC7798D42E /* VT323-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DC9EE994781EFA1409635389 /* VT323-Regular.ttf */; };
+		B541AE383A4596C48E291DA5 /* OFL-andika.txt in Resources */ = {isa = PBXBuildFile; fileRef = 130B9D4D7A7A5186D880DECF /* OFL-andika.txt */; };
+		BA8D6ED800DE7698267FEA8A /* PowerRelay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2185226C924700217519DF54 /* PowerRelay.swift */; };
+		C5E75211933FE3BC9561E881 /* OFL-grandstander.txt in Resources */ = {isa = PBXBuildFile; fileRef = AE8E1E7CB4B022226B3E252A /* OFL-grandstander.txt */; };
+		CFE88E9336BF933D0AD55E57 /* Grandstander-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C3D3F3D6F1CF428CD102AD73 /* Grandstander-Black.ttf */; };
+		D35F18441A4006EDB359D15D /* GochiHand-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 2FE44DF443242C51DA997F4B /* GochiHand-Regular.ttf */; };
+		DB632A0B89CDC8DFCE15AE06 /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A697B4AC84C9CDFBFDDDAEF4 /* ChatView.swift */; };
+		DB91CAC4866F15A5FDD08E58 /* StackChanNotesWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF59CC6778284ED3133132CE /* StackChanNotesWidget.swift */; };
+		DEAB1480AB60FD974DD14619 /* OFL-gochihand.txt in Resources */ = {isa = PBXBuildFile; fileRef = 57D43F8C648A32C3F67687C1 /* OFL-gochihand.txt */; };
+		E0582D238DF5F2AB2DA07ED5 /* OFL-grandstander.txt in Resources */ = {isa = PBXBuildFile; fileRef = AE8E1E7CB4B022226B3E252A /* OFL-grandstander.txt */; };
+		E56B1332E4077412DA34EB62 /* EveBrand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6123FC6BED038D450CCCA6D0 /* EveBrand.swift */; };
+		F83202282C9FB6FBC5315D8E /* Grandstander-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C3D3F3D6F1CF428CD102AD73 /* Grandstander-Black.ttf */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		460344AA218C5D2A5E767182 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1A6884E026E9C70C4A7161EB /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CD569FD4828EBAFB08C83C4F;
+			remoteInfo = StackChanNotesWidget;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		8ADBCBCAFC72F4225F052E80 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				0D9D2B38517F4928E7660D15 /* StackChanNotesWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		130B9D4D7A7A5186D880DECF /* OFL-andika.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "OFL-andika.txt"; sourceTree = "<group>"; };
+		2185226C924700217519DF54 /* PowerRelay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerRelay.swift; sourceTree = "<group>"; };
+		2FE44DF443242C51DA997F4B /* GochiHand-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "GochiHand-Regular.ttf"; sourceTree = "<group>"; };
+		387A8B1402D0F827CEDD1038 /* EveService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EveService.swift; sourceTree = "<group>"; };
+		3AD72D4FED4488570BCA96ED /* NoteStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteStore.swift; sourceTree = "<group>"; };
+		3B6DC1423A552A4697862DF9 /* OFL-vt323.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "OFL-vt323.txt"; sourceTree = "<group>"; };
+		4BDCCB5EA0C589C5C5FE8EAC /* EvePower.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvePower.swift; sourceTree = "<group>"; };
+		57D43F8C648A32C3F67687C1 /* OFL-gochihand.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "OFL-gochihand.txt"; sourceTree = "<group>"; };
+		6123FC6BED038D450CCCA6D0 /* EveBrand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EveBrand.swift; sourceTree = "<group>"; };
+		7D9ED287F21568518C44885F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		8D991EA2CD7ADE334CFD65C9 /* NotesMirror.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesMirror.swift; sourceTree = "<group>"; };
+		90B0C584761D23A8F5B381DC /* StackChanNotesWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = StackChanNotesWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		9CAF58838BD7BD34C55C270A /* StackChanNotesApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StackChanNotesApp.swift; sourceTree = "<group>"; };
+		A61A26D12B528429303C1AD1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		A697B4AC84C9CDFBFDDDAEF4 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
+		AE8E1E7CB4B022226B3E252A /* OFL-grandstander.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "OFL-grandstander.txt"; sourceTree = "<group>"; };
+		AF59CC6778284ED3133132CE /* StackChanNotesWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StackChanNotesWidget.swift; sourceTree = "<group>"; };
+		C3D3F3D6F1CF428CD102AD73 /* Grandstander-Black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Grandstander-Black.ttf"; sourceTree = "<group>"; };
+		C55628C4B48A52DAFD05B905 /* StackChanNotesWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = StackChanNotesWidget.entitlements; sourceTree = "<group>"; };
+		CC5C119E441B8C5FE796F0EB /* Andika-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Andika-Regular.ttf"; sourceTree = "<group>"; };
+		D86E64157D65B00D05751E84 /* StackChanNotes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StackChanNotes.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		DC63BBE13F092096D0EA99B6 /* Andika-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Andika-Bold.ttf"; sourceTree = "<group>"; };
+		DC9EE994781EFA1409635389 /* VT323-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "VT323-Regular.ttf"; sourceTree = "<group>"; };
+		F3A6DCDD52C01951B686501D /* Grandstander-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Grandstander-Bold.ttf"; sourceTree = "<group>"; };
+		F54C4933A274AD6C400BBE85 /* StackChanNotes.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = StackChanNotes.entitlements; sourceTree = "<group>"; };
+		F62C19E6D654259E691D6474 /* DiaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryView.swift; sourceTree = "<group>"; };
+		FF97E4D3AD70892D4607419A /* EveDaemon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EveDaemon.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		3E6BCFD4DC925E6A0B11F92A = {
+			isa = PBXGroup;
+			children = (
+				6362C096B4AA871B79DFE6D8 /* Shared */,
+				DA3BA2039F222259ED015254 /* StackChanNotes */,
+				D308CBB6E4C1EE2AA403A095 /* StackChanNotesWidget */,
+				5BB05CAEE5A698E64FD5D058 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		40790F64342CCC8E37C8BD33 /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				DC63BBE13F092096D0EA99B6 /* Andika-Bold.ttf */,
+				CC5C119E441B8C5FE796F0EB /* Andika-Regular.ttf */,
+				2FE44DF443242C51DA997F4B /* GochiHand-Regular.ttf */,
+				C3D3F3D6F1CF428CD102AD73 /* Grandstander-Black.ttf */,
+				F3A6DCDD52C01951B686501D /* Grandstander-Bold.ttf */,
+				130B9D4D7A7A5186D880DECF /* OFL-andika.txt */,
+				57D43F8C648A32C3F67687C1 /* OFL-gochihand.txt */,
+				AE8E1E7CB4B022226B3E252A /* OFL-grandstander.txt */,
+				3B6DC1423A552A4697862DF9 /* OFL-vt323.txt */,
+				DC9EE994781EFA1409635389 /* VT323-Regular.ttf */,
+			);
+			path = Fonts;
+			sourceTree = "<group>";
+		};
+		5BB05CAEE5A698E64FD5D058 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				D86E64157D65B00D05751E84 /* StackChanNotes.app */,
+				90B0C584761D23A8F5B381DC /* StackChanNotesWidget.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		6362C096B4AA871B79DFE6D8 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				6123FC6BED038D450CCCA6D0 /* EveBrand.swift */,
+				4BDCCB5EA0C589C5C5FE8EAC /* EvePower.swift */,
+				3AD72D4FED4488570BCA96ED /* NoteStore.swift */,
+				40790F64342CCC8E37C8BD33 /* Fonts */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		D308CBB6E4C1EE2AA403A095 /* StackChanNotesWidget */ = {
+			isa = PBXGroup;
+			children = (
+				A61A26D12B528429303C1AD1 /* Info.plist */,
+				C55628C4B48A52DAFD05B905 /* StackChanNotesWidget.entitlements */,
+				AF59CC6778284ED3133132CE /* StackChanNotesWidget.swift */,
+			);
+			path = StackChanNotesWidget;
+			sourceTree = "<group>";
+		};
+		DA3BA2039F222259ED015254 /* StackChanNotes */ = {
+			isa = PBXGroup;
+			children = (
+				FF97E4D3AD70892D4607419A /* EveDaemon.swift */,
+				387A8B1402D0F827CEDD1038 /* EveService.swift */,
+				A697B4AC84C9CDFBFDDDAEF4 /* ChatView.swift */,
+				F62C19E6D654259E691D6474 /* DiaryView.swift */,
+				7D9ED287F21568518C44885F /* Info.plist */,
+				8D991EA2CD7ADE334CFD65C9 /* NotesMirror.swift */,
+				2185226C924700217519DF54 /* PowerRelay.swift */,
+				F54C4933A274AD6C400BBE85 /* StackChanNotes.entitlements */,
+				9CAF58838BD7BD34C55C270A /* StackChanNotesApp.swift */,
+			);
+			path = StackChanNotes;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		CD569FD4828EBAFB08C83C4F /* StackChanNotesWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1DE9880DFBF152DEF6BF6D7E /* Build configuration list for PBXNativeTarget "StackChanNotesWidget" */;
+			buildPhases = (
+				0F1F99CB5417D980D2290AED /* Sources */,
+				C8E559DE6F9ED36D388DB1A8 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = StackChanNotesWidget;
+			packageProductDependencies = (
+			);
+			productName = StackChanNotesWidget;
+			productReference = 90B0C584761D23A8F5B381DC /* StackChanNotesWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		ECF291970D691D177A145055 /* StackChanNotes */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 040D31E53BCED7768D2E9852 /* Build configuration list for PBXNativeTarget "StackChanNotes" */;
+			buildPhases = (
+				39DD662ABC8D38BCC94EFAB6 /* Sources */,
+				8E1F45F3386AC8B78CB4EC2B /* Resources */,
+				8ADBCBCAFC72F4225F052E80 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				3AD367890287602968E94FCF /* PBXTargetDependency */,
+			);
+			name = StackChanNotes;
+			packageProductDependencies = (
+			);
+			productName = StackChanNotes;
+			productReference = D86E64157D65B00D05751E84 /* StackChanNotes.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		1A6884E026E9C70C4A7161EB /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					CD569FD4828EBAFB08C83C4F = {
+						DevelopmentTeam = SJ8BKXTNUS;
+						ProvisioningStyle = Automatic;
+					};
+					ECF291970D691D177A145055 = {
+						DevelopmentTeam = SJ8BKXTNUS;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = F8B55D4197EA6AC0B136BBB6 /* Build configuration list for PBXProject "StackChanNotes" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 3E6BCFD4DC925E6A0B11F92A;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 5BB05CAEE5A698E64FD5D058 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				ECF291970D691D177A145055 /* StackChanNotes */,
+				CD569FD4828EBAFB08C83C4F /* StackChanNotesWidget */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		8E1F45F3386AC8B78CB4EC2B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2D2433E0A94FA265219B7ED8 /* Andika-Bold.ttf in Resources */,
+				034B90A58D5D77B652F052EF /* Andika-Regular.ttf in Resources */,
+				2C0F57478F5F508B1FF7EEED /* GochiHand-Regular.ttf in Resources */,
+				CFE88E9336BF933D0AD55E57 /* Grandstander-Black.ttf in Resources */,
+				7FE9748D34775E716FC96487 /* Grandstander-Bold.ttf in Resources */,
+				B541AE383A4596C48E291DA5 /* OFL-andika.txt in Resources */,
+				618777E7701365F54EF07F8B /* OFL-gochihand.txt in Resources */,
+				C5E75211933FE3BC9561E881 /* OFL-grandstander.txt in Resources */,
+				2C823096CCE87292E218EC4B /* OFL-vt323.txt in Resources */,
+				9EF02456919C3BEC7798D42E /* VT323-Regular.ttf in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C8E559DE6F9ED36D388DB1A8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2C2CF0EC64D358349D815D07 /* Andika-Bold.ttf in Resources */,
+				3247FC1BCF25915A24723B1F /* Andika-Regular.ttf in Resources */,
+				D35F18441A4006EDB359D15D /* GochiHand-Regular.ttf in Resources */,
+				F83202282C9FB6FBC5315D8E /* Grandstander-Black.ttf in Resources */,
+				762C312A5CB5089AC73D19CE /* Grandstander-Bold.ttf in Resources */,
+				7EFAB9F7E653253C2DD5878F /* OFL-andika.txt in Resources */,
+				DEAB1480AB60FD974DD14619 /* OFL-gochihand.txt in Resources */,
+				E0582D238DF5F2AB2DA07ED5 /* OFL-grandstander.txt in Resources */,
+				10F996DECC3621CDBC0238EE /* OFL-vt323.txt in Resources */,
+				222BCF384FF72B610420E7CD /* VT323-Regular.ttf in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		0F1F99CB5417D980D2290AED /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E56B1332E4077412DA34EB62 /* EveBrand.swift in Sources */,
+				067C179C64BC0C1AADD49894 /* EvePower.swift in Sources */,
+				60A1428A6FE897347E2394B9 /* NoteStore.swift in Sources */,
+				DB91CAC4866F15A5FDD08E58 /* StackChanNotesWidget.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		39DD662ABC8D38BCC94EFAB6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				35DF1F3E0A641A9204BC459C /* EveBrand.swift in Sources */,
+				16A8EA1C124984DBD1E9E49B /* EveDaemon.swift in Sources */,
+				9D29263BD007A6F4D857F9EA /* EvePower.swift in Sources */,
+				85E0095C45F238556BAE6518 /* EveService.swift in Sources */,
+				DB632A0B89CDC8DFCE15AE06 /* ChatView.swift in Sources */,
+				1AFEE56DD21647A645159D29 /* DiaryView.swift in Sources */,
+				61576D5572BCCEA5587116ED /* NoteStore.swift in Sources */,
+				7F505FC43B317BECFBCF1ED1 /* NotesMirror.swift in Sources */,
+				BA8D6ED800DE7698267FEA8A /* PowerRelay.swift in Sources */,
+				7EBD54E6D6885AAA13F3CFA6 /* StackChanNotesApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		3AD367890287602968E94FCF /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CD569FD4828EBAFB08C83C4F /* StackChanNotesWidget */;
+			targetProxy = 460344AA218C5D2A5E767182 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		08649886A906E3C3D2D1EFAD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = SJ8BKXTNUS;
+				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		2D6B205C1C55D956676DC988 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = StackChanNotesWidget/StackChanNotesWidget.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = StackChanNotesWidget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.github.eve-bridge.StackChanNotes.Widget";
+				PRODUCT_NAME = StackChanNotesWidget;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		3D20089933F9D14782C6FBC2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = StackChanNotesWidget/StackChanNotesWidget.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = StackChanNotesWidget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.github.eve-bridge.StackChanNotes.Widget";
+				PRODUCT_NAME = StackChanNotesWidget;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+		5035A0BF765F0E0E57088510 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = SJ8BKXTNUS;
+				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		AF43295849597E5C11FE355B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = StackChanNotes/StackChanNotes.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = StackChanNotes/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.github.eve-bridge.StackChanNotes";
+				PRODUCT_NAME = StackChanNotes;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		CE1958B22047799977651F71 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = StackChanNotes/StackChanNotes.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = StackChanNotes/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.github.eve-bridge.StackChanNotes";
+				PRODUCT_NAME = StackChanNotes;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		040D31E53BCED7768D2E9852 /* Build configuration list for PBXNativeTarget "StackChanNotes" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CE1958B22047799977651F71 /* Debug */,
+				AF43295849597E5C11FE355B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		1DE9880DFBF152DEF6BF6D7E /* Build configuration list for PBXNativeTarget "StackChanNotesWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2D6B205C1C55D956676DC988 /* Debug */,
+				3D20089933F9D14782C6FBC2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F8B55D4197EA6AC0B136BBB6 /* Build configuration list for PBXProject "StackChanNotes" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				08649886A906E3C3D2D1EFAD /* Debug */,
+				5035A0BF765F0E0E57088510 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 1A6884E026E9C70C4A7161EB /* Project object */;
+}

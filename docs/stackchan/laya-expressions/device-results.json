@@ -1,0 +1,254 @@
+[
+  {
+    "case": "speaking",
+    "model": {
+      "id": 3321099857,
+      "source": "demo",
+      "label": "happy",
+      "p_top": 0.9397742130643084,
+      "model_ms": 31.940916000166908,
+      "event_to_send_ms": 99.74979200342204,
+      "chirp_requested": false
+    },
+    "board": [
+      {
+        "id": 3321099857,
+        "label": "happy",
+        "active": true,
+        "applied": true,
+        "chirp": false,
+        "wink": false,
+        "wink_closed": false,
+        "muted": false,
+        "phase": 4,
+        "fw": "900435c"
+      },
+      {
+        "id": 3321099857,
+        "label": "happy",
+        "active": false,
+        "applied": false,
+        "chirp": false,
+        "wink": false,
+        "wink_closed": false,
+        "muted": false,
+        "phase": 4,
+        "fw": "900435c"
+      }
+    ]
+  },
+  {
+    "case": "speaking",
+    "model": {
+      "id": 3321099858,
+      "source": "demo",
+      "label": "sad",
+      "p_top": 0.9898957021698033,
+      "model_ms": 30.113500004517846,
+      "event_to_send_ms": 110.5066660020384,
+      "chirp_requested": false
+    },
+    "board": [
+      {
+        "id": 3321099858,
+        "label": "sad",
+        "active": true,
+        "applied": true,
+        "chirp": false,
+        "wink": false,
+        "wink_closed": false,
+        "muted": false,
+        "phase": 4,
+        "fw": "900435c"
+      },
+      {
+        "id": 3321099858,
+        "label": "sad",
+        "active": false,
+        "applied": false,
+        "chirp": false,
+        "wink": false,
+        "wink_closed": false,
+        "muted": false,
+        "phase": 4,
+        "fw": "900435c"
+      }
+    ]
+  },
+  {
+    "case": "speaking",
+    "model": {
+      "id": 3321099859,
+      "source": "demo",
+      "label": "skeptical",
+      "p_top": 0.8944835253502448,
+      "model_ms": 50.13683300057892,
+      "event_to_send_ms": 131.31095800054027,
+      "chirp_requested": false
+    },
+    "board": [
+      {
+        "id": 3321099859,
+        "label": "skeptical",
+        "active": true,
+        "applied": true,
+        "chirp": false,
+        "wink": false,
+        "wink_closed": false,
+        "muted": false,
+        "phase": 4,
+        "fw": "900435c"
+      },
+      {
+        "id": 3321099859,
+        "label": "skeptical",
+        "active": false,
+        "applied": false,
+        "chirp": false,
+        "wink": false,
+        "wink_closed": false,
+        "muted": false,
+        "phase": 4,
+        "fw": "900435c"
+      }
+    ]
+  },
+  {
+    "case": "speaking",
+    "model": {
+      "id": 3321099860,
+      "source": "demo",
+      "label": "excited",
+      "p_top": 0.8007996391471891,
+      "model_ms": 31.451875001948792,
+      "event_to_send_ms": 59.54208299954189,
+      "chirp_requested": false
+    },
+    "board": [
+      {
+        "id": 3321099860,
+        "label": "excited",
+        "active": true,
+        "applied": true,
+        "chirp": false,
+        "wink": false,
+        "wink_closed": false,
+        "muted": false,
+        "phase": 4,
+        "fw": "900435c"
+      },
+      {
+        "id": 3321099860,
+        "label": "excited",
+        "active": false,
+        "applied": false,
+        "chirp": false,
+        "wink": false,
+        "wink_closed": false,
+        "muted": false,
+        "phase": 4,
+        "fw": "900435c"
+      }
+    ]
+  },
+  {
+    "case": "speaking",
+    "model": {
+      "id": 3321099861,
+      "source": "demo",
+      "label": "wink",
+      "p_top": 0.7915719128847897,
+      "model_ms": 41.27412499656202,
+      "event_to_send_ms": 157.4331660012831,
+      "chirp_requested": false
+    },
+    "board": [
+      {
+        "id": 3321099861,
+        "label": "wink",
+        "active": true,
+        "applied": true,
+        "chirp": false,
+        "wink": true,
+        "wink_closed": false,
+        "muted": false,
+        "phase": 4,
+        "fw": "900435c"
+      },
+      {
+        "id": 3321099861,
+        "label": "wink",
+        "active": true,
+        "applied": true,
+        "chirp": false,
+        "wink": false,
+        "wink_closed": true,
+        "muted": false,
+        "phase": 4,
+        "fw": "900435c"
+      },
+      {
+        "id": 3321099861,
+        "label": "wink",
+        "active": true,
+        "applied": true,
+        "chirp": false,
+        "wink": false,
+        "wink_closed": false,
+        "muted": false,
+        "phase": 4,
+        "fw": "900435c"
+      },
+      {
+        "id": 3321099861,
+        "label": "wink",
+        "active": false,
+        "applied": false,
+        "chirp": false,
+        "wink": false,
+        "wink_closed": false,
+        "muted": false,
+        "phase": 4,
+        "fw": "900435c"
+      }
+    ]
+  },
+  {
+    "case": "listening",
+    "model": {
+      "id": 3321099862,
+      "source": "demo",
+      "label": "affection",
+      "p_top": 0.856383289717017,
+      "model_ms": 31.498541997279972,
+      "event_to_send_ms": 49.48475000128383,
+      "chirp_requested": false
+    },
+    "board": [
+      {
+        "id": 3321099862,
+        "label": "affection",
+        "active": true,
+        "applied": false,
+        "chirp": false,
+        "wink": false,
+        "wink_closed": false,
+        "muted": false,
+        "phase": 2,
+        "fw": "900435c"
+      },
+      {
+        "id": 3321099862,
+        "label": "affection",
+        "active": false,
+        "applied": false,
+        "chirp": false,
+        "wink": false,
+        "wink_closed": false,
+        "muted": false,
+        "phase": 2,
+        "fw": "900435c"
+      }
+    ]
+  }
+]

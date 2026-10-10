@@ -1,0 +1,84 @@
+"""Windows Task Scheduler backend for daemon auto-start."""
+
+from __future__ import annotations
+
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+NAME = "task-scheduler"
+TASK_NAME = "eve-bridge-daemon"
+LOG_PATH = Path.home() / "AppData" / "Local" / "eve-bridge" / "daemon.log"
+
+
+def install(serial_port: str | None = None) -> int:
+    if shutil.which("schtasks") is None:
+        print("eve-bridge: `schtasks` not found on PATH", file=sys.stderr)
+        return 2
+
+    LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+    env_prefix = f'set "EVE_SERIAL_PORT={serial_port}" && ' if serial_port else ""
+    cmd = f'{env_prefix}"{sys.executable}" -m eve_bridge.cli daemon >> "{LOG_PATH}" 2>&1'
+
+    result = subprocess.run(
+        [
+            "schtasks", "/create",
+            "/tn", TASK_NAME,
+            "/tr", cmd,
+            "/sc", "onlogon",
+            "/f",
+        ],
+        capture_output=True, text=True,
+    )
+    if result.returncode != 0:
+        print(f"schtasks create failed ({result.returncode}): {result.stderr.strip()}",
+              file=sys.stderr)
+        return 2
+
+    print(f"installed: Task Scheduler task '{TASK_NAME}'")
+    print(f"logs at:   {LOG_PATH}")
+    print("daemon will start on your next login.")
+    print("To start now, run: eve-bridge daemon")
+    return 0
+
+
+def uninstall() -> int:
+    if not is_installed():
+        print("service not installed; nothing to do")
+        return 0
+
+    result = subprocess.run(
+        ["schtasks", "/delete", "/tn", TASK_NAME, "/f"],
+        capture_output=True, text=True,
+    )
+    if result.returncode != 0:
+        print(f"schtasks delete failed ({result.returncode}): {result.stderr.strip()}",
+              file=sys.stderr)
+        return 2
+
+    print(f"removed: Task Scheduler task '{TASK_NAME}'")
+    return 0
+
+
+def is_installed() -> bool:
+    if shutil.which("schtasks") is None:
+        return False
+    result = subprocess.run(
+        ["schtasks", "/query", "/tn", TASK_NAME],
+        capture_output=True, text=True,
+    )
+    return result.returncode == 0
+
+
+def is_loaded() -> bool:
+    return is_installed()
+
+
+def unit_path() -> str:
+    return f"Task Scheduler: {TASK_NAME}"
+
+
+def log_path() -> Path:
+    return LOG_PATH

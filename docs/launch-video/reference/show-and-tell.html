@@ -1,0 +1,948 @@
+<title>Eve Show-and-Tell</title>
+<!-- mappedAt: 2026-09-12 (evening) · segments: 14 · slides: 14 · follows the 118 s launch film, chapter by chapter -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Gochi+Hand&family=Grandstander:wght@700;900&family=VT323&display=swap">
+<style>
+  /* Single deliberate look: eve's cut-paper kids brand. Colors are painted explicitly. */
+  :root {
+    --paper: #FBF5EC;
+    --sheet: #FFFDF8;
+    --ink: #1F3A78;
+    --ink-soft: #3E4F82;
+    --pink: #E68AAE;
+    --pink-soft: #F4C3D4;
+    --teal: #79C6B2;
+    --sun: #F1C85B;
+    --sky: #7FA2DE;
+    --desk: #E9E1D3;
+    --screen: #1B2350;
+    --display: "Grandstander", "Comic Sans MS", "Chalkboard SE", system-ui, sans-serif;
+    --body: "Andika", "Trebuchet MS", system-ui, sans-serif;
+    --hand: "Gochi Hand", "Chalkboard SE", "Comic Sans MS", cursive;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; overflow: hidden; background: var(--desk); color: var(--ink);
+    font: 400 21px/1.45 var(--body);
+    padding-inline: 16px;
+  }
+  .viewport { position: fixed; inset: 16px 16px 72px 16px; }
+  .stage {
+    position: absolute; left: 50%; top: 50%; width: 1280px; height: 720px;
+    transform-origin: center center; transform: translate(-50%, -50%) scale(var(--s, 0.5));
+    background: var(--paper); border-radius: 6px; overflow: hidden;
+    box-shadow: 0 30px 60px -30px rgba(31, 58, 120, 0.45);
+  }
+  .slide {
+    position: absolute; inset: 0; padding: 60px 76px; display: grid; align-content: start; gap: 26px;
+    opacity: 0; visibility: hidden; transition: opacity 0.35s ease, visibility 0s linear 0.35s;
+  }
+  .slide.is-active { opacity: 1; visibility: visible; transition: opacity 0.35s ease; }
+  h1, h2, h3 { font-family: var(--display); margin: 0; color: var(--ink); text-wrap: balance; }
+  h2 { font-size: 56px; font-weight: 900; line-height: 1.02; text-shadow: 4px 4px 0 var(--pink-soft); }
+  h3 { font-size: 26px; font-weight: 700; line-height: 1.15; }
+  p { margin: 0; }
+  .kicker { font-family: var(--hand); font-size: 29px; color: var(--ink-soft); line-height: 1; }
+  .head { display: grid; gap: 10px; }
+  .lede { font-size: 24px; max-width: 46ch; }
+  .hand { font-family: var(--hand); font-size: 27px; line-height: 1.15; }
+  .tag {
+    display: inline-block; font: 700 14px/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 8px 12px; border-radius: 999px; border: 2.5px solid var(--ink); color: var(--ink); background: var(--sheet);
+    vertical-align: middle;
+  }
+  .tag--today { background: var(--teal); }
+  .tag--branch { background: var(--sun); }
+  .tags { display: flex; gap: 10px; align-items: center; }
+
+  .grid { display: grid; gap: 22px; }
+  .g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .card {
+    background: var(--sheet); border: 2.5px solid var(--ink); border-radius: 5px; padding: 22px 24px;
+    display: grid; gap: 8px; align-content: start;
+  }
+  .card p { font-size: 20px; color: var(--ink); }
+  .sh-sky { box-shadow: 7px 7px 0 var(--sky); }
+  .sh-sun { box-shadow: 7px 7px 0 var(--sun); }
+  .sh-teal { box-shadow: 7px 7px 0 var(--teal); }
+  .sh-pink { box-shadow: 7px 7px 0 var(--pink); }
+  .sh-ink { box-shadow: 7px 7px 0 var(--ink); }
+  .say { font-family: var(--hand); font-size: 26px; line-height: 1.15; }
+  .tilt-l { transform: rotate(-0.8deg); }
+  .tilt-r { transform: rotate(0.8deg); }
+  .pill {
+    display: inline-block; font: 700 18px/1 var(--body); padding: 10px 14px; border: 2.5px solid var(--ink);
+    border-radius: 999px; background: var(--sheet); white-space: nowrap;
+  }
+  .pill--sun { background: var(--sun); } .pill--teal { background: var(--teal); } .pill--pink { background: var(--pink-soft); } .pill--sky { background: var(--sky); }
+  .pills { display: flex; flex-wrap: wrap; gap: 10px; }
+  .arrow { font-family: var(--display); font-weight: 700; font-size: 24px; }
+
+  /* the "in the film" chip on chapter slides */
+  .clip {
+    position: absolute; top: 44px; right: 76px; display: grid; grid-template-columns: 88px auto; gap: 10px; align-items: center;
+    padding: 6px 12px 6px 6px; background: var(--sheet); border: 2.5px solid var(--ink); border-radius: 6px;
+    box-shadow: 4px 4px 0 var(--ink); cursor: pointer; font: 700 14px/1.2 var(--body); color: var(--ink); text-align: left;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+  }
+  .clip img { width: 88px; height: 50px; object-fit: cover; border-radius: 3px; border: 1.5px solid var(--ink); display: block; background: var(--paper); }
+  .clip span { display: block; }
+  .clip .clip__t { font-family: var(--hand); font-size: 20px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .clip:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--ink); }
+  .clip:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); }
+  .clip:focus-visible { outline: 3px solid var(--pink); outline-offset: 3px; }
+  .clip ~ .head { padding-right: 240px; }
+  .clip ~ .grid.teacher > .grid { margin-top: 84px !important; }
+
+  /* chunky buttons */
+  .chunky {
+    display: inline-flex; align-items: center; gap: 12px; font: 700 24px/1 var(--display); color: var(--ink);
+    background: var(--sun); border: 3px solid var(--ink); border-radius: 12px; padding: 16px 24px; cursor: pointer;
+    box-shadow: 5px 5px 0 var(--ink); transition: transform 0.1s ease, box-shadow 0.1s ease;
+  }
+  .chunky:hover { transform: translate(-1px, -1px); box-shadow: 6px 6px 0 var(--ink); }
+  .chunky:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 var(--ink); }
+  .chunky:focus-visible { outline: 3px solid var(--pink); outline-offset: 3px; }
+  .chunky small { font: 400 20px/1 var(--hand); color: var(--ink-soft); }
+
+  /* title + end */
+  .decor { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .title { padding: 0; align-content: center; }
+  .title__inner { position: relative; display: grid; grid-template-columns: 1.2fr 0.8fr; align-items: center; padding-inline: 170px 150px; }
+  .wordmark { font-size: 200px; font-weight: 900; line-height: 0.88; text-shadow: 7px 7px 0 var(--pink-soft); }
+  .title__sub { font-family: var(--hand); font-size: 40px; margin-top: 12px; }
+  .title__cta { margin-top: 30px; }
+  .robot { width: 300px; height: auto; justify-self: center; }
+  .end__tags { margin-top: 26px; }
+  .end__foot { position: absolute; left: 170px; right: 150px; bottom: 54px; display: flex; justify-content: space-between; align-items: end; }
+  .end__foot .src { font: 700 19px/1 var(--body); color: var(--ink-soft); }
+  .end__foot .hand { font-size: 30px; }
+
+  /* the film */
+  .film h2 { font-size: 44px; }
+  .film__body { display: grid; grid-template-columns: 1fr 340px; gap: 26px; align-items: start; }
+  .screen { position: relative; background: var(--sheet); border: 2.5px solid var(--ink); border-radius: 5px; padding: 10px; box-shadow: 8px 8px 0 var(--sky); }
+  .screen video { display: block; width: 100%; aspect-ratio: 16 / 9; background: var(--screen); border-radius: 3px; }
+  .screen__missing {
+    position: absolute; inset: 10px; display: none; align-content: center; justify-items: center; text-align: center; gap: 10px;
+    padding: 30px; background: var(--screen); color: #FF74D4; font: 400 26px/1.3 "VT323", monospace; border-radius: 3px;
+  }
+  .screen.is-missing .screen__missing { display: grid; }
+  .screen.is-missing video { visibility: hidden; }
+  .chapters { display: grid; gap: 5px; align-content: start; margin: 0; padding: 0; list-style: none; }
+  .ch {
+    display: grid; grid-template-columns: 60px 44px 1fr; gap: 8px; align-items: center; width: 100%; text-align: left;
+    padding: 3px 8px 3px 3px; background: var(--sheet); border: 2.5px solid var(--ink); border-radius: 5px; cursor: pointer;
+    font: 700 15px/1.1 var(--body); color: var(--ink); transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease;
+  }
+  .ch img { width: 60px; height: 34px; object-fit: cover; border-radius: 2px; border: 1.5px solid var(--ink); display: block; background: var(--paper); }
+  .ch__t { font-family: var(--hand); font-size: 17px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .ch:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--ink); }
+  .ch:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
+  .ch.is-now { background: var(--sun); box-shadow: 3px 3px 0 var(--ink); }
+  .film__note { font-family: var(--hand); font-size: 22px; color: var(--ink-soft); }
+
+  /* the problem */
+  .problem { grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+  .problem .card h3 { font-size: 30px; }
+  .problem .bubble { display: inline-block; font-family: var(--hand); font-size: 26px; padding: 12px 18px; border: 2.5px solid var(--ink); border-radius: 999px; justify-self: start; }
+  .problem .bubble--sun { background: var(--sun); transform: rotate(-1deg); }
+  .problem .bubble--teal { background: var(--teal); transform: rotate(1deg); }
+  .problem__stack { display: grid; gap: 30px; }
+  .problem__meet { margin-top: 40px; font-size: 34px; }
+
+  /* real robot */
+  .real { grid-template-columns: 1fr 1fr; gap: 44px; align-items: center; }
+  .photo { background: var(--sheet); border: 2.5px solid var(--ink); border-radius: 5px; padding: 12px 12px 8px; box-shadow: 8px 8px 0 var(--sun); transform: rotate(1deg); display: grid; gap: 8px; }
+  .photo img { display: block; width: 100%; height: auto; border-radius: 3px; border: 1.5px solid var(--ink); }
+  .photo figcaption { font-family: var(--hand); font-size: 22px; color: var(--ink-soft); text-align: right; }
+  .parts { display: flex; flex-wrap: wrap; gap: 12px; }
+  .part { font: 700 20px/1 var(--body); padding: 11px 15px; border: 2.5px solid var(--ink); border-radius: 999px; background: var(--sheet); box-shadow: 3px 3px 0 var(--ink); }
+  .part:nth-child(3n+1) { background: var(--sun); }
+  .part:nth-child(3n+2) { background: var(--pink-soft); }
+  .part:nth-child(3n+3) { background: var(--teal); }
+
+  /* routes */
+  .routes { grid-template-columns: 0.9fr 1.1fr; gap: 40px; align-items: start; }
+  .routes__ask { display: grid; gap: 18px; justify-items: start; }
+  .flowline { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .path { display: grid; gap: 12px; }
+  .path h3 { font-size: 27px; }
+  .path .hand { font-size: 22px; color: var(--ink-soft); }
+  .routes__foot { grid-column: 1 / -1; justify-self: end; font-family: var(--hand); font-size: 26px; color: var(--ink-soft); }
+  .answer { display: inline-block; font-family: var(--hand); font-size: 26px; padding: 12px 20px; background: var(--teal); border: 2.5px solid var(--ink); border-radius: 999px; }
+
+  /* montage */
+  .montage { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+  .mini { background: var(--sheet); border: 2.5px solid var(--ink); border-radius: 5px; padding: 12px 14px; display: grid; gap: 3px; align-content: start; }
+  .mini h3 { font-size: 19px; }
+  .mini p { font-size: 15px; line-height: 1.3; color: var(--ink-soft); }
+  .mini:nth-child(4n+1) { box-shadow: 5px 5px 0 var(--sun); }
+  .mini:nth-child(4n+2) { box-shadow: 5px 5px 0 var(--teal); }
+  .mini:nth-child(4n+3) { box-shadow: 5px 5px 0 var(--pink); }
+  .mini:nth-child(4n+4) { box-shadow: 5px 5px 0 var(--sky); }
+
+  /* one system */
+  .tech { gap: 18px; }
+  .tech h2 { font-size: 50px; }
+  .tech svg { display: block; width: 100%; height: auto; }
+
+  /* not a homework machine */
+  .teacher { grid-template-columns: 1fr 1fr; gap: 44px; align-items: start; }
+  .teacher__left { display: grid; gap: 22px; }
+  .teacher__left .lede { font-size: 27px; }
+  .note { text-align: left; }
+  .note__who { font-family: var(--hand); font-size: 27px; color: var(--ink-soft); line-height: 1; }
+  .note h3 { font-size: 30px; }
+  .ladder { display: flex; align-items: center; gap: 12px; }
+  .ladder .pill { font-family: var(--display); font-size: 22px; padding: 12px 20px; box-shadow: 4px 4px 0 var(--ink); }
+
+  /* why it matters */
+  .research { gap: 22px; }
+  .stat { display: grid; gap: 6px; align-content: start; }
+  .stat__num { font-family: var(--display); font-weight: 900; font-size: 72px; line-height: 0.95; color: var(--ink); text-shadow: 4px 4px 0 var(--pink-soft); font-variant-numeric: tabular-nums; }
+  .stat p { font-size: 19px; }
+  .quote { background: var(--sheet); border: 2.5px solid var(--ink); border-radius: 5px; padding: 20px 26px; box-shadow: 7px 7px 0 var(--sky); display: grid; gap: 6px; }
+  .quote blockquote { margin: 0; font-family: var(--hand); font-size: 27px; line-height: 1.2; }
+  .quote cite { font-style: normal; font-size: 17px; color: var(--ink-soft); }
+  .source { font-size: 15px; color: var(--ink-soft); margin-top: -6px; }
+
+  /* the lesson */
+  .lesson { gap: 18px; }
+  .lesson h2 { font-size: 46px; }
+  .lesson__body { display: grid; grid-template-columns: 1fr 560px; gap: 30px; align-items: start; }
+  .lesson__left { display: grid; gap: 18px; justify-items: start; }
+  .said { font-family: var(--display); font-weight: 700; font-size: 27px; line-height: 1.1; padding: 16px 20px; background: var(--teal); border: 2.5px solid var(--ink); border-radius: 14px; box-shadow: 6px 6px 0 var(--ink); }
+  .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .steps li { display: flex; align-items: center; gap: 12px; font: 700 21px/1 var(--body); }
+  .steps i { font-style: normal; width: 30px; height: 30px; border-radius: 50%; border: 2.5px solid var(--ink); display: inline-grid; place-items: center; font-size: 16px; }
+  .steps li:nth-child(1) i { background: var(--sun); } .steps li:nth-child(2) i { background: var(--pink-soft); } .steps li:nth-child(3) i { background: var(--sky); }
+  .shot { background: var(--sheet); border: 2.5px solid var(--ink); border-radius: 5px; padding: 10px; box-shadow: 8px 8px 0 var(--sky); }
+  .shot img { display: block; width: auto; max-width: 100%; max-height: 336px; margin-inline: auto; border-radius: 3px; border: 1.5px solid var(--ink); }
+  .lesson__foot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .lesson__foot .hand { font-size: 21px; color: var(--ink-soft); flex-basis: 100%; }
+  .pill--dashed { border-style: dashed; }
+
+  /* flow */
+  .flow { background: var(--sheet); border: 2.5px solid var(--ink); border-radius: 5px; padding: 8px 16px; justify-self: center; }
+  .flow svg { display: block; width: 760px; height: auto; }
+  .flow-slide { gap: 16px; }
+  .flow-slide h2 { font-size: 44px; }
+
+  /* the teaching rule */
+  .rule-slide h2 { font-size: 60px; }
+  .rule-slide h2 mark { background: linear-gradient(transparent 56%, var(--pink-soft) 56%); color: inherit; padding-inline: 4px; text-shadow: none; }
+  .rung { border: 2.5px solid var(--ink); border-radius: 5px; padding: 26px; display: grid; gap: 12px; align-content: start; box-shadow: 7px 7px 0 var(--ink); }
+  .rung p, .rung li { font-size: 21px; }
+  .rung ol { margin: 0; padding-left: 24px; display: grid; gap: 4px; }
+  .rung--hint { background: var(--sun); transform: rotate(-0.8deg); }
+  .rung--check { background: var(--teal); }
+  .rung--step { background: var(--pink); transform: rotate(0.8deg); }
+  .rule-slide .hand { color: var(--ink-soft); font-size: 28px; }
+
+  /* two kinds of help */
+  .two { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
+  .two .card { padding: 24px 26px; gap: 12px; }
+  .two .kicker { font-size: 26px; }
+  .two h3 { font-size: 30px; }
+  .clip ~ .head h2 { font-size: 52px; }
+  .bridge {
+    position: absolute; left: 50%; top: -24px; transform: translateX(-50%);
+    font: 700 22px/1 var(--display); padding: 14px 22px; background: var(--pink-soft); border: 2.5px solid var(--ink); border-radius: 999px; box-shadow: 4px 4px 0 var(--ink); white-space: nowrap;
+  }
+  .status { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
+  .status__row { display: grid; gap: 8px; justify-items: start; font-size: 18px; line-height: 1.35; padding: 14px 16px; background: var(--sheet); border: 2.5px dashed var(--ink); border-radius: 5px; }
+  .status__row strong { font-family: var(--display); }
+
+  /* controls */
+  .controls {
+    position: fixed; left: 16px; right: 16px; bottom: 12px; height: 48px;
+    display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: nowrap;
+  }
+  .btn {
+    font: 700 15px/1 var(--body); color: var(--ink); background: var(--sheet);
+    border: 2px solid var(--ink); border-radius: 10px; padding: 9px 13px; cursor: pointer;
+    box-shadow: 3px 3px 0 var(--ink); transition: transform 0.1s ease, box-shadow 0.1s ease; white-space: nowrap;
+  }
+  .btn:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--ink); }
+  .btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+  .btn:focus-visible { outline: 3px solid var(--pink); outline-offset: 3px; }
+  .btn--sun { background: var(--sun); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: 3px 3px 0 var(--ink); }
+  .count { font: 700 15px/1 var(--body); min-width: 58px; text-align: center; font-variant-numeric: tabular-nums; }
+  .narr-status { font-size: 14px; color: var(--ink-soft); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 34ch; }
+  @media (max-width: 640px) {
+    .narr-status, #btn-full { display: none; }
+    .controls { gap: 6px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .slide, .slide.is-active, .btn, .clip, .chunky, .ch { transition: none; }
+  }
+</style>
+
+<div class="viewport" id="viewport">
+  <div class="stage" id="stage" aria-roledescription="slideshow" aria-label="eve show-and-tell">
+
+    <!-- 1 title -->
+    <section class="slide title is-active" aria-label="eve">
+      <svg class="decor" viewBox="0 0 1000 480" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <defs>
+          <pattern id="dots" width="16" height="16" patternUnits="userSpaceOnUse"><rect x="4" y="4" width="6" height="6" rx="1" fill="#E7B44A"></rect></pattern>
+          <pattern id="waves" width="40" height="24" patternUnits="userSpaceOnUse"><path d="M0 12 C10 0 20 0 20 12 S30 24 40 12" fill="none" stroke="#D97A9E" stroke-width="5"></path></pattern>
+          <pattern id="gridp" width="22" height="22" patternUnits="userSpaceOnUse"><rect x="5" y="5" width="11" height="11" fill="none" stroke="#9BB6E6" stroke-width="2"></rect></pattern>
+        </defs>
+        <circle cx="40" cy="60" r="130" fill="#7FA2DE"></circle>
+        <circle cx="40" cy="60" r="88" fill="none" stroke="#9BB6E6" stroke-width="16"></circle>
+        <circle cx="40" cy="60" r="46" fill="none" stroke="#9BB6E6" stroke-width="16"></circle>
+        <path d="M-20 130 C70 110 130 190 118 270 C108 330 40 340 -20 330 Z" fill="#79C6B2"></path>
+        <polygon points="120,80 190,24 212,62 270,14 292,54 340,16 330,46 278,96 256,58 206,104 184,68 132,116" fill="#F1C85B"></polygon>
+        <polygon points="-10,300 128,288 138,430 -10,440" fill="#F1C85B"></polygon>
+        <polygon points="-10,300 128,288 138,430 -10,440" fill="url(#dots)"></polygon>
+        <polygon points="80,490 150,370 196,440 300,404 250,490" fill="#E68AAE"></polygon>
+        <polygon points="690,-10 910,-10 950,84 856,152 704,112" fill="#E68AAE"></polygon>
+        <polygon points="690,-10 910,-10 950,84 856,152 704,112" fill="url(#waves)"></polygon>
+        <path d="M860 124 C930 90 1010 104 1010 150 L1010 320 C960 344 902 304 882 254 C852 204 820 154 860 124 Z" fill="#79C6B2"></path>
+        <polygon points="892,204 1010,180 1010,330 952,388 884,300" fill="#F1C85B"></polygon>
+        <polygon points="892,204 1010,180 1010,330 952,388 884,300" fill="url(#dots)"></polygon>
+        <polygon points="820,490 930,346 1010,364 1010,490" fill="#7FA2DE"></polygon>
+        <polygon points="820,490 930,346 1010,364 1010,490" fill="url(#gridp)"></polygon>
+        <path d="M690 440 C750 366 858 350 904 382 L884 408 C842 388 772 400 730 460 Z" fill="#E68AAE"></path>
+      </svg>
+      <div class="title__inner">
+        <div>
+          <h1 class="wordmark">eve</h1>
+          <p class="title__sub">your desktop sidekick</p>
+          <p class="title__cta"><button class="chunky" type="button" data-film="0" data-play="1">▶ Play the film <small>1 min 58 s</small></button></p>
+        </div>
+        <svg class="robot" viewBox="0 0 200 240" role="img" aria-label="eve, a small robot with a screen face that says Hey there!">
+          <defs><linearGradient id="lbl" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#9DB3EE"></stop><stop offset="1" stop-color="#B98BD8"></stop></linearGradient></defs>
+          <rect x="68" y="168" width="64" height="30" fill="#8C90A0" stroke="#4D5160" stroke-width="2.5"></rect>
+          <rect x="46" y="194" width="108" height="38" rx="7" fill="#6F7384" stroke="#4D5160" stroke-width="2.5"></rect>
+          <circle cx="64" cy="220" r="5" fill="#4D5160"></circle><circle cx="136" cy="220" r="5" fill="#4D5160"></circle>
+          <g class="robot__head">
+            <rect x="22" y="10" width="156" height="34" rx="7" fill="url(#lbl)" stroke="#5E5F98" stroke-width="2.5"></rect>
+            <text x="100" y="35" text-anchor="middle" font-family="Grandstander, sans-serif" font-weight="700" font-size="22" fill="#F4F4FB">eve</text>
+            <rect x="12" y="42" width="176" height="14" rx="4" fill="#A487D0" stroke="#5E5F98" stroke-width="2.5"></rect>
+            <rect x="30" y="52" width="140" height="122" rx="14" fill="#C3C6CF" stroke="#5C6070" stroke-width="3"></rect>
+            <rect x="42" y="62" width="116" height="100" rx="6" fill="#1B2350"></rect>
+            <path fill="#FF74D4" d="M72 75 H88 V80 H92 V94 H87 V89 H73 V94 H68 V80 H72 Z M112 75 H128 V80 H132 V94 H127 V89 H113 V94 H108 V80 H112 Z"></path>
+            <text class="robot__greet" x="100" y="134" text-anchor="middle" font-family="VT323, monospace" font-size="22" fill="#FF74D4">Hey there!</text>
+          </g>
+        </svg>
+      </div>
+    </section>
+
+    <!-- 2 the film -->
+    <section class="slide film" aria-label="the launch film">
+      <div class="head"><span class="kicker">the launch film · 10 chapters</span><h2>Watch it, then walk it.</h2></div>
+      <div class="film__body">
+        <div class="screen" id="screen">
+          <video id="film" controls preload="metadata" playsinline poster="film/ch01.jpg" aria-label="eve launch film, 1 minute 58 seconds">
+            <source src="launch-video.mp4" type="video/mp4">
+          </video>
+          <div class="screen__missing" role="status">
+            <span>film not rendered here.</span>
+            <span>run <b>npm run render</b> in docs/launch-video/remotion, then the web export from its README.</span>
+          </div>
+        </div>
+        <ol class="chapters" id="chapters" aria-label="Chapters">
+          <li><button class="ch" type="button" data-t="0"><img src="film/ch01.jpg" alt=""><span class="ch__t">0:00</span><span>An answer isn't enough</span></button></li>
+          <li><button class="ch" type="button" data-t="12"><img src="film/ch02.jpg" alt=""><span class="ch__t">0:12</span><span>A real robot on your desk</span></button></li>
+          <li><button class="ch" type="button" data-t="22"><img src="film/ch03.jpg" alt=""><span class="ch__t">0:22</span><span>You say it, eve routes it</span></button></li>
+          <li><button class="ch" type="button" data-t="35"><img src="film/ch04.jpg" alt=""><span class="ch__t">0:35</span><span>A whole sidekick</span></button></li>
+          <li><button class="ch" type="button" data-t="43"><img src="film/ch05.jpg" alt=""><span class="ch__t">0:43</span><span>One system</span></button></li>
+          <li><button class="ch" type="button" data-t="54"><img src="film/ch06.jpg" alt=""><span class="ch__t">0:54</span><span>Not a homework answer machine</span></button></li>
+          <li><button class="ch" type="button" data-t="66"><img src="film/ch07.jpg" alt=""><span class="ch__t">1:06</span><span>A math lesson</span></button></li>
+          <li><button class="ch" type="button" data-t="90"><img src="film/ch08.jpg" alt=""><span class="ch__t">1:30</span><span>The teaching rule</span></button></li>
+          <li><button class="ch" type="button" data-t="102"><img src="film/ch09.jpg" alt=""><span class="ch__t">1:42</span><span>Two kinds of help</span></button></li>
+          <li><button class="ch" type="button" data-t="112"><img src="film/ch10.jpg" alt=""><span class="ch__t">1:52</span><span>See you</span></button></li>
+        </ol>
+      </div>
+      <p class="film__note">every chapter has its own slide next. the ▶ chip on a slide jumps back to that moment in the film.</p>
+    </section>
+
+    <!-- 3 the problem -->
+    <section class="slide" aria-label="the problem">
+      <button class="clip" type="button" data-film="0" data-play="1"><img src="film/ch01.jpg" alt=""><span><span class="clip__t">▶ 0:00</span>in the film</span></button>
+      <div class="head"><span class="kicker">the problem · when you are stuck…</span><h2>an answer isn't enough.</h2></div>
+      <div class="grid problem">
+        <div>
+          <p class="lede">A search result can be right. A busy day can still be hard. What helps is knowing what to do next.</p>
+          <p class="hand problem__meet">Meet the eve that can do both. ↘</p>
+        </div>
+        <div class="problem__stack">
+          <div class="card sh-sun tilt-l"><span class="note__who">at the desk</span><h3>A hundred tiny asks.</h3><span class="bubble bubble--sun">“eve, where is that file?”</span></div>
+          <div class="card sh-teal tilt-r"><span class="note__who">in the lesson</span><h3>A learner needs the next thought.</h3><span class="bubble bubble--teal">“where do I start?”</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 a real robot -->
+    <section class="slide" aria-label="a real robot on your desk">
+      <button class="clip" type="button" data-film="12" data-play="1"><img src="film/ch02.jpg" alt=""><span><span class="clip__t">▶ 0:12</span>in the film</span></button>
+      <div class="grid real">
+        <div class="head">
+          <span class="kicker">so, what is eve?</span>
+          <h2>A real robot on your desk.</h2>
+          <p class="lede">A physical head, a local Mac app, and a memory that stays useful.</p>
+          <div class="parts" aria-label="What's inside">
+            <span class="part">camera</span><span class="part">screen face</span><span class="part">mic + speaker</span><span class="part">2 motors</span><span class="part">12 lights</span><span class="part">touch</span>
+          </div>
+          <div class="tags"><span class="tag tag--today">works today</span><span class="hand">a little machine, a lot of personality</span></div>
+        </div>
+        <figure class="photo">
+          <img src="film/hero.jpg" alt="eve, a small robot head with a screen face, sitting on a desk beside a laptop">
+          <figcaption>M5StackChan · real hardware</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- 5 routes -->
+    <section class="slide" aria-label="you say it, eve routes it">
+      <button class="clip" type="button" data-film="22" data-play="1"><img src="film/ch03.jpg" alt=""><span><span class="clip__t">▶ 0:22</span>in the film</span></button>
+      <div class="head"><span class="kicker">everyday sidekick · works today</span><h2>You say it. eve routes it.</h2></div>
+      <div class="grid routes">
+        <div class="routes__ask">
+          <p class="say">“hey eve, where's my mug?”</p>
+          <div class="flowline arrow"><span>look</span><span>→</span><span>find</span><span>→</span><span>answer</span></div>
+          <span class="answer">“On the shelf, left of the plant.”</span>
+        </div>
+        <div class="grid" style="gap: 20px;">
+          <div class="card sh-teal path">
+            <h3>Questions take the light path.</h3>
+            <div class="flowline"><span class="pill pill--pink">voice</span><span class="arrow">→</span><span class="pill pill--sun">gpt-live-1</span><span class="arrow">→</span><span class="pill pill--teal">web search</span></div>
+            <p class="hand">Today's facts are checked, not guessed.</p>
+          </div>
+          <div class="card sh-sun path">
+            <h3>Mac work takes the guarded path.</h3>
+            <div class="flowline"><span class="pill pill--pink">request</span><span class="arrow">→</span><span class="pill pill--sun">gpt-6-astra</span><span class="arrow">→</span><span class="pill pill--teal">start_task</span></div>
+            <div class="pills"><span class="pill" style="font-size:16px">click + type</span><span class="pill" style="font-size:16px">ask before big actions</span><span class="pill" style="font-size:16px">stop anytime</span></div>
+          </div>
+        </div>
+        <p class="routes__foot">not magic — a system with boundaries.</p>
+      </div>
+    </section>
+
+    <!-- 6 montage -->
+    <section class="slide" aria-label="a whole sidekick, not one trick">
+      <button class="clip" type="button" data-film="35" data-play="1"><img src="film/ch04.jpg" alt=""><span><span class="clip__t">▶ 0:35</span>in the film</span></button>
+      <div class="head"><span class="kicker">and it also… · all on the desk, all works today</span><h2>A whole sidekick, not one trick.</h2></div>
+      <div class="montage">
+        <div class="mini"><h3>Uses your computer</h3><p>Clicks and types, up to 25 steps.</p></div>
+        <div class="mini"><h3>Web search</h3><p>Weather, scores or prices, in one line.</p></div>
+        <div class="mini"><h3>Finds your mug</h3><p>“Where's my mug?” It turns and looks.</p></div>
+        <div class="mini"><h3>Has moods</h3><p>Curious, happy, bored, lonely, startled.</p></div>
+        <div class="mini"><h3>Keeps a diary</h3><p>Only new or interesting thoughts.</p></div>
+        <div class="mini"><h3>Dreams at night</h3><p>It sleeps on the day.</p></div>
+        <div class="mini"><h3>Takes photos</h3><p>At most 2 an hour, 8 a day.</p></div>
+        <div class="mini"><h3>Explores the room</h3><p>After 10 quiet minutes, or on “go explore.”</p></div>
+        <div class="mini"><h3>Dances</h3><p>Sway, bob, nod, wiggle, figure-8.</p></div>
+        <div class="mini"><h3>Loves a head pat</h3><p>Its lights beat pink and it chirps.</p></div>
+        <div class="mini"><h3>Desktop widget</h3><p>Its mood, and a diary app with 7 tabs.</p></div>
+        <div class="mini"><h3>Meeting notes</h3><p>Decisions, to-dos and open questions.</p></div>
+        <div class="mini"><h3>Remembers you</h3><p>A few lines per chat, never the words.</p></div>
+        <div class="mini"><h3>Mirrors Claude Code</h3><p>Naps when idle, looks busy while it works.</p></div>
+        <div class="mini"><h3>Thinks hard</h3><p>Math and code go to a stronger model.</p></div>
+        <div class="mini"><h3>Asks before big actions</h3><p>Sending, paying, deleting. Say “stop” anytime.</p></div>
+      </div>
+    </section>
+
+    <!-- 7 one system -->
+    <section class="slide tech" aria-label="the physical eve is one system">
+      <button class="clip" type="button" data-film="43" data-play="1"><img src="film/ch05.jpg" alt=""><span><span class="clip__t">▶ 0:43</span>in the film</span></button>
+      <div class="head"><span class="kicker">show &amp; tell · under the hood</span><h2>The physical eve is one system.</h2></div>
+      <svg viewBox="0 0 1128 480" role="img" aria-label="The robot's firmware runs the face, head, lights, camera and touch. A USB-C cable carries JSON lines: frames, touches and pose go to the Mac, and state, captions and moves come back. The eve app on the Mac hears the wake word, runs the chat, looks, clicks and types, keeps memory and follows Claude Code. It calls OpenAI models in the cloud for the voice, tasks and web search, vision, and meeting transcripts, and, for lessons, an optional Exa practice-reference search that receives only the topic and level.">
+        <defs>
+          <marker id="tarr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#1F3A78"></path></marker>
+        </defs>
+        <g font-family="Andika, sans-serif" fill="#1F3A78" text-anchor="middle">
+          <!-- robot -->
+          <rect x="10" y="16" width="284" height="456" rx="10" fill="#F1C85B"></rect>
+          <rect x="4" y="10" width="284" height="456" rx="10" fill="#FFFDF8" stroke="#1F3A78" stroke-width="2.5"></rect>
+          <text x="146" y="42" font-family="Grandstander, sans-serif" font-size="22" font-weight="700">the robot</text>
+          <text x="146" y="64" font-size="13">ESP32-S3 chip · M5Stack CoreS3</text>
+          <g stroke="#1F3A78" stroke-width="2">
+            <rect x="22" y="84" width="248" height="58" rx="10" fill="#FBF5EC"></rect>
+            <rect x="22" y="152" width="248" height="58" rx="10" fill="#FBF5EC"></rect>
+            <rect x="22" y="220" width="248" height="58" rx="10" fill="#FBF5EC"></rect>
+            <rect x="22" y="288" width="248" height="58" rx="10" fill="#FBF5EC"></rect>
+            <rect x="22" y="356" width="248" height="58" rx="10" fill="#FBF5EC"></rect>
+          </g>
+          <text x="146" y="108" font-size="15" font-weight="700">screen face</text><text x="146" y="128" font-size="12.5">eyes and captions</text>
+          <text x="146" y="176" font-size="15" font-weight="700">2 servo motors</text><text x="146" y="196" font-size="12.5">turn and tilt the head</text>
+          <text x="146" y="244" font-size="15" font-weight="700">12 lights + speaker</text><text x="146" y="264" font-size="12.5">moods and chirps</text>
+          <text x="146" y="312" font-size="15" font-weight="700">camera</text><text x="146" y="332" font-size="12.5">about 5 frames a second</text>
+          <text x="146" y="380" font-size="15" font-weight="700">touch pad</text><text x="146" y="400" font-size="12.5">pats, taps and swipes</text>
+          <text x="146" y="440" font-size="12.5" font-style="italic">moods and face tracking</text>
+          <text x="146" y="456" font-size="12.5" font-style="italic">run on the board itself</text>
+
+          <!-- link -->
+          <g fill="none" stroke="#1F3A78" stroke-width="2.5">
+            <path d="M292 190 H470" marker-end="url(#tarr)"></path>
+            <path d="M474 300 H296" marker-end="url(#tarr)"></path>
+          </g>
+          <text x="383" y="176" font-size="13">frames · touches · pose</text>
+          <text x="383" y="238" font-family="Grandstander, sans-serif" font-size="18" font-weight="700">USB-C cable</text>
+          <text x="383" y="258" font-size="13">lines of JSON</text>
+          <text x="383" y="324" font-size="13">state · captions · moves</text>
+          <text x="383" y="350" font-size="12" font-style="italic">(Bluetooth works too)</text>
+
+          <!-- mac -->
+          <rect x="480" y="16" width="354" height="456" rx="10" fill="#79C6B2"></rect>
+          <rect x="474" y="10" width="354" height="456" rx="10" fill="#FFFDF8" stroke="#1F3A78" stroke-width="2.5"></rect>
+          <text x="651" y="42" font-family="Grandstander, sans-serif" font-size="22" font-weight="700">the Mac</text>
+          <text x="651" y="64" font-size="13">eve app · a Python program</text>
+          <g stroke="#1F3A78" stroke-width="2">
+            <rect x="492" y="84" width="154" height="64" rx="10" fill="#F4C3D4"></rect>
+            <rect x="656" y="84" width="154" height="64" rx="10" fill="#F4C3D4"></rect>
+            <rect x="492" y="158" width="154" height="64" rx="10" fill="#F4C3D4"></rect>
+            <rect x="656" y="158" width="154" height="64" rx="10" fill="#F4C3D4"></rect>
+            <rect x="492" y="232" width="154" height="64" rx="10" fill="#F4C3D4"></rect>
+            <rect x="656" y="232" width="154" height="64" rx="10" fill="#F4C3D4"></rect>
+            <rect x="492" y="306" width="318" height="64" rx="10" fill="#FBF5EC"></rect>
+          </g>
+          <text x="569" y="110" font-size="15" font-weight="700">ears</text><text x="569" y="131" font-size="12.5">mic hears “hey eve”</text>
+          <text x="733" y="110" font-size="15" font-weight="700">voice</text><text x="733" y="131" font-size="12.5">runs the chat</text>
+          <text x="569" y="184" font-size="15" font-weight="700">eyes</text><text x="569" y="205" font-size="12.5">looks at frames</text>
+          <text x="733" y="184" font-size="15" font-weight="700">hands</text><text x="733" y="205" font-size="12.5">clicks and types</text>
+          <text x="569" y="258" font-size="15" font-weight="700">head</text><text x="569" y="279" font-size="12.5">moves and dances</text>
+          <text x="733" y="258" font-size="15" font-weight="700">memory</text><text x="733" y="279" font-size="12.5">diary, photos, chats, lessons</text>
+          <text x="651" y="332" font-size="15" font-weight="700">Claude Code hooks</text><text x="651" y="353" font-size="12.5">what your coding session is doing</text>
+          <text x="651" y="420" font-size="12.5" font-style="italic">everything it remembers is saved</text>
+          <text x="651" y="438" font-size="12.5" font-style="italic">on the Mac, and the widget reads it</text>
+
+          <!-- cloud -->
+          <g fill="none" stroke="#1F3A78" stroke-width="2.5">
+            <path d="M832 150 H870" marker-start="url(#tarr)" marker-end="url(#tarr)"></path>
+            <path d="M832 330 H870" marker-start="url(#tarr)" marker-end="url(#tarr)"></path>
+          </g>
+          <rect x="874" y="10" width="250" height="456" rx="10" fill="#FBF5EC" stroke="#1F3A78" stroke-width="2.5" stroke-dasharray="8 6"></rect>
+          <text x="999" y="42" font-family="Grandstander, sans-serif" font-size="22" font-weight="700">in the cloud</text>
+          <text x="999" y="64" font-size="13">OpenAI models, plus Exa</text>
+          <g stroke="#1F3A78" stroke-width="2" fill="#FFFDF8">
+            <rect x="892" y="84" width="214" height="58" rx="10"></rect>
+            <rect x="892" y="152" width="214" height="58" rx="10"></rect>
+            <rect x="892" y="220" width="214" height="58" rx="10"></rect>
+            <rect x="892" y="288" width="214" height="58" rx="10"></rect>
+            <rect x="892" y="356" width="214" height="58" rx="10" stroke-dasharray="6 5"></rect>
+          </g>
+          <text x="999" y="108" font-size="15" font-weight="700">gpt-live-1</text><text x="999" y="128" font-size="12.5">the voice</text>
+          <text x="999" y="176" font-size="15" font-weight="700">gpt-6-astra</text><text x="999" y="196" font-size="12.5">tasks, tools, web search</text>
+          <text x="999" y="244" font-size="15" font-weight="700">gpt-5.4-nano</text><text x="999" y="264" font-size="12.5">says what the camera sees</text>
+          <text x="999" y="312" font-size="15" font-weight="700">gpt-4o-mini-transcribe</text><text x="999" y="332" font-size="12.5">meeting notes</text>
+          <text x="999" y="380" font-size="15" font-weight="700">Exa</text><text x="999" y="400" font-size="12.5">practice references, optional</text>
+          <text x="999" y="436" font-size="12" font-style="italic">wake word stays on the Mac ·</text>
+          <text x="999" y="452" font-size="12" font-style="italic">Exa gets topic + level, never the kid's work</text>
+        </g>
+      </svg>
+    </section>
+
+    <!-- 8 not a homework machine -->
+    <section class="slide" aria-label="not a homework answer machine">
+      <button class="clip" type="button" data-film="54" data-play="1"><img src="film/ch06.jpg" alt=""><span><span class="clip__t">▶ 0:54</span>in the film</span></button>
+      <div class="grid teacher">
+        <div class="teacher__left">
+          <div class="head"><span class="kicker">the other half · for learners</span><h2>Not a homework answer machine.</h2></div>
+          <p class="lede">More like a patient teacher who knows when to be small.</p>
+          <p class="hand" style="color: var(--ink-soft)">the goal is the next thought.</p>
+          <div class="ladder"><span class="pill pill--sun">nudge</span><span class="arrow">→</span><span class="pill pill--teal">check</span><span class="arrow">→</span><span class="pill" style="background: var(--pink)">one step</span></div>
+        </div>
+        <div class="grid" style="gap: 26px; margin-top: 30px;">
+          <div class="card note sh-sun tilt-l"><span class="note__who">the kid</span><h3>“I got stuck right here.”</h3><p>They want help without losing the feeling of solving it.</p></div>
+          <div class="card note sh-teal tilt-r"><span class="note__who">the grown-up</span><h3>“Please keep them thinking.”</h3><p>A helper that explains the next move, not the whole game.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9 why it matters -->
+    <section class="slide research" aria-label="why it matters">
+      <div class="head"><span class="kicker">why it matters · the film skips the numbers, so here they are</span><h2>Fraction gaps don't fix themselves.</h2></div>
+      <div class="grid g3">
+        <div class="card stat sh-teal"><span class="stat__num">71%</span><p>of UC Berkeley Calculus I students tested ready or nearly ready, 2018–2020</p></div>
+        <div class="card stat sh-pink"><span class="stat__num">44%</span><p>tested ready or nearly ready, 2021–2023</p></div>
+        <div class="card stat sh-sun"><span class="stat__num">1 in 3+</span><p>had severe math gaps in 2022–23. The most common score was zero.</p></div>
+      </div>
+      <figure class="quote">
+        <blockquote>“Office hours that should be spent discussing integrals instead become lessons on fractions and basic algebra you would expect students to learn in middle school.”</blockquote>
+        <cite>Zvezdelina Stankova, mathematics professor, UC Berkeley</cite>
+      </figure>
+      <p class="source">Source: Stankova's op-ed in the San Francisco Standard, Aug 15, 2026, reported by the California Post (Anthony Blair), Aug 16, 2026. Figures are from a diagnostic exam given to Calculus I students.</p>
+    </section>
+
+    <!-- 10 the lesson -->
+    <section class="slide lesson" aria-label="a teacher-like loop with a real whiteboard">
+      <button class="clip" type="button" data-film="66" data-play="1"><img src="film/ch07.jpg" alt=""><span><span class="clip__t">▶ 1:06</span>in the film</span></button>
+      <div class="head"><span class="kicker">show &amp; tell · a math lesson</span><h2>A teacher-like loop, with a real whiteboard.</h2></div>
+      <div class="lesson__body">
+        <div class="lesson__left">
+          <span class="kicker" style="font-size: 26px">the learner says:</span>
+          <p class="said">“Okay eve, I want<br>to do a math lesson!”</p>
+          <ol class="steps">
+            <li><i>1</i>pick a topic</li>
+            <li><i>2</i>bring a problem</li>
+            <li><i>3</i>write your ideas</li>
+          </ol>
+          <div class="tags"><span class="tag tag--branch">on a branch</span><span class="hand" style="font-size: 22px; color: var(--ink-soft)">the real lesson screen →</span></div>
+        </div>
+        <figure class="shot">
+          <img src="web-lesson.png" alt="The eve lesson screen: the problem Solve 2x + 3 = 11, a dotted whiteboard, a hint card, eve's one step in its own panel, and the buttons Give me a hint, Check my work and Show one step">
+        </figure>
+      </div>
+      <div class="lesson__foot">
+        <span class="hand" style="margin-left: 0">topic + level</span><span class="arrow">→</span><span class="pill pill--dashed">Exa · references</span><span class="arrow">→</span><span class="pill pill--sun">Astra · adapted problem</span>
+        <span class="hand">optional practice search · learner work stays out of Exa</span>
+      </div>
+    </section>
+
+    <!-- 11 the loop on paper -->
+    <section class="slide flow-slide" aria-label="every path leads to the whiteboard">
+      <div class="head"><span class="kicker">the loop on paper · learn a topic, or bring a problem</span><h2>Every path leads to the whiteboard.</h2></div>
+      <div class="flow">
+        <svg viewBox="0 0 960 620" role="img" aria-label="Lesson flow: the kid picks learn a topic or help with a problem, both lead to a whiteboard, the kid picks hint, check my work or show one step, a check asks if the writing is clear, the steps are valid and the work is finished, then eve wraps up.">
+          <defs>
+            <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#1F3A78"></path></marker>
+          </defs>
+          <g fill="none" stroke="#1F3A78" stroke-width="2.2" marker-end="url(#arr)">
+            <path d="M400 68 V90 H200 V108"></path><path d="M560 68 V90 H760 V108"></path>
+            <path d="M200 170 V198"></path><path d="M760 170 V198"></path>
+            <path d="M200 260 V330 H328"></path><path d="M760 260 V330 H632"></path>
+            <path d="M440 360 V382 H210 V398"></path><path d="M480 360 V398"></path><path d="M520 360 V382 H750 V398"></path>
+            <path d="M480 460 V486 H290 V508"></path>
+            <path d="M370 532 H398"></path><path d="M560 532 H588"></path><path d="M750 532 H778"></path>
+          </g>
+          <g font-family="Andika, sans-serif" fill="#1F3A78" text-anchor="middle">
+            <rect x="330" y="20" width="300" height="48" rx="24" fill="#79C6B2" stroke="#1F3A78" stroke-width="2.2"></rect>
+            <text x="480" y="50" font-size="15" font-weight="700">“Okay eve, a math lesson!”</text>
+            <text x="300" y="84" font-size="12.5">learn</text><text x="660" y="84" font-size="12.5">get help</text>
+            <rect x="64" y="114" width="280" height="60" rx="8" fill="#F4C3D4"></rect>
+            <rect x="60" y="110" width="280" height="60" rx="8" fill="#FFFDF8" stroke="#1F3A78" stroke-width="2.2"></rect>
+            <text x="200" y="136" font-size="15" font-weight="700">Learn a topic</text><text x="200" y="156" font-size="12.5">kid picks a topic and a level</text>
+            <rect x="64" y="204" width="280" height="60" rx="8" fill="#F4C3D4"></rect>
+            <rect x="60" y="200" width="280" height="60" rx="8" fill="#FFFDF8" stroke="#1F3A78" stroke-width="2.2"></rect>
+            <text x="200" y="226" font-size="15" font-weight="700">eve makes a problem</text><text x="200" y="246" font-size="12.5">pitched at that level</text>
+            <rect x="624" y="114" width="280" height="60" rx="8" fill="#F4C3D4"></rect>
+            <rect x="620" y="110" width="280" height="60" rx="8" fill="#FFFDF8" stroke="#1F3A78" stroke-width="2.2"></rect>
+            <text x="760" y="136" font-size="15" font-weight="700">Help with a problem</text><text x="760" y="156" font-size="12.5">paste a screenshot, or write it out</text>
+            <rect x="624" y="204" width="280" height="60" rx="8" fill="#F4C3D4"></rect>
+            <rect x="620" y="200" width="280" height="60" rx="8" fill="#FFFDF8" stroke="#1F3A78" stroke-width="2.2"></rect>
+            <text x="760" y="226" font-size="15" font-weight="700">eve reads it back</text><text x="760" y="246" font-size="12.5">and asks if it got anything wrong</text>
+            <rect x="334" y="304" width="300" height="60" rx="8" fill="#7FA2DE"></rect>
+            <rect x="330" y="300" width="300" height="60" rx="8" fill="#FFFDF8" stroke="#1F3A78" stroke-width="2.2"></rect>
+            <text x="480" y="326" font-size="15" font-weight="700">The whiteboard</text><text x="480" y="346" font-size="12.5">kid writes with a mouse or a pen</text>
+            <text x="640" y="376" font-size="12.5" font-style="italic">kid picks</text>
+            <rect x="120" y="400" width="180" height="60" rx="12" fill="#F1C85B" stroke="#1F3A78" stroke-width="2.2"></rect>
+            <text x="210" y="426" font-size="15" font-weight="700">Give me a hint</text><text x="210" y="446" font-size="12.5">never does a step</text>
+            <text x="210" y="484" font-size="12.5" font-style="italic">↺ back to the board</text>
+            <rect x="390" y="400" width="180" height="60" rx="12" fill="#79C6B2" stroke="#1F3A78" stroke-width="2.2"></rect>
+            <text x="480" y="426" font-size="15" font-weight="700">Check my work</text><text x="480" y="446" font-size="12.5">eve reviews it</text>
+            <rect x="660" y="400" width="180" height="60" rx="12" fill="#E68AAE" stroke="#1F3A78" stroke-width="2.2"></rect>
+            <text x="750" y="426" font-size="15" font-weight="700">Show one step</text><text x="750" y="446" font-size="12.5">exactly one, explained</text>
+            <text x="750" y="484" font-size="12.5" font-style="italic">↺ back to the board</text>
+            <rect x="210" y="510" width="160" height="44" rx="22" fill="#FFFDF8" stroke="#1F3A78" stroke-width="2.2"></rect>
+            <text x="290" y="537" font-size="14" font-weight="700">Can I read it?</text>
+            <rect x="400" y="510" width="160" height="44" rx="22" fill="#FFFDF8" stroke="#1F3A78" stroke-width="2.2"></rect>
+            <text x="480" y="537" font-size="14" font-weight="700">Are the steps right?</text>
+            <rect x="590" y="510" width="160" height="44" rx="22" fill="#FFFDF8" stroke="#1F3A78" stroke-width="2.2"></rect>
+            <text x="670" y="537" font-size="14" font-weight="700">Is it finished?</text>
+            <text x="384" y="524" font-size="11.5">yes</text><text x="574" y="524" font-size="11.5">yes</text><text x="764" y="524" font-size="11.5">yes</text>
+            <text x="290" y="578" font-size="12.5">no: asks what it says</text>
+            <text x="480" y="578" font-size="12.5">no: explains the first slip</text>
+            <text x="670" y="578" font-size="12.5">no: keep writing</text>
+            <rect x="784" y="504" width="160" height="60" rx="8" fill="#F1C85B"></rect>
+            <rect x="780" y="500" width="160" height="60" rx="8" fill="#FFFDF8" stroke="#1F3A78" stroke-width="2.2"></rect>
+            <text x="860" y="526" font-size="15" font-weight="700">Wrap up</text><text x="860" y="546" font-size="12.5">sums up the method</text>
+            <text x="860" y="590" font-size="12.5">then: another problem,</text><text x="860" y="607" font-size="12.5">a new topic, or finish</text>
+          </g>
+        </svg>
+      </div>
+    </section>
+
+    <!-- 12 the teaching rule -->
+    <section class="slide rule-slide" aria-label="the whole answer is never on the menu">
+      <button class="clip" type="button" data-film="90" data-play="1"><img src="film/ch08.jpg" alt=""><span><span class="clip__t">▶ 1:30</span>in the film</span></button>
+      <div class="head"><span class="kicker">the teaching rule</span><h2>The whole answer is <mark>never on the menu.</mark></h2></div>
+      <div class="grid g3">
+        <div class="rung rung--hint"><h3>Give me a hint</h3><p class="say">“What could you do to both sides?”</p><p>A nudge. It never performs a step.</p></div>
+        <div class="rung rung--check"><h3>Check my work</h3><p class="say">“Let's look at line two.”</p><ol><li>Can I read it?</li><li>Are the steps right?</li><li>Is it finished?</li></ol><p>It explains the <strong>first</strong> slip only.</p></div>
+        <div class="rung rung--step"><h3>Show one step</h3><p class="say">“Here's the next line, and why.”</p><p>Exactly one transformation, in its own panel. Tap again for the next.</p></div>
+      </div>
+      <p class="hand">Your board stays yours. eve adds the smallest useful move.</p>
+    </section>
+
+    <!-- 13 two kinds of help -->
+    <section class="slide" aria-label="the everyday build and the teacherly bit">
+      <button class="clip" type="button" data-film="102" data-play="1"><img src="film/ch09.jpg" alt=""><span><span class="clip__t">▶ 1:42</span>in the film</span></button>
+      <div class="head"><span class="kicker">same eve · two kinds of help</span><h2>The everyday build and the teacherly bit.</h2></div>
+      <div class="two">
+        <span class="bridge">one physical eve</span>
+        <div class="card sh-sun">
+          <span class="kicker">at the desk · <span class="tag tag--today">works today</span></span>
+          <h3>Listen. Look. Act. Remember.</h3>
+          <div class="pills"><span class="pill pill--sun">weather</span><span class="pill pill--sun">find my mug</span><span class="pill pill--sun">open Spotify</span><span class="pill pill--sun">go explore</span></div>
+        </div>
+        <div class="card sh-teal">
+          <span class="kicker">in a lesson · <span class="tag tag--branch">on a branch</span></span>
+          <h3>Nudge. Check. Show one step.</h3>
+          <div class="pills"><span class="pill pill--teal">topic or problem</span><span class="pill pill--teal">whiteboard</span><span class="pill pill--teal">hint</span><span class="pill pill--teal">recap</span></div>
+        </div>
+      </div>
+      <div class="status">
+        <div class="status__row"><span class="tag tag--today">works today</span><span>The robot and the eve app on your Mac: everything in chapters 2 to 5.</span></div>
+        <div class="status__row"><span class="tag tag--branch">on a branch</span><span>Math lessons, whiteboard and tutor: built and live-tested on <strong>eve-lesson-tool</strong> on Sep 12, 2026. Not merged into main yet.</span></div>
+        <div class="status__row"><span class="tag">next</span><span>Merge the lessons. Decide which grown-up features a kid's eve keeps: Mac control, web search, photos.</span></div>
+      </div>
+    </section>
+
+    <!-- 14 end -->
+    <section class="slide title" aria-label="see you">
+      <svg class="decor" viewBox="0 0 1000 480" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <defs>
+          <pattern id="dots2" width="16" height="16" patternUnits="userSpaceOnUse"><rect x="4" y="4" width="6" height="6" rx="1" fill="#E7B44A"></rect></pattern>
+          <pattern id="waves2" width="40" height="24" patternUnits="userSpaceOnUse"><path d="M0 12 C10 0 20 0 20 12 S30 24 40 12" fill="none" stroke="#D97A9E" stroke-width="5"></path></pattern>
+          <pattern id="gridp2" width="22" height="22" patternUnits="userSpaceOnUse"><rect x="5" y="5" width="11" height="11" fill="none" stroke="#9BB6E6" stroke-width="2"></rect></pattern>
+        </defs>
+        <circle cx="40" cy="60" r="130" fill="#7FA2DE"></circle>
+        <circle cx="40" cy="60" r="88" fill="none" stroke="#9BB6E6" stroke-width="16"></circle>
+        <circle cx="40" cy="60" r="46" fill="none" stroke="#9BB6E6" stroke-width="16"></circle>
+        <path d="M-20 130 C70 110 130 190 118 270 C108 330 40 340 -20 330 Z" fill="#79C6B2"></path>
+        <polygon points="120,80 190,24 212,62 270,14 292,54 340,16 330,46 278,96 256,58 206,104 184,68 132,116" fill="#F1C85B"></polygon>
+        <polygon points="-10,300 128,288 138,430 -10,440" fill="#F1C85B"></polygon>
+        <polygon points="-10,300 128,288 138,430 -10,440" fill="url(#dots2)"></polygon>
+        <polygon points="80,490 150,370 196,440 300,404 250,490" fill="#E68AAE"></polygon>
+        <polygon points="690,-10 910,-10 950,84 856,152 704,112" fill="#E68AAE"></polygon>
+        <polygon points="690,-10 910,-10 950,84 856,152 704,112" fill="url(#waves2)"></polygon>
+        <path d="M860 124 C930 90 1010 104 1010 150 L1010 320 C960 344 902 304 882 254 C852 204 820 154 860 124 Z" fill="#79C6B2"></path>
+        <polygon points="892,204 1010,180 1010,330 952,388 884,300" fill="#F1C85B"></polygon>
+        <polygon points="892,204 1010,180 1010,330 952,388 884,300" fill="url(#dots2)"></polygon>
+        <polygon points="820,490 930,346 1010,364 1010,490" fill="#7FA2DE"></polygon>
+        <polygon points="820,490 930,346 1010,364 1010,490" fill="url(#gridp2)"></polygon>
+        <path d="M690 440 C750 366 858 350 904 382 L884 408 C842 388 772 400 730 460 Z" fill="#E68AAE"></path>
+      </svg>
+      <div class="title__inner">
+        <div>
+          <h1 class="wordmark">eve</h1>
+          <p class="title__sub">your desktop sidekick</p>
+          <div class="tags end__tags"><span class="tag tag--branch">voice</span><span class="tag tag--today">desk</span><span class="tag" style="background: var(--pink-soft)">learning</span></div>
+          <p class="title__cta"><button class="chunky" type="button" data-film="0" data-play="1">▶ Watch the film again</button></p>
+        </div>
+        <svg class="robot" viewBox="0 0 200 240" role="img" aria-label="eve, a small robot with a screen face that says see you!">
+          <defs><linearGradient id="lbl2" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#9DB3EE"></stop><stop offset="1" stop-color="#B98BD8"></stop></linearGradient></defs>
+          <rect x="68" y="168" width="64" height="30" fill="#8C90A0" stroke="#4D5160" stroke-width="2.5"></rect>
+          <rect x="46" y="194" width="108" height="38" rx="7" fill="#6F7384" stroke="#4D5160" stroke-width="2.5"></rect>
+          <circle cx="64" cy="220" r="5" fill="#4D5160"></circle><circle cx="136" cy="220" r="5" fill="#4D5160"></circle>
+          <g class="robot__head">
+            <rect x="22" y="10" width="156" height="34" rx="7" fill="url(#lbl2)" stroke="#5E5F98" stroke-width="2.5"></rect>
+            <text x="100" y="35" text-anchor="middle" font-family="Grandstander, sans-serif" font-weight="700" font-size="22" fill="#F4F4FB">eve</text>
+            <rect x="12" y="42" width="176" height="14" rx="4" fill="#A487D0" stroke="#5E5F98" stroke-width="2.5"></rect>
+            <rect x="30" y="52" width="140" height="122" rx="14" fill="#C3C6CF" stroke="#5C6070" stroke-width="3"></rect>
+            <rect x="42" y="62" width="116" height="100" rx="6" fill="#1B2350"></rect>
+            <path fill="#FF74D4" d="M72 75 H88 V80 H92 V94 H87 V89 H73 V94 H68 V80 H72 Z M112 75 H128 V80 H132 V94 H127 V89 H113 V94 H108 V80 H112 Z"></path>
+            <text class="robot__greet" x="100" y="134" text-anchor="middle" font-family="VT323, monospace" font-size="22" fill="#FF74D4">see you!</text>
+          </g>
+        </svg>
+      </div>
+      <div class="end__foot"><span class="src">open source · github.com/gurul/eveTinkerer</span><span class="hand">keep thinking.</span></div>
+    </section>
+  </div>
+</div>
+
+<nav class="controls" aria-label="Slideshow controls">
+  <button class="btn" id="btn-prev" type="button" aria-label="Previous slide">←</button>
+  <span class="count" id="count" aria-live="polite">1 / 14</span>
+  <button class="btn" id="btn-next" type="button" aria-label="Next slide">→</button>
+  <button class="btn btn--sun" id="narr-play" type="button">Narrate</button>
+  <button class="btn" id="narr-stop" type="button" disabled>Stop</button>
+  <span class="narr-status" id="narr-status" role="status" aria-live="polite"></span>
+  <button class="btn" id="btn-full" type="button">Full screen</button>
+</nav>
+
+<script>
+(() => {
+  // One segment per slide, in slide order. Written to be heard, not read.
+  const SEGMENTS = [
+    "This is eve, your desktop sidekick. A small robot with a screen for a face, that lives on your desk. This show and tell follows the launch film, chapter by chapter.",
+    "Here is the film. It runs just under two minutes. Press play, or pick a chapter on the right to jump to it. Every chapter also gets a slide of its own, coming up next.",
+    "First, the problem. When you are stuck, an answer isn't enough. At the desk it's a hundred tiny asks, like: eve, where is that file? In a lesson, a learner needs the next thought, like: where do I start? A search result can be right and the day can still be hard. What helps is knowing what to do next.",
+    "So, what is eve? A real robot on your desk. A physical head, a local Mac app, and a memory that stays useful. Inside the head: a camera, a screen face, a mic and speaker, two motors, twelve lights and a touch pad. It is real hardware, an M5 Stack Chan, and it works today.",
+    "You say it, eve routes it. Say: hey eve, where's my mug? It looks, finds, and answers. Questions take the light path: your voice, the live model, and a web search, so today's facts are checked, not guessed. Mac work takes the guarded path: a request goes to the task model, which clicks and types for you, asks before big actions, and stops any time. Not magic. A system with boundaries.",
+    "And it is a whole sidekick, not one trick. It uses your computer, searches the web, finds your mug, has moods, keeps a diary, dreams at night, takes photos, explores the room, dances, loves a head pat, lives in a desktop widget, takes meeting notes, remembers you, mirrors Claude Code, thinks hard, and asks before big actions. All on the desk, all works today.",
+    "Under the hood, the physical eve is one system. The robot runs its own firmware: the screen face, the head motors, the lights, the camera and the touch pad. A U S B cable carries frames and touches to the Mac, and state, captions and moves come back. The eve app on the Mac hears the wake word, routes questions and tasks, clicks and types with approvals, and keeps the memory. It calls one model for the voice, one for tools and computer use, one that describes the camera, one for meeting notes, and, for lessons, an optional practice search. A Mac app connects the body to the right model at the right moment.",
+    "The other half is for learners. eve is not a homework answer machine. It is more like a patient teacher who knows when to be small. The kid says: I got stuck right here. They want help without losing the feeling of solving it. The grown-up says: please keep them thinking. A helper that explains the next move, not the whole game. The goal is the next thought.",
+    "Why does this matter? Fraction gaps don't fix themselves. A math professor at U C Berkeley reports that from 2018 to 2020, seventy one percent of her Calculus One students tested ready or nearly ready. From 2021 to 2023, only forty four percent did. In 2022 and 2023, more than a third had severe gaps, and the most common score was zero. Her office hours turn into lessons on fractions. eve helps kids get fractions right years before calculus.",
+    "Here is the math lesson: a teacher-like loop, with a real whiteboard. The learner says: okay eve, I want to do a math lesson. They pick a topic, or bring a problem, and write their ideas on the board. This is the real lesson screen: the problem on top, a dotted whiteboard, eve's hint and eve's one step in their own panel, and three buttons: give me a hint, check my work, show one step. For a new topic, eve can pull practice references, and the tutor writes an adapted problem. The learner's own work never leaves the board.",
+    "Every path leads to the whiteboard. Learn a topic, and eve makes a problem at the kid's level. Or get help with a problem, by pasting a screenshot or writing it out, and eve reads it back. On the board the kid picks a hint, a check, or one step. A check asks: can I read it, are the steps right, is it finished? Then eve wraps up with the method, and the kid picks another problem, a new topic, or finishes.",
+    "The teaching rule: the whole answer is never on the menu. Give me a hint is a nudge that never performs a step. Check my work looks at what is on the board and explains only the first slip. Show one step writes exactly one transformation, in its own panel. Your board stays yours. eve adds the smallest useful move.",
+    "Same eve, two kinds of help. At the desk it listens, looks, acts and remembers, and that works today. In a lesson it nudges, checks, and shows one step. That is built and live-tested on a branch, and not merged into main yet. One physical eve bridges both. Next: merge the lessons, and decide which grown-up features a kid's eve keeps.",
+    "eve. Your desktop sidekick. Voice, desk, and learning. It is open source on GitHub. Keep thinking."
+  ];
+
+  const stage = document.getElementById("stage");
+  const viewport = document.getElementById("viewport");
+  const slides = Array.from(stage.querySelectorAll(".slide"));
+  const countEl = document.getElementById("count");
+  const prevBtn = document.getElementById("btn-prev");
+  const nextBtn = document.getElementById("btn-next");
+  const fullBtn = document.getElementById("btn-full");
+  const playBtn = document.getElementById("narr-play");
+  const stopBtn = document.getElementById("narr-stop");
+  const statusEl = document.getElementById("narr-status");
+  const video = document.getElementById("film");
+  const screen = document.getElementById("screen");
+  const chapters = Array.from(document.querySelectorAll("#chapters .ch"));
+  const FILM = slides.findIndex(s => s.classList.contains("film"));
+  let current = 0;
+
+  function fit() {
+    const w = viewport.clientWidth, h = viewport.clientHeight;
+    const s = Math.min(w / 1280, h / 720);
+    stage.style.setProperty("--s", String(Math.max(0.1, s)));
+  }
+  window.addEventListener("resize", fit);
+  fit();
+
+  function show(i, fromNarration) {
+    const was = current;
+    current = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach((s, j) => {
+      s.classList.toggle("is-active", j === current);
+      s.setAttribute("aria-hidden", j === current ? "false" : "true");
+    });
+    countEl.textContent = (current + 1) + " / " + slides.length;
+    prevBtn.disabled = current === 0;
+    nextBtn.disabled = current === slides.length - 1;
+    try { history.replaceState(null, "", "#" + (current + 1)); } catch (e) {}
+    if (was === FILM && current !== FILM && video && !video.paused) video.pause();
+    if (!fromNarration && state === "playing") restartAt(current);
+    else if (!fromNarration && state === "paused") stopNarration();
+  }
+
+  // The film: chapters seek it, chips on chapter slides jump back into it.
+  function goFilm(t, play) {
+    show(FILM);
+    if (!video) return;
+    const seek = () => { try { video.currentTime = t; } catch (e) {} };
+    if (video.readyState >= 1) seek(); else video.addEventListener("loadedmetadata", seek, { once: true });
+    if (play) { const p = video.play(); if (p && p.catch) p.catch(() => {}); }
+    markChapter(t);
+  }
+  function markChapter(t) {
+    let idx = -1;
+    chapters.forEach((c, i) => { if (t >= Number(c.dataset.t)) idx = i; });
+    chapters.forEach((c, i) => c.classList.toggle("is-now", i === idx));
+  }
+  chapters.forEach(c => c.addEventListener("click", () => goFilm(Number(c.dataset.t), true)));
+  document.querySelectorAll("[data-film]").forEach(b => b.addEventListener("click", () => goFilm(Number(b.dataset.film), b.dataset.play === "1")));
+  if (video) {
+    video.addEventListener("timeupdate", () => markChapter(video.currentTime));
+    video.addEventListener("play", () => { if (state !== "idle") stopNarration("Paused for the film."); });
+    const missing = () => screen.classList.add("is-missing");
+    video.addEventListener("error", missing);
+    const src = video.querySelector("source");
+    if (src) src.addEventListener("error", missing);
+  }
+
+  prevBtn.addEventListener("click", () => show(current - 1));
+  nextBtn.addEventListener("click", () => show(current + 1));
+  stage.addEventListener("click", (e) => {
+    if (e.target.closest("a, button, video, .screen")) return;
+    const r = stage.getBoundingClientRect();
+    show(e.clientX < r.left + r.width / 3 ? current - 1 : current + 1);
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.target.closest && e.target.closest("button, video") && (e.key === " " || e.key === "Enter")) return;
+    if (["ArrowRight", "PageDown", " "].includes(e.key)) { e.preventDefault(); show(current + 1); }
+    else if (["ArrowLeft", "PageUp"].includes(e.key)) { e.preventDefault(); show(current - 1); }
+    else if (e.key === "Home") show(0);
+    else if (e.key === "End") show(slides.length - 1);
+    else if (e.key === "f" || e.key === "F") toggleFull();
+  });
+
+  function toggleFull() {
+    const doc = document;
+    try {
+      if (doc.fullscreenElement) doc.exitFullscreen();
+      else if (doc.documentElement.requestFullscreen) doc.documentElement.requestFullscreen().catch(() => { fullBtn.disabled = true; fullBtn.title = "Full screen is blocked here"; });
+      else { fullBtn.disabled = true; }
+    } catch (e) { fullBtn.disabled = true; }
+  }
+  fullBtn.addEventListener("click", toggleFull);
+  document.addEventListener("fullscreenchange", () => { fullBtn.textContent = document.fullscreenElement ? "Exit full screen" : "Full screen"; setTimeout(fit, 50); });
+
+  // Narration: the browser's own voice, one segment per slide.
+  const synth = window.speechSynthesis;
+  const words = SEGMENTS.join(" ").split(/\s+/).length;
+  const minutes = Math.max(1, Math.round(words / 150));
+  const restText = SEGMENTS.length + " parts, about " + minutes + " min";
+  statusEl.textContent = restText;
+  let state = "idle";
+  let runId = 0;
+
+  function pickVoice() {
+    const voices = (synth && synth.getVoices()) || [];
+    if (!voices.length) return null;
+    const en = voices.filter(v => /^en(-|_|$)/i.test(v.lang));
+    const pool = en.length ? en : voices;
+    return pool.find(v => /samantha|google us english|aria|jenny|natural/i.test(v.name)) || pool.find(v => v.default) || pool[0];
+  }
+  function setUi() {
+    playBtn.textContent = state === "playing" ? "Pause" : state === "paused" ? "Resume" : "Narrate";
+    stopBtn.disabled = state === "idle";
+  }
+  function stopNarration(message) {
+    runId++;
+    if (synth) synth.cancel();
+    state = "idle";
+    setUi();
+    statusEl.textContent = message || restText;
+  }
+  function speak(i, id) {
+    if (id !== runId) return;
+    if (i >= SEGMENTS.length) { stopNarration("Finished. " + restText); return; }
+    show(i, true);
+    statusEl.textContent = "Part " + (i + 1) + " of " + SEGMENTS.length;
+    const u = new SpeechSynthesisUtterance(SEGMENTS[i]);
+    const v = pickVoice();
+    if (v) u.voice = v;
+    u.pitch = 1.05;
+    u.onend = () => { if (id === runId && state === "playing") speak(i + 1, id); };
+    u.onerror = (e) => {
+      if (e.error === "interrupted" || e.error === "canceled") return;
+      if (id === runId) stopNarration("Narration stopped: " + e.error);
+    };
+    synth.speak(u);
+  }
+  function restartAt(i) {
+    synth.cancel();
+    if (video && !video.paused) video.pause();
+    state = "playing";
+    setUi();
+    const id = ++runId;
+    speak(i, id);
+  }
+
+  if (!synth || typeof window.SpeechSynthesisUtterance !== "function") {
+    playBtn.disabled = true;
+    stopBtn.disabled = true;
+    statusEl.textContent = "Narration isn't available in this browser.";
+  } else {
+    playBtn.addEventListener("click", () => {
+      if (state === "idle") restartAt(current);
+      else if (state === "playing") { synth.pause(); state = "paused"; setUi(); statusEl.textContent = "Paused on part " + (current + 1); }
+      else { synth.resume(); state = "playing"; setUi(); statusEl.textContent = "Part " + (current + 1) + " of " + SEGMENTS.length; }
+    });
+    stopBtn.addEventListener("click", () => stopNarration());
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden && state !== "idle") stopNarration("Stopped: the tab was hidden.");
+    });
+    window.addEventListener("beforeunload", () => synth.cancel());
+  }
+
+  const fromHash = parseInt((location.hash || "").slice(1), 10);
+  show(Number.isFinite(fromHash) ? fromHash - 1 : 0, true);
+  setUi();
+})();
+</script>

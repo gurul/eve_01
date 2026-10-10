@@ -1,0 +1,5 @@
+name = "eve-verification"
+defaultTargets = ["Eve"]
+
+[[lean_lib]]
+name = "Eve"

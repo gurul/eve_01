@@ -1,0 +1,7043 @@
+{
+ "captured": {
+  "ax_candidates_sha": "96599e77c9620855df3314719f9bc3f8ef40a57293c021378302e525267a9fce",
+  "macos": "26.6.2",
+  "app_version": "15.0",
+  "at": "2026-09-21T02:44:39-07:00",
+  "truncated": false,
+  "redacted": true
+ },
+ "screen": [
+  1512,
+  982
+ ],
+ "raw": {
+  "app": "System Settings",
+  "bundle": "com.apple.systempreferences",
+  "pid": 52510,
+  "title": "Appearance",
+  "fullscreen": false,
+  "node_count": 195,
+  "truncated": false,
+  "secs": 0.1036,
+  "root": {
+   "role": "AXWindow",
+   "subrole": "AXStandardWindow",
+   "title": "Appearance",
+   "description": "",
+   "value": null,
+   "frame": [
+    425.0,
+    33.0,
+    723.0,
+    865.0
+   ],
+   "actions": [],
+   "enabled": true,
+   "focused": false,
+   "children": [
+    {
+     "role": "AXGroup",
+     "subrole": "AXHostingView",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      425.0,
+      33.0,
+      723.0,
+      865.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [
+      {
+       "role": "AXSplitGroup",
+       "subrole": "",
+       "title": "",
+       "description": "",
+       "value": null,
+       "frame": [
+        425.0,
+        33.0,
+        723.0,
+        865.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [
+        {
+         "role": "AXGroup",
+         "subrole": "AXHostingView",
+         "title": "",
+         "description": "",
+         "value": null,
+         "frame": [
+          433.0,
+          41.0,
+          223.0,
+          849.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [
+          {
+           "role": "AXScrollArea",
+           "subrole": "",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            433.0,
+            131.0,
+            223.0,
+            759.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXOutline",
+             "subrole": "",
+             "title": "",
+             "description": "Sidebar",
+             "value": null,
+             "frame": [
+              433.0,
+              131.0,
+              223.0,
+              759.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": false,
+             "children": [
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                131.0,
+                206.0,
+                0.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  131.0,
+                  186.0,
+                  0.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXGroup",
+                   "subrole": "AXHostingView",
+                   "title": "",
+                   "description": "",
+                   "value": null,
+                   "frame": [
+                    447.0,
+                    131.0,
+                    190.0,
+                    0.0
+                   ],
+                   "actions": [],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                131.0,
+                206.0,
+                46.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  131.0,
+                  186.0,
+                  46.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Sam Rivera, Apple Account",
+                   "frame": [
+                    449.0,
+                    135.0,
+                    170.0,
+                    38.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                190.0,
+                206.0,
+                0.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  190.0,
+                  186.0,
+                  0.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXGroup",
+                   "subrole": "AXHostingView",
+                   "title": "",
+                   "description": "",
+                   "value": null,
+                   "frame": [
+                    447.0,
+                    190.0,
+                    190.0,
+                    0.0
+                   ],
+                   "actions": [],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                190.0,
+                206.0,
+                40.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  190.0,
+                  186.0,
+                  40.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "Some iCloud Data Isn’t Syncing, 1 new item",
+                   "value": "1",
+                   "frame": [
+                    449.0,
+                    194.0,
+                    174.0,
+                    32.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                230.0,
+                206.0,
+                67.5
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  230.0,
+                  186.0,
+                  67.5
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Add AppleCare Coverage, There are 52 days left to protect your AirPods against accidental damage.",
+                   "frame": [
+                    449.0,
+                    234.0,
+                    173.5,
+                    59.5
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                310.5,
+                206.0,
+                0.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  310.5,
+                  186.0,
+                  0.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXGroup",
+                   "subrole": "AXHostingView",
+                   "title": "",
+                   "description": "",
+                   "value": null,
+                   "frame": [
+                    447.0,
+                    310.5,
+                    190.0,
+                    0.0
+                   ],
+                   "actions": [],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                310.5,
+                206.0,
+                32.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  310.5,
+                  186.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Wi‑Fi",
+                   "frame": [
+                    447.0,
+                    314.5,
+                    59.5,
+                    24.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                342.5,
+                206.0,
+                32.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  342.5,
+                  186.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Bluetooth",
+                   "frame": [
+                    447.0,
+                    346.5,
+                    86.0,
+                    24.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                374.5,
+                206.0,
+                32.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  374.5,
+                  186.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Network",
+                   "frame": [
+                    447.0,
+                    378.5,
+                    78.0,
+                    24.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                406.5,
+                206.0,
+                32.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  406.5,
+                  186.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Battery",
+                   "frame": [
+                    447.0,
+                    410.5,
+                    71.5,
+                    24.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                451.5,
+                206.0,
+                0.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  451.5,
+                  186.0,
+                  0.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXGroup",
+                   "subrole": "AXHostingView",
+                   "title": "",
+                   "description": "",
+                   "value": null,
+                   "frame": [
+                    447.0,
+                    451.5,
+                    190.0,
+                    0.0
+                   ],
+                   "actions": [],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                451.5,
+                206.0,
+                32.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  451.5,
+                  186.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "General",
+                   "frame": [
+                    447.0,
+                    455.5,
+                    74.5,
+                    24.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                483.49999999999994,
+                206.0,
+                32.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  483.49999999999994,
+                  186.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Accessibility",
+                   "frame": [
+                    447.0,
+                    487.5,
+                    103.0,
+                    24.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                515.5,
+                206.0,
+                32.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  515.5,
+                  186.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Appearance",
+                   "frame": [
+                    447.0,
+                    519.5,
+                    100.0,
+                    24.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                547.5,
+                206.0,
+                32.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  547.5,
+                  186.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Apple Intelligence & Siri",
+                   "frame": [
+                    447.0,
+                    551.5,
+                    171.0,
+                    24.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                579.5,
+                206.0,
+                32.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  579.5,
+                  186.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Desktop & Dock",
+                   "frame": [
+                    447.0,
+                    583.5,
+                    125.0,
+                    24.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                611.5,
+                206.0,
+                32.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  611.5,
+                  186.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Displays",
+                   "frame": [
+                    447.0,
+                    615.5,
+                    78.0,
+                    24.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                643.5,
+                206.0,
+                32.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  643.5,
+                  186.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Menu Bar",
+                   "frame": [
+                    447.0,
+                    647.5,
+                    85.0,
+                    24.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                675.5,
+                206.0,
+                32.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  675.5,
+                  186.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Spotlight",
+                   "frame": [
+                    447.0,
+                    679.5,
+                    82.0,
+                    24.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                707.5,
+                206.0,
+                32.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  707.5,
+                  186.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Wallpaper",
+                   "frame": [
+                    447.0,
+                    711.5,
+                    87.5,
+                    24.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                752.5,
+                206.0,
+                0.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  752.5,
+                  186.0,
+                  0.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXGroup",
+                   "subrole": "AXHostingView",
+                   "title": "",
+                   "description": "",
+                   "value": null,
+                   "frame": [
+                    447.0,
+                    752.5,
+                    190.0,
+                    0.0
+                   ],
+                   "actions": [],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                752.5,
+                206.0,
+                32.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  752.5,
+                  186.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Notifications",
+                   "frame": [
+                    447.0,
+                    756.5,
+                    104.0,
+                    24.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                784.5,
+                206.0,
+                32.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  784.5,
+                  186.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Sound",
+                   "frame": [
+                    447.0,
+                    788.5,
+                    66.0,
+                    24.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                816.5,
+                206.0,
+                32.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  816.5,
+                  186.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Focus",
+                   "frame": [
+                    447.0,
+                    820.5,
+                    63.5,
+                    24.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                848.5,
+                206.0,
+                32.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  848.5,
+                  186.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Screen Time",
+                   "frame": [
+                    447.0,
+                    852.5,
+                    103.0,
+                    24.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                893.5,
+                206.0,
+                0.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  893.5,
+                  186.0,
+                  0.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXGroup",
+                   "subrole": "AXHostingView",
+                   "title": "",
+                   "description": "",
+                   "value": null,
+                   "frame": [
+                    447.0,
+                    893.5,
+                    190.0,
+                    0.0
+                   ],
+                   "actions": [],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                893.5,
+                206.0,
+                32.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  893.5,
+                  186.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Lock Screen",
+                   "frame": [
+                    0.0,
+                    982.0,
+                    0.0,
+                    0.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                925.5,
+                206.0,
+                32.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  925.5,
+                  186.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Privacy & Security",
+                   "frame": [
+                    0.0,
+                    982.0,
+                    0.0,
+                    0.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                957.5,
+                206.0,
+                32.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  957.5,
+                  186.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Touch ID & Password",
+                   "frame": [
+                    0.0,
+                    982.0,
+                    0.0,
+                    0.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                989.5,
+                206.0,
+                32.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  989.5,
+                  186.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Users & Groups",
+                   "frame": [
+                    0.0,
+                    982.0,
+                    0.0,
+                    0.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                1034.5,
+                206.0,
+                19.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  1034.5,
+                  186.0,
+                  19.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXGroup",
+                   "subrole": "AXHostingView",
+                   "title": "",
+                   "description": "",
+                   "value": null,
+                   "frame": [
+                    447.0,
+                    1053.5,
+                    190.0,
+                    0.0
+                   ],
+                   "actions": [],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                1053.5,
+                206.0,
+                32.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  1053.5,
+                  186.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Internet Accounts",
+                   "frame": [
+                    0.0,
+                    982.0,
+                    0.0,
+                    0.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                1085.5,
+                206.0,
+                32.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  1085.5,
+                  186.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Game Center",
+                   "frame": [
+                    0.0,
+                    982.0,
+                    0.0,
+                    0.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                1117.5,
+                206.0,
+                32.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  1117.5,
+                  186.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "iCloud",
+                   "frame": [
+                    0.0,
+                    982.0,
+                    0.0,
+                    0.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                1149.5,
+                206.0,
+                32.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  1149.5,
+                  186.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Wallet & Apple Pay",
+                   "frame": [
+                    0.0,
+                    982.0,
+                    0.0,
+                    0.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                1194.5,
+                206.0,
+                19.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  1194.5,
+                  186.0,
+                  19.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXGroup",
+                   "subrole": "AXHostingView",
+                   "title": "",
+                   "description": "",
+                   "value": null,
+                   "frame": [
+                    447.0,
+                    1213.5,
+                    190.0,
+                    0.0
+                   ],
+                   "actions": [],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                1213.5,
+                206.0,
+                32.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  1213.5,
+                  186.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Keyboard",
+                   "frame": [
+                    0.0,
+                    982.0,
+                    0.0,
+                    0.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                1245.5,
+                206.0,
+                32.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  1245.5,
+                  186.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Trackpad",
+                   "frame": [
+                    0.0,
+                    982.0,
+                    0.0,
+                    0.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXRow",
+               "subrole": "AXOutlineRow",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                433.0,
+                1277.5,
+                206.0,
+                32.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXCell",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  443.0,
+                  1277.5,
+                  186.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": true,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Printers & Scanners",
+                   "frame": [
+                    0.0,
+                    982.0,
+                    0.0,
+                    0.0
+                   ],
+                   "actions": [
+                    "AXShowMenu"
+                   ],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXOutline",
+                    "AXRow",
+                    "AXCell"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXOutline",
+                  "AXRow"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              },
+              {
+               "role": "AXColumn",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                443.0,
+                131.0,
+                186.0,
+                1188.5
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXScrollArea",
+                "AXOutline"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXGroup",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXScrollArea"
+             ]
+            },
+            {
+             "role": "AXScrollBar",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": 0.0,
+             "frame": [
+              638.0,
+              130.0,
+              19.0,
+              751.5
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXGroup",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXScrollArea"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXGroup",
+            "AXSplitGroup",
+            "AXGroup"
+           ]
+          }
+         ],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXGroup",
+          "AXSplitGroup"
+         ]
+        },
+        {
+         "role": "AXGroup",
+         "subrole": "AXHostingView",
+         "title": "",
+         "description": "",
+         "value": null,
+         "frame": [
+          443.0,
+          94.0,
+          203.0,
+          28.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [
+          {
+           "role": "AXTextField",
+           "subrole": "AXSearchField",
+           "title": "",
+           "description": "",
+           "value": "",
+           "frame": [
+            443.0,
+            94.0,
+            203.0,
+            28.0
+           ],
+           "actions": [
+            "AXShowMenu",
+            "AXConfirm"
+           ],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXButton",
+             "subrole": "",
+             "title": "",
+             "description": "Search",
+             "value": null,
+             "frame": [
+              451.0,
+              104.0,
+              15.5,
+              9.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": false,
+             "children": [],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXGroup",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXTextField"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXGroup",
+            "AXSplitGroup",
+            "AXGroup"
+           ]
+          }
+         ],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXGroup",
+          "AXSplitGroup"
+         ]
+        },
+        {
+         "role": "AXSplitter",
+         "subrole": "",
+         "title": "",
+         "description": "",
+         "value": 231.0,
+         "frame": [
+          656.0,
+          85.0,
+          0.0,
+          813.0
+         ],
+         "actions": [],
+         "enabled": false,
+         "focused": false,
+         "children": [],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXGroup",
+          "AXSplitGroup"
+         ]
+        },
+        {
+         "role": "AXGroup",
+         "subrole": "AXHostingView",
+         "title": "",
+         "description": "",
+         "value": null,
+         "frame": [
+          425.0,
+          33.0,
+          723.0,
+          865.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [
+          {
+           "role": "AXGroup",
+           "subrole": "AXHostingView",
+           "title": "",
+           "description": "",
+           "value": null,
+           "frame": [
+            425.0,
+            33.0,
+            723.0,
+            865.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [
+            {
+             "role": "AXScrollArea",
+             "subrole": "",
+             "title": "",
+             "description": "",
+             "value": null,
+             "frame": [
+              656.0,
+              85.0,
+              492.0,
+              813.0
+             ],
+             "actions": [],
+             "enabled": true,
+             "focused": false,
+             "children": [
+              {
+               "role": "AXGroup",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                676.0,
+                85.0,
+                452.0,
+                173.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "Appearance",
+                 "frame": [
+                  686.0,
+                  94.9144287109375,
+                  73.0,
+                  16.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXButton",
+                 "subrole": "",
+                 "title": "",
+                 "description": "Auto",
+                 "value": null,
+                 "frame": [
+                  880.0,
+                  95.0,
+                  74.0,
+                  65.9144287109375
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXButton",
+                 "subrole": "",
+                 "title": "",
+                 "description": "Light",
+                 "value": null,
+                 "frame": [
+                  962.0,
+                  95.0,
+                  74.0,
+                  65.9144287109375
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXButton",
+                 "subrole": "",
+                 "title": "",
+                 "description": "Dark",
+                 "value": null,
+                 "frame": [
+                  1044.0,
+                  95.0,
+                  74.0,
+                  65.9144287109375
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "Liquid Glass",
+                 "frame": [
+                  686.0,
+                  181.9144287109375,
+                  74.0,
+                  16.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "Choose your preferred look for Liquid Glass.",
+                 "frame": [
+                  686.0,
+                  199.4144287109375,
+                  232.0,
+                  14.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXButton",
+                 "subrole": "",
+                 "title": "",
+                 "description": "Clear",
+                 "value": null,
+                 "frame": [
+                  962.0,
+                  182.0,
+                  74.0,
+                  65.9144287109375
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXButton",
+                 "subrole": "",
+                 "title": "",
+                 "description": "Tinted",
+                 "value": null,
+                 "frame": [
+                  1044.0,
+                  182.0,
+                  74.0,
+                  65.9144287109375
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGroup",
+                "AXScrollArea"
+               ]
+              },
+              {
+               "role": "AXHeading",
+               "subrole": "",
+               "title": "",
+               "description": "Theme",
+               "value": null,
+               "frame": [
+                686.0,
+                287.9144287109375,
+                43.5,
+                16.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGroup",
+                "AXScrollArea"
+               ]
+              },
+              {
+               "role": "AXGroup",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                676.0,
+                314.0,
+                452.0,
+                100.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "Color",
+                 "frame": [
+                  686.0,
+                  323.9144287109375,
+                  33.0,
+                  16.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXButton",
+                 "subrole": "",
+                 "title": "",
+                 "description": "Multicolor",
+                 "value": null,
+                 "frame": [
+                  802.0,
+                  320.0,
+                  32.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXButton",
+                 "subrole": "",
+                 "title": "",
+                 "description": "Blue",
+                 "value": null,
+                 "frame": [
+                  838.0,
+                  320.0,
+                  32.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXButton",
+                 "subrole": "",
+                 "title": "",
+                 "description": "Purple",
+                 "value": null,
+                 "frame": [
+                  874.0,
+                  320.0,
+                  32.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXButton",
+                 "subrole": "",
+                 "title": "",
+                 "description": "Pink",
+                 "value": null,
+                 "frame": [
+                  910.0,
+                  320.0,
+                  32.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXButton",
+                 "subrole": "",
+                 "title": "",
+                 "description": "Red",
+                 "value": null,
+                 "frame": [
+                  946.0,
+                  320.0,
+                  32.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXButton",
+                 "subrole": "",
+                 "title": "",
+                 "description": "Orange",
+                 "value": null,
+                 "frame": [
+                  982.0,
+                  320.0,
+                  32.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXButton",
+                 "subrole": "",
+                 "title": "",
+                 "description": "Yellow",
+                 "value": null,
+                 "frame": [
+                  1018.0,
+                  320.0,
+                  32.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXButton",
+                 "subrole": "",
+                 "title": "",
+                 "description": "Green",
+                 "value": null,
+                 "frame": [
+                  1054.0,
+                  320.0,
+                  32.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXButton",
+                 "subrole": "",
+                 "title": "",
+                 "description": "Graphite",
+                 "value": null,
+                 "frame": [
+                  1090.0,
+                  320.0,
+                  32.0,
+                  32.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "Multicolor",
+                 "frame": [
+                  792.0,
+                  351.5,
+                  52.5,
+                  14.0
+                 ],
+                 "actions": [
+                  "AXShowMenu"
+                 ],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "Text highlight color",
+                 "frame": [
+                  686.0,
+                  386.7347412109375,
+                  116.0,
+                  16.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXPopUpButton",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "Automatic",
+                 "frame": [
+                  991.0,
+                  383.0,
+                  127.0,
+                  24.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGroup",
+                "AXScrollArea"
+               ]
+              },
+              {
+               "role": "AXGroup",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                676.0,
+                424.0,
+                452.0,
+                129.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "Icon & widget style",
+                 "frame": [
+                  686.0,
+                  433.9847412109375,
+                  115.5,
+                  16.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXButton",
+                 "subrole": "",
+                 "title": "",
+                 "description": "Default",
+                 "value": null,
+                 "frame": [
+                  925.0,
+                  433.0,
+                  40.0,
+                  51.9847412109375
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXButton",
+                 "subrole": "",
+                 "title": "",
+                 "description": "Dark",
+                 "value": null,
+                 "frame": [
+                  979.0,
+                  433.0,
+                  38.0,
+                  51.9847412109375
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXButton",
+                 "subrole": "",
+                 "title": "",
+                 "description": "Clear",
+                 "value": null,
+                 "frame": [
+                  1030.0,
+                  433.0,
+                  38.0,
+                  51.9847412109375
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXButton",
+                 "subrole": "",
+                 "title": "",
+                 "description": "Tinted",
+                 "value": null,
+                 "frame": [
+                  1081.0,
+                  433.0,
+                  38.0,
+                  51.9847412109375
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXRadioGroup",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  Infinity,
+                  Infinity,
+                  0.0,
+                  0.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [
+                  {
+                   "role": "AXRadioButton",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": null,
+                   "frame": [
+                    Infinity,
+                    Infinity,
+                    0.0,
+                    0.0
+                   ],
+                   "actions": [],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXGroup",
+                    "AXRadioGroup"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "Folder color",
+                 "frame": [
+                  686.0,
+                  522.9847412109375,
+                  72.5,
+                  16.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXPopUpButton",
+                 "subrole": "",
+                 "title": "",
+                 "description": "Folder color",
+                 "value": "Automatic",
+                 "frame": [
+                  991.0,
+                  519.0,
+                  127.0,
+                  24.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGroup",
+                "AXScrollArea"
+               ]
+              },
+              {
+               "role": "AXHeading",
+               "subrole": "",
+               "title": "",
+               "description": "Windows",
+               "value": null,
+               "frame": [
+                686.0,
+                583.2347412109375,
+                57.5,
+                16.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGroup",
+                "AXScrollArea"
+               ]
+              },
+              {
+               "role": "AXGroup",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                676.0,
+                609.0,
+                452.0,
+                75.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "Sidebar icon size",
+                 "frame": [
+                  686.0,
+                  619.2347412109375,
+                  103.5,
+                  16.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXPopUpButton",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "Medium",
+                 "frame": [
+                  1022.0,
+                  615.5,
+                  96.0,
+                  24.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXStaticText",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": "Tint window background with wallpaper color",
+                 "frame": [
+                  686.0,
+                  657.4847412109375,
+                  273.5,
+                  16.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXCheckBox",
+                 "subrole": "AXSwitch",
+                 "title": "",
+                 "description": "",
+                 "value": 1,
+                 "frame": [
+                  1082.0,
+                  658.0,
+                  36.0,
+                  16.0
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGroup",
+                "AXScrollArea"
+               ]
+              },
+              {
+               "role": "AXGroup",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": null,
+               "frame": [
+                676.0,
+                694.0,
+                452.0,
+                189.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [
+                {
+                 "role": "AXRadioGroup",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  686.0,
+                  703.9847412109375,
+                  279.5,
+                  85.0152587890625
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Show scroll bars",
+                   "frame": [
+                    686.0,
+                    703.9847412109375,
+                    99.5,
+                    16.0
+                   ],
+                   "actions": [],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXGroup",
+                    "AXRadioGroup"
+                   ]
+                  },
+                  {
+                   "role": "AXRadioButton",
+                   "subrole": "",
+                   "title": "",
+                   "description": "Automatically based on mouse or trackpad",
+                   "value": 0,
+                   "frame": [
+                    686.0,
+                    728.0,
+                    279.5,
+                    16.5
+                   ],
+                   "actions": [],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXGroup",
+                    "AXRadioGroup"
+                   ]
+                  },
+                  {
+                   "role": "AXRadioButton",
+                   "subrole": "",
+                   "title": "",
+                   "description": "When scrolling",
+                   "value": 0,
+                   "frame": [
+                    686.0,
+                    750.5,
+                    111.0,
+                    16.5
+                   ],
+                   "actions": [],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXGroup",
+                    "AXRadioGroup"
+                   ]
+                  },
+                  {
+                   "role": "AXRadioButton",
+                   "subrole": "",
+                   "title": "",
+                   "description": "Always",
+                   "value": 1,
+                   "frame": [
+                    686.0,
+                    773.0,
+                    63.5,
+                    16.0
+                   ],
+                   "actions": [],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXGroup",
+                    "AXRadioGroup"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                },
+                {
+                 "role": "AXRadioGroup",
+                 "subrole": "",
+                 "title": "",
+                 "description": "",
+                 "value": null,
+                 "frame": [
+                  686.0,
+                  810.2452392578125,
+                  208.0,
+                  62.7547607421875
+                 ],
+                 "actions": [],
+                 "enabled": true,
+                 "focused": false,
+                 "children": [
+                  {
+                   "role": "AXStaticText",
+                   "subrole": "",
+                   "title": "",
+                   "description": "",
+                   "value": "Click in the scroll bar to",
+                   "frame": [
+                    686.0,
+                    810.2452392578125,
+                    143.0,
+                    16.0
+                   ],
+                   "actions": [],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXGroup",
+                    "AXRadioGroup"
+                   ]
+                  },
+                  {
+                   "role": "AXRadioButton",
+                   "subrole": "",
+                   "title": "",
+                   "description": "Jump to the next page",
+                   "value": 1,
+                   "frame": [
+                    686.0,
+                    834.0,
+                    157.0,
+                    16.5
+                   ],
+                   "actions": [],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXGroup",
+                    "AXRadioGroup"
+                   ]
+                  },
+                  {
+                   "role": "AXRadioButton",
+                   "subrole": "",
+                   "title": "",
+                   "description": "Jump to the spot that’s clicked",
+                   "value": 0,
+                   "frame": [
+                    686.0,
+                    856.5,
+                    208.0,
+                    16.5
+                   ],
+                   "actions": [],
+                   "enabled": true,
+                   "focused": false,
+                   "children": [],
+                   "ancestor_roles": [
+                    "AXWindow",
+                    "AXGroup",
+                    "AXSplitGroup",
+                    "AXGroup",
+                    "AXGroup",
+                    "AXScrollArea",
+                    "AXGroup",
+                    "AXRadioGroup"
+                   ]
+                  }
+                 ],
+                 "ancestor_roles": [
+                  "AXWindow",
+                  "AXGroup",
+                  "AXSplitGroup",
+                  "AXGroup",
+                  "AXGroup",
+                  "AXScrollArea",
+                  "AXGroup"
+                 ]
+                }
+               ],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGroup",
+                "AXScrollArea"
+               ]
+              },
+              {
+               "role": "AXButton",
+               "subrole": "",
+               "title": "",
+               "description": "Help",
+               "value": null,
+               "frame": [
+                1104.0,
+                903.0,
+                24.0,
+                24.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGroup",
+                "AXScrollArea"
+               ]
+              },
+              {
+               "role": "AXScrollBar",
+               "subrole": "",
+               "title": "",
+               "description": "",
+               "value": 0.0,
+               "frame": [
+                1130.0,
+                84.0,
+                19.0,
+                815.0
+               ],
+               "actions": [],
+               "enabled": true,
+               "focused": false,
+               "children": [],
+               "ancestor_roles": [
+                "AXWindow",
+                "AXGroup",
+                "AXSplitGroup",
+                "AXGroup",
+                "AXGroup",
+                "AXScrollArea"
+               ]
+              }
+             ],
+             "ancestor_roles": [
+              "AXWindow",
+              "AXGroup",
+              "AXSplitGroup",
+              "AXGroup",
+              "AXGroup"
+             ]
+            }
+           ],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXGroup",
+            "AXSplitGroup",
+            "AXGroup"
+           ]
+          }
+         ],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXGroup",
+          "AXSplitGroup"
+         ]
+        }
+       ],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXGroup"
+       ]
+      }
+     ],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXToolbar",
+     "subrole": "",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      425.0,
+      33.0,
+      723.0,
+      52.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [
+      {
+       "role": "AXGroup",
+       "subrole": "",
+       "title": "",
+       "description": "",
+       "value": null,
+       "frame": [
+        660.0,
+        33.0,
+        81.0,
+        52.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [
+        {
+         "role": "AXGroup",
+         "subrole": "",
+         "title": "",
+         "description": "",
+         "value": null,
+         "frame": [
+          664.0,
+          41.0,
+          73.0,
+          36.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [
+          {
+           "role": "AXButton",
+           "subrole": "AXSegment",
+           "title": "",
+           "description": "Back",
+           "value": null,
+           "frame": [
+            664.0,
+            41.0,
+            36.0,
+            36.0
+           ],
+           "actions": [],
+           "enabled": true,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXToolbar",
+            "AXGroup",
+            "AXGroup"
+           ]
+          },
+          {
+           "role": "AXMenuButton",
+           "subrole": "AXSegment",
+           "title": "",
+           "description": "Forward",
+           "value": null,
+           "frame": [
+            701.0,
+            41.0,
+            36.0,
+            36.0
+           ],
+           "actions": [],
+           "enabled": false,
+           "focused": false,
+           "children": [],
+           "ancestor_roles": [
+            "AXWindow",
+            "AXToolbar",
+            "AXGroup",
+            "AXGroup"
+           ]
+          }
+         ],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXToolbar",
+          "AXGroup"
+         ]
+        }
+       ],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXToolbar"
+       ]
+      }
+     ],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXButton",
+     "subrole": "AXCloseButton",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      443.0,
+      51.0,
+      16.0,
+      16.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXButton",
+     "subrole": "AXZoomButton",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      489.0,
+      51.0,
+      16.0,
+      16.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [
+      {
+       "role": "AXGroup",
+       "subrole": "",
+       "title": "",
+       "description": "",
+       "value": null,
+       "frame": [
+        490.0,
+        52.0,
+        14.0,
+        14.0
+       ],
+       "actions": [],
+       "enabled": true,
+       "focused": false,
+       "children": [
+        {
+         "role": "AXGroup",
+         "subrole": "",
+         "title": "",
+         "description": "",
+         "value": null,
+         "frame": [
+          490.0,
+          52.0,
+          14.0,
+          14.0
+         ],
+         "actions": [],
+         "enabled": true,
+         "focused": false,
+         "children": [],
+         "ancestor_roles": [
+          "AXWindow",
+          "AXButton",
+          "AXGroup"
+         ]
+        }
+       ],
+       "ancestor_roles": [
+        "AXWindow",
+        "AXButton"
+       ]
+      }
+     ],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXButton",
+     "subrole": "AXMinimizeButton",
+     "title": "",
+     "description": "",
+     "value": null,
+     "frame": [
+      466.0,
+      51.0,
+      16.0,
+      16.0
+     ],
+     "actions": [],
+     "enabled": true,
+     "focused": false,
+     "children": [],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    },
+    {
+     "role": "AXStaticText",
+     "subrole": "",
+     "title": "",
+     "description": "",
+     "value": "Appearance",
+     "frame": [
+      741.0,
+      33.0,
+      395.0,
+      52.0
+     ],
+     "actions": [
+      "AXPress"
+     ],
+     "enabled": true,
+     "focused": false,
+     "children": [],
+     "ancestor_roles": [
+      "AXWindow"
+     ]
+    }
+   ],
+   "ancestor_roles": []
+  }
+ },
+ "snapshot": {
+  "seq": 1,
+  "app": "System Settings",
+  "bundle": "com.apple.systempreferences",
+  "title": "Appearance",
+  "pid": 52510,
+  "elements": [
+   {
+    "id": "0",
+    "role": "static text",
+    "label": "Appearance",
+    "value": "",
+    "frame": [
+     741,
+     33,
+     395,
+     52
+    ],
+    "actions": [
+     "AXPress"
+    ],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "1",
+    "role": "button",
+    "label": "Back",
+    "value": "",
+    "frame": [
+     664,
+     41,
+     36,
+     36
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "2",
+    "role": "menu button",
+    "label": "Forward",
+    "value": "",
+    "frame": [
+     701,
+     41,
+     36,
+     36
+    ],
+    "actions": [],
+    "enabled": false,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "3",
+    "role": "search field",
+    "label": "Search",
+    "value": "",
+    "frame": [
+     443,
+     94,
+     203,
+     28
+    ],
+    "actions": [
+     "AXShowMenu",
+     "AXConfirm"
+    ],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": true
+   },
+   {
+    "id": "4",
+    "role": "static text",
+    "label": "Appearance",
+    "value": "",
+    "frame": [
+     686,
+     95,
+     73,
+     16
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "5",
+    "role": "button",
+    "label": "Auto",
+    "value": "",
+    "frame": [
+     880,
+     95,
+     74,
+     66
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "6",
+    "role": "button",
+    "label": "Light",
+    "value": "",
+    "frame": [
+     962,
+     95,
+     74,
+     66
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "7",
+    "role": "button",
+    "label": "Dark",
+    "value": "",
+    "frame": [
+     1044,
+     95,
+     74,
+     66
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "8",
+    "role": "button",
+    "label": "Search",
+    "value": "",
+    "frame": [
+     451,
+     104,
+     16,
+     9
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "9",
+    "role": "row",
+    "label": "Sam Rivera, Apple Account",
+    "value": "",
+    "frame": [
+     433,
+     131,
+     206,
+     46
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "10",
+    "role": "static text",
+    "label": "Sam Rivera, Apple Account",
+    "value": "",
+    "frame": [
+     449,
+     135,
+     170,
+     38
+    ],
+    "actions": [
+     "AXShowMenu"
+    ],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "11",
+    "role": "static text",
+    "label": "Liquid Glass",
+    "value": "",
+    "frame": [
+     686,
+     182,
+     74,
+     16
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "12",
+    "role": "button",
+    "label": "Clear",
+    "value": "",
+    "frame": [
+     962,
+     182,
+     74,
+     66
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "13",
+    "role": "button",
+    "label": "Tinted",
+    "value": "",
+    "frame": [
+     1044,
+     182,
+     74,
+     66
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "14",
+    "role": "row",
+    "label": "1",
+    "value": "",
+    "frame": [
+     433,
+     190,
+     206,
+     40
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "15",
+    "role": "static text",
+    "label": "Some iCloud Data Isn’t Syncing, 1 new item",
+    "value": "",
+    "frame": [
+     449,
+     194,
+     174,
+     32
+    ],
+    "actions": [
+     "AXShowMenu"
+    ],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "16",
+    "role": "static text",
+    "label": "Choose your preferred look for Liquid Glass.",
+    "value": "",
+    "frame": [
+     686,
+     199,
+     232,
+     14
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "17",
+    "role": "row",
+    "label": "Add AppleCare Coverage, There are 52 days left to protect your AirPods against accidental damage.",
+    "value": "",
+    "frame": [
+     433,
+     230,
+     206,
+     68
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "18",
+    "role": "static text",
+    "label": "Add AppleCare Coverage, There are 52 days left to protect your AirPods against accidental damage.",
+    "value": "",
+    "frame": [
+     449,
+     234,
+     174,
+     60
+    ],
+    "actions": [
+     "AXShowMenu"
+    ],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "19",
+    "role": "row",
+    "label": "Wi‑Fi",
+    "value": "",
+    "frame": [
+     433,
+     310,
+     206,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "20",
+    "role": "static text",
+    "label": "Wi‑Fi",
+    "value": "",
+    "frame": [
+     447,
+     314,
+     60,
+     24
+    ],
+    "actions": [
+     "AXShowMenu"
+    ],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "21",
+    "role": "button",
+    "label": "Multicolor",
+    "value": "",
+    "frame": [
+     802,
+     320,
+     32,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "22",
+    "role": "button",
+    "label": "Blue",
+    "value": "",
+    "frame": [
+     838,
+     320,
+     32,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "23",
+    "role": "button",
+    "label": "Purple",
+    "value": "",
+    "frame": [
+     874,
+     320,
+     32,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "24",
+    "role": "button",
+    "label": "Pink",
+    "value": "",
+    "frame": [
+     910,
+     320,
+     32,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "25",
+    "role": "button",
+    "label": "Red",
+    "value": "",
+    "frame": [
+     946,
+     320,
+     32,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "26",
+    "role": "button",
+    "label": "Orange",
+    "value": "",
+    "frame": [
+     982,
+     320,
+     32,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "27",
+    "role": "button",
+    "label": "Yellow",
+    "value": "",
+    "frame": [
+     1018,
+     320,
+     32,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "28",
+    "role": "button",
+    "label": "Green",
+    "value": "",
+    "frame": [
+     1054,
+     320,
+     32,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "29",
+    "role": "button",
+    "label": "Graphite",
+    "value": "",
+    "frame": [
+     1090,
+     320,
+     32,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "30",
+    "role": "static text",
+    "label": "Color",
+    "value": "",
+    "frame": [
+     686,
+     324,
+     33,
+     16
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "31",
+    "role": "row",
+    "label": "Bluetooth",
+    "value": "",
+    "frame": [
+     433,
+     342,
+     206,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "32",
+    "role": "static text",
+    "label": "Bluetooth",
+    "value": "",
+    "frame": [
+     447,
+     346,
+     86,
+     24
+    ],
+    "actions": [
+     "AXShowMenu"
+    ],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "33",
+    "role": "static text",
+    "label": "Multicolor",
+    "value": "",
+    "frame": [
+     792,
+     352,
+     52,
+     14
+    ],
+    "actions": [
+     "AXShowMenu"
+    ],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "34",
+    "role": "row",
+    "label": "Network",
+    "value": "",
+    "frame": [
+     433,
+     374,
+     206,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "35",
+    "role": "static text",
+    "label": "Network",
+    "value": "",
+    "frame": [
+     447,
+     378,
+     78,
+     24
+    ],
+    "actions": [
+     "AXShowMenu"
+    ],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "36",
+    "role": "pop up button",
+    "label": "",
+    "value": "Automatic",
+    "frame": [
+     991,
+     383,
+     127,
+     24
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "37",
+    "role": "static text",
+    "label": "Text highlight color",
+    "value": "",
+    "frame": [
+     686,
+     387,
+     116,
+     16
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "38",
+    "role": "row",
+    "label": "Battery",
+    "value": "",
+    "frame": [
+     433,
+     406,
+     206,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "39",
+    "role": "static text",
+    "label": "Battery",
+    "value": "",
+    "frame": [
+     447,
+     410,
+     72,
+     24
+    ],
+    "actions": [
+     "AXShowMenu"
+    ],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "40",
+    "role": "button",
+    "label": "Default",
+    "value": "",
+    "frame": [
+     925,
+     433,
+     40,
+     52
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "41",
+    "role": "button",
+    "label": "Dark",
+    "value": "",
+    "frame": [
+     979,
+     433,
+     38,
+     52
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "42",
+    "role": "button",
+    "label": "Clear",
+    "value": "",
+    "frame": [
+     1030,
+     433,
+     38,
+     52
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "43",
+    "role": "button",
+    "label": "Tinted",
+    "value": "",
+    "frame": [
+     1081,
+     433,
+     38,
+     52
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "44",
+    "role": "static text",
+    "label": "Icon & widget style",
+    "value": "",
+    "frame": [
+     686,
+     434,
+     116,
+     16
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "45",
+    "role": "row",
+    "label": "General",
+    "value": "",
+    "frame": [
+     433,
+     452,
+     206,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "46",
+    "role": "static text",
+    "label": "General",
+    "value": "",
+    "frame": [
+     447,
+     456,
+     74,
+     24
+    ],
+    "actions": [
+     "AXShowMenu"
+    ],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "47",
+    "role": "row",
+    "label": "Accessibility",
+    "value": "",
+    "frame": [
+     433,
+     483,
+     206,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "48",
+    "role": "static text",
+    "label": "Accessibility",
+    "value": "",
+    "frame": [
+     447,
+     488,
+     103,
+     24
+    ],
+    "actions": [
+     "AXShowMenu"
+    ],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "49",
+    "role": "row",
+    "label": "Appearance",
+    "value": "",
+    "frame": [
+     433,
+     516,
+     206,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "50",
+    "role": "pop up button",
+    "label": "Folder color",
+    "value": "Automatic",
+    "frame": [
+     991,
+     519,
+     127,
+     24
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "51",
+    "role": "static text",
+    "label": "Appearance",
+    "value": "",
+    "frame": [
+     447,
+     520,
+     100,
+     24
+    ],
+    "actions": [
+     "AXShowMenu"
+    ],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "52",
+    "role": "static text",
+    "label": "Folder color",
+    "value": "",
+    "frame": [
+     686,
+     523,
+     72,
+     16
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "53",
+    "role": "row",
+    "label": "Apple Intelligence & Siri",
+    "value": "",
+    "frame": [
+     433,
+     548,
+     206,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "54",
+    "role": "static text",
+    "label": "Apple Intelligence & Siri",
+    "value": "",
+    "frame": [
+     447,
+     552,
+     171,
+     24
+    ],
+    "actions": [
+     "AXShowMenu"
+    ],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "55",
+    "role": "row",
+    "label": "Desktop & Dock",
+    "value": "",
+    "frame": [
+     433,
+     580,
+     206,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "56",
+    "role": "static text",
+    "label": "Desktop & Dock",
+    "value": "",
+    "frame": [
+     447,
+     584,
+     125,
+     24
+    ],
+    "actions": [
+     "AXShowMenu"
+    ],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "57",
+    "role": "row",
+    "label": "Displays",
+    "value": "",
+    "frame": [
+     433,
+     612,
+     206,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "58",
+    "role": "static text",
+    "label": "Displays",
+    "value": "",
+    "frame": [
+     447,
+     616,
+     78,
+     24
+    ],
+    "actions": [
+     "AXShowMenu"
+    ],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "59",
+    "role": "pop up button",
+    "label": "",
+    "value": "Medium",
+    "frame": [
+     1022,
+     616,
+     96,
+     24
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "60",
+    "role": "static text",
+    "label": "Sidebar icon size",
+    "value": "",
+    "frame": [
+     686,
+     619,
+     104,
+     16
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "61",
+    "role": "row",
+    "label": "Menu Bar",
+    "value": "",
+    "frame": [
+     433,
+     644,
+     206,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "62",
+    "role": "static text",
+    "label": "Menu Bar",
+    "value": "",
+    "frame": [
+     447,
+     648,
+     85,
+     24
+    ],
+    "actions": [
+     "AXShowMenu"
+    ],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "63",
+    "role": "static text",
+    "label": "Tint window background with wallpaper color",
+    "value": "",
+    "frame": [
+     686,
+     657,
+     274,
+     16
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "64",
+    "role": "toggle",
+    "label": "",
+    "value": "checked",
+    "frame": [
+     1082,
+     658,
+     36,
+     16
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "65",
+    "role": "row",
+    "label": "Spotlight",
+    "value": "",
+    "frame": [
+     433,
+     676,
+     206,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "66",
+    "role": "static text",
+    "label": "Spotlight",
+    "value": "",
+    "frame": [
+     447,
+     680,
+     82,
+     24
+    ],
+    "actions": [
+     "AXShowMenu"
+    ],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "67",
+    "role": "static text",
+    "label": "Show scroll bars",
+    "value": "",
+    "frame": [
+     686,
+     704,
+     100,
+     16
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "68",
+    "role": "row",
+    "label": "Wallpaper",
+    "value": "",
+    "frame": [
+     433,
+     708,
+     206,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "69",
+    "role": "static text",
+    "label": "Wallpaper",
+    "value": "",
+    "frame": [
+     447,
+     712,
+     88,
+     24
+    ],
+    "actions": [
+     "AXShowMenu"
+    ],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "70",
+    "role": "radio button",
+    "label": "Automatically based on mouse or trackpad",
+    "value": "",
+    "frame": [
+     686,
+     728,
+     280,
+     16
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "71",
+    "role": "radio button",
+    "label": "When scrolling",
+    "value": "",
+    "frame": [
+     686,
+     750,
+     111,
+     16
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "72",
+    "role": "row",
+    "label": "Notifications",
+    "value": "",
+    "frame": [
+     433,
+     752,
+     206,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "73",
+    "role": "static text",
+    "label": "Notifications",
+    "value": "",
+    "frame": [
+     447,
+     756,
+     104,
+     24
+    ],
+    "actions": [
+     "AXShowMenu"
+    ],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "74",
+    "role": "radio button",
+    "label": "Always",
+    "value": "selected",
+    "frame": [
+     686,
+     773,
+     64,
+     16
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "75",
+    "role": "row",
+    "label": "Sound",
+    "value": "",
+    "frame": [
+     433,
+     784,
+     206,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "76",
+    "role": "static text",
+    "label": "Sound",
+    "value": "",
+    "frame": [
+     447,
+     788,
+     66,
+     24
+    ],
+    "actions": [
+     "AXShowMenu"
+    ],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "77",
+    "role": "static text",
+    "label": "Click in the scroll bar to",
+    "value": "",
+    "frame": [
+     686,
+     810,
+     143,
+     16
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "78",
+    "role": "row",
+    "label": "Focus",
+    "value": "",
+    "frame": [
+     433,
+     816,
+     206,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "79",
+    "role": "static text",
+    "label": "Focus",
+    "value": "",
+    "frame": [
+     447,
+     820,
+     64,
+     24
+    ],
+    "actions": [
+     "AXShowMenu"
+    ],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "80",
+    "role": "radio button",
+    "label": "Jump to the next page",
+    "value": "selected",
+    "frame": [
+     686,
+     834,
+     157,
+     16
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "81",
+    "role": "row",
+    "label": "Screen Time",
+    "value": "",
+    "frame": [
+     433,
+     848,
+     206,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "82",
+    "role": "static text",
+    "label": "Screen Time",
+    "value": "",
+    "frame": [
+     447,
+     852,
+     103,
+     24
+    ],
+    "actions": [
+     "AXShowMenu"
+    ],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "83",
+    "role": "radio button",
+    "label": "Jump to the spot that’s clicked",
+    "value": "",
+    "frame": [
+     686,
+     856,
+     208,
+     16
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "84",
+    "role": "row",
+    "label": "Lock Screen",
+    "value": "",
+    "frame": [
+     433,
+     894,
+     206,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "85",
+    "role": "button",
+    "label": "Help",
+    "value": "",
+    "frame": [
+     1104,
+     903,
+     24,
+     24
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "86",
+    "role": "row",
+    "label": "Privacy & Security",
+    "value": "",
+    "frame": [
+     433,
+     926,
+     206,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   },
+   {
+    "id": "87",
+    "role": "row",
+    "label": "Touch ID & Password",
+    "value": "",
+    "frame": [
+     433,
+     958,
+     206,
+     32
+    ],
+    "actions": [],
+    "enabled": true,
+    "app": "System Settings",
+    "in_content": false,
+    "in_dialog": false,
+    "secure": false,
+    "editable": false
+   }
+  ],
+  "context_lines": [
+   "title: Appearance",
+   "Sam Rivera, Apple Account",
+   "Liquid Glass",
+   "Some iCloud Data Isn’t Syncing, 1 new item",
+   "Choose your preferred look for Liquid Glass.",
+   "Wi‑Fi",
+   "Color",
+   "Bluetooth"
+  ],
+  "focused": null,
+  "dialog_text": "",
+  "fullscreen": false,
+  "node_count": 195,
+  "truncated": false,
+  "secs": 0.1036
+ },
+ "cases": [
+  {
+   "goal": "go back to the previous pane",
+   "expected_id": "1",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "turn on dark mode",
+   "expected_id": "7",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": "the lane must confirm this (System Settings value change)"
+  },
+  {
+   "goal": "use the light theme",
+   "expected_id": "6",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "let the system decide the look",
+   "expected_id": "5",
+   "expected": "click",
+   "overlap": false,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "make the accent colour purple",
+   "expected_id": "23",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "pick the graphite accent",
+   "expected_id": "29",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "open the wallpaper settings",
+   "expected_id": "68",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "open displays",
+   "expected_id": "57",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "open the general pane",
+   "expected_id": "45",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "show scroll bars always",
+   "expected_id": "74",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "jump to the next page when clicking the scroll bar",
+   "expected_id": "80",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "get help",
+   "expected_id": "85",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "open the sound settings",
+   "expected_id": "75",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  },
+  {
+   "goal": "open privacy and security",
+   "expected_id": "86",
+   "expected": "click",
+   "overlap": true,
+   "distractor": false,
+   "text": null,
+   "must_not_offer": [],
+   "note": ""
+  }
+ ]
+}

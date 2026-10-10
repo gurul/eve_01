@@ -1,0 +1,479 @@
+{
+  "synthetic": true,
+  "deployment_holdout": false,
+  "failures": [],
+  "summary": {
+    "decisions": {
+      "target": {
+        "cases": 6,
+        "answered": 6,
+        "correct": 0,
+        "wrong": 0,
+        "abstained": 6,
+        "errors": 0,
+        "p50_ms": 182.8474165085936,
+        "p90_ms": 216.3877080020029,
+        "input_tokens": 7866
+      },
+      "verification": {
+        "cases": 4,
+        "answered": 4,
+        "correct": 4,
+        "wrong": 0,
+        "abstained": 0,
+        "errors": 0,
+        "p50_ms": 180.73749951145146,
+        "p90_ms": 186.97312497533858,
+        "input_tokens": 3596
+      }
+    },
+    "jev": {
+      "target": {
+        "cases": 6,
+        "answered": 6,
+        "correct": 3,
+        "wrong": 0,
+        "abstained": 3,
+        "errors": 0,
+        "p50_ms": 297.65168752055615,
+        "p90_ms": 476.2679580016993,
+        "input_tokens": 5298
+      },
+      "verification": {
+        "cases": 4,
+        "answered": 4,
+        "correct": 2,
+        "wrong": 2,
+        "abstained": 0,
+        "errors": 0,
+        "p50_ms": 262.3251464974601,
+        "p90_ms": 339.96408397797495,
+        "input_tokens": 1400
+      }
+    }
+  },
+  "rows": [
+    {
+      "provider": "decisions",
+      "kind": "target",
+      "visual_only": false,
+      "expected": "1",
+      "picked": "",
+      "correct": false,
+      "values": {
+        "target": {
+          "id": "1",
+          "p": 0.95,
+          "margin": 0.9299999999999999
+        },
+        "present": 0.04,
+        "covered": 1.0,
+        "risky": 0.92
+      },
+      "ms": 190.11445800424553,
+      "usage": {
+        "input_tokens": 1303,
+        "input_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0
+        },
+        "output_tokens": 0,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 1303
+      },
+      "error": ""
+    },
+    {
+      "provider": "jev",
+      "kind": "target",
+      "visual_only": false,
+      "expected": "1",
+      "picked": "1",
+      "correct": true,
+      "ms": 476.2679580016993,
+      "error": "",
+      "usage": {
+        "input_tokens": 875
+      }
+    },
+    {
+      "provider": "decisions",
+      "kind": "target",
+      "visual_only": false,
+      "expected": "2",
+      "picked": "",
+      "correct": false,
+      "values": {
+        "target": {
+          "id": "2",
+          "p": 0.85,
+          "margin": 0.8
+        },
+        "present": 0.0,
+        "covered": 0.42,
+        "risky": 0.92
+      },
+      "ms": 195.0097919907421,
+      "usage": {
+        "input_tokens": 1303,
+        "input_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0
+        },
+        "output_tokens": 0,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 1303
+      },
+      "error": ""
+    },
+    {
+      "provider": "jev",
+      "kind": "target",
+      "visual_only": false,
+      "expected": "2",
+      "picked": "2",
+      "correct": true,
+      "ms": 280.4417500155978,
+      "error": "",
+      "usage": {
+        "input_tokens": 875
+      }
+    },
+    {
+      "provider": "decisions",
+      "kind": "target",
+      "visual_only": false,
+      "expected": "3",
+      "picked": "",
+      "correct": false,
+      "values": {
+        "target": {
+          "id": "3",
+          "p": 0.95,
+          "margin": 0.94
+        },
+        "present": 0.0,
+        "covered": 0.73,
+        "risky": 0.94
+      },
+      "ms": 175.58037501294166,
+      "usage": {
+        "input_tokens": 1303,
+        "input_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0
+        },
+        "output_tokens": 0,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 1303
+      },
+      "error": ""
+    },
+    {
+      "provider": "jev",
+      "kind": "target",
+      "visual_only": false,
+      "expected": "3",
+      "picked": "3",
+      "correct": true,
+      "ms": 265.7668749743607,
+      "error": "",
+      "usage": {
+        "input_tokens": 875
+      }
+    },
+    {
+      "provider": "decisions",
+      "kind": "target",
+      "visual_only": true,
+      "expected": "1",
+      "picked": "",
+      "correct": false,
+      "values": {
+        "target": {
+          "id": "1",
+          "p": 1.0,
+          "margin": 1.0
+        },
+        "present": 0.02,
+        "covered": 0.99,
+        "risky": 0.83
+      },
+      "ms": 216.3877080020029,
+      "usage": {
+        "input_tokens": 1319,
+        "input_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0
+        },
+        "output_tokens": 0,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 1319
+      },
+      "error": ""
+    },
+    {
+      "provider": "jev",
+      "kind": "target",
+      "visual_only": true,
+      "expected": "1",
+      "picked": "none",
+      "correct": false,
+      "ms": 314.8616250255145,
+      "error": "",
+      "usage": {
+        "input_tokens": 891
+      }
+    },
+    {
+      "provider": "decisions",
+      "kind": "target",
+      "visual_only": true,
+      "expected": "2",
+      "picked": "",
+      "correct": false,
+      "values": {
+        "target": {
+          "id": "2",
+          "p": 0.99,
+          "margin": 0.98
+        },
+        "present": 0.25,
+        "covered": 0.99,
+        "risky": 0.9
+      },
+      "ms": 163.4090000006836,
+      "usage": {
+        "input_tokens": 1319,
+        "input_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0
+        },
+        "output_tokens": 0,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 1319
+      },
+      "error": ""
+    },
+    {
+      "provider": "jev",
+      "kind": "target",
+      "visual_only": true,
+      "expected": "2",
+      "picked": "none",
+      "correct": false,
+      "ms": 420.4198340012226,
+      "error": "",
+      "usage": {
+        "input_tokens": 891
+      }
+    },
+    {
+      "provider": "decisions",
+      "kind": "target",
+      "visual_only": true,
+      "expected": "3",
+      "picked": "",
+      "correct": false,
+      "values": {
+        "target": {
+          "id": "3",
+          "p": 0.99,
+          "margin": 0.98
+        },
+        "present": 0.02,
+        "covered": 0.95,
+        "risky": 0.99
+      },
+      "ms": 168.7905410071835,
+      "usage": {
+        "input_tokens": 1319,
+        "input_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0
+        },
+        "output_tokens": 0,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 1319
+      },
+      "error": ""
+    },
+    {
+      "provider": "jev",
+      "kind": "target",
+      "visual_only": true,
+      "expected": "3",
+      "picked": "none",
+      "correct": false,
+      "ms": 256.710708985338,
+      "error": "",
+      "usage": {
+        "input_tokens": 891
+      }
+    },
+    {
+      "provider": "decisions",
+      "kind": "verification",
+      "visual_only": false,
+      "expected": true,
+      "verified": true,
+      "correct": true,
+      "values": {
+        "verified": 1.0
+      },
+      "ms": 186.97312497533858,
+      "usage": {
+        "input_tokens": 896,
+        "input_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0
+        },
+        "output_tokens": 0,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 896
+      },
+      "error": ""
+    },
+    {
+      "provider": "jev",
+      "kind": "verification",
+      "visual_only": false,
+      "expected": true,
+      "verified": false,
+      "correct": false,
+      "ms": 242.38583398982882,
+      "error": "",
+      "usage": {
+        "input_tokens": 346
+      }
+    },
+    {
+      "provider": "decisions",
+      "kind": "verification",
+      "visual_only": false,
+      "expected": false,
+      "verified": false,
+      "correct": true,
+      "values": {
+        "verified": 0.0
+      },
+      "ms": 180.43795801349916,
+      "usage": {
+        "input_tokens": 896,
+        "input_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0
+        },
+        "output_tokens": 0,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 896
+      },
+      "error": ""
+    },
+    {
+      "provider": "jev",
+      "kind": "verification",
+      "visual_only": false,
+      "expected": false,
+      "verified": false,
+      "correct": true,
+      "ms": 282.26445900509134,
+      "error": "",
+      "usage": {
+        "input_tokens": 346
+      }
+    },
+    {
+      "provider": "decisions",
+      "kind": "verification",
+      "visual_only": true,
+      "expected": true,
+      "verified": true,
+      "correct": true,
+      "values": {
+        "verified": 1.0
+      },
+      "ms": 181.03704100940377,
+      "usage": {
+        "input_tokens": 902,
+        "input_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0
+        },
+        "output_tokens": 0,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 902
+      },
+      "error": ""
+    },
+    {
+      "provider": "jev",
+      "kind": "verification",
+      "visual_only": true,
+      "expected": true,
+      "verified": false,
+      "correct": false,
+      "ms": 202.66999999876134,
+      "error": "",
+      "usage": {
+        "input_tokens": 354
+      }
+    },
+    {
+      "provider": "decisions",
+      "kind": "verification",
+      "visual_only": true,
+      "expected": false,
+      "verified": false,
+      "correct": true,
+      "values": {
+        "verified": 0.0
+      },
+      "ms": 179.22116699628532,
+      "usage": {
+        "input_tokens": 902,
+        "input_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0
+        },
+        "output_tokens": 0,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 902
+      },
+      "error": ""
+    },
+    {
+      "provider": "jev",
+      "kind": "verification",
+      "visual_only": true,
+      "expected": false,
+      "verified": false,
+      "correct": true,
+      "ms": 339.96408397797495,
+      "error": "",
+      "usage": {
+        "input_tokens": 354
+      }
+    }
+  ]
+}

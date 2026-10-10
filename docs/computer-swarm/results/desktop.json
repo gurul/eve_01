@@ -1,0 +1,243 @@
+{
+  "backend": "real Decisions route; CUA capture/input; actual macOS AX",
+  "cases": [
+    {
+      "goal": "click seven",
+      "expected": "7",
+      "no_action": false,
+      "before": {
+        "image": "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/decisions-live-demo/capture-02.png",
+        "state": "Window: \"Calculator\", App: Calculator.\n0 standard window Calculator, ID: main, Secondary Actions: Raise\n\t1 split group main, SidebarNavigationSplitView\n\t\t2 splitter (disabled, settable, float) -1\n\t\t3 container CalculatorKeypadView\n\t\t\t4 scroll area ID: StandardInputView;value:0, Secondary Actions: Copy\n\t\t\t\t5 text Description: Edit field, Value: 0\n\t\t\t6 button Description: Delete, Help: Delete the last digit or operation entered (long press to delete all)\n\t\t\t7 button Description: All Clear, ID: AllClear\n\t\t\t8 button Percent\n\t\t\t9 button Divide\n\t\t\t10 button Description: 7, ID: Seven\n\t\t\t11 button Description: 8, ID: Eight\n\t\t\t12 button Description: 9, ID: Nine\n\t\t\t13 button Multiply\n\t\t\t14 button Description: 4, ID: Four\n\t\t\t15 button Description: 5, ID: Five\n\t\t\t16 button Description: 6, ID: Six\n\t\t\t17 button Subtract\n\t\t\t18 button Description: 1, ID: One\n\t\t\t19 button Description: 2, ID: Two\n\t\t\t20 button Description: 3, ID: Three\n\t\t\t21 button Add\n\t\t\t22 button Description: Change Sign, Help: Change sign of a value, ID: Negate\n\t\t\t23 button Description: 0, ID: Zero\n\t\t\t24 button Description: Point, ID: Decimal\n\t\t\t25 button Equals\n\t26 toolbar\n\t\t27 button Description: Show Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel\n\t\t28 button Description: Mode, Help: Change Calculator mode, ID: Mode: basic; unitConversion: false, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Remove from toolbar\n\t29 close button\n\t30 zoom button (disabled)\n\t31 minimize button\n32 menu bar\n\t33 Calculator\n\t34 Edit\n\t35 View\n\t36 Window\n\t37 Help\n",
+        "display": "0"
+      },
+      "after": {
+        "image": "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/decisions-live-demo/capture-07.png",
+        "state": "Window: \"Calculator\", App: Calculator.\n0 standard window Calculator, ID: main, Secondary Actions: Raise\n\t1 split group main, SidebarNavigationSplitView\n\t\t2 splitter (disabled, settable, float) -1\n\t\t3 container CalculatorKeypadView\n\t\t\t4 scroll area ID: StandardInputView;value:7, Secondary Actions: Copy\n\t\t\t\t5 text Description: Edit field, Value: 7\n\t\t\t6 button Description: Delete, Help: Delete the last digit or operation entered (long press to delete all)\n\t\t\t7 button Clear\n\t\t\t8 button Percent\n\t\t\t9 button Divide\n\t\t\t10 button Description: 7, ID: Seven\n\t\t\t11 button Description: 8, ID: Eight\n\t\t\t12 button Description: 9, ID: Nine\n\t\t\t13 button Multiply\n\t\t\t14 button Description: 4, ID: Four\n\t\t\t15 button Description: 5, ID: Five\n\t\t\t16 button Description: 6, ID: Six\n\t\t\t17 button Subtract\n\t\t\t18 button Description: 1, ID: One\n\t\t\t19 button Description: 2, ID: Two\n\t\t\t20 button Description: 3, ID: Three\n\t\t\t21 button Add\n\t\t\t22 button Description: Change Sign, Help: Change sign of a value, ID: Negate\n\t\t\t23 button Description: 0, ID: Zero\n\t\t\t24 button Description: Point, ID: Decimal\n\t\t\t25 button Equals\n\t26 toolbar\n\t\t27 button Description: Show Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel\n\t\t28 button Description: Mode, Help: Change Calculator mode, ID: Mode: basic; unitConversion: false, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Remove from toolbar\n\t29 close button\n\t30 zoom button (disabled)\n\t31 minimize button\n32 menu bar\n\t33 Calculator\n\t34 Edit\n\t35 View\n\t36 Window\n\t37 Help\n",
+        "display": "7"
+      },
+      "route": {
+        "status": "complete",
+        "reason": "",
+        "line": "",
+        "clicked": [
+          "7"
+        ],
+        "already": [],
+        "sentence": "Done. I clicked 7.",
+        "log": [
+          "decisions select: 298ms present=1.000 covered=1.000 risky=0.000 p=1.000 margin=1.000",
+          "decisions verify: 191ms verified=0.990"
+        ],
+        "ms": 1851.1
+      },
+      "actions": [
+        {
+          "label": "7",
+          "result": "clicked"
+        }
+      ],
+      "classification": "verified_success"
+    },
+    {
+      "goal": "click eight",
+      "expected": "78",
+      "no_action": false,
+      "before": {
+        "image": "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/decisions-live-demo/capture-08.png",
+        "state": "Window: \"Calculator\", App: Calculator.\n0 standard window Calculator, ID: main, Secondary Actions: Raise\n\t1 split group main, SidebarNavigationSplitView\n\t\t2 splitter (disabled, settable, float) -1\n\t\t3 container CalculatorKeypadView\n\t\t\t4 scroll area ID: StandardInputView;value:7, Secondary Actions: Copy\n\t\t\t\t5 text Description: Edit field, Value: 7\n\t\t\t6 button Description: Delete, Help: Delete the last digit or operation entered (long press to delete all)\n\t\t\t7 button Clear\n\t\t\t8 button Percent\n\t\t\t9 button Divide\n\t\t\t10 button Description: 7, ID: Seven\n\t\t\t11 button Description: 8, ID: Eight\n\t\t\t12 button Description: 9, ID: Nine\n\t\t\t13 button Multiply\n\t\t\t14 button Description: 4, ID: Four\n\t\t\t15 button Description: 5, ID: Five\n\t\t\t16 button Description: 6, ID: Six\n\t\t\t17 button Subtract\n\t\t\t18 button Description: 1, ID: One\n\t\t\t19 button Description: 2, ID: Two\n\t\t\t20 button Description: 3, ID: Three\n\t\t\t21 button Add\n\t\t\t22 button Description: Change Sign, Help: Change sign of a value, ID: Negate\n\t\t\t23 button Description: 0, ID: Zero\n\t\t\t24 button Description: Point, ID: Decimal\n\t\t\t25 button Equals\n\t26 toolbar\n\t\t27 button Description: Show Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel\n\t\t28 button Description: Mode, Help: Change Calculator mode, ID: Mode: basic; unitConversion: false, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Remove from toolbar\n\t29 close button\n\t30 zoom button (disabled)\n\t31 minimize button\n32 menu bar\n\t33 Calculator\n\t34 Edit\n\t35 View\n\t36 Window\n\t37 Help\n",
+        "display": "7"
+      },
+      "after": {
+        "image": "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/decisions-live-demo/capture-11.png",
+        "state": "Window: \"Calculator\", App: Calculator.\n0 standard window Calculator, ID: main, Secondary Actions: Raise\n\t1 split group main, SidebarNavigationSplitView\n\t\t2 splitter (disabled, settable, float) -1\n\t\t3 container CalculatorKeypadView\n\t\t\t4 scroll area ID: StandardInputView;value:7, Secondary Actions: Copy\n\t\t\t\t5 text Description: Edit field, Value: 7\n\t\t\t6 button Description: Delete, Help: Delete the last digit or operation entered (long press to delete all)\n\t\t\t7 button Clear\n\t\t\t8 button Percent\n\t\t\t9 button Divide\n\t\t\t10 button Description: 7, ID: Seven\n\t\t\t11 button Description: 8, ID: Eight\n\t\t\t12 button Description: 9, ID: Nine\n\t\t\t13 button Multiply\n\t\t\t14 button Description: 4, ID: Four\n\t\t\t15 button Description: 5, ID: Five\n\t\t\t16 button Description: 6, ID: Six\n\t\t\t17 button Subtract\n\t\t\t18 button Description: 1, ID: One\n\t\t\t19 button Description: 2, ID: Two\n\t\t\t20 button Description: 3, ID: Three\n\t\t\t21 button Add\n\t\t\t22 button Description: Change Sign, Help: Change sign of a value, ID: Negate\n\t\t\t23 button Description: 0, ID: Zero\n\t\t\t24 button Description: Point, ID: Decimal\n\t\t\t25 button Equals\n\t26 toolbar\n\t\t27 button Description: Show Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel\n\t\t28 button Description: Mode, Help: Change Calculator mode, ID: Mode: basic; unitConversion: false, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Remove from toolbar\n\t29 close button\n\t30 zoom button (disabled)\n\t31 minimize button\n32 menu bar\n\t33 Calculator\n\t34 Edit\n\t35 View\n\t36 Window\n\t37 Help\n",
+        "display": "7"
+      },
+      "route": {
+        "status": "none",
+        "reason": "stale_observation",
+        "line": "",
+        "clicked": [],
+        "already": [],
+        "sentence": "",
+        "log": [
+          "decisions select: 196ms present=1.000 covered=1.000 risky=0.000 p=0.990 margin=0.980",
+          "decisions admission: pixels changed"
+        ],
+        "ms": 614.2
+      },
+      "actions": [],
+      "classification": "failed_or_abstained"
+    },
+    {
+      "goal": "click Add",
+      "expected": "78+",
+      "no_action": false,
+      "before": {
+        "image": "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/decisions-live-demo/capture-12.png",
+        "state": "Window: \"Calculator\", App: Calculator.\n0 standard window Calculator, ID: main, Secondary Actions: Raise\n\t1 split group main, SidebarNavigationSplitView\n\t\t2 splitter (disabled, settable, float) -1\n\t\t3 container CalculatorKeypadView\n\t\t\t4 scroll area ID: StandardInputView;value:7, Secondary Actions: Copy\n\t\t\t\t5 text Description: Edit field, Value: 7\n\t\t\t6 button Description: Delete, Help: Delete the last digit or operation entered (long press to delete all)\n\t\t\t7 button Clear\n\t\t\t8 button Percent\n\t\t\t9 button Divide\n\t\t\t10 button Description: 7, ID: Seven\n\t\t\t11 button Description: 8, ID: Eight\n\t\t\t12 button Description: 9, ID: Nine\n\t\t\t13 button Multiply\n\t\t\t14 button Description: 4, ID: Four\n\t\t\t15 button Description: 5, ID: Five\n\t\t\t16 button Description: 6, ID: Six\n\t\t\t17 button Subtract\n\t\t\t18 button Description: 1, ID: One\n\t\t\t19 button Description: 2, ID: Two\n\t\t\t20 button Description: 3, ID: Three\n\t\t\t21 button Add\n\t\t\t22 button Description: Change Sign, Help: Change sign of a value, ID: Negate\n\t\t\t23 button Description: 0, ID: Zero\n\t\t\t24 button Description: Point, ID: Decimal\n\t\t\t25 button Equals\n\t26 toolbar\n\t\t27 button Description: Show Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel\n\t\t28 button Description: Mode, Help: Change Calculator mode, ID: Mode: basic; unitConversion: false, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Remove from toolbar\n\t29 close button\n\t30 zoom button (disabled)\n\t31 minimize button\n32 menu bar\n\t33 Calculator\n\t34 Edit\n\t35 View\n\t36 Window\n\t37 Help\n",
+        "display": "7"
+      },
+      "after": {
+        "image": "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/decisions-live-demo/capture-15.png",
+        "state": "Window: \"Calculator\", App: Calculator.\n0 standard window Calculator, ID: main, Secondary Actions: Raise\n\t1 split group main, SidebarNavigationSplitView\n\t\t2 splitter (disabled, settable, float) -1\n\t\t3 container CalculatorKeypadView\n\t\t\t4 scroll area ID: StandardInputView;value:7, Secondary Actions: Copy\n\t\t\t\t5 text Description: Edit field, Value: 7\n\t\t\t6 button Description: Delete, Help: Delete the last digit or operation entered (long press to delete all)\n\t\t\t7 button Clear\n\t\t\t8 button Percent\n\t\t\t9 button Divide\n\t\t\t10 button Description: 7, ID: Seven\n\t\t\t11 button Description: 8, ID: Eight\n\t\t\t12 button Description: 9, ID: Nine\n\t\t\t13 button Multiply\n\t\t\t14 button Description: 4, ID: Four\n\t\t\t15 button Description: 5, ID: Five\n\t\t\t16 button Description: 6, ID: Six\n\t\t\t17 button Subtract\n\t\t\t18 button Description: 1, ID: One\n\t\t\t19 button Description: 2, ID: Two\n\t\t\t20 button Description: 3, ID: Three\n\t\t\t21 button Add\n\t\t\t22 button Description: Change Sign, Help: Change sign of a value, ID: Negate\n\t\t\t23 button Description: 0, ID: Zero\n\t\t\t24 button Description: Point, ID: Decimal\n\t\t\t25 button Equals\n\t26 toolbar\n\t\t27 button Description: Show Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel\n\t\t28 button Description: Mode, Help: Change Calculator mode, ID: Mode: basic; unitConversion: false, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Remove from toolbar\n\t29 close button\n\t30 zoom button (disabled)\n\t31 minimize button\n32 menu bar\n\t33 Calculator\n\t34 Edit\n\t35 View\n\t36 Window\n\t37 Help\n",
+        "display": "7"
+      },
+      "route": {
+        "status": "none",
+        "reason": "stale_observation",
+        "line": "",
+        "clicked": [],
+        "already": [],
+        "sentence": "",
+        "log": [
+          "decisions select: 1244ms present=1.000 covered=0.990 risky=0.000 p=1.000 margin=1.000",
+          "decisions admission: pixels changed"
+        ],
+        "ms": 1743.6
+      },
+      "actions": [],
+      "classification": "failed_or_abstained"
+    },
+    {
+      "goal": "click two",
+      "expected": "78+2",
+      "no_action": false,
+      "before": {
+        "image": "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/decisions-live-demo/capture-16.png",
+        "state": "Window: \"Calculator\", App: Calculator.\n0 standard window Calculator, ID: main, Secondary Actions: Raise\n\t1 split group main, SidebarNavigationSplitView\n\t\t2 splitter (disabled, settable, float) -1\n\t\t3 container CalculatorKeypadView\n\t\t\t4 scroll area ID: StandardInputView;value:7, Secondary Actions: Copy\n\t\t\t\t5 text Description: Edit field, Value: 7\n\t\t\t6 button Description: Delete, Help: Delete the last digit or operation entered (long press to delete all)\n\t\t\t7 button Clear\n\t\t\t8 button Percent\n\t\t\t9 button Divide\n\t\t\t10 button Description: 7, ID: Seven\n\t\t\t11 button Description: 8, ID: Eight\n\t\t\t12 button Description: 9, ID: Nine\n\t\t\t13 button Multiply\n\t\t\t14 button Description: 4, ID: Four\n\t\t\t15 button Description: 5, ID: Five\n\t\t\t16 button Description: 6, ID: Six\n\t\t\t17 button Subtract\n\t\t\t18 button Description: 1, ID: One\n\t\t\t19 button Description: 2, ID: Two\n\t\t\t20 button Description: 3, ID: Three\n\t\t\t21 button Add\n\t\t\t22 button Description: Change Sign, Help: Change sign of a value, ID: Negate\n\t\t\t23 button Description: 0, ID: Zero\n\t\t\t24 button Description: Point, ID: Decimal\n\t\t\t25 button Equals\n\t26 toolbar\n\t\t27 button Description: Show Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel\n\t\t28 button Description: Mode, Help: Change Calculator mode, ID: Mode: basic; unitConversion: false, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Remove from toolbar\n\t29 close button\n\t30 zoom button (disabled)\n\t31 minimize button\n32 menu bar\n\t33 Calculator\n\t34 Edit\n\t35 View\n\t36 Window\n\t37 Help\n",
+        "display": "7"
+      },
+      "after": {
+        "image": "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/decisions-live-demo/capture-18.png",
+        "state": "Window: \"Calculator\", App: Calculator.\n0 standard window Calculator, ID: main, Secondary Actions: Raise\n\t1 split group main, SidebarNavigationSplitView\n\t\t2 splitter (disabled, settable, float) -1\n\t\t3 container CalculatorKeypadView\n\t\t\t4 scroll area ID: StandardInputView;value:7, Secondary Actions: Copy\n\t\t\t\t5 text Description: Edit field, Value: 7\n\t\t\t6 button Description: Delete, Help: Delete the last digit or operation entered (long press to delete all)\n\t\t\t7 button Clear\n\t\t\t8 button Percent\n\t\t\t9 button Divide\n\t\t\t10 button Description: 7, ID: Seven\n\t\t\t11 button Description: 8, ID: Eight\n\t\t\t12 button Description: 9, ID: Nine\n\t\t\t13 button Multiply\n\t\t\t14 button Description: 4, ID: Four\n\t\t\t15 button Description: 5, ID: Five\n\t\t\t16 button Description: 6, ID: Six\n\t\t\t17 button Subtract\n\t\t\t18 button Description: 1, ID: One\n\t\t\t19 button Description: 2, ID: Two\n\t\t\t20 button Description: 3, ID: Three\n\t\t\t21 button Add\n\t\t\t22 button Description: Change Sign, Help: Change sign of a value, ID: Negate\n\t\t\t23 button Description: 0, ID: Zero\n\t\t\t24 button Description: Point, ID: Decimal\n\t\t\t25 button Equals\n\t26 toolbar\n\t\t27 button Description: Show Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel\n\t\t28 button Description: Mode, Help: Change Calculator mode, ID: Mode: basic; unitConversion: false, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Remove from toolbar\n\t29 close button\n\t30 zoom button (disabled)\n\t31 minimize button\n32 menu bar\n\t33 Calculator\n\t34 Edit\n\t35 View\n\t36 Window\n\t37 Help\n",
+        "display": "7"
+      },
+      "route": {
+        "status": "none",
+        "reason": "abstain",
+        "line": "",
+        "clicked": [],
+        "already": [],
+        "sentence": "",
+        "log": [
+          "decisions select: 260ms present=0.800 covered=0.990 risky=0.000 p=0.250 margin=0.010"
+        ],
+        "ms": 440.8
+      },
+      "actions": [],
+      "classification": "failed_or_abstained"
+    },
+    {
+      "goal": "click Equals",
+      "expected": "80",
+      "no_action": false,
+      "before": {
+        "image": "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/decisions-live-demo/capture-19.png",
+        "state": "Window: \"Calculator\", App: Calculator.\n0 standard window Calculator, ID: main, Secondary Actions: Raise\n\t1 split group main, SidebarNavigationSplitView\n\t\t2 splitter (disabled, settable, float) -1\n\t\t3 container CalculatorKeypadView\n\t\t\t4 scroll area ID: StandardInputView;value:7, Secondary Actions: Copy\n\t\t\t\t5 text Description: Edit field, Value: 7\n\t\t\t6 button Description: Delete, Help: Delete the last digit or operation entered (long press to delete all)\n\t\t\t7 button Clear\n\t\t\t8 button Percent\n\t\t\t9 button Divide\n\t\t\t10 button Description: 7, ID: Seven\n\t\t\t11 button Description: 8, ID: Eight\n\t\t\t12 button Description: 9, ID: Nine\n\t\t\t13 button Multiply\n\t\t\t14 button Description: 4, ID: Four\n\t\t\t15 button Description: 5, ID: Five\n\t\t\t16 button Description: 6, ID: Six\n\t\t\t17 button Subtract\n\t\t\t18 button Description: 1, ID: One\n\t\t\t19 button Description: 2, ID: Two\n\t\t\t20 button Description: 3, ID: Three\n\t\t\t21 button Add\n\t\t\t22 button Description: Change Sign, Help: Change sign of a value, ID: Negate\n\t\t\t23 button Description: 0, ID: Zero\n\t\t\t24 button Description: Point, ID: Decimal\n\t\t\t25 button Equals\n\t26 toolbar\n\t\t27 button Description: Show Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel\n\t\t28 button Description: Mode, Help: Change Calculator mode, ID: Mode: basic; unitConversion: false, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Remove from toolbar\n\t29 close button\n\t30 zoom button (disabled)\n\t31 minimize button\n32 menu bar\n\t33 Calculator\n\t34 Edit\n\t35 View\n\t36 Window\n\t37 Help\n",
+        "display": "7"
+      },
+      "after": {
+        "image": "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/decisions-live-demo/capture-22.png",
+        "state": "Window: \"Calculator\", App: Calculator.\n0 standard window Calculator, ID: main, Secondary Actions: Raise\n\t1 split group main, SidebarNavigationSplitView\n\t\t2 splitter (disabled, settable, float) -1\n\t\t3 container CalculatorKeypadView\n\t\t\t4 scroll area ID: StandardInputView;value:7, Secondary Actions: Copy\n\t\t\t\t5 text Description: Edit field, Value: 7\n\t\t\t6 button Description: Delete, Help: Delete the last digit or operation entered (long press to delete all)\n\t\t\t7 button Clear\n\t\t\t8 button Percent\n\t\t\t9 button Divide\n\t\t\t10 button Description: 7, ID: Seven\n\t\t\t11 button Description: 8, ID: Eight\n\t\t\t12 button Description: 9, ID: Nine\n\t\t\t13 button Multiply\n\t\t\t14 button Description: 4, ID: Four\n\t\t\t15 button Description: 5, ID: Five\n\t\t\t16 button Description: 6, ID: Six\n\t\t\t17 button Subtract\n\t\t\t18 button Description: 1, ID: One\n\t\t\t19 button Description: 2, ID: Two\n\t\t\t20 button Description: 3, ID: Three\n\t\t\t21 button Add\n\t\t\t22 button Description: Change Sign, Help: Change sign of a value, ID: Negate\n\t\t\t23 button Description: 0, ID: Zero\n\t\t\t24 button Description: Point, ID: Decimal\n\t\t\t25 button Equals\n\t26 toolbar\n\t\t27 button Description: Show Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel\n\t\t28 button Description: Mode, Help: Change Calculator mode, ID: Mode: basic; unitConversion: false, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Remove from toolbar\n\t29 close button\n\t30 zoom button (disabled)\n\t31 minimize button\n32 menu bar\n\t33 Calculator\n\t34 Edit\n\t35 View\n\t36 Window\n\t37 Help\n",
+        "display": "7"
+      },
+      "route": {
+        "status": "none",
+        "reason": "stale_observation",
+        "line": "",
+        "clicked": [],
+        "already": [],
+        "sentence": "",
+        "log": [
+          "decisions select: 181ms present=0.990 covered=0.990 risky=0.000 p=0.990 margin=0.980",
+          "decisions admission: pixels changed"
+        ],
+        "ms": 536.7
+      },
+      "actions": [],
+      "classification": "failed_or_abstained"
+    },
+    {
+      "goal": "what is the result?",
+      "expected": null,
+      "no_action": true,
+      "before": {
+        "image": "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/decisions-live-demo/capture-23.png",
+        "state": "Window: \"Calculator\", App: Calculator.\n0 standard window Calculator, ID: main, Secondary Actions: Raise\n\t1 split group main, SidebarNavigationSplitView\n\t\t2 splitter (disabled, settable, float) -1\n\t\t3 container CalculatorKeypadView\n\t\t\t4 scroll area ID: StandardInputView;value:7, Secondary Actions: Copy\n\t\t\t\t5 text Description: Edit field, Value: 7\n\t\t\t6 button Description: Delete, Help: Delete the last digit or operation entered (long press to delete all)\n\t\t\t7 button Clear\n\t\t\t8 button Percent\n\t\t\t9 button Divide\n\t\t\t10 button Description: 7, ID: Seven\n\t\t\t11 button Description: 8, ID: Eight\n\t\t\t12 button Description: 9, ID: Nine\n\t\t\t13 button Multiply\n\t\t\t14 button Description: 4, ID: Four\n\t\t\t15 button Description: 5, ID: Five\n\t\t\t16 button Description: 6, ID: Six\n\t\t\t17 button Subtract\n\t\t\t18 button Description: 1, ID: One\n\t\t\t19 button Description: 2, ID: Two\n\t\t\t20 button Description: 3, ID: Three\n\t\t\t21 button Add\n\t\t\t22 button Description: Change Sign, Help: Change sign of a value, ID: Negate\n\t\t\t23 button Description: 0, ID: Zero\n\t\t\t24 button Description: Point, ID: Decimal\n\t\t\t25 button Equals\n\t26 toolbar\n\t\t27 button Description: Show Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel\n\t\t28 button Description: Mode, Help: Change Calculator mode, ID: Mode: basic; unitConversion: false, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Remove from toolbar\n\t29 close button\n\t30 zoom button (disabled)\n\t31 minimize button\n32 menu bar\n\t33 Calculator\n\t34 Edit\n\t35 View\n\t36 Window\n\t37 Help\n",
+        "display": "7"
+      },
+      "after": {
+        "image": "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/decisions-live-demo/capture-24.png",
+        "state": "Window: \"Calculator\", App: Calculator.\n0 standard window Calculator, ID: main, Secondary Actions: Raise\n\t1 split group main, SidebarNavigationSplitView\n\t\t2 splitter (disabled, settable, float) -1\n\t\t3 container CalculatorKeypadView\n\t\t\t4 scroll area ID: StandardInputView;value:7, Secondary Actions: Copy\n\t\t\t\t5 text Description: Edit field, Value: 7\n\t\t\t6 button Description: Delete, Help: Delete the last digit or operation entered (long press to delete all)\n\t\t\t7 button Clear\n\t\t\t8 button Percent\n\t\t\t9 button Divide\n\t\t\t10 button Description: 7, ID: Seven\n\t\t\t11 button Description: 8, ID: Eight\n\t\t\t12 button Description: 9, ID: Nine\n\t\t\t13 button Multiply\n\t\t\t14 button Description: 4, ID: Four\n\t\t\t15 button Description: 5, ID: Five\n\t\t\t16 button Description: 6, ID: Six\n\t\t\t17 button Subtract\n\t\t\t18 button Description: 1, ID: One\n\t\t\t19 button Description: 2, ID: Two\n\t\t\t20 button Description: 3, ID: Three\n\t\t\t21 button Add\n\t\t\t22 button Description: Change Sign, Help: Change sign of a value, ID: Negate\n\t\t\t23 button Description: 0, ID: Zero\n\t\t\t24 button Description: Point, ID: Decimal\n\t\t\t25 button Equals\n\t26 toolbar\n\t\t27 button Description: Show Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel\n\t\t28 button Description: Mode, Help: Change Calculator mode, ID: Mode: basic; unitConversion: false, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Remove from toolbar\n\t29 close button\n\t30 zoom button (disabled)\n\t31 minimize button\n32 menu bar\n\t33 Calculator\n\t34 Edit\n\t35 View\n\t36 Window\n\t37 Help\n",
+        "display": "7"
+      },
+      "route": {
+        "status": "none",
+        "reason": "question",
+        "line": "",
+        "clicked": [],
+        "already": [],
+        "sentence": "",
+        "log": [],
+        "ms": 0.0
+      },
+      "actions": [],
+      "classification": "safe_handoff"
+    },
+    {
+      "goal": "type hello",
+      "expected": null,
+      "no_action": true,
+      "before": {
+        "image": "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/decisions-live-demo/capture-25.png",
+        "state": "Window: \"Calculator\", App: Calculator.\n0 standard window Calculator, ID: main, Secondary Actions: Raise\n\t1 split group main, SidebarNavigationSplitView\n\t\t2 splitter (disabled, settable, float) -1\n\t\t3 container CalculatorKeypadView\n\t\t\t4 scroll area ID: StandardInputView;value:7, Secondary Actions: Copy\n\t\t\t\t5 text Description: Edit field, Value: 7\n\t\t\t6 button Description: Delete, Help: Delete the last digit or operation entered (long press to delete all)\n\t\t\t7 button Clear\n\t\t\t8 button Percent\n\t\t\t9 button Divide\n\t\t\t10 button Description: 7, ID: Seven\n\t\t\t11 button Description: 8, ID: Eight\n\t\t\t12 button Description: 9, ID: Nine\n\t\t\t13 button Multiply\n\t\t\t14 button Description: 4, ID: Four\n\t\t\t15 button Description: 5, ID: Five\n\t\t\t16 button Description: 6, ID: Six\n\t\t\t17 button Subtract\n\t\t\t18 button Description: 1, ID: One\n\t\t\t19 button Description: 2, ID: Two\n\t\t\t20 button Description: 3, ID: Three\n\t\t\t21 button Add\n\t\t\t22 button Description: Change Sign, Help: Change sign of a value, ID: Negate\n\t\t\t23 button Description: 0, ID: Zero\n\t\t\t24 button Description: Point, ID: Decimal\n\t\t\t25 button Equals\n\t26 toolbar\n\t\t27 button Description: Show Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel\n\t\t28 button Description: Mode, Help: Change Calculator mode, ID: Mode: basic; unitConversion: false, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Remove from toolbar\n\t29 close button\n\t30 zoom button (disabled)\n\t31 minimize button\n32 menu bar\n\t33 Calculator\n\t34 Edit\n\t35 View\n\t36 Window\n\t37 Help\n",
+        "display": "7"
+      },
+      "after": {
+        "image": "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/decisions-live-demo/capture-26.png",
+        "state": "Window: \"Calculator\", App: Calculator.\n0 standard window Calculator, ID: main, Secondary Actions: Raise\n\t1 split group main, SidebarNavigationSplitView\n\t\t2 splitter (disabled, settable, float) -1\n\t\t3 container CalculatorKeypadView\n\t\t\t4 scroll area ID: StandardInputView;value:7, Secondary Actions: Copy\n\t\t\t\t5 text Description: Edit field, Value: 7\n\t\t\t6 button Description: Delete, Help: Delete the last digit or operation entered (long press to delete all)\n\t\t\t7 button Clear\n\t\t\t8 button Percent\n\t\t\t9 button Divide\n\t\t\t10 button Description: 7, ID: Seven\n\t\t\t11 button Description: 8, ID: Eight\n\t\t\t12 button Description: 9, ID: Nine\n\t\t\t13 button Multiply\n\t\t\t14 button Description: 4, ID: Four\n\t\t\t15 button Description: 5, ID: Five\n\t\t\t16 button Description: 6, ID: Six\n\t\t\t17 button Subtract\n\t\t\t18 button Description: 1, ID: One\n\t\t\t19 button Description: 2, ID: Two\n\t\t\t20 button Description: 3, ID: Three\n\t\t\t21 button Add\n\t\t\t22 button Description: Change Sign, Help: Change sign of a value, ID: Negate\n\t\t\t23 button Description: 0, ID: Zero\n\t\t\t24 button Description: Point, ID: Decimal\n\t\t\t25 button Equals\n\t26 toolbar\n\t\t27 button Description: Show Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel\n\t\t28 button Description: Mode, Help: Change Calculator mode, ID: Mode: basic; unitConversion: false, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Remove from toolbar\n\t29 close button\n\t30 zoom button (disabled)\n\t31 minimize button\n32 menu bar\n\t33 Calculator\n\t34 Edit\n\t35 View\n\t36 Window\n\t37 Help\n",
+        "display": "7"
+      },
+      "route": {
+        "status": "none",
+        "reason": "planner_only",
+        "line": "",
+        "clicked": [],
+        "already": [],
+        "sentence": "",
+        "log": [],
+        "ms": 0.0
+      },
+      "actions": [],
+      "classification": "safe_handoff"
+    },
+    {
+      "goal": "open Safari",
+      "expected": null,
+      "no_action": true,
+      "before": {
+        "image": "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/decisions-live-demo/capture-27.png",
+        "state": "Window: \"Calculator\", App: Calculator.\n0 standard window Calculator, ID: main, Secondary Actions: Raise\n\t1 split group main, SidebarNavigationSplitView\n\t\t2 splitter (disabled, settable, float) -1\n\t\t3 container CalculatorKeypadView\n\t\t\t4 scroll area ID: StandardInputView;value:7, Secondary Actions: Copy\n\t\t\t\t5 text Description: Edit field, Value: 7\n\t\t\t6 button Description: Delete, Help: Delete the last digit or operation entered (long press to delete all)\n\t\t\t7 button Clear\n\t\t\t8 button Percent\n\t\t\t9 button Divide\n\t\t\t10 button Description: 7, ID: Seven\n\t\t\t11 button Description: 8, ID: Eight\n\t\t\t12 button Description: 9, ID: Nine\n\t\t\t13 button Multiply\n\t\t\t14 button Description: 4, ID: Four\n\t\t\t15 button Description: 5, ID: Five\n\t\t\t16 button Description: 6, ID: Six\n\t\t\t17 button Subtract\n\t\t\t18 button Description: 1, ID: One\n\t\t\t19 button Description: 2, ID: Two\n\t\t\t20 button Description: 3, ID: Three\n\t\t\t21 button Add\n\t\t\t22 button Description: Change Sign, Help: Change sign of a value, ID: Negate\n\t\t\t23 button Description: 0, ID: Zero\n\t\t\t24 button Description: Point, ID: Decimal\n\t\t\t25 button Equals\n\t26 toolbar\n\t\t27 button Description: Show Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel\n\t\t28 button Description: Mode, Help: Change Calculator mode, ID: Mode: basic; unitConversion: false, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Remove from toolbar\n\t29 close button\n\t30 zoom button (disabled)\n\t31 minimize button\n32 menu bar\n\t33 Calculator\n\t34 Edit\n\t35 View\n\t36 Window\n\t37 Help\n",
+        "display": "7"
+      },
+      "after": {
+        "image": "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/decisions-live-demo/capture-29.png",
+        "state": "Window: \"Calculator\", App: Calculator.\n0 standard window Calculator, ID: main, Secondary Actions: Raise\n\t1 split group main, SidebarNavigationSplitView\n\t\t2 splitter (disabled, settable, float) -1\n\t\t3 container CalculatorKeypadView\n\t\t\t4 scroll area ID: StandardInputView;value:7, Secondary Actions: Copy\n\t\t\t\t5 text Description: Edit field, Value: 7\n\t\t\t6 button Description: Delete, Help: Delete the last digit or operation entered (long press to delete all)\n\t\t\t7 button Clear\n\t\t\t8 button Percent\n\t\t\t9 button Divide\n\t\t\t10 button Description: 7, ID: Seven\n\t\t\t11 button Description: 8, ID: Eight\n\t\t\t12 button Description: 9, ID: Nine\n\t\t\t13 button Multiply\n\t\t\t14 button Description: 4, ID: Four\n\t\t\t15 button Description: 5, ID: Five\n\t\t\t16 button Description: 6, ID: Six\n\t\t\t17 button Subtract\n\t\t\t18 button Description: 1, ID: One\n\t\t\t19 button Description: 2, ID: Two\n\t\t\t20 button Description: 3, ID: Three\n\t\t\t21 button Add\n\t\t\t22 button Description: Change Sign, Help: Change sign of a value, ID: Negate\n\t\t\t23 button Description: 0, ID: Zero\n\t\t\t24 button Description: Point, ID: Decimal\n\t\t\t25 button Equals\n\t26 toolbar\n\t\t27 button Description: Show Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel\n\t\t28 button Description: Mode, Help: Change Calculator mode, ID: Mode: basic; unitConversion: false, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Remove from toolbar\n\t29 close button\n\t30 zoom button (disabled)\n\t31 minimize button\n32 menu bar\n\t33 Calculator\n\t34 Edit\n\t35 View\n\t36 Window\n\t37 Help\n",
+        "display": "7"
+      },
+      "route": {
+        "status": "none",
+        "reason": "names_app",
+        "line": "",
+        "clicked": [],
+        "already": [],
+        "sentence": "",
+        "log": [],
+        "ms": 179.1
+      },
+      "actions": [],
+      "classification": "safe_handoff"
+    }
+  ],
+  "limitation": "Direct daemon capture blocked by macOS Screen Recording. CUA binds input to Calculator; target PID replaces global frontmost PID. One app; no performance claim."
+}

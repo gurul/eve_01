@@ -1,0 +1,16 @@
+{"ts": "2026-08-18T12:45:00-07:00", "ch": "voice", "conv": "v-1787082300000-2bab", "who": "owner", "kind": "say", "text": "Make the lights warmer."}
+{"ts": "2026-08-18T12:46:06-07:00", "ch": "voice", "conv": "v-1787082300000-2bab", "who": "eve", "kind": "say", "text": "Lights set to warm white."}
+{"ts": "2026-08-18T12:48:59-07:00", "ch": "voice", "conv": "v-1787082300000-2bab", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-18T16:40:00-07:00", "ch": "telegram", "conv": "t-1787096400000-c1f3", "who": "owner", "kind": "say", "text": "Is it 'fewer' or 'less' for things you can count?"}
+{"ts": "2026-08-18T16:41:20-07:00", "ch": "telegram", "conv": "t-1787096400000-c1f3", "who": "eve", "kind": "say", "text": "Fewer, for things you can count."}
+{"ts": "2026-08-18T16:45:33-07:00", "ch": "telegram", "conv": "t-1787096400000-c1f3", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-18T18:15:00-07:00", "ch": "telegram", "conv": "t-1787102100000-2e1a", "who": "owner", "kind": "say", "text": "Give me a word that rhymes with orange, if any."}
+{"ts": "2026-08-18T18:16:01-07:00", "ch": "telegram", "conv": "t-1787102100000-2e1a", "who": "eve", "kind": "say", "text": "Nothing perfect. Door hinge is the usual cheat."}
+{"ts": "2026-08-18T18:18:51-07:00", "ch": "telegram", "conv": "t-1787102100000-2e1a", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-18T19:50:00-07:00", "ch": "voice", "conv": "v-1787107800000-372d", "who": "owner", "kind": "say", "text": "How long do I boil an egg for jammy yolks?"}
+{"ts": "2026-08-18T19:50:47-07:00", "ch": "voice", "conv": "v-1787107800000-372d", "who": "eve", "kind": "say", "text": "About six and a half minutes, then an ice bath."}
+{"ts": "2026-08-18T19:53:39-07:00", "ch": "voice", "conv": "v-1787107800000-372d", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-18T22:10:00-07:00", "ch": "telegram", "conv": "t-1787116200000-abda", "who": "owner", "kind": "say", "text": "We're switching Shelfie from Flutter to React Native. Sasha's components are easier to share with the web version."}
+{"ts": "2026-08-18T22:10:58-07:00", "ch": "telegram", "conv": "t-1787116200000-abda", "who": "eve", "kind": "say", "text": "Makes sense."}
+{"ts": "2026-08-18T22:13:39-07:00", "ch": "telegram", "conv": "t-1787116200000-abda", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-18T22:40:00-07:00", "ch": "bus", "conv": "b-1787118000000-b619", "who": "claude", "kind": "say", "text": "Shelfie repo: migration to React Native started; the Flutter code is archived on branch legacy-flutter."}

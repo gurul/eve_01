@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "browser_errors": [],
+  "checks": [
+    "learn topic",
+    "pen drawing and undo",
+    "hint",
+    "exactly one step per click",
+    "reload persistence",
+    "completion and recap",
+    "revision history",
+    "screenshot upload",
+    "problem confirmation",
+    "ideas-first gate",
+    "continue from learner step",
+    "end and resume",
+    "calculus",
+    "dashboard",
+    "mobile layout"
+  ]
+}

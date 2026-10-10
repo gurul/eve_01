@@ -1,0 +1,10 @@
+{"ts": "2026-09-14T07:15:00-07:00", "ch": "voice", "conv": "v-1789395300000-3efc", "who": "owner", "kind": "say", "text": "What's the capital of Australia?"}
+{"ts": "2026-09-14T07:16:28-07:00", "ch": "voice", "conv": "v-1789395300000-3efc", "who": "eve", "kind": "say", "text": "Canberra."}
+{"ts": "2026-09-14T07:20:05-07:00", "ch": "voice", "conv": "v-1789395300000-3efc", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-14T09:00:00-07:00", "ch": "telegram", "conv": "t-1789401600000-7f4d", "who": "owner", "kind": "say", "text": "My sister Lena turns 17 on September 19. What should I get her?"}
+{"ts": "2026-09-14T09:01:29-07:00", "ch": "telegram", "conv": "t-1789401600000-7f4d", "who": "eve", "kind": "say", "text": "She's been into photos lately, right? An instant camera would be a fun pick."}
+{"ts": "2026-09-14T09:02:42-07:00", "ch": "telegram", "conv": "t-1789401600000-7f4d", "who": "owner", "kind": "say", "text": "Done, I bought her a polaroid camera for $89."}
+{"ts": "2026-09-14T09:05:09-07:00", "ch": "telegram", "conv": "t-1789401600000-7f4d", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-14T15:00:00-07:00", "ch": "telegram", "conv": "t-1789423200000-6650", "who": "owner", "kind": "say", "text": "Grindhouse raised the oat flat white to $5.75."}
+{"ts": "2026-09-14T15:01:12-07:00", "ch": "telegram", "conv": "t-1789423200000-6650", "who": "eve", "kind": "say", "text": "Noted."}
+{"ts": "2026-09-14T15:04:26-07:00", "ch": "telegram", "conv": "t-1789423200000-6650", "who": "system", "kind": "close", "text": ""}

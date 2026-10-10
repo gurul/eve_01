@@ -1,0 +1,97 @@
+# xcodegen spec — regenerate the .xcodeproj with `xcodegen generate` from this directory (build.sh does).
+# Team SJ8BKXTNUS is the owner's, as in widget/project.yml.
+name: EveLink
+options:
+  bundleIdPrefix: com.github.eve-bridge
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+  generateEmptySchemes: false
+settings:
+  base:
+    DEVELOPMENT_TEAM: SJ8BKXTNUS
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    GENERATE_INFOPLIST_FILE: NO
+targets:
+  EveLink:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+        excludes: ["ChatWeb/**", "*.entitlements"]
+      # The chat page (docs/app-chat.md), built by ios/EveLink/Web: a folder reference, so it keeps its layout in
+      # the bundle and the eveapp:// scheme handler serves it as ChatWeb/...
+      - path: App/ChatWeb
+        type: folder
+        buildPhase: resources
+      - path: Shared
+      - path: Intents
+    # The pairing's Keychain item is in a group the widget extension lists too (Shared/Pairing.swift, docs/widget.md).
+    entitlements:
+      path: App/EveLink.entitlements
+      properties:
+        keychain-access-groups:
+          - $(AppIdentifierPrefix)com.github.eve-bridge.EveLink.shared
+    dependencies:
+      - target: EveLinkControls
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: Eve Link
+        CFBundleName: EveLink
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        NSMicrophoneUsageDescription: Eve Link sends what you say to eve when you hold Talk or press the Action Button, and types what you say when you tap the mic in Chat.
+        NSSpeechRecognitionUsageDescription: Eve Link turns what you say into text in the message field when you tap the mic in Chat. Nothing is sent until you tap send.
+        NSSupportsLiveActivities: true
+        UIBackgroundModes: [audio]
+        CFBundleURLTypes:
+          - CFBundleURLName: com.github.eve-bridge.EveLink
+            CFBundleURLSchemes: [evelink]
+        EveKeychainGroup: $(AppIdentifierPrefix)com.github.eve-bridge.EveLink.shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.github.eve-bridge.EveLink
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon   # App/Assets.xcassets, drawn by tools/make_icon.py (white eyes on black)
+        INFOPLIST_FILE: App/Info.plist
+  # The "Talk to eve" control (Settings > Action Button > Controls), the call's Live Activity and the home-screen
+  # widget (docs/widget.md), which reads the pairing from the shared Keychain group.
+  EveLinkControls:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Controls
+        excludes: ["*.entitlements"]
+      - path: Intents
+      - path: Shared/PhoneTurn.swift
+      - path: Shared/Pairing.swift
+      - path: Shared/Rendezvous.swift
+      - path: Shared/Today.swift
+    entitlements:
+      path: Controls/EveLinkControls.entitlements
+      properties:
+        keychain-access-groups:
+          - $(AppIdentifierPrefix)com.github.eve-bridge.EveLink.shared
+    info:
+      path: Controls/Info.plist
+      properties:
+        CFBundleDisplayName: Eve Link
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        EveKeychainGroup: $(AppIdentifierPrefix)com.github.eve-bridge.EveLink.shared
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.github.eve-bridge.EveLink.Controls
+        TARGETED_DEVICE_FAMILY: "1"
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) WIDGET_EXTENSION

@@ -1,0 +1,13 @@
+{"ts": "2026-09-02T06:10:00-07:00", "ch": "voice", "conv": "v-1788354600000-bb19", "who": "owner", "kind": "say", "text": "Moving my gym time to 6:30 now, the bus from Quarry Street is slow."}
+{"ts": "2026-09-02T06:11:04-07:00", "ch": "voice", "conv": "v-1788354600000-bb19", "who": "eve", "kind": "say", "text": "Okay."}
+{"ts": "2026-09-02T06:15:11-07:00", "ch": "voice", "conv": "v-1788354600000-bb19", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-02T07:00:00-07:00", "ch": "telegram", "conv": "t-1788357600000-0160", "who": "owner", "kind": "say", "text": "What's the fastest way to campus from here?"}
+{"ts": "2026-09-02T07:01:28-07:00", "ch": "telegram", "conv": "t-1788357600000-0160", "who": "eve", "kind": "tool", "text": "transit: Quarry Street to Halden campus", "tool": "transit"}
+{"ts": "2026-09-02T07:03:04-07:00", "ch": "telegram", "conv": "t-1788357600000-0160", "who": "eve", "kind": "say", "text": "Route 9 from Quarry Street gets you to campus in about 22 minutes."}
+{"ts": "2026-09-02T07:06:07-07:00", "ch": "telegram", "conv": "t-1788357600000-0160", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-02T19:30:00-07:00", "ch": "telegram", "conv": "t-1788402600000-b938", "who": "owner", "kind": "say", "text": "Wifi password here is quarry-sunset-55."}
+{"ts": "2026-09-02T19:31:17-07:00", "ch": "telegram", "conv": "t-1788402600000-b938", "who": "eve", "kind": "say", "text": "Noted."}
+{"ts": "2026-09-02T19:34:47-07:00", "ch": "telegram", "conv": "t-1788402600000-b938", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-02T22:20:00-07:00", "ch": "voice", "conv": "v-1788412800000-5bdf", "who": "owner", "kind": "say", "text": "Volume down a bit."}
+{"ts": "2026-09-02T22:21:11-07:00", "ch": "voice", "conv": "v-1788412800000-5bdf", "who": "eve", "kind": "say", "text": "Done."}
+{"ts": "2026-09-02T22:25:28-07:00", "ch": "voice", "conv": "v-1788412800000-5bdf", "who": "system", "kind": "close", "text": ""}

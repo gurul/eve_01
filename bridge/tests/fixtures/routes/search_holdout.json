@@ -1,0 +1,485 @@
+{
+ "note": "Written blind by a Claude subagent on 2026-09-29: no router code, prompts, search_tuning.json or other eval sets were read; browser_holdout2.json was opened only to copy the JSON shape. Labelling policy: label each request by the provider that would genuinely give the best answer. tinyfish = one fact, a definition, hours, a price or policy stated on a public page, what one specific doc says, or a simple comparison from a few pages. perplexity = breaking news or current events, anything whose answer may have changed recently, multi-hop, open-ended or ambiguous questions, and comparisons that need many sources; when torn between tinyfish and perplexity the label is perplexity (quality first). firecrawl = only when a live structured data tool answers directly: flight fares from a fare service, and government or official records. 'tricky' marks deliberately borderline cases.",
+ "cases": [
+  {
+   "goal": "what time does the Trader Joe's on Masonic open tomorrow",
+   "provider": "tinyfish",
+   "why": "public store hours on one page",
+   "tricky": false
+  },
+  {
+   "goal": "hey whats the definition of idempotent",
+   "provider": "tinyfish",
+   "why": "one definition, any glossary page",
+   "tricky": false
+  },
+  {
+   "goal": "how many ounces in a cup",
+   "provider": "tinyfish",
+   "why": "single fixed fact",
+   "tricky": false
+  },
+  {
+   "goal": "what does the python docs say about dict ordering",
+   "provider": "tinyfish",
+   "why": "what one specific doc page says",
+   "tricky": false
+  },
+  {
+   "goal": "whats the price of the kindle paperwork on amazon",
+   "provider": "tinyfish",
+   "why": "price shown on one public product page",
+   "tricky": true
+  },
+  {
+   "goal": "how much is a monthly Clipper pass for BART",
+   "provider": "tinyfish",
+   "why": "fare listed on the operator's public page, not a fare-search service",
+   "tricky": true
+  },
+  {
+   "goal": "is the Ferry Building farmers market open on sundays",
+   "provider": "tinyfish",
+   "why": "public schedule on one page",
+   "tricky": false
+  },
+  {
+   "goal": "what's the boiling point of water at 5000 feet",
+   "provider": "tinyfish",
+   "why": "single fact available on a few pages",
+   "tricky": false
+  },
+  {
+   "goal": "what's the capital of Kazakhstan",
+   "provider": "tinyfish",
+   "why": "one stable fact",
+   "tricky": false
+  },
+  {
+   "goal": "read the Stripe docs and tell me the default idempotency key expiry",
+   "provider": "tinyfish",
+   "why": "what one specific doc says",
+   "tricky": false
+  },
+  {
+   "goal": "who wrote the book Piranesi",
+   "provider": "tinyfish",
+   "why": "one stable fact",
+   "tricky": false
+  },
+  {
+   "goal": "uh what's the phone number for the Apple store on Union Square",
+   "provider": "tinyfish",
+   "why": "public listing on one page",
+   "tricky": false
+  },
+  {
+   "goal": "how much does Spotify premium family cost in the US",
+   "provider": "tinyfish",
+   "why": "price on the vendor's own public pricing page",
+   "tricky": true
+  },
+  {
+   "goal": "difference between baking soda and baking powder",
+   "provider": "tinyfish",
+   "why": "simple comparison, a few pages agree",
+   "tricky": false
+  },
+  {
+   "goal": "what does the Node 22 changelog say about fetch",
+   "provider": "tinyfish",
+   "why": "reading one specific changelog page",
+   "tricky": false
+  },
+  {
+   "goal": "how long do I boil a soft boiled egg",
+   "provider": "tinyfish",
+   "why": "simple how-to fact",
+   "tricky": false
+  },
+  {
+   "goal": "is the MoMA free on fridays",
+   "provider": "tinyfish",
+   "why": "policy on the museum's own public page",
+   "tricky": false
+  },
+  {
+   "goal": "compare the iPhone 17 and 17 Pro screen sizes",
+   "provider": "tinyfish",
+   "why": "two spec numbers from official spec pages",
+   "tricky": true
+  },
+  {
+   "goal": "what's the check-in time at the Hotel Zetta",
+   "provider": "tinyfish",
+   "why": "stated on the hotel's own page; not a booking fare lookup",
+   "tricky": true
+  },
+  {
+   "goal": "what does GDPR article 17 say",
+   "provider": "tinyfish",
+   "why": "text of one article on a public page",
+   "tricky": true
+  },
+  {
+   "goal": "how many calories in a banana",
+   "provider": "tinyfish",
+   "why": "one fact",
+   "tricky": false
+  },
+  {
+   "goal": "what's the price of admission at the California Academy of Sciences",
+   "provider": "tinyfish",
+   "why": "ticket price shown on the venue's public page",
+   "tricky": true
+  },
+  {
+   "goal": "convert 350 fahrenheit to celsius for my oven",
+   "provider": "tinyfish",
+   "why": "one fixed conversion",
+   "tricky": false
+  },
+  {
+   "goal": "what is the return window at Costco for electronics",
+   "provider": "tinyfish",
+   "why": "one public policy page",
+   "tricky": false
+  },
+  {
+   "goal": "does the Muni 38 run all night",
+   "provider": "tinyfish",
+   "why": "public route schedule page",
+   "tricky": false
+  },
+  {
+   "goal": "what's the max carry-on size for United",
+   "provider": "tinyfish",
+   "why": "airline's public baggage page; no fare data needed",
+   "tricky": true
+  },
+  {
+   "goal": "what's the rust book say a lifetime is",
+   "provider": "tinyfish",
+   "why": "what one specific doc says",
+   "tricky": false
+  },
+  {
+   "goal": "how tall is the Golden Gate Bridge",
+   "provider": "tinyfish",
+   "why": "one stable fact",
+   "tricky": false
+  },
+  {
+   "goal": "what's going on with the fed rate decision",
+   "provider": "perplexity",
+   "why": "breaking news, needs current multi-source synthesis",
+   "tricky": false
+  },
+  {
+   "goal": "is the Bay Bridge closed right now",
+   "provider": "perplexity",
+   "why": "sounds like a lookup but needs live news/traffic reports",
+   "tricky": true
+  },
+  {
+   "goal": "who's the CEO of OpenAI",
+   "provider": "perplexity",
+   "why": "sounds like one fact but leadership can change; needs current news",
+   "tricky": true
+  },
+  {
+   "goal": "what's the price of bitcoin rn",
+   "provider": "perplexity",
+   "why": "volatile price; aggregated live sources beat one static page",
+   "tricky": true
+  },
+  {
+   "goal": "should I get a heat pump or a mini split for a 1920s house in SF",
+   "provider": "perplexity",
+   "why": "open-ended advice needing many sources",
+   "tricky": false
+  },
+  {
+   "goal": "summarize what people are saying about the new Pixel 11",
+   "provider": "perplexity",
+   "why": "synthesis across many reviews",
+   "tricky": false
+  },
+  {
+   "goal": "did the Warriors make any trades today",
+   "provider": "perplexity",
+   "why": "breaking sports news",
+   "tricky": true
+  },
+  {
+   "goal": "what's the best budget mechanical keyboard right now",
+   "provider": "perplexity",
+   "why": "open-ended ranking across many sources",
+   "tricky": false
+  },
+  {
+   "goal": "why did Nvidia stock drop this week",
+   "provider": "perplexity",
+   "why": "current events, causal synthesis",
+   "tricky": false
+  },
+  {
+   "goal": "is Tartine still open, I heard it closed",
+   "provider": "perplexity",
+   "why": "looks like opening hours but hinges on recent news",
+   "tricky": true
+  },
+  {
+   "goal": "compare the pros and cons of Rust vs Go for a CLI tool",
+   "provider": "perplexity",
+   "why": "comparison that needs many sources and judgment",
+   "tricky": true
+  },
+  {
+   "goal": "what's the latest on the SF Muni budget cuts",
+   "provider": "perplexity",
+   "why": "ongoing news story",
+   "tricky": false
+  },
+  {
+   "goal": "what are the side effects of combining melatonin and magnesium",
+   "provider": "perplexity",
+   "why": "health question; needs careful multi-source synthesis",
+   "tricky": true
+  },
+  {
+   "goal": "who won the election in Japan",
+   "provider": "perplexity",
+   "why": "sounds like one fact but may be recent news",
+   "tricky": true
+  },
+  {
+   "goal": "explain how the new EU AI Act rules affect small startups",
+   "provider": "perplexity",
+   "why": "multi-hop policy analysis",
+   "tricky": false
+  },
+  {
+   "goal": "what laptop should i get for ML under two grand",
+   "provider": "perplexity",
+   "why": "open-ended recommendation",
+   "tricky": false
+  },
+  {
+   "goal": "is it safe to travel to Peru right now",
+   "provider": "perplexity",
+   "why": "current advisories plus news synthesis",
+   "tricky": true
+  },
+  {
+   "goal": "what's the current mortgage rate",
+   "provider": "perplexity",
+   "why": "sounds like one number; rates vary by source and change daily",
+   "tricky": true
+  },
+  {
+   "goal": "which neighbourhoods in Lisbon are best for a month-long stay",
+   "provider": "perplexity",
+   "why": "open-ended, many sources",
+   "tricky": false
+  },
+  {
+   "goal": "how does the Anthropic model context protocol compare to OpenAI's tools API",
+   "provider": "perplexity",
+   "why": "technical comparison across several docs and commentary",
+   "tricky": true
+  },
+  {
+   "goal": "what happened with the earthquake in Turkey",
+   "provider": "perplexity",
+   "why": "breaking news",
+   "tricky": false
+  },
+  {
+   "goal": "is the new Zelda game worth it",
+   "provider": "perplexity",
+   "why": "opinion synthesis across reviews",
+   "tricky": false
+  },
+  {
+   "goal": "what's the price of eggs these days",
+   "provider": "perplexity",
+   "why": "sounds like a price but it's an aggregate trend from news and data",
+   "tricky": true
+  },
+  {
+   "goal": "who founded the company that makes the Oura ring and what else did they do",
+   "provider": "perplexity",
+   "why": "multi-hop question",
+   "tricky": true
+  },
+  {
+   "goal": "uh what's happening with the tiktok ban",
+   "provider": "perplexity",
+   "why": "ongoing current event",
+   "tricky": false
+  },
+  {
+   "goal": "when is the next iPhone event",
+   "provider": "perplexity",
+   "why": "sounds like a date lookup but needs recent announcements and rumours",
+   "tricky": true
+  },
+  {
+   "goal": "what's the best way to learn Japanese in six months",
+   "provider": "perplexity",
+   "why": "open-ended advice",
+   "tricky": false
+  },
+  {
+   "goal": "is the Tesla Model Y price going up",
+   "provider": "perplexity",
+   "why": "price question that is really about news and trends",
+   "tricky": true
+  },
+  {
+   "goal": "what are researchers saying about GLP-1 drugs and alzheimers",
+   "provider": "perplexity",
+   "why": "research synthesis",
+   "tricky": false
+  },
+  {
+   "goal": "what time's the Giants game tonight and who's pitching",
+   "provider": "perplexity",
+   "why": "schedule plus a lineup that changes same-day; needs current news",
+   "tricky": true
+  },
+  {
+   "goal": "tell me about the Rivian R2",
+   "provider": "perplexity",
+   "why": "ambiguous and open-ended",
+   "tricky": false
+  },
+  {
+   "goal": "compare the three cheapest phone plans on T-Mobile, Verizon and Mint",
+   "provider": "perplexity",
+   "why": "many pages plus fine print; comparison across sources",
+   "tricky": true
+  },
+  {
+   "goal": "is Postgres 18 out yet and what's new",
+   "provider": "perplexity",
+   "why": "release status is recent; needs synthesis of what's new",
+   "tricky": true
+  },
+  {
+   "goal": "whats the deal with the new SF parking meter rules",
+   "provider": "perplexity",
+   "why": "local news, ambiguous",
+   "tricky": true
+  },
+  {
+   "goal": "how are the housing prices in Austin trending",
+   "provider": "perplexity",
+   "why": "trend analysis across many sources",
+   "tricky": false
+  },
+  {
+   "goal": "what's the weather gonna be like for the marathon sunday",
+   "provider": "perplexity",
+   "why": "forecast plus event context; torn with tinyfish, quality first",
+   "tricky": true
+  },
+  {
+   "goal": "cheapest flight SFO to JFK next friday",
+   "provider": "firecrawl",
+   "why": "flight fare search service answers directly",
+   "tricky": false
+  },
+  {
+   "goal": "how much is a round trip to Tokyo in December",
+   "provider": "firecrawl",
+   "why": "fare data from Google Flights/Skyscanner, not a public page",
+   "tricky": true
+  },
+  {
+   "goal": "find me flights to Lisbon under 800 in march",
+   "provider": "firecrawl",
+   "why": "structured fare search",
+   "tricky": false
+  },
+  {
+   "goal": "what's the fare on United from SFO to Denver on the 14th",
+   "provider": "firecrawl",
+   "why": "airline fare for a date is fare-service data, not a public page",
+   "tricky": true
+  },
+  {
+   "goal": "look up the business registration for Acme Robotics LLC in Delaware",
+   "provider": "firecrawl",
+   "why": "official government records tool",
+   "tricky": false
+  },
+  {
+   "goal": "is there a nonstop from Oakland to Honolulu in january and what does it cost",
+   "provider": "firecrawl",
+   "why": "route plus fare data from a fare service",
+   "tricky": true
+  },
+  {
+   "goal": "find the property records for 123 Main St in Alameda county",
+   "provider": "firecrawl",
+   "why": "government records data tool",
+   "tricky": true
+  },
+  {
+   "goal": "what's the cheapest day to fly to Chicago next month",
+   "provider": "firecrawl",
+   "why": "fare calendar from a flight data tool",
+   "tricky": false
+  },
+  {
+   "goal": "pull the list of SEC filings Rivian made this quarter",
+   "provider": "firecrawl",
+   "why": "official filings records tool answers directly; sounds like news",
+   "tricky": true
+  },
+  {
+   "goal": "how much would it cost to fly the family to Cancun over spring break",
+   "provider": "firecrawl",
+   "why": "multi-passenger fare search",
+   "tricky": false
+  },
+  {
+   "goal": "compare fares Alaska vs Southwest SFO to Seattle this weekend",
+   "provider": "firecrawl",
+   "why": "sounds like a comparison but the answer is fare-tool data",
+   "tricky": true
+  },
+  {
+   "goal": "pull the FAA registration for tail number N12345",
+   "provider": "firecrawl",
+   "why": "official registry record",
+   "tricky": false
+  },
+  {
+   "goal": "any cheap last minute flights out of SFO this weekend",
+   "provider": "firecrawl",
+   "why": "fare search; not news",
+   "tricky": false
+  },
+  {
+   "goal": "look up the building permits filed for 500 Valencia St",
+   "provider": "firecrawl",
+   "why": "city records data",
+   "tricky": true
+  },
+  {
+   "goal": "what's a one way to London in business class next month",
+   "provider": "firecrawl",
+   "why": "fare search service",
+   "tricky": false
+  },
+  {
+   "goal": "find trademark filings for the name 'Eve Bot'",
+   "provider": "firecrawl",
+   "why": "official USPTO records tool",
+   "tricky": true
+  }
+ ]
+}

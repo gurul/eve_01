@@ -1,0 +1,15 @@
+{
+ "about": "Dev cases for tools/openui_eval.py, written 2026-10-08 before the first run. label ui: the answer has a shape the owner would rather scan (a comparison, options, steps, a schedule, a chart, tap choices). label plain: chat, a single fact, feelings, thanks. Made up; no personal data.",
+ "cases": [
+  {"id": "compare-phones", "label": "ui", "text": "pixel 10 vs iphone 17, which one has better battery camera and price"},
+  {"id": "workout-plan", "label": "ui", "text": "make me a simple 3 day a week workout plan, i only have dumbbells"},
+  {"id": "router-steps", "label": "ui", "text": "how do i reset my wifi router, walk me through it"},
+  {"id": "dinner-options", "label": "ui", "text": "what should i cook tonight? give me a few ideas to pick from"},
+  {"id": "water-chart", "label": "ui", "text": "chart my water this week: mon 1.2L tue 2L wed 1.5L thu 2.4L fri 1.8L"},
+  {"id": "saturday-plan", "label": "ui", "text": "plan a saturday in seattle for me, morning to night"},
+  {"id": "hello", "label": "plain", "text": "hey how's it going"},
+  {"id": "capital", "label": "plain", "text": "what's the capital of australia"},
+  {"id": "stressed", "label": "plain", "text": "ugh i'm kinda stressed about tomorrow"},
+  {"id": "thanks", "label": "plain", "text": "perfect, thanks!"}
+ ]
+}

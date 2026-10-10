@@ -1,0 +1,7 @@
+{"t": 177331.756, "goal": "Go to https://help.eve-eval.test, open the Shipping page and tell me how many business days standard shipping takes.", "model": "gpt-6-sol"}
+{"t": 177331.783, "turn": 0, "browser": {"opened_before_planning": "https://help.eve-eval.test"}}
+{"t": 177333.938, "turn": 0, "plan": {"steps": [{"kind": "click", "target": "Shipping link", "label_hint": "Shipping", "text": "", "text_source": "utterance", "key": "", "consequential": false, "expect": null}], "final_say": "", "source": "astra", "needs_eyes": false, "success": null, "app": "browser", "secs": 2.18, "attempt": 0, "outline_lines": 4}}
+{"t": 177334.895, "turn": 0, "ledger": {"status": "complete", "next_index": 1, "reason": "", "confirm": "", "sentence": "Done: click Shipping link.", "ms": 954.6, "ledger": [{"index": 1, "step": "click Shipping link", "effect": "confirmed", "how": "keyword+jev", "note": "stopped: reason=one_step; steps=1; last=click link: Shipping; pick=1 link \"Shipping\"; text=none; key=none", "ms": 954.6}]}}
+{"t": 177342.281, "turn": 0, "read": {"url": "https://help.eve-eval.test/shipping", "chars": 161, "answer": "Standard shipping takes 5 to 7 business days."}}
+{"t": 177342.281, "final": "Standard shipping takes 5 to 7 business days.", "browser_only": true, "handed_on": false}
+{"t": 177342.281, "bill": {"model": "gpt-6-sol", "calls": 2, "tokens": {"in": 1137, "cached": 0, "out": 81}, "usd": 0.003084, "jev": {"calls": 1, "input_tokens": 693, "ms": 313, "errors": 0, "usd": 2.9e-05}, "total_usd": 0.003113, "secs": 10.53}}

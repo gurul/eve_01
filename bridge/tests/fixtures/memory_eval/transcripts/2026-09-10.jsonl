@@ -1,0 +1,13 @@
+{"ts": "2026-09-10T10:00:00-07:00", "ch": "telegram", "conv": "t-1789059600000-3260", "who": "owner", "kind": "say", "text": "Probability midterm is October 6."}
+{"ts": "2026-09-10T10:01:46-07:00", "ch": "telegram", "conv": "t-1789059600000-3260", "who": "owner", "kind": "say", "text": "If I study 45 minutes a day starting today, how much is that?"}
+{"ts": "2026-09-10T10:03:12-07:00", "ch": "telegram", "conv": "t-1789059600000-3260", "who": "eve", "kind": "say", "text": "From today to October 6 that's about 19.5 hours."}
+{"ts": "2026-09-10T10:05:50-07:00", "ch": "telegram", "conv": "t-1789059600000-3260", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-10T12:00:00-07:00", "ch": "telegram", "conv": "t-1789066800000-3421", "who": "owner", "kind": "say", "text": "I lost the multimeter Sasha lent me. Haven't told her yet."}
+{"ts": "2026-09-10T12:00:48-07:00", "ch": "telegram", "conv": "t-1789066800000-3421", "who": "eve", "kind": "say", "text": "Okay."}
+{"ts": "2026-09-10T12:03:47-07:00", "ch": "telegram", "conv": "t-1789066800000-3421", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-10T12:45:00-07:00", "ch": "voice", "conv": "v-1789069500000-051d", "who": "owner", "kind": "say", "text": "What's the capital of Australia?"}
+{"ts": "2026-09-10T12:46:28-07:00", "ch": "voice", "conv": "v-1789069500000-051d", "who": "eve", "kind": "say", "text": "Canberra."}
+{"ts": "2026-09-10T12:48:48-07:00", "ch": "voice", "conv": "v-1789069500000-051d", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-10T18:00:00-07:00", "ch": "telegram", "conv": "t-1789088400000-d523", "who": "owner", "kind": "say", "text": "Starting a probability study group with Hamid, Sundays at 4 pm, first one this Sunday."}
+{"ts": "2026-09-10T18:01:14-07:00", "ch": "telegram", "conv": "t-1789088400000-d523", "who": "eve", "kind": "say", "text": "Saved."}
+{"ts": "2026-09-10T18:04:36-07:00", "ch": "telegram", "conv": "t-1789088400000-d523", "who": "system", "kind": "close", "text": ""}

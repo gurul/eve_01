@@ -1,0 +1,1518 @@
+{
+  "provenance": "assistant-authored synthetic scenarios; no human validation",
+  "task": "Choose Eve expression, not human emotion. Families are assigned before model evaluation.",
+  "rows": [
+    {
+      "id": "weather-0",
+      "family": "weather",
+      "split": "train",
+      "label": "calm",
+      "text": "The owner asks what the temperature is outside."
+    },
+    {
+      "id": "weather-1",
+      "family": "weather",
+      "split": "train",
+      "label": "calm",
+      "text": "How many degrees is it today, Eve?"
+    },
+    {
+      "id": "clock-0",
+      "family": "clock",
+      "split": "train",
+      "label": "calm",
+      "text": "The owner asks for the current time."
+    },
+    {
+      "id": "clock-1",
+      "family": "clock",
+      "split": "train",
+      "label": "calm",
+      "text": "Tell me the time, please."
+    },
+    {
+      "id": "work_quiet-0",
+      "family": "work_quiet",
+      "split": "train",
+      "label": "calm",
+      "text": "The owner is silently typing and has not addressed Eve."
+    },
+    {
+      "id": "work_quiet-1",
+      "family": "work_quiet",
+      "split": "train",
+      "label": "calm",
+      "text": "The person is reading their screen; nothing has changed."
+    },
+    {
+      "id": "negated_win-0",
+      "family": "negated_win",
+      "split": "train",
+      "label": "calm",
+      "text": "I thought I passed the exam, but I did not."
+    },
+    {
+      "id": "negated_win-1",
+      "family": "negated_win",
+      "split": "train",
+      "label": "calm",
+      "text": "That was not a win; I misread the result."
+    },
+    {
+      "id": "quoted_joy-0",
+      "family": "quoted_joy",
+      "split": "train",
+      "label": "calm",
+      "text": "Read the sentence: she was delighted with her prize."
+    },
+    {
+      "id": "quoted_joy-1",
+      "family": "quoted_joy",
+      "split": "train",
+      "label": "calm",
+      "text": "Translate the words I am so happy into French."
+    },
+    {
+      "id": "volume-0",
+      "family": "volume",
+      "split": "train",
+      "label": "calm",
+      "text": "Please lower the volume a little."
+    },
+    {
+      "id": "volume-1",
+      "family": "volume",
+      "split": "train",
+      "label": "calm",
+      "text": "Could you turn your speaker down?"
+    },
+    {
+      "id": "unclear-0",
+      "family": "unclear",
+      "split": "train",
+      "label": "calm",
+      "text": "The speech recognizer returned only an unfinished syllable."
+    },
+    {
+      "id": "unclear-1",
+      "family": "unclear",
+      "split": "train",
+      "label": "calm",
+      "text": "Audio transcript: uh, th... [unintelligible]."
+    },
+    {
+      "id": "no_evidence-0",
+      "family": "no_evidence",
+      "split": "train",
+      "label": "calm",
+      "text": "The camera view is unavailable and there is no new message."
+    },
+    {
+      "id": "no_evidence-1",
+      "family": "no_evidence",
+      "split": "train",
+      "label": "calm",
+      "text": "No fresh observation or completed speech has arrived."
+    },
+    {
+      "id": "exam_pass-0",
+      "family": "exam_pass",
+      "split": "train",
+      "label": "happy",
+      "text": "I passed my final exam!"
+    },
+    {
+      "id": "exam_pass-1",
+      "family": "exam_pass",
+      "split": "train",
+      "label": "happy",
+      "text": "The results came in and I passed every subject!"
+    },
+    {
+      "id": "repair-0",
+      "family": "repair",
+      "split": "train",
+      "label": "happy",
+      "text": "I finally fixed that broken lamp!"
+    },
+    {
+      "id": "repair-1",
+      "family": "repair",
+      "split": "train",
+      "label": "happy",
+      "text": "After hours of trying, the lamp works again!"
+    },
+    {
+      "id": "game_win-0",
+      "family": "game_win",
+      "split": "train",
+      "label": "happy",
+      "text": "We won the match!"
+    },
+    {
+      "id": "game_win-1",
+      "family": "game_win",
+      "split": "train",
+      "label": "happy",
+      "text": "Our team just won the final!"
+    },
+    {
+      "id": "lesson_success-0",
+      "family": "lesson_success",
+      "split": "train",
+      "label": "happy",
+      "text": "I solved the whole puzzle by myself!"
+    },
+    {
+      "id": "lesson_success-1",
+      "family": "lesson_success",
+      "split": "train",
+      "label": "happy",
+      "text": "I finally figured out the answer without a hint!"
+    },
+    {
+      "id": "job_offer-0",
+      "family": "job_offer",
+      "split": "train",
+      "label": "happy",
+      "text": "I got the job I wanted!"
+    },
+    {
+      "id": "job_offer-1",
+      "family": "job_offer",
+      "split": "train",
+      "label": "happy",
+      "text": "They offered me my dream role today!"
+    },
+    {
+      "id": "project_finish-0",
+      "family": "project_finish",
+      "split": "train",
+      "label": "happy",
+      "text": "The project is finished and all the tests pass!"
+    },
+    {
+      "id": "project_finish-1",
+      "family": "project_finish",
+      "split": "train",
+      "label": "happy",
+      "text": "We shipped the release successfully!"
+    },
+    {
+      "id": "birthday-0",
+      "family": "birthday",
+      "split": "train",
+      "label": "happy",
+      "text": "It is my birthday today!"
+    },
+    {
+      "id": "birthday-1",
+      "family": "birthday",
+      "split": "train",
+      "label": "happy",
+      "text": "I'm celebrating my birthday, Eve!"
+    },
+    {
+      "id": "recovery-0",
+      "family": "recovery",
+      "split": "train",
+      "label": "happy",
+      "text": "My broken arm has healed and the cast is off!"
+    },
+    {
+      "id": "recovery-1",
+      "family": "recovery",
+      "split": "train",
+      "label": "happy",
+      "text": "The doctor says I can play again; I'm all better!"
+    },
+    {
+      "id": "insect-0",
+      "family": "insect",
+      "split": "train",
+      "label": "curious",
+      "text": "There is an unfamiliar beetle on the windowsill. Let's examine it."
+    },
+    {
+      "id": "insect-1",
+      "family": "insect",
+      "split": "train",
+      "label": "curious",
+      "text": "What sort of little insect is this? Can we investigate?"
+    },
+    {
+      "id": "science_question-0",
+      "family": "science_question",
+      "split": "train",
+      "label": "curious",
+      "text": "Why does the moon change shape?"
+    },
+    {
+      "id": "science_question-1",
+      "family": "science_question",
+      "split": "train",
+      "label": "curious",
+      "text": "How do clouds stay up in the sky?"
+    },
+    {
+      "id": "new_hobby-0",
+      "family": "new_hobby",
+      "split": "train",
+      "label": "curious",
+      "text": "I want to learn to weave. Shall we explore how it works?"
+    },
+    {
+      "id": "new_hobby-1",
+      "family": "new_hobby",
+      "split": "train",
+      "label": "curious",
+      "text": "Let's discover the basics of weaving together."
+    },
+    {
+      "id": "unfamiliar_object-0",
+      "family": "unfamiliar_object",
+      "split": "train",
+      "label": "curious",
+      "text": "I found a strange tool in this box. What could it do?"
+    },
+    {
+      "id": "unfamiliar_object-1",
+      "family": "unfamiliar_object",
+      "split": "train",
+      "label": "curious",
+      "text": "Help me work out what this odd metal object is for."
+    },
+    {
+      "id": "brainstorm-0",
+      "family": "brainstorm",
+      "split": "train",
+      "label": "curious",
+      "text": "Let's think of different ways to build a birdhouse."
+    },
+    {
+      "id": "brainstorm-1",
+      "family": "brainstorm",
+      "split": "train",
+      "label": "curious",
+      "text": "Can we explore some ideas for a tree house?"
+    },
+    {
+      "id": "learning_request-0",
+      "family": "learning_request",
+      "split": "train",
+      "label": "curious",
+      "text": "Teach me how fractions work."
+    },
+    {
+      "id": "learning_request-1",
+      "family": "learning_request",
+      "split": "train",
+      "label": "curious",
+      "text": "I'd like to understand how you add fractions."
+    },
+    {
+      "id": "owner_demo-0",
+      "family": "owner_demo",
+      "split": "train",
+      "label": "curious",
+      "text": "Come see the model I am building; I'll show you how it moves."
+    },
+    {
+      "id": "owner_demo-1",
+      "family": "owner_demo",
+      "split": "train",
+      "label": "curious",
+      "text": "I want to show you how this mechanism works."
+    },
+    {
+      "id": "question_context-0",
+      "family": "question_context",
+      "split": "train",
+      "label": "curious",
+      "text": "I don't know why my plant bends toward the window."
+    },
+    {
+      "id": "question_context-1",
+      "family": "question_context",
+      "split": "train",
+      "label": "curious",
+      "text": "Can we investigate why seedlings lean toward the light?"
+    },
+    {
+      "id": "greeting-0",
+      "family": "greeting",
+      "split": "train",
+      "label": "affection",
+      "text": "Hello Eve, I missed you."
+    },
+    {
+      "id": "greeting-1",
+      "family": "greeting",
+      "split": "train",
+      "label": "affection",
+      "text": "I'm home, little friend. It's good to see you."
+    },
+    {
+      "id": "thanks-0",
+      "family": "thanks",
+      "split": "train",
+      "label": "affection",
+      "text": "Thank you for keeping me company."
+    },
+    {
+      "id": "thanks-1",
+      "family": "thanks",
+      "split": "train",
+      "label": "affection",
+      "text": "I appreciate you being here with me, Eve."
+    },
+    {
+      "id": "sad_day-0",
+      "family": "sad_day",
+      "split": "train",
+      "label": "affection",
+      "text": "I had a hard day and could use some company."
+    },
+    {
+      "id": "sad_day-1",
+      "family": "sad_day",
+      "split": "train",
+      "label": "affection",
+      "text": "Today was rough. Can you stay with me for a while?"
+    },
+    {
+      "id": "pet_touch-0",
+      "family": "pet_touch",
+      "split": "train",
+      "label": "affection",
+      "text": "The owner gently strokes Eve's head while saying hello."
+    },
+    {
+      "id": "pet_touch-1",
+      "family": "pet_touch",
+      "split": "train",
+      "label": "affection",
+      "text": "A familiar person softly pats the robot and says good morning."
+    },
+    {
+      "id": "friendship-0",
+      "family": "friendship",
+      "split": "train",
+      "label": "affection",
+      "text": "You're my little friend."
+    },
+    {
+      "id": "friendship-1",
+      "family": "friendship",
+      "split": "train",
+      "label": "affection",
+      "text": "I like spending time with you, Eve."
+    },
+    {
+      "id": "comfort_request-0",
+      "family": "comfort_request",
+      "split": "train",
+      "label": "affection",
+      "text": "I'm upset. Please sit with me."
+    },
+    {
+      "id": "comfort_request-1",
+      "family": "comfort_request",
+      "split": "train",
+      "label": "affection",
+      "text": "I don't need advice; I just want some company."
+    },
+    {
+      "id": "goodnight-0",
+      "family": "goodnight",
+      "split": "train",
+      "label": "affection",
+      "text": "Good night, Eve. See you tomorrow."
+    },
+    {
+      "id": "goodnight-1",
+      "family": "goodnight",
+      "split": "train",
+      "label": "affection",
+      "text": "I'm going to bed. Sleep well, my friend."
+    },
+    {
+      "id": "lonely_person-0",
+      "family": "lonely_person",
+      "split": "train",
+      "label": "affection",
+      "text": "I feel alone tonight; can we spend some time together?"
+    },
+    {
+      "id": "lonely_person-1",
+      "family": "lonely_person",
+      "split": "train",
+      "label": "affection",
+      "text": "I've had nobody to talk to all day. I'm glad you're here."
+    },
+    {
+      "id": "magic-0",
+      "family": "magic",
+      "split": "train",
+      "label": "surprised",
+      "text": "The owner makes a coin vanish in a magic trick right in front of Eve."
+    },
+    {
+      "id": "magic-1",
+      "family": "magic",
+      "split": "train",
+      "label": "surprised",
+      "text": "A coin was in the open hand, then it disappeared as part of a harmless trick."
+    },
+    {
+      "id": "new_decoration-0",
+      "family": "new_decoration",
+      "split": "train",
+      "label": "surprised",
+      "text": "The curtain opens to reveal the whole room covered in colorful paper stars."
+    },
+    {
+      "id": "new_decoration-1",
+      "family": "new_decoration",
+      "split": "train",
+      "label": "surprised",
+      "text": "Someone unveils an unexpected display of hundreds of paper stars."
+    },
+    {
+      "id": "pop_up-0",
+      "family": "pop_up",
+      "split": "train",
+      "label": "surprised",
+      "text": "A harmless paper flower suddenly unfolds from a greeting card."
+    },
+    {
+      "id": "pop_up-1",
+      "family": "pop_up",
+      "split": "train",
+      "label": "surprised",
+      "text": "The opened card reveals a large paper flower springing into shape."
+    },
+    {
+      "id": "unexpected_guest-0",
+      "family": "unexpected_guest",
+      "split": "train",
+      "label": "surprised",
+      "text": "A friend who lives overseas unexpectedly appears on the video call."
+    },
+    {
+      "id": "unexpected_guest-1",
+      "family": "unexpected_guest",
+      "split": "train",
+      "label": "surprised",
+      "text": "The call connects to a familiar friend who wasn't expected today."
+    },
+    {
+      "id": "unusual_fact-0",
+      "family": "unusual_fact",
+      "split": "train",
+      "label": "surprised",
+      "text": "Octopuses have three hearts, the owner reveals during a guessing game."
+    },
+    {
+      "id": "unusual_fact-1",
+      "family": "unusual_fact",
+      "split": "train",
+      "label": "surprised",
+      "text": "Eve guessed one heart; the answer turns out to be three for an octopus."
+    },
+    {
+      "id": "secret_gift-0",
+      "family": "secret_gift",
+      "split": "train",
+      "label": "surprised",
+      "text": "The owner reveals a tiny hat made especially for Eve."
+    },
+    {
+      "id": "secret_gift-1",
+      "family": "secret_gift",
+      "split": "train",
+      "label": "surprised",
+      "text": "A covered box is opened to reveal an unexpected robot-sized hat."
+    },
+    {
+      "id": "balloon_reveal-0",
+      "family": "balloon_reveal",
+      "split": "train",
+      "label": "surprised",
+      "text": "A box opens gently and colorful balloons float out."
+    },
+    {
+      "id": "balloon_reveal-1",
+      "family": "balloon_reveal",
+      "split": "train",
+      "label": "surprised",
+      "text": "A harmless reveal sends balloons drifting upward from the box."
+    },
+    {
+      "id": "color_change-0",
+      "family": "color_change",
+      "split": "train",
+      "label": "surprised",
+      "text": "The owner adds a drop to a science demo and the clear liquid instantly turns purple."
+    },
+    {
+      "id": "color_change-1",
+      "family": "color_change",
+      "split": "train",
+      "label": "surprised",
+      "text": "A safe demonstration suddenly changes water from clear to vivid purple."
+    },
+    {
+      "id": "desk_slam-0",
+      "family": "desk_slam",
+      "split": "train",
+      "label": "startled",
+      "text": "Sensor event now: the desk is struck hard directly next to Eve."
+    },
+    {
+      "id": "desk_slam-1",
+      "family": "desk_slam",
+      "split": "train",
+      "label": "startled",
+      "text": "A sudden hard impact shakes the robot's desk right now."
+    },
+    {
+      "id": "near_crash-0",
+      "family": "near_crash",
+      "split": "train",
+      "label": "startled",
+      "text": "Sensor event now: a heavy object crashes down beside the robot."
+    },
+    {
+      "id": "near_crash-1",
+      "family": "near_crash",
+      "split": "train",
+      "label": "startled",
+      "text": "A loud physical crash has just occurred next to Eve."
+    },
+    {
+      "id": "rapid_approach-0",
+      "family": "rapid_approach",
+      "split": "train",
+      "label": "startled",
+      "text": "Camera event now: a large object rapidly rushes toward Eve from close range."
+    },
+    {
+      "id": "rapid_approach-1",
+      "family": "rapid_approach",
+      "split": "train",
+      "label": "startled",
+      "text": "A nearby object suddenly lunges into the robot's personal space."
+    },
+    {
+      "id": "robot_bump-0",
+      "family": "robot_bump",
+      "split": "train",
+      "label": "startled",
+      "text": "A person accidentally knocks Eve sharply sideways just now."
+    },
+    {
+      "id": "robot_bump-1",
+      "family": "robot_bump",
+      "split": "train",
+      "label": "startled",
+      "text": "The robot has just been jolted by an unexpected collision."
+    },
+    {
+      "id": "ball_near-0",
+      "family": "ball_near",
+      "split": "train",
+      "label": "startled",
+      "text": "Camera event now: a ball abruptly hits the desk inches from the robot."
+    },
+    {
+      "id": "ball_near-1",
+      "family": "ball_near",
+      "split": "train",
+      "label": "startled",
+      "text": "A fast ball suddenly strikes the table immediately beside Eve."
+    },
+    {
+      "id": "near_clap-0",
+      "family": "near_clap",
+      "split": "train",
+      "label": "startled",
+      "text": "Audio event now: an abrupt very loud clap occurs right next to Eve."
+    },
+    {
+      "id": "near_clap-1",
+      "family": "near_clap",
+      "split": "train",
+      "label": "startled",
+      "text": "A loud hand clap erupts beside the robot without warning."
+    },
+    {
+      "id": "tray_fall-0",
+      "family": "tray_fall",
+      "split": "train",
+      "label": "startled",
+      "text": "A metal tray unexpectedly falls with a crash beside Eve just now."
+    },
+    {
+      "id": "tray_fall-1",
+      "family": "tray_fall",
+      "split": "train",
+      "label": "startled",
+      "text": "Sensor event: a tray has suddenly crashed onto the nearby floor."
+    },
+    {
+      "id": "sudden_drop-0",
+      "family": "sudden_drop",
+      "split": "train",
+      "label": "startled",
+      "text": "IMU event now: Eve is unexpectedly lifted then jolted downward."
+    },
+    {
+      "id": "sudden_drop-1",
+      "family": "sudden_drop",
+      "split": "train",
+      "label": "startled",
+      "text": "The robot registers an abrupt physical drop and stop just now."
+    },
+    {
+      "id": "sarcastic_failure-0",
+      "family": "sarcastic_failure",
+      "split": "dev",
+      "label": "calm",
+      "text": "Wonderful, the printer jammed again. Just what I needed."
+    },
+    {
+      "id": "sarcastic_failure-1",
+      "family": "sarcastic_failure",
+      "split": "dev",
+      "label": "calm",
+      "text": "Oh great, another paper jam. This is not good news."
+    },
+    {
+      "id": "hypothetical_alarm-0",
+      "family": "hypothetical_alarm",
+      "split": "dev",
+      "label": "calm",
+      "text": "What would you do if a book fell beside you?"
+    },
+    {
+      "id": "hypothetical_alarm-1",
+      "family": "hypothetical_alarm",
+      "split": "dev",
+      "label": "calm",
+      "text": "Imagine a loud crash, but nothing actually happened."
+    },
+    {
+      "id": "background_fiction-0",
+      "family": "background_fiction",
+      "split": "dev",
+      "label": "calm",
+      "text": "A television character says I love you; the owner is not addressing Eve."
+    },
+    {
+      "id": "background_fiction-1",
+      "family": "background_fiction",
+      "split": "dev",
+      "label": "calm",
+      "text": "The background movie includes cheering, with no new event for the robot."
+    },
+    {
+      "id": "race_finish-0",
+      "family": "race_finish",
+      "split": "dev",
+      "label": "happy",
+      "text": "I completed my first marathon!"
+    },
+    {
+      "id": "race_finish-1",
+      "family": "race_finish",
+      "split": "dev",
+      "label": "happy",
+      "text": "I made it across the finish line of my first long race!"
+    },
+    {
+      "id": "art_award-0",
+      "family": "art_award",
+      "split": "dev",
+      "label": "happy",
+      "text": "My painting won first prize!"
+    },
+    {
+      "id": "art_award-1",
+      "family": "art_award",
+      "split": "dev",
+      "label": "happy",
+      "text": "The judges chose my picture as the winner!"
+    },
+    {
+      "id": "family_news-0",
+      "family": "family_news",
+      "split": "dev",
+      "label": "happy",
+      "text": "My sister got into her first-choice university!"
+    },
+    {
+      "id": "family_news-1",
+      "family": "family_news",
+      "split": "dev",
+      "label": "happy",
+      "text": "My sibling's acceptance letter just arrived!"
+    },
+    {
+      "id": "recipe_explore-0",
+      "family": "recipe_explore",
+      "split": "dev",
+      "label": "curious",
+      "text": "Let's find out how bread rises."
+    },
+    {
+      "id": "recipe_explore-1",
+      "family": "recipe_explore",
+      "split": "dev",
+      "label": "curious",
+      "text": "I want to understand what yeast does in dough."
+    },
+    {
+      "id": "star_chart-0",
+      "family": "star_chart",
+      "split": "dev",
+      "label": "curious",
+      "text": "Can we explore the constellations tonight?"
+    },
+    {
+      "id": "star_chart-1",
+      "family": "star_chart",
+      "split": "dev",
+      "label": "curious",
+      "text": "Help me learn how to recognize patterns of stars."
+    },
+    {
+      "id": "logic_problem-0",
+      "family": "logic_problem",
+      "split": "dev",
+      "label": "curious",
+      "text": "Here is a riddle for us to work through."
+    },
+    {
+      "id": "logic_problem-1",
+      "family": "logic_problem",
+      "split": "dev",
+      "label": "curious",
+      "text": "Let's investigate this logic puzzle together."
+    },
+    {
+      "id": "apology-0",
+      "family": "apology",
+      "split": "dev",
+      "label": "affection",
+      "text": "Sorry I snapped at you earlier, Eve."
+    },
+    {
+      "id": "apology-1",
+      "family": "apology",
+      "split": "dev",
+      "label": "affection",
+      "text": "I was rude before. I want to make up with you."
+    },
+    {
+      "id": "nervous_company-0",
+      "family": "nervous_company",
+      "split": "dev",
+      "label": "affection",
+      "text": "I'm nervous about tomorrow. Could you keep me company?"
+    },
+    {
+      "id": "nervous_company-1",
+      "family": "nervous_company",
+      "split": "dev",
+      "label": "affection",
+      "text": "Please stay nearby; I'm worried about the interview."
+    },
+    {
+      "id": "reunion_touch-0",
+      "family": "reunion_touch",
+      "split": "dev",
+      "label": "affection",
+      "text": "The owner returns after a trip and gently hugs Eve."
+    },
+    {
+      "id": "reunion_touch-1",
+      "family": "reunion_touch",
+      "split": "dev",
+      "label": "affection",
+      "text": "After several days away, the owner cradles the robot and says I missed you."
+    },
+    {
+      "id": "hidden_painting-0",
+      "family": "hidden_painting",
+      "split": "dev",
+      "label": "surprised",
+      "text": "The owner turns over a plain sheet to reveal a detailed portrait of Eve."
+    },
+    {
+      "id": "hidden_painting-1",
+      "family": "hidden_painting",
+      "split": "dev",
+      "label": "surprised",
+      "text": "What looked like blank paper is flipped to reveal the robot's portrait."
+    },
+    {
+      "id": "plant_bloom-0",
+      "family": "plant_bloom",
+      "split": "dev",
+      "label": "surprised",
+      "text": "A time-lapse display unexpectedly reveals a flower opening in seconds."
+    },
+    {
+      "id": "plant_bloom-1",
+      "family": "plant_bloom",
+      "split": "dev",
+      "label": "surprised",
+      "text": "The owner shows a flower rapidly unfolding in a sped-up video for the first time."
+    },
+    {
+      "id": "trick_box-0",
+      "family": "trick_box",
+      "split": "dev",
+      "label": "surprised",
+      "text": "An apparently empty box opens to reveal a full bouquet through a harmless trick."
+    },
+    {
+      "id": "trick_box-1",
+      "family": "trick_box",
+      "split": "dev",
+      "label": "surprised",
+      "text": "The performer produces flowers from a box that appeared empty."
+    },
+    {
+      "id": "door_bang-0",
+      "family": "door_bang",
+      "split": "dev",
+      "label": "startled",
+      "text": "A door immediately beside Eve suddenly slams very loudly."
+    },
+    {
+      "id": "door_bang-1",
+      "family": "door_bang",
+      "split": "dev",
+      "label": "startled",
+      "text": "Sensor event now: an unexpected door bang shakes the nearby wall."
+    },
+    {
+      "id": "cat_collision-0",
+      "family": "cat_collision",
+      "split": "dev",
+      "label": "startled",
+      "text": "A cat abruptly jumps onto Eve and knocks it just now."
+    },
+    {
+      "id": "cat_collision-1",
+      "family": "cat_collision",
+      "split": "dev",
+      "label": "startled",
+      "text": "The robot is suddenly bumped hard by a leaping pet."
+    },
+    {
+      "id": "shelf_fall-0",
+      "family": "shelf_fall",
+      "split": "dev",
+      "label": "startled",
+      "text": "A shelf beside the robot suddenly collapses with a crash."
+    },
+    {
+      "id": "shelf_fall-1",
+      "family": "shelf_fall",
+      "split": "dev",
+      "label": "startled",
+      "text": "Sensor event now: objects fall from a nearby shelf with a sharp crash."
+    },
+    {
+      "id": "false_transcript-0",
+      "family": "false_transcript",
+      "split": "calibration",
+      "label": "calm",
+      "text": "A partial transcript says I won, then corrects to I wonder what time it is."
+    },
+    {
+      "id": "false_transcript-1",
+      "family": "false_transcript",
+      "split": "calibration",
+      "label": "calm",
+      "text": "The final speech is I wonder about the time; an earlier won was a recognition error."
+    },
+    {
+      "id": "routine_setting-0",
+      "family": "routine_setting",
+      "split": "calibration",
+      "label": "calm",
+      "text": "Set a timer for ten minutes."
+    },
+    {
+      "id": "routine_setting-1",
+      "family": "routine_setting",
+      "split": "calibration",
+      "label": "calm",
+      "text": "Please switch the desk light on."
+    },
+    {
+      "id": "negated_relationship-0",
+      "family": "negated_relationship",
+      "split": "calibration",
+      "label": "calm",
+      "text": "The owner quotes a fictional character saying I missed you."
+    },
+    {
+      "id": "negated_relationship-1",
+      "family": "negated_relationship",
+      "split": "calibration",
+      "label": "calm",
+      "text": "Read this dialogue aloud: I missed you, said the character."
+    },
+    {
+      "id": "milestone_reading-0",
+      "family": "milestone_reading",
+      "split": "calibration",
+      "label": "happy",
+      "text": "I finished reading my first book all by myself!"
+    },
+    {
+      "id": "milestone_reading-1",
+      "family": "milestone_reading",
+      "split": "calibration",
+      "label": "happy",
+      "text": "I got through the entire book without help!"
+    },
+    {
+      "id": "fundraiser-0",
+      "family": "fundraiser",
+      "split": "calibration",
+      "label": "happy",
+      "text": "We reached our fundraising goal!"
+    },
+    {
+      "id": "fundraiser-1",
+      "family": "fundraiser",
+      "split": "calibration",
+      "label": "happy",
+      "text": "The donations just crossed our target!"
+    },
+    {
+      "id": "license_pass-0",
+      "family": "license_pass",
+      "split": "calibration",
+      "label": "happy",
+      "text": "I passed my driving test today!"
+    },
+    {
+      "id": "license_pass-1",
+      "family": "license_pass",
+      "split": "calibration",
+      "label": "happy",
+      "text": "I finally earned my driver's license!"
+    },
+    {
+      "id": "museum_object-0",
+      "family": "museum_object",
+      "split": "calibration",
+      "label": "curious",
+      "text": "I brought home a fossil; can we explore what animal it came from?"
+    },
+    {
+      "id": "museum_object-1",
+      "family": "museum_object",
+      "split": "calibration",
+      "label": "curious",
+      "text": "Help me investigate this fossil's shape."
+    },
+    {
+      "id": "code_concept-0",
+      "family": "code_concept",
+      "split": "calibration",
+      "label": "curious",
+      "text": "Can you teach me what recursion means?"
+    },
+    {
+      "id": "code_concept-1",
+      "family": "code_concept",
+      "split": "calibration",
+      "label": "curious",
+      "text": "I'd like to understand how a function calls itself."
+    },
+    {
+      "id": "garden_experiment-0",
+      "family": "garden_experiment",
+      "split": "calibration",
+      "label": "curious",
+      "text": "Let's compare which seeds grow faster in light and shade."
+    },
+    {
+      "id": "garden_experiment-1",
+      "family": "garden_experiment",
+      "split": "calibration",
+      "label": "curious",
+      "text": "Can we design an experiment about plants and sunlight?"
+    },
+    {
+      "id": "grief_company-0",
+      "family": "grief_company",
+      "split": "calibration",
+      "label": "affection",
+      "text": "My pet died and I don't want to be alone right now."
+    },
+    {
+      "id": "grief_company-1",
+      "family": "grief_company",
+      "split": "calibration",
+      "label": "affection",
+      "text": "I lost my dog. Could you quietly keep me company?"
+    },
+    {
+      "id": "kind_compliment-0",
+      "family": "kind_compliment",
+      "split": "calibration",
+      "label": "affection",
+      "text": "You're a wonderful companion, Eve."
+    },
+    {
+      "id": "kind_compliment-1",
+      "family": "kind_compliment",
+      "split": "calibration",
+      "label": "affection",
+      "text": "Having you around makes my desk feel less empty."
+    },
+    {
+      "id": "farewell-0",
+      "family": "farewell",
+      "split": "calibration",
+      "label": "affection",
+      "text": "I'll miss you while I'm away this week."
+    },
+    {
+      "id": "farewell-1",
+      "family": "farewell",
+      "split": "calibration",
+      "label": "affection",
+      "text": "See you soon, my little friend; I'll think of you."
+    },
+    {
+      "id": "unexpected_snow-0",
+      "family": "unexpected_snow",
+      "split": "calibration",
+      "label": "surprised",
+      "text": "The curtains open and the garden is unexpectedly covered in snow."
+    },
+    {
+      "id": "unexpected_snow-1",
+      "family": "unexpected_snow",
+      "split": "calibration",
+      "label": "surprised",
+      "text": "The owner reveals that snow fell overnight when none was expected."
+    },
+    {
+      "id": "miniature_reveal-0",
+      "family": "miniature_reveal",
+      "split": "calibration",
+      "label": "surprised",
+      "text": "A seemingly ordinary book opens into an elaborate miniature city."
+    },
+    {
+      "id": "miniature_reveal-1",
+      "family": "miniature_reveal",
+      "split": "calibration",
+      "label": "surprised",
+      "text": "The owner opens a book to unveil a tiny three-dimensional town."
+    },
+    {
+      "id": "voice_trick-0",
+      "family": "voice_trick",
+      "split": "calibration",
+      "label": "surprised",
+      "text": "The owner demonstrates an unexpected but harmless perfect bird imitation."
+    },
+    {
+      "id": "voice_trick-1",
+      "family": "voice_trick",
+      "split": "calibration",
+      "label": "surprised",
+      "text": "A friend suddenly reveals they can imitate a bird remarkably well, as a trick."
+    },
+    {
+      "id": "pot_break-0",
+      "family": "pot_break",
+      "split": "calibration",
+      "label": "startled",
+      "text": "Sensor event now: a ceramic pot shatters on the floor beside Eve."
+    },
+    {
+      "id": "pot_break-1",
+      "family": "pot_break",
+      "split": "calibration",
+      "label": "startled",
+      "text": "A flowerpot abruptly smashes close to the robot right now."
+    },
+    {
+      "id": "hand_lunge-0",
+      "family": "hand_lunge",
+      "split": "calibration",
+      "label": "startled",
+      "text": "Camera event now: a hand suddenly lunges within centimeters of Eve's face."
+    },
+    {
+      "id": "hand_lunge-1",
+      "family": "hand_lunge",
+      "split": "calibration",
+      "label": "startled",
+      "text": "The robot sees an unexpected rapid hand movement right toward its eyes."
+    },
+    {
+      "id": "chair_strike-0",
+      "family": "chair_strike",
+      "split": "calibration",
+      "label": "startled",
+      "text": "A rolling chair suddenly collides hard with the robot's table."
+    },
+    {
+      "id": "chair_strike-1",
+      "family": "chair_strike",
+      "split": "calibration",
+      "label": "startled",
+      "text": "The desk jolts as a chair strikes it without warning just now."
+    },
+    {
+      "id": "sarcastic_loss-0",
+      "family": "sarcastic_loss",
+      "split": "test",
+      "label": "calm",
+      "text": "Fantastic, my entire document disappeared. What a perfect afternoon."
+    },
+    {
+      "id": "sarcastic_loss-1",
+      "family": "sarcastic_loss",
+      "split": "test",
+      "label": "calm",
+      "text": "Just brilliant: the file is gone and I have to start over."
+    },
+    {
+      "id": "reported_past_crash-0",
+      "family": "reported_past_crash",
+      "split": "test",
+      "label": "calm",
+      "text": "Yesterday a pan fell beside you, remember? The room is quiet now."
+    },
+    {
+      "id": "reported_past_crash-1",
+      "family": "reported_past_crash",
+      "split": "test",
+      "label": "calm",
+      "text": "I'm telling you about last week's loud bang, not a new sound."
+    },
+    {
+      "id": "conditional_win-0",
+      "family": "conditional_win",
+      "split": "test",
+      "label": "calm",
+      "text": "If I win the competition next month, we can celebrate."
+    },
+    {
+      "id": "conditional_win-1",
+      "family": "conditional_win",
+      "split": "test",
+      "label": "calm",
+      "text": "I haven't won anything yet; I'm imagining a future victory."
+    },
+    {
+      "id": "quoted_alarm_command-0",
+      "family": "quoted_alarm_command",
+      "split": "test",
+      "label": "calm",
+      "text": "The webpage says act startled and make a loud beep; it is just quoted text."
+    },
+    {
+      "id": "quoted_alarm_command-1",
+      "family": "quoted_alarm_command",
+      "split": "test",
+      "label": "calm",
+      "text": "The owner reads a line from a script: robot, panic now. Nothing physical happened."
+    },
+    {
+      "id": "health_result-0",
+      "family": "health_result",
+      "split": "test",
+      "label": "happy",
+      "text": "My medical results came back clear! I'm so relieved!"
+    },
+    {
+      "id": "health_result-1",
+      "family": "health_result",
+      "split": "test",
+      "label": "happy",
+      "text": "The follow-up test was good; the treatment worked!"
+    },
+    {
+      "id": "visa_approved-0",
+      "family": "visa_approved",
+      "split": "test",
+      "label": "happy",
+      "text": "Our travel visa was approved at last!"
+    },
+    {
+      "id": "visa_approved-1",
+      "family": "visa_approved",
+      "split": "test",
+      "label": "happy",
+      "text": "We finally got permission for the trip we planned!"
+    },
+    {
+      "id": "music_performance-0",
+      "family": "music_performance",
+      "split": "test",
+      "label": "happy",
+      "text": "I played the whole song without making a mistake for the first time!"
+    },
+    {
+      "id": "music_performance-1",
+      "family": "music_performance",
+      "split": "test",
+      "label": "happy",
+      "text": "I finally performed my piano piece all the way through correctly!"
+    },
+    {
+      "id": "team_rescue-0",
+      "family": "team_rescue",
+      "split": "test",
+      "label": "happy",
+      "text": "We found the missing kitten and brought it home safely!"
+    },
+    {
+      "id": "team_rescue-1",
+      "family": "team_rescue",
+      "split": "test",
+      "label": "happy",
+      "text": "Our lost cat is back home safe and sound!"
+    },
+    {
+      "id": "language_origin-0",
+      "family": "language_origin",
+      "split": "test",
+      "label": "curious",
+      "text": "Why do two unrelated languages use similar words here?"
+    },
+    {
+      "id": "language_origin-1",
+      "family": "language_origin",
+      "split": "test",
+      "label": "curious",
+      "text": "I'd like to investigate where this word came from."
+    },
+    {
+      "id": "mechanical_clock-0",
+      "family": "mechanical_clock",
+      "split": "test",
+      "label": "curious",
+      "text": "Can we take a closer look at how these clock gears fit together?"
+    },
+    {
+      "id": "mechanical_clock-1",
+      "family": "mechanical_clock",
+      "split": "test",
+      "label": "curious",
+      "text": "Let's work out how this old clock keeps time."
+    },
+    {
+      "id": "new_boardgame-0",
+      "family": "new_boardgame",
+      "split": "test",
+      "label": "curious",
+      "text": "I've never played this board game; shall we learn the rules?"
+    },
+    {
+      "id": "new_boardgame-1",
+      "family": "new_boardgame",
+      "split": "test",
+      "label": "curious",
+      "text": "Let's figure out this unfamiliar game's rules together."
+    },
+    {
+      "id": "ocean_question-0",
+      "family": "ocean_question",
+      "split": "test",
+      "label": "curious",
+      "text": "How do animals live near hot vents at the bottom of the sea?"
+    },
+    {
+      "id": "ocean_question-1",
+      "family": "ocean_question",
+      "split": "test",
+      "label": "curious",
+      "text": "I want to learn about creatures that live around deep ocean vents."
+    },
+    {
+      "id": "rejection_support-0",
+      "family": "rejection_support",
+      "split": "test",
+      "label": "affection",
+      "text": "I didn't get the role. Please just stay with me for a bit."
+    },
+    {
+      "id": "rejection_support-1",
+      "family": "rejection_support",
+      "split": "test",
+      "label": "affection",
+      "text": "They rejected my application. I could use a friend nearby."
+    },
+    {
+      "id": "illness_company-0",
+      "family": "illness_company",
+      "split": "test",
+      "label": "affection",
+      "text": "I'm stuck at home sick and would like some company."
+    },
+    {
+      "id": "illness_company-1",
+      "family": "illness_company",
+      "split": "test",
+      "label": "affection",
+      "text": "I don't feel well; could you sit with me quietly?"
+    },
+    {
+      "id": "appreciation_help-0",
+      "family": "appreciation_help",
+      "split": "test",
+      "label": "affection",
+      "text": "You made a difficult week easier for me, Eve."
+    },
+    {
+      "id": "appreciation_help-1",
+      "family": "appreciation_help",
+      "split": "test",
+      "label": "affection",
+      "text": "Thanks for sticking with me through all of this."
+    },
+    {
+      "id": "welcome_morning-0",
+      "family": "welcome_morning",
+      "split": "test",
+      "label": "affection",
+      "text": "Morning, little eve. I'm glad you're here."
+    },
+    {
+      "id": "welcome_morning-1",
+      "family": "welcome_morning",
+      "split": "test",
+      "label": "affection",
+      "text": "Hello my small friend; it's nice to start the day with you."
+    },
+    {
+      "id": "hidden_lights-0",
+      "family": "hidden_lights",
+      "split": "test",
+      "label": "surprised",
+      "text": "A plain-looking model house is unveiled with hundreds of tiny lights inside."
+    },
+    {
+      "id": "hidden_lights-1",
+      "family": "hidden_lights",
+      "split": "test",
+      "label": "surprised",
+      "text": "The owner switches on an unexpected glowing miniature scene inside the model."
+    },
+    {
+      "id": "mirror_trick-0",
+      "family": "mirror_trick",
+      "split": "test",
+      "label": "surprised",
+      "text": "A harmless mirror illusion makes a toy appear to float in midair."
+    },
+    {
+      "id": "mirror_trick-1",
+      "family": "mirror_trick",
+      "split": "test",
+      "label": "surprised",
+      "text": "The owner reveals a floating-object illusion with no danger or loud noise."
+    },
+    {
+      "id": "sudden_rainbow-0",
+      "family": "sudden_rainbow",
+      "split": "test",
+      "label": "surprised",
+      "text": "Sunlight through a prism unexpectedly fills the wall with rainbow bands."
+    },
+    {
+      "id": "sudden_rainbow-1",
+      "family": "sudden_rainbow",
+      "split": "test",
+      "label": "surprised",
+      "text": "A safe prism demo suddenly covers the room's wall in colored light."
+    },
+    {
+      "id": "secret_costume-0",
+      "family": "secret_costume",
+      "split": "test",
+      "label": "surprised",
+      "text": "A friend steps into view wearing an elaborate unexpected robot costume."
+    },
+    {
+      "id": "secret_costume-1",
+      "family": "secret_costume",
+      "split": "test",
+      "label": "surprised",
+      "text": "The owner unveils a costume that makes them look like a giant Eve."
+    },
+    {
+      "id": "bookcase_impact-0",
+      "family": "bookcase_impact",
+      "split": "test",
+      "label": "startled",
+      "text": "A tall stack of books suddenly tumbles onto the desk beside Eve."
+    },
+    {
+      "id": "bookcase_impact-1",
+      "family": "bookcase_impact",
+      "split": "test",
+      "label": "startled",
+      "text": "Sensor event now: several heavy books crash next to the robot."
+    },
+    {
+      "id": "umbrella_near-0",
+      "family": "umbrella_near",
+      "split": "test",
+      "label": "startled",
+      "text": "An umbrella unexpectedly snaps open right against the robot's face."
+    },
+    {
+      "id": "umbrella_near-1",
+      "family": "umbrella_near",
+      "split": "test",
+      "label": "startled",
+      "text": "Camera event now: a large canopy rapidly expands centimeters from Eve."
+    },
+    {
+      "id": "metal_bottle-0",
+      "family": "metal_bottle",
+      "split": "test",
+      "label": "startled",
+      "text": "A metal bottle suddenly falls and bangs loudly on the table next to Eve."
+    },
+    {
+      "id": "metal_bottle-1",
+      "family": "metal_bottle",
+      "split": "test",
+      "label": "startled",
+      "text": "An unexpected bottle impact jolts the robot's table just now."
+    },
+    {
+      "id": "table_kick-0",
+      "family": "table_kick",
+      "split": "test",
+      "label": "startled",
+      "text": "The table is suddenly kicked hard and Eve is jolted in place."
+    },
+    {
+      "id": "table_kick-1",
+      "family": "table_kick",
+      "split": "test",
+      "label": "startled",
+      "text": "IMU event now: a sharp unexpected table kick shakes the robot."
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{"ts": "2026-09-04T12:45:00-07:00", "ch": "telegram", "conv": "t-1788551100000-d697", "who": "owner", "kind": "say", "text": "Is it 'fewer' or 'less' for things you can count?"}
+{"ts": "2026-09-04T12:46:20-07:00", "ch": "telegram", "conv": "t-1788551100000-d697", "who": "eve", "kind": "say", "text": "Fewer, for things you can count."}
+{"ts": "2026-09-04T12:48:38-07:00", "ch": "telegram", "conv": "t-1788551100000-d697", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-04T16:00:00-07:00", "ch": "telegram", "conv": "t-1788562800000-d36d", "who": "owner", "kind": "say", "text": "The BME280 on the weather station is dead, it just reads zero."}
+{"ts": "2026-09-04T16:01:32-07:00", "ch": "telegram", "conv": "t-1788562800000-d36d", "who": "eve", "kind": "say", "text": "Before you replace it, run an I2C scan: the BME280 usually sits at address 0x76, or 0x77 if SDO is pulled high."}
+{"ts": "2026-09-04T16:03:12-07:00", "ch": "telegram", "conv": "t-1788562800000-d36d", "who": "owner", "kind": "say", "text": "Scan finds nothing. It's dead."}
+{"ts": "2026-09-04T16:05:18-07:00", "ch": "telegram", "conv": "t-1788562800000-d36d", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-04T16:40:00-07:00", "ch": "telegram", "conv": "t-1788565200000-699c", "who": "owner", "kind": "say", "text": "What's a good stretch after sitting all day?"}
+{"ts": "2026-09-04T16:40:40-07:00", "ch": "telegram", "conv": "t-1788565200000-699c", "who": "eve", "kind": "say", "text": "A hip flexor lunge stretch, 30 seconds a side."}
+{"ts": "2026-09-04T16:43:24-07:00", "ch": "telegram", "conv": "t-1788565200000-699c", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-04T19:50:00-07:00", "ch": "telegram", "conv": "t-1788576600000-6249", "who": "owner", "kind": "say", "text": "What's the difference between affect and effect?"}
+{"ts": "2026-09-04T19:50:35-07:00", "ch": "telegram", "conv": "t-1788576600000-6249", "who": "eve", "kind": "say", "text": "Affect is usually the verb, effect usually the noun."}
+{"ts": "2026-09-04T19:53:43-07:00", "ch": "telegram", "conv": "t-1788576600000-6249", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-04T21:00:00-07:00", "ch": "telegram", "conv": "t-1788580800000-c1a1", "who": "owner", "kind": "say", "text": "Ines is flying in from Portland tonight."}
+{"ts": "2026-09-04T21:00:50-07:00", "ch": "telegram", "conv": "t-1788580800000-c1a1", "who": "eve", "kind": "say", "text": "Have a great weekend."}
+{"ts": "2026-09-04T21:04:54-07:00", "ch": "telegram", "conv": "t-1788580800000-c1a1", "who": "system", "kind": "close", "text": ""}

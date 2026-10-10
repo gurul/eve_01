@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Eve OpenTable browser search launch receipt",
+  "description": "Local in-process orchestration receipt, not an OpenTable API, upstream inventory schema or reservation confirmation. Final observed UI results arrive separately as computer-agent text and a screenshot when available.",
+  "oneOf": [
+    {"$ref": "#/$defs/Started"},
+    {"$ref": "#/$defs/Failure"}
+  ],
+  "$defs": {
+    "SearchRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["request"],
+      "properties": {
+        "request": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000,
+          "pattern": "\\S",
+          "description": "The owner's explicit restaurant/location, date, local time, party size and preferences. Omit private history, credentials and saved location; missing filters can be clarified."
+        }
+      }
+    },
+    "Started": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ok", "status", "provider", "reservation_submitted", "note"],
+      "properties": {
+        "ok": {"const": true},
+        "status": {"const": "started"},
+        "provider": {"const": "opentable_browser"},
+        "reservation_submitted": {"const": false},
+        "note": {
+          "const": "Search started; observed availability and links will be sent when it finishes. No reservation has been made."
+        }
+      }
+    },
+    "Failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ok", "status", "reason"],
+      "properties": {
+        "ok": {"const": false},
+        "status": {"enum": ["unavailable", "invalid_request"]},
+        "reason": {"type": "string", "minLength": 1},
+        "opentable_url": {"const": "https://www.opentable.com/"},
+        "reservation_submitted": {"const": false}
+      }
+    }
+  },
+  "x-eve-interface": {
+    "transport": "existing_computer_task",
+    "browser": "Normal Chrome via installed cua_repl, using the owner's existing signed-in session",
+    "executor_floor": "codex",
+    "tool": {
+      "type": "function",
+      "name": "opentable_search",
+      "strict": true,
+      "description": "Start read-only restaurant search and availability in the owner's existing OpenTable Chrome session. Returns a started receipt; observed results arrive separately. Does not hold or book a table.",
+      "parameters": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["request"],
+        "properties": {
+          "request": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000,
+            "pattern": "\\S",
+            "description": "The owner's explicit restaurant/location, date, local time, party size and preferences. Omit private history, credentials and saved location; missing filters can be clarified."
+          }
+        }
+      }
+    },
+    "request_schema": {"$ref": "#/$defs/SearchRequest"},
+    "configuration": {
+      "EVE_OPENTABLE": "Default off; 1/true/yes/on enable, case-insensitive and trimmed",
+      "prerequisites": "Configured owner, existing computer control and agent factory; normal Chrome and installed Codex browser tools for UI operation",
+      "EVE_COMPUTER_CONTROL": "Existing computer-control setting",
+      "new_provider_credentials": false,
+      "firecrawl_calls_per_search": 0
+    },
+    "command": {
+      "name": "opentable",
+      "menu": ["opentable", "Find restaurants and available tables"],
+      "syntax": "/opentable[@BotName] [request], case-insensitive",
+      "bare": "Shows a concrete example; no task is started",
+      "arguments": "Owner-only direct task launch ahead of Claude/Codex relays; unrelated pending questions remain pending",
+      "cancel": "Stops only the OpenTable-owned task running in the same owner chat; does not cancel a reservation"
+    },
+    "limits": {
+      "request_chars": 4000,
+      "read_only_scope": "Visible restaurant search, profiles and availability; no slot selection/hold, booking identity/payment fields, submission, modification or cancellation",
+      "scope_enforcement": "Fixed instructions to the existing general computer agent, not a dedicated mutation-blocking browser transport",
+      "blocked_access": "Report authentication, card, challenge or unsupported flow; no bypass or repeated blocked-action retry",
+      "no_hidden_access": "No hidden/internal endpoints, direct availability HTTP API, copied cookies/credentials, impersonation, invented deep-link parameters or alternate provider"
+    },
+    "time": "Fresh aware local clock snapshot per goal; confirm destination date/time context for relative dates. Never treat the clock timezone as the dining destination or infer destination from saved location/site guesses.",
+    "acknowledgment": "started is an immediate launch receipt. Existing progress acknowledges launch; no extra follow-up model call solely for acknowledgment.",
+    "final_result": {
+      "format": "Existing agent freeform text, with actual screenshot when available; no structured upstream response promised",
+      "required_observations": "Exact confirmed filters, observed restaurant/profile URLs, actual displayed slots and visible constraints, checked observation time; timezone only when known/visible",
+      "unknowns": "Distinguish no visible availability from missing input, blocked/unloaded UI and unknown availability",
+      "booking_status": "No reservation made; available times and observed links are handoff information that can change"
+    },
+    "failures": "Invalid/denied/off/busy launches do not query another provider. Optional opentable_url and reservation_submitted fields are not required on every failure.",
+    "scope": "Configured owners in the existing shared text/call brain; separate wake-word voice backend is not advertised here"
+  },
+  "x-access-evidence": {
+    "reviewed_on": "2026-10-04",
+    "route": "Best-effort ordinary signed-in browser; no approved OpenTable partnership or reusable public consumer availability API established",
+    "bounded_discovery": "No OpenTable capability among inspected Alexandria/Composio results; not a universal absence claim",
+    "terms": "https://www.opentable.com/c/legal/terms-and-conditions/",
+    "terms_revision": "2026-07-22",
+    "terms_limit": "Section 13 restricts AI/automated access absent OpenTable express authorization and restricts seeking nonpublic APIs. Sign-in does not establish that authorization.",
+    "partner_docs": "https://docs.opentable.com/",
+    "daemon_verification": {
+      "verified_on": "2026-10-04",
+      "enabled_in_private_env": true,
+      "env_file_mode": "0600",
+      "other_env_values_preserved": true,
+      "daemon_restarted": true,
+      "previous_pid": 64374,
+      "verified_pid": 65014,
+      "restart_exit": 0,
+      "ipc_ok": true,
+      "editable_checkout_import_confirmed": true,
+      "owner_menu_opentable_count": 1,
+      "owner_menu_description": "Find restaurants and available tables",
+      "america_menu_preserved": true,
+      "scope": "Installed software configuration, daemon process, IPC, checkout import and read-only owner-menu query; no live Telegram/call turn or reservation"
+    },
+    "runtime_evidence": {
+      "browser_checked_at": "2026-10-04T13:50-07:00",
+      "observation_time_precision": "minute, as reported by the agent",
+      "executor": "Production Daemon._make_agent(floor='codex') using the actual module build_goal",
+      "filters": {"location": "Seattle", "date": "2026-10-05", "time": "19:00", "party_size": 2, "preferences": []},
+      "displayed_results": [
+        {"name": "Momiji – Capitol Hill", "url": "https://www.opentable.com/r/momiji-capitol-hill-seattle", "times": ["6:45 PM", "7:00 PM", "7:15 PM"]},
+        {"name": "Bar Cantinetta – Capitol Hill", "url": "https://www.opentable.com/r/bar-cantinetta-capitol-hill-seattle", "times": ["6:45 PM", "7:00 PM", "7:15 PM"]}
+      ],
+      "card_timezone_label": "not displayed; PDT was explicitly requested and present in checked clock context",
+      "seating_experience_constraints": "not displayed on observed cards",
+      "screenshot_inspected": true,
+      "slot_selected": false,
+      "reservation_submitted": false,
+      "scope": "One observed browser search; not persistent inventory, general reliability, live Telegram/call operation or installed-daemon enablement"
+    }
+  }
+}

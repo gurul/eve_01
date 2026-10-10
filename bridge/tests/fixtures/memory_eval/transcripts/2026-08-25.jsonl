@@ -1,0 +1,13 @@
+{"ts": "2026-08-25T07:15:00-07:00", "ch": "telegram", "conv": "t-1787667300000-4a69", "who": "owner", "kind": "say", "text": "Convert 30 miles to kilometers."}
+{"ts": "2026-08-25T07:15:53-07:00", "ch": "telegram", "conv": "t-1787667300000-4a69", "who": "eve", "kind": "say", "text": "About 48 kilometers."}
+{"ts": "2026-08-25T07:19:55-07:00", "ch": "telegram", "conv": "t-1787667300000-4a69", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-25T15:00:00-07:00", "ch": "telegram", "conv": "t-1787695200000-1646", "who": "owner", "kind": "say", "text": "Bought the Probability textbook new for $118."}
+{"ts": "2026-08-25T15:01:23-07:00", "ch": "telegram", "conv": "t-1787695200000-1646", "who": "eve", "kind": "say", "text": "Used copies run about $60, if you can still return it."}
+{"ts": "2026-08-25T15:05:49-07:00", "ch": "telegram", "conv": "t-1787695200000-1646", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-25T16:40:00-07:00", "ch": "voice", "conv": "v-1787701200000-e902", "who": "owner", "kind": "say", "text": "How long do I boil an egg for jammy yolks?"}
+{"ts": "2026-08-25T16:40:47-07:00", "ch": "voice", "conv": "v-1787701200000-e902", "who": "eve", "kind": "say", "text": "About six and a half minutes, then an ice bath."}
+{"ts": "2026-08-25T16:45:00-07:00", "ch": "voice", "conv": "v-1787701200000-e902", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-25T19:50:00-07:00", "ch": "telegram", "conv": "t-1787712600000-edc0", "who": "owner", "kind": "say", "text": "Quick: Ohm's law?"}
+{"ts": "2026-08-25T19:51:43-07:00", "ch": "telegram", "conv": "t-1787712600000-edc0", "who": "eve", "kind": "say", "text": "V equals I times R."}
+{"ts": "2026-08-25T19:54:38-07:00", "ch": "telegram", "conv": "t-1787712600000-edc0", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-25T23:00:00-07:00", "ch": "bus", "conv": "b-1787724000000-4098", "who": "claude", "kind": "say", "text": "Shelfie CI: 142 tests passed on branch beta-prep."}

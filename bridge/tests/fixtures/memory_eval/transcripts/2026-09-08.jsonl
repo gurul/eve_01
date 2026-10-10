@@ -1,0 +1,15 @@
+{"ts": "2026-09-08T07:15:00-07:00", "ch": "voice", "conv": "v-1788876900000-024c", "who": "owner", "kind": "say", "text": "What's 15 percent of 48?"}
+{"ts": "2026-09-08T07:16:27-07:00", "ch": "voice", "conv": "v-1788876900000-024c", "who": "eve", "kind": "say", "text": "7.2."}
+{"ts": "2026-09-08T07:19:19-07:00", "ch": "voice", "conv": "v-1788876900000-024c", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-08T09:00:00-07:00", "ch": "telegram", "conv": "t-1788883200000-6266", "who": "owner", "kind": "say", "text": "Okafor moved ECE 412 to 11:30 on Mondays and Wednesdays, in Kellner 118, starting September 14."}
+{"ts": "2026-09-08T09:01:34-07:00", "ch": "telegram", "conv": "t-1788883200000-6266", "who": "eve", "kind": "say", "text": "Schedule updated."}
+{"ts": "2026-09-08T09:03:53-07:00", "ch": "telegram", "conv": "t-1788883200000-6266", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-08T13:00:00-07:00", "ch": "telegram", "conv": "t-1788897600000-6426", "who": "owner", "kind": "say", "text": "I need to move the dentist. Can you change it to September 16 at 10 am?"}
+{"ts": "2026-09-08T13:01:42-07:00", "ch": "telegram", "conv": "t-1788897600000-6426", "who": "eve", "kind": "say", "text": "Moved: dentist on September 16 at 10:00."}
+{"ts": "2026-09-08T13:04:39-07:00", "ch": "telegram", "conv": "t-1788897600000-6426", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-08T18:00:00-07:00", "ch": "voice", "conv": "v-1788915600000-5647", "who": "owner", "kind": "say", "text": "Doctor said my vitamin D is low, 18."}
+{"ts": "2026-09-08T18:01:47-07:00", "ch": "voice", "conv": "v-1788915600000-5647", "who": "eve", "kind": "say", "text": "Okay."}
+{"ts": "2026-09-08T18:04:41-07:00", "ch": "voice", "conv": "v-1788915600000-5647", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-09-08T20:00:00-07:00", "ch": "telegram", "conv": "t-1788922800000-b49f", "who": "owner", "kind": "say", "text": "Not doing volleyball after all, Tuesday nights clash with my lab writeups."}
+{"ts": "2026-09-08T20:01:38-07:00", "ch": "telegram", "conv": "t-1788922800000-b49f", "who": "eve", "kind": "say", "text": "Fair."}
+{"ts": "2026-09-08T20:04:35-07:00", "ch": "telegram", "conv": "t-1788922800000-b49f", "who": "system", "kind": "close", "text": ""}

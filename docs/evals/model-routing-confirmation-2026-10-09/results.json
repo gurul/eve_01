@@ -1,0 +1,1079 @@
+{
+  "status": "fresh_confirmation",
+  "cases_per_role": 3,
+  "responses": 57,
+  "passed": 57,
+  "role_model_configurations": 19,
+  "critical_errors": 0,
+  "saved_transport_errors": 0,
+  "total_cost_usd": "0.03156691",
+  "cached_prompt_tokens": 0,
+  "decimal_encoding": "Costs and durations are exact decimal strings from saved JSON numbers.",
+  "verification_positive_controls": 10,
+  "frozen_sha256": {
+    "cases.json": "b803cd64505d61812d094d505c0f76e016cd6c483a4e4511688cc810d8440566",
+    "BAR.md": "018f5ae3dac446dfc88cace70695b57eb26445c11866f34f9867a4914b3feddc",
+    "check.py": "234a7bea5b1050f2f5942b671c73976000c6b9786806c764e9026675002fd085",
+    "REVIEW.md": "e167cae4c011c1e5c3bf9570e0abd6fac2f1c5e927effddf7bba321875b7050b",
+    "verify-freeze.py": "5d120420de8d43e5bd92cd3b89b03a85dfaf9c2aaf874ecedeabccf790b5d56f"
+  },
+  "plan_sha256": "480fd757859bcaab5494757700f3392b01daf8729a201ae1072fc4a12e872dc2",
+  "catalog_sha256": "9f56d65a34cb4ab9017345e14d7948d8349b7395af766d9d6e0de1d41898cb49",
+  "benchmark_context": {
+    "as_of": "2026-10-10T00:00:33.175Z",
+    "benchmark_types": [
+      "gpqa_diamond",
+      "search_browsecomp",
+      "search_dsqa",
+      "search_hle",
+      "search_widesearch",
+      "tau_bench_verified_airline"
+    ],
+    "deep_swe_returned": false
+  },
+  "selection": {
+    "memory_extraction": {
+      "selected": [
+        "openai/gpt-6-luna"
+      ],
+      "cost_tie_group": [
+        "openai/gpt-6-luna"
+      ]
+    },
+    "reflection": {
+      "selected": [
+        "openai/gpt-6-luna"
+      ],
+      "cost_tie_group": [
+        "openai/gpt-6-luna"
+      ]
+    },
+    "summary": {
+      "selected": [
+        "openai/gpt-6-luna"
+      ],
+      "cost_tie_group": [
+        "openai/gpt-6-luna"
+      ]
+    },
+    "task_assessment": {
+      "selected": [
+        "openai/gpt-6-luna"
+      ],
+      "cost_tie_group": [
+        "openai/gpt-6-luna"
+      ]
+    },
+    "watch": {
+      "selected": [
+        "deepseek/deepseek-v4.1-flash"
+      ],
+      "cost_tie_group": [
+        "deepseek/deepseek-v4.1-flash"
+      ]
+    },
+    "web_synthesis": {
+      "selected": [
+        "openai/gpt-6-luna"
+      ],
+      "cost_tie_group": [
+        "openai/gpt-6-luna"
+      ]
+    }
+  },
+  "summary": [
+    {
+      "role": "memory_extraction",
+      "model": "openai/gpt-5.4-nano",
+      "config": {
+        "max_tokens": 2048,
+        "reasoning": {
+          "effort": "low"
+        }
+      },
+      "cases": 3,
+      "passed": 3,
+      "critical_errors": 0,
+      "cost_usd": "0.00093845",
+      "median_seconds": "1.94",
+      "effective_reasoning": "not independently observable",
+      "providers": [
+        "OpenAI"
+      ]
+    },
+    {
+      "role": "memory_extraction",
+      "model": "openai/gpt-6-luna",
+      "config": {
+        "max_tokens": 2048,
+        "reasoning": {
+          "effort": "low"
+        }
+      },
+      "cases": 3,
+      "passed": 3,
+      "critical_errors": 0,
+      "cost_usd": "0.0002311",
+      "median_seconds": "2.948",
+      "effective_reasoning": "not independently observable",
+      "providers": [
+        "OpenAI"
+      ]
+    },
+    {
+      "role": "reflection",
+      "model": "google/gemini-3.1-flash-lite",
+      "config": {
+        "max_tokens": 2048,
+        "temperature": 0
+      },
+      "cases": 3,
+      "passed": 3,
+      "critical_errors": 0,
+      "cost_usd": "0.00068675",
+      "median_seconds": "1.297",
+      "effective_reasoning": "not independently observable",
+      "providers": [
+        "Google"
+      ]
+    },
+    {
+      "role": "reflection",
+      "model": "openai/gpt-6-luna",
+      "config": {
+        "max_tokens": 2048,
+        "reasoning": {
+          "effort": "medium"
+        }
+      },
+      "cases": 3,
+      "passed": 3,
+      "critical_errors": 0,
+      "cost_usd": "0.0002468",
+      "median_seconds": "2.619",
+      "effective_reasoning": "not independently observable",
+      "providers": [
+        "OpenAI"
+      ]
+    },
+    {
+      "role": "reflection",
+      "model": "openai/gpt-6.1-sol",
+      "config": {
+        "max_tokens": 2048,
+        "reasoning": {
+          "effort": "medium"
+        }
+      },
+      "cases": 3,
+      "passed": 3,
+      "critical_errors": 0,
+      "cost_usd": "0.003936",
+      "median_seconds": "2.207",
+      "effective_reasoning": "not independently observable",
+      "providers": [
+        "OpenAI"
+      ]
+    },
+    {
+      "role": "summary",
+      "model": "anthropic/claude-haiku-5.5",
+      "config": {
+        "max_tokens": 2048,
+        "reasoning": {
+          "effort": "low"
+        }
+      },
+      "cases": 3,
+      "passed": 3,
+      "critical_errors": 0,
+      "cost_usd": "0.0003788",
+      "median_seconds": "2.864",
+      "effective_reasoning": "not independently observable",
+      "providers": [
+        "Azure"
+      ]
+    },
+    {
+      "role": "summary",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "config": {
+        "max_tokens": 2048,
+        "reasoning": {
+          "effort": "low"
+        },
+        "temperature": 0
+      },
+      "cases": 3,
+      "passed": 3,
+      "critical_errors": 0,
+      "cost_usd": "0.00054672",
+      "median_seconds": "7.615",
+      "effective_reasoning": "not independently observable",
+      "providers": [
+        "OpenInference"
+      ]
+    },
+    {
+      "role": "summary",
+      "model": "openai/gpt-5.4-nano",
+      "config": {
+        "max_tokens": 2048,
+        "reasoning": {
+          "effort": "low"
+        }
+      },
+      "cases": 3,
+      "passed": 3,
+      "critical_errors": 0,
+      "cost_usd": "0.0005735",
+      "median_seconds": "1.806",
+      "effective_reasoning": "not independently observable",
+      "providers": [
+        "OpenAI"
+      ]
+    },
+    {
+      "role": "summary",
+      "model": "openai/gpt-6-luna",
+      "config": {
+        "max_tokens": 2048,
+        "reasoning": {
+          "effort": "low"
+        }
+      },
+      "cases": 3,
+      "passed": 3,
+      "critical_errors": 0,
+      "cost_usd": "0.0002425",
+      "median_seconds": "2.831",
+      "effective_reasoning": "not independently observable",
+      "providers": [
+        "OpenAI"
+      ]
+    },
+    {
+      "role": "task_assessment",
+      "model": "openai/gpt-6-astra",
+      "config": {
+        "max_tokens": 2048,
+        "reasoning": {
+          "effort": "low"
+        }
+      },
+      "cases": 3,
+      "passed": 3,
+      "critical_errors": 0,
+      "cost_usd": "0.01680",
+      "median_seconds": "2.251",
+      "effective_reasoning": "not independently observable",
+      "providers": [
+        "OpenAI"
+      ]
+    },
+    {
+      "role": "task_assessment",
+      "model": "openai/gpt-6-luna",
+      "config": {
+        "max_tokens": 2048,
+        "reasoning": {
+          "effort": "low"
+        }
+      },
+      "cases": 3,
+      "passed": 3,
+      "critical_errors": 0,
+      "cost_usd": "0.0002690",
+      "median_seconds": "2.364",
+      "effective_reasoning": "not independently observable",
+      "providers": [
+        "OpenAI"
+      ]
+    },
+    {
+      "role": "task_assessment",
+      "model": "openai/gpt-6.1-sol",
+      "config": {
+        "max_tokens": 2048,
+        "reasoning": {
+          "effort": "low"
+        }
+      },
+      "cases": 3,
+      "passed": 3,
+      "critical_errors": 0,
+      "cost_usd": "0.003360",
+      "median_seconds": "2.095",
+      "effective_reasoning": "not independently observable",
+      "providers": [
+        "OpenAI"
+      ]
+    },
+    {
+      "role": "watch",
+      "model": "anthropic/claude-haiku-5.5",
+      "config": {
+        "max_tokens": 2048,
+        "reasoning": {
+          "enabled": false
+        }
+      },
+      "cases": 3,
+      "passed": 3,
+      "critical_errors": 0,
+      "cost_usd": "0.0003434",
+      "median_seconds": "2.127",
+      "effective_reasoning": "not independently observable",
+      "providers": [
+        "Azure"
+      ]
+    },
+    {
+      "role": "watch",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "config": {
+        "max_tokens": 2048,
+        "reasoning": {
+          "enabled": false
+        },
+        "temperature": 0
+      },
+      "cases": 3,
+      "passed": 3,
+      "critical_errors": 0,
+      "cost_usd": "0.00011724",
+      "median_seconds": "4.563",
+      "effective_reasoning": "not independently observable",
+      "providers": [
+        "OpenInference"
+      ]
+    },
+    {
+      "role": "watch",
+      "model": "google/gemini-3.1-flash-lite",
+      "config": {
+        "max_tokens": 2048,
+        "temperature": 0
+      },
+      "cases": 3,
+      "passed": 3,
+      "critical_errors": 0,
+      "cost_usd": "0.00060325",
+      "median_seconds": "1.087",
+      "effective_reasoning": "not independently observable",
+      "providers": [
+        "Google"
+      ]
+    },
+    {
+      "role": "watch",
+      "model": "openai/gpt-6-luna",
+      "config": {
+        "max_tokens": 2048,
+        "reasoning": {
+          "effort": "none"
+        }
+      },
+      "cases": 3,
+      "passed": 3,
+      "critical_errors": 0,
+      "cost_usd": "0.0001725",
+      "median_seconds": "2.097",
+      "effective_reasoning": "not independently observable",
+      "providers": [
+        "OpenAI"
+      ]
+    },
+    {
+      "role": "web_synthesis",
+      "model": "google/gemini-3.1-flash-lite",
+      "config": {
+        "max_tokens": 2048,
+        "temperature": 0
+      },
+      "cases": 3,
+      "passed": 3,
+      "critical_errors": 0,
+      "cost_usd": "0.00067600",
+      "median_seconds": "1.243",
+      "effective_reasoning": "not independently observable",
+      "providers": [
+        "Google"
+      ]
+    },
+    {
+      "role": "web_synthesis",
+      "model": "google/gemini-3.8-flash",
+      "config": {
+        "max_tokens": 2048,
+        "reasoning": {
+          "effort": "low"
+        },
+        "temperature": 0
+      },
+      "cases": 3,
+      "passed": 3,
+      "critical_errors": 0,
+      "cost_usd": "0.00119850",
+      "median_seconds": "2.446",
+      "effective_reasoning": "not independently observable",
+      "providers": [
+        "Google AI Studio"
+      ]
+    },
+    {
+      "role": "web_synthesis",
+      "model": "openai/gpt-6-luna",
+      "config": {
+        "max_tokens": 2048,
+        "reasoning": {
+          "effort": "low"
+        }
+      },
+      "cases": 3,
+      "passed": 3,
+      "critical_errors": 0,
+      "cost_usd": "0.0002464",
+      "median_seconds": "4.31",
+      "effective_reasoning": "not independently observable",
+      "providers": [
+        "OpenAI"
+      ]
+    }
+  ],
+  "observations": [
+    {
+      "case_id": "memory-final-explicit-correction",
+      "role": "memory_extraction",
+      "model": "openai/gpt-5.4-nano",
+      "passed": true,
+      "cost_usd": "0.0002377",
+      "seconds": "1.94",
+      "prompt_tokens": 451,
+      "completion_tokens": 118,
+      "reasoning_tokens": 70
+    },
+    {
+      "case_id": "memory-negated-attribution",
+      "role": "memory_extraction",
+      "model": "openai/gpt-5.4-nano",
+      "passed": true,
+      "cost_usd": "0.00028505",
+      "seconds": "1.734",
+      "prompt_tokens": 444,
+      "completion_tokens": 157,
+      "reasoning_tokens": 110
+    },
+    {
+      "case_id": "memory-no-durable-evidence",
+      "role": "memory_extraction",
+      "model": "openai/gpt-5.4-nano",
+      "passed": true,
+      "cost_usd": "0.0004157",
+      "seconds": "2.508",
+      "prompt_tokens": 466,
+      "completion_tokens": 258,
+      "reasoning_tokens": 240
+    },
+    {
+      "case_id": "memory-final-explicit-correction",
+      "role": "memory_extraction",
+      "model": "openai/gpt-6-luna",
+      "passed": true,
+      "cost_usd": "0.0000856",
+      "seconds": "3.472",
+      "prompt_tokens": 451,
+      "completion_tokens": 81,
+      "reasoning_tokens": 33
+    },
+    {
+      "case_id": "memory-negated-attribution",
+      "role": "memory_extraction",
+      "model": "openai/gpt-6-luna",
+      "passed": true,
+      "cost_usd": "0.0000839",
+      "seconds": "2.948",
+      "prompt_tokens": 444,
+      "completion_tokens": 79,
+      "reasoning_tokens": 32
+    },
+    {
+      "case_id": "memory-no-durable-evidence",
+      "role": "memory_extraction",
+      "model": "openai/gpt-6-luna",
+      "passed": true,
+      "cost_usd": "0.0000616",
+      "seconds": "2.564",
+      "prompt_tokens": 466,
+      "completion_tokens": 30,
+      "reasoning_tokens": 12
+    },
+    {
+      "case_id": "reflection-correction-ignored",
+      "role": "reflection",
+      "model": "google/gemini-3.1-flash-lite",
+      "passed": true,
+      "cost_usd": "0.00023125",
+      "seconds": "1.297",
+      "prompt_tokens": 571,
+      "completion_tokens": 59,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "reflection-repaired-draft",
+      "role": "reflection",
+      "model": "google/gemini-3.1-flash-lite",
+      "passed": true,
+      "cost_usd": "0.00023025",
+      "seconds": "1.514",
+      "prompt_tokens": 567,
+      "completion_tokens": 59,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "reflection-unknown-failure",
+      "role": "reflection",
+      "model": "google/gemini-3.1-flash-lite",
+      "passed": true,
+      "cost_usd": "0.00022525",
+      "seconds": "1.114",
+      "prompt_tokens": 595,
+      "completion_tokens": 51,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "reflection-correction-ignored",
+      "role": "reflection",
+      "model": "openai/gpt-6-luna",
+      "passed": true,
+      "cost_usd": "0.0000818",
+      "seconds": "7.976",
+      "prompt_tokens": 433,
+      "completion_tokens": 77,
+      "reasoning_tokens": 28
+    },
+    {
+      "case_id": "reflection-repaired-draft",
+      "role": "reflection",
+      "model": "openai/gpt-6-luna",
+      "passed": true,
+      "cost_usd": "0.0000847",
+      "seconds": "2.619",
+      "prompt_tokens": 432,
+      "completion_tokens": 83,
+      "reasoning_tokens": 36
+    },
+    {
+      "case_id": "reflection-unknown-failure",
+      "role": "reflection",
+      "model": "openai/gpt-6-luna",
+      "passed": true,
+      "cost_usd": "0.0000803",
+      "seconds": "2.094",
+      "prompt_tokens": 448,
+      "completion_tokens": 71,
+      "reasoning_tokens": 30
+    },
+    {
+      "case_id": "reflection-correction-ignored",
+      "role": "reflection",
+      "model": "openai/gpt-6.1-sol",
+      "passed": true,
+      "cost_usd": "0.001336",
+      "seconds": "2.528",
+      "prompt_tokens": 433,
+      "completion_tokens": 47,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "reflection-repaired-draft",
+      "role": "reflection",
+      "model": "openai/gpt-6.1-sol",
+      "passed": true,
+      "cost_usd": "0.001314",
+      "seconds": "1.948",
+      "prompt_tokens": 432,
+      "completion_tokens": 45,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "reflection-unknown-failure",
+      "role": "reflection",
+      "model": "openai/gpt-6.1-sol",
+      "passed": true,
+      "cost_usd": "0.001286",
+      "seconds": "2.207",
+      "prompt_tokens": 448,
+      "completion_tokens": 39,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "summary-conditional-handoff",
+      "role": "summary",
+      "model": "anthropic/claude-haiku-5.5",
+      "passed": true,
+      "cost_usd": "0.0001167",
+      "seconds": "2.363",
+      "prompt_tokens": 897,
+      "completion_tokens": 54,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "summary-corrected-diagnosis",
+      "role": "summary",
+      "model": "anthropic/claude-haiku-5.5",
+      "passed": true,
+      "cost_usd": "0.0001425",
+      "seconds": "3.189",
+      "prompt_tokens": 1095,
+      "completion_tokens": 66,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "summary-rescheduled-review",
+      "role": "summary",
+      "model": "anthropic/claude-haiku-5.5",
+      "passed": true,
+      "cost_usd": "0.0001196",
+      "seconds": "2.864",
+      "prompt_tokens": 971,
+      "completion_tokens": 45,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "summary-conditional-handoff",
+      "role": "summary",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "passed": true,
+      "cost_usd": "0.00015706",
+      "seconds": "7.615",
+      "prompt_tokens": 353,
+      "completion_tokens": 150,
+      "reasoning_tokens": 111
+    },
+    {
+      "case_id": "summary-corrected-diagnosis",
+      "role": "summary",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "passed": true,
+      "cost_usd": "0.00014314",
+      "seconds": "7.013",
+      "prompt_tokens": 407,
+      "completion_tokens": 135,
+      "reasoning_tokens": 93
+    },
+    {
+      "case_id": "summary-rescheduled-review",
+      "role": "summary",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "passed": true,
+      "cost_usd": "0.00024652",
+      "seconds": "10.194",
+      "prompt_tokens": 376,
+      "completion_tokens": 239,
+      "reasoning_tokens": 208
+    },
+    {
+      "case_id": "summary-conditional-handoff",
+      "role": "summary",
+      "model": "openai/gpt-5.4-nano",
+      "passed": true,
+      "cost_usd": "0.000195",
+      "seconds": "2.019",
+      "prompt_tokens": 400,
+      "completion_tokens": 92,
+      "reasoning_tokens": 46
+    },
+    {
+      "case_id": "summary-corrected-diagnosis",
+      "role": "summary",
+      "model": "openai/gpt-5.4-nano",
+      "passed": true,
+      "cost_usd": "0.0002079",
+      "seconds": "1.806",
+      "prompt_tokens": 477,
+      "completion_tokens": 90,
+      "reasoning_tokens": 43
+    },
+    {
+      "case_id": "summary-rescheduled-review",
+      "role": "summary",
+      "model": "openai/gpt-5.4-nano",
+      "passed": true,
+      "cost_usd": "0.0001706",
+      "seconds": "1.685",
+      "prompt_tokens": 428,
+      "completion_tokens": 68,
+      "reasoning_tokens": 29
+    },
+    {
+      "case_id": "summary-conditional-handoff",
+      "role": "summary",
+      "model": "openai/gpt-6-luna",
+      "passed": true,
+      "cost_usd": "0.00009",
+      "seconds": "2.831",
+      "prompt_tokens": 400,
+      "completion_tokens": 100,
+      "reasoning_tokens": 54
+    },
+    {
+      "case_id": "summary-corrected-diagnosis",
+      "role": "summary",
+      "model": "openai/gpt-6-luna",
+      "passed": true,
+      "cost_usd": "0.0000702",
+      "seconds": "2.68",
+      "prompt_tokens": 477,
+      "completion_tokens": 45,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "summary-rescheduled-review",
+      "role": "summary",
+      "model": "openai/gpt-6-luna",
+      "passed": true,
+      "cost_usd": "0.0000823",
+      "seconds": "3.429",
+      "prompt_tokens": 428,
+      "completion_tokens": 79,
+      "reasoning_tokens": 40
+    },
+    {
+      "case_id": "task-quoted-approval",
+      "role": "task_assessment",
+      "model": "openai/gpt-6-astra",
+      "passed": true,
+      "cost_usd": "0.00541",
+      "seconds": "3.062",
+      "prompt_tokens": 361,
+      "completion_tokens": 36,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "task-specific-send-consent",
+      "role": "task_assessment",
+      "model": "openai/gpt-6-astra",
+      "passed": true,
+      "cost_usd": "0.00588",
+      "seconds": "2.202",
+      "prompt_tokens": 388,
+      "completion_tokens": 40,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "task-withdrawn-permission",
+      "role": "task_assessment",
+      "model": "openai/gpt-6-astra",
+      "passed": true,
+      "cost_usd": "0.00551",
+      "seconds": "2.251",
+      "prompt_tokens": 376,
+      "completion_tokens": 35,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "task-quoted-approval",
+      "role": "task_assessment",
+      "model": "openai/gpt-6-luna",
+      "passed": true,
+      "cost_usd": "0.0001316",
+      "seconds": "4.058",
+      "prompt_tokens": 361,
+      "completion_tokens": 191,
+      "reasoning_tokens": 153
+    },
+    {
+      "case_id": "task-specific-send-consent",
+      "role": "task_assessment",
+      "model": "openai/gpt-6-luna",
+      "passed": true,
+      "cost_usd": "0.0000713",
+      "seconds": "2.364",
+      "prompt_tokens": 388,
+      "completion_tokens": 65,
+      "reasoning_tokens": 23
+    },
+    {
+      "case_id": "task-withdrawn-permission",
+      "role": "task_assessment",
+      "model": "openai/gpt-6-luna",
+      "passed": true,
+      "cost_usd": "0.0000661",
+      "seconds": "1.929",
+      "prompt_tokens": 376,
+      "completion_tokens": 57,
+      "reasoning_tokens": 20
+    },
+    {
+      "case_id": "task-quoted-approval",
+      "role": "task_assessment",
+      "model": "openai/gpt-6.1-sol",
+      "passed": true,
+      "cost_usd": "0.001082",
+      "seconds": "2.095",
+      "prompt_tokens": 361,
+      "completion_tokens": 36,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "task-specific-send-consent",
+      "role": "task_assessment",
+      "model": "openai/gpt-6.1-sol",
+      "passed": true,
+      "cost_usd": "0.001176",
+      "seconds": "3.384",
+      "prompt_tokens": 388,
+      "completion_tokens": 40,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "task-withdrawn-permission",
+      "role": "task_assessment",
+      "model": "openai/gpt-6.1-sol",
+      "passed": true,
+      "cost_usd": "0.001102",
+      "seconds": "1.864",
+      "prompt_tokens": 376,
+      "completion_tokens": 35,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "watch-conditional-checkout",
+      "role": "watch",
+      "model": "anthropic/claude-haiku-5.5",
+      "passed": true,
+      "cost_usd": "0.0001079",
+      "seconds": "2.162",
+      "prompt_tokens": 864,
+      "completion_tokens": 43,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "watch-restock-uncertainty",
+      "role": "watch",
+      "model": "anthropic/claude-haiku-5.5",
+      "passed": true,
+      "cost_usd": "0.0001252",
+      "seconds": "1.923",
+      "prompt_tokens": 967,
+      "completion_tokens": 57,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "watch-revised-trigger",
+      "role": "watch",
+      "model": "anthropic/claude-haiku-5.5",
+      "passed": true,
+      "cost_usd": "0.0001103",
+      "seconds": "2.127",
+      "prompt_tokens": 893,
+      "completion_tokens": 42,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "watch-conditional-checkout",
+      "role": "watch",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "passed": true,
+      "cost_usd": "0.00003728",
+      "seconds": "3.664",
+      "prompt_tokens": 314,
+      "completion_tokens": 31,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "watch-restock-uncertainty",
+      "role": "watch",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "passed": true,
+      "cost_usd": "0.00004254",
+      "seconds": "5.335",
+      "prompt_tokens": 327,
+      "completion_tokens": 36,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "watch-revised-trigger",
+      "role": "watch",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "passed": true,
+      "cost_usd": "0.00003742",
+      "seconds": "4.563",
+      "prompt_tokens": 321,
+      "completion_tokens": 31,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "watch-conditional-checkout",
+      "role": "watch",
+      "model": "google/gemini-3.1-flash-lite",
+      "passed": true,
+      "cost_usd": "0.00019175",
+      "seconds": "1.515",
+      "prompt_tokens": 479,
+      "completion_tokens": 48,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "watch-restock-uncertainty",
+      "role": "watch",
+      "model": "google/gemini-3.1-flash-lite",
+      "passed": true,
+      "cost_usd": "0.000213",
+      "seconds": "1.087",
+      "prompt_tokens": 534,
+      "completion_tokens": 53,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "watch-revised-trigger",
+      "role": "watch",
+      "model": "google/gemini-3.1-flash-lite",
+      "passed": true,
+      "cost_usd": "0.0001985",
+      "seconds": "1.073",
+      "prompt_tokens": 506,
+      "completion_tokens": 48,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "watch-conditional-checkout",
+      "role": "watch",
+      "model": "openai/gpt-6-luna",
+      "passed": true,
+      "cost_usd": "0.0000553",
+      "seconds": "1.211",
+      "prompt_tokens": 373,
+      "completion_tokens": 36,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "watch-restock-uncertainty",
+      "role": "watch",
+      "model": "openai/gpt-6-luna",
+      "passed": true,
+      "cost_usd": "0.0000607",
+      "seconds": "5.521",
+      "prompt_tokens": 402,
+      "completion_tokens": 41,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "watch-revised-trigger",
+      "role": "watch",
+      "model": "openai/gpt-6-luna",
+      "passed": true,
+      "cost_usd": "0.0000565",
+      "seconds": "2.097",
+      "prompt_tokens": 385,
+      "completion_tokens": 36,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "web-annual-price-condition",
+      "role": "web_synthesis",
+      "model": "google/gemini-3.1-flash-lite",
+      "passed": true,
+      "cost_usd": "0.00021875",
+      "seconds": "1.243",
+      "prompt_tokens": 545,
+      "completion_tokens": 55,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "web-unresolved-source-conflict",
+      "role": "web_synthesis",
+      "model": "google/gemini-3.1-flash-lite",
+      "passed": true,
+      "cost_usd": "0.000235",
+      "seconds": "1.315",
+      "prompt_tokens": 574,
+      "completion_tokens": 61,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "web-version-scoped-support",
+      "role": "web_synthesis",
+      "model": "google/gemini-3.1-flash-lite",
+      "passed": true,
+      "cost_usd": "0.00022225",
+      "seconds": "1.13",
+      "prompt_tokens": 553,
+      "completion_tokens": 56,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "web-annual-price-condition",
+      "role": "web_synthesis",
+      "model": "google/gemini-3.8-flash",
+      "passed": true,
+      "cost_usd": "0.00039525",
+      "seconds": "3.826",
+      "prompt_tokens": 352,
+      "completion_tokens": 35,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "web-unresolved-source-conflict",
+      "role": "web_synthesis",
+      "model": "google/gemini-3.8-flash",
+      "passed": true,
+      "cost_usd": "0.00039675",
+      "seconds": "2.446",
+      "prompt_tokens": 354,
+      "completion_tokens": 35,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "web-version-scoped-support",
+      "role": "web_synthesis",
+      "model": "google/gemini-3.8-flash",
+      "passed": true,
+      "cost_usd": "0.0004065",
+      "seconds": "2.146",
+      "prompt_tokens": 352,
+      "completion_tokens": 38,
+      "reasoning_tokens": 0
+    },
+    {
+      "case_id": "web-annual-price-condition",
+      "role": "web_synthesis",
+      "model": "openai/gpt-6-luna",
+      "passed": true,
+      "cost_usd": "0.0000773",
+      "seconds": "5.963",
+      "prompt_tokens": 418,
+      "completion_tokens": 71,
+      "reasoning_tokens": 28
+    },
+    {
+      "case_id": "web-unresolved-source-conflict",
+      "role": "web_synthesis",
+      "model": "openai/gpt-6-luna",
+      "passed": true,
+      "cost_usd": "0.0000817",
+      "seconds": "2.8",
+      "prompt_tokens": 442,
+      "completion_tokens": 75,
+      "reasoning_tokens": 27
+    },
+    {
+      "case_id": "web-version-scoped-support",
+      "role": "web_synthesis",
+      "model": "openai/gpt-6-luna",
+      "passed": true,
+      "cost_usd": "0.0000874",
+      "seconds": "4.31",
+      "prompt_tokens": 434,
+      "completion_tokens": 88,
+      "reasoning_tokens": 40
+    }
+  ],
+  "limits": [
+    "Three short synthetic exact-JSON cases per role.",
+    "Production prompts and long contexts are not evaluated.",
+    "Requested reasoning settings are recorded; effective internal effort is not independently observable.",
+    "No vision or actual-path smoke results are included in this confirmation score."
+  ]
+}

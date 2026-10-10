@@ -1,0 +1,14 @@
+{"ts": "2026-08-02T07:15:00-07:00", "ch": "voice", "conv": "v-1785680100000-d8b6", "who": "owner", "kind": "say", "text": "Thanks eve."}
+{"ts": "2026-08-02T07:15:53-07:00", "ch": "voice", "conv": "v-1785680100000-d8b6", "who": "eve", "kind": "say", "text": "Anytime."}
+{"ts": "2026-08-02T07:20:30-07:00", "ch": "voice", "conv": "v-1785680100000-d8b6", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-02T08:55:00-07:00", "ch": "voice", "conv": "v-1785686100000-cfef", "who": "owner", "kind": "say", "text": "How long do I boil an egg for jammy yolks?"}
+{"ts": "2026-08-02T08:55:47-07:00", "ch": "voice", "conv": "v-1785686100000-cfef", "who": "eve", "kind": "say", "text": "About six and a half minutes, then an ice bath."}
+{"ts": "2026-08-02T08:58:22-07:00", "ch": "voice", "conv": "v-1785686100000-cfef", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-02T10:05:00-07:00", "ch": "telegram", "conv": "t-1785690300000-6975", "who": "owner", "kind": "say", "text": "Morning. Can you help me set a budget for the semester? I want to keep it to $1,600 a month for everything besides rent."}
+{"ts": "2026-08-02T10:06:00-07:00", "ch": "telegram", "conv": "t-1785690300000-6975", "who": "eve", "kind": "say", "text": "Sure. How do you want to split it?"}
+{"ts": "2026-08-02T10:06:39-07:00", "ch": "telegram", "conv": "t-1785690300000-6975", "who": "owner", "kind": "say", "text": "Groceries get $250 a month, the rest is flexible."}
+{"ts": "2026-08-02T10:07:31-07:00", "ch": "telegram", "conv": "t-1785690300000-6975", "who": "eve", "kind": "say", "text": "Done: $250 a month for groceries, the rest flexible."}
+{"ts": "2026-08-02T10:10:18-07:00", "ch": "telegram", "conv": "t-1785690300000-6975", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-02T23:05:00-07:00", "ch": "voice", "conv": "v-1785737100000-d3ef", "who": "owner", "kind": "say", "text": "Pause the music."}
+{"ts": "2026-08-02T23:06:44-07:00", "ch": "voice", "conv": "v-1785737100000-d3ef", "who": "eve", "kind": "say", "text": "Paused."}
+{"ts": "2026-08-02T23:09:29-07:00", "ch": "voice", "conv": "v-1785737100000-d3ef", "who": "system", "kind": "close", "text": ""}

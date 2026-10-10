@@ -1,0 +1,10 @@
+{"ts": "2026-08-24T09:40:00-07:00", "ch": "voice", "conv": "v-1787589600000-4115", "who": "owner", "kind": "say", "text": "First day of classes. ECE 412 is in Kellner 204."}
+{"ts": "2026-08-24T09:40:41-07:00", "ch": "voice", "conv": "v-1787589600000-4115", "who": "eve", "kind": "say", "text": "Good luck today."}
+{"ts": "2026-08-24T09:44:08-07:00", "ch": "voice", "conv": "v-1787589600000-4115", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-24T12:00:00-07:00", "ch": "telegram", "conv": "t-1787598000000-610f", "who": "owner", "kind": "say", "text": "My student ID number is 90412377."}
+{"ts": "2026-08-24T12:01:22-07:00", "ch": "telegram", "conv": "t-1787598000000-610f", "who": "eve", "kind": "say", "text": "Noted."}
+{"ts": "2026-08-24T12:03:38-07:00", "ch": "telegram", "conv": "t-1787598000000-610f", "who": "system", "kind": "close", "text": ""}
+{"ts": "2026-08-24T13:40:00-07:00", "ch": "voice", "conv": "v-1787604000000-0f86", "who": "owner", "kind": "say", "text": "What's the weather tomorrow?"}
+{"ts": "2026-08-24T13:41:31-07:00", "ch": "voice", "conv": "v-1787604000000-0f86", "who": "eve", "kind": "tool", "text": "weather: Port Alder tomorrow, sunny, high 24 C", "tool": "weather"}
+{"ts": "2026-08-24T13:42:31-07:00", "ch": "voice", "conv": "v-1787604000000-0f86", "who": "eve", "kind": "say", "text": "Sunny tomorrow, high around 24."}
+{"ts": "2026-08-24T13:44:35-07:00", "ch": "voice", "conv": "v-1787604000000-0f86", "who": "system", "kind": "close", "text": ""}
