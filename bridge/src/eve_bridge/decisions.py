@@ -10,7 +10,8 @@ Two clients speak the ``evaluate(evidence, images, questions) -> Answer`` seam:
   tools/decisions_live_demo.py), which pass an OpenAI key of their own.
 
 ``EVE_DECISIONS``: ``1`` lets the judge's pick click (through decision_lane's revalidation and hit-test);
-``shadow`` runs it as a dry run that decides and logs scores, never clicks, and leaves the task to Codex; ``0`` is
+``shadow`` runs it as a dry run on a background thread (desk_lane) that decides and logs scores, never clicks, and
+leaves the task to Codex at once; ``0`` is
 off. Unset is ``visual_judge.SHIPPED`` (False until a real-capture blind holdout passes; VERDICT.md in
 docs/evals/visual-judge-2026-10/). No transport retries here; the judge counts its own.
 """

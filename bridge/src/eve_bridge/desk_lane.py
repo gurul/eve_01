@@ -22,7 +22,8 @@ in the log. ``EVE_DESK_LANE=0`` turns it off.
 
 After a zero-input keyword miss, ``EVE_DECISIONS`` (``decisions.mode``) can hand the request to the visual judge
 (``visual_judge.py``: Gemma 4 26B looks, Jev decides) through ``decision_lane.route``: ``on`` clicks its pick,
-``shadow`` runs it as a dry run that only logs scores and keeps the keyword lane's miss, so Codex still takes it.
+``shadow`` runs it as a dry run on a background thread that only logs scores and keeps the keyword lane's miss,
+so Codex takes the task at once (the miss is never held for the judge).
 Off by default: the judge failed its blind eval (docs/evals/visual-judge-2026-10/VERDICT.md).
 """
 
@@ -82,6 +83,7 @@ class DeskLane:
         self._lock = threading.Lock()
         self._decisions: Any = None
         self._no_judge = False                  # the visual judge could not be built (no key); not retried
+        self._shadow: Optional[threading.Thread] = None   # the EVE_DECISIONS=shadow judgement, if one is running
 
     def _attempt(self, goal: str) -> Optional[dict[str, Any]]:
         with self._lock:
@@ -113,18 +115,45 @@ class DeskLane:
                     if self._decisions is None and not self._no_judge:
                         self._decisions = decisions.from_env()
                         self._no_judge = self._decisions is None      # said once in the log; not rebuilt per task
-                    if self._decisions is not None:
-                        judged = dict(helpers.decisions_first(str(goal)[:MAX_GOAL_CHARS], self._decisions,
-                                                              dry_run=how == "shadow",
+                    if self._decisions is not None and how == "shadow":
+                        # Decided and logged (scores only), never clicked, and never waited on: the keyword
+                        # miss goes back to Codex now and the judge runs behind it on its own thread.
+                        self._start_shadow(str(goal)[:MAX_GOAL_CHARS])
+                    elif self._decisions is not None:
+                        result = dict(helpers.decisions_first(str(goal)[:MAX_GOAL_CHARS], self._decisions,
                                                               gates=getattr(self._decisions, "gates", None)))
-                        if how == "shadow":
-                            # Decided and logged (scores only, through helpers.log), never clicked: Codex
-                            # still takes the task.
-                            log.info("desk lane: visual judge shadow — %s", judged.get("reason") or "complete")
-                        else:
-                            result = judged
             result.setdefault("log", lines)
             return result
+
+    def _start_shadow(self, goal: str) -> None:
+        """Run the judge as a dry run on a daemon thread, at most one at a time. Called with the lane lock held;
+        the thread takes the lock itself, so it starts only after this miss has been returned. A desk-lane
+        request that arrives while a shadow judgement is still running waits for it (at most the judge's budget
+        plus the overrun of its last call); a miss while one is running skips its shadow."""
+        if self._shadow is not None and self._shadow.is_alive():
+            log.info("desk lane: visual judge shadow skipped — the previous one is still running")
+            return
+        client = self._decisions
+
+        def run() -> None:
+            with self._lock:
+                helpers = self._helpers
+                if helpers is None:
+                    return
+                lines: list[str] = []
+                helpers.bind(lambda *values: lines.append(" ".join(str(v) for v in values)), lambda _image: None)
+                try:
+                    judged = dict(helpers.decisions_first(goal, client, dry_run=True,
+                                                          gates=getattr(client, "gates", None)))
+                except Exception as e:  # noqa: BLE001 — a shadow never costs anything
+                    log.warning("desk lane: visual judge shadow failed (%s)", type(e).__name__)
+                    return
+                for line in lines:                # scores and milliseconds only (decision_lane._scores)
+                    log.info("desk lane: shadow %s", line)
+                log.info("desk lane: visual judge shadow — %s", judged.get("reason") or "complete")
+
+        self._shadow = threading.Thread(target=run, name="desk-lane-shadow", daemon=True)
+        self._shadow.start()
 
     async def attempt(self, goal: str) -> Optional[dict[str, Any]]:
         t0 = time.perf_counter()

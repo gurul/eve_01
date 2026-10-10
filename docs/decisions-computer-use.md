@@ -28,14 +28,18 @@ Since 2026-10-10 the judge is `visual_judge.GemmaJevJudge`, on the owner's OpenR
    `EVE_CLEF=1` and once it has passed its own holdout (`CLEF_SHIPPED`); until then `EVE_CLEF=1` runs as `shadow`
    (asked in the background, numbers logged, never acting). The slot is empty without both Cloudflare keys.
 
-One selection call is one Gemma call (about $0.0001) and one Jev call (about $0.00002), with a hard budget of 5 s;
-past it the answer is an error and Codex takes the task.
+One selection call is one Gemma call (about $0.0001) and one Jev call (about $0.00002), with a budget of 5 s;
+an answer that arrives after it is discarded as an error and Codex takes the task. The budget is not a wall-clock
+limit: the lane waits for the call to return, which on the holdout took up to 7.7 s.
+
+Jev's choice reply must give a probability for every offered id and the abstain key (as `decider.py` requires),
+and the gate reads the chosen id's own probability; Jev's `confidence` is never gated on.
 
 ## Switches
 
 | Variable | Default | What it does |
 |---|---|---|
-| `EVE_DECISIONS` | off (follows `visual_judge.SHIPPED`, False) | `1`: the judge's pick clicks. `shadow`: the judge decides as a dry run and logs scores only; Codex still takes the task. `0`: off |
+| `EVE_DECISIONS` | off (follows `visual_judge.SHIPPED`, False) | `1`: the judge's pick clicks. `shadow`: the judge decides as a dry run on a background thread and logs scores only; the miss goes to Codex at once, never held for the judge (one shadow at a time; a desk-lane request that arrives while one is running waits for it). `0`: off |
 | `EVE_GEMMA_MODEL` | `google/gemma-4-26b-a4b-it` | the looking model. The `:free` id is refused (it answered HTTP 429 five times in five) |
 | `EVE_GEMMA_PROVIDERS` | `nextbit` | the OpenRouter host(s), sent as `provider.order` with fallbacks off |
 | `EVE_GEMMA_TIMEOUT` | `4.0` | seconds per Gemma call (at most the 5 s budget) |

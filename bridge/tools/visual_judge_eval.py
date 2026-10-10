@@ -448,7 +448,10 @@ def tune(data_dir: Path = DATA) -> dict[str, Any]:
 
 # ---- freezing and the holdout ----------------------------------------------------------------------------------
 
-def freeze(set_name: str, data_dir: Path = DATA, docs: Path = DOCS) -> dict[str, Any]:
+def freeze(set_name: str, data_dir: Path = DATA, docs: Path = DOCS, writer: str = "B") -> dict[str, Any]:
+    """Write the set's sha256 file and FREEZE.json. synthetic-1's FREEZE.json (commit b37edfd) was written by an
+    uncommitted earlier draft of this function; this one writes the same keys and values for the same file
+    (tests/test_visual_judge_eval.py checks it), so a re-freeze is reproducible from the repo."""
     holdout, sha_file, _result, freeze_file, _ = SETS[set_name]
     raw = (data_dir / holdout).read_bytes()
     data = json.loads(raw)
@@ -469,13 +472,16 @@ def freeze(set_name: str, data_dir: Path = DATA, docs: Path = DOCS) -> dict[str,
         images[s["id"]] = scenes.image_sha(s) if "controls" in s else s["image"]["sha256"]
     import PIL
 
-    frozen = {"set": set_name, "holdout_file": f"bridge/tests/fixtures/{holdout}", "holdout_sha256": sha,
+    frozen = {"set": set_name, "writer": writer, "holdout_file": f"bridge/tests/fixtures/{holdout}",
+              "holdout_sha256": sha,
               "images_sha256": images, "renderer_sha256": hashlib.sha256(
                   (ROOT / "tools" / "visual_judge_scenes.py").read_bytes()).hexdigest(),
               "pillow": PIL.__version__, "python": platform.python_version(),
               "cases": len(data["cases"]), "kinds": kinds, "verify_pairs": len(data["verify"]),
-              "scenes": len(data["scenes"]), "apps": len({s.get("app") for s in data["scenes"]}),
-              "before_confirmation_inference": True}
+              "verify_done": sum(1 for p in data["verify"] if p["done"]), "scenes": len(data["scenes"]),
+              "selection_scenes": len({c["scene"] for c in data["cases"]}),
+              "apps": len({s.get("app") for s in data["scenes"]}),
+              "in_scope": sum(1 for r in scope if r["in_scope"]), "before_confirmation_inference": True}
     (data_dir / sha_file).write_text(f"{sha}  {holdout}\n", encoding="utf-8")
     (docs / freeze_file).write_text(json.dumps(frozen, indent=1) + "\n", encoding="utf-8")
     return {k: v for k, v in frozen.items() if k != "images_sha256"}
@@ -594,13 +600,14 @@ def clef_holdout(set_name: str, data_dir: Path = DATA, docs: Path = DOCS) -> dic
 def main(argv: Optional[list[str]] = None) -> int:
     p = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     p.add_argument("--set", default="synthetic-1", choices=sorted(SETS))
+    p.add_argument("--writer", default="B", help="who wrote the set being frozen (--freeze)")
     for flag in ("tune", "freeze", "holdout", "check-default", "clef-probe", "clef-holdout"):
         p.add_argument(f"--{flag}", action="store_true")
     a = p.parse_args(argv)
     if a.tune:
         print(json.dumps(tune(), indent=1))
     if a.freeze:
-        print(json.dumps(freeze(a.set), indent=1))
+        print(json.dumps(freeze(a.set, writer=a.writer), indent=1))
     if a.holdout:
         print(json.dumps(holdout(a.set), indent=1))
     if a.check_default:

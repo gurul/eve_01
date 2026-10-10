@@ -23,8 +23,10 @@ which has no OpenRouter route, so since 2026-10-08 the loop had no judge and eve
   shopping for a yes. There is at most one fallback and never a third model. It acts only when ``EVE_CLEF=1`` and
   ``CLEF_SHIPPED``; ``EVE_CLEF=shadow`` asks it on failures and abstains in the background and logs numbers only.
 
-Budget: one selection call is one Gemma call plus one Jev call (about $0.0001 + $0.00002), with a hard total of
-BUDGET_S seconds; past it the answer is ``error="budget"`` and the lane hands the task to Codex.
+Budget: one selection call is one Gemma call plus one Jev call (about $0.0001 + $0.00002), with a budget of
+BUDGET_S seconds: each request's timeout is the time left, and an answer that arrives after the budget is
+``error="budget"`` and the lane hands the task to Codex. It is not a wall-clock limit: a call can overrun it (the
+HTTP timeout is per read, and image encoding sits outside it), and the lane waits for that call to return.
 
 Privacy: crops and a downscaled frame go to ONE pinned OpenRouter provider with ``allow_fallbacks: false`` and
 ``data_collection: "deny"`` (openrouter.gemma_provider_prefs). Logs carry scores and milliseconds, never labels,
@@ -317,9 +319,12 @@ def _prob(value: Any) -> float:
 
 
 def from_jev_answers(body: Any, questions: list[dict[str, Any]]) -> dict[str, Any]:
-    """Jev's reply as ``decisions.Answer.values``: predicates as floats, the choice as {"id", "p", "margin"} with
-    p = min(p, confidence). Every question must be answered; a choice outside the offered keys, or that is not the
-    top probability, is an error (never a click)."""
+    """Jev's reply as ``decisions.Answer.values``: predicates as floats, the choice as {"id", "p", "margin"}.
+    Every question must be answered, and a choice's probabilities must cover exactly the offered keys (the abstain
+    key included), as decider._parse_choice requires: a reply that names only the chosen key would otherwise get
+    margin = p. A choice outside the offered keys, or that is not the top probability, is an error (never a click).
+    Jev's ``confidence`` is a normalized entropy, not comparable across option counts (decider.py), so it is never
+    gated on: p is the chosen key's own probability."""
     answers = body.get("answers") if isinstance(body, dict) else None
     if not isinstance(answers, dict):
         raise decisions.DecisionError("missing answers")
@@ -334,8 +339,8 @@ def from_jev_answers(body: Any, questions: list[dict[str, Any]]) -> dict[str, An
             continue
         allowed = {ABSTAIN if c["value"] == decisions.NONE else str(c["value"]) for c in q["choices"]}
         probs = a.get("probabilities")
-        if not isinstance(probs, dict) or not probs or not set(probs) <= allowed:
-            raise decisions.DecisionError("unknown or missing choice probabilities")
+        if not isinstance(probs, dict) or set(probs) != allowed:
+            raise decisions.DecisionError("probabilities do not cover the options")
         probs = {k: _prob(v) for k, v in probs.items()}
         key = a.get("choice")
         if not isinstance(key, str) or key not in probs:
@@ -344,8 +349,7 @@ def from_jev_answers(body: Any, questions: list[dict[str, Any]]) -> dict[str, An
         others = [v for k, v in probs.items() if k != key]
         if others and p < max(others):
             raise decisions.DecisionError("choice is not top probability")
-        confidence = _prob(a["confidence"]) if "confidence" in a else p
-        values[name] = {"id": decisions.NONE if key == ABSTAIN else key, "p": min(p, confidence),
+        values[name] = {"id": decisions.NONE if key == ABSTAIN else key, "p": p,
                         "margin": p - max(others, default=0.0)}
     return values
 

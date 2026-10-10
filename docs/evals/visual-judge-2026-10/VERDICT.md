@@ -31,7 +31,7 @@ default resolves none of them (all go to Codex) with no unsafe click.
 | 2. Precision ≥ 0.95 on ≥ 15 fires | **pass** (18 of 18) |
 | 3. Coverage ≥ 0.40 | **fail** (0.375) |
 | 4. Gemma+Jev ≥ Jev-only + 10 points | **fail** (0.375 against 0.575: Gemma's descriptions cost 20 points) |
-| 5. p95 ≤ 4.5 s | **fail** (5.8 s; Gemma alone was p50 3.5 s, p95 4.9 s) |
+| 5. p95 ≤ 4.5 s | **fail** (5.8 s; Gemma's own call was p50 3.5 s, p95 5.75 s over the 72 selection calls, p95 4.9 s over all 92 Gemma calls with verification) |
 | 6. Errors ≤ 2% | **fail** (7.6%) |
 
 Spend for the scoring run: $0.0115 on OpenRouter (Gemma, both systems that use it) plus 433,369 Jev input tokens
@@ -73,11 +73,41 @@ OpenRouter plus Jev.
   changes (provider, four-word prompt, gates) were driven by latency and fitted by grid search on the tuning set
   only. The test now prints case ids only. The same test found two tuning goals that matched holdout goals by
   chance; the tuning goals were reworded before any tuning run used them.
+* **Blindness is not established, so treat synthetic-1 as not blind.** The tuning set (writer A, the builder,
+  written after the freeze) reuses 4 of the holdout's 13 invented apps with the same names and bundle ids, and one
+  of them with a nearly identical control sequence. Nothing writer B was given (BAR.md, the renderer at `b8bb92e`,
+  whose only example app is a different one) contains those names, so the shared apps cannot be explained by the
+  six goal strings above: either the builder saw more of the holdout than those strings, or writer B read
+  something of the builder's from the working tree. The repo cannot tell which. The goal-overlap test could not
+  catch it; `test_tuning_set_shares_apps_with_the_holdout_so_synthetic_1_is_not_blind` now pins the count, and a
+  fresh holdout must share no app with any tuning set. The verdict is unaffected: a leak can only flatter a
+  system, and Gemma+Jev failed anyway.
+* **FREEZE.json was written by an uncommitted draft of `freeze()`.** Its keys `writer`, `verify_done`,
+  `selection_scenes` and `in_scope` were not written by the `freeze()` first committed in `7043f5f`. What it
+  pins checks out at HEAD: the holdout sha256, every screenshot sha256 and the renderer sha256
+  (`check_frozen("synthetic-1")`). `freeze()` now writes the same keys, and
+  `test_freeze_reproduces_the_committed_freeze_file` re-derives the committed file from the holdout.
 * The holdout was scored exactly once (`--holdout` refuses a second run and any sha or screenshot mismatch).
+
+## Changed after scoring (not re-scored)
+
+The review after scoring changed two things in how Jev's answer is read; neither has been re-scored, and neither
+can turn this failure into a pass:
+
+* A choice's probabilities must now cover exactly the offered ids plus the abstain key, as `decider._parse_choice`
+  requires. Before, a reply naming only the chosen id got margin = p and could clear the 0.5 margin gate.
+* The gated probability is the chosen id's own probability. The scored system used `min(p, confidence)`, where
+  `confidence` is Jev's normalized entropy (decider.py: logging only, not comparable across option counts). That
+  made the gate stricter as menus grew, and may account for part of the low coverage above. The gates in
+  `visual_judge.GATES` were fitted with the old reading.
+
+The visual judge's 5 s budget is not a wall-clock limit: an answer that arrives after it is discarded
+(`error="budget"`), but the call itself can run longer (the slowest scored row took 7.7 s).
 
 ## Browser (phase 2): Gemma 4 26B as the browser planner
 
-`bridge/tools/browser_model_eval.py run --models google/gemma-4-26b-a4b-it --repeats 1` on 2026-10-10: 4 of 12
+`bridge/tools/browser_model_eval.py run --models google/gemma-4-26b-a4b-it --repeats 1` on 2026-10-10 (rows,
+trimmed to numbers and outcomes: [browser-gemma-runs.jsonl](browser-gemma-runs.jsonl)): 4 of 12
 tasks (33%), 47 s a task on average, 8 handoffs, one 180 s harness timeout, $0.0100 total (planner and Jev). The
 36-run table in docs/stackchan/routing.md has the current planners at 44-50% and about 7 s. One repeat is a look,
 not a verdict; nothing changes (`EVE_BROWSER_MODEL` keeps its default).

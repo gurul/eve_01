@@ -249,8 +249,8 @@ Codex alone.
 **The visual judge behind it (off by default).** When the keyword gate misses (`no_match`, `ambiguous_target`,
 `uncovered`) and `EVE_DECISIONS` is `1` or `shadow`, the lane asks `decision_lane.route` with the visual judge
 (`visual_judge.py`): Gemma 4 26B describes zoomed crops of the offered controls, Jev picks one under the lane's
-gates, and Clef (Cloudflare) is asked only if Gemma or Jev fail in transport. `shadow` decides as a dry run and only
-logs scores; Codex still takes the task. It failed its blind eval on 2026-10-10 (Gemma+Jev covered 0.375 of the
+gates, and Clef (Cloudflare) is asked only if Gemma or Jev fail in transport. `shadow` decides as a dry run on a background
+thread and only logs scores; Codex takes the task at once, never held for the judge. It failed its blind eval on 2026-10-10 (Gemma+Jev covered 0.375 of the
 click cases against a 0.40 bar, 20 points below Jev alone, with p95 5.8 s), so `EVE_DECISIONS` stays off:
 [decisions-computer-use.md](../decisions-computer-use.md).
 

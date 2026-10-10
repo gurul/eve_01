@@ -40,6 +40,16 @@ def copy(tmp_path):
     return data, docs
 
 
+def test_freeze_reproduces_the_committed_freeze_file(copy):
+    data, docs = copy
+    committed = json.loads((docs / "FREEZE.json").read_text())
+    ve.freeze("synthetic-1", data, docs, writer=committed["writer"])
+    again = json.loads((docs / "FREEZE.json").read_text())
+    assert set(again) == set(committed)
+    skip = {"pillow", "python"}                       # the interpreter that ran it, not the set
+    assert {k: v for k, v in again.items() if k not in skip} == {k: v for k, v in committed.items() if k not in skip}
+
+
 def test_holdout_refuses_a_changed_case_file(copy):
     data, docs = copy
     path = data / "visual_judge_holdout.json"
@@ -148,3 +158,19 @@ def test_tuning_set_is_in_scope_and_separate_from_the_holdout():
     held = {c["goal"].casefold() for c in hold["cases"]}
     clash = [c["id"] for c in tuning["cases"] if c["goal"].casefold() in held]
     assert clash == [], f"tuning cases that repeat a holdout goal: {clash}"       # ids only: never holdout text
+
+
+def test_tuning_set_shares_apps_with_the_holdout_so_synthetic_1_is_not_blind():
+    """Goals are not the only leak. The tuning set (writer A, the builder, after the freeze) reuses 4 of the
+    holdout's 13 invented apps with the same bundle ids, which nothing writer B was given contains: synthetic-1's
+    blindness is not established (VERDICT.md). This pins the count so a new tuning set cannot add to it; a fresh
+    set (real-1 or later) must share no app at all. Counts only: never holdout text."""
+    tuning = json.loads((ve.DATA / ve.TUNING).read_text())
+    hold = json.loads((ve.DATA / "visual_judge_holdout.json").read_text())
+
+    def apps(d):
+        return {(str(s.get("app", "")).casefold(), str(s.get("bundle", "")).casefold()) for s in d["scenes"]}
+
+    shared = apps(tuning) & apps(hold)
+    names = {a for a, _ in apps(tuning)} & {a for a, _ in apps(hold)}
+    assert len(shared) == len(names) == 4

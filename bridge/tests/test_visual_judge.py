@@ -145,6 +145,13 @@ def test_an_option_cannot_squat_on_the_abstain_key():
         vj.to_jev_questions(q)
 
 
+def test_the_gated_probability_is_the_choice_s_own_not_jev_s_confidence():
+    qs = selection(3)
+    body = jev_body(vj.to_jev_questions(qs), choice="2", p=0.97)
+    body["answers"]["target"]["confidence"] = 0.10      # a normalized entropy: logging only (decider.py)
+    assert vj.from_jev_answers(body, qs)["target"]["p"] == 0.97
+
+
 def test_answers_translate_back_to_the_decisions_shape():
     qs = selection(3)
     body = jev_body(vj.to_jev_questions(qs), choice=vj.ABSTAIN)
@@ -153,7 +160,8 @@ def test_answers_translate_back_to_the_decisions_shape():
     assert values["risky"] == 0.01 and values["present"] == 0.99
 
 
-@pytest.mark.parametrize("fault", ["unoffered", "not_top", "missing_noul", "bad_prob", "no_answers"])
+@pytest.mark.parametrize("fault", ["unoffered", "not_top", "missing_noul", "bad_prob", "no_answers",
+                                   "partial_probs"])
 def test_malformed_jev_answers_are_errors_not_clicks(fault):
     qs = selection(3)
     body = jev_body(vj.to_jev_questions(qs))
@@ -165,6 +173,8 @@ def test_malformed_jev_answers_are_errors_not_clicks(fault):
         t["choice"] = "1"
     elif fault == "missing_noul":
         del body["answers"]["risky"]
+    elif fault == "partial_probs":           # only the chosen key: margin would be p (decider._parse_choice)
+        t["probabilities"] = {t["choice"]: 0.96}
     elif fault == "bad_prob":
         body["answers"]["present"]["noul"] = 1.5
     else:
