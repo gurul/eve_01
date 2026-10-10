@@ -317,7 +317,7 @@ def test_an_unreachable_car_says_so() -> None:
 
         p = Pika(PikaConfig(host="127.0.0.1", port=9), opener=refuse)
         assert await drive(p, "forward", "h") == {"ok": False, "stopped": True, "line": pika.UNREACHABLE_LINE}
-        assert (await p.panel({"action": "status"})) == {"ok": True, "connected": False, "line": ""}
+        assert (await p.panel({"action": "status"})) == {"ok": True, "connected": False, "rtc": False, "line": ""}
         assert (await p.panel({"action": "drive", "dir": "up", "hold": "x"}))["ok"] is False
         assert (await p.panel({"action": "spin"}))["ok"] is False
 
@@ -486,7 +486,8 @@ def test_split_jpegs_keeps_a_partial_frame() -> None:
     assert found == [a] and rest == b[:10]
     found, rest = pika.split_jpegs(rest + b[10:])
     assert found == [b] and rest == b""[-1:]
-    assert pika.video_part(a).startswith(b"--frame\r\nContent-Type: image/jpeg\r\nContent-Length: 44\r\n\r\n\xff\xd8")
+    assert pika.video_part(a, 1760100000123) == (b"--frame\r\nContent-Type: image/jpeg\r\nContent-Length: 44\r\n"
+                                                 b"X-Stamp: 1760100000123\r\n\r\n" + a + b"\r\n")
 
 
 def test_the_car_is_dialled_over_ipv4_only(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -68,6 +68,7 @@ DEFAULT_PORT = 100                    # the camera board's JSON relay (tools/car
 DEFAULT_VIDEO_PORT = 81               # its MJPEG server (tools/controller.py --video-port)
 DEFAULT_SPEED = 120                   # calibration.json forward_speed; tools/car.py's default speed
 DEFAULT_TURN_SPEED = 140              # calibration.json turn_speed
+DEFAULT_STUN = "stun:stun.cloudflare.com:3478"   # pika_rtc.py: the Mac's public address, for a phone off the home Wi-Fi
 
 DIRS = {"left": 1, "right": 2, "forward": 3, "back": 4}   # tools/car.py DIR (its "fwd" is "forward" here)
 PULSE_MS = 450                        # each drive frame's timed move: the firmware deadman (tools/safety.py
@@ -96,6 +97,8 @@ VIDEO_BUSY_LINE = "Pika's video is in use by another viewer."
 VIDEO_UNREACHABLE_LINE = "I can't reach Pika's camera. Is it on, and on the home Wi-Fi?"
 
 HOST_RE = re.compile(r"^[A-Za-z0-9.-]{1,253}$")
+STUN_RE = re.compile(r"^stun:[A-Za-z0-9.-]{1,253}(:[0-9]{1,5})?$")
+STAT_PATHS = ("webrtc", "tunnel")
 
 Opener = Callable[[str, int], Awaitable[tuple[asyncio.StreamReader, asyncio.StreamWriter]]]
 
@@ -107,6 +110,8 @@ class PikaConfig:
     video_port: int = DEFAULT_VIDEO_PORT
     speed: int = DEFAULT_SPEED
     turn_speed: int = DEFAULT_TURN_SPEED
+    rtc: bool = True                  # offer the video over WebRTC (pika_rtc.py); false: the tunnel stream only
+    stun: str = DEFAULT_STUN          # "" for none: then WebRTC works on the home Wi-Fi only
 
 
 def enabled(environ: Any = None) -> bool:
@@ -132,7 +137,12 @@ def load(path: Optional[Path] = None) -> Optional[PikaConfig]:
     host = raw.get("host", DEFAULT_HOST)
     if not isinstance(host, str) or not HOST_RE.match(host.strip()):
         host = DEFAULT_HOST
+    rtc = raw.get("rtc", True)
+    stun = raw.get("stun", DEFAULT_STUN)
+    if not isinstance(stun, str) or not (stun == "" or STUN_RE.match(stun)):
+        stun = DEFAULT_STUN
     return PikaConfig(host=host.strip(), port=number("port", DEFAULT_PORT, 1, 65535),
+                      rtc=rtc if isinstance(rtc, bool) else True, stun=stun,
                       video_port=number("video_port", DEFAULT_VIDEO_PORT, 1, 65535),
                       speed=number("speed", DEFAULT_SPEED, 0, 255),
                       turn_speed=number("turn_speed", DEFAULT_TURN_SPEED, 0, 255))
@@ -148,8 +158,12 @@ def make_pika(path: Optional[Path] = None, environ: Any = None) -> Optional["Pik
     if cfg is None:
         log.info("pika: no config (%s)", CONFIG_PATH)
         return None
-    log.info("pika: on")
-    return Pika(cfg)
+    car = Pika(cfg)
+    from . import pika_rtc
+    if cfg.rtc and pika_rtc.available():
+        car.rtc = pika_rtc.PikaRtc(car, cfg.stun)
+    log.info("pika: on (video over %s)", "webrtc, tunnel fallback" if car.rtc else "the tunnel")
+    return car
 
 
 # ---- the wire (tools/car.py) ---------------------------------------------------------------------------------
@@ -194,9 +208,15 @@ def split_jpegs(buf: bytes) -> tuple[list[bytes], bytes]:
         buf = buf[z + 2:]
 
 
-def video_part(jpeg: bytes) -> bytes:
-    """One part of the app's multipart stream."""
-    return b"--frame\r\nContent-Type: image/jpeg\r\nContent-Length: %d\r\n\r\n" % len(jpeg) + jpeg + b"\r\n"
+def stamp_ms() -> int:
+    """The Mac's wall clock in ms, put on every frame so the phone can measure how late it arrives."""
+    return int(time.time() * 1000)
+
+
+def video_part(jpeg: bytes, stamp: Optional[int] = None) -> bytes:
+    """One part of the app's multipart stream, stamped with when it left the Mac."""
+    return (b"--frame\r\nContent-Type: image/jpeg\r\nContent-Length: %d\r\nX-Stamp: %d\r\n\r\n"
+            % (len(jpeg), stamp_ms() if stamp is None else stamp) + jpeg + b"\r\n")
 
 
 async def _body(reader: asyncio.StreamReader, chunked: bool) -> AsyncIterator[bytes]:
@@ -273,6 +293,7 @@ class Pika:
         self._note = ""                            # why the last hold was stopped, said to its next beat
         self._video: Optional[asyncio.Task] = None
         self.stops: list[str] = []                 # why each stop was sent (the tests read it)
+        self.rtc: Any = None                       # pika_rtc.PikaRtc: the video over WebRTC, when aiortc is there
 
     # -- state --
     @property
@@ -295,7 +316,11 @@ class Pika:
         hold = body.get("hold")
         hold = hold.strip()[:MAX_HOLD_CHARS] if isinstance(hold, str) else ""
         if action == "status":
-            return {"ok": True, "connected": self.connected, "line": ""}
+            return {"ok": True, "connected": self.connected, "rtc": self.rtc is not None, "line": ""}
+        if action == "rtc":
+            return await self._rtc(body.get("sdp"))
+        if action == "stats":
+            return self._stats(body)
         if action == "stop":
             self._end(hold)
             self.stop("release")
@@ -322,6 +347,33 @@ class Pika:
             self.stop("error")
             self._drop()
             return {"ok": False, "stopped": True, "line": LOST_LINE}
+
+    async def _rtc(self, sdp: Any) -> dict[str, Any]:
+        """Answer the app's WebRTC offer for the video (pika_rtc.py). ``rtc: false``: use the tunnel stream."""
+        if self.rtc is None:
+            return {"ok": False, "rtc": False, "line": ""}
+        if not isinstance(sdp, str) or not sdp.startswith("v=0") or len(sdp) > 20000:
+            return {"ok": False, "rtc": False, "line": ""}
+        try:
+            answer = await asyncio.wait_for(self.rtc.answer(sdp), 8.0)
+        except Exception as e:                                    # aiortc raises its own kinds; the tunnel still works
+            log.info("pika: webrtc answer failed (%s)", type(e).__name__)
+            return {"ok": False, "rtc": False, "line": ""}
+        return {"ok": True, "rtc": True, "sdp": answer, "line": ""}
+
+    def _stats(self, body: dict[str, Any]) -> dict[str, Any]:
+        """The phone's latency summary for one video path: logged, so the two paths can be compared."""
+        path = body.get("path")
+
+        def num(key: str) -> Optional[float]:
+            v = body.get(key)
+            return float(v) if isinstance(v, (int, float)) and not isinstance(v, bool) and abs(v) < 1e7 else None
+
+        n, p50, p95, fps = num("n"), num("p50"), num("p95"), num("fps")
+        if path not in STAT_PATHS or None in (n, p50, p95, fps):
+            return {"ok": False, "line": ""}
+        log.info("pika: video stats %s n=%d p50=%.0f p95=%.0f fps=%.1f", path, n, p50, p95, fps)
+        return {"ok": True, "line": ""}
 
     async def _drive(self, hold: str, direction: int) -> dict[str, Any]:
         if hold in self._ended:
@@ -460,12 +512,14 @@ class Pika:
         if watch is not None and watch is not asyncio.current_task():
             watch.cancel()
         await self._end_video()
+        if self.rtc is not None:
+            await self.rtc.close()
 
     # -- the video --
-    async def stream(self, writer: asyncio.StreamWriter) -> None:
-        """The car's video to the app as multipart JPEGs, newest frame only. One viewer: a new one ends the old."""
-        await self._end_video()
-        self._video = asyncio.current_task()
+    async def frames(self) -> AsyncIterator[bytes]:
+        """The car's camera as whole JPEGs, the newest only: a reader that falls behind skips frames, never queues
+        them. Raises PikaError with the owner's line when the camera can't be reached or is busy; ends when the
+        camera ends or goes quiet for VIDEO_FRAME_SECS. The caller holds the one viewer slot (``_take_video``)."""
         up_writer: Optional[asyncio.StreamWriter] = None
         try:
             try:
@@ -475,21 +529,14 @@ class Pika:
                 await up_writer.drain()
                 head = await asyncio.wait_for(up_reader.readuntil(b"\r\n\r\n"), VIDEO_HEAD_SECS)
             except asyncio.TimeoutError:
-                await _json(writer, 503, {"ok": False, "line": VIDEO_BUSY_LINE if up_writer else
-                                          VIDEO_UNREACHABLE_LINE})
-                return
+                raise PikaError(VIDEO_BUSY_LINE if up_writer else VIDEO_UNREACHABLE_LINE) from None
             except (OSError, ConnectionError, asyncio.IncompleteReadError, asyncio.LimitOverrunError) as e:
                 log.info("pika: camera unreachable (%s %s)", type(e).__name__, getattr(e, "errno", None) or "")
-                await _json(writer, 503, {"ok": False, "line": VIDEO_UNREACHABLE_LINE})
-                return
+                raise PikaError(VIDEO_UNREACHABLE_LINE) from None
             lines = head.decode("latin-1").split("\r\n")
             if len(lines[0].split()) < 2 or lines[0].split()[1] != "200":
-                await _json(writer, 503, {"ok": False, "line": VIDEO_BUSY_LINE})
-                return
+                raise PikaError(VIDEO_BUSY_LINE)
             chunked = any(ln.lower().startswith("transfer-encoding:") and "chunked" in ln.lower() for ln in lines)
-            writer.write(VIDEO_HEAD)
-            await writer.drain()
-            log.info("pika: video on")
             latest: list[bytes] = []
             fresh = asyncio.Event()
 
@@ -511,25 +558,60 @@ class Pika:
                                                  return_when=asyncio.FIRST_COMPLETED)
                     if waiter not in done:
                         waiter.cancel()
-                        break                                   # the camera ended, failed or went quiet
+                        return                                  # the camera ended, failed or went quiet
                     fresh.clear()
                     if latest:
-                        await _chunk(writer, video_part(latest.pop()))
+                        yield latest.pop()
             finally:
                 puller.cancel()
                 with contextlib.suppress(BaseException):
                     await puller
+        finally:
+            if up_writer is not None:
+                with contextlib.suppress(Exception):
+                    up_writer.close()
+
+    async def _take_video(self, keep_rtc: bool = False) -> None:
+        """The camera serves one viewer: the newest, over either path, ends the one before it."""
+        await self._end_video()
+        if self.rtc is not None and not keep_rtc:
+            await self.rtc.close()
+        self._video = asyncio.current_task()
+
+    def _left_video(self) -> None:
+        if self._video is asyncio.current_task():
+            self._video = None
+        log.info("pika: video off")
+
+    async def stream(self, writer: asyncio.StreamWriter) -> None:
+        """The car's video to the app as multipart JPEGs through the tunnel, each part stamped ``X-Stamp`` with the
+        Mac's clock in ms (the phone measures latency with it). WebRTC's fallback (pika_rtc.py)."""
+        await self._take_video()
+        try:
+            frames = self.frames()
+            try:
+                first = await anext(frames)
+            except PikaError as e:
+                await _json(writer, 503, {"ok": False, "line": str(e)})
+                return
+            except StopAsyncIteration:
+                await _json(writer, 503, {"ok": False, "line": VIDEO_BUSY_LINE})
+                return
+            writer.write(VIDEO_HEAD)
+            await writer.drain()
+            log.info("pika: video on (tunnel)")
+            await _chunk(writer, video_part(first))
+            try:
+                async for jpeg in frames:
+                    await _chunk(writer, video_part(jpeg))
+            finally:
+                await frames.aclose()
             with contextlib.suppress(Exception):
                 await _chunk(writer, b"")
         except (OSError, ConnectionError):
             pass                                                # the app hung up
         finally:
-            if up_writer is not None:
-                with contextlib.suppress(Exception):
-                    up_writer.close()
-            if self._video is asyncio.current_task():
-                self._video = None
-            log.info("pika: video off")
+            self._left_video()
 
     async def _end_video(self) -> None:
         task, self._video = self._video, None

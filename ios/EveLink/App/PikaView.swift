@@ -183,28 +183,92 @@ private struct HoldKey: View {
     }
 }
 
-/// The car's video from the Mac: one multipart stream, the newest JPEG shown. Tries again every few seconds while
-/// the screen is up, so a car switched on later appears by itself.
+/// The car's video from the Mac, the newest JPEG shown: over WebRTC straight from the Mac (PikaRTC) when it
+/// connects, else one multipart stream through the tunnel. Tries again every few seconds while the screen is up, so a
+/// car switched on later appears by itself. Nothing connects while the screen is closed.
 @MainActor
 final class PikaFeed: ObservableObject {
     @Published private(set) var image: UIImage?
     @Published private(set) var problem: String? = "Connecting to Pika…"
     private var session: URLSession?
+    private var rtc: PikaRTC?
     private var running = false
     private var retry: Task<Void, Never>?
+    private var rtcLatency = PikaLatency(path: "webrtc")
+    private var tunnelLatency = PikaLatency(path: "tunnel")
 
     func start(_ client: WorkClient) {
         guard !running else { return }
         running = true
-        open(client)
+        connect(client)
     }
 
     func stop() {
         running = false
         retry?.cancel()
         retry = nil
+        rtc?.close()
+        rtc = nil
         session?.invalidateAndCancel()
         session = nil
+    }
+
+    /// WebRTC first; the tunnel stream when it can't connect.
+    private func connect(_ client: WorkClient) {
+        guard running else { return }
+        let link = PikaRTC { [weak self] event in
+            Task { @MainActor in self?.handle(event, client) }
+        }
+        rtc?.close()
+        rtc = link
+        Task { @MainActor in
+            let ok = await link.connect(client)
+            guard running, rtc === link else {
+                link.close()
+                return
+            }
+            if !ok {
+                rtc = nil
+                open(client)
+            }
+        }
+    }
+
+    private func handle(_ event: PikaRTC.Event, _ client: WorkClient) {
+        guard running, rtc != nil else { return }
+        switch event {
+        case .frame(let jpeg, let stamp):
+            show(jpeg)
+            measure(&rtcLatency, stamp, client)
+        case .line(let line):
+            problem = line
+        case .closed:
+            rtc = nil
+            problem = image == nil ? "No video from Pika." : "Pika's video stopped."
+            again(client)
+        }
+    }
+
+    private func show(_ jpeg: Data) {
+        if let img = UIImage(data: jpeg) {
+            image = img
+            problem = nil
+        }
+    }
+
+    private func measure(_ latency: inout PikaLatency, _ stamp: Double?, _ client: WorkClient) {
+        guard let stamp, let body = latency.add(stamp: stamp, now: Date().timeIntervalSince1970 * 1000),
+              let data = try? JSONSerialization.data(withJSONObject: body) else { return }
+        Task { await client.pikaStats(data) }
+    }
+
+    private func again(_ client: WorkClient) {
+        retry?.cancel()
+        retry = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(3))
+            guard !Task.isCancelled else { return }
+            self?.connect(client)
+        }
     }
 
     private func open(_ client: WorkClient) {
@@ -227,23 +291,16 @@ final class PikaFeed: ObservableObject {
     }
 
     private func handle(_ event: MJPEGReceiver.Event, _ client: WorkClient) {
-        guard running else { return }
+        guard running, session != nil else { return }
         switch event {
-        case .frame(let data):
-            if let img = UIImage(data: data) {
-                image = img
-                problem = nil
-            }
+        case .frame(let data, let stamp):
+            show(data)
+            measure(&tunnelLatency, stamp, client)
         case .ended(let line):
             problem = line ?? (image == nil ? "No video from Pika." : "Pika's video stopped.")
             session?.finishTasksAndInvalidate()
             session = nil
-            retry?.cancel()
-            retry = Task { @MainActor [weak self] in
-                try? await Task.sleep(for: .seconds(3))
-                guard !Task.isCancelled else { return }
-                self?.open(client)
-            }
+            again(client)                                  // WebRTC first again: the Mac or the Wi-Fi may be back
         }
     }
 }
@@ -251,7 +308,7 @@ final class PikaFeed: ObservableObject {
 /// URLSession's delegate for the stream: frames as they complete, and why the stream ended.
 private final class MJPEGReceiver: NSObject, URLSessionDataDelegate, @unchecked Sendable {
     enum Event: Sendable {
-        case frame(Data)
+        case frame(Data, Double?)          // the JPEG and its X-Stamp
         case ended(String?)
     }
 
@@ -272,14 +329,14 @@ private final class MJPEGReceiver: NSObject, URLSessionDataDelegate, @unchecked 
     }
 
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
-        let frame: Data? = lock.withLock {
+        let frame: (Data, Double?)? = lock.withLock {
             if refused != nil {
                 if refused!.count < 4096 { refused!.append(data) }
                 return nil
             }
-            return splitter.feed(data)
+            return splitter.feed(data).map { ($0, splitter.stamp) }
         }
-        if let frame { emit(.frame(frame)) }
+        if let frame { emit(.frame(frame.0, frame.1)) }
     }
 
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {

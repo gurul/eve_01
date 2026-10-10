@@ -4,8 +4,12 @@
 //   POST /api/link/controls/pika          {"action": "drive", "dir", "hold"} every beat while held,
 //                                         {"action": "stop", "hold"} on release or Stop, {"action": "close"} on leaving
 //                                         -> {"ok", "line", "stopped"?}
-//   GET  /api/link/controls/pika/stream   multipart JPEGs, one viewer; 503 {"ok": false, "line"} when the camera is
-//                                         off or busy
+//   GET  /api/link/controls/pika/stream   multipart JPEGs, each part stamped X-Stamp (the Mac's clock, ms), one
+//                                         viewer; 503 {"ok": false, "line"} when the camera is off or busy
+//   POST /api/link/controls/pika          {"action": "rtc", "sdp": <offer>} -> {"ok", "rtc", "sdp": <answer>}: the
+//                                         video over WebRTC (pika_rtc.py), each binary message an 8-byte big-endian
+//                                         stamp then the JPEG; a text message is a line. {"ok": false} -> the stream
+//   POST /api/link/controls/pika          {"action": "stats", "path": "webrtc"|"tunnel", "n", "p50", "p95", "fps"}
 import Foundation
 
 enum PikaDirection: String, CaseIterable, Sendable {
@@ -104,6 +108,10 @@ struct PikaHold: Equatable, Sendable {
 struct MJPEGSplitter: Sendable {
     private(set) var buffer = Data()
     var cap = 1 << 20
+    /// The newest returned JPEG's X-Stamp: when it left the Mac, ms since 1970. Nil when its part had none.
+    private(set) var stamp: Double?
+
+    private static let stampKey = Data("X-Stamp: ".utf8)
 
     private static let start = Data([0xFF, 0xD8])
     private static let end = Data([0xFF, 0xD9])
@@ -115,6 +123,7 @@ struct MJPEGSplitter: Sendable {
         while let a = buffer.range(of: Self.start),
               let z = buffer.range(of: Self.end, in: a.upperBound..<buffer.endIndex) {
             newest = buffer.subdata(in: a.lowerBound..<z.upperBound)
+            stamp = Self.stamp(in: buffer.subdata(in: buffer.startIndex..<a.lowerBound))
             buffer = buffer.subdata(in: z.upperBound..<buffer.endIndex)
         }
         if let a = buffer.range(of: Self.start) {
@@ -125,6 +134,52 @@ struct MJPEGSplitter: Sendable {
         if buffer.count > cap { buffer = Data() }
         return newest
     }
+
+    /// The last X-Stamp in a part's head.
+    static func stamp(in head: Data) -> Double? {
+        guard let k = head.range(of: stampKey, options: .backwards) else { return nil }
+        let digits = head[k.upperBound...].prefix { $0 >= 0x30 && $0 <= 0x39 }
+        return digits.isEmpty ? nil : Double(String(decoding: digits, as: UTF8.self))
+    }
+}
+
+/// One WebRTC frame message: the Mac's send stamp (8 bytes, big-endian ms) then the JPEG (pika_rtc.frame_message).
+enum PikaFrameMessage {
+    static func parse(_ data: Data) -> (stamp: Double, jpeg: Data)? {
+        guard data.count > 8 else { return nil }
+        var ms: UInt64 = 0
+        for b in data.prefix(8) { ms = ms << 8 | UInt64(b) }
+        return (Double(ms), data.subdata(in: data.startIndex + 8..<data.endIndex))
+    }
+}
+
+/// How late frames arrive on one video path: the phone's clock minus the Mac's stamp. The two clocks differ by an
+/// offset that is the same on both paths, so the paths compare fairly. A summary every `every` seconds of frames.
+struct PikaLatency: Sendable {
+    let path: String                     // "webrtc" | "tunnel"
+    var every: Double = 10
+    private(set) var samples: [Double] = []
+    private var since: Double?
+
+    init(path: String, every: Double = 10) {
+        self.path = path
+        self.every = every
+    }
+
+    /// A frame stamped `stamp` arrived at `now` (both ms since 1970). Returns the stats body when one is due.
+    mutating func add(stamp: Double, now: Double) -> [String: Any]? {
+        if since == nil { since = now }
+        samples.append(now - stamp)
+        guard let start = since, now - start >= every * 1000, samples.count >= 10 else { return nil }
+        let sorted = samples.sorted()
+        func pct(_ p: Double) -> Double { sorted[min(sorted.count - 1, Int(Double(sorted.count) * p))] }
+        let body: [String: Any] = ["action": "stats", "path": path, "n": sorted.count,
+                                   "p50": pct(0.5).rounded(), "p95": pct(0.95).rounded(),
+                                   "fps": (Double(sorted.count) / ((now - start) / 1000) * 10).rounded() / 10]
+        samples = []
+        since = now
+        return body
+    }
 }
 
 extension ControlsRequests {
@@ -132,6 +187,13 @@ extension ControlsRequests {
     static func pika(_ ep: ChatEndpoint, _ command: PikaCommand) -> URLRequest {
         var r = WorkRequests.request(ep, ["api", "link", "controls", "pika"], post: true, body: command.body)
         r.timeoutInterval = command.action == "drive" ? 3 : 8
+        return r
+    }
+
+    /// The WebRTC offer (gathering on the Mac takes up to a few seconds) and the latency stats.
+    static func pikaBody(_ ep: ChatEndpoint, _ body: [String: Any], timeout: Double) -> URLRequest {
+        var r = WorkRequests.request(ep, ["api", "link", "controls", "pika"], post: true, body: body)
+        r.timeoutInterval = timeout
         return r
     }
 
@@ -146,5 +208,25 @@ extension ControlsRequests {
 extension WorkClient {
     func pika(_ command: PikaCommand) async -> Result<PikaReply, ChatFailure> {
         await call(.controls, { ControlsRequests.pika($0, command) }) { data, _ in PikaReply.decode(data) }
+    }
+
+    /// The Mac's answer to a WebRTC offer, or nil: then the video comes through the tunnel stream.
+    func pikaAnswer(_ offer: String) async -> String? {
+        let r = await call(.controls, { ControlsRequests.pikaBody($0, ["action": "rtc", "sdp": offer], timeout: 12) }) {
+            data, _ in
+            let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+            return (obj?["ok"] as? Bool == true ? obj?["sdp"] as? String : nil) ?? ""
+        }
+        if case .success(let sdp) = r, !sdp.isEmpty { return sdp }
+        return nil
+    }
+
+    /// A latency summary (PikaLatency's body, as JSON) for the Mac's log.
+    func pikaStats(_ data: Data) async {
+        _ = await call(.controls, { ep in
+            var r = ControlsRequests.pikaBody(ep, [:], timeout: 5)
+            r.httpBody = data
+            return r
+        }) { _, _ in true }
     }
 }

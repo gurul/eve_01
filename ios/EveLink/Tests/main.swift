@@ -731,6 +731,20 @@ check(splitter.feed(Data(repeating: 9, count: 100)) == nil && splitter.buffer.co
 var small = MJPEGSplitter(cap: 16)
 _ = small.feed(Data([0xFF, 0xD8]) + Data(repeating: 7, count: 64))
 check(small.buffer.isEmpty, "a frame that never ends is dropped at the cap")
+// The stamps that measure latency (pika.video_part's X-Stamp, pika_rtc.frame_message's 8 bytes).
+var stamped = MJPEGSplitter()
+let stampedPart = Data("--frame\r\nContent-Type: image/jpeg\r\nContent-Length: 7\r\nX-Stamp: 1760100000123\r\n\r\n".utf8)
+check(stamped.feed(stampedPart + fakeJPEG(5)) == fakeJPEG(5) && stamped.stamp == 1760100000123, "a part's X-Stamp is read")
+check(stamped.feed(part + fakeJPEG(6)) == fakeJPEG(6) && stamped.stamp == nil, "a part without one has none")
+let rtcMessage = Data([0, 0, 0x01, 0x99, 0xCE, 0x22, 0xA1, 0x7B]) + fakeJPEG(7)     // 1760100000123
+check(PikaFrameMessage.parse(rtcMessage).map { $0.stamp == 1760100000123 && $0.jpeg == fakeJPEG(7) } == true,
+      "a WebRTC frame is its stamp, then the JPEG as the camera made it")
+check(PikaFrameMessage.parse(Data([1, 2, 3])) == nil, "a short message is not a frame")
+var lat = PikaLatency(path: "webrtc", every: 2)
+var report: [String: Any]?
+for i in 0..<20 { report = lat.add(stamp: Double(i) * 100, now: Double(i) * 100 + (i < 18 ? 40 : 300)) ?? report }
+check(report?["path"] as? String == "webrtc" && report?["p50"] as? Double == 40 && report?["p95"] as? Double == 300
+      && (report?["n"] as? Int ?? 0) >= 10, "latency: the median and the slow tail of one path")
 // Notes (Shared/NotesText.swift, link_notes.py): the list, a page, its blocks and a to-do's tick.
 let notesList = NotesReply.decode(Data(#"{"ok":true,"line":"","folders":["00-vision","01-inbox","03-projects","03-projects/garden","09-archive"],"notes":[{"path":"03-projects/garden/beds.md","folder":"03-projects/garden","title":"Beds","preview":"Raised","modified":1700000100},{"path":"01-inbox/tea.md","folder":"01-inbox","title":"Tea","preview":"buy oolong","modified":1700000200},{"path":"CLAUDE.md","folder":"","title":"This vault","preview":"","modified":1700000300},{"path":"01-inbox/old.md","folder":"01-inbox","title":"Old","preview":"","modified":1600000000},{"path":"08-journals/daily/2026-10-10.md","folder":"08-journals/daily","title":"Today","preview":"","modified":1700000000},{"path":"","title":"no path"}]}"#.utf8))
 check(notesList?.ok == true && notesList?.notes.count == 5, "the list decodes; a note without a path is left out")
