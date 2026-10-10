@@ -2,9 +2,10 @@
 """The rename to eve is complete: no tracked text or path outside vendor/ says the old name.
 
 Two names stay, because they belong to someone else: Apple's PlistBuddy tool,
-and the upstream project this was forked from (claude-desktop-buddy). Four files stay byte-for-byte:
-the blind eval sets whose sha256 was committed before they were scored. Rewriting one would
-make its verdict a claim about a set nobody scored.
+and the upstream project this was forked from (claude-desktop-buddy). Eight files stay byte-for-byte:
+the blind eval sets whose sha256 was committed before they were scored, and the computer-protocol
+eval's source records, whose sha256 its summary pins. Rewriting one would make its verdict a claim
+about evidence nobody scored.
 The check proves it can fail first, on a planted positive, before it trusts a clean result.
 Prints RENAME_CLEAN and exits 0 only when every assertion holds.
 """
@@ -22,6 +23,10 @@ FROZEN = {
     "bridge/tests/fixtures/chief/replan_holdout.json",
     "bridge/tests/fixtures/grade_holdout.json",
     "bridge/tests/fixtures/memory_eval/questions.json",
+    "docs/computer-protocol-eval/browser/runs-gpt-6-astra.jsonl",
+    "docs/computer-protocol-eval/browser/runs-gpt-6-luna.jsonl",
+    "docs/computer-protocol-eval/browser/runs-gpt-6-sol.jsonl",
+    "docs/computer-protocol-eval/visual.json",
 }
 # The chat bundle carries ci-info's list of CI vendors; one of them is a CI service that shares the old name.
 KEPT = re.compile(r"PlistBu" + r"ddy|claude-desktop-bu" + r"ddy"

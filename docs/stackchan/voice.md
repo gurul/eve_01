@@ -9,6 +9,10 @@ and `EVE_AGENT_*` tuning described below are retained legacy internals and
 are no longer selected by the daemon task factory. They are not a fallback.
 See [integration evidence and limitations](../codex-computer-use/README.md).
 
+**Wake word (2026-10-10):** the owner does not use one. Since the rename the
+default phrase is "hey eve", and the shipped spotter does not hear it in the
+real-model tests (`bridge/tests/test_ears.py`, marked strict xfail). Talk
+through Eve Link or the Voice PE button instead.
 
 Say **"hey eve"** and the robot listens. Ask it to do something on your Mac and
 it does it — opens the mail, finds a file, fills a form — talking back while it
