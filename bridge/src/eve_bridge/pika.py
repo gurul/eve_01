@@ -54,6 +54,7 @@ import json
 import logging
 import os
 import re
+import socket
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -216,7 +217,9 @@ async def _body(reader: asyncio.StreamReader, chunked: bool) -> AsyncIterator[by
 
 
 async def _open(host: str, port: int) -> tuple[asyncio.StreamReader, asyncio.StreamWriter]:
-    return await asyncio.open_connection(host, port)
+    # IPv4 only: the car has no IPv6, and macOS spends 5 s on the mDNS AAAA lookup before giving up, longer than
+    # CONNECT_SECS. Measured 2026-10-10: getaddrinfo("elegoo-car.local") 5.06 s, with AF_INET 0.02 s.
+    return await asyncio.open_connection(host, port, family=socket.AF_INET)
 
 
 async def _chunk(writer: asyncio.StreamWriter, data: bytes) -> None:
@@ -375,7 +378,7 @@ class Pika:
         try:
             reader, writer = await asyncio.wait_for(self._open(self.cfg.host, self.cfg.port), CONNECT_SECS)
         except (OSError, asyncio.TimeoutError) as e:
-            log.info("pika: car unreachable (%s)", type(e).__name__)
+            log.info("pika: car unreachable (%s %s)", type(e).__name__, getattr(e, "errno", None) or "")
             raise PikaError(UNREACHABLE_LINE) from None
         self._reader, self._writer = reader, writer
         self._answered = asyncio.Event()
@@ -475,7 +478,8 @@ class Pika:
                 await _json(writer, 503, {"ok": False, "line": VIDEO_BUSY_LINE if up_writer else
                                           VIDEO_UNREACHABLE_LINE})
                 return
-            except (OSError, ConnectionError, asyncio.IncompleteReadError, asyncio.LimitOverrunError):
+            except (OSError, ConnectionError, asyncio.IncompleteReadError, asyncio.LimitOverrunError) as e:
+                log.info("pika: camera unreachable (%s %s)", type(e).__name__, getattr(e, "errno", None) or "")
                 await _json(writer, 503, {"ok": False, "line": VIDEO_UNREACHABLE_LINE})
                 return
             lines = head.decode("latin-1").split("\r\n")

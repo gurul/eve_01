@@ -487,3 +487,16 @@ def test_split_jpegs_keeps_a_partial_frame() -> None:
     found, rest = pika.split_jpegs(rest + b[10:])
     assert found == [b] and rest == b""[-1:]
     assert pika.video_part(a).startswith(b"--frame\r\nContent-Type: image/jpeg\r\nContent-Length: 44\r\n\r\n\xff\xd8")
+
+
+def test_the_car_is_dialled_over_ipv4_only(monkeypatch: pytest.MonkeyPatch) -> None:
+    # macOS spends 5 s on the mDNS AAAA lookup for elegoo-car.local, longer than CONNECT_SECS; IPv4 answers at once.
+    seen: dict[str, Any] = {}
+
+    async def fake_open(host: str, port: int, **kw: Any) -> Any:
+        seen.update(host=host, port=port, **kw)
+        return None, None
+
+    monkeypatch.setattr(pika.asyncio, "open_connection", fake_open)
+    asyncio.run(pika._open("elegoo-car.local", 100))
+    assert seen == {"host": "elegoo-car.local", "port": 100, "family": pika.socket.AF_INET}
