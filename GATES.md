@@ -1,6 +1,6 @@
 # Gates: the rename to eve
 
-OWNS: every tracked file and path (vendor/ excepted), ~/.config/eve-bridge, the launchd agent, the iOS app on the phone, ../portfolio/app/projects/page.js
+OWNS: every tracked file and path (vendor/ excepted), ~/.config/eve-bridge, the launchd agent, the iOS app on the phone (and, outside this repo, the portfolio's app/projects/page.js)
 
 Scope: the owner, 2026-10-10: "change name of repo and everywhere including app, phone is connected, to eve", then "Everything, including bundle ID", "also in portfolio", "push everything after". Then: "move everything into a brand new repo so that it looks new" — one commit, authored by the owner alone. The ledger this replaces (the chief's replanner) is in the previous repository at 97ea560.
 
