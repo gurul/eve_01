@@ -20,6 +20,7 @@ struct ControlSheet: View {
                 case .firetv: RemoteControls(client: client)
                 case .memory: MemoryControls(client: client)
                 case .notes: NotesControls(client: client)
+                case .pika: PikaControls(client: client)
                 }
             }
             .background(Color.eveBackground)

@@ -66,9 +66,10 @@ enum HomeWidget {
 
 #if DEBUG && targetEnvironment(simulator)
 /// For screenshots in the simulator only (docs/app-chat.md, "Design hook"); none of it is in a device build.
-/// EVE_PAIR_URL (environment) pairs; -eveScreen chat | work | voice | settings opens that screen; -eveGrade
+/// EVE_PAIR_URL (environment) pairs; -eveScreen chat | apps | work | voice | settings | pika opens that screen (pika:
+/// the Apps tab with the Pika screen open); -eveGrade
 /// auto | instant | think preselects the speed dial, -eveKeyboard YES puts the cursor in the chat's composer (launch
-/// arguments, read through UserDefaults). -eveControl notes | spotify | lights | firetv | memory opens that control's sheet over
+/// arguments, read through UserDefaults). -eveControl notes | spotify | lights | firetv | pika | memory opens that control's sheet over
 /// Work; -eveMemoryQuery <words> runs that search in the Memory card; -eveNote <path> (with -eveControl notes)
 /// opens that note's page.
 /// -eveActivity <phase> puts up the call's Live Activity in that phase.

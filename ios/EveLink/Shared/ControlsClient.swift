@@ -2,19 +2,21 @@
 // cards, drawn natively. The daemon's link door hands each body to the card's own panel (link_chat.py), so the actions
 // and answers are exactly the Mini App's (miniapp_page.html). Foundation only, so Tests/main.swift checks it on the Mac.
 //
-//   GET  /api/link/controls             {"lights": [{"name", "room"?}], "spotify": bool, "firetv": bool, "memory": bool}
+//   GET  /api/link/controls             {"lights": [{"name", "room"?}], "spotify": bool, "firetv": bool, "memory": bool,
+//                                        "notes": bool, "pika": bool}
 //   POST /api/link/controls/lights      {"action": "status"} | {"action": "set", "target", "power"|"color"|"brightness"}
 //   POST /api/link/controls/spotify     {"action": "status"|"play"|"pause"|"next"|"previous"|"volume"|"transfer"|"mode"}
 //   POST /api/link/controls/firetv      {"action": "status"|"up"|...|"volume"|"volume_change"|"open_app"|"power_on"...}
 //   POST /api/link/controls/memory      {"action": "profile"|"search"|"forget"|"apply"|"remember"|"hide"|"unhide"|"hidden",
 //                                        "query"?, "token"?, "text"?}
 //                                       (link_memory.py)
+//   POST /api/link/controls/pika        hold-to-drive for the car, and its video (PikaDrive.swift, pika.py)
 //   404 with {"ok": false, "line"} for a control this Mac does not have.
 import Foundation
 
 /// One of eve's controls, in the order the Work view lists them.
 enum ControlKind: String, CaseIterable, Sendable, Identifiable {
-    case notes, spotify, lights, firetv, memory
+    case notes, spotify, lights, firetv, pika, memory
 
     var id: String { rawValue }
 
@@ -25,6 +27,7 @@ enum ControlKind: String, CaseIterable, Sendable, Identifiable {
         case .firetv: "Remote"
         case .memory: "Memory"
         case .notes: "Notes"
+        case .pika: "Pika"
         }
     }
 
@@ -36,6 +39,7 @@ enum ControlKind: String, CaseIterable, Sendable, Identifiable {
         case .firetv: "tv"
         case .memory: "brain.head.profile"
         case .notes: "doc.text"
+        case .pika: "car"
         }
     }
 }
@@ -53,6 +57,7 @@ struct ControlsInfo: Equatable, Sendable {
     var firetv: Bool
     var memory: Bool = false        // the Memory card (2026-10-09): on while the Mac's memory is on
     var notes: Bool = false         // Notes (2026-10-10, link_notes.py): on while the second brain's vault is there
+    var pika: Bool = false          // Pika, the car (2026-10-10, pika.py): only with EVE_PIKA=1 and its config
 
     var available: [ControlKind] {
         ControlKind.allCases.filter { kind in
@@ -62,6 +67,7 @@ struct ControlsInfo: Equatable, Sendable {
             case .firetv: firetv
             case .memory: memory
             case .notes: notes
+            case .pika: pika
             }
         }
     }
@@ -78,7 +84,7 @@ struct ControlsInfo: Equatable, Sendable {
         }
         return ControlsInfo(lights: lights, spotify: obj["spotify"] as? Bool ?? false,
                             firetv: obj["firetv"] as? Bool ?? false, memory: obj["memory"] as? Bool ?? false,
-                            notes: obj["notes"] as? Bool ?? false)
+                            notes: obj["notes"] as? Bool ?? false, pika: obj["pika"] as? Bool ?? false)
     }
 }
 

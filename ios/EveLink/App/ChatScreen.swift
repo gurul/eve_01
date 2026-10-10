@@ -126,7 +126,7 @@ struct HomeScreen: View {
     }
 
     #if DEBUG && targetEnvironment(simulator)
-    /// The simulator's design hook (docs/app-chat.md): -eveScreen chat | work | voice | settings, -eveGrade,
+    /// The simulator's design hook (docs/app-chat.md): -eveScreen chat | apps | work | voice | settings | pika, -eveGrade,
     /// -eveKeyboard YES (chat with the keyboard up).
     private func openDesignScreen() {
         if let grade = DesignHook.grade.flatMap(ChatGrade.init(rawValue:)) { chat.grade = grade }
@@ -143,7 +143,7 @@ struct HomeScreen: View {
                 }
             }
         case "work": mode = .work
-        case "apps": mode = .apps
+        case "apps", "pika": mode = .apps               // pika: the Apps tab with the Pika screen open
         case "voice": showVoice = true
         case "settings": showSettings = true
         default: break

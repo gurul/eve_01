@@ -304,6 +304,9 @@ final class WorkClient {
         session = URLSession(configuration: config)
     }
 
+    /// Where eve is now, for a request this client does not make itself (Pika's video stream).
+    func currentEndpoint() -> ChatEndpoint? { endpoint() }
+
     func jobs() async -> Result<WorkJobs, ChatFailure> {
         await call(.jobs, WorkRequests.jobs) { data, _ in WorkJobs.decode(data) }
     }

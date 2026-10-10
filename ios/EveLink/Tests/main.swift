@@ -683,6 +683,54 @@ check(withAll?.available == [.notes, .spotify, .lights, .firetv, .memory], "the 
 check(withAll?.apps == [.notes, .spotify, .lights, .firetv], "Apps lists Notes first and never Memory")
 check(ControlsInfo.decode(Data(#"{"lights":[],"spotify":false,"firetv":false,"memory":true}"#.utf8))?.apps == [], "memory alone is no Apps row")
 check(ControlsInfo.decode(Data(#"{"lights":[],"spotify":false,"firetv":false}"#.utf8))?.notes == false, "an older Mac has no Notes")
+// Pika, the car (Shared/PikaDrive.swift, pika.py): an Apps row only when the Mac says so, after the TV remote.
+let withPika = ControlsInfo.decode(Data(#"{"lights":[],"spotify":true,"firetv":true,"memory":true,"notes":true,"pika":true}"#.utf8))
+check(withPika?.apps == [.notes, .spotify, .firetv, .pika], "Pika is listed when the Mac has it, Memory never")
+check(withAll?.pika == false && !(withAll?.apps.contains(.pika) ?? true), "no pika key: no Pika row (an older Mac, or off)")
+check(ControlKind.pika.title == "Pika" && ControlKind.pika.rawValue == "pika", "the control's name is the daemon's")
+// Hold to drive: a press drives with its own id, the beat repeats it, only the driving key's release stops.
+var pikaHold = PikaHold()
+check(pikaHold.renew() == nil && !pikaHold.holding, "nothing held: no beat")
+check(pikaHold.press(.forward, id: "a") == PikaCommand(action: "drive", dir: .forward, hold: "a"), "a press drives")
+check(pikaHold.renew() == PikaCommand(action: "drive", dir: .forward, hold: "a"), "the beat repeats the same press")
+check(pikaHold.press(.left, id: "b") == PikaCommand(action: "drive", dir: .left, hold: "b"), "a second key takes over")
+check(pikaHold.release(.forward) == nil && pikaHold.direction == .left, "lifting the replaced key says nothing")
+check(pikaHold.release(.left) == PikaCommand(action: "stop", dir: nil, hold: "b") && pikaHold.renew() == nil,
+      "lifting the driving key stops, and the beat ends")
+check(pikaHold.release(.left) == nil, "a second lift sends nothing more")
+_ = pikaHold.press(.back, id: "c")
+pikaHold.ended("old")
+check(pikaHold.holding, "the Mac ending an older press leaves this one")
+pikaHold.ended("c")
+check(!pikaHold.holding && pikaHold.renew() == nil, "the Mac ending this press stops the beat")
+check(pikaHold.stop() == PikaCommand(action: "stop", dir: nil, hold: "c"), "Stop always sends a stop")
+let pikaBody = PikaCommand(action: "drive", dir: .right, hold: "h").body
+check(pikaBody["action"] as? String == "drive" && pikaBody["dir"] as? String == "right" && pikaBody["hold"] as? String == "h"
+      && PikaCommand(action: "close").body.count == 1, "the bodies the daemon reads")
+check(PikaHold.beat < .milliseconds(450 / 2), "two beats fit in the Mac's heartbeat window")
+check(PikaReply.decode(Data(#"{"ok":false,"stopped":true,"line":"Pika is busy."}"#.utf8))
+      == PikaReply(ok: false, stopped: true, line: "Pika is busy.") && PikaReply.decode(Data("[]".utf8)) == nil,
+      "the panel's answer")
+let pikaDrive = ControlsRequests.pika(ctlEP, PikaCommand(action: "drive", dir: .forward, hold: "h"))
+check(pikaDrive.url?.absoluteString == "https://x.trycloudflare.com/api/link/controls/pika" && pikaDrive.httpMethod == "POST"
+      && pikaDrive.value(forHTTPHeaderField: "Authorization") == "Bearer tok" && pikaDrive.timeoutInterval <= 3,
+      "a beat is a short POST with the token")
+let pikaVideo = ControlsRequests.pikaStream(ctlEP)
+check(pikaVideo.url?.path == "/api/link/controls/pika/stream" && pikaVideo.httpMethod == "GET"
+      && pikaVideo.value(forHTTPHeaderField: "Authorization") == "Bearer tok"
+      && !(pikaVideo.url?.absoluteString.contains("tok") ?? true), "the video asks with the token in the header only")
+// The video: whole JPEGs between the markers, across reads, only the newest kept.
+func fakeJPEG(_ n: UInt8) -> Data { Data([0xFF, 0xD8, n, n, n, 0xFF, 0xD9]) }
+var splitter = MJPEGSplitter()
+let part = Data("--frame\r\nContent-Type: image/jpeg\r\n\r\n".utf8)
+check(splitter.feed(part + fakeJPEG(1).prefix(4)) == nil, "half a frame: nothing yet")
+check(splitter.feed(fakeJPEG(1).dropFirst(4) + part) == fakeJPEG(1), "the rest arrives: the frame")
+check(splitter.feed(fakeJPEG(2) + part + fakeJPEG(3) + part + fakeJPEG(4).prefix(3)) == fakeJPEG(3), "two at once: the newest")
+check(splitter.feed(Data([0xFF, 0xD9])) == Data([0xFF, 0xD8, 4, 0xFF, 0xD9]), "the frame left over ends on the next read")
+check(splitter.feed(Data(repeating: 9, count: 100)) == nil && splitter.buffer.count <= 1, "bytes outside a frame are not kept")
+var small = MJPEGSplitter(cap: 16)
+_ = small.feed(Data([0xFF, 0xD8]) + Data(repeating: 7, count: 64))
+check(small.buffer.isEmpty, "a frame that never ends is dropped at the cap")
 // Notes (Shared/NotesText.swift, link_notes.py): the list, a page, its blocks and a to-do's tick.
 let notesList = NotesReply.decode(Data(#"{"ok":true,"line":"","folders":["00-vision","01-inbox","03-projects","03-projects/garden","09-archive"],"notes":[{"path":"03-projects/garden/beds.md","folder":"03-projects/garden","title":"Beds","preview":"Raised","modified":1700000100},{"path":"01-inbox/tea.md","folder":"01-inbox","title":"Tea","preview":"buy oolong","modified":1700000200},{"path":"CLAUDE.md","folder":"","title":"This vault","preview":"","modified":1700000300},{"path":"01-inbox/old.md","folder":"01-inbox","title":"Old","preview":"","modified":1600000000},{"path":"08-journals/daily/2026-10-10.md","folder":"08-journals/daily","title":"Today","preview":"","modified":1700000000},{"path":"","title":"no path"}]}"#.utf8))
 check(notesList?.ok == true && notesList?.notes.count == 5, "the list decodes; a note without a path is left out")

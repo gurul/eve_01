@@ -1,7 +1,7 @@
 // The Apps and Work tabs (docs/app-chat.md): one plain native list each. Work is the chief's jobs: a job opens a sheet
 // with its steps and only the actions that apply, and its bar's "+" starts a New job (eve takes it on as in the
 // chat). Apps is eve's own controls (Notes, the owner's vault, NotesView.swift; Music, Lights, Remote: the Mini App's
-// cards), each opening its native sheet (ControlSheets.swift). Memory is in Settings (owner, 2026-10-10). The owner's built apps are not listed (owner,
+// cards; Pika, the car, PikaView.swift), each opening its native sheet (ControlSheets.swift). Memory is in Settings (owner, 2026-10-10). The owner's built apps are not listed (owner,
 // 2026-10-08); the owner asked for "chat, apps, work" as three tabs the same evening.
 import SwiftUI
 
@@ -117,7 +117,8 @@ struct WorkView: View {
         .task(id: shows) {
             await reload()
             #if DEBUG && targetEnvironment(simulator)
-            if shows == .apps, let raw = DesignHook.control, let kind = ControlKind(rawValue: raw) { control = kind }
+            if shows == .apps, let raw = DesignHook.control ?? (DesignHook.screen == "pika" ? "pika" : nil),
+               let kind = ControlKind(rawValue: raw) { control = kind }
             #endif
         }
         .sheet(item: $job) { shown in
@@ -271,6 +272,7 @@ private struct ControlRow: View {
         case .firetv: "Fire TV"
         case .memory: "What eve remembers"
         case .notes: "Your second brain"
+        case .pika: "Drive the car"
         }
     }
 }
