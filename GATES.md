@@ -44,5 +44,5 @@ Scope: the owner, 2026-10-10: "change name of repo and everywhere including app,
   EXPECT: REPO_OK
   EVIDENCE: pending
 
-- [ ] G9: The phone runs the Eve Link app, paired, and the old app (the previous bundle ID) is gone from it.
-  EVIDENCE: pending
+- [x] G9: The phone runs the Eve Link app, paired, and the old app (the previous bundle ID) is gone from it.
+  EVIDENCE: manual; the owner, 2026-10-10: "phone looks good" after pairing through the Safari page; devicectl lists only com.github.eve-bridge.EveLink (the old bundle uninstalled: "App uninstalled.")
