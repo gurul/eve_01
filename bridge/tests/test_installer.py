@@ -104,3 +104,20 @@ def test_uninstall_drops_empty_hooks_block(temp_settings: Path) -> None:
 def test_uninstall_when_nothing_to_remove(temp_settings: Path) -> None:
     _write(temp_settings, _baseline())
     assert installer.uninstall_hooks() == 0  # no-op, exit clean
+
+
+def test_install_replaces_the_hooks_from_before_the_rename(temp_settings: Path) -> None:
+    # 2026-10-10: after the rename the old entries stayed, every hook failed, and "claude on" found no session.
+    old = "/old/venv/bin/python -m cc_bu" + "ddy_bridge.hooks."
+    foreign = {"type": "command", "command": "other-tool hook"}
+    _write(temp_settings, _baseline({"hooks": {
+        "SessionStart": [{"hooks": [{"type": "command", "command": old + "session_start"}, foreign]}],
+        "Stop": [{"hooks": [{"type": "command", "command": old + "stop"}]}],
+    }}))
+    assert installer.install_hooks() == 0
+    text = temp_settings.read_text()
+    assert "ddy_bridge" not in text and "other-tool hook" in text
+    data = json.loads(text)
+    starts = [h["command"] for g in data["hooks"]["SessionStart"] for h in g["hooks"]]
+    assert any(c.endswith("-m eve_bridge.hooks.session_start") for c in starts)
+    assert all(g["hooks"] for e in data["hooks"].values() for g in e)          # no empty groups left behind

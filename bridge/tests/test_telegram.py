@@ -6487,3 +6487,31 @@ def test_with_no_switch_the_late_join_still_happens(tmp_path: Path) -> None:
 
     asyncio.run(go())
     assert rig.inlet.claude and api.titled[-1][0] == telegram.CLAUDE_ON_TITLE
+
+
+def test_the_same_file_is_sent_once_even_when_the_task_and_the_turn_both_send_it(tmp_path: Path,
+                                                                                  monkeypatch: pytest.MonkeyPatch) -> None:
+    # 2026-10-10: a task handed over its photo, then the chat turn that waited on it sent the same photo again.
+    home = tmp_path / "home"
+    (home / "Pictures").mkdir(parents=True)
+    photo = home / "Pictures" / "shot.jpg"
+    photo.write_bytes(b"\xff\xd8 photo \xff\xd9")
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: home))
+    sent: list[str] = []
+
+    class Api(FakeApi):
+        async def send_document(self, chat_id: int, path: Path, caption: str = "") -> None:
+            sent.append(caption)
+
+    rig = Rig(Api([update("send it")]), FakeCreate(say("ok")))
+
+    async def go() -> list[dict[str, Any]]:
+        a = await rig.inlet._send_file(OWNER, "~/Pictures/shot.jpg", "From the task: shot.jpg")
+        b = await rig.inlet._send_file(OWNER, "~/Pictures/shot.jpg", "")
+        photo.write_bytes(b"\xff\xd8 a new photo \xff\xd9")                     # changed since: it goes again
+        c = await rig.inlet._send_file(OWNER, "~/Pictures/shot.jpg", "again")
+        return [a, b, c]
+
+    a, b, c = asyncio.run(go())
+    assert sent == ["From the task: shot.jpg", "again"]
+    assert a["ok"] and b["ok"] and "already sent" in b["note"] and c["ok"] and "note" not in c

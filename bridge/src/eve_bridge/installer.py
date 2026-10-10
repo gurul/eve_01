@@ -24,6 +24,9 @@ from typing import Any
 from .claude_home import settings_path
 
 MARKER = "eve_bridge.hooks."
+# The package's name before the rename to eve (2026-10-10). Its entries point at a module that no longer exists, so
+# Claude Code's hooks fail and eve never hears of a session; install replaces them and uninstall removes them.
+LEGACY_MARKERS = ("cc_bu" + "ddy_bridge.hooks.",)
 HOOK_TIMEOUT_SECS = 330  # must be > the pretooluse hook's BLOCK_TIMEOUT_SECS (320 s) + a small buffer
 
 # (Claude Code hook event name, python module, matcher, needs_decision)
@@ -62,7 +65,12 @@ def _hook_command(module: str) -> str:
 
 def _is_our_entry(hook_obj: dict[str, Any]) -> bool:
     cmd = hook_obj.get("command", "")
-    return isinstance(cmd, str) and MARKER in cmd
+    return isinstance(cmd, str) and (MARKER in cmd or any(m in cmd for m in LEGACY_MARKERS))
+
+
+def _is_legacy(hook_obj: dict[str, Any]) -> bool:
+    cmd = hook_obj.get("command", "")
+    return isinstance(cmd, str) and any(m in cmd for m in LEGACY_MARKERS)
 
 
 def _load_settings(path: Path) -> dict[str, Any]:
@@ -104,6 +112,20 @@ def install_hooks(config_dir: str | None = None) -> int:
 
     data = _load_settings(path)
     hooks = data.setdefault("hooks", {})
+
+    removed = 0
+    for entries in hooks.values():
+        for group in entries if isinstance(entries, list) else []:
+            inner = group.get("hooks") if isinstance(group, dict) else None
+            if isinstance(inner, list):
+                kept = [h for h in inner if not _is_legacy(h)]
+                removed += len(inner) - len(kept)
+                inner[:] = kept
+    for event in list(hooks):
+        if isinstance(hooks[event], list):
+            hooks[event] = [g for g in hooks[event] if not (isinstance(g, dict) and g.get("hooks") == [])]
+    if removed:
+        print(f"removed {removed} hook(s) left from before the rename")
 
     added = 0
     for event, module, matcher, needs_decision in HOOK_DEFS:

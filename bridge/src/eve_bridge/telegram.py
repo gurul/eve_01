@@ -144,6 +144,7 @@ API_ROOT = "https://api.telegram.org"
 POLL_TIMEOUT_SECS = 50              # long poll: Telegram holds the request open this long
 MAX_CAPTION_CHARS = 1024            # Bot API limit on a photo caption
 MAX_DOCUMENT_BYTES = 50 * 1024 * 1024   # Bot API limit on sendDocument
+RESENT_FILE_SECS = 600              # the same file to the same chat within this long is sent once
 MAX_LISTING = 40
 DEFAULT_STALE_SECS = 120.0          # a message older than this when it arrives is a backlog, not a request
 DEFAULT_ASK_TIMEOUT_SECS = 180.0    # a task's question waits this long (the voice waits 60: thumbs are slower)
@@ -6888,6 +6889,18 @@ class TelegramInlet:
         size = real.stat().st_size
         if size > MAX_DOCUMENT_BYTES:
             return {"ok": False, "reason": f"too big for Telegram ({size // (1024 * 1024)} MB; the limit is 50 MB)"}
+        # The same file to the same chat once (owner, 2026-10-10: "why did it send two pictures"): a task hands over
+        # the files it wrote, and the chat turn that waited on it then sent the same photo again.
+        stat = real.stat()
+        key = (chat_id, str(real), stat.st_size, stat.st_mtime_ns)
+        now = time.time()
+        sent_files = self.__dict__.setdefault("_sent_files", {})
+        for k in [k for k, at in sent_files.items() if now - at > RESENT_FILE_SECS]:
+            del sent_files[k]
+        if key in sent_files:
+            log.info("telegram: that file was just sent; not again (%d bytes)", size)
+            return {"ok": True, "sent": real.name, "bytes": size, "note": "already sent a moment ago; not sent twice"}
+        sent_files[key] = now
         await self._send_media(chat_id, real, caption, document=True)
         log.info("telegram: sent a file (%d bytes)", size)     # the size, never the name
         return {"ok": True, "sent": real.name, "bytes": size}
