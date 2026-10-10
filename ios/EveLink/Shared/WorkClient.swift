@@ -15,7 +15,7 @@ import Foundation
 /// What the owner can do to a job from the phone. The daemon lists only the ones that apply now: an act that may
 /// already have happened gets "It happened" and "It didn't", never a Go.
 enum WorkAction: String, CaseIterable, Sendable, Hashable {
-    case go, done, drop, raise, happened, didnt
+    case go, done, drop, raise, happened, didnt, hide
 
     var title: String {
         switch self {
@@ -25,6 +25,7 @@ enum WorkAction: String, CaseIterable, Sendable, Hashable {
         case .raise: "Raise budget"
         case .happened: "It happened"
         case .didnt: "It didn't"
+        case .hide: "Delete"
         }
     }
 }

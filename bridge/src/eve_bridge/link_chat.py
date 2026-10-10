@@ -44,6 +44,9 @@ view and does all its networking natively (ios/EveLink); this module is the daem
   refused. A Go on a card whose act may already have happened is refused: the app offers "It happened" and "It
   didn't" there, as Telegram's buttons do (Chief.choices), and a deliberate re-run stays the typed "go c12".
   Their dict is the answer.
+* ``POST /api/link/jobs/<id>/hide`` (owner, 2026-10-10: "i should also have ability to delete completed jobs i dont
+  want to be forced to see them"): a finished card leaves the Work list for good (``HiddenJobs``); the chief's
+  ledger keeps it, so its record and memory stay whole. An open card is refused: Drop ends it first.
 * ``POST /api/link/upload``: one attachment (a photo, a PDF, a text file or an Office document; link_uploads.py),
   the raw bytes as the body, its name in ``X-Filename`` (percent-encoded), at most ``link_uploads.MAX_BYTES``. The
   answer is ``{"ok": true, "id", "kind", "name", "mime", "size"}``; 413 too large, 415 a type eve does not take.
@@ -132,7 +135,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Collection, Optional
 from urllib.parse import parse_qsl
 
 from . import memory_sources
@@ -156,7 +159,8 @@ FILE_RE = re.compile(r"^/api/link/file/([^/]{0,64})$")
 PATHS = (TURN_PATH, MESSAGES_PATH, JOBS_PATH, APPS_PATH, UPLOAD_PATH, CONTROLS_PATH, TODAY_PATH, PIKA_STREAM_PATH)
 POST_PATHS = (TURN_PATH, UPLOAD_PATH)
 GRADES = ("auto", "instant", "think")    # telegram.GRADES: the speed dial
-JOB_ACTIONS = ("go", "done", "drop", "raise", "happened", "didnt")
+JOB_ACTIONS = ("go", "done", "drop", "raise", "happened", "didnt", "hide")
+HIDDEN_JOBS_FILE = "~/.config/eve-bridge/chat/hidden-jobs.json"   # the finished cards the owner removed from Work
 FINISHED_SHOWN = 20                   # finished cards listed after the open ones
 MAX_GOAL_CHARS = 1000                 # a New job's goal, after trimming
 MAX_DETAIL_CHARS = 2000               # and its details
@@ -515,7 +519,7 @@ def job_needs_you(chief: Any, card: Any) -> bool:
 def job_actions(chief: Any, card: Any) -> list[str]:
     """The subset of JOB_ACTIONS that does something to this card now, the way Chief.choices picks its buttons."""
     if card.terminal:
-        return []
+        return ["hide"]
     out = []
     if chief._doubtful(card) is not None:
         # the act may already have happened: never a one-tap Go (that would run it twice), only the answer
@@ -561,15 +565,42 @@ def job_entry(chief: Any, card: Any) -> dict[str, Any]:
             "needs_you": job_needs_you(chief, card), "actions": job_actions(chief, card)}
 
 
-def list_jobs(chief: Any) -> dict[str, Any]:
+def list_jobs(chief: Any, hidden: Collection[str] = ()) -> dict[str, Any]:
     """Open cards first (the ones that need the owner first, then the newest), then the last ``FINISHED_SHOWN``
-    finished, newest first; ``needs_you`` counts the cards that need the owner."""
+    finished, newest first, without the ones the owner removed (``hidden``); ``needs_you`` counts the cards that
+    need the owner."""
     cards = chief.ledger.all()
     open_ = [job_entry(chief, c) for c in cards if not c.terminal]
     open_.sort(key=lambda j: (not j["needs_you"], -j["updated"]))
-    finished = sorted((c for c in cards if c.terminal), key=lambda c: c.updated, reverse=True)[:FINISHED_SHOWN]
+    finished = sorted((c for c in cards if c.terminal and c.id not in hidden), key=lambda c: c.updated,
+                      reverse=True)[:FINISHED_SHOWN]
     return {"jobs": open_ + [job_entry(chief, c) for c in finished],
             "needs_you": sum(1 for j in open_ if j["needs_you"])}
+
+
+class HiddenJobs:
+    """The finished cards' ids the owner removed from the Work list, kept in one small file (0600, its folder
+    0700). Card ids are never reused (chief_card.Card.id), so an id alone names its card for good. A file that
+    cannot be read is an empty list: every finished card shows again, nothing is lost."""
+
+    def __init__(self, path: str | Path = HIDDEN_JOBS_FILE) -> None:
+        self.path = Path(path).expanduser()
+        self.ids: set[str] = set()
+        try:
+            got = json.loads(self.path.read_text(encoding="utf-8"))
+            self.ids = {i for i in got.get("hidden", []) if isinstance(i, str)}
+        except FileNotFoundError:
+            pass
+        except (OSError, ValueError, AttributeError) as e:
+            log.warning("link chat: the hidden jobs could not be read (%s); all are shown", type(e).__name__)
+
+    def add(self, cid: str) -> None:
+        self.ids.add(cid)
+        self.path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        tmp = self.path.with_suffix(".tmp")
+        tmp.write_text(json.dumps({"hidden": sorted(self.ids)}), encoding="utf-8")
+        tmp.chmod(0o600)
+        tmp.replace(self.path)
 
 
 # ---- the door ---------------------------------------------------------------------------------------------
@@ -582,7 +613,7 @@ class LinkChat:
     def __init__(self, inlet: Callable[[], Any], *, clock: Callable[[], float] = time.monotonic,
                  turn_secs: float = TURN_SECS, ping_secs: float = PING_SECS, settle_secs: float = SETTLE_SECS,
                  poll_secs: float = POLL_SECS, uploads: Any = None, today: Any = None,
-                 job_secs: float = JOB_SECS) -> None:
+                 job_secs: float = JOB_SECS, hidden: Optional[HiddenJobs] = None) -> None:
         from .link_today import Today
         from .link_uploads import UploadStore
 
@@ -592,6 +623,7 @@ class LinkChat:
         self._clock = clock
         self.turn_secs, self.ping_secs, self.settle_secs, self.poll_secs = turn_secs, ping_secs, settle_secs, poll_secs
         self.job_secs = job_secs
+        self.hidden = hidden if hidden is not None else HiddenJobs()     # finished cards removed from Work
         self._job_starts: dict[str, _Turn] = {}             # New job client_id -> its turn
         self._turns: dict[str, _Turn] = {}                 # by turn id, oldest first
         self._by_client: dict[str, _Turn] = {}
@@ -1022,7 +1054,7 @@ class LinkChat:
             await self._new_job(inlet, chief, headers, reader, writer)
             return
         if action is None:
-            await self._json(writer, 200, list_jobs(chief))
+            await self._json(writer, 200, list_jobs(chief, self.hidden.ids))
             return
         cid, verb = action.group(1), action.group(2)
         body = await self._optional_body(headers, reader, writer)
@@ -1039,6 +1071,19 @@ class LinkChat:
             # via="id" skips the chief's own in-doubt refusal (typed "go c12" is a deliberate re-run); a tap is not
             await self._json(writer, 200, {"ok": False, "reason": f"{cid} may already have done that; "
                                                                     "say whether it happened first"})
+            return
+        if verb == "hide":
+            if not chief.ledger.get(cid).terminal:
+                await self._json(writer, 200, {"ok": False, "reason": f"{cid} is still open; drop it first"})
+                return
+            try:
+                self.hidden.add(cid)
+            except OSError as e:
+                log.warning("link chat: could not hide %s (%s)", cid, type(e).__name__)
+                await self._json(writer, 500, {"ok": False, "reason": "I couldn't remove that just now."})
+                return
+            log.info("link chat: hide %s from the app: ok", cid)
+            await self._json(writer, 200, {"ok": True, "hidden": cid})
             return
         try:
             if verb == "go":

@@ -407,7 +407,7 @@ let jobsJSON = """
    "end_state": "", "phases": [{"n": 1, "do": "research", "goal": "Search", "door": "two_way", "status": "running"}],
    "needs_you": false, "actions": ["done", "drop"]},
   {"id": "c9", "kind": "commitment", "title": "Send the deck", "status": "done", "phases": [],
-   "needs_you": false, "actions": []},
+   "needs_you": false, "actions": ["hide"]},
   {"title": "no id: dropped"}
 ], "needs_you": 1}
 """
@@ -429,6 +429,7 @@ check(told?.statusLine == "May have happened: check" && told?.stepsDone == 1 && 
       "the daemon's own line and steps done win")
 check(jobs?.jobs[2].statusLine == "Done" && jobs?.jobs[2].progress == 1 && jobs?.jobs[2].open == false, "a finished job")
 check(jobs?.open.map(\.id) == ["c12", "c13"] && jobs?.finished.map(\.id) == ["c9"], "open first, then finished")
+check(jobs?.finished.first?.actions == [.hide] && WorkAction.hide.title == "Delete", "a finished job can be deleted")
 check(WorkJobs.decode(Data(#"{"jobs": [{"id": "c1", "title": "x", "needs_you": true}]}"#.utf8))?.needsYou == 1,
       "no needs_you count: counted from the jobs")
 check(WorkJobs.decode(Data("[]".utf8)) == nil && WorkJobs.decode(Data("nope".utf8)) == nil, "a bad payload is nil")
@@ -469,8 +470,8 @@ for action in WorkAction.allCases {
           && r.value(forHTTPHeaderField: "Authorization") == "Bearer " + ep.token
           && !(r.url?.absoluteString.contains(ep.token) ?? true), "the \(action.rawValue) request")
 }
-check(WorkAction.allCases.map(\.rawValue) == ["go", "done", "drop", "raise", "happened", "didnt"],
-      "the six actions the daemon takes")
+check(WorkAction.allCases.map(\.rawValue) == ["go", "done", "drop", "raise", "happened", "didnt", "hide"],
+      "the seven actions the daemon takes")
 let goReq = WorkRequests.act(ep, job: "c12", .go, rev: 3)
 check(goReq.httpBody.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Int] } == ["rev": 3],
       "a Go carries the revision the sheet showed")

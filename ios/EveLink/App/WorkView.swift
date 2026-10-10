@@ -76,6 +76,19 @@ final class WorkModel: ObservableObject {
 
     struct StartProblem: Error { let message: String }
 
+    /// Clear finished: every finished job leaves the list (link_chat ``hide``; the chief keeps its record). The
+    /// count of the ones that would not go.
+    func hideFinished() async -> Int {
+        var refused = 0
+        for job in jobs?.finished ?? [] where job.actions.contains(.hide) {
+            if case .success(let r) = await client.act(.hide, job: job.id), r.ok { continue }
+            refused += 1
+        }
+        acted += 1
+        await refreshJobs()
+        return refused
+    }
+
     /// The owner's action on a job. nil when it went through, else the reason in words.
     func act(_ action: WorkAction, on job: WorkJob) async -> String? {
         let said: String?
@@ -102,6 +115,7 @@ struct WorkView: View {
     @State private var newJob = false
     /// The job a New job filed: its sheet opens once the New job sheet has gone.
     @State private var started: WorkJob?
+    @State private var confirmClear = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -142,6 +156,17 @@ struct WorkView: View {
         HStack {
             Text("Jobs").font(.headline)
             Spacer()
+            if work.jobs?.finished.contains(where: { $0.actions.contains(.hide) }) == true {
+                Button("Clear finished") { confirmClear = true }
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .padding(.trailing, 8)
+                    .accessibilityHint("Removes every finished job from this list")
+                    .confirmationDialog("Remove every finished job from Work?", isPresented: $confirmClear,
+                                        titleVisibility: .visible) {
+                        Button("Clear finished", role: .destructive) { Task { _ = await work.hideFinished() } }
+                    }
+            }
             Button { newJob = true } label: {
                 Image(systemName: "plus").font(.system(size: 16, weight: .semibold))
             }
@@ -164,6 +189,11 @@ struct WorkView: View {
             ForEach(jobs.open + jobs.finished) { j in
                 Button { job = j } label: { JobRow(job: j) }
                     .listRowBackground(Color.eveBackground)
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        if j.actions.contains(.hide) {     // a finished job: gone from Work for good
+                            Button("Delete", role: .destructive) { Task { _ = await work.act(.hide, on: j) } }
+                        }
+                    }
             }
         } else {
             quiet(work.jobsProblem ?? (work.jobs == nil ? "Loading…" : "No jobs."))
@@ -426,7 +456,7 @@ private struct JobSheet: View {
     }
 
     @ViewBuilder private var actions: some View {
-        ForEach(job.actions.filter { $0 != .drop }, id: \.self) { action in
+        ForEach(job.actions.filter { $0 != .drop && $0 != .hide }, id: \.self) { action in
             Button { Task { await run(action) } } label: {
                 HStack {
                     Text(action.title).fontWeight(action == .go ? .semibold : .regular)
@@ -442,6 +472,11 @@ private struct JobSheet: View {
                 .disabled(running != nil)
                 .accessibilityHint(hint(.drop))
         }
+        if job.actions.contains(.hide) {
+            Button("Delete", role: .destructive) { Task { await run(.hide) } }
+                .disabled(running != nil)
+                .accessibilityHint(hint(.hide))
+        }
     }
 
     private func hint(_ action: WorkAction) -> String {
@@ -452,6 +487,7 @@ private struct JobSheet: View {
         case .raise: "Doubles the job's budget"
         case .happened: "Tells eve the step it may have done did happen"
         case .didnt: "Tells eve the step did not happen; it will need your Go again"
+        case .hide: "Removes the finished job from this list"
         }
     }
 
@@ -461,7 +497,7 @@ private struct JobSheet: View {
         let said = await work.act(action, on: job)
         running = nil
         problem = said
-        if said == nil, action == .done || action == .drop { dismiss() }
+        if said == nil, action == .done || action == .drop || action == .hide { dismiss() }
     }
 }
 

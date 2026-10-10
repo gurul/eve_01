@@ -104,6 +104,7 @@ async def serve(tmp_path: Path, inlet: Any, **kw: Any) -> tuple[MiniAppServer, i
     server = MiniAppServer(cfg, SpendLedger(cfg.ledger_path), page=b"home", store=kw.pop("store", None))
     server.stick = stick_link.LinkToken(tmp_path / "stick-link.json")
     token = server.stick.ensure()
+    kw.setdefault("hidden", link_chat.HiddenJobs(tmp_path / "hidden-jobs.json"))
     server.link = LinkChat(lambda: inlet, **kw)
     port = await server.start()
     return server, port, token
@@ -1001,13 +1002,39 @@ def test_jobs_list_open_cards_first_needs_you_first_then_the_finished(tmp_path: 
         assert [j["id"] for j in got["jobs"]] == ["c1", "c3", "c2"] and got["needs_you"] == 1
         c3, c2 = got["jobs"][1], got["jobs"][2]
         assert (c3["needs_you"], c3["actions"]) == (False, ["drop"])
-        assert (c2["line"], c2["needs_you"], c2["actions"]) == ("Dropped", False, [])
+        assert (c2["line"], c2["needs_you"], c2["actions"]) == ("Dropped", False, ["hide"])
         inlet.chief = None
         status, _, body = await http(port, "GET", link_chat.JOBS_PATH, token=token)
         assert status == 503 and json.loads(body)["error"] == link_chat.NO_CHIEF
         await server.close()
 
     asyncio.run(go())
+
+
+def test_a_finished_job_can_be_removed_from_work_for_good(tmp_path: Path) -> None:
+    """Owner, 2026-10-10: "i should also have ability to delete completed jobs i dont want to be forced to see
+    them". A finished card leaves the list, stays gone after a restart, and stays in the chief's ledger."""
+    c, f, _ = chief_at(tmp_path)
+
+    async def go() -> None:
+        inlet = FakeInlet(store_at(tmp_path))
+        inlet.chief = c
+        server, port, token = await serve(tmp_path, inlet)
+        assert (await act(port, token, "c2", "hide"))[1] == {"ok": False, "reason": "c2 is still open; drop it first"}
+        await act(port, token, "c2", "drop")
+        assert "c2" in [j["id"] for j in (await jobs(port, token))["jobs"]]
+        assert (await act(port, token, "c2", "hide"))[1] == {"ok": True, "hidden": "c2"}
+        assert "c2" not in [j["id"] for j in (await jobs(port, token))["jobs"]]
+        assert c.ledger.get("c2").status == "dropped"                              # the chief's record is whole
+        assert (await act(port, token, "c99", "hide"))[0] == 404
+        await server.close()
+
+    asyncio.run(go())
+    again = link_chat.HiddenJobs(tmp_path / "hidden-jobs.json")                    # a restart reads it back
+    assert again.ids == {"c2"} and "c2" not in [j["id"] for j in link_chat.list_jobs(c, again.ids)["jobs"]]
+    assert (tmp_path / "hidden-jobs.json").stat().st_mode & 0o777 == 0o600
+    (tmp_path / "bad.json").write_text("{not json")
+    assert link_chat.HiddenJobs(tmp_path / "bad.json").ids == set()                # unreadable: all shown again
 
 
 def test_only_the_last_twenty_finished_cards_are_listed(tmp_path: Path) -> None:
