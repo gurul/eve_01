@@ -74,3 +74,10 @@ OpenRouter plus Jev.
   only. The test now prints case ids only. The same test found two tuning goals that matched holdout goals by
   chance; the tuning goals were reworded before any tuning run used them.
 * The holdout was scored exactly once (`--holdout` refuses a second run and any sha or screenshot mismatch).
+
+## Browser (phase 2): Gemma 4 26B as the browser planner
+
+`bridge/tools/browser_model_eval.py run --models google/gemma-4-26b-a4b-it --repeats 1` on 2026-10-10: 4 of 12
+tasks (33%), 47 s a task on average, 8 handoffs, one 180 s harness timeout, $0.0100 total (planner and Jev). The
+36-run table in docs/stackchan/routing.md has the current planners at 44-50% and about 7 s. One repeat is a look,
+not a verdict; nothing changes (`EVE_BROWSER_MODEL` keeps its default).

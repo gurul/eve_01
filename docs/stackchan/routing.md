@@ -834,6 +834,11 @@ behind the lane:
 | gpt-6-luna | 16/36 (44%) | 6.4 s | $0.0002 | 20 |
 | z-ai/glm-5.3-flash | 9/36 (25%) | 15.0 s | $0.0001 | 26 (does not hold the plan schema) |
 
+Added 2026-10-10, one run per task on the 12 tasks of that day (not the 36-run table above, so a look, not a
+verdict): `google/gemma-4-26b-a4b-it` as the planner finished 4 of 12 (33%) at 47 s a task on average, with 8
+handoffs and one 180 s timeout, for $0.0008 of planner spend a task. It held the plan schema, but it is slower and no
+better than the models above, so `EVE_BROWSER_MODEL` is unchanged.
+
 The differences among astra, sol, luna and gemini-flash are within noise. The
 bigger lesson was that six of the nine local tasks failed for every model, and
 the causes were in the lane, not the planner:
