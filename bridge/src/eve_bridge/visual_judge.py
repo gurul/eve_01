@@ -58,7 +58,7 @@ from .decision_lane import Gates
 
 log = logging.getLogger(__name__)
 
-SHIPPED = False          # unscored on a real-capture holdout (VERDICT.md); EVE_DECISIONS stays off by default
+SHIPPED = False          # synthetic-1 failed gates 3-6 (2026-10-10); real-1 never captured (VERDICT.md)
 CLEF_SHIPPED = False     # Clef has never been called: no Cloudflare key on this Mac (VERDICT.md)
 
 MODEL_ENV, PROVIDERS_ENV, TIMEOUT_ENV, CLEF_ENV = "EVE_GEMMA_MODEL", "EVE_GEMMA_PROVIDERS", "EVE_GEMMA_TIMEOUT", "EVE_CLEF"
