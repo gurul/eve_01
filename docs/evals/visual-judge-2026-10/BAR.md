@@ -77,6 +77,14 @@ three probabilities itself, under the same `Gates`) as a check on the division o
 Rows kept in the result file: case ids, kinds, fired ids, scores, milliseconds and errors. Never goals, labels
 or Gemma text.
 
+## Clarifications fixed before any holdout was scored (2026-10-10)
+
+* Each system is scored under its own gates fitted on the tuning set (`SYSTEM_GATES` in
+  `tools/visual_judge_eval.py`): gate 4 compares Gemma+Jev with Jev-only at Jev-only's best tuning setting.
+  Gemma-alone keeps the lane's default `Gates()`.
+* A verification pair whose clicked control the lane would never offer (or that is already selected) cannot reach
+  the verify call; it is reported as `verify_unreached` and counts in no gate.
+
 ## Clef
 
 Scored once on the same frozen set with `--clef-holdout` (a separate result file), only after the owner adds
