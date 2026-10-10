@@ -904,39 +904,5 @@ net.answers["old-name.trycloudflare.com"] = (200, Data("not json".utf8))
 check(await loadToday(paired).problem == .unreachable, "an answer that makes no sense is not shown")
 try? FileManager.default.removeItem(at: cacheURL)
 print("TODAY_OK")
-// The composer's / menu (Shared/SlashCommands.swift): when it shows, what it lists, the daemon's list and its request.
-let slashAll = SlashMenu.builtIn
-check(slashAll.count == 14 && slashAll.first?.command == "apps" && slashAll.last?.command == "stop"
-      && Set(slashAll.map(\.command)).count == 14 && slashAll.allSatisfy { SlashMenu.valid($0.command) && !$0.description.isEmpty },
-      "the built-in menu: the 14 base words, each a valid command with its line")
-check(SlashMenu.query("/") == "" && SlashMenu.query("/Cl") == "cl" && SlashMenu.query("") == nil
-      && SlashMenu.query("apps") == nil && SlashMenu.query("/watch AAPL") == nil && SlashMenu.query("/ap\n") == nil
-      && SlashMenu.query(" /apps") == nil, "the menu shows only for a leading / with no space yet")
-check(SlashMenu.matches(slashAll, draft: "/")?.count == 14
-      && SlashMenu.matches(slashAll, draft: "/c")?.map(\.command) == ["claude_on", "claude_off", "codex"]
-      && SlashMenu.matches(slashAll, draft: "/claude_o")?.map(\.command) == ["claude_on", "claude_off"]
-      && SlashMenu.matches(slashAll, draft: "/ST")?.map(\.command) == ["stick", "stealth", "stop"]
-      && SlashMenu.matches(slashAll, draft: "/zzz") == []
-      && SlashMenu.matches(slashAll, draft: "/apps now") == nil && SlashMenu.matches(slashAll, draft: "hi") == nil,
-      "rows filter by prefix, in the menu's order; a space or no / hides them")
-check(SlashCommand(command: "new_claude", description: "").text == "/new_claude", "a row sends /command")
-let slashJSON = """
-{"commands": [{"command": "apps", "description": "Your apps"}, {"command": "jobs", "description": "Your jobs"},
-              {"command": "Bad Word", "description": "x"}, {"command": "", "description": "x"}, {"description": "x"},
-              {"command": "apps", "description": "again"}, {"command": "stop"}]}
-"""
-check(SlashMenu.decode(Data(slashJSON.utf8)) == [SlashCommand(command: "apps", description: "Your apps"),
-                                                  SlashCommand(command: "jobs", description: "Your jobs"),
-                                                  SlashCommand(command: "stop", description: "")],
-      "the daemon's list: invalid and repeated words left out, a missing line is empty")
-check(SlashMenu.decode(Data("[]".utf8)) == nil && SlashMenu.decode(Data("nope".utf8)) == nil
-      && SlashMenu.decode(Data(#"{"ok": false}"#.utf8)) == nil, "a bad payload is nil")
-let slashReq = WorkRequests.commands(ep)
-check(slashReq.httpMethod == "GET" && slashReq.url?.absoluteString == "https://a-b.trycloudflare.com/api/link/commands"
-      && slashReq.value(forHTTPHeaderField: "Authorization") == "Bearer " + ep.token
-      && slashReq.value(forHTTPHeaderField: "Origin") == nil && slashReq.httpBody == nil, "the commands request")
-check(WorkFailure.from(status: 503, body: Data(), for: .commands).message == "eve's chat isn't running."
-      && !WorkFailure.from(status: 503, body: Data(), for: .commands).addressMayHaveMoved, "an off chat's menu")
-print("SLASH_OK")
 if failures > 0 { print("\(failures) check(s) failed"); exit(1) }
 print("eve link: all checks passed")

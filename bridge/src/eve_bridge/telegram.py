@@ -2644,8 +2644,7 @@ class TelegramInlet:
 
     def menu_commands(self) -> tuple[tuple[str, str], ...]:
         """The / menu as this inlet runs: BOT_COMMANDS, plus /jobs while the chief is on, /america and /opentable
-        while they are on, each before /stop. One list for Telegram's menu (_set_commands) and the Eve Link
-        app's (link_chat.py, ``GET /api/link/commands``), so the two never offer different words."""
+        while they are on, each before /stop. Telegram's menu is set from it (_set_commands)."""
         # /jobs only while the chief is on: the menu never offers a dead word
         commands = BOT_COMMANDS if self.chief is None else BOT_COMMANDS[:-1] + (JOBS_MENU, BOT_COMMANDS[-1])
         if self._america is not None:

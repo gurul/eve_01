@@ -91,11 +91,6 @@ view and does all its networking natively (ios/EveLink); this module is the daem
   and what is going (the chief's open cards and the watches), the calendar's events left today and what plays now
   (Spotify, the TV), each source within its own short limit; one that is off or fails is left out and named in
   ``sources``, never failing the answer.
-* ``GET /api/link/commands`` (owner, 2026-10-08: "have menu feature in chat"): the / menu the app's composer
-  offers, ``{"commands": [{"command", "description"}, ...]}``, exactly the list Telegram's menu gets
-  (``TelegramInlet.menu_commands``: /jobs only while the chief is on, /america and /opentable while they are on).
-  The app sends a tapped one as an ordinary turn, "/apps", which the inlet dispatches as it does typed. 503
-  ``NO_CHAT`` while the inlet is not running.
 
 **Who may call.** The link token (stick_link.LinkToken), as ``Authorization: Bearer``, checked in constant time.
 A browser sends an Origin on every cross-site fetch and the app's URLSession sends none, so any Origin is refused
@@ -152,10 +147,9 @@ CONTROLS_PATH = "/api/link/controls"
 CONTROL_RE = re.compile(r"^/api/link/controls/([a-z]{1,16})$")
 CONTROLS = ("lights", "spotify", "firetv", "memory", "notes")    # the Mini App server's attributes, each with ``panel(body)``
 TODAY_PATH = "/api/link/today"           # link_today.py: the home-screen widget's one read
-COMMANDS_PATH = "/api/link/commands"     # the composer's / menu: TelegramInlet.menu_commands
 # one kept upload's bytes, full size; anything after the prefix that is not 32 hex is a 404 (never a path)
 FILE_RE = re.compile(r"^/api/link/file/([^/]{0,64})$")
-PATHS = (TURN_PATH, MESSAGES_PATH, JOBS_PATH, APPS_PATH, UPLOAD_PATH, CONTROLS_PATH, TODAY_PATH, COMMANDS_PATH)
+PATHS = (TURN_PATH, MESSAGES_PATH, JOBS_PATH, APPS_PATH, UPLOAD_PATH, CONTROLS_PATH, TODAY_PATH)
 POST_PATHS = (TURN_PATH, UPLOAD_PATH)
 GRADES = ("auto", "instant", "think")    # telegram.GRADES: the speed dial
 JOB_ACTIONS = ("go", "done", "drop", "raise", "happened", "didnt")
@@ -729,9 +723,6 @@ class LinkChat:
         if path == TODAY_PATH:
             await self._json(writer, 200, await self.today.gather(self._inlet(), apps))
             return
-        if path == COMMANDS_PATH:
-            await self._commands(writer)
-            return
         inlet = self._inlet()
         if inlet is None or getattr(inlet, "_chat_id", None) is None:
             await self._json(writer, 503, {"ok": False, "error": NO_CHAT})
@@ -1143,16 +1134,6 @@ class LinkChat:
                 return card
             with contextlib.suppress(asyncio.TimeoutError):
                 await asyncio.wait_for(changed.wait(), self.settle_secs)
-
-    async def _commands(self, writer: asyncio.StreamWriter) -> None:
-        """``GET /api/link/commands``: the inlet's / menu, the same list Telegram's menu gets. The menu needs no
-        owner chat yet (it only names words), so only a missing inlet is refused."""
-        inlet = self._inlet()
-        menu = getattr(inlet, "menu_commands", None) if inlet is not None else None
-        if menu is None:
-            await self._json(writer, 503, {"ok": False, "error": NO_CHAT})
-            return
-        await self._json(writer, 200, {"commands": [{"command": c, "description": d} for c, d in menu()]})
 
     async def _optional_body(self, headers: dict[str, str], reader: asyncio.StreamReader,
                              writer: asyncio.StreamWriter) -> Optional[dict[str, Any]]:

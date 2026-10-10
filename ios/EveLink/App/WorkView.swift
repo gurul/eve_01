@@ -16,9 +16,6 @@ final class WorkModel: ObservableObject {
     @Published private(set) var needsYou = 0
     /// An action the owner took landed: the Go haptic (and a light one for the others).
     @Published private(set) var acted = 0
-    /// The chat composer's / menu (Shared/SlashCommands.swift): the daemon's list once read, the built-in one until
-    /// then and whenever it cannot be read, so the menu never shows empty.
-    @Published private(set) var commands = SlashMenu.builtIn
 
     /// The sheets' calls go through the same client (ControlsClient.swift).
     let client: WorkClient
@@ -56,12 +53,6 @@ final class WorkModel: ObservableObject {
         case .failure(let f):
             controlsProblem = f.message
         }
-    }
-
-    /// The / menu, read when the chat appears and when the pairing changes; kept in memory only. A failure (an older
-    /// eve without the list, no network) keeps what is shown: the last list read, or the built-in one.
-    func refreshCommands() async {
-        if case .success(let got) = await client.commands(), got != commands { commands = got }
     }
 
     /// A New job: eve hears the goal as a chat turn and files the card itself (link_chat ``POST /api/link/jobs``).

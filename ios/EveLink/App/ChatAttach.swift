@@ -83,20 +83,17 @@ struct AttachError: Error, Sendable {
     init(_ message: String) { self.message = message }
 }
 
-/// The "+" at the composer's left: Photos and Files (off when four are attached), and Commands, which types "/" and
-/// opens the / menu (ChatSlash.swift).
+/// The "+" at the composer's left: Photos and Files (off when four are attached).
 struct AttachButton: View {
     var full: Bool
     var ready = true
     var photos: () -> Void
     var files: () -> Void
-    var commands: () -> Void = {}
 
     var body: some View {
         Menu {
             Button(action: photos) { Label("Photos", systemImage: "photo.on.rectangle") }.disabled(full)
             Button(action: files) { Label("Files", systemImage: "folder") }.disabled(full)
-            Button(action: commands) { Label("Commands", systemImage: "slash.circle") }
         } label: {
             Image(systemName: "plus")
                 .font(.system(size: 20, weight: .regular))
@@ -107,7 +104,7 @@ struct AttachButton: View {
         .menuOrder(.fixed)
         .disabled(!ready)
         .accessibilityLabel("Add")
-        .accessibilityHint(full ? "One of eve's commands. Four attachments at most" : "A photo, a file, or one of eve's commands")
+        .accessibilityHint(full ? "Four attachments at most" : "A photo or a file")
     }
 }
 

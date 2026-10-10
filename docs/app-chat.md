@@ -29,31 +29,18 @@ screen but the controls below until there are messages.
   white circle with a black up arrow; it turns into a stop square while eve
   answers, and into a small spinner while attachments upload.
   - **+** (`App/ChatAttach.swift`) is a menu with **Photos** (the system photo
-    picker), **Files** (the Files app) and **Commands** (the / menu, below).
+    picker) and **Files** (the Files app).
     What you pick shows above the field in the card: a photo as a 56 pt rounded
     thumbnail, a file as a small card with its name, each with an x to take it
     off. Four at most; then Photos and Files are dimmed. Send works with only
     attachments and no words. See "Attachments".
-  - **The / menu** (`App/ChatSlash.swift`, `Shared/SlashCommands.swift`; owner,
-    2026-10-08: "have menu feature in chat"): Telegram's command menu, in the
-    app. While the field starts with "/" and has no space yet, a small card in
-    the composer's style (20 pt corners, the same fill and edge) sits just above
-    the composer card. Each row is "/command" and its one-line description,
-    truncated. The rows filter by prefix as you type ("/c" shows /claude_on,
-    /claude_off and /codex), at most six show and the rest scroll. A tap sends
-    "/command" at once, the way the send button sends (Telegram's menu sends on
-    tap too), clears the field, and gives a selection haptic. A space, a line
-    break, deleting the "/", or no match hides it. **Commands** in the + menu
-    types "/" and opens it. It does not show while attachments wait: a code word
-    goes alone. VoiceOver reads each row as "claude on command", its
-    description, and "Sends /claude_on to eve".
-    The words are the daemon's (`GET /api/link/commands`, the same list
-    Telegram's menu gets, so /jobs is there only while the chief is on), read
-    when the chat first shows and again for a new pairing, and kept in memory.
-    Until that read lands, or when it fails (an older eve without the list),
-    the menu shows a built-in copy of the 14 base words, so it is never empty;
-    `tests/test_link_commands.py` holds that copy to `telegram.BOT_COMMANDS`.
-    The daemon handles a sent word exactly as one typed.
+  - **No / menu** (owner, 2026-10-10: "i dont think we need / commands
+    anymore since it can parse my natural language commands pretty easily").
+    The app has no command menu and no Commands button: the owner types plain
+    language and eve works out what is meant. A "/" in the field is just text.
+    A turn that starts with one of eve's code words ("/apps", "/watch AAPL")
+    is still handled by the daemon as Telegram's typed words are
+    (`tests/test_link_code_words.py`).
   - **Speed dial** (`gauge.with.dots.needle.33percent`): a menu with **Auto**
     (the default), **Instant** and **Think**. The choice is remembered
     (`UserDefaults` `chat.grade`) and goes with every turn as `"grade"`. When it
@@ -574,16 +561,13 @@ nothing behind them. Now:
 
 Compiled only under `#if DEBUG && targetEnvironment(simulator)`; a device build
 has none of it (checked: the strings `EVE_PAIR_URL`, `eveScreen` and
-`eveKeyboard` are not in the device binary or its debug dylib; `eveSlash` sits beside them under the same
-guard).
+`eveKeyboard` are not in the device binary or its debug dylib).
 
 - Environment `EVE_PAIR_URL=evelink://pair?u=…&t=…`: pairs at launch, as
   that link would, with no dialog.
 - `-eveScreen chat | apps | work | voice | settings`: opens that screen.
 - `-eveGrade auto | instant | think`: preselects the speed dial.
 - `-eveKeyboard YES` (with `chat`): puts the cursor in the composer.
-- `-eveSlash YES`: opens the chat with "/" typed in the composer, so the / menu shows (against a daemon
-  without `/api/link/commands`, the built-in list).
 - `-eveControl notes|spotify|lights|firetv|memory` (with `apps`): opens that control's sheet.
 - `-eveNote <vault path>` (with `-eveControl notes`): opens that note's page.
 - `-eveActivity listening|thinking|speaking|waiting|notes`: puts up the call's Live Activity in that phase
@@ -609,7 +593,6 @@ same one retry at a new address as the chat:
 | `POST /api/link/controls/notes` | Notes (`link_notes.NotesPanel` over `second_brain`): `{"action": "list"}` (`notes: [{path, folder, title, preview, modified}]`, newest first, and `folders`), `{"action": "read", "path"}` (`body` under the frontmatter, `front`, `revision`, `editable`, `undo_id`), `{"action": "save", "path", "revision", "body"}` (the frontmatter kept; a stale revision is refused), `{"action": "undo", "path", "revision", "undo_id"}`, `{"action": "create", "folder", "title", "body"?}`, `{"action": "delete", "path", "revision"}` (into `.eve-trash/`, `trash_id` back), `{"action": "restore", "trash_id"}`, `{"action": "move", "path", "into"}` and `{"action": "search", "query"}`. Paths that leave the vault or enter a hidden folder are refused. 404 while the second brain is off. |
 | `POST /api/link/controls/memory` | The Memory card (`link_memory.MemoryPanel`, over the chat's own `memory.Memory`): `{"action": "profile"}` (what eve knows about you), `{"action": "search", "query"}` (record facts, recalled meanings and the words said, as `memory_search` returns them, without the lines around a hit), `{"action": "forget", "query"}` (a preview: counts per store and a one-use token, never the words), `{"action": "apply", "token"}` (forgets what the preview counted), `{"action": "remember", "text"}` (the chat's "remember that": one claim starred for good), `{"action": "hide", "text"}` / `{"action": "unhide", "text"}` (*Don't mention this again*: the words are left out of the profile and every search, nothing deleted) and `{"action": "hidden"}` (`{"ok", "hidden": [...]}`). Listed as `"memory": true` only while the Mac's memory is on and built; 404 otherwise. |
 | `POST /api/link/controls/<lights\|spotify\|firetv>` | That card's own `panel(body)` (`lights.Lights`, `spotify.Spotify`, `firetv.FireTV`, the same objects the Mini App's `/api/lights`, `/api/spotify` and `/api/firetv` use), and its JSON as it is. The body is the Mini App's: `{"action": "status"}` reads; `{"action": "set", "target", "power"\|"color"\|"brightness"}` for lights; `play`, `pause`, `next`, `previous`, `volume`, `transfer`, `mode` for music; the d-pad keys (with `repeat`), `power_on`/`power_off`, media keys, `volume`, `volume_change`, `mute`/`unmute`, `open_app` for the TV. 404 with `{"ok": false, "line"}` for one this Mac does not have. JSON object bodies only, 64 kB at most. |
-| `GET /api/link/commands` | `{"commands": [{"command": "apps", "description": "..."}, ...]}`: the composer's / menu, the same list Telegram's menu gets (`TelegramInlet.menu_commands`: `BOT_COMMANDS`, plus /jobs while the chief is on and /america and /opentable while they are on, each before /stop). 503 when the chat inlet is not running; it does not wait for an owner to have texted. |
 | `GET /api/link/today` | The home-screen widget's one read: what needs the owner, what is going, the events left today and what plays now, each source within its own limit and left out when it fails. See [the widget](widget.md). |
 | `GET /api/link/apps` | `{"apps": [{"slug", "name", "updated"}]}`. Not used by Work now (the built apps are not listed there); kept for later. |
 | `POST /api/link/apps/<slug>/open` | `{"url": "<tunnel origin>/apps/<slug>/?t=<app token>"}`; 404 for an app that is gone. Not used by Work now. |
@@ -895,7 +878,8 @@ low effort, 2026-10-08:
 
 ## Menu commands in plain words
 
-The `/` menu's commands work in the app's chat in plain words too (2026-10-08). The brain has one tool for
+eve's code words (Telegram's `/` menu) work in the app's chat in plain words (2026-10-08), which is why the app
+has no `/` menu of its own (2026-10-10). The brain has one tool for
 each command that did not have one: `spend_report`, `daily_rundown`, `claude_relay`, `codex_relay`,
 `set_stealth`, `open_apps` and `pair_eve_link` (`menu_tools.py`). Each tool runs the same handler as the typed
 command. So "what did you spend today", "hook me into claude" or "go quiet for a while" does what `/spend`,
@@ -941,12 +925,9 @@ failure words. `CONTROLS_OK` checks the controls listing (only what the Mac
 has, Music first), the two requests, the lights choices, the colour hex both
 ways, each card's answer (artwork only from Spotify's image host), the remote's
 press queue (in order, d-pad taps coalesced, the newest volume wins), and a
-missing device's words. `SLASH_OK` checks when the / menu shows (a leading "/", no space), the prefix filter
-and its order, the built-in 14 words, the daemon's list (bad and repeated words left out), the request and an
-off chat's words. In `bridge/`, `tests/test_link_commands.py` checks the commands door (the link token, any
-Origin refused, GET only, the 503 without an inlet), that its list is the inlet's (and Telegram's) with /jobs only
-while the chief is on, that every base word is accepted when sent from the app (`hear(app=...)`, with
-`test_telegram.py`'s menu checks), and that the app's built-in copy is `BOT_COMMANDS`. `tests/test_link_chat.py` checks the
+missing device's words. In `bridge/`, `tests/test_link_code_words.py` checks that every base word is accepted
+when typed in the app (`hear(app=...)`, with `test_telegram.py`'s menu checks) and that Telegram's menu is set
+from `TelegramInlet.menu_commands`. `tests/test_link_chat.py` checks the
 controls door: the link token, any Origin refused, an unknown control and a
 missing device as 404, the body passed to the card's panel and its answer
 passed back as it is, a refused body never reaching the panel, and a panel that

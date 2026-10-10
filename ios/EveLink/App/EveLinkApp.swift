@@ -71,14 +71,12 @@ enum HomeWidget {
 /// arguments, read through UserDefaults). -eveControl notes | spotify | lights | firetv | memory opens that control's sheet over
 /// Work; -eveMemoryQuery <words> runs that search in the Memory card; -eveNote <path> (with -eveControl notes)
 /// opens that note's page.
-/// -eveActivity <phase> puts up the call's Live Activity in that phase. -eveSlash YES opens the chat with "/" typed
-/// in the composer, so its / menu shows.
+/// -eveActivity <phase> puts up the call's Live Activity in that phase.
 enum DesignHook {
     static var pairURL: URL? { ProcessInfo.processInfo.environment["EVE_PAIR_URL"].flatMap(URL.init(string:)) }
     static var screen: String? { UserDefaults.standard.string(forKey: "eveScreen") }
     static var grade: String? { UserDefaults.standard.string(forKey: "eveGrade") }
     static var keyboard: Bool { UserDefaults.standard.bool(forKey: "eveKeyboard") }
-    static var slash: Bool { UserDefaults.standard.bool(forKey: "eveSlash") }
     static var control: String? { UserDefaults.standard.string(forKey: "eveControl") }
     /// -eveMemoryQuery <words> (with -eveControl memory): runs that search in the Memory card, for screenshots.
     static var memoryQuery: String? { UserDefaults.standard.string(forKey: "eveMemoryQuery") }

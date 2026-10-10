@@ -21,10 +21,6 @@ struct HomeScreen: View {
     @State private var showVoice = false
     /// Bumped to put the cursor in the composer (voice mode's "Ask eve").
     @State private var composerFocus = 0
-    #if DEBUG && targetEnvironment(simulator)
-    /// Bumped to type "/" in the composer (the design hook's -eveSlash).
-    @State private var composerSlash = 0
-    #endif
     /// Where the native chrome covers the web view, in global points: the page pads its list by them (setInsets).
     @State private var webFrame = CGRect.zero
     @State private var barBottom: CGFloat = 0
@@ -70,8 +66,7 @@ struct HomeScreen: View {
                     PairPrompt(relay: relay)
                 } else if mode == .chat {
                     Spacer(minLength: 0)
-                    ChatComposer(chat: chat, relay: relay, dictation: dictation, commands: work.commands,
-                                 focusRequest: composerFocus, slashRequest: slashRequest)
+                    ChatComposer(chat: chat, relay: relay, dictation: dictation, focusRequest: composerFocus)
                         .background(alignment: .top) { ComposerFloor() }
                         .onGeometryChange(for: CGFloat.self) { $0.frame(in: .global).minY } action: {
                             composerTop = $0
@@ -113,21 +108,8 @@ struct HomeScreen: View {
                 try? await Task.sleep(for: .seconds(60))
             }
         }
-        // The composer's / menu: read when the chat first shows and again for a new pairing (another Mac's eve).
-        .task(id: relay.pairing) {
-            guard relay.pairing != nil else { return }
-            await work.refreshCommands()
-        }
         #if DEBUG && targetEnvironment(simulator)
         .task { openDesignScreen() }
-        #endif
-    }
-
-    private var slashRequest: Int {
-        #if DEBUG && targetEnvironment(simulator)
-        composerSlash
-        #else
-        0
         #endif
     }
 
@@ -145,19 +127,19 @@ struct HomeScreen: View {
 
     #if DEBUG && targetEnvironment(simulator)
     /// The simulator's design hook (docs/app-chat.md): -eveScreen chat | work | voice | settings, -eveGrade,
-    /// -eveKeyboard YES (chat with the keyboard up), -eveSlash YES (chat with "/" typed: the / menu).
+    /// -eveKeyboard YES (chat with the keyboard up).
     private func openDesignScreen() {
         if let grade = DesignHook.grade.flatMap(ChatGrade.init(rawValue:)) { chat.grade = grade }
         if let phase = DesignHook.activity.flatMap(CallPhase.init(rawValue:)) {
             TalkActivity.shared.show(phase, since: .now.addingTimeInterval(-7))
         }
-        switch DesignHook.screen ?? (DesignHook.slash ? "chat" : nil) {
+        switch DesignHook.screen {
         case "chat":
             mode = .chat
-            if DesignHook.keyboard || DesignHook.slash {
+            if DesignHook.keyboard {
                 Task {
                     try? await Task.sleep(for: .seconds(2))     // the page says ready first
-                    if DesignHook.slash { composerSlash += 1 } else { composerFocus += 1 }
+                    composerFocus += 1
                 }
             }
         case "work": mode = .work
@@ -304,12 +286,8 @@ struct ChatComposer: View {
     @ObservedObject var chat: ChatModel
     @ObservedObject var relay: Relay
     @ObservedObject var dictation: Dictation
-    /// The / menu's words (WorkModel.commands): the daemon's list, or the built-in one.
-    var commands: [SlashCommand] = SlashMenu.builtIn
     /// Bumped by the screen to put the cursor here (voice mode's "Ask eve").
     var focusRequest = 0
-    /// Bumped by the screen to type "/" here and open the / menu (the simulator's design hook).
-    var slashRequest = 0
     @State private var draft = ""
     @State private var beforeDictation = ""
     @State private var sent = 0
@@ -319,19 +297,12 @@ struct ChatComposer: View {
     @State private var picked: [PhotosPickerItem] = []
     @State private var uploading = false
     @State private var attachProblem: String?
-    /// A row of the / menu was tapped: the selection haptic.
-    @State private var picks = 0
     @FocusState private var focused: Bool
 
     private var trimmed: String { draft.trimmingCharacters(in: .whitespacesAndNewlines) }
     private var tooLong: Bool { ChatBridgeMessage.tooLong(trimmed) }
     private var canSend: Bool { chat.ready && !uploading && (!trimmed.isEmpty || !attachments.isEmpty) && !tooLong }
     private var roomLeft: Int { ChatAttachments.maxCount - attachments.count }
-    /// The / menu's rows for what is typed; nil or empty hides it. Not while attachments wait: a code word goes alone.
-    private var slashRows: [SlashCommand]? {
-        guard chat.ready, attachments.isEmpty, !uploading else { return nil }
-        return SlashMenu.matches(commands, draft: draft).flatMap { $0.isEmpty ? nil : $0 }
-    }
 
     var body: some View {
         VStack(spacing: 6) {
@@ -358,7 +329,7 @@ struct ChatComposer: View {
                     .accessibilityLabel("Message eve")
                 HStack(spacing: 18) {
                     AttachButton(full: roomLeft <= 0 || uploading, ready: chat.ready,
-                                 photos: { showPhotos = true }, files: { showFiles = true }, commands: openCommands)
+                                 photos: { showPhotos = true }, files: { showFiles = true })
                     Spacer()
                     SpeedDial(grade: $chat.grade)
                     micButton
@@ -372,28 +343,15 @@ struct ChatComposer: View {
             .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(Color.eveEdge, lineWidth: 1))
             .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
             .onTapGesture { if chat.ready { focused = true } }
-            // Above the card, over the chat: an overlay, so the composer's height (and the page's bottom inset) does
-            // not jump while the owner types a command.
-            .overlay(alignment: .top) {
-                if let rows = slashRows {
-                    // its own height up from the card's top edge, 8 pt clear of it
-                    SlashMenuList(rows: rows, pick: pickCommand)
-                        .offset(y: -SlashMenuList.height(rows.count) - 8)
-                        .transition(.opacity.combined(with: .offset(y: 6)))
-                }
-            }
-            .animation(.snappy(duration: 0.18), value: slashRows == nil)
         }
         .padding(.horizontal, 12)
         .padding(.top, 4)
         .padding(.bottom, 8)
         .sensoryFeedback(.impact(weight: .light), trigger: sent)
-        .sensoryFeedback(.selection, trigger: picks)
         // a call takes the mic: Relay.beforeMic stopped dictation already; never release the call's session here
         .onChange(of: relay.phase) { _, now in if now != .ended { dictation.stop(releaseSession: false) } }
         .onDisappear { dictation.stop() }
         .onChange(of: focusRequest) { if chat.ready { focused = true } }
-        .onChange(of: slashRequest) { openCommands() }
         .photosPicker(isPresented: $showPhotos, selection: $picked, maxSelectionCount: max(roomLeft, 1),
                       selectionBehavior: .ordered, matching: .images, preferredItemEncoding: .compatible)
         .onChange(of: picked) { _, items in
@@ -492,23 +450,6 @@ struct ChatComposer: View {
             .disabled(!canSend)
             .accessibilityLabel("Send")
         }
-    }
-
-    /// "Commands" in the "+" menu: "/" in the field, which opens the / menu, and the cursor after it.
-    private func openCommands() {
-        guard chat.ready else { return }
-        attachProblem = nil
-        if SlashMenu.query(draft) == nil { draft = "/" }
-        focused = true
-    }
-
-    /// A tapped row: sent at once, the way the send button sends, and the field cleared.
-    private func pickCommand(_ command: SlashCommand) {
-        guard chat.ready else { return }
-        dictation.stop()
-        picks += 1
-        chat.send(command.text)
-        draft = ""
     }
 
     private func toggleDictation() {
