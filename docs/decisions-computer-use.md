@@ -1,36 +1,76 @@
-# Image-aware Decisions before Codex
+# Image-aware decisions before Codex: the desk lane's visual judge
 
-`EVE_DECISIONS=1` adds a bounded visual click loop after the desk lane's
-keyword router declines a request with zero input. It uses OpenAI's beta
-`POST /v1/decisions`, with `gpt-6-luna` by default. The ordinary keyword path
-still finishes its measured simple requests without a model call.
+`EVE_DECISIONS` adds a bounded visual click loop (`decision_lane.py`) after the desk lane's keyword router
+declines a request with zero input. The keyword path still finishes its measured simple requests without a model
+call. **It is off by default**: the judge failed its blind eval on 2026-10-10
+([verdict](evals/visual-judge-2026-10/VERDICT.md)).
 
-## Off in the daemon since 2026-10-08
+## The judge: Gemma 4 26B looks, Jev decides, Clef only when transport fails
 
-Eve now calls every model through `OPENROUTER_API_KEY`
-([one key: OpenRouter](openrouter.md)). OpenRouter has no Decisions API, so the
-daemon no longer builds this client. `EVE_DECISIONS=1` logs one line saying
-the judge is off, and the desk lane sends what its keyword clicks miss to Codex.
-Jev, on OpenRouter, takes a text state and choice questions, not screenshots
-with predicate questions, so moving the judge to Jev would mean writing a new
-safety judgement. The development tools below (`tools/decisions_eval.py`,
-`tools/decisions_live_demo.py`) still call OpenAI's Decisions beta with an
-`OPENAI_API_KEY` of their own.
+Since 2026-10-10 the judge is `visual_judge.GemmaJevJudge`, on the owner's OpenRouter key
+([one key: OpenRouter](openrouter.md)):
 
-## Enable it (before 2026-10-08)
+1. **Gemma 4 26B looks** (`google/gemma-4-26b-a4b-it`). Code crops each offered control's own rectangle (plus
+   12 pt), upscales it 2x, writes the control's id beside it, and packs the tiles on at most two contact sheets.
+   Gemma says in four words per id what the control shows and does. It never gives coordinates: in the probe it
+   hit 1 to 3 of 8 targets pointing on a full screen and 7 of 8 on a 2x crop.
+2. **Jev decides** (`typesafe/jev-1.13`). It answers the lane's own questions (`target`, `present`, `covered`,
+   `risky`, and `verified` after a click) over the Accessibility text, where each control gains `looks_like`
+   (Gemma's words, marked as an untrusted visual description).
+3. **The lane's gates decide** (`visual_judge.GATES`, fitted on the tuning set), and `decision_lane.route` keeps
+   every rule it had: consequential, typing and question requests are refused before any model call; the pick
+   is one offered id; the screen and Accessibility tree are observed again before the click; the click goes
+   through the hit-test or AXPress; a separate call verifies it; anything unverified goes to Codex.
+4. **Clef** (`clef.py`) is Cloudflare's Jev-compatible decision model, which can also read images. It is a
+   fallback for **transport failures only**: Gemma or Jev erroring, timing out, or answering in a shape that does
+   not translate. It is never asked after an abstain, a `none`, a low probability or a risky answer (asking a
+   second model after a no is shopping for a yes), and there is never a third model. It acts only with
+   `EVE_CLEF=1` and once it has passed its own holdout (`CLEF_SHIPPED`); until then `EVE_CLEF=1` runs as `shadow`
+   (asked in the background, numbers logged, never acting). The slot is empty without both Cloudflare keys.
 
-These settings in `~/.config/eve-bridge/env` turned it on before the change:
+One selection call is one Gemma call (about $0.0001) and one Jev call (about $0.00002), with a hard budget of 5 s;
+past it the answer is an error and Codex takes the task.
 
-```text
-EVE_DESK_LANE=1
-EVE_DECISIONS=1
-OPENAI_API_KEY=<your existing OpenAI API key>
-```
+## Switches
 
-`EVE_DECISIONS_MODEL` overrides the default model. The endpoint must support
-that model. Missing credentials, endpoint errors, refusals and malformed answers
-leave the request to Codex. Set `EVE_DECISIONS=0` to disable it. It ships off:
-the live checks below are synthetic diagnostics, not a deployment holdout.
+| Variable | Default | What it does |
+|---|---|---|
+| `EVE_DECISIONS` | off (follows `visual_judge.SHIPPED`, False) | `1`: the judge's pick clicks. `shadow`: the judge decides as a dry run and logs scores only; Codex still takes the task. `0`: off |
+| `EVE_GEMMA_MODEL` | `google/gemma-4-26b-a4b-it` | the looking model. The `:free` id is refused (it answered HTTP 429 five times in five) |
+| `EVE_GEMMA_PROVIDERS` | `nextbit` | the OpenRouter host(s), sent as `provider.order` with fallbacks off |
+| `EVE_GEMMA_TIMEOUT` | `4.0` | seconds per Gemma call (at most the 5 s budget) |
+| `EVE_JEV_ROUTE`, `EVE_JEV_MODEL`, `EVE_JEV_TIMEOUT` | unchanged | Jev, as for the other Jev features |
+| `EVE_CLEF` | `0` | `0`, `shadow` or `1` (treated as `shadow` until `CLEF_SHIPPED`) |
+| `EVE_CLEF_MODEL` / `EVE_CLEF_TIMEOUT` / `EVE_CLEF_PATH` | `clef` / `2.0` / `@cf/cloudflare/clef` | Clef's body model (`clef` or `clef-flash`), time limit and Workers AI path |
+| `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_AUTH_TOKEN` | absent | Clef's keys. Add them yourself (a Cloudflare API token with the Workers AI permission); they are never logged |
+
+`EVE_COMPUTER_CONTROL=0` or `EVE_DESK_LANE=0` turns all of this off, because the desk lane never runs.
+
+## The blind eval (2026-10-10)
+
+[BAR.md](evals/visual-judge-2026-10/BAR.md) states six gates, written before the judge existed. A separate agent
+session wrote the holdout (72 selection cases on synthetic app states, 20 verification pairs), frozen with its
+sha256 before the judge's first commit, and scored once with `bridge/tools/visual_judge_eval.py --holdout`.
+
+| | Gemma+Jev | Jev-only | Gemma-alone |
+|---|---|---|---|
+| Unsafe clicks | 0 | 0 | 7 |
+| Fired clicks right | 18 of 18 | 29 of 29 | 42 of 42 |
+| Coverage of 40 click cases (bar 0.40) | 0.375 | 0.575 | 0.875 |
+| p95 per selection (bar 4.5 s) | 5.8 s | 0.46 s | 3.4 s |
+| Errors (bar 2%) | 7.6% | 0% | 3.3% |
+
+Gemma+Jev failed gates 3 to 6, and Gemma's descriptions lowered Jev's coverage instead of raising it, so Gemma does
+not ship. A synthetic set could not ship the lane in any case; the real-capture holdout (`real-1`, captured with
+`bridge/tools/visual_judge_capture.py` while the owner drives his apps) has not been run.
+[VERDICT.md](evals/visual-judge-2026-10/VERDICT.md) has the details.
+
+## Before 2026-10-10: OpenAI's Decisions beta
+
+The first judge called OpenAI's beta `POST /v1/decisions` (`gpt-6-luna`) with screenshots and predicate questions.
+It went off on 2026-10-08 when every model call moved to OpenRouter, which has no Decisions API.
+`decisions.Client` and the development tools (`tools/decisions_eval.py`, `tools/decisions_live_demo.py`) still
+call it with an `OPENAI_API_KEY` of their own. The sections below describe that judge and its measurements.
 
 ## The loop
 

@@ -19,6 +19,11 @@ and was right on all 23, with no sensitive click. It never types and never press
 The lane runs in the daemon (no worker process to start), on a thread, one task at a time. It needs the
 daemon's Accessibility access; without it the snapshot is empty and every request goes to Codex, said once
 in the log. ``EVE_DESK_LANE=0`` turns it off.
+
+After a zero-input keyword miss, ``EVE_DECISIONS`` (``decisions.mode``) can hand the request to the visual judge
+(``visual_judge.py``: Gemma 4 26B looks, Jev decides) through ``decision_lane.route``: ``on`` clicks its pick,
+``shadow`` runs it as a dry run that only logs scores and keeps the keyword lane's miss, so Codex still takes it.
+Off by default: the judge failed its blind eval (docs/evals/visual-judge-2026-10/VERDICT.md).
 """
 
 from __future__ import annotations

@@ -2,6 +2,10 @@
 
 Decisions is strong when the answer requires the screenshot. Jev covers more labelled AX targets. The guarded keyword router remains the cheap first step. None of these stage results establishes a reliable autonomous Decisions desktop loop: the live Calculator trial did not verify a completion.
 
+> **Later (2026-10-10):** the desk lane's judge moved to Gemma 4 26B + Jev on OpenRouter and was scored on a blind
+> synthetic holdout: [visual judge verdict](evals/visual-judge-2026-10/VERDICT.md). It failed (Gemma's descriptions
+> lowered Jev's coverage, and the latency and error gates failed), so it stays off.
+
 ![Measured comparison](computer-protocol-eval/comparison.png)
 
 ## Scope and grading

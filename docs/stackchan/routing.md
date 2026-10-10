@@ -246,6 +246,14 @@ It needs Accessibility access for the daemon's Python; without it the lane logs 
 task goes to Codex. `EVE_DESK_LANE=0` turns it off. The chief's approved one-way acts skip it and go to
 Codex alone.
 
+**The visual judge behind it (off by default).** When the keyword gate misses (`no_match`, `ambiguous_target`,
+`uncovered`) and `EVE_DECISIONS` is `1` or `shadow`, the lane asks `decision_lane.route` with the visual judge
+(`visual_judge.py`): Gemma 4 26B describes zoomed crops of the offered controls, Jev picks one under the lane's
+gates, and Clef (Cloudflare) is asked only if Gemma or Jev fail in transport. `shadow` decides as a dry run and only
+logs scores; Codex still takes the task. It failed its blind eval on 2026-10-10 (Gemma+Jev covered 0.375 of the
+click cases against a 0.40 bar, 20 points below Jev alone, with p95 5.8 s), so `EVE_DECISIONS` stays off:
+[decisions-computer-use.md](../decisions-computer-use.md).
+
 ## Controlling your logged-in Chrome (attach mode)
 
 The owner's priority (2026-09-23): eve should drive the **real, signed-in
@@ -889,6 +897,9 @@ then `report --out-dir DIR`.
 | `EVE_HEAD_MODEL` | `off` | `jev`: a spoken head pose ("look left", "a bit lower") is chosen by Jev in about a quarter of a second instead of ~3.2 s through the backend, which remains the fallback. The words of a turn that mentions a direction go to TypeSafe / OpenRouter |
 | `EVE_ROUTER_MODEL` | `off` | `jev`: ask Jev, natively, about a request the rules did not recognise; it may only add a bare launch. The request's words go to TypeSafe / OpenRouter, so it is your switch |
 | `EVE_DESK_LANE` | `1` | the desk lane: keyword-decided clicks on the front window before Codex ([above](#clicking-the-front-window-before-codex-the-desk-lane)); `0` sends every desktop task to Codex |
+| `EVE_DECISIONS` | off (`visual_judge.SHIPPED`) | the desk lane's visual judge after a keyword miss ([above](#clicking-the-front-window-before-codex-the-desk-lane)): `1` clicks its pick, `shadow` only logs scores. Crops of the window go to one pinned OpenRouter host ([openrouter.md](../openrouter.md)) |
+| `EVE_GEMMA_MODEL` / `EVE_GEMMA_PROVIDERS` / `EVE_GEMMA_TIMEOUT` | `google/gemma-4-26b-a4b-it` / `nextbit` / `4.0` | the judge's looking model, its pinned host (no fallbacks, data collection denied) and its time limit |
+| `EVE_CLEF` (+ `EVE_CLEF_MODEL`, `EVE_CLEF_TIMEOUT`, `EVE_CLEF_PATH`) | `0` | Clef as the judge's transport fallback: `shadow` logs only; `1` acts once `CLEF_SHIPPED`, else runs as `shadow`. Needs `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_AUTH_TOKEN` |
 | `EVE_LANE_FIRST` | `1` | the lane's router ([voice.md](voice.md#lane-first-the-router-before-the-planner)) |
 | `EVE_FAST_LANE_DECIDE` | `keyword` | who picks a lane step under the planner: `keyword`, `model`, or `jev` (the gate proposes, Jev can refuse; the step's words and the window's control labels go to `EVE_JEV_ROUTE`, never the title) |
 | `EVE_JEV_GROUPS` | `0` | `1`: a Jev step asker reads up to 100 controls instead of 25, asked as groups of 25 in one request and then a final question over each group's top three (`typed_ask.ask_jev_step_grouped`). A menu of 25 or fewer is asked exactly as before. Off by measurement: see [Borrowed](#borrowed-and-from-where) |
