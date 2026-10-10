@@ -132,6 +132,31 @@ def estimate_jev_cost(input_tokens: int) -> float:
     return max(0, int(input_tokens or 0)) * JEV_INPUT_PER_M / 1_000_000.0
 
 
+# Chat models on OpenRouter that are not OpenAI's, USD per million tokens. Gemma 4 26B: openrouter.ai/api/v1/models
+# and the model's endpoints list, fetched 2026-10-10: $0.0675 input / $0.225 output, which is also NextBit's rate (the
+# host visual_judge.py pins). OpenRouter's own usage.cost is preferred when a reply carries it.
+CHAT_RATES: dict[str, dict[str, float]] = {
+    "google/gemma-4-26b-a4b-it": {"input": 0.0675, "output": 0.225},
+    "google/gemma-4-31b-it": {"input": 0.09, "output": 0.34},
+}
+# Cloudflare's Clef (clef.py), input only; output tokens are free. Clef: developers.cloudflare.com/workers-ai/models/
+# clef, 2026-10-10. Clef-flash: unverified, secondary source (no Cloudflare page seen with the figure).
+CLEF_INPUT_PER_M: dict[str, float] = {"clef": 0.24, "clef-flash": 0.09}
+
+
+def estimate_chat_cost(model_id: str, input_tokens: int, output_tokens: int) -> float | None:
+    """USD for one chat completion on a model in CHAT_RATES (an exact OpenRouter id), or None."""
+    r = CHAT_RATES.get((model_id or "").strip().lower())
+    if r is None:
+        return None
+    return (max(0, int(input_tokens or 0)) * r["input"] + max(0, int(output_tokens or 0)) * r["output"]) / 1_000_000.0
+
+
+def estimate_clef_cost(model: str, input_tokens: int) -> float | None:
+    rate = CLEF_INPUT_PER_M.get((model or "").strip().lower())
+    return None if rate is None else max(0, int(input_tokens or 0)) * rate / 1_000_000.0
+
+
 
 # ---- every other model eve pays for: the rates spend.py meters with --------------------------------------
 #

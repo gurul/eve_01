@@ -59,6 +59,16 @@ def provider_prefs(model_id: str) -> Optional[dict[str, Any]]:
     return None
 
 
+def gemma_provider_prefs(order: Any = ("nextbit",)) -> dict[str, Any]:
+    """The pinned ``provider`` field for the visual judge's Gemma 4 calls (visual_judge.py). Unlike the preference
+    above, fallbacks are OFF: the probe of 2026-10-10 saw the same screenshot and prompt at temperature 0 answered
+    differently by different upstream hosts, one host run away into whitespace under a strict schema, and an
+    unpinned request rotate across 7+ hosts. ``require_parameters`` keeps a host that ignores ``response_format``
+    out; ``data_collection: deny`` keeps screen crops away from hosts that train on or retain prompts."""
+    return {"order": [str(p) for p in order], "allow_fallbacks": False, "require_parameters": True,
+            "data_collection": "deny"}
+
+
 def key(env: Any = None) -> str:
     """The OpenRouter key, stripped, or ""."""
     e = os.environ if env is None else env

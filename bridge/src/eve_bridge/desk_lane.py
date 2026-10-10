@@ -76,6 +76,7 @@ class DeskLane:
         self._broken = ""                       # why the lane is off for this daemon's life, once known
         self._lock = threading.Lock()
         self._decisions: Any = None
+        self._no_judge = False                  # the visual judge could not be built (no key); not retried
 
     def _attempt(self, goal: str) -> Optional[dict[str, Any]]:
         with self._lock:
@@ -102,11 +103,21 @@ class DeskLane:
             if result.get("status") == "none" and result.get("reason") in ("no_match", "ambiguous_target", "uncovered"):
                 from . import decisions
 
-                if decisions.enabled():
-                    if self._decisions is None:
+                how = decisions.mode()
+                if how != "off":
+                    if self._decisions is None and not self._no_judge:
                         self._decisions = decisions.from_env()
+                        self._no_judge = self._decisions is None      # said once in the log; not rebuilt per task
                     if self._decisions is not None:
-                        result = dict(helpers.decisions_first(str(goal)[:MAX_GOAL_CHARS], self._decisions))
+                        judged = dict(helpers.decisions_first(str(goal)[:MAX_GOAL_CHARS], self._decisions,
+                                                              dry_run=how == "shadow",
+                                                              gates=getattr(self._decisions, "gates", None)))
+                        if how == "shadow":
+                            # Decided and logged (scores only, through helpers.log), never clicked: Codex
+                            # still takes the task.
+                            log.info("desk lane: visual judge shadow — %s", judged.get("reason") or "complete")
+                        else:
+                            result = judged
             result.setdefault("log", lines)
             return result
 

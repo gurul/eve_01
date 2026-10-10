@@ -230,6 +230,8 @@ def record_chat_completion(feature: str, payload: Any, *, model: str = "", provi
         if usage:
             usd = pricing.estimate_openai_cost(name, {"input_tokens": tok["in"], "output_tokens": tok["out"],
                                                       "input_tokens_details": {"cached_tokens": tok["cached"]}})
+            if usd is None:
+                usd = pricing.estimate_chat_cost(name, tok["in"], tok["out"])
         record(provider, name, feature, usd, tokens=tok)
     except Exception as e:  # noqa: BLE001
         _once("helper", "spend: could not read a reply's usage (%s)", type(e).__name__)
