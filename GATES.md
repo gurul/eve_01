@@ -42,7 +42,7 @@ Scope: the owner, 2026-10-10: "change name of repo and everywhere including app,
 - [x] G8: GitHub has a new gurul/eve whose main is this repo's head, with one contributor: the owner.
   CHECK: test "$(gh api repos/gurul/eve --jq .name)" = eve && test "$(git ls-remote https://github.com/gurul/eve.git refs/heads/main | cut -f1)" = "$(git rev-parse HEAD)" && test "$(gh api repos/gurul/eve/contributors --jq '[.[].login]|join(",")')" = gurul && echo REPO_OK
   EXPECT: REPO_OK
-  EVIDENCE: exit=0; REPO_OK (contributors: gurul; every commit authored by the owner's noreply address, no trailers; gurul/buddy made private)
+  EVIDENCE: exit=0; REPO_OK (contributors: gurul; every commit authored by the owner's noreply address, no trailers; the old repository made private)
 
 - [x] G9: The phone runs the Eve Link app, paired, and the old app (the previous bundle ID) is gone from it.
   EVIDENCE: manual; the owner, 2026-10-10: "phone looks good" after pairing through the Safari page; devicectl lists only com.github.eve-bridge.EveLink (the old bundle uninstalled: "App uninstalled.")
