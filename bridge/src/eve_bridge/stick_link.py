@@ -204,7 +204,7 @@ PAIR_PAGE = """<!doctype html>
   history.replaceState(null, "", location.pathname);
   var go = document.getElementById("go");
   if (!t) {
-    document.getElementById("say").textContent = "This link is missing its token. Send /stick to eve again.";
+    document.getElementById("say").textContent = "This link is missing its token. On the Mac, run eve-bridge link pair again.";
     go.remove();
   } else {
     go.href = "evelink://pair?u=" + encodeURIComponent(location.origin) + "&t=" + encodeURIComponent(t);

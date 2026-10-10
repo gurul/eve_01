@@ -166,14 +166,14 @@ final class CallSocket {
     private static func explain(_ error: Error, _ t: URLSessionWebSocketTask) -> String {
         if let http = t.response as? HTTPURLResponse {
             switch http.statusCode {
-            case 404, 530, 502: return "eve's address changed. Tap Update Eve Link in Telegram."
-            case 403: return "eve refused the app. Send /stick to eve and tap its button."
+            case 404, 530, 502: return "eve's address changed and the app couldn't find the new one. Is the Mac awake?"
+            case 403: return "eve refused the app. Pair again: run eve-bridge link pair on the Mac."
             default: return "eve answered \(http.statusCode)."
             }
         }
         let ns = error as NSError
         if ns.domain == NSURLErrorDomain, [NSURLErrorCannotFindHost, NSURLErrorDNSLookupFailed].contains(ns.code) {
-            return "eve's address changed. Tap Update Eve Link in Telegram."
+            return "eve's address changed and the app couldn't find the new one. Is the Mac awake?"
         }
         if ns.domain == NSURLErrorDomain, ns.code == NSURLErrorNotConnectedToInternet {
             return "The phone is offline."

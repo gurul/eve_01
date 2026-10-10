@@ -283,7 +283,7 @@ private struct PairPrompt: View {
         ContentUnavailableView {
             Label("Pair with eve", systemImage: "link")
         } description: {
-            Text("Send /stick to eve in Telegram and tap Update Eve Link. Or copy the pairing link and paste it here.")
+            Text("On the Mac, run eve-bridge link pair and open the link on this phone. Or copy the pairing link and paste it here.")
         } actions: {
             Button("Paste pairing link") {
                 let text = UIPasteboard.general.string?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""

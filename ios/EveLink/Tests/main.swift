@@ -150,7 +150,7 @@ check(!liveTurn.retryMayStart(since: 0, turn: .none, callOpen: false), "P4: a ca
 print("LINK_TURN_OK")
 
 // What the intent says when it cannot start, and the Live Activity's words.
-check(PhoneTurnError.notPaired.description == "Pair Eve Link first: send /stick to eve on Telegram.", "not paired text")
+check(PhoneTurnError.notPaired.description == "Pair Eve Link first: on the Mac, run eve-bridge link pair.", "not paired text")
 check(PhoneTurnError.micUnasked.description.contains("Open Eve Link"), "mic unasked text")
 check(CallPhase.listening.nextPress == "Send" && CallPhase.speaking.nextPress == "Interrupt"
       && CallPhase.waiting.nextPress == "Talk", "Live Activity button words")
@@ -198,7 +198,7 @@ print("PHONE_TURN_OK")
 
 // ---- the rendezvous (Shared/Rendezvous.swift): the topic must equal the daemon's ----------------------------
 // Vector from Python: stick_link.rendezvous_topic("a" * 40).
-check(Rendezvous.topic(token: String(repeating: "a", count: 40)) == "evelink-c059eec2dc98cc7d9b2a1f7b6c2e7273",
+check(Rendezvous.topic(token: String(repeating: "a", count: 40)) == "evelink-a7c4bc0e3e702a6abc8c7afe80e62b5d",
       "rendezvous topic matches the daemon's")
 let ntfyBody = """
 {"id":"1","time":1,"event":"open","topic":"t"}
@@ -213,7 +213,7 @@ check(Rendezvous.newest(in: "") == nil, "empty topic gives nothing")
 check(!Rendezvous.isTunnel("http://a.trycloudflare.com") && Rendezvous.isTunnel("https://a-b-1.trycloudflare.com"),
       "only https quick-tunnel origins are believed")
 // Notifications (Shared/Rendezvous.swift, NotifyTopic): vector from Python, notify.notify_topic("a" * 40).
-check(NotifyTopic.topic(token: String(repeating: "a", count: 40)) == "eve-efc639635058b9d0fae92b811972c0a7",
+check(NotifyTopic.topic(token: String(repeating: "a", count: 40)) == "eve-312f09f108bc0795afe2c8447ddfbd6a",
       "notify topic matches the daemon's")
 check(NotifyTopic.topic(token: String(repeating: "a", count: 40)) != Rendezvous.topic(token: String(repeating: "a", count: 40)),
       "notify and rendezvous topics differ")

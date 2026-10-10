@@ -96,7 +96,7 @@ struct SettingsSheet: View {
                 } header: {
                     Text("Pairing")
                 } footer: {
-                    Text("Send /stick to eve in Telegram and tap Update Eve Link. Do the same after eve restarts: the pinned message's button has the new address.")
+                    Text("On the Mac, run eve-bridge link pair and open the link on this phone. After eve restarts, the app finds its new address by itself.")
                 }
                 Section {
                     if log.lines.isEmpty {

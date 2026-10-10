@@ -358,7 +358,7 @@ enum PhoneTurnError: Error, Equatable, CustomStringConvertible {
 
     var description: String {
         switch self {
-        case .notPaired: "Pair Eve Link first: send /stick to eve on Telegram."
+        case .notPaired: "Pair Eve Link first: on the Mac, run eve-bridge link pair."
         case .micDenied: "Eve Link may not use the microphone. Allow it in Settings > Apps > Eve Link."
         case .micUnasked: "Open Eve Link once and allow the microphone."
         case .noPhoneAudio: "This device has no microphone for eve."

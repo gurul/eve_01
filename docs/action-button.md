@@ -72,10 +72,10 @@ You need the daemon with the Telegram door and the Mini App on
    extension, **EveLinkControls**. Automatic signing creates its App ID
    (`…EveLink.Controls`) on the first build. Build from this checkout's
    `main`: an older worktree builds an older app.
-2. Pair the app with eve: send `/stick` to eve on Telegram and tap its
-   button ([pairing](#pairing-the-phone)). If you skip this, the
-   Action Button shows *"Pair Eve Link first: send /stick to eve on
-   Telegram."*
+2. Pair the app with eve: on the Mac, run `eve-bridge link pair`, open the
+   link on the iPhone and tap **Open in Eve Link**
+   ([pairing](#pairing-the-phone)). If you skip this, the Action Button
+   shows *"Pair Eve Link first: on the Mac, run eve-bridge link pair."*
 3. Open Eve Link once, tap **Talk** (top right) and touch the big button. iOS asks for the
    microphone; allow it. The Action Button cannot show that prompt. Until you
    allow the microphone, it says *"Open Eve Link once and allow the
