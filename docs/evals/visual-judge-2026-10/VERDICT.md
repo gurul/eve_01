@@ -4,7 +4,7 @@
 scored. Clef: never called (no Cloudflare key), `CLEF_SHIPPED` stays `False`.**
 
 The bar is [BAR.md](BAR.md), written before the judge existed. The frozen set is [FREEZE.json](FREEZE.json)
-(commit `ad1c2cc`, before the judge's first commit `1789347`). The kept rows are
+(commit `b37edfd`, before the judge's first commit `02cc8db`). The kept rows are
 `bridge/tests/fixtures/visual_judge_result.json` (ids, kinds, fired ids, numbers, milliseconds, errors).
 
 ## synthetic-1, scored once on 2026-10-10
@@ -66,7 +66,7 @@ OpenRouter plus Jev.
 ## Process notes, stated plainly
 
 * Writer B was a separate Claude Code session (`claude -p`), given only BAR.md, the scene renderer and the request
-  and label filters; the judge did not exist yet. Its file was frozen and committed (`ad1c2cc`) before the judge.
+  and label filters; the judge did not exist yet. Its file was frozen and committed (`b37edfd`) before the judge.
 * **The builder saw a few holdout goals.** After the judge code was written and before tuning, a failing test
   assertion (`test_tuning_set_is_in_scope_and_separate_from_the_holdout`, which compared goal sets) printed six
   truncated holdout goal strings into the builder's session. Nothing was changed in response: the later tuning
