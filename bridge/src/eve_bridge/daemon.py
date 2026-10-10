@@ -1490,6 +1490,13 @@ class Daemon:
             from .link_notes import NotesPanel
 
             server.notes = NotesPanel()                      # Notes, the owner's vault (link_notes.py, second_brain.py)
+            from . import pika as pika_mod
+
+            # Pika, the car (pika.py, docs/pika.md): only with EVE_PIKA=1 and ~/.config/eve-bridge/pika.json
+            try:
+                server.pika = pika_mod.make_pika()
+            except Exception:  # noqa: BLE001 — a car that cannot load costs the car, never the daemon
+                log.exception("pika: could not load; Pika is off this run")
             server.calls = PhoneCalls(
                 lambda init_data: miniapp.check_init_data(init_data, cfg.token, cfg.owner_ids),
                 getattr(self, "_telegram", None), make_voice())

@@ -364,6 +364,7 @@ class MiniAppServer:
         self.lights: Any = None                           # lights.Lights: the Lights card, or None (no lights)
         self.spotify: Any = None                          # spotify.Spotify: the Music card, or None (no login)
         self.firetv: Any = None                           # firetv.FireTV: the TV remote card, or None (no TV)
+        self.pika: Any = None                             # pika.Pika: the car, or None (EVE_PIKA off, no pika.json)
         self._conns: set[asyncio.Task] = set()
         self._server: Optional[asyncio.base_events.Server] = None
         self.port = 0
@@ -406,6 +407,9 @@ class MiniAppServer:
         """Stop serving. Open connections are cut, and the wait for them is bounded: a build's stream stays
         open for minutes, and a daemon restart must not wait for it (on Python 3.12+ wait_closed waits for every
         handler) until launchd kills it before the pinned button says offline."""
+        if self.pika is not None:
+            with contextlib.suppress(Exception):
+                await self.pika.close("daemon stopping")  # the car stops and its slot is let go
         if self.link is not None:
             self.link.close()                             # its streams end with [DONE], not a cut:
             with contextlib.suppress(Exception):
