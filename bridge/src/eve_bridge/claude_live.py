@@ -14,6 +14,11 @@ Every doubt keeps a session. The probe failing, or finding no claude process at 
 look like that), answers "unknown" (None), and the picker then shows what it showed before. A session with a
 permission still pending, or one that started moments ago, is never dropped either. Hiding a live session is
 worse than showing a dead one: the first loses the owner's way in, the second costs one tap on a stale button.
+
+The daemon's list lives in memory, so a restart empties it until each session's next hook (live, 2026-10-10: the
+daemon restarted at 15:31, the session in front of the owner was idle, and "claude on" at 15:33 found none and
+opened a new one). So the picker also offers every interactive claude process whose folder no known session is
+in. Joining one needs only its folder; its answers reach the phone once its next hook adopts it.
 """
 
 from __future__ import annotations
@@ -24,7 +29,7 @@ import os
 import subprocess
 import time
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Sequence
 
 log = logging.getLogger(__name__)
 
@@ -53,8 +58,25 @@ def _is_claude(args: str) -> bool:
     return any("claude-code/cli" in w for w in words[1:3])
 
 
+# A claude process with one of these flags is not a terminal session the owner can type into: Chrome's native
+# messaging host, a headless print run, an SDK or plugin worker speaking stream-json.
+HEADLESS_FLAGS = frozenset({"--chrome-native-host", "-p", "--print", "--output-format", "--input-format"})
+
+
+def interactive(args: str) -> bool:
+    """A claude process an owner types into: none of HEADLESS_FLAGS on its command line."""
+    return not HEADLESS_FLAGS.intersection(w.partition("=")[0] for w in args.split())
+
+
 def live_cwds(run: Run = subprocess.run) -> Optional[set[str]]:
     """The working folders of every running Claude Code process, or None when that cannot be told."""
+    found = live_processes(run)
+    return set(found) if found is not None else None
+
+
+def live_processes(run: Run = subprocess.run) -> Optional[dict[str, bool]]:
+    """Each running Claude Code process's working folder → whether any process there is interactive
+    (``interactive``), or None when that cannot be told."""
     try:
         ps = run([PS, "-axww", "-o", "pid=,args="], capture_output=True, text=True, timeout=PROBE_TIMEOUT_SECS)
     except (OSError, subprocess.SubprocessError) as e:
@@ -62,11 +84,11 @@ def live_cwds(run: Run = subprocess.run) -> Optional[set[str]]:
         return None
     if ps.returncode != 0:
         return None
-    pids = []
+    pids: dict[str, bool] = {}
     for line in str(ps.stdout).splitlines():
         pid, _, args = line.strip().partition(" ")
         if pid.isdigit() and _is_claude(args.strip()):
-            pids.append(pid)
+            pids[pid] = interactive(args)
     if not pids:
         return None                                  # no claude at all is more likely a blind probe
     try:
@@ -77,7 +99,13 @@ def live_cwds(run: Run = subprocess.run) -> Optional[set[str]]:
     except (OSError, subprocess.SubprocessError) as e:
         log.debug("claude_live: lsof failed (%s)", type(e).__name__)
         return None
-    cwds = {line[1:] for line in str(lsof.stdout).splitlines() if line.startswith("n/")}
+    cwds: dict[str, bool] = {}
+    pid = ""
+    for line in str(lsof.stdout).splitlines():
+        if line.startswith("p"):
+            pid = line[1:]
+        elif line.startswith("n/"):
+            cwds[line[1:]] = cwds.get(line[1:], False) or pids.get(pid, False)
     return cwds or None
 
 
@@ -101,16 +129,22 @@ def alive(cwd: str, live: set[str]) -> bool:
 async def picker_sessions_off_loop(state: Any, probe: Optional[Callable[[], Optional[set[str]]]] = None) -> list[str]:
     """``picker_sessions`` for code on the event loop: the probe (two subprocesses, up to 1.5 s each) runs on
     a worker thread, and only the pruning of ``state``, which the loop owns, runs on the loop."""
-    live = await asyncio.to_thread(probe or live_cwds)
-    return picker_sessions(state, probe=lambda: live)
+    if probe is not None:
+        live = await asyncio.to_thread(probe)
+        return picker_sessions(state, probe=lambda: live)
+    found = await asyncio.to_thread(live_processes)
+    if found is None:
+        return picker_sessions(state, probe=lambda: None)
+    return picker_sessions(state, set(found), unknown=[c for c, typed in found.items() if typed])
 
 
 def picker_sessions(state: Any, live: Optional[set[str]] = None, *,
                     probe: Optional[Callable[[], Optional[set[str]]]] = None,
-                    now: Optional[float] = None) -> list[str]:
+                    now: Optional[float] = None, unknown: Sequence[str] = ()) -> list[str]:
     """The "claude on" picker's folders, newest first, without the sessions whose process is gone. Those
     are dropped from ``state`` too, as a SessionEnd would have: a hook from one that was alive after all
-    brings it straight back (the tool hooks adopt an unknown session)."""
+    brings it straight back (the tool hooks adopt an unknown session). ``unknown``: the interactive claude
+    processes' folders; each that no kept session is in follows them (after a restart, all of them)."""
     sessions = sorted(state.sessions.values(), key=lambda s: s.started_at, reverse=True)
     if live is None:
         live = (probe or live_cwds)()
@@ -126,4 +160,7 @@ def picker_sessions(state: Any, live: Optional[set[str]] = None, *,
             continue
         state.session_end(s.session_id)
         log.info("claude_live: dropped a session whose Claude process is gone (%s)", Path(s.cwd).name)
+    for folder in sorted(unknown):
+        if folder not in keep and not any(alive(k, {folder}) for k in keep):
+            keep.append(folder)
     return keep

@@ -105,7 +105,7 @@ def test_the_daemon_lends_the_live_list_to_the_inlet(monkeypatch: Any) -> None:
     for name, value in (("EVE_TELEGRAM", "1"), ("EVE_TELEGRAM_TOKEN", "123456:AAsecretTOKENvalue"),
                         ("EVE_TELEGRAM_OWNER", "4242"), ("OPENROUTER_API_KEY", "sk-test")):
         monkeypatch.setenv(name, value)
-    monkeypatch.setattr(claude_live, "live_cwds", lambda run=None: {"/Users/g/repo"})
+    monkeypatch.setattr(claude_live, "live_processes", lambda run=None: {"/Users/g/repo": True})
     state = State()
     state.session_start("dead", cwd="/Users/g/old")
     state.session_start("live", cwd="/Users/g/repo")
@@ -156,3 +156,51 @@ def test_the_probe_runs_off_the_event_loop_and_the_pruning_on_it() -> None:
     assert asyncio.run(go()) == ["/Users/g/repo"]
     assert threads and threads[0] != threading.main_thread().name
     assert set(state.sessions) == {"live"}
+
+
+def test_each_folder_says_whether_an_owner_can_type_there() -> None:
+    ps = PS_OUT + "  6100 /Users/g/.local/bin/claude --output-format stream-json --verbose\n"
+    run, _ = fake_run(ps=ps, lsof="p1524\nfcwd\nn/Users/g/.claude/chrome\np2643\nfcwd\nn/Users/g/repo\n"
+                              "p6100\nfcwd\nn/Users/g/.claude-mem/observer\n")
+    assert claude_live.live_processes(run) == {"/Users/g/.claude/chrome": False, "/Users/g/repo": True,
+                                              "/Users/g/.claude-mem/observer": False}
+    assert claude_live.interactive("claude --dangerously-skip-permissions --resume")
+    assert not claude_live.interactive("claude -p hello")
+    assert not claude_live.interactive("claude --output-format=stream-json")
+
+
+def test_after_a_restart_claude_on_still_finds_the_open_session(monkeypatch: Any) -> None:
+    """Live, 2026-10-10: the daemon restarted, the session in front of the owner sent no hook before "claude on",
+    and the empty list opened a new session instead of joining it."""
+    import asyncio
+
+    monkeypatch.setattr(claude_live, "live_processes",
+                        lambda run=None: {"/Users/g/buddy": True, "/Users/g/.claude/chrome": False})
+    assert asyncio.run(claude_live.picker_sessions_off_loop(State())) == ["/Users/g/buddy"]
+
+
+def test_a_known_session_is_not_offered_twice(tmp_path: Path, monkeypatch: Any) -> None:
+    import asyncio
+
+    repo, other = tmp_path / "repo", tmp_path / "other"
+    (repo / "src").mkdir(parents=True)
+    other.mkdir()
+    state = State()
+    state.session_start("known", cwd=str(repo / "src"))                 # its shell moved into a subfolder
+    monkeypatch.setattr(claude_live, "live_processes", lambda run=None: {str(repo): True, str(other): True})
+    assert asyncio.run(claude_live.picker_sessions_off_loop(state)) == [str(repo / "src"), str(other)]
+
+
+def test_a_blind_probe_offers_only_what_the_hooks_told() -> None:
+    import asyncio
+
+    import pytest
+
+    mp = pytest.MonkeyPatch()
+    try:
+        mp.setattr(claude_live, "live_processes", lambda run=None: None)
+        state = State()
+        state.session_start("known", cwd="/Users/g/repo")
+        assert asyncio.run(claude_live.picker_sessions_off_loop(state)) == ["/Users/g/repo"]
+    finally:
+        mp.undo()
