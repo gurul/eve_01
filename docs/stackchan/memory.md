@@ -110,7 +110,8 @@ Nothing else writes:
 2. **"Remember that"** — said out loud, or the Telegram `remember` tool —
    → `records.star` → one dated line in `records/starred.md`. It counts on the next
    message: the profile puts every star the dream has not absorbed yet on top of
-   itself, verbatim. The notes widget shows the stars; it does not write them.
+   itself (above its first section), verbatim. The notes widget shows the
+   stars; it does not write them.
 3. **The nightly dream** → the records, the profile, the day's journal and the mem0
    index. It is the only automatic writer of the records, which keeps their first
    rule: **the brains read, they never write.** A model that promotes its own

@@ -701,7 +701,16 @@ def profile(cfg: RecallConfig) -> str:
     m = _UPDATED.search(text)
     block = _fresh_block(cfg, m.group(1) if m else "", hide_pred)
     if block:
-        text = block + ("\n\n" + text if text else "")
+        # above the page's first section, under its frontmatter, title and intro: a reader (the app's Memory card)
+        # strips frontmatter only at the top and joins loose lines to the fact before them, so a block above the
+        # frontmatter glued "id: profile updated: …" onto the last star
+        at = text.find("\n## ")
+        if not text:
+            text = block
+        elif at < 0:
+            text = text + "\n\n" + block
+        else:
+            text = text[:at].rstrip("\n") + "\n\n" + block + "\n\n" + text[at + 1:]
     return _clip_lines(text, MAX_PROFILE_CHARS)
 
 

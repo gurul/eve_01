@@ -262,6 +262,11 @@ folders. The steps are code, with no model call, and each one is a short text:
    matched loosely, so `era maker` finds `era-maker`. If more than one folder
    matches, you get a numbered choice.
 
+When the relay joins the session it just opened, your messages wait until
+Claude Code reports that it has started (its SessionStart hook from that
+folder), then about a second more. A message typed into a window that is still
+starting is lost. If the hook never arrives, typing goes ahead after 30 s.
+
 Every question comes with **tap buttons** under it (an inline keyboard):
 `Personal` / `Work` and the recent sessions, then `List` / `General`, then one
 button per folder. A tap does exactly what typing the button's text does, such

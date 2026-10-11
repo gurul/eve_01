@@ -6489,6 +6489,61 @@ def test_with_no_switch_the_late_join_still_happens(tmp_path: Path) -> None:
     assert rig.inlet.claude and api.titled[-1][0] == telegram.CLAUDE_ON_TITLE
 
 
+def test_the_first_message_to_a_new_claude_waits_until_the_session_has_started(tmp_path: Path) -> None:
+    """2026-10-10: "new claude" joined as soon as the terminal opened, and the first message was typed a second
+    before Claude Code's SessionStart, so it was lost. Typing now waits for that hook from the session's folder."""
+    from eve_bridge import claude_launch
+
+    folder = tmp_path / "repo"
+    folder.mkdir()
+    typed: list[str] = []
+
+    async def terminal(cwd: str, text: str) -> str:
+        typed.append(text)
+        return ""
+
+    async def launcher(where: Path, harness: str) -> str:
+        return "Opened."
+
+    rig = Rig(FakeApi(), FakeCreate(), launcher=launcher, terminal=terminal)
+
+    async def go() -> None:
+        rig.inlet._join_after_launch = True
+        await rig.inlet._launch_step(OWNER, claude_launch.Step("Opening.", folder=folder, harness="claude", done=True))
+        assert rig.inlet.claude
+        typing = asyncio.ensure_future(rig.inlet._type_to_claude(OWNER, "hello claude", 7))
+        await settle()
+        assert typed == []                                             # still starting: nothing typed yet
+        rig.inlet.relay_session_started(str(tmp_path / "elsewhere"))  # another folder's session: still waits
+        await settle()
+        assert typed == []
+        rig.inlet.relay_session_started(str(folder))
+        assert await typing
+        assert typed == ["hello claude"]
+        assert await rig.inlet._type_to_claude(OWNER, "and again", 8)  # started: no wait after the first
+        assert typed == ["hello claude", "and again"]
+
+    asyncio.run(go())
+
+
+def test_a_session_already_running_is_typed_into_at_once() -> None:
+    """The control: "claude on" joining a running session never waits for a SessionStart that already happened."""
+    typed: list[str] = []
+
+    async def terminal(cwd: str, text: str) -> str:
+        typed.append(text)
+        return ""
+
+    rig = Rig(FakeApi(), FakeCreate(), terminal=terminal)
+
+    async def go() -> None:
+        rig.inlet._relay_to("/Users/g/repo")
+        assert await asyncio.wait_for(rig.inlet._type_to_claude(OWNER, "run it", 3), 1)
+
+    asyncio.run(go())
+    assert typed == ["run it"]
+
+
 def test_the_same_file_is_sent_once_even_when_the_task_and_the_turn_both_send_it(tmp_path: Path,
                                                                                   monkeypatch: pytest.MonkeyPatch) -> None:
     # 2026-10-10: a task handed over its photo, then the chat turn that waited on it sent the same photo again.

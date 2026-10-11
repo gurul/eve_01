@@ -339,6 +339,8 @@ DEFAULT_PERMISSION_TIMEOUT_SECS = 240.0    # the hook blocks 320 s at most; a si
 MAX_RELAY_CHARS = 16000     # whole replies reach the phone, split into 4096-char messages by _say; the cap only
                             # stops a runaway (owner, 2026-09-24: "I don't want rest in terminal")
 ASKED_RECENTLY_SECS = 20.0         # "Claude is waiting on you" right after the question itself is an echo
+CLAUDE_READY_SECS = 30.0                  # a session just opened: how long typing waits for its SessionStart hook
+CLAUDE_SETTLE_SECS = 1.0                  # after that hook, before the first keystrokes (the prompt box draws)
 RELAY_BATCH_SECS = 1.2                     # relay lines are batched this long into one message (Telegram: ~1 msg/s)
 RELAY_PROMPTS_MAX = 16                     # prompts typed into the session that Claude has not begun: a bound
 STEALTH_ON_LINE = "Stealth mode: I'll act asleep at the desk until you say wake up."
@@ -2436,6 +2438,9 @@ class TelegramInlet:
         self._chat_id: Optional[int] = next(iter(sorted(config.owner_ids)), None)   # a private chat's id is the user's
         self._relay_cwd: str = ""                          # the session Claude last spoke from
         self._relay_pin: str = ""                          # the session picked at "claude on"; "" follows the last
+        # Set when the session eve just opened says it started (relay_session_started); None for a session that was
+        # already running. Typing waits on it: keystrokes sent while Claude Code is still starting are lost.
+        self._relay_ready: Optional[asyncio.Event] = None
         # (title, subtitle, body, options, origin) waiting for the next batch; origin: the reader of the call the
         # line's prompt was said on, taken when the line arrived
         self._relay_lines: list[tuple[str, str, str, tuple[Choice, ...], Optional[Callable[[str], None]]]] = []
@@ -3918,6 +3923,7 @@ class TelegramInlet:
                     + chat_log.note_text(said))
         if join and step.folder.is_dir() and epoch == self._claude_epoch:
             self._relay_to(str(step.folder.resolve()))
+            self._relay_ready = asyncio.Event()            # typing waits for its SessionStart (_await_ready)
             await self._say(chat_id, CLAUDE_ON_LINE, title=CLAUDE_ON_TITLE, subtitle=step.folder.name)
             return
         await self._say(chat_id, said)
@@ -4019,7 +4025,32 @@ class TelegramInlet:
             self._relay_prompts.clear()                    # nor its turns
             self._relay_origin = None
         self.claude, self._relay_pin, self._relay_cwd = True, cwd, cwd
+        self._relay_ready = None
         log.info("telegram: claude relay on")
+
+    def relay_session_started(self, cwd: str) -> None:
+        """Claude Code's SessionStart hook: a session in ``cwd`` is up. The one eve just opened and joined can now be
+        typed into."""
+        ready = self._relay_ready
+        if ready is not None and cwd and os.path.realpath(cwd) == os.path.realpath(self._relay_pin or self._relay_cwd):
+            ready.set()
+
+    async def _await_ready(self) -> None:
+        """Wait for a just-opened session to start before typing into it (owner, 2026-10-10: the first message
+        after a new claude was typed a second before Claude Code was listening, and was lost). A session that never
+        says so is typed into after CLAUDE_READY_SECS anyway, as before."""
+        ready = self._relay_ready
+        if ready is None:
+            return
+        if not ready.is_set():
+            log.info("telegram: waiting for the new Claude session to start before typing")
+            try:
+                await asyncio.wait_for(ready.wait(), CLAUDE_READY_SECS)
+            except asyncio.TimeoutError:
+                log.warning("telegram: the new Claude session did not report it started; typing anyway")
+        if self._relay_ready is ready:
+            self._relay_ready = None
+            await self._sleep(CLAUDE_SETTLE_SECS)
 
     def _join(self, chat_id: int, cwd: str) -> None:
         self._relay_to(cwd)
@@ -4051,6 +4082,9 @@ class TelegramInlet:
             return False
         if self._terminal is None or not text:
             await self._say(chat_id, "I can't reach a terminal on this computer.")
+            return False
+        await self._await_ready()
+        if not self.claude:                                # "claude off" while it waited
             return False
         # Queued before it is typed: Claude Code's UserPromptSubmit hook for it can reach relay_turn_began before
         # the keystrokes' osascript returns. Claude's lines for this prompt are read on the call it was said on, if

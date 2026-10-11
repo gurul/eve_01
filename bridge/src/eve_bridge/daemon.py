@@ -2548,6 +2548,12 @@ class Daemon:
             transcript_path=req.get("transcript_path"),
             cwd=req.get("cwd"),
         )
+        inlet = getattr(self, "_telegram", None)
+        if inlet is not None and inlet.claude:
+            try:
+                inlet.relay_session_started(str(req.get("cwd") or ""))
+            except Exception:  # noqa: BLE001 — the hook's reply must never wait on the phone
+                log.exception("telegram: relay_session_started failed")
         await self._push_heartbeat()
         return {"ok": True}
 

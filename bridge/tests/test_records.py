@@ -169,7 +169,9 @@ def test_a_star_newer_than_the_profile_is_on_top_of_it_verbatim(tmp_path: Path) 
     assert "They asked you to remember" not in prof and "My name is Sam" not in prof   # the page has read it
     star(cfg, "my sister is Ana", when=datetime(2026, 9, 22, 12))
     prof = RecordsReader(cfg).profile()
-    assert prof.startswith(records.FRESH_STARS_HEADING) and "- My sister is Ana (2026-09-22)" in prof
+    assert prof.startswith("---\n")                                           # the frontmatter stays on top
+    assert prof.index(records.FRESH_STARS_HEADING) < prof.index("## Life context")   # stars above every section
+    assert "- My sister is Ana (2026-09-22)" in prof
     assert "My name is Sam" not in prof and "## Life context" in prof
     (rdir(cfg) / "profile.md").write_text("# The owner\n" + "x\n" * 5000)
     assert 0 < len(profile(cfg)) <= records.MAX_PROFILE_CHARS
@@ -243,7 +245,7 @@ def test_hidden_words_leave_the_profile_and_the_searches_but_nothing_is_deleted(
     assert "Dr Lee" not in full and "Dr Lee" not in voice
     assert "My sister is Ana" in full and "My sister is Ana" in voice                    # the rest stays
     assert "## Life context" in full and "Works on a desk robot" in full and "Short texts" in voice
-    assert full.startswith(records.FRESH_STARS_HEADING)
+    assert full.index(records.FRESH_STARS_HEADING) < full.index("## Life context")
     hits = search(load_records(cfg), "coffee place", hide=records.hidden_match(cfg))
     assert all("The coffee place on the main street" not in h["line"] for h in hits)
     assert search(load_records(cfg), "coffee place")[0]["id"] == "cafe-nero"            # without hide: as before
