@@ -92,20 +92,18 @@ def test_transport_exception_does_not_leak_request_or_key(exception):
     assert a.error == exception.__name__
 
 
-def test_from_env_builds_the_visual_judge_only_when_on_or_shadow():
-    from eve_bridge import visual_judge
-
-    keys = {"OPENROUTER_API_KEY": "or", "EVE_JEV_ROUTE": "openrouter"}
-    assert d.from_env({**keys, d.ENV: "0"}) is None
-    assert d.mode({**keys, d.ENV: "0"}) == "off" and not d.enabled({d.ENV: "off"})
-    unset = d.from_env(keys)                                    # unset follows SHIPPED
-    assert (unset is not None) is visual_judge.SHIPPED
-    for value, want in (("1", "on"), ("shadow", "shadow")):
-        assert d.mode({d.ENV: value}) == want and d.enabled({d.ENV: value})
-        judge = d.from_env({**keys, d.ENV: value})
-        assert isinstance(judge, visual_judge.GemmaJevJudge)
-    assert d.from_env({d.ENV: "1"}) is None                     # no OpenRouter key: no judge, Codex takes misses
-    assert d.from_env({d.ENV: "1", "OPENAI_API_KEY": "k"}) is None   # the OpenAI Decisions client is never built
+def test_the_daemon_never_builds_a_decisions_client_and_says_so_once(caplog):
+    # Off since 2026-10-08: OpenAI's Decisions beta has no OpenRouter route (docs/openrouter.md)
+    assert d.from_env({"OPENAI_API_KEY": "k"}) is None
+    assert d.from_env({d.ENV: "1"}) is None
+    d._warned = False
+    with caplog.at_level("WARNING"):
+        assert d.from_env({d.ENV: "1", "OPENAI_API_KEY": "k", "OPENROUTER_API_KEY": "or"}) is None
+    assert any("visual judge is off" in r.message for r in caplog.records) and d._warned
+    caplog.clear()
+    with caplog.at_level("WARNING"):
+        assert d.from_env({d.ENV: "1"}) is None
+    assert not any("visual judge is off" in r.message for r in caplog.records)       # once a process
 
 
 def test_usage_is_recorded_even_when_answer_is_refused(monkeypatch):

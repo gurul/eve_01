@@ -204,7 +204,7 @@ def test_daemon_wiring_only_tries_decisions_after_zero_input_keyword_mismatch(mo
     seen = []
 
     class Helpers(FakeHelpers):
-        def decisions_first(self, goal, client, **kw):
+        def decisions_first(self, goal, client):
             seen.append(goal)
             return {"status": "complete", "clicked": ["Week"], "sentence": "Done."}
 
@@ -218,80 +218,3 @@ def test_daemon_wiring_only_tries_decisions_after_zero_input_keyword_mismatch(mo
         h.result = result
         asyncio.run(DeskLane(make_helpers=lambda: h, trusted=lambda: True).attempt("x"))
     assert seen == ["next seven days"]
-
-
-def test_shadow_mode_decides_as_a_dry_run_and_leaves_the_task_to_codex(monkeypatch):
-    from test_desk_lane import FakeHelpers
-
-    from eve_bridge import decisions
-
-    seen = []
-
-    class Helpers(FakeHelpers):
-        def decisions_first(self, goal, client, **kw):
-            seen.append(kw)
-            return {"status": "none", "reason": "dry_run"}
-
-    monkeypatch.setenv(d.ENV, "shadow")
-    monkeypatch.setattr(decisions, "from_env", lambda: Client())
-    h = Helpers({"status": "none", "reason": "no_match"})
-    lane = DeskLane(make_helpers=lambda: h, trusted=lambda: True)
-    r = asyncio.run(lane.attempt("next seven days"))
-    assert r["status"] == "none" and r["reason"] == "no_match"         # the keyword lane's miss stands: Codex
-    lane._shadow.join(5)
-    assert seen and seen[0]["dry_run"] is True
-
-
-def test_shadow_mode_never_holds_the_miss_for_the_judge(monkeypatch):
-    import threading
-
-    from test_desk_lane import FakeHelpers
-
-    from eve_bridge import decisions
-
-    release, started = threading.Event(), threading.Event()
-
-    class Helpers(FakeHelpers):
-        def decisions_first(self, goal, client, **kw):
-            started.set()
-            release.wait(5)                   # a slow Gemma+Jev call
-            return {"status": "none", "reason": "dry_run"}
-
-    monkeypatch.setenv(d.ENV, "shadow")
-    monkeypatch.setattr(decisions, "from_env", lambda: Client())
-    lane = DeskLane(make_helpers=lambda: Helpers({"status": "none", "reason": "no_match"}), trusted=lambda: True)
-    r = asyncio.run(lane.attempt("next seven days"))      # returns while the judge is still running
-    assert r["reason"] == "no_match" and started.wait(5) and lane._shadow.is_alive()
-    first = lane._shadow
-    lane._start_shadow("again")                          # one shadow at a time
-    assert lane._shadow is first
-    release.set()
-    first.join(5)
-    assert not first.is_alive()
-
-
-def test_with_the_switch_off_the_judge_is_never_built(monkeypatch):
-    from test_desk_lane import FakeHelpers
-
-    from eve_bridge import decisions
-
-    built = []
-    monkeypatch.setenv(d.ENV, "0")
-    monkeypatch.setattr(decisions, "from_env", lambda: built.append(1))
-    h = FakeHelpers({"status": "none", "reason": "no_match"})
-    asyncio.run(DeskLane(make_helpers=lambda: h, trusted=lambda: True).attempt("next seven days"))
-    assert not built
-
-
-def test_a_missing_judge_is_not_rebuilt_per_task(monkeypatch):
-    from test_desk_lane import FakeHelpers
-
-    from eve_bridge import decisions
-
-    built = []
-    monkeypatch.setenv(d.ENV, "1")
-    monkeypatch.setattr(decisions, "from_env", lambda: built.append(1))
-    lane = DeskLane(make_helpers=lambda: FakeHelpers({"status": "none", "reason": "no_match"}), trusted=lambda: True)
-    for _ in range(3):
-        asyncio.run(lane.attempt("next seven days"))
-    assert built == [1]

@@ -125,34 +125,17 @@ the call's optional live ears.
 | Tutor (`learning/tutor.py`) | OpenAI by default, OpenRouter opt-in | OpenRouter only (`openai/gpt-6-astra`) |
 | App builder (`apps_maker.py`, `miniapp.py`) | `AsyncAnthropic()` on `ANTHROPIC_API_KEY` | `openrouter.anthropic_client()`, `anthropic/claude-opus-5.5`; the Mini App turns on with `OPENROUTER_API_KEY` |
 | Web search answer model, watch model (`websearch.py`, `watch.py`) | `openai/*` ids refused | `openai/*` ids allowed; without an OpenRouter key, search is `off` |
-| Desk lane visual judge (`decisions.py`, `visual_judge.py`, `desk_lane.py`) | OpenAI's Decisions beta when `EVE_DECISIONS=1` | Gemma 4 26B (looks) + Jev (decides) on OpenRouter, Clef (Cloudflare) as a transport fallback slot. **Off by default**: it failed its blind eval ([decisions-computer-use.md](decisions-computer-use.md)). Keyword clicks still work; the rest goes to Codex. |
+| Desk lane visual judge (`decisions.py`, `desk_lane.py`) | OpenAI's Decisions beta when `EVE_DECISIONS=1` | **off**, with one log line. OpenRouter has no Decisions API, and Jev is not a drop-in replacement (see below). Keyword clicks still work; the rest goes to Codex. |
 | Desk voice (`voice_agent.py`) | OpenAI Live API | unchanged until wave 2; off without `OPENAI_API_KEY` |
 
-### The desk lane judge on OpenRouter (2026-10-10)
+### Why the desk lane judge is off, and not on Jev
 
-OpenAI's Decisions beta took screenshots and predicate questions; Jev takes text. The judge is now two models
-(`visual_judge.py`): Gemma 4 26B turns zoomed crops of the offered controls into a few words each, and Jev answers
-the lane's questions over the Accessibility text plus those words. It is off by default (`EVE_DECISIONS`), because
-it failed its blind eval; [decisions-computer-use.md](decisions-computer-use.md) has the design and the numbers.
-
-**A new image path when it is on.** With `EVE_DECISIONS=1` or `shadow`, every desk-lane miss sends a downscaled
-screenshot (768 px) and crops of up to 25 controls to OpenRouter, and from there to **one** pinned host. The request
-carries `provider: {"order": ["nextbit"], "allow_fallbacks": false, "require_parameters": true,
-"data_collection": "deny"}` (`openrouter.gemma_provider_prefs`):
-
-- **One host, no fallbacks.** In the probe, the same screenshot and prompt at temperature 0 got different answers
-  from different hosts, one host ran away into whitespace under a strict schema, and an unpinned request rotated
-  across 7+ hosts. NextBit was the fastest host that accepts `data_collection: deny` (1.6 to 6 s a call).
-  `EVE_GEMMA_PROVIDERS` changes it.
-- **`data_collection: deny`** keeps the crops away from hosts that train on or keep prompts; hosts that do not
-  accept it answer 404 for this request rather than receive it.
-- **The paid id, never `:free`.** `google/gemma-4-26b-a4b-it:free` answered HTTP 429 five times in five and has no
-  structured outputs. The paid id costs $0.0675 per million input tokens and $0.225 per million output (about
-  $0.0001 a call).
-
-Codex already sends screens to OpenAI when it does a desktop task; this is the same kind of egress on a different
-route. Logs keep scores and milliseconds only, never labels or Gemma's words. Clef, when its keys are added, would
-send the crops to Cloudflare Workers AI instead (`clef.py`), only after Gemma or Jev failed.
+The judge sends screenshots and asks predicate questions such as "is this click
+risky?". Jev (`jev.py`, on OpenRouter's `/api/alpha/decisions`) takes a text
+state and choice questions. Moving the judge to Jev would mean writing a new
+safety judgement, so the judge is off instead. The tools
+`tools/decisions_eval.py` and `tools/decisions_live_demo.py` still call OpenAI's
+Decisions beta with an OpenAI key, for development only.
 
 ### What you will notice
 

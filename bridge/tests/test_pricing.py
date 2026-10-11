@@ -140,23 +140,3 @@ def test_jev_input_is_priced_and_unknown_models_are_none():
     assert estimate_jev_cost(0) == 0.0 and estimate_jev_cost(-5) == 0.0
     assert estimate_openai_cost("gpt-9-unknown", {"input_tokens": 10}) is None
     assert estimate_openai_cost("", {"input_tokens": 10}) is None
-
-
-def test_gemma_4_and_clef_are_priced():
-    from eve_bridge import pricing as p
-
-    assert p.CHAT_RATES["google/gemma-4-26b-a4b-it"] == {"input": 0.0675, "output": 0.225}
-    usd = p.estimate_chat_cost("google/gemma-4-26b-a4b-it", 1_000_000, 1_000_000)
-    assert usd is not None and abs(usd - 0.2925) < 1e-9
-    assert p.estimate_chat_cost("google/unknown-model", 10, 10) is None
-    assert abs(p.estimate_clef_cost("clef", 1_000_000) - 0.24) < 1e-9 and p.estimate_clef_cost("x", 5) is None
-
-
-def test_a_gemma_chat_completion_without_reported_cost_is_priced_not_blank(monkeypatch):
-    from eve_bridge import spend
-
-    rows = []
-    monkeypatch.setattr(spend, "record", lambda *a, **kw: rows.append((a, kw)))
-    spend.record_chat_completion("computer_visual_judge", {"usage": {"prompt_tokens": 2000, "completion_tokens": 100}},
-                                 model="google/gemma-4-26b-a4b-it")
-    assert rows and rows[0][0][3] is not None and rows[0][0][3] > 0

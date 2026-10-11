@@ -1007,14 +1007,12 @@ class Helpers:
             self.log(line)
         return result.to_dict()
 
-    def decisions_first(self, goal: str, client: Any, dry_run: bool = False, gates: Any = None) -> dict[str, Any]:
-        """The opt-in visual loop, using the same hit-test and AXPress effectors as the keyword lane. ``gates`` is
-        the judge's fitted decision_lane.Gates (visual_judge.GATES); None keeps the lane's defaults."""
-        from .decision_lane import Gates, route
+    def decisions_first(self, goal: str, client: Any, dry_run: bool = False) -> dict[str, Any]:
+        """The opt-in visual loop, using the same hit-test and AXPress effectors as the keyword lane."""
+        from .decision_lane import route
 
         adapter = _LaneAdapter(self, None)
-        result = route(goal, senses=adapter, effectors=adapter, client=client, dry_run=dry_run,
-                       gates=gates if gates is not None else Gates())
+        result = route(goal, senses=adapter, effectors=adapter, client=client, dry_run=dry_run)
         for line in result.log_lines:
             self.log(line)
         return result.to_dict()

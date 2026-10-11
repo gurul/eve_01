@@ -1,19 +1,15 @@
-"""Typed, image-aware decisions for the desk lane's visual click loop (decision_lane.py).
+"""Typed, image-aware OpenAI Decisions. No tool execution and no transport retries.
 
-Two clients speak the ``evaluate(evidence, images, questions) -> Answer`` seam:
+Wire contract: https://developers.openai.com/api/reference/resources/decisions/methods/create
+The REST seam works with SDK versions that predate this beta endpoint.
 
-* ``visual_judge.GemmaJevJudge`` (the daemon's, since 2026-10-10): Gemma 4 26B describes zoomed crops of the offered
-  controls, Jev decides over text, Clef is a transport-failure fallback slot. Everything is on the owner's OpenRouter
-  key. ``from_env`` builds it when ``EVE_DECISIONS`` is on or ``shadow``.
-* ``Client``, OpenAI's Decisions beta (https://developers.openai.com/api/reference/resources/decisions/methods/create).
-  It has no OpenRouter route, so the daemon never builds it; it stays for the dev tools (tools/decisions_eval.py,
-  tools/decisions_live_demo.py), which pass an OpenAI key of their own.
-
-``EVE_DECISIONS``: ``1`` lets the judge's pick click (through decision_lane's revalidation and hit-test);
-``shadow`` runs it as a dry run on a background thread (desk_lane) that decides and logs scores, never clicks, and
-leaves the task to Codex at once; ``0`` is
-off. Unset is ``visual_judge.SHIPPED`` (False until a real-capture blind holdout passes; VERDICT.md in
-docs/evals/visual-judge-2026-10/). No transport retries here; the judge counts its own.
+OFF IN THE DAEMON since 2026-10-08. The owner moved every model call to his OpenRouter key (docs/openrouter.md), and
+OpenAI's Decisions beta has no OpenRouter route. Jev (jev.py, OpenRouter's /api/alpha/decisions) is not a drop-in: it
+takes a text state and choice questions, not screenshots with predicate heads, so moving the desk lane's visual judge
+onto it would be a new safety judgement, not a port. ``from_env`` therefore returns None (with one log line when
+EVE_DECISIONS asks for it), and the desk lane keeps its keyword clicks and hands the rest to Codex, as it does
+with the switch off. ``Client`` stays for the dev tools (tools/decisions_eval.py, tools/decisions_live_demo.py), which
+pass an OpenAI key of their own.
 """
 
 from __future__ import annotations
@@ -42,23 +38,8 @@ class DecisionError(ValueError):
     """A local, fixed diagnostic safe to expose without a request or response body."""
 
 
-def mode(environ: Mapping[str, str] | None = None) -> str:
-    """"on" | "shadow" | "off". Unset (or blank) follows visual_judge.SHIPPED."""
-    raw = str((os.environ if environ is None else environ).get(ENV, "") or "").strip().lower()
-    if raw in ("1", "true", "yes", "on"):
-        return "on"
-    if raw == "shadow":
-        return "shadow"
-    if raw:
-        return "off"
-    from .visual_judge import SHIPPED
-
-    return "on" if SHIPPED else "off"
-
-
 def enabled(environ: Mapping[str, str] | None = None) -> bool:
-    """The visual judge runs at all: on or shadow."""
-    return mode(environ) != "off"
+    return (os.environ if environ is None else environ).get(ENV, "0").strip().lower() in ("1", "true", "yes", "on")
 
 
 def image_url(image: Any) -> str:
@@ -195,12 +176,16 @@ class Client:
             self._http = None
 
 
-def from_env(environ: Mapping[str, str] | None = None) -> Any:
-    """The daemon's visual judge (visual_judge.GemmaJevJudge) when EVE_DECISIONS is on or shadow, else None. None
-    too when OpenRouter's key or Jev's route is missing (visual_judge.from_env says why, once)."""
-    env = os.environ if environ is None else environ
-    if not enabled(env):
-        return None
-    from . import visual_judge
+_warned = False
 
-    return visual_judge.from_env(env)
+
+def from_env(environ: Mapping[str, str] | None = None) -> Client | None:
+    """The daemon's Decisions client: always None since 2026-10-08 (no OpenRouter route; module docstring). When
+    EVE_DECISIONS asks for it, one log line says the desk lane's visual judge is off."""
+    global _warned
+    env = os.environ if environ is None else environ
+    if enabled(env) and not _warned:
+        _warned = True
+        log.warning("decisions: EVE_DECISIONS is on, but OpenAI's Decisions beta is not on OpenRouter; the desk "
+                    "lane's visual judge is off and its misses go to Codex (docs/openrouter.md)")
+    return None
