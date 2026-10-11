@@ -1,0 +1,47 @@
+{
+ "about": "A small dev set for the camera (2026-10-11), written by the builder to check the harness end to end. Not evidence: the blind set (intent_camera_blind.json) is the bar.",
+ "cases": [
+  {
+   "id": "dev-cam-1",
+   "text": "camera left",
+   "primary": "camera_aim",
+   "expect": []
+  },
+  {
+   "id": "dev-cam-2",
+   "text": "can you point the webcam a bit more toward the couch",
+   "primary": "camera_aim",
+   "expect": [
+    "camera_photo"
+   ]
+  },
+  {
+   "id": "dev-cam-3",
+   "text": "zoom in on me",
+   "primary": "camera_aim",
+   "expect": []
+  },
+  {
+   "id": "dev-cam-4",
+   "text": "take a picture with the webcam",
+   "primary": "camera_photo",
+   "expect": []
+  },
+  {
+   "id": "dev-cam-5",
+   "text": "turn right at the next corner, how long to get to the gym?",
+   "primary": "maps_directions",
+   "expect": [
+    "none",
+    "web_search"
+   ],
+   "group": "hard_negative"
+  },
+  {
+   "id": "dev-cam-6",
+   "text": "make the camera follow me while I walk around",
+   "primary": "camera_aim",
+   "expect": []
+  }
+ ]
+}

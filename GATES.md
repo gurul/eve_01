@@ -1,51 +1,38 @@
-# Gates: the OBSBOT camera, from the CLI and from Eve Link
+# Gates: eve moves the camera when asked (chat, app chat, voice)
 
-OWNS: bridge/src/eve_bridge/obsbot.py, bridge/src/eve_bridge/obsbot_panel.py, bridge/src/eve_bridge/link_chat.py, bridge/src/eve_bridge/daemon.py, bridge/src/eve_bridge/miniapp.py, bridge/src/eve_bridge/cli.py, bridge/tests/test_obsbot*.py, bridge/tools/obsbot_live_check.py, ios/EveLink/** (ObsbotView.swift, ObsbotControl.swift, ControlsClient.swift, ControlSheets.swift, WorkView.swift, PikaView.swift, Tests/main.swift), docs/obsbot.md, docs/app-chat.md, README.md, GATES.md
+OWNS: bridge/src/eve_bridge/obsbot.py, bridge/src/eve_bridge/obsbot_usb.py, bridge/src/eve_bridge/native/obsbot_uvc.c, bridge/pyproject.toml, bridge/src/eve_bridge/obsbot_panel.py, bridge/src/eve_bridge/daemon.py, bridge/src/eve_bridge/telegram.py, bridge/src/eve_bridge/voice_agent.py, bridge/src/eve_bridge/tool_gate.py, bridge/tools/intent_eval.py, bridge/tools/obsbot_chat_check.py, bridge/tests/** (test_obsbot_brain.py and the device-tool tests it touches), bridge/tests/fixtures/intent_dev.json, docs/obsbot.md, docs/stackchan/telegram.md, docs/toolset-router.md, README.md, GATES.md
 
-Scope: the owner, 2026-10-11: "use [REA] to [reverse-engineer the] obsbot camera controller ... for the tiny 3 ... allow it to be interacted [with] via cli so eve can control it", then "after ur confident wit this step, build in an app into eve for obsbot". The CLI is `eve-bridge obsbot` over OBSBOT Center's OSC; the app is an Apps-tab row in Eve Link with the camera's live picture, hold-to-turn arrows, zoom, center, sleep/wake, tracking and AI mode. The ledger this replaces (the rename to eve) is at fcd2987.
+Scope: the owner, 2026-10-11, after the camera CLI and app shipped (6f681c5): "go for it build that", meaning eve itself answers "point the camera at the door", "zoom in", "camera left" in the chat, the app chat and out loud. Midway the owner asked "can't u just interface with [the camera] directly" and chose "Direct + app for AI": moves, turns, zoom, center and wake go over USB (UVC through IOKit, native/obsbot_uvc.c), and tracking, AI modes, presets and sleep use OBSBOT Center only while it runs; eve never starts the app. Two tools for the models (camera_status, camera_control), a no-model code path for plain commands that name the camera, and the safety/intent wiring. The camera's picture stays take_photo's (it already uses this camera). The ledger this replaces (the camera CLI and app) is at 6f681c5.
 
-- [x] G1: The obsbot module and its Eve Link panel pass their tests (a fake OBSBOT Center that answers the way the real one measured).
-  CHECK: cd bridge && .venv/bin/python -m pytest -q -p no:cacheprovider tests/test_obsbot.py tests/test_obsbot_panel.py && echo OBSBOT_TESTS_OK
-  EXPECT: OBSBOT_TESTS_OK
-  EVIDENCE: exit=0; shell=/bin/sh; cwd=<repo>; path=8ae25fade4c8/16 entries; output=23 passed in 4.25s | OBSBOT_TESTS_OK
+- [x] G1: The camera's model surface and its wiring pass their tests: strict tools, handle, the code path's matcher (and what it leaves to the model), Telegram's fast path and tool offer and dispatch, the voice's offer and dispatch, the tool gate, the intent eval's label and code route, the menu-tool intent lines.
+  CHECK: cd bridge && .venv/bin/python -m pytest -q -p no:cacheprovider tests/test_obsbot.py tests/test_obsbot_usb.py tests/test_obsbot_panel.py tests/test_obsbot_brain.py tests/test_telegram.py tests/test_voice_agent.py tests/test_tool_gate.py tests/test_intent_eval.py tests/test_menu_tools.py && echo BRAIN_TESTS_OK
+  EXPECT: BRAIN_TESTS_OK
+  EVIDENCE: exit=0; shell=/bin/sh; cwd=<repo>; path=8ae25fade4c8/16 entries; output=719 passed in 26.86s | BRAIN_TESTS_OK
 
 - [x] G2: The bridge's full test suite passes.
   CHECK: bridge/.venv/bin/python -m pytest -q -p no:cacheprovider -n auto bridge/tests && echo BRIDGE_TESTS_OK
   EXPECT: BRIDGE_TESTS_OK
-  EVIDENCE: exit=0; shell=/bin/sh; cwd=<repo>; path=8ae25fade4c8/16 entries; output=6400 passed, 23 skipped, 2 xfailed, 1 warning in 200.46s (0:03:20) | BRIDGE_TESTS_OK
+  EVIDENCE: exit=0; shell=/bin/sh; cwd=<repo>; path=8ae25fade4c8/16 entries; output=6464 passed, 23 skipped, 2 xfailed in 209.98s (0:03:29) | BRIDGE_TESTS_OK
 
 - [x] G3: Lint is clean.
   CHECK: cd bridge && uv run ruff check src tests tools && echo LINT_OK
   EXPECT: LINT_OK
   EVIDENCE: exit=0; shell=/bin/sh; cwd=<repo>; path=8ae25fade4c8/16 entries; output=All checks passed! | LINT_OK
 
-- [x] G4: The Swift checks pass, including the camera's (Tests/run.sh).
-  CHECK: cd ios/EveLink && ./Tests/run.sh && echo SWIFT_CHECKS_OK
-  EXPECT: SWIFT_CHECKS_OK
-  EVIDENCE: exit=0; shell=/bin/sh; cwd=<repo>; path=8ae25fade4c8/16 entries; output=CAPTIONS_OK | SWIFT_CHECKS_OK
+- [x] G4: The live daemon's chat brain moves the real camera: a plain "camera left" is done by code (no model turn) and the camera's pan changes; a request in other words goes to the model, which calls camera_control, and the camera moves the way asked. Read back from the camera, not from the reply.
+  CHECK: bridge/.venv/bin/python bridge/tools/obsbot_chat_check.py
+  EXPECT: OBSBOT_CHAT_OK
+  EVIDENCE: exit=0; shell=/bin/sh; cwd=<repo>; path=8ae25fade4c8/16 entries; output=the model: "could you swing the webcam roughly 30 degrees to the right of where it's aimed now" -> pan 20° -> -9°; eve said: Swung it 30° right. It’s now pointing 9° right of center, level. | OBSBOT_CHAT_OK
 
-- [x] G5: The iOS app builds for the simulator.
-  CHECK: cd ios/EveLink && xcodegen generate -q && xcodebuild -project EveLink.xcodeproj -scheme EveLink -sdk iphonesimulator -configuration Debug -derivedDataPath build-sim build -quiet && echo SIM_BUILD_OK
-  EXPECT: SIM_BUILD_OK
-  EVIDENCE: exit=0; shell=/bin/sh; cwd=<repo>; path=8ae25fade4c8/16 entries; output=(xcodebuild destination list; device ids redacted) | SIM_BUILD_OK
+- [ ] G5: The intent eval, with the real chat model and production routing, on a BLIND set (tests/fixtures/intent_camera_blind.json: 30 cases written by a separate agent from a brief, without the code or the tool text): camera_aim >= 90% (18 of 20), camera_photo >= 75% (3 of 4), no hard negative acts, no provider errors. Bar fixed before the first run on the set.
+  CHECK: cd bridge && env $(grep -E '^(OPENROUTER_API_KEY)=' ~/.config/eve-bridge/env | xargs) .venv/bin/python tools/intent_eval.py tests/fixtures/intent_camera_blind.json --require camera_aim=90 --require camera_photo=75
+  EXPECT: INTENT_BAR_OK
+  EVIDENCE: FAILED (exit 1, BAR MISSED), the same on all four runs, 2026-10-11 11:36-11:47: camera_aim 20/20 and camera_photo 4/4 every run; no case outside the camera moved it; PROVIDER_ERRORS 0. The miss is HARD_NEGATIVE_ACTED 2: blind-cam-28 and blind-cam-30 called start_task, the label the blind author listed as acceptable (blind-cam-30's own primary is computer_task, and blind-cam-28 accepts it), while the harness's pre-registered rule counts any acting tool on a hard negative "whatever its expect says". The set's labels and the rule conflict on those two non-camera cases; the bar was not moved after the fact. Other misses, not part of the bar: blind-cam-25 and blind-cam-27 asked a question back (non-camera hard negatives). Cost $0.06 a run.
 
-- [x] G6: The live daemon, over the same HTTP door the phone uses, lists the camera, reads its status, moves it and reads the move back, streams its picture, and gives a WebRTC viewer a steady picture (gap p95 under 200 ms) while a second viewer keeps getting frames.
-  CHECK: bridge/.venv/bin/python bridge/tools/obsbot_live_check.py
-  EXPECT: OBSBOT_LIVE_OK
-  EVIDENCE: exit=0; shell=/bin/sh; cwd=<repo>; path=8ae25fade4c8/16 entries; output=webrtc: 90 frames in 6 s, gap p95 76 ms; the stream viewer got 92 at the same time | OBSBOT_LIVE_OK
-
-- [x] G7: The CLI drives the real camera: status, a move read back within 3°, zoom read back, center.
-  CHECK: cd bridge && .venv/bin/eve-bridge obsbot move --pan 30 --pitch 10 && .venv/bin/eve-bridge obsbot zoom 40 && .venv/bin/eve-bridge obsbot zoom 0 && .venv/bin/eve-bridge obsbot center && .venv/bin/eve-bridge obsbot status && echo CLI_LIVE_OK
-  EXPECT: CLI_LIVE_OK
-  EVIDENCE: exit=0; shell=/bin/sh; cwd=<repo>; path=8ae25fade4c8/16 entries; output=Tiny 3 awake; pan 0°, pitch 0°; zoom 0%; presets: none saved. | CLI_LIVE_OK
-
-- [x] G8: No personal data or token-shaped strings in the diff (the repo is public).
-  CHECK: git diff HEAD | python3 -c "import re,sys; d=sys.stdin.read(); bad=[p for p in (r'guru\.lingamallu', r'@gmail\.com', r'Bearer [A-Za-z0-9_-]{20,}', r'[a-z0-9]+(-[a-z0-9]+){2,}\.trycloudflare\.com', r'sk-[A-Za-z0-9]{20,}') if re.search(p, d)]; print(bad or 'DIFF_CLEAN'); sys.exit(1 if bad else 0)"
+- [x] G6: No personal data or token-shaped strings in the diff (the repo is public).
+  CHECK: git diff HEAD | python3 -c "import re,sys; d=sys.stdin.read(); bad=[p for p in (r'guru\.lingamallu', r'@gmail\.com', r'guruchara[n]', r'Bearer [A-Za-z0-9_-]{20,}', r'[a-z0-9]+(-[a-z0-9]+){2,}\.trycloudflare\.com', r'sk-[A-Za-z0-9]{20,}') if re.search(p, d)]; print(bad or 'DIFF_CLEAN'); sys.exit(1 if bad else 0)"
   EXPECT: DIFF_CLEAN
   EVIDENCE: exit=0; shell=/bin/sh; cwd=<repo>; path=8ae25fade4c8/16 entries; output=DIFF_CLEAN
 
-- [x] G9: The app is installed on the owner's iPhone (build.sh --install), with the WebRTC picture (2026-10-11 second build).
-  EVIDENCE: manual, 2026-10-11, second build: `sh ios/EveLink/build.sh --install` -> devicectl "App installed: bundleID: com.github.eve-bridge.EveLink" (the iPhone available and paired). First build: manual, 2026-10-11: `sh ios/EveLink/build.sh --install` -> devicectl "App installed: bundleID: com.github.eve-bridge.EveLink" on the paired iPhone 17 Pro. Before that, the same build in the iPhone 17 Pro simulator, paired to the live daemon, opened Apps > Camera showing the live picture, "Pan 0°, tilt -3°", the arrows around Center, zoom, Sleep / Track / Mode.
-
-- [x] G10: The owner opens Camera in the Apps tab, sees the picture, and turns the camera with the arrows.
-  EVIDENCE: manual, 2026-10-11: the owner, on the second build (WebRTC picture, shared capture), after using Apps > Camera on the iPhone: "beautiful push".
+- [x] G7: The owner asks eve, in the app chat or out loud, to move the camera, and it moves.
+  EVIDENCE: manual, 2026-10-11: the owner, after asking eve to move the camera from the iPhone: "it works on my phone, push".

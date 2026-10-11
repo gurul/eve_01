@@ -475,6 +475,8 @@ class Daemon:
                 await self._spotify.close()
             if getattr(self, "_firetv", None) is not None:
                 await self._firetv.close()
+            if getattr(self, "_obsbot", None) is not None:
+                await self._obsbot.close()
             if getattr(self, "_canvas", None) is not None:
                 await self._canvas.close()
             if getattr(self, "_chrome_lane", None) is not None:
@@ -1202,7 +1204,8 @@ class Daemon:
                                            meeter=getattr(self, "_meeter", None),
                                            lights=Daemon._lights_hub(self),
                                            spotify=Daemon._spotify_hub(self),
-                                           firetv=Daemon._firetv_hub(self))
+                                           firetv=Daemon._firetv_hub(self),
+                                           obsbot=Daemon._obsbot_hub(self))
         except asyncio.CancelledError:
             self._explore_after_conversation = None      # hushed: stay put
             self._think_aloud_wish = None                # a hush or a stop cancels a pending listen too
@@ -1376,6 +1379,7 @@ class Daemon:
         inlet = telegram_mod.make_inlet(
             tg, watcher=watcher, meeter=self._meeter, lights=Daemon._lights_hub(self),
             spotify=Daemon._spotify_hub(self), firetv=Daemon._firetv_hub(self),
+            obsbot=Daemon._obsbot_hub(self),
             canvas=Daemon._make_canvas(self),
             share=Daemon._make_share(self) if tg.enabled else None,
             agentcard=self._agentcard,
@@ -1497,13 +1501,7 @@ class Daemon:
                 server.pika = pika_mod.make_pika()
             except Exception:  # noqa: BLE001 — a car that cannot load costs the car, never the daemon
                 log.exception("pika: could not load; Pika is off this run")
-            from . import obsbot_panel
-
-            # the OBSBOT webcam (obsbot_panel.py, docs/obsbot.md): while OBSBOT Center is installed, EVE_OBSBOT=0 off
-            try:
-                server.obsbot = obsbot_panel.make_panel()
-            except Exception:  # noqa: BLE001
-                log.exception("obsbot: could not load; the camera is off this run")
+            server.obsbot = Daemon._obsbot_hub(self)        # the camera's app screen (obsbot_panel.py)
             server.calls = PhoneCalls(
                 lambda init_data: miniapp.check_init_data(init_data, cfg.token, cfg.owner_ids),
                 getattr(self, "_telegram", None), make_voice())
@@ -1588,6 +1586,20 @@ class Daemon:
                 log.exception("firetv: could not load; the Fire TV is off this run")
                 self._firetv = None
         return self._firetv
+
+    def _obsbot_hub(self) -> Any:
+        """The OBSBOT webcam (obsbot_panel.py, docs/obsbot.md), made once and shared by the app's Camera screen,
+        the chat and the voice; None when EVE_OBSBOT=0 or no OBSBOT camera or app is on this Mac. Making it sends
+        nothing to the camera: the first command reads it."""
+        if not hasattr(self, "_obsbot"):
+            from . import obsbot_panel
+
+            try:
+                self._obsbot = obsbot_panel.make_panel()
+            except Exception:  # noqa: BLE001 — a camera that cannot load costs the camera, never the daemon
+                log.exception("obsbot: could not load; the camera is off this run")
+                self._obsbot = None
+        return self._obsbot
 
     def _make_canvas(self) -> Any:
         """The owner's Canvas (canvas.py), read only, for the Telegram brain; None when CANVAS_BASE_URL or

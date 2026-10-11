@@ -2583,3 +2583,51 @@ def test_the_tv_out_loud_reaches_the_tv() -> None:
     asyncio.run(go())
     assert hub.calls == [("firetv_control", args)]
     assert conn.tool_outputs()[0]["line"] == "TV volume 30%."
+
+
+class _FakeCamera:
+    def __init__(self) -> None:
+        self.calls: list = []
+
+    def tools(self) -> list:
+        from eve_bridge import obsbot_panel
+        return obsbot_panel.TOOLS
+
+    def instructions(self) -> str:
+        from eve_bridge import obsbot_panel
+        return obsbot_panel.INSTRUCTIONS
+
+    async def handle(self, name: str, args: dict) -> dict:
+        self.calls.append((name, args))
+        return {"ok": True, "pan": 20, "tilt": 0, "line": "Camera pointing 20° left."}
+
+
+def test_the_camera_is_offered_out_loud_only_when_there_is_one_and_never_in_a_lesson() -> None:
+    from eve_bridge import voice_agent
+
+    names = lambda cfg: [t.get("name") for t in cfg["delegation"]["responses"]["tools"]]  # noqa: E731
+    cfg = VoiceConfig()
+    off = voice_agent.session_config(cfg)
+    assert not {"camera_status", "camera_control"} & set(names(off))
+    on = voice_agent.session_config(cfg, obsbot=_FakeCamera())
+    assert {"camera_status", "camera_control"} <= set(names(on))
+    assert "camera_control" in on["delegation"]["responses"]["instructions"]
+    lesson = voice_agent.session_config(cfg, think_aloud={"id": "l1", "topic": "fractions"}, obsbot=_FakeCamera())
+    assert not {"camera_status", "camera_control"} & set(names(lesson))
+
+
+def test_the_camera_out_loud_reaches_the_camera() -> None:
+    hub = _FakeCamera()
+    args = {"action": "turn", "direction": "left", "degrees": 20, "pan": None, "tilt": None, "zoom": None,
+            "zoom_change": None, "mode": None, "preset": None}
+    conn = FakeConnection([_tool_call("camera_control", "c1", **args)])
+    s, _, _ = _session(conn, [FakeAgent(None, None)], obsbot=hub)
+
+    async def go():
+        task = asyncio.create_task(s.run())
+        await _eventually(lambda: bool(conn.tool_outputs()))
+        conn.feed(_tool_call("end_conversation", "c9"), None)
+        await task
+    asyncio.run(go())
+    assert hub.calls == [("camera_control", args)]
+    assert conn.tool_outputs()[0]["line"] == "Camera pointing 20° left."

@@ -103,6 +103,7 @@ from . import (
     meet,
     memory_sources,
     menu_tools,
+    obsbot_panel,
     opentable,
     quick_answers,
     rundown,
@@ -761,6 +762,10 @@ INTENT_LINES: tuple[tuple[tuple[str, ...], str], ...] = (
                           "so is opening any app on the TV or the Fire TV stick."),
     (("spotify_control",), "Music (an artist, a song, an album, a playlist or a mood: \"put on some jazz\", \"play "
                            "the new album\") is spotify_control."),
+    (("camera_control", "take_photo"),
+     "Moving the webcam (\"turn the camera left\", \"point it at the door\", \"zoom in on me\", \"follow me\") is "
+     "camera_control; a picture of what it sees is take_photo. To aim at something by name, take_photo first, then "
+     "camera_control."),
     (("web_search",), "Current facts, news, prices, opening hours and theater showtimes are web_search."),
     (("america_ask",), "Official U.S. government and legal sources (tax rules, visas, benefits, a law, an agency's "
                        "own page) are america_ask."),
@@ -2299,6 +2304,7 @@ class TelegramInlet:
                  lights: Optional[lights.Lights] = None,
                  spotify: Optional[spotify.Spotify] = None,
                  firetv: Optional[firetv.FireTV] = None,
+                 obsbot: Any = None,
                  canvas: Optional[canvas.Canvas] = None,
                  agentcard: Any = None,
                  america: Any = None,
@@ -2364,6 +2370,7 @@ class TelegramInlet:
         self._lights = lights                              # lights.Lights, or None (EVE_LIGHTS=0, no lights file)
         self._spotify = spotify                            # spotify.Spotify, or None (EVE_SPOTIFY=0, no login)
         self._firetv = firetv                              # firetv.FireTV, or None (EVE_FIRETV=0, never paired)
+        self._obsbot = obsbot                              # obsbot_panel.ObsbotPanel: the webcam, or None (none here)
         self._canvas = canvas                              # canvas.Canvas, or None (no CANVAS_BASE_URL/CANVAS_API_TOKEN)
         self._agentcard = agentcard
         self._purchases = agentcard_tools.AgentCardTools(agentcard) if agentcard is not None else None
@@ -3115,6 +3122,15 @@ class TelegramInlet:
             # leaves "play the music on the tv" to Spotify's transfer.
             self._spawn(self._firetv_by_code(inbound, tv_cmd), "telegram-firetv")
             return
+        cam_cmd = None if inbound.tapped else obsbot_panel.match(inbound.text)
+        if cam_cmd is not None and self._obsbot is None and obsbot_panel.enabled():
+            self._spawn(self._say(inbound.chat_id, obsbot_panel.NOT_SET_UP_LINE), "telegram-obsbot")
+            return
+        if cam_cmd is not None and self._obsbot is not None:
+            # "camera left", "zoom the camera in", "center the camera": done by code, no model turn
+            # (obsbot_panel.py). Every pattern names the camera, so no TV, light or music command reaches it.
+            self._spawn(self._obsbot_by_code(inbound, cam_cmd), "telegram-obsbot")
+            return
         light_cmd = None if inbound.tapped or self._lights is None else self._lights.match(inbound.text)
         if light_cmd is not None:
             # "lights off", "lamp blue at 40%": done by code, no model turn (lights.py)
@@ -3220,6 +3236,14 @@ class TelegramInlet:
         """A message that is only a TV command, done by code; the line says what the TV did."""
         assert self._firetv is not None
         line = await self._firetv.run(cmd)
+        self._note("user", inbound.text)
+        self._note("eve", line)
+        await self._say(inbound.chat_id, line)
+
+    async def _obsbot_by_code(self, inbound: Inbound, cmd: obsbot_panel.Command) -> None:
+        """A message that is only a camera command, done by code; the line says where the camera ended up."""
+        assert self._obsbot is not None
+        line = await self._obsbot.run(cmd)
         self._note("user", inbound.text)
         self._note("eve", line)
         await self._say(inbound.chat_id, line)
@@ -5100,6 +5124,7 @@ class TelegramInlet:
             set(lights.TOOL_NAMES) if self._lights is not None else set()) | (
             set(spotify.TOOL_NAMES) if self._spotify is not None else set()) | (
             set(firetv.TOOL_NAMES) if self._firetv is not None else set()) | (
+            set(obsbot_panel.TOOL_NAMES) if self._obsbot is not None else set()) | (
             set(canvas.TOOL_NAMES) if self._canvas is not None else set()) | (
             set(agentcard_mod.TOOL_NAMES) if self._agentcard is not None else set()) | (
             set(america.TOOL_NAMES) if self._america is not None else set()) | (
@@ -5119,6 +5144,7 @@ class TelegramInlet:
             self._lights.tools() if self._lights is not None else []) + (
             self._spotify.tools() if self._spotify is not None else []) + (
             self._firetv.tools() if self._firetv is not None else []) + (
+            self._obsbot.tools() if self._obsbot is not None else []) + (
             self._canvas.tools() if self._canvas is not None else []) + (
             self._agentcard.tools() if self._agentcard is not None else []) + (
             self._america.tools() if self._america is not None else []) + (
@@ -5138,6 +5164,7 @@ class TelegramInlet:
                                                 self._lights.instructions() if self._lights is not None else "",
                                                 self._spotify.instructions() if self._spotify is not None else "",
                                                 self._firetv.instructions() if self._firetv is not None else "",
+                                                self._obsbot.instructions() if self._obsbot is not None else "",
                                                 self._canvas.instructions() if self._canvas is not None else "",
                                                 self._agentcard.instructions() if self._agentcard is not None else "",
                                                 self._america.instructions() if self._america is not None else "",
@@ -5333,6 +5360,10 @@ class TelegramInlet:
                         path.unlink(missing_ok=True)
                     return {"ok": True, "sent": "photo", "shows": str(shot.get("shows") or "")}
                 return await self._firetv.handle(name, args)
+            if name in obsbot_panel.TOOL_NAMES:
+                if self._obsbot is None:
+                    return {"ok": False, "reason": obsbot_panel.OFF_REASON}
+                return await self._obsbot.handle(name, args)
             if name in canvas.TOOL_NAMES:
                 if self._canvas is None:
                     return {"ok": False, "reason": canvas.OFF_REASON}

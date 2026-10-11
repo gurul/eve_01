@@ -31,6 +31,8 @@ ACTING: frozenset[str] = frozenset({
     "opentable_search",                          # a browser task in the owner's signed-in Chrome
     # the home: every Fire TV action changes the TV (a key, the volume, an app, the power)
     "lights_set", "lights_match", "spotify_control", "firetv_control",
+    # the webcam: every camera_control action moves it, zooms it, wakes or sleeps it, or changes its tracking
+    "camera_control",
     # the watcher, Meet, the room's notes, memory and the vault, the app maker, the chief
     "watch_add", "watch_remove", "watch_pause", "watch_resume", "watch_set_end",
     "meet_join", "meet_leave", "take_notes",
@@ -59,7 +61,8 @@ _STATUS_ONLY: dict[str, str] = {"take_notes": "status"}
 
 # Calls whose results are eve's own state, with no text from outside: they never taint a turn. (task_status is
 # not one: it answers with the running task's own words.)
-CLEAN: frozenset[str] = frozenset({"spend_report", "lights_status", "firetv_status", "open_app", "open_apps",
+CLEAN: frozenset[str] = frozenset({"spend_report", "lights_status", "firetv_status", "camera_status", "open_app",
+                                   "open_apps",
                                    "move_head",
                                    "forget_preview"})        # counts and a token, never the words (memory.py)
 
@@ -216,6 +219,7 @@ _SAY_HEADS: dict[str, str] = {
     "meet_join": "join the meeting", "answer_question": "answer the task's question with", "take_notes": "take notes",
     "remember": "remember that", "watch_add": "watch", "spotify_control": "change the music",
     "lights_set": "change the lights", "lights_match": "change the lights", "firetv_control": "use the TV",
+    "camera_control": "move the camera",
 }
 _SAY_WORDS: dict[str, str] = {"start_task": "goal", "steer_task": "text", "answer_question": "answer"}
 _SAY_FIXED: dict[str, str] = {"leave_meeting": "leave the meeting", "meet_leave": "leave the meeting",

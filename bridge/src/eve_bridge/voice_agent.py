@@ -88,7 +88,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Awaitable, Callable, Optional
 
-from . import consent, self_context, spend, system_context, tool_gate, websearch
+from . import consent, obsbot_panel, self_context, spend, system_context, tool_gate, websearch
 from . import firetv as firetv_mod
 from . import head as head_mod
 from . import lights as lights_mod
@@ -453,6 +453,8 @@ MEET_TOOL_NAMES = frozenset(t["name"] for t in MEET_TOOLS)
 # The Fire TV's tools out loud: all but the screenshot, whose picture is sent to a chat (firetv.py)
 VOICE_FIRETV_TOOLS = frozenset(n for n in firetv_mod.TOOL_NAMES if n != "firetv_screenshot")
 VOICE_FIRETV_NOTE = "Out loud you can't see the TV's screen: when you need to know what it shows, ask the owner."
+# The webcam's tools out loud (obsbot_panel.py): both; they move the camera and read where it points
+VOICE_OBSBOT_TOOLS = obsbot_panel.TOOL_NAMES
 
 DEFAULT_CAPTION_CPS = PagerConfig().read_cps
 
@@ -512,7 +514,8 @@ def session_config(config: VoiceConfig, brief: str = "",
                    backend_profile: str = "", today: str = "", backend_today: str = "",
                    memory_tools: Optional[list[dict[str, Any]]] = None,
                    meet_tools: Optional[list[dict[str, Any]]] = None,
-                   lights: Any = None, spotify: Any = None, firetv: Any = None) -> dict[str, Any]:
+                   lights: Any = None, spotify: Any = None, firetv: Any = None,
+                   obsbot: Any = None) -> dict[str, Any]:
     """The `session.start` payload (Live API, openai 3.13).
 
     There is no `output_modalities` and no turn-detection block: gpt-live-1 is
@@ -551,6 +554,9 @@ def session_config(config: VoiceConfig, brief: str = "",
     # picture goes to a chat, and a voice conversation has none
     tv_tools = [] if listening or firetv is None else [t for t in firetv.tools() if t["name"] in VOICE_FIRETV_TOOLS]
     lights_block += "" if not tv_tools else "\n\n" + firetv.instructions(screenshot=False) + "\n" + VOICE_FIRETV_NOTE
+    # the owner's webcam (obsbot_panel.py), when there is one: the same slot, never in a lesson
+    cam_tools = [] if listening or obsbot is None else obsbot.tools()
+    lights_block += "" if not cam_tools else "\n\n" + obsbot.instructions()
     return {
         "model": config.model,
         "instructions": INSTRUCTIONS + config.about + profile_block(profile) + today_block(today) + context
@@ -572,7 +578,7 @@ def session_config(config: VoiceConfig, brief: str = "",
                                 + (think_aloud_mod.backend_instructions(think_aloud) if listening else "")
                                 + lights_block,
                 "tools": TOOLS + (websearch.tools_for(config.search) if config.web_search else []) + extra + meeting
-                         + light_tools + music_tools + tv_tools,
+                         + light_tools + music_tools + tv_tools + cam_tools,
                 "tool_choice": "auto",
                 "reasoning": {"effort": config.backend_effort},
                 "parallel_tool_calls": False,
@@ -765,11 +771,13 @@ class VoiceSession:
         lights: Any = None,                                 # lights.Lights, or None: "lights off" out loud
         spotify: Any = None,                                # spotify.Spotify, or None: "pause the music" out loud
         firetv: Any = None,                                 # firetv.FireTV, or None: "turn on the tv" out loud
+        obsbot: Any = None,                                 # obsbot_panel.ObsbotPanel, or None: "camera left" out loud
     ) -> None:
         self.meeter = meeter
         self.lights = lights
         self.spotify = spotify
         self.firetv = firetv
+        self.obsbot = obsbot
         self.on_expression = on_expression
         self.mac_busy = mac_busy
         self._expression_chars = 0
@@ -919,7 +927,7 @@ class VoiceSession:
         cfg = session_config(self.config, self.brief, self._think_aloud, profile,
                              backend_profile=backend_profile, today=self.today, backend_today=self.backend_today,
                              memory_tools=memory_tools, meet_tools=MEET_TOOLS if self.meeter is not None else None,
-                             lights=self.lights, spotify=self.spotify, firetv=self.firetv)
+                             lights=self.lights, spotify=self.spotify, firetv=self.firetv, obsbot=self.obsbot)
         log.info("voice: prompt front %d chars, backend %d chars",
                  len(cfg["instructions"]), len(cfg["delegation"]["responses"]["instructions"]))
         await self.conn.session.start(session=cfg)
@@ -1621,7 +1629,7 @@ class VoiceSession:
                 result = {"ok": False, "reason": "on must be true or false"}
         elif (name in ("look", "look_around", "find", "think_hard", "lesson", "take_photo", websearch.TOOL_NAME)
               or name in self._memory_tool_names or name in MEET_TOOL_NAMES or name in lights_mod.TOOL_NAMES
-              or name in spotify_mod.TOOL_NAMES or name in VOICE_FIRETV_TOOLS):
+              or name in spotify_mod.TOOL_NAMES or name in VOICE_FIRETV_TOOLS or name in VOICE_OBSBOT_TOOLS):
             # Seconds (or a minute, for think_hard) of camera, head, model or disk work:
             # answered from a background task, so Live events (the owner talking,
             # captions) keep flowing meanwhile.
@@ -1780,6 +1788,10 @@ class VoiceSession:
                     # an ``input`` key on the TV starts a Java VM there (~1.2 s): a slow tool, like the lights
                     result = (await self.firetv.handle(name, args) if self.firetv is not None
                               else {"ok": False, "reason": firetv_mod.OFF_REASON})
+                elif name in VOICE_OBSBOT_TOOLS:
+                    # a move reads the camera back until it stops (~1-3 s): a slow tool, like the TV
+                    result = (await self.obsbot.handle(name, args) if self.obsbot is not None
+                              else {"ok": False, "reason": obsbot_panel.OFF_REASON})
                 else:
                     result = await self._find(str(args.get("target", "")))
             except asyncio.CancelledError:
@@ -2270,6 +2282,7 @@ async def open_session(
     lights: Any = None,
     spotify: Any = None,
     firetv: Any = None,
+    obsbot: Any = None,
 ) -> None:
     """Run one full conversation on the real Live API — captions to the robot,
     or the real speaker in audio mode.
@@ -2304,7 +2317,7 @@ async def open_session(
                                    think_aloud=think_aloud, lesson_wake=lesson_wake, on_spoken_idea=on_spoken_idea,
                                    on_think_aloud=on_think_aloud, head_pose=head_pose, gate=gate,
                                    on_expression=on_expression, mac_busy=mac_busy, meeter=meeter,
-                                   lights=lights, spotify=spotify, firetv=firetv)
+                                   lights=lights, spotify=spotify, firetv=firetv, obsbot=obsbot)
             if on_open is not None:
                 on_open(session)
             try:

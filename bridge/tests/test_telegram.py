@@ -5818,6 +5818,78 @@ def test_firetv_by_code_and_by_the_brain(monkeypatch: pytest.MonkeyPatch) -> Non
     assert "firetv_control" not in rig.create.requests[0]["instructions"]
 
 
+class _FakeCamera:
+    """The webcam for the chat's tests: obsbot_panel.match is the real one; nothing reaches a camera."""
+
+    def __init__(self) -> None:
+        from eve_bridge import obsbot_panel
+
+        self.mod = obsbot_panel
+        self.ran: list = []
+        self.handled: list = []
+
+    async def run(self, cmd: Any) -> str:
+        self.ran.append(cmd)
+        return "Camera pointing 20° left."
+
+    def tools(self) -> list:
+        return self.mod.TOOLS
+
+    def instructions(self) -> str:
+        return self.mod.INSTRUCTIONS
+
+    async def handle(self, name: str, args: dict) -> dict:
+        self.handled.append((name, args))
+        return {"ok": True, "pan": 30, "tilt": 0, "line": "Camera pointing 30° left."}
+
+
+def test_camera_by_code_and_by_the_brain(monkeypatch: pytest.MonkeyPatch) -> None:
+    from eve_bridge import obsbot_panel
+
+    cam = _FakeCamera()
+    # "camera left": by code, no model call
+    run_rig(rig := Rig(api := FakeApi([update("camera left")]), FakeCreate(), obsbot=cam))
+    assert api.sent[-1] == (OWNER, "Camera pointing 20° left.")
+    assert rig.create.requests == [] and cam.ran == [obsbot_panel.Command("turn", direction="left", degrees=20)]
+    # anything more goes to the brain, which has the camera's tools and instructions
+    args = {"action": "point", "direction": None, "degrees": None, "pan": 30, "tilt": None, "zoom": None,
+            "zoom_change": None, "mode": None, "preset": None}
+    rig = Rig(FakeApi(), FakeCreate(call("camera_control", args), say("Done.")), obsbot=cam)
+    asyncio.run(rig.inlet._turn(telegram.Inbound(OWNER, OWNER, "aim the webcam over toward the window",
+                                                 message_id=9)))
+    first = rig.create.requests[0]
+    assert set(obsbot_panel.TOOL_NAMES) <= {t.get("name") for t in first["tools"]}
+    own = telegram.own_tools()
+    assert first["tools"][:len(own)] == own                              # the camera rides the optional slot
+    assert "camera_control" in first["instructions"]
+    assert cam.handled == [("camera_control", args)]
+    # no camera: no camera tools
+    rig = Rig(FakeApi(), FakeCreate(say("ok")))
+    asyncio.run(rig.inlet._turn(telegram.Inbound(OWNER, OWNER, "hi", message_id=10)))
+    assert not any(t.get("name") in obsbot_panel.TOOL_NAMES for t in rig.create.requests[0]["tools"])
+
+
+def test_a_camera_command_without_a_camera(monkeypatch: pytest.MonkeyPatch) -> None:
+    from eve_bridge import obsbot_panel
+
+    # a camera on the USB bus but no hub (it failed to load): say how to set it up, no model turn
+    monkeypatch.setattr(obsbot_panel, "enabled", lambda environ=None: True)
+    run_rig(rig := Rig(api := FakeApi([update("camera left")]), FakeCreate()))
+    assert api.sent[-1] == (OWNER, obsbot_panel.NOT_SET_UP_LINE) and rig.create.requests == []
+    # no camera at all (or EVE_OBSBOT=0): the brain answers
+    monkeypatch.setattr(obsbot_panel, "enabled", lambda environ=None: False)
+    run_rig(rig := Rig(api := FakeApi([update("camera left")]), FakeCreate(say("ok"))))
+    assert rig.create.requests and api.sent[-1] == (OWNER, "ok")
+
+
+def test_the_camera_tool_without_a_camera_is_a_reason() -> None:
+    from eve_bridge import obsbot_panel
+
+    rig = Rig(FakeApi(), FakeCreate())
+    out = asyncio.run(rig.inlet._tool("camera_status", {}, OWNER))
+    assert out == {"ok": False, "reason": obsbot_panel.OFF_REASON}
+
+
 def test_a_tv_command_without_a_paired_tv_says_how_to_set_it_up(monkeypatch: pytest.MonkeyPatch) -> None:
     from eve_bridge import firetv
 

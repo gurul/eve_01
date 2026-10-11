@@ -807,6 +807,14 @@ Flip it to `ask` if two seconds a command is a price you will pay.
   music on the tv" stays with Spotify. Anything more is a model turn with
   `firetv_status`, `firetv_control` and `firetv_screenshot`. With no TV paired,
   a TV command gets a one-line "not set up" answer. See [Fire TV](../firetv.md).
+- **The camera** — a text that is only a camera command and names the camera
+  ("camera left", "turn the webcam right a bit", "zoom the camera in", "center
+  the camera", "where is the camera pointing") is done by code with no model
+  call, and the reply says where it ended up ("Camera pointing 20° left.").
+  Anything more ("point the camera at the door", "follow me around") is a model
+  turn with `camera_status` and `camera_control`; to aim at a named thing the
+  model takes a photo first. The voice has the same two tools. Only while an
+  OBSBOT camera is plugged in. See [OBSBOT](../obsbot.md#asking-eve).
 - **"typing…"** shows while eve works on a reply, for the whole turn, not only
   the first 5 seconds. It is sent again every 4 s and stops when the reply goes
   out. `think_hard` keeps it up for up to 5 minutes. It pauses while eve waits

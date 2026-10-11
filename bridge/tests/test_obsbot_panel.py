@@ -16,34 +16,47 @@ from eve_bridge import link_chat, obsbot, obsbot_panel, pika
 from eve_bridge.obsbot_panel import ObsbotPanel
 
 
+class FakeUsbTurns:
+    """UsbCamera's turn and wake, recorded into the shared list."""
+
+    def __init__(self, sent: list):
+        self.sent = sent
+        self.why = ""
+
+    def wake(self) -> bool:
+        self.sent.append(("wake", []))
+        return True
+
+    def turn(self, direction: str, speed: int = 0) -> bool:
+        self.sent.append(("turn", [direction]))
+        return True
+
+
 class FakeCam:
-    """Obsbot's surface: sends recorded, reads answered."""
+    """Obsbot's surface: moves and reads answered, USB turns recorded."""
 
     def __init__(self, sent: list, ready: bool = True, **kw: Any):
         self.sent = sent
         self._ready = False
         self.answers = ready
         self.device = 0
-        self.launch = kw.get("launch", True)
+        self.usb = FakeUsbTurns(sent)
 
     def ensure(self) -> Any:
         if not self.answers:
-            return obsbot.OFF_REASON
+            return "No OBSBOT camera is plugged into this Mac."
         self._ready = True
         return None
 
-    def send(self, name: str, *args: Any) -> None:
-        self.sent.append((name.rsplit("/", 1)[-1], list(args)))
-
     def status(self) -> dict:
-        return {"ok": True, "line": "Tiny 3 awake; pan 0°, pitch 0°; zoom 0%; presets: none saved.", "pan": 0}
+        return {"ok": True, "line": "Tiny 3 awake; pan 0°, pitch 0°; zoom 0%.", "pan": 0}
 
     def zoom(self, level: int) -> dict:
-        self.send("SetZoom", 0, level)
+        self.sent.append(("zoom", [level]))
         return {"ok": True, "line": f"Zoom {level}%.", "zoom": level}
 
     def move(self, pan: Any, pitch: Any) -> dict:
-        self.send("SetGimMotorDegree", 0, 30, pan, pitch)
+        self.sent.append(("move", [pan, pitch]))
         return {"ok": True, "line": f"Pan {pan:g}°, pitch {pitch:g}°.", "pan": pan, "pitch": pitch}
 
     def close(self) -> None:
@@ -55,34 +68,33 @@ def make_panel(sent: list, ready: bool = True, **kw: Any) -> ObsbotPanel:
 
 
 def turns(sent: list) -> list:
-    return [(n, a[-1]) for n, a in sent if n.startswith("SetGimbal")]
+    return [a[0] for n, a in sent if n == "turn"]
 
 
-def test_every_beat_sends_the_turn_and_a_stop_ends_it() -> None:
+def test_a_press_wakes_and_turns_once_and_a_stop_ends_it() -> None:
     async def go() -> None:
         sent: list = []
         p = make_panel(sent)
         for _ in range(3):
             assert await p.panel({"action": "hold", "dir": "left", "hold": "a"}) == {"ok": True, "line": ""}
-        # every beat, never a stop between: a lost UDP turn is made good by the next beat
-        assert turns(sent) == [("SetGimbalLeft", obsbot_panel.HOLD_SPEED)] * 3
+        # the first beat wakes the camera and starts the USB turn; the rest only renew it
+        assert [n for n, _ in sent] == ["wake", "turn"] and turns(sent) == ["left"]
         res = await p.panel({"action": "stop", "hold": "a"})
-        assert res["stopped"] and sorted(turns(sent)[3:]) == sorted((c, 0) for c in obsbot.DIRECTIONS.values())
+        assert res["stopped"] and turns(sent) == ["left", "stop"]
         late = await p.panel({"action": "hold", "dir": "left", "hold": "a"})        # a beat that crossed the stop
-        assert late["stopped"] and not late["ok"] and len(turns(sent)) == 7
+        assert late["stopped"] and not late["ok"] and turns(sent) == ["left", "stop"]
         await p.close()
 
     asyncio.run(go())
 
 
-def test_a_new_direction_stops_the_old_one_first() -> None:
+def test_a_new_direction_replaces_the_turn() -> None:
     async def go() -> None:
         sent: list = []
         p = make_panel(sent)
         await p.panel({"action": "hold", "dir": "up", "hold": "a"})
         await p.panel({"action": "hold", "dir": "right", "hold": "b"})
-        assert turns(sent) == [("SetGimbalUp", obsbot_panel.HOLD_SPEED), ("SetGimbalUp", 0),
-                               ("SetGimbalRight", obsbot_panel.HOLD_SPEED)]
+        assert turns(sent) == ["up", "right"]
         assert (await p.panel({"action": "hold", "dir": "up", "hold": "a"}))["stopped"]   # the replaced press
         await p.close()
 
@@ -95,7 +107,7 @@ def test_no_beat_stops_the_gimbal() -> None:
         p = make_panel(sent)
         await p.panel({"action": "hold", "dir": "down", "hold": "a"})
         await asyncio.sleep(obsbot_panel.HEARTBEAT_SECS + 0.3)
-        assert ("SetGimbalDown", 0) in turns(sent) and p._hold is None
+        assert turns(sent) == ["down", "stop"] and p._hold is None
         assert (await p.panel({"action": "hold", "dir": "down", "hold": "a"}))["stopped"]
         await p.close()
 
@@ -109,9 +121,9 @@ def test_beats_keep_it_turning_past_the_heartbeat() -> None:
         for _ in range(8):                                                          # 8 x 0.15 s > 0.45 s
             await p.panel({"action": "hold", "dir": "down", "hold": "a"})
             await asyncio.sleep(0.15)
-        assert turns(sent) == [("SetGimbalDown", obsbot_panel.HOLD_SPEED)] * 8                # no stop between
+        assert turns(sent) == ["down"]                                              # no stop between
         await p.panel({"action": "close"})
-        assert ("SetGimbalDown", 0) in turns(sent)
+        assert turns(sent) == ["down", "stop"]
         await p.close()
 
     asyncio.run(go())
@@ -130,7 +142,7 @@ def test_reads_and_refusals() -> None:
         assert not (await p.panel({"action": "hold", "dir": "sideways", "hold": "x"}))["ok"]
         down = make_panel([], ready=False)
         res = await down.panel({"action": "status"})
-        assert res == {"ok": False, "line": obsbot.OFF_REASON, "stopped": False}
+        assert res == {"ok": False, "line": "No OBSBOT camera is plugged into this Mac.", "stopped": False}
         await p.close()
         await down.close()
 

@@ -29,7 +29,8 @@ DEV_SET = Path(__file__).parent / "fixtures" / "intent_dev.json"
     ("memory_search", {}, "memory_recall"), ("forget_preview", {}, "memory_forget"), ("web_search", {}, "web_search"),
     ("capture_note", {}, "notes"), ("list_todos", {}, "todos_read"), ("watch_add", {}, "price_watch"),
     ("meet_join", {}, "meet"), ("lights_set", {}, "lights"), ("spotify_control", {}, "music"),
-    ("firetv_control", {}, "tv_control"), ("america_ask", {}, "gov_legal_lookup"),
+    ("firetv_control", {}, "tv_control"), ("camera_control", {}, "camera_aim"), ("camera_status", {}, "camera_aim"),
+    ("america_ask", {}, "gov_legal_lookup"),
     ("opentable_search", {}, "restaurant_booking"), ("events_search", {}, "events"),
     ("jobs_list", {}, "jobs_and_reminders"), ("take_on", {}, "jobs_and_reminders"), ("make_app", {}, "app_builder"),
     ("open_apps", {}, "app_builder"), ("calendar__list_events", {}, "calendar_read"),
@@ -80,11 +81,12 @@ def test_code_words_are_scored_by_their_code_path(text: str, lab: str) -> None:
     ("what time is it", "none"), ("/jobs", "jobs_and_reminders"), ("go c12", "jobs_and_reminders"),
     ("codex: fix the tests", "codex"), ("claude: run the tests", "claude_relay"), ("/america visa rules", "gov_legal_lookup"),
     ("i want to watch a movie tonight", ""), ("book dinner for 4 fri at 7", ""),
+    ("camera left", "camera_aim"), ("zoom the camera in", "camera_aim"), ("point the camera at the door", ""),
 ])
 def test_the_inlet_s_own_matchers_take_what_production_takes_by_code(text: str, lab: str) -> None:
     from eve_bridge import lights
 
-    rig = Rig(FakeApi(), FakeCreate(), firetv=object(), spotify=object())
+    rig = Rig(FakeApi(), FakeCreate(), firetv=object(), spotify=object(), obsbot=object())
     rig.inlet.chief = type("Chief", (), {"live": None})()
     rig.inlet._eval_lights = lights.Lights([lights.Light(name="desk lamp", kind="govee", room="office")])
     assert ev.code_route(text, rig.inlet) == lab

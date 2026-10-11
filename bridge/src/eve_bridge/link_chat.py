@@ -217,7 +217,7 @@ NO_CONTROL = {"lights": "eve has no lights on this computer.",
               "memory": "eve's memory is off on this Mac (EVE_MEMORY).",
               "notes": "Your notes are off on this Mac (EVE_SECOND_BRAIN).",
               "pika": "Pika isn't set up on this Mac (EVE_PIKA and pika.json).",
-              "obsbot": "The camera is off on this Mac (OBSBOT Center isn't installed, or EVE_OBSBOT=0)."}
+              "obsbot": "The camera is off on this Mac (no OBSBOT camera is plugged in, or EVE_OBSBOT=0)."}
 NO_MEMORY = "eve's memory is off on this Mac (EVE_MEMORY), so there is no conversation to read"
 
 PROMPT_PATH = Path(__file__).with_name("openui_prompt.txt")

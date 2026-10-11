@@ -79,7 +79,8 @@ UNKNOWN = "unknown_tool"              # a call to a name the turn did not offer:
 LABELS = (
     "computer_task", "camera_photo", "screenshot", "send_file_to_owner", "mac_files_read", "room_notes",
     "memory_write", "coding_session", "deep_reasoning", "chat_history_recall", "memory_recall", "memory_forget",
-    "web_search", "notes", "todos_read", "price_watch", "meet", "lights", "music", "tv_control", "gov_legal_lookup",
+    "web_search", "notes", "todos_read", "price_watch", "meet", "lights", "music", "tv_control", "camera_aim",
+    "gov_legal_lookup",
     "restaurant_booking", "events", "jobs_and_reminders", "app_builder", "calendar_read", "calendar_write",
     "email_read", "email_send", "contacts_read", "maps_directions", "github", "slack", "notion", "linear",
     "claude_relay", "codex", "spend_report", "stealth", "stop_task", "phone_pairing", "ask", "none",
@@ -103,7 +104,7 @@ TOOL_LABELS: dict[str, str] = {
     "pair_eve_link": "phone_pairing", "read_file": "mac_files_read",
 }
 _PREFIXES = (("watch_", "price_watch"), ("meet_", "meet"), ("lights_", "lights"), ("spotify_", "music"),
-             ("firetv_", "tv_control"))
+             ("firetv_", "tv_control"), ("camera_", "camera_aim"))
 _NOTES = ("capture_note", "search_notes", "read_note", "edit_note", "undo_note", "list_inbox", "file_note",
           "second_brain_workflow")
 _MAKER = ("make_app", "change_app", "delete_app", "list_apps", "rename_app", "restore_app", "undo_app")
@@ -415,10 +416,12 @@ def code_route(text: str, inlet: Any = None) -> str:
         return NONE
     if inlet is None:
         return ""
-    from eve_bridge import firetv, spotify
+    from eve_bridge import firetv, obsbot_panel, spotify
 
     if getattr(inlet, "_firetv", None) is not None and firetv.match(text) is not None:
         return "tv_control"
+    if getattr(inlet, "_obsbot", None) is not None and obsbot_panel.match(text) is not None:
+        return "camera_aim"
     matcher = getattr(inlet, "_eval_lights", None)
     if matcher is not None and matcher.match(text) is not None:
         return "lights"
@@ -697,6 +700,7 @@ def _brain(scratch: Path, allow_keywords: bool) -> tuple[Any, list[str], Any]:
         firetv,
         lights,
         meet,
+        obsbot_panel,
         openrouter,
         share,
         spotify,
@@ -730,6 +734,7 @@ def _brain(scratch: Path, allow_keywords: bool) -> tuple[Any, list[str], Any]:
         watcher=watch.make_watcher(), meeter=_Lent(meet.TOOLS, meet.INSTRUCTIONS_BLOCK),
         lights=_Lent(lights.TOOLS, lights_block), spotify=_Lent(spotify.TOOLS, spotify.INSTRUCTIONS),
         firetv=_Lent(firetv.TOOLS, firetv.INSTRUCTIONS), america=_Lent([america.TOOL], america.INSTRUCTIONS),
+        obsbot=_Lent(obsbot_panel.TOOLS, obsbot_panel.INSTRUCTIONS),
         share=_Lent(share.TOOLS, share.INSTRUCTIONS), memory=_Memory(), vault=SimpleNamespace(root=scratch / "vault"),
         chat_log=chat_log.ChatLog(scratch / "chat" / "log.json"), direct=direct, apps=_Workspace(),
         opentable_enabled=True, agent_factory=lambda *a, **k: None, brief=lambda: "")
@@ -752,6 +757,7 @@ def _brain(scratch: Path, allow_keywords: bool) -> tuple[Any, list[str], Any]:
              f"chief {'on' if inlet.chief is not None else 'off'}",
              "this checkout has: " + ", ".join(f"{k} {'yes' if v else 'no'}" for k, v in have.items()),
              "lent: own tools, web_search, memory, chat log, second brain, watch, meet, lights, spotify, fire tv, "
+             "obsbot camera, "
              "america, share, opentable, chief, maker, direct apps (" + ", ".join(direct.apps) + "), workspace"]
     writes = {n for n in direct.names if "__" in n and not direct.reads(n)}
     return inlet, notes, writes
@@ -786,7 +792,7 @@ def _watch_jev() -> None:
 
 # A code path's label that changes something when it runs (lights, the TV, a session, a booking's browser task).
 # Counted as acting whatever the words asked for, so a hard negative a matcher takes is never missed.
-CODE_ACTING = frozenset({"tv_control", "lights", "music", "stealth", "claude_relay", "codex", "coding_session",
+CODE_ACTING = frozenset({"tv_control", "camera_aim", "lights", "music", "stealth", "claude_relay", "codex", "coding_session",
                          "stop_task", "restaurant_booking", "meet", "screenshot"})
 
 
@@ -876,7 +882,8 @@ async def _ask(inlet: Any, case: Mapping[str, Any], i: int, writes: set[str]) ->
     return Row(ident, first, want, tuple(steps), "brain", group, jev=jev)
 
 
-def run(path: Path, model: str = "", menu: str = "", allow_keywords: bool = False) -> int:
+def run(path: Path, model: str = "", menu: str = "", allow_keywords: bool = False,
+        require: Sequence[str] = ()) -> int:
     cases = load_cases(path)
     with tempfile.TemporaryDirectory(prefix="intent-eval-") as tmp:
         scratch = Path(tmp)
@@ -904,7 +911,37 @@ def run(path: Path, model: str = "", menu: str = "", allow_keywords: bool = Fals
     report(rows)
     print(f"   cost: ${cost['usd']:.4f} over {cost['calls']} model calls ({cost['unpriced']} unpriced); "
           f"scored {datetime.now().isoformat(timespec='seconds')}")
+    if not require:
+        return 0
+    missed = bars(rows, require)
+    for m in missed:
+        print("BAR MISSED: " + m)
+    if missed:
+        return 1
+    print("INTENT_BAR_OK")
     return 0
+
+
+def bars(rows: Sequence[Row], require: Sequence[str]) -> list[str]:
+    """The --require bars a run missed: a label's pass rate under its PCT, or any hard negative that acted, or any
+    provider error. A label with no cases misses (a bar over nothing proves nothing)."""
+    missed = []
+    by = totals(rows)
+    for spec in require:
+        lab, _, pct = spec.partition("=")
+        if lab not in LABELS or not pct:
+            missed.append(f"{spec}: not LABEL=PCT with a known label")
+            continue
+        p, n = by.get(lab, (0, 0))
+        if n == 0 or 100.0 * p / n < float(pct):
+            missed.append(f"{lab} {p}/{n} under {pct}%")
+    acted = [r.id for r in rows if r.hard_negative and r.acted]
+    if acted:
+        missed.append("HARD_NEGATIVE_ACTED " + ", ".join(acted))
+    errors = [r.id for r in rows if r.error]
+    if errors:
+        missed.append("PROVIDER_ERRORS " + ", ".join(errors))
+    return missed
 
 
 def main(argv: Optional[list[str]] = None) -> int:
@@ -914,8 +951,11 @@ def main(argv: Optional[list[str]] = None) -> int:
     p.add_argument("--menu-tools", default="", choices=("", "on", "off"),
                    help="EVE_MENU_TOOLS for the run (default: the shell's, else on)")
     p.add_argument("--allow-keywords", action="store_true", help="run even when Jev is not reachable")
+    p.add_argument("--require", action="append", default=[], metavar="LABEL=PCT",
+                   help="a bar for this run: the cases whose primary is LABEL score at least PCT%%; with any --require, "
+                        "HARD_NEGATIVE_ACTED and PROVIDER_ERRORS must also be 0. Prints INTENT_BAR_OK when all hold")
     args = p.parse_args(argv)
-    return run(Path(args.cases), args.model, args.menu_tools, args.allow_keywords)
+    return run(Path(args.cases), args.model, args.menu_tools, args.allow_keywords, args.require)
 
 
 if __name__ == "__main__":

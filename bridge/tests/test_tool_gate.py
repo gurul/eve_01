@@ -54,6 +54,8 @@ async def _answer(rig: Rig, label: str) -> None:
     ("firetv_control", {"action": "power_off"}, True), ("firetv_control", {"action": "type_text"}, True),
     ("firetv_control", {"action": "volume"}, True), ("firetv_control", {"action": "open_app"}, True),
     ("lights_set", {}, True), ("meet_join", {}, True),
+    ("camera_control", {"action": "turn"}, True), ("camera_control", {"action": "track_on"}, True),
+    ("camera_status", {}, False),
     ("take_on", {}, True), ("forget_apply", {}, True), ("make_app", {}, True), ("watch_add", {}, True),
     # v2 safety review: a starred line, the vault's writes, the room's recording, a stop, a browser task
     ("remember", {"fact": "x"}, True), ("capture_note", {}, True), ("edit_note", {}, True), ("file_note", {}, True),
@@ -74,7 +76,8 @@ def test_every_read_taints_and_eve_own_state_does_not() -> None:
                  # acting calls that answer with what they saw (v2 safety review)
                  "watch_add", "take_photo", "screenshot"):
         assert tool_gate.taints(name, {}), name
-    for name in ("spend_report", "lights_status", "firetv_status", "open_app", "start_task", "set_stealth",
+    for name in ("spend_report", "lights_status", "firetv_status", "camera_status", "camera_control", "open_app",
+                 "start_task", "set_stealth",
                  "remember", "opentable_search"):
         assert not tool_gate.taints(name, {"on": True}), name
 

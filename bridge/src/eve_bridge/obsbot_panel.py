@@ -4,9 +4,9 @@ obsbot"): the camera's live picture, hold-to-turn arrows, zoom, center, sleep an
 The phone never talks to the camera. Every press comes through the tunnel to the daemon with the link token
 (link_chat.py, ``POST /api/link/controls/obsbot``), and this panel drives OBSBOT Center's OSC server (obsbot.py).
 
-Holding an arrow is Pika's hold-to-drive (pika.py): the app sends ``hold`` with the press's id about every 150 ms,
-and every beat sends the turn again (OSC ``SetGimbalUp`` etc. at a speed, which turns until a 0 is sent). Not only
-the first: OSC is UDP, so a lost first turn would otherwise leave a held arrow doing nothing. The gimbal stops on ``stop``, when no beat came for HEARTBEAT_SECS, on ``close`` and when the
+Holding an arrow is Pika's hold-to-drive (pika.py): the app sends ``hold`` with the press's id about every 150 ms;
+the first starts the camera's continuous USB turn (obsbot_usb.py: it turns until told to stop), and the rest only
+renew it. The gimbal stops on ``stop``, when no beat came for HEARTBEAT_SECS, on ``close`` and when the
 daemon stops. A late beat of a press that already ended is refused, so it never starts the camera turning again.
 
 The picture: ffmpeg reads the webcam through AVFoundation, alongside OBSBOT Center (macOS lets both), and writes
@@ -24,21 +24,23 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import copy
 import logging
 import os
 import re
 import shutil
 import time
+from dataclasses import dataclass
 from typing import Any, AsyncIterator, Callable, Optional
 
-from . import obsbot, pika_rtc
+from . import obsbot, obsbot_usb, pika_rtc
 from .pika import DEFAULT_STUN as STUN
 from .pika import VIDEO_HEAD, _chunk, _json, split_jpegs, stamp_ms, video_part
 
 log = logging.getLogger(__name__)
 
 HEARTBEAT_SECS = 0.45                 # no beat from the app for this long: stop turning
-HOLD_SPEED = 60                       # SetGimbalUp etc., 1-100: ~25°/s, slow enough to stop where you meant
+HOLD_SPEED = obsbot_usb.TURN_SPEED    # the USB continuous turn's speed: slow enough to stop where you meant
 VIDEO_FIRST_SECS = 6.0                # ffmpeg's first frame (0.45 s measured; the camera may be waking)
 VIDEO_FRAME_SECS = 4.0                # no new frame for this long: the video ended
 MAX_VIDEO_BUFFER = 1 << 20
@@ -54,9 +56,192 @@ VIDEO_DENIED_LINE = "The Mac didn't let eve read the camera. Allow it in System 
 NO_FFMPEG_LINE = "The picture needs ffmpeg on the Mac (brew install ffmpeg)."
 
 
+# ---- the models' camera (chat, app chat, voice; owner, 2026-10-11: "go for it build that") --------------------
+# The models see tilt with + up and pan with + to the left, the way the picture moves; the camera's own pitch is +
+# down (obsbot.py), so tilt = -pitch at this boundary and nowhere else.
+
+OFF_REASON = "The OBSBOT camera is off on this Mac (no OBSBOT camera is plugged in, or EVE_OBSBOT=0)."
+NOT_SET_UP_LINE = "The camera didn't load on this Mac. Run: eve-bridge obsbot setup"
+ACTIONS = ("turn", "point", "center", "zoom", "wake", "sleep", "track_on", "track_off", "mode", "preset")
+TURN_DEGREES = 20                     # a turn with no amount
+BIT_DEGREES = 10                      # "a bit", "a little"
+LOT_DEGREES = 45                      # "a lot", "all the way" is the range's end
+ZOOM_STEP = 25                        # "zoom in" with no amount
+TILT_RANGE = (-int(obsbot.PITCH_RANGE[1]), -int(obsbot.PITCH_RANGE[0]))
+
+TOOLS: list[dict[str, Any]] = [
+    {"type": "function", "name": "camera_status", "strict": True,
+     "description": "The owner's OBSBOT webcam on the Mac right now: awake or asleep, where it points (pan "
+                    "degrees left or right of straight ahead, tilt degrees up or down), the zoom in percent, "
+                    "and its saved presets.",
+     "parameters": {"type": "object", "additionalProperties": False, "required": [], "properties": {}}},
+    {"type": "function", "name": "camera_control", "strict": True,
+     "description": "Move the owner's OBSBOT webcam on the Mac: turn it (a direction and degrees from where it "
+                    "points), point it (pan and tilt from straight ahead), center it, zoom (a level or a "
+                    "change), wake it or put it to sleep, turn AI tracking on or off, set the AI mode, or go "
+                    "to a saved preset. Pass null for what you don't use.",
+     "parameters": {"type": "object", "additionalProperties": False,
+                    "required": ["action", "direction", "degrees", "pan", "tilt", "zoom", "zoom_change",
+                                 "mode", "preset"],
+                    "properties": {
+                        "action": {"type": "string", "enum": list(ACTIONS)},
+                        "direction": {"type": ["string", "null"], "enum": ["left", "right", "up", "down", None],
+                                      "description": "turn: which way, as the picture moves; or null."},
+                        "degrees": {"type": ["integer", "null"],
+                                    "description": f"turn: how far, 1-120; null for {TURN_DEGREES}. \"A bit\" "
+                                                   f"is {BIT_DEGREES}, \"a lot\" {LOT_DEGREES}."},
+                        "pan": {"type": ["integer", "null"],
+                                "description": "point: degrees from straight ahead, -129 to 129, + is left; "
+                                               "or null to keep it."},
+                        "tilt": {"type": ["integer", "null"],
+                                 "description": "point: degrees from level, -59 to 59, + is up; or null to keep "
+                                                "it."},
+                        "zoom": {"type": ["integer", "null"], "description": "zoom: 0-100 percent; or null."},
+                        "zoom_change": {"type": ["integer", "null"],
+                                        "description": f"zoom: a change such as {ZOOM_STEP} or -{ZOOM_STEP}, "
+                                                       "when no level was asked; or null."},
+                        "mode": {"type": ["string", "null"], "enum": [*obsbot.AI_MODES, None],
+                                 "description": "mode: single follows one person, group frames everyone, voice "
+                                                "follows who speaks, desk looks down at the desk, hand follows "
+                                                "a hand, whiteboard frames a whiteboard; or null."},
+                        "preset": {"type": ["integer", "null"],
+                                   "description": "preset: 1, 2 or 3, saved in OBSBOT Center; or null."}}}},
+]
+TOOL_NAMES = tuple(t["name"] for t in TOOLS)
+
+INSTRUCTIONS = f"""The owner's OBSBOT webcam, the Mac's camera (take_photo takes its pictures).
+What you can do: camera_control turns it (a direction and degrees from where it points: a turn with no amount is
+{TURN_DEGREES}°, "a bit" {BIT_DEGREES}°, "a lot" {LOT_DEGREES}°), points it (pan + left, tilt + up, from straight
+ahead), centers it, zooms ("zoom in" is zoom_change {ZOOM_STEP}), wakes it or puts it to sleep, turns AI tracking on
+or off, sets the AI mode and goes to a saved preset. camera_status reads where it points, the zoom and whether it
+is awake.
+Verify: turns, points, centering and zoom are read back from the camera: say where it ended up, in plain words
+("a little to the left, level"). Tracking and the AI mode are not read back: say what you set.
+To aim at something by name ("the door", "my desk"), you need to see the room first: take_photo, then turn toward
+it, and say if you are guessing. While tracking is on, the camera follows a person and won't stay where it was
+pointed: turn tracking off first when the owner wants it to hold still.
+Limits: moving, zoom and waking always work. Tracking, the AI mode, presets and sleep are OBSBOT's own features and
+work only while the OBSBOT Center app runs on the Mac; when one can't, say so in one line."""
+
+
+def where(pan: Optional[int], pitch: Optional[int]) -> str:
+    """Where the camera points, in the owner's words: "20° left, 10° up", "straight ahead"."""
+    if pan is None or pitch is None:
+        return "somewhere I couldn't read"
+    tilt = -pitch
+    parts = [] if abs(pan) <= 2 else [f"{abs(pan)}° {'left' if pan > 0 else 'right'}"]
+    if abs(tilt) > 2:
+        parts.append(f"{abs(tilt)}° {'up' if tilt > 0 else 'down'}")
+    return ", ".join(parts) if parts else "straight ahead"
+
+
+# ---- the code path: a message that is only a camera command names the camera -----------------------------------
+
+@dataclass(frozen=True)
+class Command:
+    """A camera command the code understood."""
+    action: str                         # status, turn, center, zoom, wake, sleep, track_on, track_off, preset
+    direction: str = ""
+    degrees: Optional[int] = None
+    zoom: Optional[int] = None
+    zoom_change: Optional[int] = None
+    preset: Optional[int] = None
+
+
+_LEAD = r"(?:(?:hey|ok|okay)\s+)?(?:eve\s+)?(?:(?:please|pls|can you|could you|would you)\s+)?"
+_TAIL = r"(?:\s+(?:please|pls|thanks|thank you|eve|now))?"
+_CAM = r"(?:the\s+|my\s+)?(?:camera|webcam|cam|obsbot)"
+_TURN_VERB = r"(?:turn|move|pan|tilt|point|swing|rotate|look)"
+
+
+def _turn(m: re.Match[str]) -> Optional[Command]:
+    g = m.groupdict()
+    deg = (BIT_DEGREES if g.get("bit") else LOT_DEGREES if g.get("lot")
+           else int(g["deg"]) if g.get("deg") else TURN_DEGREES)
+    if not 1 <= deg <= 120:
+        return None                                     # an odd amount: the model gets it
+    return Command("turn", direction=g["dir"], degrees=deg)
+
+
+_AMOUNT_NAMED = (r"(?:\s+(?:by\s+)?(?:(?P<bit>a\s+(?:bit|little|touch|tad)|slightly)|(?P<lot>a\s+lot|a\s+bunch|way)"
+                 r"|(?P<deg>\d{1,3})\s*(?:°|degrees?|deg)))?")
+_DIR_NAMED = r"(?:to\s+the\s+)?(?P<dir>left|right|up|down)"
+
+
+def _zoom_step(m: re.Match[str], sign: int) -> Command:
+    g = m.groupdict()
+    if g.get("all"):
+        return Command("zoom", zoom=100 if sign > 0 else 0)
+    return Command("zoom", zoom_change=sign * (ZOOM_STEP // 2 if g.get("bit") else ZOOM_STEP))
+
+
+_ZOOM_AMOUNT = r"(?:\s+(?:(?P<bit>a\s+(?:bit|little|touch))|(?P<all>all\s+the\s+way)))?"
+_PATTERNS: list[tuple[re.Pattern[str], Callable[[re.Match[str]], Optional[Command]]]] = [
+    # "camera left", "turn the camera left a bit", "pan the webcam right 30 degrees", "camera to the left"
+    (re.compile(rf"(?:{_TURN_VERB}\s+)?{_CAM}\s+{_DIR_NAMED}{_AMOUNT_NAMED}"), _turn),
+    (re.compile(rf"{_TURN_VERB}\s+{_DIR_NAMED}{_AMOUNT_NAMED}\s+(?:on\s+|with\s+)?{_CAM}"), _turn),
+    # "center the camera", "camera center", "camera straight ahead", "reset the camera"
+    (re.compile(rf"(?:center|centre|recenter|reset|straighten)\s+{_CAM}"
+                rf"|{_CAM}\s+(?:to\s+(?:the\s+)?)?(?:center|centre|straight\s+ahead|middle|home)"
+                rf"|point\s+{_CAM}\s+straight(?:\s+ahead)?"),
+     lambda m: Command("center")),
+    # "zoom the camera in", "camera zoom in a bit", "zoom in on the camera" (the camera named), "camera zoom 50%"
+    *[(re.compile(form.format(cam=_CAM, way=way, amount=_ZOOM_AMOUNT)), lambda m, sign=sign: _zoom_step(m, sign))
+      for way, sign in (("in", 1), ("out", -1))
+      for form in (r"zoom\s+{cam}\s+{way}{amount}", r"{cam}\s+zoom\s+{way}{amount}",
+                   r"zoom\s+{way}{amount}\s+(?:on|with)\s+{cam}")],
+    (re.compile(rf"unzoom\s+{_CAM}"), lambda m: Command("zoom", zoom=0)),
+    (re.compile(rf"(?:set\s+)?{_CAM}\s+zoom\s+(?:to\s+)?(?P<z>\d{{1,3}})\s*%?|zoom\s+{_CAM}\s+to\s+(?P<z2>\d{{1,3}})\s*%?"),
+     lambda m: Command("zoom", zoom=int(m.group("z") or m.group("z2")))),
+    # "wake the camera", "camera on" (it wakes: OBSBOT's sleep is its off), "camera off", "put the camera to sleep"
+    (re.compile(rf"wake\s+(?:up\s+)?{_CAM}(?:\s+up)?|(?:turn|switch)\s+on\s+{_CAM}|(?:turn|switch)\s+{_CAM}\s+on"
+                rf"|{_CAM}\s+(?:on|wake(?:\s+up)?)"),
+     lambda m: Command("wake")),
+    (re.compile(rf"(?:turn|switch)\s+off\s+{_CAM}|(?:turn|switch)\s+{_CAM}\s+off|{_CAM}\s+(?:off|sleep)"
+                rf"|put\s+{_CAM}\s+to\s+sleep"),
+     lambda m: Command("sleep")),
+    # "where is the camera pointing", "camera status"
+    (re.compile(rf"{_CAM}\s+status|where(?:'s|\s+is)\s+{_CAM}\s+(?:pointing|pointed|looking|aimed)"
+                rf"|is\s+{_CAM}\s+(?:on|awake|asleep)"),
+     lambda m: Command("status")),
+    # "camera track me", "camera follow me", "camera stop tracking", "stop the camera tracking"
+    (re.compile(rf"{_CAM}\s+(?:track|follow)\s+me|(?:turn\s+on|start)\s+{_CAM}\s+tracking"
+                rf"|{_CAM}\s+tracking\s+on"),
+     lambda m: Command("track_on")),
+    (re.compile(rf"{_CAM}\s+stop\s+(?:tracking|following)(?:\s+me)?|stop\s+{_CAM}\s+(?:tracking|following)(?:\s+me)?"
+                rf"|(?:turn\s+off)\s+{_CAM}\s+tracking|{_CAM}\s+tracking\s+off"),
+     lambda m: Command("track_off")),
+    # "camera preset 2", "camera to preset 1"
+    (re.compile(rf"{_CAM}\s+(?:to\s+)?preset\s+(?P<n>[123])|(?:go\s+to\s+)?preset\s+(?P<n2>[123])\s+on\s+{_CAM}"),
+     lambda m: Command("preset", preset=int(m.group("n") or m.group("n2")))),
+]
+
+
+def _norm(text: str) -> str:
+    t = (text or "").lower().replace("’", "'")
+    return re.sub(r"\s+", " ", re.sub(r"[^\w%°'\s-]", " ", t)).strip()
+
+
+def match(text: str) -> Optional[Command]:
+    """A Command when the whole message is a camera command that names the camera, else None (the model answers).
+    Anchored at both ends: "turn the camera to the door" leaves words over, so the model gets it. Reads no state."""
+    t = _norm(text)
+    if not t or len(t) > 100:
+        return None
+    for pattern, make in _PATTERNS:
+        m = re.fullmatch(_LEAD + "(?:" + pattern.pattern + ")" + _TAIL, t)
+        if m:
+            cmd = make(m)
+            if cmd is not None and cmd.zoom is not None and cmd.zoom > 100:
+                return None
+            return cmd
+    return None
+
+
 def enabled(environ: Any = None) -> bool:
+    """On unless EVE_OBSBOT=0, while an OBSBOT camera is plugged in or OBSBOT Center is installed."""
     env = os.environ if environ is None else environ
-    return env.get("EVE_OBSBOT", "1").strip() != "0" and obsbot.APP_PATH.exists()
+    return env.get("EVE_OBSBOT", "1").strip() != "0" and (obsbot.APP_PATH.exists() or obsbot_usb.present())
 
 
 def find_ffmpeg() -> Optional[str]:
@@ -74,7 +259,6 @@ class ObsbotPanel:
         self._ffmpeg = ffmpeg
         self._clock = clock
         self._cam: Optional[obsbot.Obsbot] = None      # reads, one at a time (its socket's replies are shared)
-        self._tx: Optional[obsbot.Obsbot] = None       # beats and stops: sends only, never queued behind a read
         self._lock = asyncio.Lock()
         self._hold: Optional[tuple[str, str]] = None   # (press id, direction) while the gimbal turns
         self._beat = 0.0
@@ -89,23 +273,19 @@ class ObsbotPanel:
 
     # -- the camera --
     async def _ready(self) -> Optional[str]:
-        """None when OBSBOT Center answers (it is started hidden when it isn't running); else the owner's line."""
+        """None when the camera answers over USB; else the owner's line (no camera, no clang)."""
         if self._cam is not None and self._cam._ready:
             return None                                 # no lock: a beat must not wait behind a move's read-back
         async with self._lock:
             if self._cam is None:
                 self._cam = self._make()
-                self._tx = self._make(launch=False)
-            why = await asyncio.to_thread(self._cam.ensure)
-            if why is None and self._tx is not None:
-                self._tx._ready = True                  # the same app: _cam just proved it answers
-            return why
+            return await asyncio.to_thread(self._cam.ensure)
 
     async def _read(self, fn: Callable[..., dict[str, Any]], *args: Any) -> dict[str, Any]:
         async with self._lock:
             res = await asyncio.to_thread(fn, *args)
         if not res.get("ok") and self._cam is not None:
-            self._cam._ready = False                    # ask again next time: OBSBOT Center may have quit
+            self._cam._ready = False                    # ask again next time: the camera may have been unplugged
         return res
 
     async def panel(self, body: dict[str, Any]) -> dict[str, Any]:
@@ -148,22 +328,131 @@ class ObsbotPanel:
             return await self._read(cam.preset, int(n) if n is not None else 0)
         return {"ok": False, "line": "That isn't something the camera does."}
 
+    # -- the models' tools (chat, app chat, voice) and the code path --
+    def tools(self) -> list[dict[str, Any]]:
+        return copy.deepcopy(TOOLS)
+
+    def instructions(self) -> str:
+        return INSTRUCTIONS
+
+    def match(self, text: str) -> Optional[Command]:
+        return match(text)
+
+    async def handle(self, name: str, args: dict[str, Any]) -> dict[str, Any]:
+        """A model's call. Every answer has ``ok`` and a plain ``line``; a move adds where the camera ended up."""
+        if name not in TOOL_NAMES:
+            return {"ok": False, "reason": f"unknown tool {name}"}
+        why = await self._ready()
+        if why:
+            return {"ok": False, "reason": why}
+        cam = self._cam
+        assert cam is not None
+        if name == "camera_status":
+            st = await self._read(cam.status)
+            if not st.get("ok"):
+                return {"ok": False, "reason": st.get("line", "")}
+            pan, pitch = st.get("pan"), st.get("pitch")
+            saved = [p["name"] or f"preset {p['n']}" for p in st.get("presets", []) if p.get("set")]
+            return {"ok": True, "awake": st.get("awake"), "pan": pan, "tilt": None if pitch is None else -pitch,
+                    "zoom": st.get("zoom"), "presets": saved,
+                    "line": f"{st.get('camera', 'The camera')} is {'asleep' if st.get('awake') is False else 'awake'}, "
+                            f"pointing {where(pan, pitch)}, zoom {st.get('zoom', 0)}%."}
+        return await self.control(**{k: args.get(k) for k in ("action", "direction", "degrees", "pan", "tilt",
+                                                              "zoom", "zoom_change", "mode", "preset")})
+
+    async def control(self, action: Any, direction: Any = None, degrees: Any = None, pan: Any = None,
+                      tilt: Any = None, zoom: Any = None, zoom_change: Any = None, mode: Any = None,
+                      preset: Any = None) -> dict[str, Any]:
+        cam = self._cam
+        assert cam is not None
+        if action == "turn":
+            if direction not in obsbot.DIRECTIONS:
+                return {"ok": False, "reason": "turn needs a direction: left, right, up or down"}
+            deg = _num(degrees)
+            deg = TURN_DEGREES if deg is None else max(1.0, min(120.0, abs(deg)))
+            now = await self._read(cam.position_reply)
+            if not now.get("ok"):
+                return {"ok": False, "reason": now.get("line", "")}
+            p, q = now["pan"], now["pitch"]
+            p, q = {"left": (p + deg, q), "right": (p - deg, q), "up": (p, q - deg), "down": (p, q + deg)}[direction]
+            return self._moved(await self._read(cam.move, p, q), f"turn {direction}")
+        if action == "point":
+            pt, tl = _num(pan), _num(tilt)
+            if pt is None and tl is None:
+                return {"ok": False, "reason": "point needs pan, tilt or both"}
+            return self._moved(await self._read(cam.move, pt, None if tl is None else -tl), "point")
+        if action == "center":
+            return self._moved(await self._read(cam.reset), "center")
+        if action == "zoom":
+            z, dz = _num(zoom), _num(zoom_change)
+            if z is None and dz is None:
+                return {"ok": False, "reason": "zoom needs zoom or zoom_change"}
+            if z is None:
+                now = await self._read(cam.zoom_reply)
+                if not now.get("ok"):
+                    return {"ok": False, "reason": now.get("line", "")}
+                z = now["zoom"] + (dz or 0)
+            res = await self._read(cam.zoom, int(max(0, min(100, z))))
+            return {"ok": bool(res.get("ok")), "zoom": res.get("zoom"), "line": res.get("line", "")}
+        if action in ("wake", "sleep"):
+            res = await self._read(cam.wake, action == "wake")
+            return {"ok": bool(res.get("ok")), "line": res.get("line", "")}
+        if action in ("track_on", "track_off"):
+            res = await self._read(cam.track, action == "track_on")
+            on = action == "track_on" and res.get("ok")
+            return {**res, "line": res["line"] + (" It follows a person now, not where it was pointed." if on else "")}
+        if action == "mode":
+            return await self._read(cam.mode, str(mode or ""))
+        if action == "preset":
+            n = _num(preset)
+            return await self._read(cam.preset, int(n) if n is not None else 0)
+        return {"ok": False, "reason": f"unknown action {action}"}
+
+    @staticmethod
+    def _moved(res: dict[str, Any], what: str) -> dict[str, Any]:
+        """A move's answer for the model and the owner: where the camera ended up, tilt + up."""
+        pan, pitch = res.get("pan"), res.get("pitch")
+        if pan is None or pitch is None:
+            return {"ok": False, "reason": res.get("line", f"the camera didn't confirm the {what}")}
+        line = f"Camera pointing {where(pan, pitch)}."
+        if not res.get("ok"):
+            line = f"The camera stopped at {where(pan, pitch)} (the end of its range, or it is asleep)."
+        return {"ok": bool(res.get("ok")), "pan": pan, "tilt": -pitch, "line": line}
+
+    async def run(self, cmd: Command) -> str:
+        """A code-path command (match): the line for the owner."""
+        why = await self._ready()
+        if why:
+            return why
+        if cmd.action == "status":
+            out = await self.handle("camera_status", {})
+        else:
+            out = await self.control(cmd.action, direction=cmd.direction or None, degrees=cmd.degrees,
+                                     zoom=cmd.zoom, zoom_change=cmd.zoom_change, preset=cmd.preset)
+        log.info("obsbot: by code, %s -> %s", cmd.action, "done" if out.get("ok") else "refused")
+        return str(out.get("line") or out.get("reason") or "")
+
     # -- hold to turn --
     async def _turn(self, hold: str, direction: str) -> dict[str, Any]:
         if not hold or direction not in obsbot.DIRECTIONS:
             return {"ok": False, "line": "Hold an arrow.", "stopped": True}
         if hold in self._ended:
             return {"ok": False, "line": "", "stopped": True}  # a late beat of a press that ended
-        tx = self._tx
-        assert tx is not None
+        cam = self._cam
+        assert cam is not None
+        self._beat = self._clock()
         if self._hold != (hold, direction):
-            if self._hold is not None and self._hold[1] != direction:
-                tx.send(obsbot.G + obsbot.DIRECTIONS[self._hold[1]], tx.device, 0)
             if self._hold is not None:
                 self._end(self._hold[0])
+            first = self._hold is None
             self._hold = (hold, direction)
-        tx.send(obsbot.G + obsbot.DIRECTIONS[direction], tx.device, HOLD_SPEED)   # every beat: UDP (see the top)
-        self._beat = self._clock()
+            if first and not await asyncio.to_thread(cam.usb.wake):   # a sleeping camera ignores the turn
+                self._hold = None
+                self._end(hold)
+                return {"ok": False, "line": cam.usb.why or "The camera is asleep and didn't wake.", "stopped": True}
+            # a new direction replaces the old turn in one request; later beats only renew it
+            await asyncio.to_thread(cam.usb.turn, direction, HOLD_SPEED)
+            self._beat = self._clock()
         if self._watch is None or self._watch.done():
             self._watch = asyncio.ensure_future(self._watchdog())
         return {"ok": True, "line": ""}
@@ -179,9 +468,8 @@ class ObsbotPanel:
             self._end(self._hold[0])
         self._end(hold)
         self._hold = None
-        if self._tx is not None:
-            for cmd in obsbot.DIRECTIONS.values():
-                self._tx.send(obsbot.G + cmd, self._tx.device, 0)
+        if self._cam is not None:
+            await asyncio.to_thread(self._cam.usb.turn, "stop")
 
     async def _watchdog(self) -> None:
         while self._hold is not None:
@@ -195,7 +483,7 @@ class ObsbotPanel:
         """The Tiny 3's AVFoundation index, by name: the list's order changes when cameras come and go."""
         proc = await asyncio.create_subprocess_exec(
             ffmpeg, "-hide_banner", "-f", "avfoundation", "-list_devices", "true", "-i", "",
-            stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.PIPE)
+            stdin=asyncio.subprocess.DEVNULL, stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.PIPE)
         _, err = await proc.communicate()
         text = err.decode("utf-8", "replace")
         for line in text.splitlines():
@@ -219,7 +507,7 @@ class ObsbotPanel:
             ffmpeg, "-hide_banner", "-loglevel", "error", "-f", "avfoundation", "-pixel_format", "nv12",
             "-framerate", "30", "-video_size", "1280x720", "-i", f"{index}:none",
             "-vf", f"fps={VIDEO_FPS},scale={VIDEO_WIDTH}:-2", "-q:v", "7", "-f", "mjpeg", "pipe:1",
-            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+            stdin=asyncio.subprocess.DEVNULL, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
         assert proc.stdout is not None and proc.stderr is not None
         buf, first = b"", True
         try:
@@ -363,9 +651,8 @@ class ObsbotPanel:
         for pc in list(self._peers):
             await self._close_peer(pc)
         await self._capture.stop()
-        for c in (self._cam, self._tx):
-            if c is not None:
-                c.close()
+        if self._cam is not None:
+            self._cam.close()
 
 
 class Capture:

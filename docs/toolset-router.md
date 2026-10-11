@@ -67,7 +67,9 @@ offered on that turn. No line names a wrong tool, even as a warning.
 `{id, text, primary, expect[]}` and runs each case as an app turn through `TelegramInlet._think`, with the
 **production toolset router**: Jev over OpenRouter, as the owner's Mac runs it. Before any model call it runs every
 path `TelegramInlet._handle` answers by code, in its order (the code words, the chief's words, then the Fire TV,
-lights, Spotify and quick-answer matchers), and scores such a message as the tool its code path runs. It stops at
+camera, lights, Spotify and quick-answer matchers), and scores such a message as the tool its code path runs.
+`--require LABEL=PCT` (repeatable) sets a bar for the run: each label's cases score at least PCT%, and no hard
+negative acts and no provider errors; it prints `INTENT_BAR_OK` and exits 0 only when all hold. It stops at
 the first tool call, so no tool runs; `open_app` is let through (it only opens toolsets), so the call it leads to is
 the one scored, and an `open_app` followed by a reply is labelled by the app the owner's words name (Slack, Notion
 or Linear for the workspace). It maps the tool to one label (`intent_eval.LABELS`; a reply that asks a question is `ask`, a plain
