@@ -93,6 +93,10 @@ view and does all its networking natively (ios/EveLink); this module is the daem
 * ``POST /api/link/controls/pika`` and ``GET /api/link/controls/pika/stream`` (pika.py, docs/pika.md; owner,
   2026-10-10: "can we build a controller for pika as an app"): hold-to-drive for the owner's robot car, and its
   video as multipart JPEGs, one viewer. Listed only with EVE_PIKA=1 and its config; 404 otherwise.
+* ``POST /api/link/controls/obsbot`` and ``GET /api/link/controls/obsbot/stream`` (obsbot_panel.py, docs/obsbot.md;
+  owner, 2026-10-11: "build in an app into eve for obsbot"): the OBSBOT webcam through OBSBOT Center's OSC, with
+  hold-to-turn arrows the way Pika drives, and its picture in Pika's multipart format. Listed while OBSBOT Center
+  is installed and EVE_OBSBOT isn't 0.
 * ``GET /api/link/today`` (link_today.py, docs/widget.md): the home-screen widget's one read. What needs the owner
   and what is going (the chief's open cards and the watches), the calendar's events left today and what plays now
   (Spotify, the TV), each source within its own short limit; one that is off or fails is left out and named in
@@ -151,12 +155,14 @@ JOB_ACTION_RE = re.compile(r"^/api/link/jobs/(c\d{1,6})/([a-z]{1,16})$")
 APP_OPEN_RE = re.compile(r"^/api/link/apps/([A-Za-z0-9_-]{1,80})/open$")
 CONTROLS_PATH = "/api/link/controls"
 CONTROL_RE = re.compile(r"^/api/link/controls/([a-z]{1,16})$")
-CONTROLS = ("lights", "spotify", "firetv", "memory", "notes", "pika")  # the Mini App server's attributes, each with ``panel(body)``
+CONTROLS = ("lights", "spotify", "firetv", "memory", "notes", "pika", "obsbot")  # the Mini App server's attributes, each with ``panel(body)``
 PIKA_STREAM_PATH = "/api/link/controls/pika/stream"   # pika.py: the car's video, one viewer
+OBSBOT_STREAM_PATH = "/api/link/controls/obsbot/stream"   # obsbot_panel.py: the webcam's picture, one viewer
 TODAY_PATH = "/api/link/today"           # link_today.py: the home-screen widget's one read
 # one kept upload's bytes, full size; anything after the prefix that is not 32 hex is a 404 (never a path)
 FILE_RE = re.compile(r"^/api/link/file/([^/]{0,64})$")
-PATHS = (TURN_PATH, MESSAGES_PATH, JOBS_PATH, APPS_PATH, UPLOAD_PATH, CONTROLS_PATH, TODAY_PATH, PIKA_STREAM_PATH)
+PATHS = (TURN_PATH, MESSAGES_PATH, JOBS_PATH, APPS_PATH, UPLOAD_PATH, CONTROLS_PATH, TODAY_PATH, PIKA_STREAM_PATH,
+         OBSBOT_STREAM_PATH)
 POST_PATHS = (TURN_PATH, UPLOAD_PATH)
 GRADES = ("auto", "instant", "think")    # telegram.GRADES: the speed dial
 JOB_ACTIONS = ("go", "done", "drop", "raise", "happened", "didnt", "hide")
@@ -210,7 +216,8 @@ NO_CONTROL = {"lights": "eve has no lights on this computer.",
               "firetv": "eve has no TV on this computer.",
               "memory": "eve's memory is off on this Mac (EVE_MEMORY).",
               "notes": "Your notes are off on this Mac (EVE_SECOND_BRAIN).",
-              "pika": "Pika isn't set up on this Mac (EVE_PIKA and pika.json)."}
+              "pika": "Pika isn't set up on this Mac (EVE_PIKA and pika.json).",
+              "obsbot": "The camera is off on this Mac (OBSBOT Center isn't installed, or EVE_OBSBOT=0)."}
 NO_MEMORY = "eve's memory is off on this Mac (EVE_MEMORY), so there is no conversation to read"
 
 PROMPT_PATH = Path(__file__).with_name("openui_prompt.txt")
@@ -757,12 +764,13 @@ class LinkChat:
         if path == CONTROLS_PATH or control is not None:
             await self._controls(apps, headers, reader, writer, control.group(1) if control else None)
             return
-        if path == PIKA_STREAM_PATH:
-            pika = getattr(apps, "pika", None) if apps is not None else None
-            if pika is None or not getattr(pika, "available", True):
-                await self._json(writer, 404, {"ok": False, "line": NO_CONTROL["pika"]})
+        if path in (PIKA_STREAM_PATH, OBSBOT_STREAM_PATH):
+            name = "pika" if path == PIKA_STREAM_PATH else "obsbot"
+            target = getattr(apps, name, None) if apps is not None else None
+            if target is None or not getattr(target, "available", True):
+                await self._json(writer, 404, {"ok": False, "line": NO_CONTROL[name]})
             else:
-                await pika.stream(writer)
+                await target.stream(writer)
             return
         if path == TODAY_PATH:
             await self._json(writer, 200, await self.today.gather(self._inlet(), apps))
@@ -1255,7 +1263,10 @@ class LinkChat:
                                            # Notes (link_notes.py): while the second brain is on and its vault is there
                                            "notes": notes is not None and bool(getattr(notes, "available", True)),
                                            # Pika, the car (pika.py): only with EVE_PIKA=1 and its config
-                                           "pika": get("pika") is not None})
+                                           "pika": get("pika") is not None,
+                                           # the OBSBOT webcam (obsbot_panel.py): while OBSBOT Center is installed
+                                           "obsbot": get("obsbot") is not None
+                                           and bool(getattr(get("obsbot"), "available", True))})
             return
         target = get(name)
         if target is not None and not getattr(target, "available", True):
@@ -1274,7 +1285,7 @@ class LinkChat:
             log.warning("link chat: the %s control failed (%s)", name, type(e).__name__)
             await self._json(writer, 500, {"ok": False, "line": "That didn't work just now."})
             return
-        if not (name == "pika" and body.get("action") == "drive"):     # a held drive beats every 150 ms
+        if body.get("action") not in ("drive", "hold"):     # a held arrow (Pika, the camera) beats every 150 ms
             log.info("link chat: %s %s from the app: %s", name, str(body.get("action") or "status")[:24],
                      "ok" if result.get("ok", True) else "refused")
         await self._json(writer, 200, result)

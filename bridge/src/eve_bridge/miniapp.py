@@ -365,6 +365,7 @@ class MiniAppServer:
         self.spotify: Any = None                          # spotify.Spotify: the Music card, or None (no login)
         self.firetv: Any = None                           # firetv.FireTV: the TV remote card, or None (no TV)
         self.pika: Any = None                             # pika.Pika: the car, or None (EVE_PIKA off, no pika.json)
+        self.obsbot: Any = None                           # obsbot_panel.ObsbotPanel: the webcam, or None (no OBSBOT Center)
         self._conns: set[asyncio.Task] = set()
         self._server: Optional[asyncio.base_events.Server] = None
         self.port = 0
@@ -410,6 +411,9 @@ class MiniAppServer:
         if self.pika is not None:
             with contextlib.suppress(Exception):
                 await self.pika.close("daemon stopping")  # the car stops and its slot is let go
+        if self.obsbot is not None:
+            with contextlib.suppress(Exception):
+                await self.obsbot.close()                 # the gimbal stops turning and the picture ends
         if self.link is not None:
             self.link.close()                             # its streams end with [DONE], not a cut:
             with contextlib.suppress(Exception):

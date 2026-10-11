@@ -85,7 +85,8 @@ screen but the controls below until there are messages.
   - An error says which part is off: "eve's chief is off." for Jobs.
   - **Apps** are eve's own controls (owner, 2026-10-08: "like the spotify,
     lights and remote"): **Notes** (2026-10-10, below), then **Music**, **Lights** and **Remote**, the Telegram
-    Mini App's three cards, then **Pika** (2026-10-10, the robot car; [pika.md](pika.md)), each listed only when
+    Mini App's three cards, then **Pika** (2026-10-10, the robot car; [pika.md](pika.md)) and **Camera**
+    (2026-10-11, the OBSBOT webcam; [obsbot.md](obsbot.md)), each listed only when
     this Mac has it. **Memory** (2026-10-09, owner: "make memories
     accessible through app") is in **Settings** since 2026-10-10 (owner: "move memories to settings"), not here. A row is an
     SF Symbol in a rounded square, the name, and one muted line ("Spotify",
@@ -113,6 +114,11 @@ screen but the controls below until there are messages.
       and a red Stop over it. Hold an arrow to drive; lift it and the car stops. One status line shows only when
       something is wrong (the car is busy or off, no video). Listed only with `EVE_PIKA=1` and
       `~/.config/eve-bridge/pika.json`. Safety and the one-slot rule: [pika.md](pika.md).
+    - **Camera** (`App/ObsbotView.swift`, `Shared/ObsbotControl.swift`, `obsbot_panel.py`; owner, 2026-10-11:
+      "build in an app into eve for obsbot"): the OBSBOT webcam's live picture, then arrows around a Center key
+      (hold to turn, lift to stop, Pika's beats), a zoom slider (sent when you let go), Sleep or Wake, Track and
+      Mode, and the presets saved in OBSBOT Center. Listed while OBSBOT Center is installed. See
+      [obsbot.md](obsbot.md).
     - **Music**: the artwork (Spotify's image host only), track, artists and
       album; previous, play/pause, next; a volume slider (sent when you let
       go); the device it plays on, as a menu that moves the music; and the
@@ -575,7 +581,7 @@ has none of it (checked: the strings `EVE_PAIR_URL`, `eveScreen` and
   screen open).
 - `-eveGrade auto | instant | think`: preselects the speed dial.
 - `-eveKeyboard YES` (with `chat`): puts the cursor in the composer.
-- `-eveControl notes|spotify|lights|firetv|pika|memory` (with `apps`): opens that control's sheet.
+- `-eveControl notes|spotify|lights|firetv|pika|obsbot|memory` (with `apps`): opens that control's sheet.
 - `-eveNote <vault path>` (with `-eveControl notes`): opens that note's page.
 - `-eveActivity listening|thinking|speaking|waiting|notes`: puts up the call's Live Activity in that phase
   (simulator screenshots leave the Dynamic Island out; check it on a phone).
@@ -597,7 +603,9 @@ same one retry at a new address as the chat:
 | `POST /api/link/jobs` | New job. Body `{"goal", "detail"?, "client_id"?}`: goal 1 to 1000 characters after trimming, detail at most 2000, client_id at most 64; a JSON object of at most 64 kB. The words are heard as an app turn, as `POST /api/link/turn` hears typed words, led by `"Take this on as a job: "` (`link_chat.JOB_LEAD`, which names no act, so it never grounds a one-way step) and the details after `"Details: "`. The brain's own `take_on` files the card, with its parse, door floor, backbrief and every chief rule; nothing in the endpoint files or approves anything. The request waits for that turn (90 s at most) and answers `{"ok": true, "job": <one card, as GET gives it>, "said": [...]}` for the card that turn's own `take_on` filed (`TelegramInlet.app_filed`, keyed by the app turn's id; a card another turn files during the wait is never returned), or `{"ok": false, "reason", "said"}` when it filed none (`said`: eve's lines on the turn, OpenUI made plain). The same `client_id` within 10 minutes waits for the first request's turn, never a second card. 503 when the chief is off or the chat is not running; 400 or 413 for a bad body. |
 | `POST /api/link/jobs/<id>/<go\|done\|drop\|raise\|happened\|didnt>` | The chief's own `approve` / `done` / `drop` / `raise_budget` / `happened` / `didnt`, and its dict: `{"ok": true, ...}` or `{"ok": false, "reason": ...}`. A Go here is the owner's yes, as "go c12" in Telegram, and may carry `{"rev": n}`. A Go on a card whose act may already have happened is refused (`ok: false`); answer `happened` or `didnt` first. |
 | `POST /api/link/jobs/<id>/hide` | A finished job leaves the Work list for good: swipe left on it, Delete in its sheet, or Clear finished in the bar. Only the list forgets it (`~/.config/eve-bridge/chat/hidden-jobs.json`); the chief's ledger keeps the card. An open job is refused (`ok: false`): Drop it first. |
-| `GET /api/link/controls` | `{"lights": [{"name", "room"?}], "spotify": bool, "firetv": bool, "memory": bool, "notes": bool, "pika": bool}`: which of the Mini App's Lights, Music and TV remote cards, the Memory card, Notes and Pika this Mac has. |
+| `GET /api/link/controls` | `{"lights": [{"name", "room"?}], "spotify": bool, "firetv": bool, "memory": bool, "notes": bool, "pika": bool, "obsbot": bool}`: which of the Mini App's Lights, Music and TV remote cards, the Memory card, Notes, Pika and the camera this Mac has. |
+| `POST /api/link/controls/obsbot` | The OBSBOT webcam (`obsbot_panel.ObsbotPanel`): `{"action": "status"}`, `{"action": "hold", "dir": "up"\|"down"\|"left"\|"right", "hold"}` every 150 ms while held, `{"action": "stop", "hold"}`, `{"action": "move", "pan", "pitch"}`, `center`, `wake`, `sleep`, `{"action": "zoom", "level"}`, `{"action": "track", "on"}`, `{"action": "mode", "name"}`, `{"action": "preset", "n"}`, `close`; `{"ok", "line", ...}`. 404 when OBSBOT Center isn't installed or `EVE_OBSBOT=0`. See [obsbot.md](obsbot.md). |
+| `GET /api/link/controls/obsbot/stream` | The webcam's picture as `multipart/x-mixed-replace` JPEGs (Pika's format), the fallback when WebRTC (`{"action": "rtc", "sdp"}` on the panel) can't connect. Any number of viewers share one capture. 503 `{"ok": false, "line"}` when the camera or the camera permission is missing. |
 | `POST /api/link/controls/pika` | Pika, the car (`pika.Pika`): `{"action": "drive", "dir": "forward"\|"back"\|"left"\|"right", "hold"}` every 150 ms while held, `{"action": "stop", "hold"}`, `{"action": "close"}` and `{"action": "status"}`; `{"ok", "line", "stopped"?}`. 404 unless `EVE_PIKA=1` and its config. See [pika.md](pika.md). |
 | `GET /api/link/controls/pika/stream` | The car's video as `multipart/x-mixed-replace` JPEGs, chunked, one viewer (the newest wins); 503 `{"ok": false, "line"}` when the camera is off or busy. |
 | `POST /api/link/controls/notes` | Notes (`link_notes.NotesPanel` over `second_brain`): `{"action": "list"}` (`notes: [{path, folder, title, preview, modified}]`, newest first, and `folders`), `{"action": "read", "path"}` (`body` under the frontmatter, `front`, `revision`, `editable`, `undo_id`), `{"action": "save", "path", "revision", "body"}` (the frontmatter kept; a stale revision is refused), `{"action": "undo", "path", "revision", "undo_id"}`, `{"action": "create", "folder", "title", "body"?}`, `{"action": "delete", "path", "revision"}` (into `.eve-trash/`, `trash_id` back), `{"action": "restore", "trash_id"}`, `{"action": "move", "path", "into"}` and `{"action": "search", "query"}`. Paths that leave the vault or enter a hidden folder are refused. 404 while the second brain is off. |

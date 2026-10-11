@@ -1497,6 +1497,13 @@ class Daemon:
                 server.pika = pika_mod.make_pika()
             except Exception:  # noqa: BLE001 — a car that cannot load costs the car, never the daemon
                 log.exception("pika: could not load; Pika is off this run")
+            from . import obsbot_panel
+
+            # the OBSBOT webcam (obsbot_panel.py, docs/obsbot.md): while OBSBOT Center is installed, EVE_OBSBOT=0 off
+            try:
+                server.obsbot = obsbot_panel.make_panel()
+            except Exception:  # noqa: BLE001
+                log.exception("obsbot: could not load; the camera is off this run")
             server.calls = PhoneCalls(
                 lambda init_data: miniapp.check_init_data(init_data, cfg.token, cfg.owner_ids),
                 getattr(self, "_telegram", None), make_voice())

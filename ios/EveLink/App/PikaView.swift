@@ -305,8 +305,9 @@ final class PikaFeed: ObservableObject {
     }
 }
 
-/// URLSession's delegate for the stream: frames as they complete, and why the stream ended.
-private final class MJPEGReceiver: NSObject, URLSessionDataDelegate, @unchecked Sendable {
+/// URLSession's delegate for the stream: frames as they complete, and why the stream ended. The camera's picture
+/// (ObsbotView.swift) uses it too, with its own fallback line.
+final class MJPEGReceiver: NSObject, URLSessionDataDelegate, @unchecked Sendable {
     enum Event: Sendable {
         case frame(Data, Double?)          // the JPEG and its X-Stamp
         case ended(String?)
@@ -316,8 +317,10 @@ private final class MJPEGReceiver: NSObject, URLSessionDataDelegate, @unchecked 
     private let lock = NSLock()
     private var splitter = MJPEGSplitter()
     private var refused: Data?             // a non-200 answer's body, for its line
+    private let fallback: String
 
-    init(emit: @escaping @Sendable (Event) -> Void) {
+    init(fallback: String = "Pika's video isn't available.", emit: @escaping @Sendable (Event) -> Void) {
+        self.fallback = fallback
         self.emit = emit
     }
 
@@ -344,7 +347,7 @@ private final class MJPEGReceiver: NSObject, URLSessionDataDelegate, @unchecked 
         let body = lock.withLock { refused }
         let obj = body.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
         let line = (obj?["line"] as? String).flatMap { $0.isEmpty ? nil : $0 }
-            ?? (body != nil ? "Pika's video isn't available." : nil)
+            ?? (body != nil ? fallback : nil)
         emit(.ended(line))
     }
 }

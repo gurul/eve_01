@@ -303,6 +303,7 @@ private struct ControlRow: View {
         case .memory: "What eve remembers"
         case .notes: "Your second brain"
         case .pika: "Drive the car"
+        case .obsbot: "OBSBOT webcam"
         }
     }
 }

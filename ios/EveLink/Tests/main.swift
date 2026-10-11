@@ -720,6 +720,41 @@ let pikaVideo = ControlsRequests.pikaStream(ctlEP)
 check(pikaVideo.url?.path == "/api/link/controls/pika/stream" && pikaVideo.httpMethod == "GET"
       && pikaVideo.value(forHTTPHeaderField: "Authorization") == "Bearer tok"
       && !(pikaVideo.url?.absoluteString.contains("tok") ?? true), "the video asks with the token in the header only")
+// The OBSBOT webcam (Shared/ObsbotControl.swift, obsbot_panel.py): an Apps row only when the Mac says so, after Pika.
+let withCam = ControlsInfo.decode(Data(#"{"lights":[],"spotify":false,"firetv":true,"memory":true,"notes":false,"pika":true,"obsbot":true}"#.utf8))
+check(withCam?.apps == [.firetv, .pika, .obsbot], "the camera is listed when the Mac has it, after Pika")
+check(withPika?.obsbot == false && !(withPika?.apps.contains(.obsbot) ?? true), "no obsbot key: no Camera row")
+check(ControlKind.obsbot.title == "Camera" && ControlKind.obsbot.rawValue == "obsbot", "the control's name is the daemon's")
+var camHold = ObsbotHold()
+check(camHold.renew() == nil, "nothing held: no beat")
+check(camHold.press(.left, id: "a") == ObsbotCommand(action: "hold", dir: .left, hold: "a"), "a press turns")
+check(camHold.renew() == ObsbotCommand(action: "hold", dir: .left, hold: "a"), "the beat repeats the press")
+check(camHold.press(.up, id: "b").dir == .up && camHold.release(.left) == nil, "lifting a replaced arrow says nothing")
+check(camHold.release(.up) == ObsbotCommand(action: "stop", hold: "b") && camHold.renew() == nil, "lifting stops")
+_ = camHold.press(.down, id: "c")
+camHold.ended("c")
+check(!camHold.holding, "the Mac ending the press stops the beat")
+check(ObsbotHold.beat < .milliseconds(450 / 2), "two beats fit in the Mac's heartbeat window")
+let camBody = ObsbotCommand(action: "zoom", level: 40).body
+check(camBody["action"] as? String == "zoom" && camBody["level"] as? Int == 40 && camBody.count == 2, "zoom's body")
+let trackBody = ObsbotCommand(action: "track", on: false).body
+check(trackBody["on"] as? Bool == false && ObsbotCommand(action: "hold", dir: .right, hold: "h").body["dir"] as? String == "right",
+      "the bodies the daemon reads")
+let camStatus = ObsbotReply.decode(Data(#"{"ok":true,"line":"Tiny 3 awake.","camera":"Tiny 3","awake":true,"pan":12,"pitch":-4,"zoom":30,"presets":[{"n":1,"set":true,"name":"Desk"},{"n":2,"set":false,"name":""},{"n":3,"set":true,"name":""}],"modes":["single","desk"]}"#.utf8))
+check(camStatus?.pan == 12 && camStatus?.pitch == -4 && camStatus?.zoom == 30 && camStatus?.awake == true
+      && camStatus?.presets == [ObsbotPreset(n: 1, name: "Desk"), ObsbotPreset(n: 3, name: "Preset 3")]
+      && camStatus?.modes == ["single", "desk"], "a status read: where it points and only the saved presets")
+check(ObsbotReply.decode(Data(#"{"ok":false,"stopped":true,"line":""}"#.utf8))?.stopped == true
+      && ObsbotReply.decode(Data("[]".utf8)) == nil, "a refused beat, and a body that isn't an object")
+check(ObsbotModes.title("voice") == "Follow the voice" && ObsbotModes.title("new") == "New", "the modes' names")
+let camBeat = ControlsRequests.obsbot(ctlEP, ObsbotCommand(action: "hold", dir: .up, hold: "h"))
+check(camBeat.url?.absoluteString == "https://x.trycloudflare.com/api/link/controls/obsbot" && camBeat.httpMethod == "POST"
+      && camBeat.value(forHTTPHeaderField: "Authorization") == "Bearer tok" && camBeat.timeoutInterval <= 3
+      && ControlsRequests.obsbot(ctlEP, ObsbotCommand(action: "wake")).timeoutInterval >= 10,
+      "a beat is a short POST with the token; a wake may wait for the camera")
+let camVideo = ControlsRequests.obsbotStream(ctlEP)
+check(camVideo.url?.path == "/api/link/controls/obsbot/stream" && camVideo.httpMethod == "GET"
+      && !(camVideo.url?.absoluteString.contains("tok") ?? true), "the picture asks with the token in the header only")
 // The video: whole JPEGs between the markers, across reads, only the newest kept.
 func fakeJPEG(_ n: UInt8) -> Data { Data([0xFF, 0xD8, n, n, n, 0xFF, 0xD9]) }
 var splitter = MJPEGSplitter()

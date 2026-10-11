@@ -21,6 +21,7 @@ struct ControlSheet: View {
                 case .memory: MemoryControls(client: client)
                 case .notes: NotesControls(client: client)
                 case .pika: PikaControls(client: client)
+                case .obsbot: ObsbotControls(client: client)
                 }
             }
             .background(Color.eveBackground)
@@ -35,7 +36,7 @@ struct ControlSheet: View {
 }
 
 /// The muted line under a control: what the Mac said last. Read out by VoiceOver when it changes.
-private struct SaidLine: View {
+struct SaidLine: View {
     let text: String
     var error = false
 
@@ -1031,7 +1032,7 @@ struct MemoryControls: View {
     }
 }
 
-private struct PressStyle: ButtonStyle {
+struct PressStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .opacity(configuration.isPressed ? 0.55 : 1)

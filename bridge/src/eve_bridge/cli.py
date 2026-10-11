@@ -33,6 +33,9 @@ def main(argv: list[str] | None = None) -> int:
     if rest[:1] == ["firetv"]:
         from . import firetv
         return firetv.cli(rest[1:] or ["--help"])
+    if rest[:1] in (["obsbot"], ["cam"]):
+        from . import obsbot
+        return obsbot.cli(rest[1:] or ["--help"])
     parser = argparse.ArgumentParser(prog="eve-bridge")
     parser.add_argument("--version", action="version", version=f"eve-bridge {__version__}")
     sub = parser.add_subparsers(dest="cmd")
@@ -229,6 +232,15 @@ def main(argv: list[str] | None = None) -> int:
         add_help=False,
     )
     p_firetv.add_argument("firetv_args", nargs=argparse.REMAINDER)
+
+    p_obsbot = sub.add_parser(
+        "obsbot",
+        aliases=["cam"],
+        help="The OBSBOT Tiny 3 webcam through OBSBOT Center's OSC: setup, status, wake, sleep, move, nudge, "
+             "center, zoom, fov, preset, track, mode. See docs/obsbot.md",
+        add_help=False,
+    )
+    p_obsbot.add_argument("obsbot_args", nargs=argparse.REMAINDER)
 
     p_chrome = sub.add_parser(
         "chrome-profile",

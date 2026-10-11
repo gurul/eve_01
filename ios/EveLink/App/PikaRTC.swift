@@ -31,7 +31,8 @@ final class PikaRTC: NSObject, @unchecked Sendable {
     }
 
     /// Offer, send the offer through the Mac's panel, and wait for the channel to open. False: use the tunnel.
-    func connect(_ client: WorkClient) async -> Bool {
+    /// `answer` sends the offer to the panel that serves this video (Pika's by default; the camera's in ObsbotView).
+    func connect(_ client: WorkClient, answer ask: (@Sendable (String) async -> String?)? = nil) async -> Bool {
         let config = RTCConfiguration()
         config.iceServers = [RTCIceServer(urlStrings: [Self.stun])]
         config.sdpSemantics = .unifiedPlan
@@ -61,7 +62,10 @@ final class PikaRTC: NSObject, @unchecked Sendable {
         for _ in 0..<40 where pc.iceGatheringState != .complete {
             try? await Task.sleep(for: .milliseconds(50))
         }
-        guard !isEnded, let local = pc.localDescription?.sdp, let answer = await client.pikaAnswer(local),
+        guard !isEnded, let local = pc.localDescription?.sdp else { return fail() }
+        let answer: String?
+        if let ask { answer = await ask(local) } else { answer = await client.pikaAnswer(local) }
+        guard let answer,
               !isEnded, await set(pc, remote: RTCSessionDescription(type: .answer, sdp: answer)) else {
             return fail()
         }

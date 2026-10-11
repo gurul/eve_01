@@ -3,7 +3,7 @@
 // and answers are exactly the Mini App's (miniapp_page.html). Foundation only, so Tests/main.swift checks it on the Mac.
 //
 //   GET  /api/link/controls             {"lights": [{"name", "room"?}], "spotify": bool, "firetv": bool, "memory": bool,
-//                                        "notes": bool, "pika": bool}
+//                                        "notes": bool, "pika": bool, "obsbot": bool}
 //   POST /api/link/controls/lights      {"action": "status"} | {"action": "set", "target", "power"|"color"|"brightness"}
 //   POST /api/link/controls/spotify     {"action": "status"|"play"|"pause"|"next"|"previous"|"volume"|"transfer"|"mode"}
 //   POST /api/link/controls/firetv      {"action": "status"|"up"|...|"volume"|"volume_change"|"open_app"|"power_on"...}
@@ -11,12 +11,13 @@
 //                                        "query"?, "token"?, "text"?}
 //                                       (link_memory.py)
 //   POST /api/link/controls/pika        hold-to-drive for the car, and its video (PikaDrive.swift, pika.py)
+//   POST /api/link/controls/obsbot      the OBSBOT webcam, and its picture (ObsbotControl.swift, obsbot_panel.py)
 //   404 with {"ok": false, "line"} for a control this Mac does not have.
 import Foundation
 
 /// One of eve's controls, in the order the Work view lists them.
 enum ControlKind: String, CaseIterable, Sendable, Identifiable {
-    case notes, spotify, lights, firetv, pika, memory
+    case notes, spotify, lights, firetv, pika, obsbot, memory
 
     var id: String { rawValue }
 
@@ -28,6 +29,7 @@ enum ControlKind: String, CaseIterable, Sendable, Identifiable {
         case .memory: "Memory"
         case .notes: "Notes"
         case .pika: "Pika"
+        case .obsbot: "Camera"
         }
     }
 
@@ -40,6 +42,7 @@ enum ControlKind: String, CaseIterable, Sendable, Identifiable {
         case .memory: "brain.head.profile"
         case .notes: "doc.text"
         case .pika: "car"
+        case .obsbot: "web.camera"
         }
     }
 }
@@ -58,6 +61,7 @@ struct ControlsInfo: Equatable, Sendable {
     var memory: Bool = false        // the Memory card (2026-10-09): on while the Mac's memory is on
     var notes: Bool = false         // Notes (2026-10-10, link_notes.py): on while the second brain's vault is there
     var pika: Bool = false          // Pika, the car (2026-10-10, pika.py): only with EVE_PIKA=1 and its config
+    var obsbot: Bool = false        // the OBSBOT webcam (2026-10-11, obsbot_panel.py): while OBSBOT Center is installed
 
     var available: [ControlKind] {
         ControlKind.allCases.filter { kind in
@@ -68,6 +72,7 @@ struct ControlsInfo: Equatable, Sendable {
             case .memory: memory
             case .notes: notes
             case .pika: pika
+            case .obsbot: obsbot
             }
         }
     }
@@ -84,7 +89,8 @@ struct ControlsInfo: Equatable, Sendable {
         }
         return ControlsInfo(lights: lights, spotify: obj["spotify"] as? Bool ?? false,
                             firetv: obj["firetv"] as? Bool ?? false, memory: obj["memory"] as? Bool ?? false,
-                            notes: obj["notes"] as? Bool ?? false, pika: obj["pika"] as? Bool ?? false)
+                            notes: obj["notes"] as? Bool ?? false, pika: obj["pika"] as? Bool ?? false,
+                            obsbot: obj["obsbot"] as? Bool ?? false)
     }
 }
 

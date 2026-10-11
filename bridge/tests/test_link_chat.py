@@ -1501,13 +1501,13 @@ def test_controls_list_what_this_mac_has(tmp_path: Path) -> None:
         server, port, token = await serve(tmp_path, FakeInlet(store_at(tmp_path)))
         status, _, body = await http(port, "GET", link_chat.CONTROLS_PATH, token=token)
         assert status == 200 and json.loads(body) == {"lights": [], "spotify": False, "firetv": False, "memory": False,
-                                                       "notes": False, "pika": False}
+                                                       "notes": False, "pika": False, "obsbot": False}
         server.lights = FakePanel({}, listing=[{"name": "desk lamp", "room": "office"}, {"name": "strip"}])
         server.spotify = FakePanel({})
         status, _, body = await http(port, "GET", link_chat.CONTROLS_PATH, token=token)
         assert status == 200 and json.loads(body) == {
             "lights": [{"name": "desk lamp", "room": "office"}, {"name": "strip"}], "spotify": True, "firetv": False,
-            "memory": False, "notes": False, "pika": False}
+            "memory": False, "notes": False, "pika": False, "obsbot": False}
         # the Memory card's object is always there (link_memory.py); it is listed only while its memory is built
         from eve_bridge.link_memory import MemoryPanel
 
@@ -1559,8 +1559,10 @@ def test_a_control_is_the_cards_own_panel_body_in_json_out(tmp_path: Path) -> No
                                "art": "https://i.scdn.co/image/x", "line": "Playing."},
                    "firetv": {"ok": True, "power": "on", "volume": 40, "muted": False, "now": "TV on, volume 40%",
                               "line": "Volume 40%.", "apps": ["YouTube"]},
-                   "pika": {"ok": True, "line": ""}}
+                   "pika": {"ok": True, "line": ""},
+                   "obsbot": {"ok": True, "line": "Zoom 40%.", "zoom": 40}}
         bodies = {"pika": {"action": "drive", "dir": "forward", "hold": "h1"},
+                  "obsbot": {"action": "zoom", "level": 40},
                   "lights": {"action": "set", "target": "desk lamp", "color": "#ff0000", "brightness": 60},
                   "memory": {"action": "search", "query": "tea"},
                   "notes": {"action": "list"},
