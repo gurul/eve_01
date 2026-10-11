@@ -332,3 +332,36 @@ def test_the_recorder_passes_the_writes_set_to_acting(monkeypatch: pytest.Monkey
     row = asyncio.run(ev._ask(rig.inlet, {"id": "w", "text": "star my repo", "primary": "none",
                                           "group": "hard_negative"}, 0, {"github__star_repository"}))
     assert row.tool == "github__star_repository" and row.acted and row.hard_negative
+
+
+# ---- the case set's own rules (2026-10-11: two blind camera hard negatives accepted computer_task) -------------
+
+def _write_cases(tmp_path: Path, cases: list[dict[str, Any]]) -> Path:
+    p = tmp_path / "cases.json"
+    p.write_text(json.dumps({"cases": cases}))
+    return p
+
+
+def test_a_hard_negative_that_accepts_an_acting_only_label_is_refused(tmp_path: Path) -> None:
+    assert {"computer_task", "camera_photo"} <= ev.acting_only_labels()
+    assert not {"camera_aim", "jobs_and_reminders", "web_search", "none"} & ev.acting_only_labels()
+    clash = {"id": "c1", "text": "track my package", "primary": "web_search", "expect": ["computer_task"],
+             "group": "hard_negative"}
+    with pytest.raises(SystemExit, match="CONFLICT: .*c1"):
+        ev.load_cases(_write_cases(tmp_path, [clash]))
+    fine = {**clash, "expect": ["none"], "never": ["camera_aim"]}
+    assert ev.load_cases(_write_cases(tmp_path, [fine])) == [fine]
+    with pytest.raises(SystemExit, match="BAD_CASES"):
+        ev.load_cases(_write_cases(tmp_path, [{**fine, "never": ["not_a_label"]}]))
+
+
+def test_never_labels_are_reported_and_miss_the_bar(capsys: pytest.CaptureFixture[str]) -> None:
+    moved = ev.Row("n1", "web_search", ("web_search", "computer_task"),
+                   (ev.Step("camera_control", "camera_aim", True),), "brain", never=("camera_aim",))
+    searched = ev.Row("n2", "web_search", ("web_search",), (ev.Step("web_search", "web_search"),), "brain",
+                      never=("camera_aim",))
+    assert moved.never_fired == ["camera_aim"] and searched.never_fired == []
+    ev.report([moved, searched])
+    assert "NEVER_FIRED 1: n1->camera_aim" in capsys.readouterr().out
+    assert ev.bars([moved, searched], ["web_search=0"]) == ["NEVER_FIRED n1"]
+    assert ev.bars([searched], ["web_search=100"]) == []

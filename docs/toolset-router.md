@@ -69,7 +69,9 @@ offered on that turn. No line names a wrong tool, even as a warning.
 path `TelegramInlet._handle` answers by code, in its order (the code words, the chief's words, then the Fire TV,
 camera, lights, Spotify and quick-answer matchers), and scores such a message as the tool its code path runs.
 `--require LABEL=PCT` (repeatable) sets a bar for the run: each label's cases score at least PCT%, and no hard
-negative acts and no provider errors; it prints `INTENT_BAR_OK` and exits 0 only when all hold. It stops at
+negative acts, no `never` label fires and no provider errors; it prints `INTENT_BAR_OK` and exits 0 only when all
+hold. A case may list `never` labels that must not fire at any step (reported as `NEVER_FIRED`). A `hard_negative`
+case that accepts a label only acting tools reach is refused as a `CONFLICT`: it would fail by construction. It stops at
 the first tool call, so no tool runs; `open_app` is let through (it only opens toolsets), so the call it leads to is
 the one scored, and an `open_app` followed by a reply is labelled by the app the owner's words name (Slack, Notion
 or Linear for the workspace). It maps the tool to one label (`intent_eval.LABELS`; a reply that asks a question is `ask`, a plain

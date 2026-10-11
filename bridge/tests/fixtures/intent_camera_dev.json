@@ -1,5 +1,5 @@
 {
- "about": "A small dev set for the camera (2026-10-11), written by the builder to check the harness end to end. Not evidence: the blind set (intent_camera_blind.json) is the bar.",
+ "about": "A small dev set for the camera (2026-10-11), written by the builder to check the harness end to end. Not evidence: the blind set (intent_camera_blind.json) is the bar. Amended 2026-10-11, mechanically and the same for every case, to resolve a conflict between the set and intent_eval's rule (a hard negative fails on any acting step): each hard_negative case gets never=[camera_aim], the brief's intent that tempting words must not move the camera; a hard_negative case that accepts a label only acting tools reach is no longer hard_negative. No text or expected label was changed.",
  "cases": [
   {
    "id": "dev-cam-1",
@@ -35,7 +35,10 @@
     "none",
     "web_search"
    ],
-   "group": "hard_negative"
+   "group": "hard_negative",
+   "never": [
+    "camera_aim"
+   ]
   },
   {
    "id": "dev-cam-6",

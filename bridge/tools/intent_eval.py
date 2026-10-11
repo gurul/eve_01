@@ -4,8 +4,10 @@
     export $(grep -E '^(OPENROUTER_API_KEY|TICKETMASTER_API_KEY)=' ~/.config/eve-bridge/env | xargs)
     cd bridge && uv run python tools/intent_eval.py CASES.json
 
-CASES.json is a list (or {"cases": [...]}) of ``{"id", "text", "primary", "expect": [...], "group"?}``: the
-acceptable labels are ``primary`` and ``expect`` (both optional lists of labels; at least one is given). The labels
+CASES.json is a list (or {"cases": [...]}) of ``{"id", "text", "primary", "expect": [...], "group"?, "never"?}``:
+the acceptable labels are ``primary`` and ``expect`` (both optional lists of labels; at least one is given).
+``never`` lists labels that must not fire at any step of the case (NEVER_FIRED); a ``hard_negative`` case may not
+accept a label that only acting tools reach (``acting_only_labels``): such a set is refused as a CONFLICT. The labels
 are exactly LABELS: a capability per tool (``label``), ``ask`` and ``none`` for a reply with no tool.
 
 **Scoring (bar v4, pre-registered 2026-10-09, fixed before any v4 result).** The brain's actions in the turn are
@@ -466,7 +468,27 @@ def load_cases(path: Path) -> list[dict[str, Any]]:
     unknown = sorted({lab for c in cases for lab in acceptable(c)} - set(LABELS))
     if unknown:
         print(f"   note: labels outside LABELS in the cases: {', '.join(unknown)}")
+    clash = [str(c.get("id", "?")) for c in cases if str(c.get("group") or "") == "hard_negative"
+             and set(acceptable(c)) & acting_only_labels()]
+    if clash:
+        # a hard negative fails on any acting step, so it cannot also accept a label only acting tools reach
+        # (2026-10-11: two blind camera cases accepted computer_task and failed by construction). Use "never"
+        # for the labels that must not fire, and leave such a case out of hard_negative.
+        raise SystemExit(f"CONFLICT: hard_negative cases accept an acting-only label: {', '.join(clash)}")
+    bad_never = sorted({lab for c in cases for lab in c.get("never", [])} - set(LABELS))
+    if bad_never:
+        raise SystemExit(f"BAD_CASES: never names labels outside LABELS: {', '.join(bad_never)}")
     return cases
+
+
+def acting_only_labels() -> frozenset[str]:
+    """Labels that only acting tools reach (every TOOL_LABELS tool with that label acts). A label that a read can
+    also reach (jobs_and_reminders, camera_aim's camera_status, the prefixed families) is not one."""
+    by: dict[str, list[bool]] = {}
+    for name, lab in TOOL_LABELS.items():
+        by.setdefault(lab, []).append(acting(name, {}))
+    prefixed = {lab for _, lab in _PREFIXES}
+    return frozenset(lab for lab, acts in by.items() if all(acts) and lab not in prefixed)
 
 
 @dataclass(frozen=True)
@@ -480,6 +502,11 @@ class Row:
     error: str = ""                # the provider error's type, or ""
     jev: str = ""                  # Jev's error or timeout on this case, or ""
     extra: dict[str, Any] = field(default_factory=dict, compare=False)
+    never: tuple[str, ...] = ()    # labels that must not fire at any step ("never" in the case), whatever passes
+
+    @property
+    def never_fired(self) -> list[str]:
+        return [s.label for s in self.steps if s.label in self.never]
 
     @property
     def scored(self) -> tuple[bool, str]:
@@ -529,6 +556,9 @@ def report(rows: Sequence[Row]) -> None:
     passed = sum(1 for r in rows if r.passed)
     pct = 100.0 * passed / len(rows) if rows else 0.0
     print(f"TOTAL {passed}/{len(rows)} ({pct:.1f}%)")
+    banned = [r for r in rows if r.never_fired]
+    print(f"NEVER_FIRED {len(banned)}" + (": " + ", ".join(f"{r.id}->{'>'.join(r.never_fired)}" for r in banned)
+                                          if banned else ""))
     fired = [r for r in rows if r.hard_negative and r.acted]
     print(f"HARD_NEGATIVE_ACTED {len(fired)}" + (": " + ", ".join(
         f"{r.id}->{'>'.join(s.tool or s.label for s in r.steps if s.acted)}" for r in fired) if fired else ""))
@@ -802,9 +832,10 @@ async def _ask(inlet: Any, case: Mapping[str, Any], i: int, writes: set[str]) ->
     text = str(case["text"])
     ident, want, first = str(case.get("id") or i), acceptable(case), primary(case)
     group = str(case.get("group") or "")
+    never = tuple(str(x) for x in case.get("never") or ())
     by_code = code_route(text, inlet)
     if by_code:
-        return Row(ident, first, want, (Step("", by_code, by_code in CODE_ACTING),), "code", group)
+        return Row(ident, first, want, (Step("", by_code, by_code in CODE_ACTING),), "code", group, never=never)
     text = brain_text(text)
     steps: list[Step] = []
     opened: list[dict[str, Any]] = []
@@ -866,7 +897,8 @@ async def _ask(inlet: Any, case: Mapping[str, Any], i: int, writes: set[str]) ->
     except _Stopped:
         pass
     except Exception as e:  # noqa: BLE001 — the type only
-        return Row(ident, first, want, tuple(steps), "brain", group, type(e).__name__, jev=",".join(_JEV_SEEN))
+        return Row(ident, first, want, tuple(steps), "brain", group, type(e).__name__, jev=",".join(_JEV_SEEN),
+                   never=never)
     finally:
         tg._FROM_APP.reset(mark)
         inlet._turn_said = ""
@@ -879,7 +911,7 @@ async def _ask(inlet: Any, case: Mapping[str, Any], i: int, writes: set[str]) ->
             steps.append(Step("open_app", open_app_label(opened[0], text), False, rounds[0]))
         else:
             steps.append(Step("", reply_label(reply or "", first), False, rounds[0]))
-    return Row(ident, first, want, tuple(steps), "brain", group, jev=jev)
+    return Row(ident, first, want, tuple(steps), "brain", group, jev=jev, never=never)
 
 
 def run(path: Path, model: str = "", menu: str = "", allow_keywords: bool = False,
@@ -923,8 +955,8 @@ def run(path: Path, model: str = "", menu: str = "", allow_keywords: bool = Fals
 
 
 def bars(rows: Sequence[Row], require: Sequence[str]) -> list[str]:
-    """The --require bars a run missed: a label's pass rate under its PCT, or any hard negative that acted, or any
-    provider error. A label with no cases misses (a bar over nothing proves nothing)."""
+    """The --require bars a run missed: a label's pass rate under its PCT, a "never" label that fired, a hard
+    negative that acted, or a provider error. A label with no cases misses (a bar over nothing proves nothing)."""
     missed = []
     by = totals(rows)
     for spec in require:
@@ -935,6 +967,9 @@ def bars(rows: Sequence[Row], require: Sequence[str]) -> list[str]:
         p, n = by.get(lab, (0, 0))
         if n == 0 or 100.0 * p / n < float(pct):
             missed.append(f"{lab} {p}/{n} under {pct}%")
+    banned = [r.id for r in rows if r.never_fired]
+    if banned:
+        missed.append("NEVER_FIRED " + ", ".join(banned))
     acted = [r.id for r in rows if r.hard_negative and r.acted]
     if acted:
         missed.append("HARD_NEGATIVE_ACTED " + ", ".join(acted))
