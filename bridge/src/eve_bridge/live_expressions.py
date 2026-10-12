@@ -22,7 +22,16 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from .eye_model import LABELS, WARM_STATE, ConversationContext, JevEyeModel, LiveEyeModel
+from .eye_model import (
+    LABELS,
+    TTL_MAX_MS,
+    TTL_MIN_MS,
+    TTL_MS,
+    WARM_STATE,
+    ConversationContext,
+    JevEyeModel,
+    LiveEyeModel,
+)
 
 log = logging.getLogger(__name__)
 
@@ -45,6 +54,11 @@ def backend_from_env(env=None) -> str:
         log.warning("expressions: EVE_EXPRESSION_BACKEND=%r is not one of %s; using %s", value[:20], BACKENDS,
                     DEFAULT_BACKEND)
     return value if value in BACKENDS else DEFAULT_BACKEND
+
+
+def expression_ttl_ms(label: str, age_s: float) -> int:
+    """The label's hold (eye_model.TTL_MS) less the time the turn has already waited, in TTL_MIN_MS..TTL_MAX_MS."""
+    return max(TTL_MIN_MS, min(TTL_MAX_MS, int(TTL_MS.get(label, TTL_MIN_MS) - age_s * 1000)))
 
 
 class LiveExpressions:
@@ -226,7 +240,7 @@ class LiveExpressions:
                     if not self.enabled or generation != self.generation or age > 4 or not self.connected():
                         self.dropped += 1
                         continue
-                    ttl = max(500, min(4000, int((4 - age) * 1000)))
+                    ttl = expression_ttl_ms(label, age)
                     cmd = {"cmd": "expression", "id": event, "label": label, "ttl_ms": ttl, "chirp": False}
                     if await self.send(cmd) is False:
                         raise RuntimeError("expression send failed")

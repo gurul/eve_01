@@ -73,7 +73,8 @@ simulator; not yet tried on the owner's iPhone.
   and each caption is read as "You: …" or "eve: …".
 - **Reduce Motion**: the eyes do not blink, glance or bounce. Only their
   openness follows the call. An expression's shape changes at once, with no
-  easing.
+  easing, and holds its end pose: no bounce, sway, nod or drift, and its marks
+  (z's, "?", sweat drop, sparkles, blush) shown still.
 
 ## The hands-free call (not used by voice mode since 2026-10-08)
 
@@ -172,7 +173,9 @@ show.
 - `id`: a nonzero uint32 that only grows (seeded from the clock, so it grows
   across daemon restarts; it wraps at 2³²).
 - `label`: exactly one of calm, happy, curious, affection, surprised, sad,
-  worried, skeptical, frustrated, excited, wink (`eye_model.LABELS`).
+  worried, skeptical, frustrated, excited, wink, laughing, sleepy, confused,
+  thinking, sheepish, relieved, proud, flattered (`eye_model.LABELS`; the last
+  eight since 2026-10-12, `docs/expressions-design.json`).
 - `ttl_ms`: 500 to 4000, the board's 4 s less the time the pick took.
 - `said`: on a pick for one of eve's sentences, that sentence, exactly as its
   `said` caption message carried it (`Call.said_for`). The owner's words and a
@@ -183,8 +186,10 @@ show.
 
 - `CallSocket` decodes the message with `FaceExpressionRequest.decode`
   (`Shared/FaceExpression.swift`), by the board's rules (`data.h`): the id must
-  be a nonzero whole uint32, the label one of the eleven, `clear` a real
-  boolean, a missing `ttl_ms` means 4000, and `said` is kept only if it is a
+  be a nonzero whole uint32, the label one of the nineteen, `clear` a real
+  boolean, a missing `ttl_ms` means the label's own time (4000 for the board's
+  eleven; laughing 3000, sleepy 5000, confused, thinking and relieved 3500,
+  the rest 4000), and `said` is kept only if it is a
   non-blank string. Anything else is dropped. An
   older build ignores the message (`default: break`).
 - `Relay` hands it to `VoiceLevels.showExpression` while the phone has the
@@ -224,8 +229,55 @@ show.
     collapsed, a curved closed lid replaces it, and a lifted brow shows over the
     open eye (`FaceWink`, from `eyes.cpp`). There are no blinks or curiosity
     during the wink.
+- **The eight of 2026-10-12** (`docs/expressions-design.json`, "shape") add
+  two lids, motion and marks. Their timing is pure math in
+  `FaceExpressionLabel.pose(at:)` (seconds since the label showed, in board
+  px), which `FaceMotion` eases and `StackChanFace` draws:
+  - **flat** (sleepy, thinking, sheepish): a level upper lid. The top comes
+    down with a small 7 board px round at its ends, so it reads as a lid and
+    not a cropped box; the bottom stays where the rest eye's is.
+  - **droop + smile** (relieved): the outer droop at half of sad's depth over
+    a smile at 70% of happy's.
+  - A smile can be deeper or lighter than happy's: laughing 1.4 (70% cover,
+    and the eye's top and the lid arch together into an even crescent), proud
+    0.5, flattered 0.8.
+  - **laughing**: snaps into its crescent in about 120 ms (the others ease in
+    over about a third of a second), then both crescents bounce 4 px at 5 Hz
+    for 1.2 s, then 2 px at 2 Hz. No blinks.
+  - **sleepy**: 40 px slits; every 2.5 s the lids sag to 24 over 600 ms and
+    pop back; the gaze sinks 6 px; 400 ms blinks every 6 s; two white z's (14
+    and 20 px, the second starting 16 px further right) rise and drift right
+    over the right eye, 400 ms apart, so both show together for most of the nod.
+  - **confused**: the tilt swaps (104/80, then 80/104, 500 ms each, twice)
+    with an 8 px gaze sweep, then rests at 100/88; a 22 px "?" pops in over the pair
+    at 200 ms and tips 10 degrees toward the taller eye.
+  - **thinking**: looks up (22 px) and to the left for 1.6 s, then one 300 ms
+    saccade up and to the right, held. No blinks during the holds.
+  - **sheepish**: looks aside and down (10 px), two 2 px shuffles in the first
+    second, a 300 ms glance back at 2 s; a 15 px sweat drop slides 6 px down
+    the right eye's outer corner.
+  - **relieved**: both eyes shut into the wink's arched line and reopen over
+    700 ms, rising 4 px, then sink 6 px and hold.
+  - **proud**: one 4 px chin-up nudge, the gaze straight up 8 px, two sparkles
+    at the outer top corners (12 px arms) for about a second, twinkling again
+    every 1.75 s until the time to live ends; one deliberate 300 ms blink at
+    1.5 s.
+  - **flattered**: looks down 8 px, a shy 3 px sway at 1 Hz, "///" blush
+    strokes (20 px across, 3 px thick) on each outer, lower cheek.
+  - Where these differ from `docs/expressions-design.json` (thinking's and
+    sheepish's gaze heights, the mark sizes, relieved's smile, proud's
+    twinkle, laughing's snap, sleepy's z timing), a contact sheet at phone
+    scale showed the design's numbers did not read: thinking and sheepish
+    looked alike, and the marks were specks.
+  An expression that points the gaze owns it (the mood's glances wait). Marks
+  are drawn in the face's own white and grow in and out rather than fade;
+  when the expression ends they shrink away. Each id's motion runs from when it
+  first showed, and does not replay if the owner talks and it shows again.
 - Every shape eases in and out on critically damped springs (about a third of
-  a second). With **Reduce Motion** it changes at once, with no animation.
+  a second). That includes the scripted closures (relieved's exhale, proud's
+  blink): an expression cut off while the eyes are shut reopens them over a
+  few frames, not in one. With **Reduce Motion** it changes at once, with no
+  animation.
 - **VoiceOver** reads the face as its mood and the expression, for example
   "speaking, happy".
 
@@ -242,6 +294,17 @@ show.
 | frustrated | 70 × 70 | 94 | 16 | brow | 2 | no |
 | excited | 110 × 110 | 104 | 26 | smile | 1 | no |
 | wink | 96 × 96 | 96 | 22 | none (the wink) | 4 | no |
+| laughing | 94 × 94 | 100 | 22 | smile 1.4 | 3 (none) | no |
+| sleepy | 40 × 40 | 96 | 18 | flat | 6 (400 ms) | no |
+| confused | 100 × 88 | 92 | 22 | none | 3 | no |
+| thinking | 84 × 84 | 88 | 24 | flat | 3 | no |
+| sheepish | 78 × 78 | 92 | 22 | flat | 2 | no |
+| relieved | 86 × 86 | 98 | 26 | droop + smile | 4 | no |
+| proud | 80 × 80 | 100 | 24 | smile 0.5 | 3 | no |
+| flattered | 66 × 66 | 100 | 28 | smile 0.8 | 4 | no |
+
+The eight new rows are the phone's own until the firmware's `expression.h`
+gains them; `Tests/run.sh` checks the board's eleven against that file.
 
 Not verified yet: the shapes on the owner's iPhone in a real call (gate E6 in
 `docs/phone-eyes-gates.md`).
@@ -252,9 +315,9 @@ Not verified yet: the shapes on the owner's iPhone in a real call (gate E6 in
 |---|---|
 | `ios/EveLink/App/VoiceCall.swift` | The host: starts and ends the hands-free call, owns the meter, sets the status line, the face's tap and hold (`TalkGesture`, moved from the Talk sheet), Settings and the voice settings sheet. |
 | `ios/EveLink/App/VoiceModeView.swift` | The screen. It shows the levels and reports taps through closures; it does not own the call. |
-| `ios/EveLink/App/StackChanFace.swift` | The face (`StackChanFace`, drawn with `Canvas` once per frame in a `TimelineView(.animation)`), its motion (`FaceMotion`: blinks, glances and openness on critically damped springs), eve's expression drawn over it (per-eye height, width, corner, RoboEyes' lids, the wink) and the caption view. |
+| `ios/EveLink/App/StackChanFace.swift` | The face (`StackChanFace`, drawn with `Canvas` once per frame in a `TimelineView(.animation)`), its motion (`FaceMotion`: blinks, glances and openness on critically damped springs), eve's expression drawn over it (per-eye height, width, corner, RoboEyes' lids, the level lid, the wink, each label's motion and white marks) and the caption view. |
 | `ios/EveLink/App/VoiceLevels.swift` | The level meter, the captions and the expression: PCM in, `level`, `speaker`, `caption` and `expression` out. |
-| `ios/EveLink/Shared/FaceExpression.swift` | `FaceMood`, the eleven labels and their shapes (from `expression.h`), the message's decoding, `FaceExpressionState` (newer ids, ttl, when a shape may show) and `FaceWink`: pure, checked on the Mac. |
+| `ios/EveLink/Shared/FaceExpression.swift` | `FaceMood`, the nineteen labels and their shapes (the eleven from `expression.h`), each label's motion and marks (`pose(at:)`), the message's decoding, `FaceExpressionState` (newer ids, ttl, when a shape may show) and `FaceWink`: pure, checked on the Mac. |
 | `ios/EveLink/Shared/PhoneTurn.swift` | `SpeechOnset`, `HandsFree`, `VoiceStatus`: the pure logic, checked on the Mac. |
 | `ios/EveLink/Shared/Relay.swift` | `beginHandsFree`, `endHandsFree`, `muted`, `connected`, `callError`, `voiceLevels`, `handsFreeBackgrounded`, and the wait for queued playback before the mic reopens. |
 | `ios/EveLink/App/PhoneAudio.swift` | `earpiece`: the session's category without `.defaultToSpeaker`. |
@@ -318,7 +381,17 @@ and, with eve's audio queued ahead, that a pick for the next sentence waits for
 that sentence's sound, runs its ttl from there, and never shows if eve is
 flushed first. The face run (`FACE_OK`) builds the real `App/StackChanFace.swift`
 on the Mac and checks that `FaceMotion` settles each expression at its table
-height whatever the mood (surprised while thinking at 110/96, not 0.89).
+height whatever the mood (surprised while thinking at 110/96, not 0.89). For the
+eight new labels it checks the design's numbers; that each pose is a function of
+the time, bounded, free of jumps, and still (or looping) after its settle time;
+that Reduce Motion holds one pose with its marks still; that each mark belongs to
+its label only; each motion against the design's words; and that the board's
+eleven are unchanged; and that relieved or proud cut off while shut reopens over
+frames. `sh ios/EveLink/Tests/Face/render.sh` draws a contact sheet
+of all nineteen at 0.3, 2 and 3 s (3 s shows the settled poses) with the app's
+own drawing code, to `ios/EveLink/build/expressions.png`. `--phone` draws it at
+true phone scale (one pixel per point, each face in a 393 pt column), and
+`--only happy,proud` draws just those labels.
 
 `Tests/run.sh` also checks the hands-free logic (`VOICE_MODE_OK`): hiss never starts
 a turn, 120 ms of voice is not enough, 150 ms of voice starts it with the 0.5 s

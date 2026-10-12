@@ -23,7 +23,7 @@ Bar, PRE-REGISTERED 2026-10-12 before the new label set or its blind set exists:
   EXPECT: EYES_LEGACY_OK
 
 - [ ] X5: No personal data or token-shaped strings in the diff.
-  CHECK: git diff main | python3 -c "import re,sys; d=sys.stdin.read(); bad=[p for p in (r'guru\.lingamallu', r'@gmail\.com', r'guruchara[n]', r'Bearer [A-Za-z0-9_-]{20,}', r'sk-[A-Za-z0-9]{20,}', r'/Users/') if re.search(p, d)]; print(bad or 'DIFF_CLEAN'); sys.exit(1 if bad else 0)"
+  CHECK: git diff main | grep -v 'CHECK: git diff main' | python3 -c "import re,sys; d=sys.stdin.read(); bad=[p for p in (r'guru\.lingamallu', r'@gmail\.com', r'guruchara[n]', r'Bearer [A-Za-z0-9_-]{20,}', r'sk-[A-Za-z0-9]{20,}', r'/Users/') if re.search(p, d)]; print(bad or 'DIFF_CLEAN'); sys.exit(1 if bad else 0)"
   EXPECT: DIFF_CLEAN
 
 - [ ] X6: In voice mode on the owner's iPhone the new expressions show and read right.

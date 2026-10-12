@@ -1,17 +1,25 @@
-"""Conversation-aware eye choice: Jev picks one of eleven eye labels (default), or local Laya does.
+"""Conversation-aware eye choice: Jev picks one of nineteen eye labels (default), or local Laya does.
 
 Two models, one contract — ``predict(state) -> {"label", "probabilities" (in LABELS order), "ms"}``:
 
 * ``JevEyeModel`` (owner, 2026-09-24: "use jev for that too"): TypeSafe's Jev, asked ONE ``choice`` over the
-  eleven labels — its native shape (it ranks options; ask each model in the shape it is built for). Measured
-  on this Mac 2026-09-24 (tools/jev_eyes_eval.py, the 84 hand-written cases in tests/fixtures/emotion, both
-  pickers asked THIS eleven-label question and folded onto the sets' six labels the same way): Jev 62.5% on
-  the 48 scenario tests and 72.2% on the 36 confirmation cases, against 47.9% and 52.8% for untouched Laya;
-  200 ms p50 and about $0.00002 a call. 14 of Jev's 32 misses are the sets' "startled" read as
-  "surprised", which is the fold, not the eye. Jev is a network call: the state is the last turn or two of
-  conversation, and it leaves the Mac only while the owner has expressions enabled.
-* ``LiveEyeModel`` (``EVE_EXPRESSION_BACKEND=laya``): the original local Laya weights, eleven binary
-  questions. No weights are trained here. Kept for a Mac without network or without a Jev key.
+  labels — its native shape (it ranks options; ask each model in the shape it is built for). Measured on this
+  Mac 2026-09-24 with the then eleven labels (tools/jev_eyes_eval.py, the 84 hand-written cases in
+  tests/fixtures/emotion, both pickers asked the eleven-label question and folded onto the sets' six labels the
+  same way): Jev 62.5% on the 48 scenario tests and 72.2% on the 36 confirmation cases, against 47.9% and
+  52.8% for untouched Laya; 200 ms p50 and about $0.00002 a call. 14 of Jev's 32 misses are the sets'
+  "startled" read as "surprised", which is the fold, not the eye. Jev is a network call: the state is the last
+  turn or two of conversation, and it leaves the Mac only while the owner has expressions enabled.
+* ``LiveEyeModel`` (``EVE_EXPRESSION_BACKEND=laya``): the original local Laya weights, one binary question per
+  label. No weights are trained here. Kept for a Mac without network or without a Jev key.
+
+The eight labels after wink (owner, 2026-10-12: "also build more expressions") were chosen by a judge panel and
+a critic (docs/expressions-design.json) for how often the moment comes up, how well the face reads at phone size
+and how cleanly it separates from the labels next to it; wink's criterion lost "a joke" so laughing alone owns
+humour. They ship only on the bar pre-registered in docs/more-expressions-gates.md before any result existed: on
+a blind set, top-1 >= 65%, recall >= 55% for every label with five or more cases, p50 <= 400 ms and errors <= 2%;
+and on the 84 cases above, folded as on 2026-09-24, no more than five points below that baseline on either set.
+The order of LABELS is the wire contract with the phone's face (the original eleven first, the new eight after).
 """
 
 from __future__ import annotations
@@ -32,9 +40,25 @@ CRITERIA = {
     "skeptical": "doubt, disbelief or questioning a claim",
     "frustrated": "annoyed or fed up with a problem",
     "excited": "very enthusiastic, thrilled or eagerly anticipating",
-    "wink": "playful teasing, a joke or asking for a wink",
+    "wink": "playful teasing, a cheeky aside or asking for a wink",
+    "laughing": "laughter or finding something genuinely funny",
+    "sleepy": "sleepiness, drowsiness, bedtime or saying goodnight",
+    "confused": "not understanding what the owner means, or asking them to repeat or clarify",
+    "thinking": "Eve saying it needs a moment to think something over",
+    "sheepish": "an apology, an admitted mistake or a small embarrassing slip",
+    "relieved": "relief that a fear or problem turned out fine",
+    "proud": "pride in a finished task or a personal achievement",
+    "flattered": "being praised or complimented and feeling bashful",
 }
 LABELS = tuple(CRITERIA)
+# How long a label's face holds (docs/expressions-design.json; the original eleven keep 4 s). live_expressions
+# subtracts the turn's age and clamps the result to TTL_MIN_MS..TTL_MAX_MS.
+DEFAULT_TTL_MS = 4000
+TTL_MS = {label: DEFAULT_TTL_MS for label in LABELS} | {
+    "laughing": 3000, "sleepy": 5000, "confused": 3500, "thinking": 3500,
+    "sheepish": 4000, "relieved": 3500, "proud": 4000, "flattered": 4000,
+}
+TTL_MIN_MS, TTL_MAX_MS = 500, 6000
 QUESTION = {
     label: {
         "type": "noul",

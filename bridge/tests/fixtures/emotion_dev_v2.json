@@ -1,0 +1,301 @@
+{
+ "provenance": "Development set, fictional cases written by the bridge agent on 2026-10-12 to sanity-check the eight eye labels added that day. Not blind; spent as soon as it is run.",
+ "cases": [
+  {
+   "id": "dev-laughing-1",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "My cat just tried to fight his own reflection and lost. Hahaha!"
+    }
+   ],
+   "label": "laughing"
+  },
+  {
+   "id": "dev-laughing-2",
+   "turns": [
+    {
+     "who": "eve",
+     "text": "Why did the scarecrow get promoted? He was outstanding in his field."
+    },
+    {
+     "who": "owner",
+     "text": "lol okay that one got me"
+    }
+   ],
+   "label": "laughing"
+  },
+  {
+   "id": "dev-laughing-3",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "I wore two different shoes to the whole meeting and nobody said a thing"
+    },
+    {
+     "who": "eve",
+     "text": "Ha! That is honestly hilarious."
+    }
+   ],
+   "label": "laughing"
+  },
+  {
+   "id": "dev-sleepy-1",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "Okay I'm heading to bed. Goodnight eve."
+    }
+   ],
+   "label": "sleepy"
+  },
+  {
+   "id": "dev-sleepy-2",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "I can barely keep my eyes open, it's way past midnight"
+    }
+   ],
+   "label": "sleepy"
+  },
+  {
+   "id": "dev-sleepy-3",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "Night night, talk tomorrow."
+    },
+    {
+     "who": "eve",
+     "text": "Sleep well. Goodnight!"
+    }
+   ],
+   "label": "sleepy"
+  },
+  {
+   "id": "dev-confused-1",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "Can you move the thing to after the other thing?"
+    },
+    {
+     "who": "eve",
+     "text": "Sorry, which thing do you mean?"
+    }
+   ],
+   "label": "confused"
+  },
+  {
+   "id": "dev-confused-2",
+   "turns": [
+    {
+     "who": "eve",
+     "text": "The parcel is in locker 14, code 2290."
+    },
+    {
+     "who": "owner",
+     "text": "Wait, what? You've lost me."
+    }
+   ],
+   "label": "confused"
+  },
+  {
+   "id": "dev-confused-3",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "send it to Sam"
+    },
+    {
+     "who": "eve",
+     "text": "I didn't catch that. Which Sam should I send it to?"
+    }
+   ],
+   "label": "confused"
+  },
+  {
+   "id": "dev-thinking-1",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "Should I take the train or drive to the coast on Saturday?"
+    },
+    {
+     "who": "eve",
+     "text": "Hmm, let me think about that for a second."
+    }
+   ],
+   "label": "thinking"
+  },
+  {
+   "id": "dev-thinking-2",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "What's a good name for the new plant?"
+    },
+    {
+     "who": "eve",
+     "text": "Ooh, give me a moment to mull that over."
+    }
+   ],
+   "label": "thinking"
+  },
+  {
+   "id": "dev-thinking-3",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "Which of these three flats is the best deal?"
+    },
+    {
+     "who": "eve",
+     "text": "There are a few things to weigh here. Give me a second."
+    }
+   ],
+   "label": "thinking"
+  },
+  {
+   "id": "dev-sheepish-1",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "That reminder went off on Wednesday, I said Tuesday."
+    },
+    {
+     "who": "eve",
+     "text": "Oops, sorry, I set it for the wrong day."
+    }
+   ],
+   "label": "sheepish"
+  },
+  {
+   "id": "dev-sheepish-2",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "Ugh, I just sent that message to the wrong group chat."
+    }
+   ],
+   "label": "sheepish"
+  },
+  {
+   "id": "dev-sheepish-3",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "No, I said lights off, not lights on."
+    },
+    {
+     "who": "eve",
+     "text": "My mistake, I misheard you. Sorry about that."
+    }
+   ],
+   "label": "sheepish"
+  },
+  {
+   "id": "dev-relieved-1",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "Phew, the backup actually worked. Nothing was lost."
+    }
+   ],
+   "label": "relieved"
+  },
+  {
+   "id": "dev-relieved-2",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "Was the flight cancelled?"
+    },
+    {
+     "who": "eve",
+     "text": "Good news, it's still on time after all."
+    }
+   ],
+   "label": "relieved"
+  },
+  {
+   "id": "dev-relieved-3",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "Found my keys, they were in the fridge. What a relief."
+    }
+   ],
+   "label": "relieved"
+  },
+  {
+   "id": "dev-proud-1",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "Book the hotel for Friday."
+    },
+    {
+     "who": "eve",
+     "text": "Done, your room is booked and the confirmation is in your inbox."
+    }
+   ],
+   "label": "proud"
+  },
+  {
+   "id": "dev-proud-2",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "I finally ran my first 10k this morning!"
+    }
+   ],
+   "label": "proud"
+  },
+  {
+   "id": "dev-proud-3",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "I shipped the app update I've been working on for months."
+    }
+   ],
+   "label": "proud"
+  },
+  {
+   "id": "dev-flattered-1",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "Good job, eve. You're honestly the best assistant ever."
+    }
+   ],
+   "label": "flattered"
+  },
+  {
+   "id": "dev-flattered-2",
+   "turns": [
+    {
+     "who": "eve",
+     "text": "Here's the summary of the article."
+    },
+    {
+     "who": "owner",
+     "text": "That summary was perfect, you're so smart."
+    }
+   ],
+   "label": "flattered"
+  },
+  {
+   "id": "dev-flattered-3",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "Wow eve, you nailed that, I'm impressed with you."
+    }
+   ],
+   "label": "flattered"
+  }
+ ]
+}
