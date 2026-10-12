@@ -1,10 +1,10 @@
-# Gates: the Work tab is Claude Code sessions in ~/Documents/personal
+# Gates: the Work tab is Claude Code sessions in ~/Documents/personal/work
 
 OWNS: bridge/src/eve_bridge/eve_mcp.py (new), bridge/tests/test_eve_mcp.py (new), the session routes in bridge/src/eve_bridge/link_chat.py, bridge/src/eve_bridge/work_sessions.py (new), claude_launch.py / claude_live.py / the relay only where the routes need a seam, bridge/tests/test_work_sessions.py (new), ios/EveLink/App/WorkView.swift (the Work half only), ios/EveLink/App/SessionSheet.swift (new), ios/EveLink/Shared/WorkSessions.swift (new), ios/EveLink/Tests/**, docs/work-sessions.md (new), docs/app-chat.md, README.md, docs/work-sessions-gates.md
 
-Scope: the owner, 2026-10-12: "can work essentially be a new terminal session in documents personal", "since its long horizon", "that would be optimal". eve already opens `claude` in a folder under ~/Documents from the phone ("new claude", claude_launch.py: a Warp window, --dangerously-skip-permissions for personal), knows live sessions (claude_live.py, the hooks) and relays to them ("claude on"). So the Work tab lists those sessions; + New opens a fresh terminal session running claude in ~/Documents/personal with the typed task as its first prompt; a session's sheet shows its latest turns, takes a reply, and can stop it.
+Scope: the owner, 2026-10-12: "can work essentially be a new terminal session in documents personal", "since its long horizon", "that would be optimal", "make a folder called work under personal where this happens" (created 2026-10-12). Careful: claude_launch's *area* "work" is ~/Documents/work with era-code; these sessions are plain `claude` in ~/Documents/personal/work, never the work area. eve already opens `claude` in a folder under ~/Documents from the phone ("new claude", claude_launch.py: a Warp window, --dangerously-skip-permissions for personal), knows live sessions (claude_live.py, the hooks) and relays to them ("claude on"). So the Work tab lists those sessions; + New opens a fresh terminal session running claude in ~/Documents/personal/work with the typed task as its first prompt; a session's sheet shows its latest turns, takes a reply, and can stop it.
 
-- [ ] W1: The routes and the session model pass their tests: list (live sessions with folder, state working / waiting on you / idle, last activity, last line), start (one new claude in ~/Documents/personal with the task as first prompt, nothing else on the Mac), detail (the latest turns from the transcript, clipped), reply (reaches only that session), stop; link token and Origin refusal as every /api/link route; a task is never interpolated into a shell command.
+- [ ] W1: The routes and the session model pass their tests: list (live sessions with folder, state working / waiting on you / idle, last activity, last line), start (one new claude in ~/Documents/personal/work with the task as first prompt, nothing else on the Mac), detail (the latest turns from the transcript, clipped), reply (reaches only that session), stop; link token and Origin refusal as every /api/link route; a task is never interpolated into a shell command.
   CHECK: cd bridge && .venv/bin/python -m pytest -q -p no:cacheprovider tests/test_work_sessions.py tests/test_link_chat.py && echo WORK_TESTS_OK
   EXPECT: WORK_TESTS_OK
 
@@ -16,7 +16,7 @@ Scope: the owner, 2026-10-12: "can work essentially be a new terminal session in
   CHECK: sh ios/EveLink/Tests/run.sh && sh ios/EveLink/build.sh && echo APP_OK
   EXPECT: APP_OK
 
-- [ ] W4: Live on this Mac: a session started through the route opens a terminal running claude in ~/Documents/personal, shows up in the list within 15 s, and its reply appears in detail; the check stops it after. Prints counts and states only.
+- [ ] W4: Live on this Mac: a session started through the route opens a terminal running claude in ~/Documents/personal/work, shows up in the list within 15 s, and its reply appears in detail; the check stops it after. Prints counts and states only.
   CHECK: bridge/.venv/bin/python bridge/tools/work_sessions_check.py
   EXPECT: WORK_LIVE_OK
 
