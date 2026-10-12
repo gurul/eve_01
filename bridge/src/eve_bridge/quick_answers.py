@@ -25,10 +25,16 @@ meeting", "should I bike given the weather" and "what's 17 times my rent" go to 
 calendar, the search and the judgement. When a source fails, ``answer`` returns None and the model answers as
 before, so a failure here costs nothing. Open-Meteo is free and needs no key.
 
-Where "here" is: ``EVE_WEATHER_PLACE`` (a place name, looked up once with Open-Meteo's geocoder), or
-``EVE_WEATHER_LAT`` and ``EVE_WEATHER_LON``. Without either, questions about "here" (weather, sun, air)
+Where "here" is: the phone's own location while it is fresh (phone_location.py: the Eve Link app shared a fix at
+most ``PHONE_FRESH_MIN`` minutes ago; its coordinates go to Open-Meteo rounded to ``PHONE_DECIMALS`` decimals, about
+a kilometer), else ``EVE_WEATHER_PLACE`` (a place name, looked up once with Open-Meteo's geocoder), or
+``EVE_WEATHER_LAT`` and ``EVE_WEATHER_LON``. Without any of them, questions about "here" (weather, sun, air)
 go to the model. The time zone is ``EVE_TIMEZONE`` (an IANA name), as system_context.py reads it, else the
 Mac's.
+
+Coordinates never reach the log (``CoordinateFilter``): httpx logs each request line at INFO with its query string,
+and the daemon logs at INFO, so every Open-Meteo call would write where the phone was, a location history in a
+plain file. The filter on the "httpx" logger replaces the latitude and longitude values in any Open-Meteo URL.
 """
 from __future__ import annotations
 
@@ -50,6 +56,35 @@ FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
 AIR_URL = "https://air-quality-api.open-meteo.com/v1/air-quality"
 GEOCODE_URL = "https://geocoding-api.open-meteo.com/v1/search"
 TIMEOUT_SECS = 5.0
+PHONE_FRESH_MIN = 60                     # phone_location.STALE_MIN: an older fix is not "here" any more
+PHONE_DECIMALS = 2                       # what of a phone fix Open-Meteo is sent: about a kilometer
+PHONE_PLACE = "where you are"            # a phone fix with no place name
+HIDDEN = "<hidden>"                      # what the log shows for a coordinate
+_COORD = re.compile(r"\b((?:latitude|longitude)=)[^&\s\"']+")
+
+
+class CoordinateFilter(logging.Filter):
+    """Rewrites a record that quotes an Open-Meteo URL so its latitude/longitude values read ``HIDDEN``. httpx logs
+    through the one logger "httpx" (httpcore's request logs carry no URL), so the filter sits there."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        try:
+            message = record.getMessage()
+        except Exception:  # noqa: BLE001 — a record that cannot format is the logging module's to report
+            return True
+        if "open-meteo.com" in message and _COORD.search(message):
+            record.msg, record.args = _COORD.sub(r"\1" + HIDDEN, message), None
+        return True
+
+
+def hide_coordinates() -> None:
+    """Install CoordinateFilter on the "httpx" logger, once (import does it)."""
+    logger = logging.getLogger("httpx")
+    if not any(isinstance(f, CoordinateFilter) for f in logger.filters):
+        logger.addFilter(CoordinateFilter())
+
+
+hide_coordinates()
 
 
 @dataclass(frozen=True)
@@ -433,10 +468,11 @@ def zone(environ: Optional[Mapping[str, str]] = None) -> Optional[dt.tzinfo]:
 Getter = Callable[[str, dict[str, Any]], Awaitable[Any]]
 
 
-async def _get_json(url: str, params: dict[str, Any]) -> Any:
+async def _get_json(url: str, params: dict[str, Any], transport: Any = None) -> Any:
     import httpx
 
-    async with httpx.AsyncClient(timeout=TIMEOUT_SECS) as client:
+    hide_coordinates()                            # a test may have reset the logger's filters
+    async with httpx.AsyncClient(timeout=TIMEOUT_SECS, transport=transport) as client:
         r = await client.get(url, params=params)
         r.raise_for_status()
         return r.json()
@@ -457,15 +493,28 @@ class Place:
     tz: Optional[str] = None
 
 
+def phone_here(environ: Optional[Mapping[str, str]] = None) -> Optional[Place]:
+    """The phone's fresh fix as "here" (phone_location.fresh), rounded to PHONE_DECIMALS; None without one."""
+    from . import phone_location
+
+    fix = phone_location.fresh(environ, max_age_min=PHONE_FRESH_MIN)
+    if fix is None:
+        return None
+    return Place(fix.place or PHONE_PLACE, round(fix.lat, PHONE_DECIMALS), round(fix.lon, PHONE_DECIMALS))
+
+
 class QuickAnswers:
-    """``match(text)`` then ``answer(ask)``: the words for a standard question, or None to let the model answer."""
+    """``match(text)`` then ``answer(ask)``: the words for a standard question, or None to let the model answer.
+    ``phone``: where the phone is now, or None (phone_here, read on every question)."""
 
     def __init__(self, environ: Optional[Mapping[str, str]] = None, get: Getter = _get_json,
                  now: Callable[[Optional[dt.tzinfo]], dt.datetime] = dt.datetime.now,
-                 pmset: Callable[[], Awaitable[str]] = _pmset) -> None:
+                 pmset: Callable[[], Awaitable[str]] = _pmset,
+                 phone: Optional[Callable[[], Optional[Place]]] = None) -> None:
         env = os.environ if environ is None else environ
         self.tz = zone(env)
         self.get, self.now, self.pmset = get, now, pmset
+        self.phone = phone if phone is not None else (lambda: phone_here(env))
         self.home_name = " ".join((env.get("EVE_WEATHER_PLACE") or "").split())[:100]
         self.home: Optional[Place] = None
         try:
@@ -478,7 +527,14 @@ class QuickAnswers:
 
     @property
     def knows_here(self) -> bool:
-        return self.home is not None or bool(self.home_name)
+        return self.home is not None or bool(self.home_name) or self._phone() is not None
+
+    def _phone(self) -> Optional[Place]:
+        try:
+            return self.phone()
+        except Exception as e:  # noqa: BLE001 — no phone fix: the configured place, as before
+            log.info("quick answers: the phone's location unavailable (%s)", type(e).__name__)
+            return None
 
     def match(self, text: str) -> Optional[Ask]:
         ask = match(text)
@@ -537,6 +593,9 @@ class QuickAnswers:
         return None
 
     async def _here(self) -> Optional[Place]:
+        phone = self._phone()
+        if phone is not None:
+            return phone                                  # the phone's fresh fix beats the configured home
         if self.home is None and self.home_name:
             self.home = await self._place(self.home_name)
         return self.home

@@ -2,6 +2,7 @@
 // Updates (left of it) lists things to act on (docs/updates.md), Work lists the chief's jobs and the owner's apps, voice mode (and the Action Button through TalkIntent) carries each
 // turn to eve as a call, and Settings holds pairing and diagnostics.
 import SwiftUI
+import UIKit
 import WidgetKit
 
 @main
@@ -13,6 +14,7 @@ struct EveLinkApp: App {
     @StateObject private var updates = UpdatesModel(relay: PhoneLink.relay)
     @State private var talkError: String?
     @Environment(\.scenePhase) private var scenePhase
+    @UIApplicationDelegateAdaptor(EveLinkAppDelegate.self) private var appDelegate
 
     /// Every cold launch opens on Chat, whatever tab was last shown (owner, 2026-10-12: "when I open, chat should
     /// still be main pane"). A link that opens the app (evelink://updates, the widget's evelink://work) still wins:
@@ -27,6 +29,7 @@ struct EveLinkApp: App {
                 .onChange(of: scenePhase) { _, now in
                     diag("app: \(now)")
                     chat.scene(now)
+                    LocationSharer.shared.scene(now)
                     if now == .active { HomeWidget.reload() }
                 }
                 #if DEBUG && targetEnvironment(simulator)
@@ -38,7 +41,10 @@ struct EveLinkApp: App {
                 .onOpenURL { url in
                     switch LinkRoute(url) {
                     case .pair(let link):
-                        if relay.pair(with: link) { HomeWidget.reload() }
+                        if relay.pair(with: link) {
+                            HomeWidget.reload()
+                            LocationSharer.shared.askIfNeeded()     // paired now: the location question can come
+                        }
                     case .talk:
                         diag("link: evelink://talk")
                         Task { await talkFromLink() }
@@ -66,6 +72,20 @@ struct EveLinkApp: App {
         } catch {
             talkError = (error as? PhoneTurnError)?.description ?? error.localizedDescription
         }
+    }
+}
+
+/// The app delegate, for one thing SwiftUI does not give: the launch options. iOS relaunches the app in the
+/// background for a significant location change (LocationSharer.swift), and the location manager must be set up
+/// before didFinishLaunching returns for that fix to arrive.
+final class EveLinkAppDelegate: NSObject, UIApplicationDelegate {
+    func application(_ application: UIApplication,
+                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+        LocationSharer.shared.launch(
+            endpoint: { PhoneLink.relay.pairing.map { ChatEndpoint(base: $0.base, token: $0.token) } },
+            refresh: { await PhoneLink.relay.refreshAddress() },
+            forLocation: launchOptions?[.location] != nil)
+        return true
     }
 }
 

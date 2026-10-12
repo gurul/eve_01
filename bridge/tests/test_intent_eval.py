@@ -141,7 +141,8 @@ def test_hard_negatives_that_act_are_reported(capsys: pytest.CaptureFixture[str]
 
 def test_the_prep_set_is_exactly_the_registered_lookups() -> None:
     assert ev.PREP == {"list_files", "calendar__list_events", "calendar__search_events", "gmail__search_threads",
-                       "gmail__get_thread", "memory_search", "watch_list", "jobs_list", "search_notes"}
+                       "gmail__get_thread", "memory_search", "watch_list", "jobs_list", "search_notes",
+                       "phone_location"}
     assert not any(ev.acting(n, {}) for n in ev.PREP)
 
 
@@ -221,6 +222,16 @@ def test_prep_stubs_are_short_neutral_and_name_the_request() -> None:
     cal = ev.prep_stub("calendar__list_events", {}, "cancel the gym event tmrw")
     assert len(cal["events"]) == 1 and "gym" in cal["events"][0]["summary"]
     assert len(json.dumps(ev.prep_stub("gmail__search_threads", {}, "reply to the landlord email"))) < 400
+    here = ev.prep_stub("phone_location", {}, "concerts near me tonight")
+    assert here["stale"] is False and {"place", "lat", "lon", "accuracy_m", "age_min"} <= set(here)
+
+
+def test_a_location_lookup_is_scored_on_the_action_after_it() -> None:
+    """'concerts near me' reads the phone's fix first, then searches: scored on the search (PREP); 'where am I'
+    is answered by the fix itself, so phone_location is its own label there."""
+    steps = [ev.Step("phone_location", "phone_location", round=1), ev.Step("events_search", "events", round=2)]
+    assert ev.score(("events",), steps) == (True, "phone_location>events")
+    assert ev.score(("phone_location",), steps[:1]) == (True, "phone_location")
 
 
 def test_a_lookup_gets_its_stub_and_the_next_round_is_scored() -> None:

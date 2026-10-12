@@ -74,6 +74,9 @@ _SOURCES: dict[str, str] = {
     "daily_rundown": "the rundown's sources", "america_ask": "a government site", "think_hard": "a long think",
     "jobs_list": "the job cards", "watch_list": "the watches", "list_files": "the Mac's file list",
     "read_file": "a file on the Mac",
+    # a read, never acting, so it never asks; not CLEAN: its place is the phone's geocoder's words, which can be a
+    # business's own name (phone_location.py)
+    "phone_location": "the phone's location",
     "meet_join": "a meeting invite", "join_meeting": "a meeting invite",
     "spotify_control": "Spotify", "spotify_now_playing": "Spotify",
     "watch_add": "the watched page", "take_photo": "a photo", "screenshot": "the screen", "look": "the camera",

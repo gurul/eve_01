@@ -9,8 +9,9 @@
 working on, a home-screen widget, and a voice on the Action Button. On the desk it
 can have a face on an M5StackChan and a button and dial on a Home Assistant Voice
 PE. It helps with computer tasks, notes, lights, music and the TV, and keeps a diary
-of what it notices. Every model call goes through one key, `OPENROUTER_API_KEY`
-([OpenRouter](docs/openrouter.md)).
+of what it notices. Model calls use `OPENROUTER_API_KEY`
+([OpenRouter](docs/openrouter.md)); the shared conversational model can instead
+use your existing [Codex subscription](docs/codex-subscription.md).
 
 Setting it up for yourself, or having an agent do it: [Get started](#get-started)
 is the path, and [AGENTS.md](AGENTS.md) is the same path written for an agent, with a
@@ -72,7 +73,7 @@ you can use the Mac and phone features without a StackChan.
 | **Mac host** | Local daemon, files and IPC | Runs voice, chat, tools, computer tasks and memory. Its microphone captures wake-word conversations and Voice PE button presses. |
 | **M5StackChan K151 / CoreS3** | USB serial to the Mac | Face, moving head, camera, captions and chirps. Custom Arduino firmware keeps the body responsive while the Mac handles perception and model calls. [Build guide](docs/stackchan/build.md). |
 | **Home Assistant Voice PE** | A second USB serial link as the controller | Button, dial, light ring and spoken replies. Hold to talk through the **Mac microphone**; the Voice PE's microphones are not used. Its dial can control voice volume or Spotify. Runs eve's custom firmware. [Voice PE guide](docs/voice-pe.md). |
-| **iPhone with Eve Link** | HTTPS and a secure WebSocket through a tunnel to the Mac | The main way in. Four tabs, and it always opens on Chat: **Updates** (left of Chat: a few cards of things to act on, found in your mail, calendar, notes, memory and the chief's jobs; each is one sentence like "**Review** your storage plan before the new price starts Oct 23", and a tap sends exactly that sentence to Chat; [Updates](docs/updates.md)), **Chat** (eve's replies drawn with [OpenUI](docs/app-chat.md#using-generated-cards), with a text view, local input reset and recovery for incomplete cards, photos and files, and the Claude relay; no `/` menu, you type plain language), **Apps** (Notes, a small native Notion over your second-brain vault; Music, Lights and the TV remote; [Pika](docs/pika.md), hold-to-drive for the robot car over its live video, when set up; [Camera](docs/obsbot.md), the OBSBOT webcam's live picture with hold-to-turn, zoom and tracking; what eve remembers is under Settings) and **Work** (the chief's jobs). Voice mode is hold to talk; the Action Button talks from anywhere, with a minimal Live Activity. A large home-screen [widget](docs/widget.md) shows what needs you, what's going, today and now. The phone needs internet and the Mac daemon must remain reachable. Notifications come through the free ntfy app. [App](docs/app-chat.md), [setup and pairing](docs/action-button.md#setting-it-up), [notifications](docs/notifications.md). |
+| **iPhone with Eve Link** | HTTPS and a secure WebSocket through a tunnel to the Mac | The main way in. Four tabs, and it always opens on Chat: **Updates** (left of Chat: a few cards of things to act on, found in your mail, calendar, notes, memory and the chief's jobs; each is one sentence like "**Review** your storage plan before the new price starts Oct 23", and a tap sends exactly that sentence to Chat; [Updates](docs/updates.md)), **Chat** (eve's replies drawn with [OpenUI](docs/app-chat.md#using-generated-cards), with a text view, local input reset and recovery for incomplete cards, photos and files, and the Claude relay; no `/` menu, you type plain language), **Apps** (Notes, a small native Notion over your second-brain vault; Music, Lights and the TV remote; [Pika](docs/pika.md), hold-to-drive for the robot car over its live video, when set up; [Camera](docs/obsbot.md), the OBSBOT webcam's live picture with hold-to-turn, zoom and tracking; what eve remembers is under Settings, and so is [Share location](docs/phone-location.md), which lets eve answer where you are) and **Work** (the chief's jobs). Voice mode is hold to talk; the Action Button talks from anywhere, with a minimal Live Activity. A large home-screen [widget](docs/widget.md) shows what needs you, what's going, today and now. The phone needs internet and the Mac daemon must remain reachable. Notifications come through the free ntfy app. [App](docs/app-chat.md), [setup and pairing](docs/action-button.md#setting-it-up), [notifications](docs/notifications.md). |
 | **Mac app and desktop widget** | Local IPC and shared data snapshots | Chat, diary, photos, saved memories, plus wake-mic and daemon controls. [Widget and app setup](docs/stackchan/widget.md). |
 | **Room lights** | Govee and WiZ over LAN; HappyLighting over BLE; Sylvania/Tuya over LAN | Names, rooms, colours, brightness and on/off. Device control stays local after setup; the Mac must be on the same network or within BLE range. [Lights guide](docs/lights.md). |
 | **Spotify Connect devices** | Spotify Web API from the Mac | Playback, volume and transfer to the Mac, phone or supported speakers. Voice PE's Spotify mode makes its dial and button the controls; music plays on the selected Connect device. Requires login and [Premium for playback control](https://developer.spotify.com/documentation/web-api/reference/start-a-users-playback). [Spotify guide](docs/spotify.md). |
@@ -311,7 +312,7 @@ You need macOS 14 or later, Python 3.12, Homebrew, and these keys in
 
 | Key | Where it comes from |
 |---|---|
-| `OPENROUTER_API_KEY` | [openrouter.ai](https://openrouter.ai). Every model call eve makes goes through this one key ([one key: OpenRouter](docs/openrouter.md)). |
+| `OPENROUTER_API_KEY` | [openrouter.ai](https://openrouter.ai). The default model API provider ([OpenRouter](docs/openrouter.md)); text chat can instead use [Codex subscription mode](docs/codex-subscription.md). |
 | `EVE_TELEGRAM_TOKEN`, `EVE_TELEGRAM_OWNER` | A bot token from **@BotFather** (`/newbot`) and your numeric user id from **@userinfobot**. eve's brain is wired through its Telegram door even when Telegram is muted; with `EVE_TELEGRAM=app` nothing is ever sent there. `EVE_TELEGRAM=1` also answers on Telegram. |
 
 ```bash
@@ -332,6 +333,10 @@ EVE_MINIAPP=1          # the phone's door (a Cloudflare quick tunnel)
 EVE_MEMORY=1           # transcripts and the nightly dream; off in code
 EVE_SHARE=1            # send your files to people by iMessage or email, on your yes
 ```
+
+To use the installed Codex CLI's ChatGPT sign-in for conversations (text and photos), add
+`EVE_CODEX_SUBSCRIPTION=1`. That chat path does not need an OpenRouter key;
+other model features retain their providers. See [setup and limits](docs/codex-subscription.md).
 
 Install the Claude Code hooks and the login service (both commands; `--service`
 installs only the service):
@@ -558,6 +563,7 @@ Every message is shaped for the phone by `telegram_format.py`.
 | Your apps (`EVE_APPS=1`) | Gmail (reads; sends after your yes to each email, shown whole), Google Calendar (writable: events, invites, free time), Google Drive, Google Contacts (read only), GitHub and Google Maps, directly: Google's own APIs and GitHub's and Maps' MCP servers, no broker. Known routine private edits run; sending, deleting, publishing and permission changes ask first. Unknown writes still ask. Apps load per turn as the message names them. Set up with `eve-bridge apps login google`; see [your apps](docs/apps.md). |
 | Composio (`EVE_COMPOSIO=1`) | Slack, Notion, Linear and the long tail by API (`composio_tools.py`), each change asked first. |
 | Camera (`EVE_OBSBOT`, on by default) | The OBSBOT webcam: the chat's and the voice's `camera_status` and `camera_control`, Eve Link's Camera screen and `eve-bridge obsbot`. Moves go over USB; OBSBOT's own features through OBSBOT Center while it runs. On while an OBSBOT camera is plugged in (or OBSBOT Center is installed); `EVE_OBSBOT=0` turns it off. See [OBSBOT](docs/obsbot.md). |
+| Phone location (`EVE_PHONE_LOCATION`, on by default) | Eve Link shares the iPhone's latest location with the Mac (`POST /api/link/location`, only the newest fix kept, never logged), so the chat's and the voice's `phone_location` answers "where am I" and quick answers' weather uses where you are. See [phone location](docs/phone-location.md). |
 | Pika (`EVE_PIKA=1`) | The robot car in Eve Link's Apps tab: live video and hold-to-drive through this Mac, with `~/.config/eve-bridge/pika.json`. The video comes over WebRTC straight from the Mac (on the home Wi-Fi, past the tunnel), with the tunnel stream as the fallback; `"rtc": false` keeps it on the tunnel. Off by default. See [Pika](docs/pika.md). |
 | Updates (`EVE_UPDATES`, on by default) | Eve Link's Updates pane: up to 8 cards of things to act on, made in the background from Gmail, the calendar, the vault's to-dos, the dream journal and the chief's jobs, every `EVE_UPDATES_EVERY_MIN` (120) minutes in day time. Suggestions only; a tap sends the card's sentence to the chat. `EVE_UPDATES=0` turns it off. See [Updates](docs/updates.md). |
 | Second brain (`EVE_SECOND_BRAIN=1`) | Texts become notes in a local markdown vault Obsidian opens (`second_brain.py`). |
@@ -634,7 +640,7 @@ Persistent data lives under `~/.config/eve-bridge/`:
 | `bridge/src/eve_bridge/` | Daemon, CLI, voice, desktop control, vision and memory | [Bridge reference](bridge/README.md), [voice](docs/stackchan/voice.md), [routing](docs/stackchan/routing.md), [Telegram](docs/stackchan/telegram.md) |
 | `bridge/tests/`, `bridge/tools/` | Python tests, fixtures and routing/desktop evaluation tools | [Routing evaluations](docs/stackchan/routing.md) |
 | `widget/` | SwiftUI app, shared data readers, WidgetKit extension and Xcode project | [Widget setup](docs/stackchan/widget.md) |
-| `ios/EveLink/` | The Eve Link iPhone app: Updates (things to act on), chat with eve (with photos and files attached), the chief's jobs, Notes (your vault: pages, to-dos, edit, move, delete with undo), native Music, Lights and TV remote controls, Memory in Settings, voice mode (StackChan's face with captions, the Action Button talks), notes on the go | [Action Button](docs/action-button.md), [Chat in the app](docs/app-chat.md), [Updates](docs/updates.md), [voice mode](docs/voice-mode.md) |
+| `ios/EveLink/` | The Eve Link iPhone app: Updates (things to act on), chat with eve (with photos and files attached), the chief's jobs, Notes (your vault: pages, to-dos, edit, move, delete with undo), native Music, Lights and TV remote controls, Memory and Share location in Settings, voice mode (StackChan's face with captions, the Action Button talks), notes on the go | [Action Button](docs/action-button.md), [Chat in the app](docs/app-chat.md), [Updates](docs/updates.md), [voice mode](docs/voice-mode.md), [phone location](docs/phone-location.md) |
 | `verification/` | Lean 4 models of eve's state machines, 470 kernel-checked theorems | [Verification](docs/verification.md) |
 | `AGENTS.md` | The setup runbook and the rules, for an agent working on eve | |
 | `tools/` | Firmware flashing and demo utilities | [Build](docs/stackchan/build.md) |

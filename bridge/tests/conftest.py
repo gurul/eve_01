@@ -137,3 +137,12 @@ def _menu_tools_pinned_off(monkeypatch: pytest.MonkeyPatch):
     written against the switch-off bytes, which stay byte for byte as before: a plain test runs with it off. The menu,
     events, tool-choice and intent tests switch it on themselves (EVE_MENU_TOOLS=on)."""
     monkeypatch.setenv("EVE_MENU_TOOLS", "off")
+
+
+@pytest.fixture(autouse=True)
+def _phone_location_in_tmp(_test_dir, monkeypatch: pytest.MonkeyPatch):
+    """Every test's phone fix (phone_location.py) is a temporary file that does not exist yet, never the owner's real
+    one: with no fix, no turn offers phone_location and quick answers keep their configured place, so the suite's
+    request bytes are as before. A test that wants a fix stores one."""
+    monkeypatch.setenv("EVE_PHONE_LOCATION_FILE", str(_test_dir / "phone" / "phone-location.json"))
+    monkeypatch.delenv("EVE_PHONE_LOCATION", raising=False)

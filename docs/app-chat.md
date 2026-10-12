@@ -180,8 +180,21 @@ screen but the controls below until there are messages.
 - **Settings** (`App/SettingsSheet.swift`): what the old main screen had except
   Hold to talk (which is voice mode's orb): the phone's call state and End call, the pairing and link
   status, **Memory** (the card described under Apps, pushed in Settings' own navigation; shown while the Mac's
-  memory is on), pairing from a pasted link, and the diagnostics log. A line at the
+  memory is on), **Location**, pairing from a pasted link, and the diagnostics log. A line at the
   top says when jobs wait on the owner.
+- **Location** (2026-10-12, owner: "give access to live phone location through app"; `App/LocationSharer.swift`,
+  `Shared/PhoneLocation.swift`): a **Share location** switch, on by default, with what iOS allows (Always, While
+  using the app, approximate when Precise Location is off, Not allowed, Restricted), when the Mac last heard, and an
+  Open Settings button when iOS says no or only while using. The app asks once it is paired: while using the app
+  first, then once for Always. With the app open it takes standard updates (about 100 m, every 50 m, a fresh fix
+  every 10 minutes when still); in the background only significant-change monitoring (moves of about 500 m), which
+  also relaunches the app after iOS ended it, with Always. A fix is sent (`POST /api/link/location`) when the phone
+  moved at least 100 m (and more than the fix's own uncertainty), when it got a lot sharper, or after 10 minutes in
+  the same place with the app open (30 in the background); a fix more than 10 minutes old on arrival is not sent.
+  The phone names the place itself (reverse geocoding, at most once a minute, reused within 200 m): a street for a
+  sharp fix, the city otherwise. Turning the switch off stops every location service. Diagnostics say how accurate
+  and how old a fix was, never where. The Mac keeps only the latest fix (EVE_PHONE_LOCATION=0 refuses it with 403,
+  which the switch's row shows). See [phone location](phone-location.md).
 - **Not paired:** Chat and Work both say how to pair and take a pasted pairing
   link. The app never shows an empty page.
 - **Haptics:** a light tap on send, a soft one when the first words of a reply

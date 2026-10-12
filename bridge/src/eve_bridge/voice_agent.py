@@ -88,7 +88,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Awaitable, Callable, Optional
 
-from . import consent, obsbot_panel, self_context, spend, system_context, tool_gate, websearch
+from . import consent, obsbot_panel, phone_location, self_context, spend, system_context, tool_gate, websearch
 from . import firetv as firetv_mod
 from . import head as head_mod
 from . import lights as lights_mod
@@ -557,6 +557,8 @@ def session_config(config: VoiceConfig, brief: str = "",
     # the owner's webcam (obsbot_panel.py), when there is one: the same slot, never in a lesson
     cam_tools = [] if listening or obsbot is None else obsbot.tools()
     lights_block += "" if not cam_tools else "\n\n" + obsbot.instructions()
+    # the phone's latest location (phone_location.py), once the Eve Link app has shared one: never in a lesson
+    loc_tools = [] if listening else phone_location.tools()
     return {
         "model": config.model,
         "instructions": INSTRUCTIONS + config.about + profile_block(profile) + today_block(today) + context
@@ -578,7 +580,7 @@ def session_config(config: VoiceConfig, brief: str = "",
                                 + (think_aloud_mod.backend_instructions(think_aloud) if listening else "")
                                 + lights_block,
                 "tools": TOOLS + (websearch.tools_for(config.search) if config.web_search else []) + extra + meeting
-                         + light_tools + music_tools + tv_tools + cam_tools,
+                         + light_tools + music_tools + tv_tools + cam_tools + loc_tools,
                 "tool_choice": "auto",
                 "reasoning": {"effort": config.backend_effort},
                 "parallel_tool_calls": False,
@@ -1629,7 +1631,8 @@ class VoiceSession:
                 result = {"ok": False, "reason": "on must be true or false"}
         elif (name in ("look", "look_around", "find", "think_hard", "lesson", "take_photo", websearch.TOOL_NAME)
               or name in self._memory_tool_names or name in MEET_TOOL_NAMES or name in lights_mod.TOOL_NAMES
-              or name in spotify_mod.TOOL_NAMES or name in VOICE_FIRETV_TOOLS or name in VOICE_OBSBOT_TOOLS):
+              or name in spotify_mod.TOOL_NAMES or name in VOICE_FIRETV_TOOLS or name in VOICE_OBSBOT_TOOLS
+              or name in phone_location.TOOL_NAMES):
             # Seconds (or a minute, for think_hard) of camera, head, model or disk work:
             # answered from a background task, so Live events (the owner talking,
             # captions) keep flowing meanwhile.
@@ -1792,6 +1795,10 @@ class VoiceSession:
                     # a move reads the camera back until it stops (~1-3 s): a slow tool, like the TV
                     result = (await self.obsbot.handle(name, args) if self.obsbot is not None
                               else {"ok": False, "reason": obsbot_panel.OFF_REASON})
+                elif name in phone_location.TOOL_NAMES:
+                    # the phone's latest fix (phone_location.py): a small file read, here so the taint gate sees
+                    # its result as it sees every read's (the place name is the phone's geocoder's words)
+                    result = await phone_location.handle(name, args)
                 else:
                     result = await self._find(str(args.get("target", "")))
             except asyncio.CancelledError:
