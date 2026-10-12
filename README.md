@@ -9,9 +9,8 @@
 working on, a home-screen widget, and a voice on the Action Button. On the desk it
 can have a face on an M5StackChan and a button and dial on a Home Assistant Voice
 PE. It helps with computer tasks, notes, lights, music and the TV, and keeps a diary
-of what it notices. Model calls use `OPENROUTER_API_KEY`
-([OpenRouter](docs/openrouter.md)); the shared conversational model can instead
-use your existing [Codex subscription](docs/codex-subscription.md).
+of what it notices. Every model call goes through one key, `OPENROUTER_API_KEY`
+([OpenRouter](docs/openrouter.md)).
 
 Setting it up for yourself, or having an agent do it: [Get started](#get-started)
 is the path, and [AGENTS.md](AGENTS.md) is the same path written for an agent, with a
@@ -314,7 +313,7 @@ You need macOS 14 or later, Python 3.12, Homebrew, and these keys in
 
 | Key | Where it comes from |
 |---|---|
-| `OPENROUTER_API_KEY` | [openrouter.ai](https://openrouter.ai). The default model API provider ([OpenRouter](docs/openrouter.md)); text chat can instead use [Codex subscription mode](docs/codex-subscription.md). |
+| `OPENROUTER_API_KEY` | [openrouter.ai](https://openrouter.ai). Every model call eve makes goes through this one key ([one key: OpenRouter](docs/openrouter.md)). |
 | `EVE_TELEGRAM_TOKEN`, `EVE_TELEGRAM_OWNER` | A bot token from **@BotFather** (`/newbot`) and your numeric user id from **@userinfobot**. eve's brain is wired through its Telegram door even when Telegram is muted; with `EVE_TELEGRAM=app` nothing is ever sent there. `EVE_TELEGRAM=1` also answers on Telegram. |
 
 ```bash
@@ -335,10 +334,6 @@ EVE_MINIAPP=1          # the phone's door (a Cloudflare quick tunnel)
 EVE_MEMORY=1           # transcripts and the nightly dream; off in code
 EVE_SHARE=1            # send your files to people by iMessage or email, on your yes
 ```
-
-To use the installed Codex CLI's ChatGPT sign-in for conversations (text and photos), add
-`EVE_CODEX_SUBSCRIPTION=1`. That chat path does not need an OpenRouter key;
-other model features retain their providers. See [setup and limits](docs/codex-subscription.md).
 
 Install the Claude Code hooks and the login service (both commands; `--service`
 installs only the service):
