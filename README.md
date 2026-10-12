@@ -553,6 +553,7 @@ Every message is shaped for the phone by `telegram_format.py`.
 | Feature | What it does |
 |---|---|
 | Chat and tasks | Chat with eve, start and stop a Mac task, answer a task's question, receive a camera photo. A task shows one progress message with a Stop button; the result arrives as a reply to your request. |
+| Small talk (`EVE_SMALL_TALK`, off until its blind bar passes) | A short, plain message ("hi", "thanks", "good night") while nothing waits on you is read first by Haiku 5.5 (`small_talk.py`), which answers in eve's voice in about 1.5 s or hands it to the full brain unchanged. Code decides when it may try; Haiku hands off anything that needs a tool, your data or a lookup. Each such message, the last 4 lines of the current conversation and your profile's "How they like to talk" section go to Anthropic through OpenRouter, also on a hand-off. See [small talk](docs/small-talk.md#what-leaves-the-mac). |
 | Images | Send photos or image files with captions (still JPEG/PNG/WebP/GIF, up to 10 MB). See [image routing and retention](docs/stackchan/telegram.md#receiving-images). |
 | `rundown` | Today's email, calendar, Slack and Obsidian todos through the packaged [rundown skill](bridge/src/eve_bridge/skills/rundown/SKILL.md). Read-only; names disconnected sources, never result limits. |
 | `claude on` | Streams Claude Code's visible text to the phone (never the gray tool lines or thinking) and types your replies in; tool calls run as in bypass mode. Jev judges each relayed shell command for risk (shadow by default). |

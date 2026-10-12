@@ -347,6 +347,14 @@ class Memory:
             log.warning("memory: voice profile unavailable (%s)", type(e).__name__)
             return ""
 
+    def talking_section(self) -> str:
+        """The profile's "How they like to talk" section, whole (records.talking_section). "" on any failure."""
+        try:
+            return _records_mod().talking_section(self.cfg) or ""
+        except Exception as e:  # noqa: BLE001
+            log.warning("memory: talking section unavailable (%s)", type(e).__name__)
+            return ""
+
     def today(self, max_chars: int, *, exclude_conv: Optional[str] = None, exclude_tail: int = 0,
               style: str = "text", exclude: Optional[Mapping[str, int]] = None) -> str:
         """Today on both channels, within `max_chars` (see Transcripts.today_block)."""
