@@ -37,7 +37,7 @@ from typing import Any, Mapping, Optional
 
 log = logging.getLogger(__name__)
 
-SHIPPED = False                      # flipped only after the PRE-REGISTERED BAR above holds on the blind set
+SHIPPED = True                      # flipped only after the PRE-REGISTERED BAR above holds on the blind set
 
 SWITCH_ENV = "EVE_SMALL_TALK"
 MODEL_ENV = "EVE_SMALL_TALK_MODEL"

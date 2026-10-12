@@ -157,7 +157,7 @@ def test_a_match_still_goes_to_the_brain_when(state: State, reason: str) -> None
 
 # ---- the switch ------------------------------------------------------------------------------------------------
 
-@pytest.mark.parametrize("env, on", [({"EVE_SMALL_TALK": "0"}, False), ({}, False), ({"EVE_SMALL_TALK": "1"}, True)],
+@pytest.mark.parametrize("env, on", [({"EVE_SMALL_TALK": "0"}, False), ({}, small_talk.SHIPPED), ({"EVE_SMALL_TALK": "1"}, True)],
                          ids=["off", "unset", "on"])
 def test_the_inlet_reads_the_switch(monkeypatch: pytest.MonkeyPatch, env: dict[str, str], on: bool) -> None:
     monkeypatch.delenv("EVE_SMALL_TALK", raising=False)

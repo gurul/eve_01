@@ -102,3 +102,7 @@ are not on the phrase list, so coverage on it is low by design.
 
 **Blind sets:** `tests/fixtures/small_talk_blind.json` was spent on the first design. The simple design is scored
 once on `tests/fixtures/small_talk_blind_v2.json`.
+
+## Verdict
+
+Shipped 2026-10-12 on the blind v2 set (docs/small-talk-gates.md S3b): 0 of 30 brain messages answered by the lane, 80% of small talk caught, no reply claiming an act, p50 1.17 s. The v1 design (Haiku deciding, with history) failed its blind bar and was replaced.
