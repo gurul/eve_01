@@ -1,0 +1,1063 @@
+{
+  "about": "blind small-talk set v2, written from a brief without the code, 2026-10-12, groups: small_talk (greetings, thanks after a finished answer, goodbyes, how-are-you, laughter, compliments; all flags false) and needs_brain (confirmations/answers while awaiting, greeting+request, thanks+command, thanks with attachment, ok/nvm/stop/wait while running_task, short commands, data questions, remember-this, compliment+request)",
+  "cases": [
+    {
+      "id": "blind-st2-1",
+      "text": "hiii eve",
+      "history": [],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-2",
+      "text": "Good morning!",
+      "history": [],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-3",
+      "text": "heyyy 👋",
+      "history": [],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-4",
+      "text": "yo",
+      "history": [],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-5",
+      "text": "evening eve :)",
+      "history": [],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-6",
+      "text": "thanks!",
+      "history": [
+        {
+          "role": "owner",
+          "text": "when does the pharmacy close"
+        },
+        {
+          "role": "eve",
+          "text": "Larkspur Pharmacy closes at 9 pm tonight."
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-7",
+      "text": "thank youuu so much",
+      "history": [
+        {
+          "role": "owner",
+          "text": "find me the tracking number for the lamp"
+        },
+        {
+          "role": "eve",
+          "text": "It's 1Z 999 AA1 0123 4567, arriving Thursday."
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-8",
+      "text": "thx eve 🙏",
+      "history": [
+        {
+          "role": "owner",
+          "text": "add milk to the shopping list"
+        },
+        {
+          "role": "eve",
+          "text": "Done, milk is on the shopping list."
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-9",
+      "text": "ty",
+      "history": [
+        {
+          "role": "owner",
+          "text": "what's the wifi password at the cabin"
+        },
+        {
+          "role": "eve",
+          "text": "From your notes: the cabin wifi is 'pinecone42'."
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-10",
+      "text": "perfect, thanks",
+      "history": [
+        {
+          "role": "owner",
+          "text": "move my dentist to friday 3pm"
+        },
+        {
+          "role": "eve",
+          "text": "Moved. Dentist with Dr. Okafor is now Friday at 3 pm."
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-11",
+      "text": "cheers",
+      "history": [
+        {
+          "role": "owner",
+          "text": "did Mira reply?"
+        },
+        {
+          "role": "eve",
+          "text": "Yes, Mira Castell replied at 2:14: she can make Saturday."
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-12",
+      "text": "ok thanks",
+      "history": [
+        {
+          "role": "owner",
+          "text": "what's the weather tomorrow"
+        },
+        {
+          "role": "eve",
+          "text": "Tomorrow: 18 degrees and sunny, light wind."
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-13",
+      "text": "goodnight eve",
+      "history": [
+        {
+          "role": "owner",
+          "text": "thanks for today"
+        },
+        {
+          "role": "eve",
+          "text": "Anytime! Sleep well."
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-14",
+      "text": "bye!",
+      "history": [
+        {
+          "role": "owner",
+          "text": "thanks"
+        },
+        {
+          "role": "eve",
+          "text": "You're welcome!"
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-15",
+      "text": "ttyl",
+      "history": [
+        {
+          "role": "owner",
+          "text": "haha nice"
+        },
+        {
+          "role": "eve",
+          "text": "Glad that made you smile."
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-16",
+      "text": "night night 😴",
+      "history": [],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-17",
+      "text": "how are you?",
+      "history": [],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-18",
+      "text": "hows it going eve",
+      "history": [],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-19",
+      "text": "how r u doing today",
+      "history": [],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-20",
+      "text": "whats up",
+      "history": [
+        {
+          "role": "owner",
+          "text": "hey"
+        },
+        {
+          "role": "eve",
+          "text": "Hey! Good to hear from you."
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-21",
+      "text": "lol",
+      "history": [
+        {
+          "role": "owner",
+          "text": "tell me a joke"
+        },
+        {
+          "role": "eve",
+          "text": "Why did the scarecrow win an award? He was outstanding in his field."
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-22",
+      "text": "hahahaha",
+      "history": [
+        {
+          "role": "owner",
+          "text": "tell me a joke"
+        },
+        {
+          "role": "eve",
+          "text": "I'd tell you a UDP joke, but you might not get it."
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-23",
+      "text": "LMAO 😂",
+      "history": [
+        {
+          "role": "owner",
+          "text": "another one"
+        },
+        {
+          "role": "eve",
+          "text": "Parallel lines have so much in common. It's a shame they'll never meet."
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-24",
+      "text": "you're the best",
+      "history": [
+        {
+          "role": "owner",
+          "text": "can you find the receipt from the bike shop"
+        },
+        {
+          "role": "eve",
+          "text": "Found it: Spoke & Gear, 14 Sept, 86.40. I've attached it."
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-25",
+      "text": "ur amazing eve ❤️",
+      "history": [
+        {
+          "role": "owner",
+          "text": "thanks for sorting the flights"
+        },
+        {
+          "role": "eve",
+          "text": "Happy to help!"
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-26",
+      "text": "good job 👍",
+      "history": [
+        {
+          "role": "owner",
+          "text": "book the 7pm table at Nonna Lucia"
+        },
+        {
+          "role": "eve",
+          "text": "Booked: Nonna Lucia, tonight at 7 pm for two."
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-27",
+      "text": "love you eve",
+      "history": [
+        {
+          "role": "owner",
+          "text": "you're so helpful"
+        },
+        {
+          "role": "eve",
+          "text": "Aw, thank you!"
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-28",
+      "text": "GOOD MORNING EVE ☀️",
+      "history": [],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-29",
+      "text": "thnaks",
+      "history": [
+        {
+          "role": "owner",
+          "text": "set an alarm for 6:30"
+        },
+        {
+          "role": "eve",
+          "text": "Alarm set for 6:30 am."
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-30",
+      "text": "nice one, thank you!",
+      "history": [
+        {
+          "role": "owner",
+          "text": "what did Theo say about the deck"
+        },
+        {
+          "role": "eve",
+          "text": "Theo Brandt said the deck looks good and to ship it Monday."
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "small_talk"
+    },
+    {
+      "id": "blind-st2-31",
+      "text": "yes",
+      "history": [
+        {
+          "role": "owner",
+          "text": "email Priya the invoice"
+        },
+        {
+          "role": "eve",
+          "text": "Ready to send the invoice to Priya Nair. Send it?"
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": true,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "needs_brain"
+    },
+    {
+      "id": "blind-st2-32",
+      "text": "ok do it",
+      "history": [
+        {
+          "role": "owner",
+          "text": "delete the old drafts"
+        },
+        {
+          "role": "eve",
+          "text": "I found 12 drafts older than 6 months. Delete them all?"
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": true,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "needs_brain"
+    },
+    {
+      "id": "blind-st2-33",
+      "text": "thanks, go ahead",
+      "history": [
+        {
+          "role": "owner",
+          "text": "reply to Jonah that I'm in"
+        },
+        {
+          "role": "eve",
+          "text": "Draft: \"Count me in, Jonah!\" Send it?"
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": true,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "needs_brain"
+    },
+    {
+      "id": "blind-st2-34",
+      "text": "yep 👍",
+      "history": [
+        {
+          "role": "owner",
+          "text": "order the usual coffee beans"
+        },
+        {
+          "role": "eve",
+          "text": "That's 2 bags from Hilltop Roasters, 31.00 total. Place the order?"
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": true,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "needs_brain"
+    },
+    {
+      "id": "blind-st2-35",
+      "text": "sure",
+      "history": [
+        {
+          "role": "owner",
+          "text": "cancel my 4pm"
+        },
+        {
+          "role": "eve",
+          "text": "Cancel 'Sync with Dana Ruiz' at 4 pm and notify her?"
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": true,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "needs_brain"
+    },
+    {
+      "id": "blind-st2-36",
+      "text": "no",
+      "history": [
+        {
+          "role": "owner",
+          "text": "send the photos to the family group"
+        },
+        {
+          "role": "eve",
+          "text": "Send all 23 photos to 'Family'?"
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": true,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "needs_brain"
+    },
+    {
+      "id": "blind-st2-37",
+      "text": "thursday",
+      "history": [
+        {
+          "role": "owner",
+          "text": "set up lunch with Ana"
+        },
+        {
+          "role": "eve",
+          "text": "Which day works for lunch with Ana Kovac?"
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": true,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "needs_brain"
+    },
+    {
+      "id": "blind-st2-38",
+      "text": "the second one",
+      "history": [
+        {
+          "role": "owner",
+          "text": "call the plumber"
+        },
+        {
+          "role": "eve",
+          "text": "I found two plumbers in your contacts: Reed Plumbing and Ortega & Sons. Which one?"
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": true,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "needs_brain"
+    },
+    {
+      "id": "blind-st2-39",
+      "text": "7",
+      "history": [
+        {
+          "role": "owner",
+          "text": "wake me up tomorrow"
+        },
+        {
+          "role": "eve",
+          "text": "What time should I set the alarm for?"
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": true,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "needs_brain"
+    },
+    {
+      "id": "blind-st2-40",
+      "text": "hey, what's on today",
+      "history": [],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "needs_brain"
+    },
+    {
+      "id": "blind-st2-41",
+      "text": "morning! any emails?",
+      "history": [],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "needs_brain"
+    },
+    {
+      "id": "blind-st2-42",
+      "text": "hi eve, what's the weather like",
+      "history": [],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "needs_brain"
+    },
+    {
+      "id": "blind-st2-43",
+      "text": "good morning, remind me to call mom at 5",
+      "history": [],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "needs_brain"
+    },
+    {
+      "id": "blind-st2-44",
+      "text": "thanks, now send it",
+      "history": [
+        {
+          "role": "owner",
+          "text": "draft a reply to Felix saying I'll be late"
+        },
+        {
+          "role": "eve",
+          "text": "Draft: \"Hi Felix, running about 15 minutes late, sorry!\""
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "needs_brain"
+    },
+    {
+      "id": "blind-st2-45",
+      "text": "thx",
+      "history": [
+        {
+          "role": "owner",
+          "text": "can you read this receipt"
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": true
+      },
+      "kind": "needs_brain"
+    },
+    {
+      "id": "blind-st2-46",
+      "text": "thanks 🙂",
+      "history": [],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": true
+      },
+      "kind": "needs_brain"
+    },
+    {
+      "id": "blind-st2-47",
+      "text": "ok",
+      "history": [
+        {
+          "role": "owner",
+          "text": "clean up my downloads folder"
+        },
+        {
+          "role": "eve",
+          "text": "Working on it, sorting 340 files..."
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": true,
+        "attachment": false
+      },
+      "kind": "needs_brain"
+    },
+    {
+      "id": "blind-st2-48",
+      "text": "nvm",
+      "history": [
+        {
+          "role": "owner",
+          "text": "find every email from the landlord this year"
+        },
+        {
+          "role": "eve",
+          "text": "Searching your mail..."
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": true,
+        "attachment": false
+      },
+      "kind": "needs_brain"
+    },
+    {
+      "id": "blind-st2-49",
+      "text": "stop",
+      "history": [
+        {
+          "role": "owner",
+          "text": "play my focus playlist on all speakers"
+        },
+        {
+          "role": "eve",
+          "text": "Starting playback..."
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": true,
+        "attachment": false
+      },
+      "kind": "needs_brain"
+    },
+    {
+      "id": "blind-st2-50",
+      "text": "wait",
+      "history": [
+        {
+          "role": "owner",
+          "text": "send the reminder to the whole team"
+        },
+        {
+          "role": "eve",
+          "text": "Sending to 9 people..."
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": true,
+        "attachment": false
+      },
+      "kind": "needs_brain"
+    },
+    {
+      "id": "blind-st2-51",
+      "text": "lights off",
+      "history": [],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "needs_brain"
+    },
+    {
+      "id": "blind-st2-52",
+      "text": "turn the heat up a bit",
+      "history": [],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "needs_brain"
+    },
+    {
+      "id": "blind-st2-53",
+      "text": "what time is it",
+      "history": [],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "needs_brain"
+    },
+    {
+      "id": "blind-st2-54",
+      "text": "what's today's date",
+      "history": [],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "needs_brain"
+    },
+    {
+      "id": "blind-st2-55",
+      "text": "where am I",
+      "history": [],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "needs_brain"
+    },
+    {
+      "id": "blind-st2-56",
+      "text": "remember I like tea",
+      "history": [],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "needs_brain"
+    },
+    {
+      "id": "blind-st2-57",
+      "text": "you're the best, can you also add it to my calendar",
+      "history": [
+        {
+          "role": "owner",
+          "text": "when is the Harbor Lights concert"
+        },
+        {
+          "role": "eve",
+          "text": "Harbor Lights plays the Meridian Hall on Nov 2 at 8 pm."
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "needs_brain"
+    },
+    {
+      "id": "blind-st2-58",
+      "text": "great job! now do the same for Lena",
+      "history": [
+        {
+          "role": "owner",
+          "text": "send Oskar the address"
+        },
+        {
+          "role": "eve",
+          "text": "Sent Oskar the address for Saturday."
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "needs_brain"
+    },
+    {
+      "id": "blind-st2-59",
+      "text": "thanks, and what about tomorrow?",
+      "history": [
+        {
+          "role": "owner",
+          "text": "anything on my calendar today?"
+        },
+        {
+          "role": "eve",
+          "text": "Today you have standup at 10 and a call with Ruth at 3."
+        }
+      ],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "needs_brain"
+    },
+    {
+      "id": "blind-st2-60",
+      "text": "hey did Sam text back",
+      "history": [],
+      "state": {
+        "awaiting_confirmation": false,
+        "awaiting_answer": false,
+        "running_task": false,
+        "attachment": false
+      },
+      "kind": "needs_brain"
+    }
+  ]
+}
