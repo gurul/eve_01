@@ -1497,9 +1497,15 @@ class Daemon:
                 lambda init_data: miniapp.check_init_data(init_data, cfg.token, cfg.owner_ids),
                 getattr(self, "_telegram", None), make_voice())
             # Eve Link's chat (link_chat.py): the owner texts the chat's brain from the app, with the link token.
+            # The Work tab's Claude Code sessions in ~/Documents/personal/work (work_sessions.py,
+            # docs/work-sessions.md); EVE_WORK_SESSIONS=0 leaves them off and the routes answer 503.
+            from . import work_sessions
             from .link_chat import LinkChat
 
-            server.link = LinkChat(lambda: getattr(self, "_telegram", None))
+            if work_sessions.enabled():
+                self._work = work_sessions.WorkSessions(state=lambda: self.state)
+            server.link = LinkChat(lambda: getattr(self, "_telegram", None),
+                                   work=lambda: getattr(self, "_work", None))
             # Notes on the phone (owner, 2026-10-04: "the phone should hold the port until i click action button
             # to turn it off, this allows me to take notes on the go"): take_notes said on an Eve Link call records
             # the phone through the room's own note-taker, and the notes are texted through the chat's door.
@@ -2561,6 +2567,7 @@ class Daemon:
             transcript_path=req.get("transcript_path"),
             cwd=req.get("cwd"),
         )
+        _work_note(self, "session_start", req)
         inlet = getattr(self, "_telegram", None)
         if inlet is not None and inlet.claude:
             try:
@@ -2572,6 +2579,7 @@ class Daemon:
 
     async def _ipc_session_end(self, req: dict[str, Any]) -> dict[str, Any]:
         self.state.session_end(req["session_id"])
+        _work_note(self, "session_end", req)
         await self._push_heartbeat()
         return {"ok": True}
 
@@ -2585,6 +2593,7 @@ class Daemon:
         self.state.completed_until = 0.0
         self.state.session_start(session_id)  # idempotent
         self.state.turn_begin(session_id)
+        _work_note(self, "turn_begin", req)
         prompt = req.get("prompt")
         if isinstance(prompt, str) and prompt:
             self.state.add_entry(f"> {truncate_utf8_bytes(prompt, _ENTRY_PAYLOAD_MAX_BYTES)}")
@@ -2608,6 +2617,7 @@ class Daemon:
         # short enough that idle really does clock. A new turn_begin
         # cancels the scheduled task.
         session_id = req["session_id"]
+        _work_note(self, "turn_end", req)       # exact, not the 15 s deferral below
         previous = self._pending_turn_ends.get(session_id)
         if previous is not None and not previous.done():
             previous.cancel()
@@ -2635,6 +2645,7 @@ class Daemon:
         return {"ok": True}
 
     async def _ipc_pretooluse(self, req: dict[str, Any]) -> dict[str, Any]:
+        _work_note(self, "pretooluse", req)      # an AskUserQuestion: the Work session waits on the owner
         return await self._handle_pretooluse(req)
 
     async def _ipc_permissionrequest(self, req: dict[str, Any]) -> dict[str, Any]:
@@ -2686,6 +2697,56 @@ class Daemon:
         tg.hear(text, on_call=False)                     # typed, not said: never read on a call
         return {"ok": True}
 
+    async def _ipc_mcp_tools(self, req: dict[str, Any]) -> dict[str, Any]:
+        """A Work session's eve MCP server (eve_mcp.py) asks for the tools: the chat brain's own, now
+        (TelegramInlet.session_tools). Only with the token of a Work session eve started that has not ended."""
+        refused = _mcp_refusal(self, req)
+        if refused is not None:
+            return refused
+        inlet = getattr(self, "_telegram", None)
+        try:
+            tools, _ = inlet.session_tools()
+        except Exception as e:  # noqa: BLE001 — the type only: the request holds a token
+            log.warning("work sessions: the tool list failed (%s)", type(e).__name__)
+            return {"ok": False, "error": "eve couldn't list its tools"}
+        log.info("work sessions: %s listed %d tools", str(req.get("sid"))[:8], len(tools))
+        secs = float(getattr(getattr(inlet, "config", None), "ask_timeout_secs", 180.0)) + MCP_CALL_MARGIN_SECS
+        return {"ok": True, "tools": tools, "call_secs": secs}
+
+    async def _ipc_mcp_call(self, req: dict[str, Any]) -> dict[str, Any]:
+        """One tool call from a Work session's eve MCP server, run through the chat's own gate and tool path
+        (TelegramInlet.session_call): an acting tool asks the owner on the phone, and this waits for the answer."""
+        refused = _mcp_refusal(self, req)
+        if refused is not None:
+            return refused
+        inlet = getattr(self, "_telegram", None)
+        name, args = req.get("name"), req.get("args")
+        # The daemon bounds the call, never the MCP side: it answers within MCP_CALL_BOUND_SECS of the ask timeout,
+        # before eve_mcp.py gives up waiting. A call still running then is not cancelled (an owner-approved
+        # purchase or send may be half done); it goes on in _background and the session is told the outcome is
+        # unknown and not to retry it.
+        ask = float(getattr(getattr(inlet, "config", None), "ask_timeout_secs", 180.0))
+        task = asyncio.ensure_future(inlet.session_call(name, args if isinstance(args, dict) else {},
+                                                        sid=str(req.get("sid"))))
+        try:
+            result, outside = await asyncio.wait_for(asyncio.shield(task), timeout=ask + MCP_CALL_BOUND_SECS)
+        except asyncio.TimeoutError:
+            background = getattr(self, "_background", None)
+            if isinstance(background, set):
+                background.add(task)
+                task.add_done_callback(background.discard)
+            task.add_done_callback(_mcp_late_done)
+            log.warning("work sessions: %s's tool call is still running after %.0f s; told the session the "
+                        "outcome is unknown", str(req.get("sid"))[:8], ask + MCP_CALL_BOUND_SECS)
+            return {"ok": False, "error": MCP_STILL_RUNNING}
+        except asyncio.CancelledError:
+            task.cancel()
+            raise
+        except Exception as e:  # noqa: BLE001 — the type only: the request holds a token and the arguments
+            log.warning("work sessions: a tool call failed (%s)", type(e).__name__)
+            return {"ok": False, "error": "that tool call failed in eve"}
+        return {"ok": True, "result": result, "outside": outside}
+
     async def _ipc_mic(self, req: dict[str, Any]) -> dict[str, Any]:
         # `eve-bridge mic [on|off|status]`, and the menu-bar app's switch.
         action = req.get("action")
@@ -2720,6 +2781,7 @@ class Daemon:
     async def _ipc_posttooluse(self, req: dict[str, Any]) -> dict[str, Any]:
         # A tool ran → any terminal-side permission prompt was answered.
         self.state.input_received(req.get("session_id", ""))
+        _work_note(self, "posttooluse", req)
         tool_name = req.get("tool_name")
         if isinstance(tool_name, str):
             self.state.add_entry(f"+ {tool_name}")
@@ -2738,6 +2800,7 @@ class Daemon:
         waits = notification_waits(kind)
         if waits:
             self.state.needs_input(req.get("session_id", ""))
+        _work_note(self, "notification", req)
         msg = req.get("message")
         if isinstance(msg, str) and msg.strip():
             self.state.add_entry(f"! {msg.strip()}")
@@ -3315,6 +3378,43 @@ class Daemon:
 
 
 CHAT_MAX_CHARS = 4000     # a Telegram message is at most 4096 characters
+MCP_CALL_MARGIN_SECS = 120.0   # an eve MCP call waits the chat's ask_timeout_secs plus this (eve_mcp.py)
+MCP_CALL_BOUND_SECS = 90.0     # the daemon answers within ask_timeout_secs plus this: before the MCP side gives up
+MCP_STILL_RUNNING = ("that call is still running in eve, so its outcome is unknown: it may yet run or finish. "
+                     "Do not retry it; ask the owner what happened.")
+
+
+def _mcp_late_done(task: "asyncio.Future[Any]") -> None:
+    """A Work session's tool call that outlived its answer: log how it ended (never its result)."""
+    if task.cancelled():
+        log.info("work sessions: a late tool call was cancelled")
+        return
+    err = task.exception()
+    log.info("work sessions: a late tool call finished (%s)", type(err).__name__ if err else "done")
+
+
+def _work_note(daemon: Any, evt: str, req: dict[str, Any]) -> None:
+    """A hook event for the Work sessions' registry (work_sessions.WorkSessions.note), when it exists. A stub
+    daemon in a test has none; a failure costs the Work tab's state, never the hook's reply."""
+    work = getattr(daemon, "_work", None)
+    if work is None:
+        return
+    try:
+        work.note(evt, req)
+    except Exception as e:  # noqa: BLE001
+        log.warning("work sessions: note %s failed (%s)", evt, type(e).__name__)
+
+
+def _mcp_refusal(daemon: Any, req: dict[str, Any]) -> Optional[dict[str, Any]]:
+    """None when the request carries the token of a live Work session and the chat is up; else the refusal."""
+    work = getattr(daemon, "_work", None)
+    if work is None or not work.check_token(req.get("sid"), req.get("token")):
+        log.info("work sessions: refused an eve MCP request (no such session, or a wrong token)")
+        return {"ok": False, "error": "not a live Work session eve started"}
+    inlet = getattr(daemon, "_telegram", None)
+    if inlet is None or getattr(inlet, "_chat_id", None) is None:
+        return {"ok": False, "error": "eve's chat isn't running, or no owner has texted it yet"}
+    return None
 
 # Daemon._handle_ipc's dispatch table: event name -> handler (called as handler(daemon, req)).
 IPC_HANDLERS: dict[str, Any] = {
@@ -3342,6 +3442,8 @@ IPC_HANDLERS: dict[str, Any] = {
     "sound": Daemon._ipc_sound,
     "mic": Daemon._ipc_mic,
     "chat": Daemon._ipc_chat,
+    "mcp_tools": Daemon._ipc_mcp_tools,
+    "mcp_call": Daemon._ipc_mcp_call,
     "get_state": Daemon._ipc_get_state,
     "posttooluse": Daemon._ipc_posttooluse,
     "notification": Daemon._ipc_notification,

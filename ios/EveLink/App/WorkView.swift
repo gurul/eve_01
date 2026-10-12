@@ -1,10 +1,12 @@
-// The Apps and Work tabs (docs/app-chat.md): one plain native list each. Work is the chief's jobs: a job opens a sheet
-// with its steps and only the actions that apply, and its bar's "+" starts a New job (eve takes it on as in the
-// chat). Apps is Notes (the owner's vault, NotesView.swift) and then the apps the Mac's registry lists, in its order
-// (app_registry.py; ControlsInfo.rows): the owner's own (Music, Lights, Remote, Pika, Camera) open their native sheets
-// (ControlSheets.swift), any other app the generic sheet (GenericAppSheet.swift). Memory is in Settings (owner,
-// 2026-10-10). The owner's built apps are not listed (owner, 2026-10-08); the owner asked for "chat, apps, work" as
-// three tabs the same evening.
+// The Apps and Work tabs (docs/app-chat.md): one plain native list each. Work is Claude Code sessions on the Mac
+// (docs/work-sessions.md; owner, 2026-10-12: "can work essentially be a new terminal session"): each row a session's
+// state, folder, last line and last activity, refreshed while the tab is open; "+" starts one in the work folder with
+// the typed task (NewSessionSheet), and a session opens SessionSheet.swift. The chief's jobs stay below as a small
+// section while there are any (the menu's dot and Settings still point here). Apps is Notes (the owner's vault,
+// NotesView.swift) and then the apps the Mac's registry lists, in its order (app_registry.py; ControlsInfo.rows): the
+// owner's own (Music, Lights, Remote, Pika, Camera) open their native sheets (ControlSheets.swift), any other app the
+// generic sheet (GenericAppSheet.swift). Memory is in Settings (owner, 2026-10-10). The owner's built apps are not
+// listed (owner, 2026-10-08); the owner asked for "chat, apps, work" as three tabs the same evening.
 import SwiftUI
 
 @MainActor
@@ -18,6 +20,9 @@ final class WorkModel: ObservableObject {
     @Published private(set) var needsYou = 0
     /// An action the owner took landed: the Go haptic (and a light one for the others).
     @Published private(set) var acted = 0
+    /// The Claude Code sessions on the Mac (WorkSessions.swift).
+    @Published private(set) var sessions: WorkSessionList?
+    @Published private(set) var sessionsProblem: String?
 
     /// The sheets' calls go through the same client (ControlsClient.swift).
     let client: WorkClient
@@ -57,38 +62,68 @@ final class WorkModel: ObservableObject {
         }
     }
 
-    /// A New job: eve hears the goal as a chat turn and files the card itself (link_chat ``POST /api/link/jobs``).
-    /// The card it filed, or the line the sheet shows (eve's question back, or why there is no card).
-    func start(goal: String, detail: String, clientID: String) async -> Result<WorkJob, StartProblem> {
-        let out: Result<WorkJob, StartProblem>
-        switch await client.start(goal: goal, detail: detail, clientID: clientID) {
+    func refreshSessions() async {
+        switch await client.sessions() {
+        case .success(let got):
+            if got != sessions { sessions = got }
+            sessionsProblem = nil
+        case .failure(let f):
+            sessionsProblem = f.message
+        }
+    }
+
+    struct Problem: Error { let message: String }
+
+    /// + New: one Claude Code session in the work folder, the task its first prompt. The session as started, or why
+    /// there is none. The same clientID again is the same session (a retry never opens a second terminal).
+    func startSession(task: String, clientID: String) async -> Result<WorkSession, Problem> {
+        let out: Result<WorkSession, Problem>
+        switch await client.startSession(task: task, clientID: clientID) {
         case .success(let r):
-            if let job = r.job {
-                out = .success(job)
+            if let s = r.session {
+                out = .success(s)
                 acted += 1
             } else {
-                out = .failure(StartProblem(message: r.problem))
+                out = .failure(Problem(message: r.reason ?? "eve didn't start a session."))
             }
         case .failure(let f):
-            out = .failure(StartProblem(message: f.message))
+            out = .failure(Problem(message: f.message))
         }
-        await refreshJobs()
+        await refreshSessions()
         return out
     }
 
-    struct StartProblem: Error { let message: String }
-
-    /// Clear finished: every finished job leaves the list (link_chat ``hide``; the chief keeps its record). The
-    /// count of the ones that would not go.
-    func hideFinished() async -> Int {
-        var refused = 0
-        for job in jobs?.finished ?? [] where job.actions.contains(.hide) {
-            if case .success(let r) = await client.act(.hide, job: job.id), r.ok { continue }
-            refused += 1
+    /// A session's latest turns, for its sheet.
+    func detail(_ id: String) async -> Result<WorkSessionDetail, Problem> {
+        switch await client.session(id) {
+        case .success(let d): .success(d)
+        case .failure(let f): .failure(Problem(message: f.message))
         }
-        acted += 1
-        await refreshJobs()
-        return refused
+    }
+
+    /// The owner's words typed into that session's terminal. nil when they landed, else why not.
+    func reply(_ text: String, to id: String) async -> String? {
+        switch await client.reply(text, to: id) {
+        case .success(let r) where r.ok:
+            acted += 1
+            return nil
+        case .success(let r): return r.reason ?? "eve didn't send that."
+        case .failure(let f): return f.message
+        }
+    }
+
+    /// Ends the session (Claude quits; its terminal stays). nil when it is stopped or was already gone.
+    func stop(_ id: String) async -> String? {
+        let said: String?
+        switch await client.stopSession(id) {
+        case .success(let r) where r.ok:
+            said = nil
+            acted += 1
+        case .success(let r): said = r.reason ?? "eve didn't stop it."
+        case .failure(let f): said = f.message
+        }
+        await refreshSessions()
+        return said
     }
 
     /// The owner's action on a job. nil when it went through, else the reason in words.
@@ -114,16 +149,18 @@ struct WorkView: View {
     let shows: HomeMode
     @State private var job: WorkJob?
     @State private var control: AppRow?
-    @State private var newJob = false
-    /// The job a New job filed: its sheet opens once the New job sheet has gone.
-    @State private var started: WorkJob?
-    @State private var confirmClear = false
+    @State private var session: WorkSession?
+    @State private var newSession = false
+    /// The session + New started: its sheet opens once the New session sheet has gone.
+    @State private var started: WorkSession?
+    /// How often the open Work tab reads the sessions again.
+    static let sessionPoll: Duration = .seconds(6)
 
     var body: some View {
         VStack(spacing: 0) {
             if shows == .work { workBar }
             List {
-                if shows == .apps { controlRows } else { jobRows }
+                if shows == .apps { controlRows } else { sessionRows; jobRows }
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
@@ -139,9 +176,18 @@ struct WorkView: View {
                 else if let kind = ControlKind(rawValue: raw) { control = .native(kind) }
             }
             #endif
+            // Work: the sessions again every few seconds while the tab is open (the task ends with the tab).
+            while shows == .work, !Task.isCancelled {
+                try? await Task.sleep(for: Self.sessionPoll)
+                if Task.isCancelled { break }
+                if session == nil { await work.refreshSessions() }   // an open sheet reads its own session
+            }
         }
         .sheet(item: $job) { shown in
             JobSheet(work: work, jobID: shown.id, fallback: shown)
+        }
+        .sheet(item: $session, onDismiss: { Task { await work.refreshSessions() } }) { shown in
+            SessionSheet(work: work, fallback: shown)
         }
         .sheet(item: $control) { row in
             switch row {
@@ -149,39 +195,28 @@ struct WorkView: View {
             case .generic(let entry): GenericAppSheet(entry: entry, client: work.client)
             }
         }
-        .sheet(isPresented: $newJob, onDismiss: {
-            if let filed = started {
+        .sheet(isPresented: $newSession, onDismiss: {
+            if let s = started {
                 started = nil
-                job = filed
+                session = s
             }
         }) {
-            NewJobSheet(work: work) { filed in started = filed }
+            NewSessionSheet(work: work) { s in started = s }
         }
     }
 
-    /// The Work list's own toolbar: what it lists, and New job.
+    /// The Work list's own toolbar: what it lists, and a new session.
     private var workBar: some View {
         HStack {
-            Text("Jobs").font(.headline)
+            Text("Sessions").font(.headline)
             Spacer()
-            if work.jobs?.finished.contains(where: { $0.actions.contains(.hide) }) == true {
-                Button("Clear finished") { confirmClear = true }
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(.trailing, 8)
-                    .accessibilityHint("Removes every finished job from this list")
-                    .confirmationDialog("Remove every finished job from Work?", isPresented: $confirmClear,
-                                        titleVisibility: .visible) {
-                        Button("Clear finished", role: .destructive) { Task { _ = await work.hideFinished() } }
-                    }
-            }
-            Button { newJob = true } label: {
+            Button { newSession = true } label: {
                 Image(systemName: "plus").font(.system(size: 16, weight: .semibold))
             }
             .buttonStyle(RoundButtonStyle(size: 36))
             .foregroundStyle(.primary)
-            .accessibilityLabel("New job")
-            .accessibilityHint("Hands eve a job to take on")
+            .accessibilityLabel("New session")
+            .accessibilityHint("Starts Claude Code on your Mac with a task")
         }
         .padding(.horizontal, 20)
         .padding(.top, 8)
@@ -189,24 +224,52 @@ struct WorkView: View {
     }
 
     private func reload() async {
-        if shows == .apps { await work.refreshControls() } else { await work.refreshJobs() }
+        if shows == .apps {
+            await work.refreshControls()
+        } else {
+            async let s: Void = work.refreshSessions()
+            async let j: Void = work.refreshJobs()
+            _ = await (s, j)
+        }
     }
 
+    @ViewBuilder private var sessionRows: some View {
+        if let list = work.sessions, !list.sessions.isEmpty {
+            ForEach(list.sessions) { s in
+                Button { session = s } label: {
+                    TimelineView(.periodic(from: .now, by: 30)) { clock in    // "2 min ago" moves on between reads
+                        SessionRow(session: s, now: clock.date)
+                    }
+                }
+                .listRowBackground(Color.eveBackground)
+            }
+        } else if let problem = work.sessionsProblem {
+            quiet(problem)
+        } else if work.sessions == nil {
+            quiet("Loading…")
+        } else {
+            quiet("No sessions yet. Tap + to start Claude Code on your Mac.")
+        }
+    }
+
+    /// The chief's jobs, a small section under the sessions while there are any (the chat can still file one).
     @ViewBuilder private var jobRows: some View {
         if let jobs = work.jobs, !jobs.jobs.isEmpty {
-            ForEach(jobs.open + jobs.finished) { j in
-                Button { job = j } label: { JobRow(job: j) }
-                    .listRowBackground(Color.eveBackground)
-                    .contextMenu {                     // a long press: a sideways swipe changes the pane
-                        if j.actions.contains(.hide) {     // a finished job: gone from Work for good
-                            Button("Delete", systemImage: "trash", role: .destructive) {
-                                Task { _ = await work.act(.hide, on: j) }
+            Section {
+                ForEach(jobs.open + jobs.finished) { j in
+                    Button { job = j } label: { JobRow(job: j) }
+                        .listRowBackground(Color.eveBackground)
+                        .contextMenu {                     // a long press: a sideways swipe changes the pane
+                            if j.actions.contains(.hide) {     // a finished job: gone from Work for good
+                                Button("Delete", systemImage: "trash", role: .destructive) {
+                                    Task { _ = await work.act(.hide, on: j) }
+                                }
                             }
                         }
-                    }
+                }
+            } header: {
+                Text("Jobs").font(.subheadline.weight(.semibold)).foregroundStyle(.secondary)
             }
-        } else {
-            quiet(work.jobsProblem ?? (work.jobs == nil ? "Loading…" : "No jobs."))
         }
     }
 
@@ -342,51 +405,130 @@ private struct ControlRow: View {
     }
 }
 
-// ---- a new job (owner, 2026-10-09: "work tab should allow me to start long horizon task not only just track") ------
+/// One session: what it is doing in a chip, its title, what it last said, its folder and when it last moved.
+private struct SessionRow: View {
+    let session: WorkSession
+    let now: Date
 
-/// The goal in the owner's words, optional details, and Start. eve takes it on as it would in the chat: a step that
-/// cannot be undone still waits on the owner's Go in the job's sheet.
-private struct NewJobSheet: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                SessionChip(state: session.state)
+                Spacer(minLength: 0)
+                Text(WorkSession.ago(session.lastActivity, now: now))
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+            Text(session.headline)
+                .font(.body)
+                .foregroundStyle(.primary)
+                .lineLimit(2)
+            if !session.subline.isEmpty {
+                Text(session.subline)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+            if !session.folder.isEmpty {
+                Label(session.folder, systemImage: "folder")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .labelStyle(.titleAndIcon)
+            }
+        }
+        .padding(.vertical, 6)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityText)
+        .accessibilityHint("Opens the session")
+        .accessibilityAddTraits(.isButton)
+    }
+
+    private var accessibilityText: String {
+        var parts = [session.headline, session.state.label]
+        if !session.subline.isEmpty { parts.append(session.subline) }
+        if !session.folder.isEmpty { parts.append("In \(session.folder)") }
+        let ago = WorkSession.ago(session.lastActivity, now: now)
+        if !ago.isEmpty { parts.append("Last active \(ago)") }
+        return parts.joined(separator: ". ")
+    }
+}
+
+/// A session's state as a small capsule: blue when it waits on the owner, the text color while it works, muted when
+/// it is idle or gone. The word is always there, so the color is never the only cue.
+struct SessionChip: View {
+    let state: WorkSessionState
+
+    var body: some View {
+        HStack(spacing: 5) {
+            Circle().fill(tint).frame(width: 7, height: 7)
+            Text(state.label).font(.caption.weight(.semibold))
+        }
+        .foregroundStyle(state == .waiting ? Color.blue : state.rank <= 1 ? Color.primary : Color.secondary)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 3)
+        .background(Capsule().fill(Color.eveFill))
+        .overlay(Capsule().strokeBorder(Color.eveEdge, lineWidth: 1))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(state.label)
+    }
+
+    private var tint: Color {
+        switch state {
+        case .waiting: .blue
+        case .working, .starting: .green
+        case .idle, .ended: .secondary
+        }
+    }
+}
+
+// ---- a new session (owner, 2026-10-12: "a new terminal session in documents personal") -------------------------------
+
+/// The task in the owner's words and Start: Claude Code opens in a new terminal on the Mac, in the work folder, with
+/// the task as its first prompt.
+private struct NewSessionSheet: View {
     @ObservedObject var work: WorkModel
-    /// The card eve filed: the caller opens its sheet once this one has gone.
-    let filed: (WorkJob) -> Void
+    /// The session it started: the caller opens its sheet once this one has gone.
+    let started: (WorkSession) -> Void
     @Environment(\.dismiss) private var dismiss
-    @State private var goal = ""
-    @State private var detail = ""
+    @State private var task = ""
     @State private var running = false
     @State private var problem: String?
-    /// One per goal and details as typed: a retry after a dropped connection or a slow turn is the same job, never a
-    /// second one; changed words are a new job.
-    @State private var clientID = "job-" + UUID().uuidString.lowercased()
-    @FocusState private var goalFocused: Bool
+    /// One per wording: a retry after a dropped connection is the same session, never a second terminal; changed
+    /// words are a new one.
+    @State private var clientID = NewSessionSheet.freshID()
+    @FocusState private var focused: Bool
 
-    private var canStart: Bool { !running && !goal.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    private static func freshID() -> String { "ws-" + UUID().uuidString.lowercased() }
+    private var canStart: Bool { !running && !task.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 
     var body: some View {
         NavigationStack {
             List {
                 Section {
-                    TextField("Plan my trip to Rome in December, flights and a hotel under $200 a night",
-                              text: $goal, axis: .vertical)
-                        .lineLimit(3...8)
-                        .focused($goalFocused)
-                        .accessibilityLabel("Goal")
+                    TextField("What should Claude work on?", text: $task, axis: .vertical)
+                        .lineLimit(4...12)
+                        .focused($focused)
+                        .accessibilityLabel("Task")
                 } header: {
-                    Text("Goal")
+                    Text("Task")
                 } footer: {
-                    Text("eve plans the steps and asks for your Go before anything it can't undo.")
+                    Text("Claude Code starts in a new terminal on your Mac, in your \(folder) folder. "
+                         + "You can follow it here, reply and stop it.")
                 }
-                Section("Details") {
-                    TextField("Optional: dates, limits, what to avoid", text: $detail, axis: .vertical)
-                        .lineLimit(2...6)
-                        .accessibilityLabel("Details, optional")
+                if task.count > WorkSessionRequests.maxTask - 400 {
+                    Section {
+                        Text("\(min(task.count, WorkSessionRequests.maxTask)) of \(WorkSessionRequests.maxTask) characters")
+                            .font(.footnote).foregroundStyle(.secondary)
+                    }
                 }
                 if let problem {
                     Section { Text(problem).foregroundStyle(.red).font(.subheadline) }
                 }
             }
             .disabled(running)
-            .navigationTitle("New job")
+            .navigationTitle("New session")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
@@ -400,28 +542,34 @@ private struct NewJobSheet: View {
                     }
                 }
             }
-            .onAppear { goalFocused = true }
-            .onChange(of: goal) { clientID = "job-" + UUID().uuidString.lowercased() }
-            .onChange(of: detail) { clientID = "job-" + UUID().uuidString.lowercased() }
+            .onAppear { focused = true }
+            .onChange(of: task) { _, now in
+                if now.count > WorkSessionRequests.maxTask { task = String(now.prefix(WorkSessionRequests.maxTask)) }
+                clientID = Self.freshID()
+            }
         }
         .presentationDragIndicator(.visible)
         .interactiveDismissDisabled(running)
         .sensoryFeedback(.success, trigger: work.acted)
     }
 
+    private var folder: String {
+        let name = work.sessions?.folder ?? ""
+        return name.isEmpty ? "work" : name
+    }
+
     private func start() async {
         guard canStart else { return }
         running = true
         problem = nil
-        let out = await work.start(goal: String(goal.prefix(WorkRequests.maxGoal)),
-                                   detail: String(detail.prefix(WorkRequests.maxDetail)), clientID: clientID)
+        let out = await work.startSession(task: task, clientID: clientID)
         running = false
         switch out {
-        case .success(let job):
-            filed(job)
+        case .success(let s):
+            started(s)
             dismiss()
         case .failure(let p):
-            problem = p.message                 // the same words again wait for the same turn (clientID)
+            problem = p.message                 // the same words again ask for the same session (clientID)
         }
     }
 }

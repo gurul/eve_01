@@ -116,6 +116,14 @@ view and does all its networking natively (ios/EveLink); this module is the daem
   card's sources for 30 days; refresh starts one rebuild and never waits for the model (``started: false`` while one
   runs). With ``EVE_UPDATES=0`` the list is empty and nothing is read.
 
+* ``GET /api/link/sessions``, ``POST /api/link/sessions/start`` ``{"task", "client_id"?}``, ``GET
+  /api/link/sessions/<id>``, ``POST /api/link/sessions/<id>/reply`` ``{"text"}`` and ``POST .../<id>/stop``
+  (work_sessions.py, docs/work-sessions.md; owner, 2026-10-12: "make a folder called work under personal where this
+  happens"): the Work tab's Claude Code sessions in ``~/Documents/personal/work``. Start opens one Terminal window
+  running ``claude`` with the task as its first prompt, never through a shell string; detail is the transcript's
+  latest turns, words only, secrets masked; reply types into that session's own tab only while it runs; stop ends
+  it. 503 while ``EVE_WORK_SESSIONS=0`` (``work`` is None).
+
 **Who may call.** The link token (stick_link.LinkToken), as ``Authorization: Bearer``, checked in constant time.
 A browser sends an Origin on every cross-site fetch and the app's URLSession sends none, so any Origin is refused
 (403) before the token is even read: a web page cannot reach this door, whatever it holds. The token never reaches
@@ -182,11 +190,15 @@ UPDATES_PATH = "/api/link/updates"       # updates.py: the Updates pane's cards
 UPDATES_DISMISS_PATH = "/api/link/updates/dismiss"
 UPDATES_REFRESH_PATH = "/api/link/updates/refresh"
 LOCATION_PATH = "/api/link/location"     # phone_location.py: the phone's latest fix
+SESSIONS_PATH = "/api/link/sessions"     # work_sessions.py: the Work tab's Claude Code sessions
+SESSION_START_PATH = "/api/link/sessions/start"
+SESSION_RE = re.compile(r"^/api/link/sessions/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})"
+                        r"(?:/(reply|stop))?$")
 # one kept upload's bytes, full size; anything after the prefix that is not 32 hex is a 404 (never a path)
 FILE_RE = re.compile(r"^/api/link/file/([^/]{0,64})$")
 PATHS = (TURN_PATH, MESSAGES_PATH, JOBS_PATH, APPS_PATH, UPLOAD_PATH, CONTROLS_PATH, TODAY_PATH, *STREAM_PATHS,
-         UPDATES_PATH, UPDATES_DISMISS_PATH, UPDATES_REFRESH_PATH, LOCATION_PATH)
-POST_PATHS = (TURN_PATH, UPLOAD_PATH, UPDATES_DISMISS_PATH, UPDATES_REFRESH_PATH, LOCATION_PATH)
+         UPDATES_PATH, UPDATES_DISMISS_PATH, UPDATES_REFRESH_PATH, LOCATION_PATH, SESSIONS_PATH, SESSION_START_PATH)
+POST_PATHS = (TURN_PATH, UPLOAD_PATH, UPDATES_DISMISS_PATH, UPDATES_REFRESH_PATH, LOCATION_PATH, SESSION_START_PATH)
 MAX_CARD_ID_CHARS = 64                # a dismissed Updates card's id (updates.card_id: 12 hex)
 GRADES = ("auto", "instant", "think")    # telegram.GRADES: the speed dial
 JOB_ACTIONS = ("go", "done", "drop", "raise", "happened", "didnt", "hide")
@@ -230,7 +242,7 @@ CURSOR_RE = re.compile(r"^(\d{4}-\d{2}-\d{2}):(-1|\d{1,9})$")
 REACTION_VERSION_RE = re.compile(r"^\d{1,16}$")         # a cursor's "~<version>" (link_reactions.Reactions.version)
 TURN_ID_RE = re.compile(r"^[A-Za-z0-9_-]{8,64}$")        # a client_id that is also a good turn id
 REASONS = {200: "OK", 400: "Bad Request", 401: "Unauthorized", 403: "Forbidden", 404: "Not Found",
-           405: "Method Not Allowed", 411: "Length Required", 413: "Payload Too Large",
+           405: "Method Not Allowed", 409: "Conflict", 411: "Length Required", 413: "Payload Too Large",
            415: "Unsupported Media Type", 500: "Internal Server Error", 503: "Service Unavailable"}
 NO_CHAT = "eve's chat isn't running, or no owner has texted it yet"
 NO_CHIEF = "eve's chief of staff is off on this Mac (EVE_CHIEF), so there are no jobs"
@@ -240,6 +252,7 @@ NO_CONTROL = {**{a.slot: a.no_control for a in app_registry.APPS},
               "notes": "Your notes are off on this Mac (EVE_SECOND_BRAIN)."}
 NO_MEMORY = "eve's memory is off on this Mac (EVE_MEMORY), so there is no conversation to read"
 NO_LOCATION = "phone location is off on this Mac (EVE_PHONE_LOCATION=0)"
+NO_WORK = "Work sessions are off on this Mac"
 
 PROMPT_PATH = Path(__file__).with_name("openui_prompt.txt")
 # What an app turn's instructions end with (app_block), in this order: APP_RULE, the openui-lang reference
@@ -686,7 +699,8 @@ class LinkChat:
     def __init__(self, inlet: Callable[[], Any], *, clock: Callable[[], float] = time.monotonic,
                  turn_secs: float = TURN_SECS, ping_secs: float = PING_SECS, settle_secs: float = SETTLE_SECS,
                  poll_secs: float = POLL_SECS, uploads: Any = None, today: Any = None,
-                 job_secs: float = JOB_SECS, hidden: Optional[HiddenJobs] = None, updates: Any = None) -> None:
+                 job_secs: float = JOB_SECS, hidden: Optional[HiddenJobs] = None, updates: Any = None,
+                 work: Optional[Callable[[], Any]] = None) -> None:
         from .link_today import Today
         from .link_uploads import UploadStore
         from .updates import Updates
@@ -695,6 +709,7 @@ class LinkChat:
         # updates.Updates: the Updates pane's cards; the daemon runs its refresh loop (daemon.Daemon.run)
         self.updates = updates if updates is not None else Updates(inlet)
         self._inlet = inlet
+        self._work = work                  # work_sessions.WorkSessions, read per request; None: the routes are a 503
         self.uploads = uploads if uploads is not None else UploadStore()   # link_uploads.UploadStore
         self._clock = clock
         self.turn_secs, self.ping_secs, self.settle_secs, self.poll_secs = turn_secs, ping_secs, settle_secs, poll_secs
@@ -808,18 +823,23 @@ class LinkChat:
         app_open = APP_OPEN_RE.match(path)
         control = CONTROL_RE.match(path)
         file = FILE_RE.match(path)
-        if (path not in PATHS and app_open is None and file is None
+        session = SESSION_RE.match(path)
+        if (path not in PATHS and app_open is None and file is None and session is None
                 and (action is None or action.group(2) not in JOB_ACTIONS)
                 and (control is None or control.group(1) not in CONTROLS)):
             await self._json(writer, 404, {"ok": False, "error": "not found"})
             return
         if path == JOBS_PATH and method in ("GET", "POST"):
             pass                                            # GET lists the cards; POST starts one (New job)
-        elif method != ("POST" if path in POST_PATHS or action or app_open or control else "GET"):
+        elif method != ("POST" if path in POST_PATHS or action or app_open or control
+                        or (session is not None and session.group(2)) else "GET"):
             await self._json(writer, 405, {"ok": False, "error": "wrong method"})
             return
         if file is not None:
             await self._file(file.group(1), writer)
+            return
+        if path in (SESSIONS_PATH, SESSION_START_PATH) or session is not None:
+            await self._sessions(path, session, headers, reader, writer)
             return
         if path == JOBS_PATH or action is not None:
             await self._jobs(headers, reader, writer, action, method)
@@ -1351,6 +1371,38 @@ class LinkChat:
         log.info("link chat: location %s (%s)", "updated" if kept else "ignored, not newer",
                  phone_location.describe(fix))
         await self._json(writer, 200, {"ok": True})
+
+    async def _sessions(self, path: str, session: Optional[re.Match[str]], headers: dict[str, str],
+                        reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        """The Work tab's Claude Code sessions (work_sessions.py, docs/work-sessions.md): ``GET /api/link/sessions``,
+        ``POST .../start`` ``{"task", "client_id"?}``, ``GET .../<id>``, ``POST .../<id>/reply`` ``{"text"}`` and
+        ``POST .../<id>/stop``. The token and Origin checks in ``serve`` come first; 503 while they are off."""
+        work = self._work() if self._work is not None else None
+        if work is None:
+            if path == SESSION_START_PATH or (session is not None and session.group(2)):
+                await self._discard(reader, _length(headers))     # the body is read and dropped before the 503
+            await self._json(writer, 503, {"ok": False, "error": NO_WORK})
+            return
+        if path == SESSIONS_PATH:
+            status, out = await work.list()
+        elif path == SESSION_START_PATH:
+            body = await self._optional_body(headers, reader, writer)
+            if body is None:
+                return
+            status, out = await work.start(body.get("task"), body.get("client_id", ""))
+        else:
+            assert session is not None
+            sid, verb = session.group(1), session.group(2)
+            if verb is None:
+                status, out = await work.detail(sid)
+            elif verb == "reply":
+                body = await self._optional_body(headers, reader, writer)
+                if body is None:
+                    return
+                status, out = await work.reply(sid, body.get("text"))
+            else:
+                status, out = await work.stop(sid)
+        await self._json(writer, status, out)
 
     async def _apps(self, apps: Any, headers: dict[str, str], writer: asyncio.StreamWriter,
                     slug: Optional[str]) -> None:
