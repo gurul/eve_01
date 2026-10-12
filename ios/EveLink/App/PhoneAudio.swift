@@ -8,8 +8,9 @@
 
 @MainActor
 final class PhoneAudio: PhoneVoice {
-    private let engine = AVAudioEngine()
-    private let player = AVAudioPlayerNode()
+    private var engine = AVAudioEngine()
+    private var player = AVAudioPlayerNode()
+    private var configObserver: NSObjectProtocol?
     private let playFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: Double(PCM16.sampleRate),
                                            channels: 1, interleaved: false)!
     private var running = false
@@ -36,17 +37,14 @@ final class PhoneAudio: PhoneVoice {
 
     init() {
         let center = NotificationCenter.default
-        // A route change (AirPods, a Bluetooth headset) stops the engine and can change the input format.
-        observers.append(center.addObserver(forName: .AVAudioEngineConfigurationChange, object: engine,
-                                            queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.reconfigure() }
-        })
+        observeConfiguration()
         // A phone call, an alarm or Siri takes the audio session: the engine stops.
         observers.append(center.addObserver(forName: AVAudioSession.interruptionNotification,
                                             object: AVAudioSession.sharedInstance(), queue: .main) { [weak self] note in
             let raw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt
             switch raw.flatMap(AVAudioSession.InterruptionType.init(rawValue:)) {
             case .began:
+                diag("audio: interrupted")
                 MainActor.assumeIsolated { self?.lose() }
             case .ended:
                 // The interruption is over (the phone call hung up, Siri finished). Notes on the phone start the
@@ -58,6 +56,15 @@ final class PhoneAudio: PhoneVoice {
                 break
             }
         })
+    }
+
+    /// A route change (AirPods, a Bluetooth headset) stops the engine and can change the input format.
+    private func observeConfiguration() {
+        if let configObserver { NotificationCenter.default.removeObserver(configObserver) }
+        configObserver = NotificationCenter.default.addObserver(forName: .AVAudioEngineConfigurationChange,
+                                                                object: engine, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.reconfigure() }
+        }
     }
 
     var micAllowed: Bool? {
@@ -78,16 +85,36 @@ final class PhoneAudio: PhoneVoice {
         try setCategory()
         try session.setActive(true)
         sessionHeld = false
-        let input = engine.inputNode
+        do {
+            try wireAndStart(onPCM)
+        } catch {
+            // Seen on the iPhone 2026-10-12: after the call's audio stopped in the background, every later start
+            // failed with avfaudio -50 until the app was relaunched. A fresh engine starts; so build one and retry.
+            diag("mic: start failed (\(error.localizedDescription)); rebuilding the audio engine")
+            rebuildEngine()
+            try wireAndStart(onPCM)
+        }
+        self.onPCM = onPCM
+        running = true
+    }
+
+    private func wireAndStart(_ onPCM: @escaping @MainActor @Sendable ([Int16]) -> Void) throws {
         if !wired {
-            try input.setVoiceProcessingEnabled(true)
+            try engine.inputNode.setVoiceProcessingEnabled(true)
             engine.attach(player)
             engine.connect(player, to: engine.mainMixerNode, format: playFormat)
             wired = true
         }
         try startEngine(onPCM)
-        self.onPCM = onPCM
-        running = true
+    }
+
+    private func rebuildEngine() {
+        engine.inputNode.removeTap(onBus: 0)
+        engine.stop()
+        engine = AVAudioEngine()
+        player = AVAudioPlayerNode()
+        wired = false
+        observeConfiguration()
     }
 
     /// Play and record for voice chat. The speaker unless voice mode chose the earpiece; Bluetooth headsets either way.
@@ -124,6 +151,7 @@ final class PhoneAudio: PhoneVoice {
         do {
             try startEngine(onPCM)
         } catch {
+            diag("audio: restart after a route change failed: \(error.localizedDescription)")
             lose()
         }
     }

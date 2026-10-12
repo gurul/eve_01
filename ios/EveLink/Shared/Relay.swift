@@ -611,6 +611,7 @@ final class Relay: ObservableObject {
     private func phoneLost() {
         guard phoneLive else { return }
         phoneLive = false
+        diag("mic: off (the phone's audio stopped)")
         if notes == .on {
             diag("notes: the phone's audio was interrupted; paused")
             flushNotesBatch()
@@ -827,6 +828,7 @@ final class Relay: ObservableObject {
         if phoneLive {
             phone?.stop()
             phoneLive = false
+            diag("mic: off")
         }
         phase = .ended
     }
