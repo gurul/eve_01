@@ -146,3 +146,12 @@ def _phone_location_in_tmp(_test_dir, monkeypatch: pytest.MonkeyPatch):
     request bytes are as before. A test that wants a fix stores one."""
     monkeypatch.setenv("EVE_PHONE_LOCATION_FILE", str(_test_dir / "phone" / "phone-location.json"))
     monkeypatch.delenv("EVE_PHONE_LOCATION", raising=False)
+
+
+@pytest.fixture(autouse=True)
+def _science_search_pinned_off(monkeypatch: pytest.MonkeyPatch):
+    """Ask science ships on (science_search.py, 2026-10-12), but the suite's request-body and prompt checks were
+    written against the bytes without its tool, so a plain test runs with it off, as the menu tools' switch does.
+    Its own tests (test_science_search.py) switch it on and check every surface it rides. A plain `pytest` never
+    sends a search: no faked model calls it, and its own tests use a mocked transport."""
+    monkeypatch.setenv("EVE_SCIENCE_SEARCH", "0")

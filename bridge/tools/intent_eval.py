@@ -87,7 +87,8 @@ LABELS = (
     "gov_legal_lookup",
     "restaurant_booking", "events", "jobs_and_reminders", "app_builder", "calendar_read", "calendar_write",
     "email_read", "email_send", "contacts_read", "maps_directions", "github", "slack", "notion", "linear",
-    "claude_relay", "codex", "spend_report", "stealth", "stop_task", "phone_pairing", "phone_location", "ask", "none",
+    "claude_relay", "codex", "spend_report", "stealth", "stop_task", "phone_pairing", "phone_location",
+    "science_search", "ask", "none",
 )
 
 # The production switches (owner's Mac, 2026-10-08), set when the shell has not set them.
@@ -106,6 +107,7 @@ TOOL_LABELS: dict[str, str] = {
     "find_contact": "contacts_read", "claude_relay": "claude_relay", "codex_relay": "codex",
     "spend_report": "spend_report", "set_stealth": "stealth", "stop_task": "stop_task",
     "pair_eve_link": "phone_pairing", "read_file": "mac_files_read", "phone_location": "phone_location",
+    "science_search": "science_search",
 }
 _PREFIXES = (("watch_", "price_watch"), ("meet_", "meet"), ("lights_", "lights"), ("spotify_", "music"),
              ("firetv_", "tv_control"), ("camera_", "camera_aim"))
@@ -796,7 +798,7 @@ def _brain(scratch: Path, allow_keywords: bool) -> tuple[Any, list[str], Any]:
              f"chief {'on' if inlet.chief is not None else 'off'}",
              "this checkout has: " + ", ".join(f"{k} {'yes' if v else 'no'}" for k, v in have.items()),
              "lent: own tools, web_search, memory, chat log, second brain, watch, meet, lights, spotify, fire tv, "
-             "obsbot camera, phone location, "
+             "obsbot camera, phone location, science search, "
              "america, share, opentable, chief, maker, direct apps (" + ", ".join(direct.apps) + "), workspace"]
     writes = {n for n in direct.names if "__" in n and not direct.reads(n)}
     return inlet, notes, writes

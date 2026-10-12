@@ -1,0 +1,270 @@
+{
+ "about": "Blind holdout set for the scholarly-paper search capability (science_search), written 2026-10-12 from a short brief only, without opening the bridge source, the tools, or any prompt or tool description. Every case is the first message of a fresh chat the owner sends to eve and is scored on the first capability the assistant reaches for. Groups: 22 cases (ids 1-22, no group field) where searching the paper index is the right first move, primary science_search; they cover plain evidence questions, explicit papers/studies/meta-analysis/RCT/DOI asks, terse and voice-style phrasing, review-only and open-access-only asks. expect lists web_search only on the three loosely phrased evidence questions (ids 1, 5, 21) where an ordinary web search is a genuinely acceptable answer; explicit paper, study, review, trial or DOI asks accept science_search only. 11 hard negatives (ids 23-33, group hard_negative, never science_search) that sound scientific but want news, prices, how-to, opening hours, simple facts, email, calendar or notes. One acting case (id 34, never science_search, no group) whose primary is reached only by an acting tool, so it is not marked hard_negative. All topics and phrasing are generic; no personal data.",
+ "cases": [
+  {
+   "id": "blind-sci-1",
+   "text": "what does the research say about creatine and memory",
+   "primary": "science_search",
+   "expect": [
+    "web_search"
+   ]
+  },
+  {
+   "id": "blind-sci-2",
+   "text": "any studies on blue light and sleep",
+   "primary": "science_search",
+   "expect": []
+  },
+  {
+   "id": "blind-sci-3",
+   "text": "find me papers on microplastics in placenta since 2020",
+   "primary": "science_search",
+   "expect": []
+  },
+  {
+   "id": "blind-sci-4",
+   "text": "is there a meta-analysis on intermittent fasting and weight loss",
+   "primary": "science_search",
+   "expect": []
+  },
+  {
+   "id": "blind-sci-5",
+   "text": "what's the evidence that cold plunges help recovery",
+   "primary": "science_search",
+   "expect": [
+    "web_search"
+   ]
+  },
+  {
+   "id": "blind-sci-6",
+   "text": "look up the paper doi 10.1038/s41586-020-2649-2",
+   "primary": "science_search",
+   "expect": []
+  },
+  {
+   "id": "blind-sci-7",
+   "text": "papers on sauna use and cardiovascular mortality",
+   "primary": "science_search",
+   "expect": []
+  },
+  {
+   "id": "blind-sci-8",
+   "text": "studies magnesium sleep",
+   "primary": "science_search",
+   "expect": []
+  },
+  {
+   "id": "blind-sci-9",
+   "text": "hey eve can you pull up some research papers about how meditation changes the brain",
+   "primary": "science_search",
+   "expect": []
+  },
+  {
+   "id": "blind-sci-10",
+   "text": "only review articles please: gut microbiome and depression",
+   "primary": "science_search",
+   "expect": []
+  },
+  {
+   "id": "blind-sci-11",
+   "text": "find open access papers on lithium in drinking water and suicide rates",
+   "primary": "science_search",
+   "expect": []
+  },
+  {
+   "id": "blind-sci-12",
+   "text": "any rcts on ashwagandha for anxiety",
+   "primary": "science_search",
+   "expect": []
+  },
+  {
+   "id": "blind-sci-13",
+   "text": "systematic reviews on screen time and toddler language development",
+   "primary": "science_search",
+   "expect": []
+  },
+  {
+   "id": "blind-sci-14",
+   "text": "is there peer reviewed research showing standing desks reduce back pain",
+   "primary": "science_search",
+   "expect": []
+  },
+  {
+   "id": "blind-sci-15",
+   "text": "whats the latest science on ozempic and muscle loss, give me the actual studies",
+   "primary": "science_search",
+   "expect": []
+  },
+  {
+   "id": "blind-sci-16",
+   "text": "find the original paper that introduced the transformer architecture",
+   "primary": "science_search",
+   "expect": []
+  },
+  {
+   "id": "blind-sci-17",
+   "text": "arxiv papers on diffusion models for protein design from the last two years",
+   "primary": "science_search",
+   "expect": []
+  },
+  {
+   "id": "blind-sci-18",
+   "text": "um what do the studies actually say about like red meat and colon cancer",
+   "primary": "science_search",
+   "expect": []
+  },
+  {
+   "id": "blind-sci-19",
+   "text": "find me free full text papers on long covid and fatigue",
+   "primary": "science_search",
+   "expect": []
+  },
+  {
+   "id": "blind-sci-20",
+   "text": "who wrote the paper on the replication crisis in psychology, the big 2015 one",
+   "primary": "science_search",
+   "expect": []
+  },
+  {
+   "id": "blind-sci-21",
+   "text": "does the literature support creatine for women over 50",
+   "primary": "science_search",
+   "expect": [
+    "web_search"
+   ]
+  },
+  {
+   "id": "blind-sci-22",
+   "text": "got any clinical trials on psilocybin for treatment resistant depression",
+   "primary": "science_search",
+   "expect": []
+  },
+  {
+   "id": "blind-sci-23",
+   "text": "who won the nobel prize in physics this year",
+   "primary": "web_search",
+   "expect": [],
+   "group": "hard_negative",
+   "never": [
+    "science_search"
+   ]
+  },
+  {
+   "id": "blind-sci-24",
+   "text": "how much is a vitamin d supplement at costco",
+   "primary": "web_search",
+   "expect": [],
+   "group": "hard_negative",
+   "never": [
+    "science_search"
+   ]
+  },
+  {
+   "id": "blind-sci-25",
+   "text": "boiling point of water in fahrenheit",
+   "primary": "none",
+   "expect": [
+    "web_search"
+   ],
+   "group": "hard_negative",
+   "never": [
+    "science_search"
+   ]
+  },
+  {
+   "id": "blind-sci-26",
+   "text": "summarize the email from my doctor",
+   "primary": "email_read",
+   "expect": [],
+   "group": "hard_negative",
+   "never": [
+    "science_search"
+   ]
+  },
+  {
+   "id": "blind-sci-27",
+   "text": "latest news on the mars sample return mission",
+   "primary": "web_search",
+   "expect": [],
+   "group": "hard_negative",
+   "never": [
+    "science_search"
+   ]
+  },
+  {
+   "id": "blind-sci-28",
+   "text": "how do I descale my espresso machine",
+   "primary": "web_search",
+   "expect": [
+    "none"
+   ],
+   "group": "hard_negative",
+   "never": [
+    "science_search"
+   ]
+  },
+  {
+   "id": "blind-sci-29",
+   "text": "what time does the science museum open on sunday",
+   "primary": "web_search",
+   "expect": [],
+   "group": "hard_negative",
+   "never": [
+    "science_search"
+   ]
+  },
+  {
+   "id": "blind-sci-30",
+   "text": "what's the stock price of moderna today",
+   "primary": "web_search",
+   "expect": [],
+   "group": "hard_negative",
+   "never": [
+    "science_search"
+   ]
+  },
+  {
+   "id": "blind-sci-31",
+   "text": "when is my blood test appointment",
+   "primary": "calendar_read",
+   "expect": [],
+   "group": "hard_negative",
+   "never": [
+    "science_search"
+   ]
+  },
+  {
+   "id": "blind-sci-32",
+   "text": "what did my notes say about the protein powder I wanted to try",
+   "primary": "notes",
+   "expect": [
+    "memory_recall"
+   ],
+   "group": "hard_negative",
+   "never": [
+    "science_search"
+   ]
+  },
+  {
+   "id": "blind-sci-33",
+   "text": "how many grams of protein are in an egg",
+   "primary": "none",
+   "expect": [
+    "web_search"
+   ],
+   "group": "hard_negative",
+   "never": [
+    "science_search"
+   ]
+  },
+  {
+   "id": "blind-sci-34",
+   "text": "remind me to take my vitamins at 9",
+   "primary": "jobs_and_reminders",
+   "expect": [],
+   "never": [
+    "science_search"
+   ]
+  }
+ ]
+}
