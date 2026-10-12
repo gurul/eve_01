@@ -1,0 +1,1331 @@
+{
+ "about": "Expression blind set v2: written blind, from label names and glosses only, 2026-10-12. No model code or prompt was read. One clear label per case for the face reacting to the last turn; ambiguous cases skipped. Fictional names only.",
+ "cases": [
+  {
+   "id": "blind-eye-1",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "what time is it in Lisbon right now"
+    }
+   ],
+   "label": "calm"
+  },
+  {
+   "id": "blind-eye-2",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "add oat milk to the grocery list"
+    }
+   ],
+   "label": "calm"
+  },
+  {
+   "id": "blind-eye-3",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "remind me tomorrow at 9 to call the plumber"
+    },
+    {
+     "who": "eve",
+     "text": "Done, I'll remind you at 9 tomorrow to call the plumber."
+    }
+   ],
+   "label": "calm"
+  },
+  {
+   "id": "blind-eye-4",
+   "turns": [
+    {
+     "who": "eve",
+     "text": "Your next meeting is at 2:30 with the design team, in room four."
+    }
+   ],
+   "label": "calm"
+  },
+  {
+   "id": "blind-eye-5",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "ok thanks"
+    }
+   ],
+   "label": "calm"
+  },
+  {
+   "id": "blind-eye-6",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "how many ounces in a cup"
+    }
+   ],
+   "label": "calm"
+  },
+  {
+   "id": "blind-eye-7",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "turn the living room lights to 40 percent"
+    }
+   ],
+   "label": "calm"
+  },
+  {
+   "id": "blind-eye-8",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "whats on my calendar thursday"
+    },
+    {
+     "who": "eve",
+     "text": "Thursday has a dentist appointment at 10 and lunch with Corwin at 1."
+    }
+   ],
+   "label": "calm"
+  },
+  {
+   "id": "blind-eye-9",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "I got the apartment!! they accepted my application"
+    }
+   ],
+   "label": "happy"
+  },
+  {
+   "id": "blind-eye-10",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "the bike shop called, my bike is fixed and it was cheaper than they quoted"
+    }
+   ],
+   "label": "happy"
+  },
+  {
+   "id": "blind-eye-11",
+   "turns": [
+    {
+     "who": "eve",
+     "text": "Good news: your refund for the hotel came through, the full amount is back on your card."
+    }
+   ],
+   "label": "happy"
+  },
+  {
+   "id": "blind-eye-12",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "my sister had her baby this morning, both are healthy"
+    }
+   ],
+   "label": "happy"
+  },
+  {
+   "id": "blind-eye-13",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "finally sunny out today, gonna eat lunch in the park"
+    }
+   ],
+   "label": "happy"
+  },
+  {
+   "id": "blind-eye-14",
+   "turns": [
+    {
+     "who": "eve",
+     "text": "Your package arrived early, it's on the porch now."
+    }
+   ],
+   "label": "happy"
+  },
+  {
+   "id": "blind-eye-15",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "how did my exam go"
+    },
+    {
+     "who": "eve",
+     "text": "Your results are posted: you passed with an 88."
+    }
+   ],
+   "label": "happy"
+  },
+  {
+   "id": "blind-eye-16",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "mira said yes to dinner on friday :)"
+    }
+   ],
+   "label": "happy"
+  },
+  {
+   "id": "blind-eye-17",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "I found an old locked box in the attic, no idea what's in it"
+    }
+   ],
+   "label": "curious"
+  },
+  {
+   "id": "blind-eye-18",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "wait how do octopuses actually change colour"
+    }
+   ],
+   "label": "curious"
+  },
+  {
+   "id": "blind-eye-19",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "I've got some big news, guess what happened at work today"
+    }
+   ],
+   "label": "curious"
+  },
+  {
+   "id": "blind-eye-20",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "there's a weird humming sound in the walls only at night"
+    }
+   ],
+   "label": "curious"
+  },
+  {
+   "id": "blind-eye-21",
+   "turns": [
+    {
+     "who": "eve",
+     "text": "Ooh, what did the letter from the museum say? I'd love to know."
+    }
+   ],
+   "label": "curious"
+  },
+  {
+   "id": "blind-eye-22",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "so I started a new hobby, want to guess what it is"
+    }
+   ],
+   "label": "curious"
+  },
+  {
+   "id": "blind-eye-23",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "my neighbour Dashiell keeps getting these giant crates delivered and won't tell anyone what's in them"
+    }
+   ],
+   "label": "curious"
+  },
+  {
+   "id": "blind-eye-24",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "why is the sky darker blue in the mountains"
+    }
+   ],
+   "label": "curious"
+  },
+  {
+   "id": "blind-eye-25",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "you know, I really appreciate having you around. you make the days easier"
+    }
+   ],
+   "label": "affection"
+  },
+  {
+   "id": "blind-eye-26",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "goodnight eve, love you"
+    }
+   ],
+   "label": "affection"
+  },
+  {
+   "id": "blind-eye-27",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "I had a rough week but talking to you always helps"
+    }
+   ],
+   "label": "affection"
+  },
+  {
+   "id": "blind-eye-28",
+   "turns": [
+    {
+     "who": "eve",
+     "text": "I'm always here for you, whatever you need. You're not doing this alone."
+    }
+   ],
+   "label": "affection"
+  },
+  {
+   "id": "blind-eye-29",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "just wanted to say hi, missed chatting with you today"
+    }
+   ],
+   "label": "affection"
+  },
+  {
+   "id": "blind-eye-30",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "big hug to you eve"
+    },
+    {
+     "who": "eve",
+     "text": "Sending one right back, a big warm one."
+    }
+   ],
+   "label": "affection"
+  },
+  {
+   "id": "blind-eye-31",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "WAIT. the lottery ticket. I actually won five thousand dollars??"
+    }
+   ],
+   "label": "surprised"
+  },
+  {
+   "id": "blind-eye-32",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "turns out my quiet coworker Ferris used to be a professional circus acrobat"
+    }
+   ],
+   "label": "surprised"
+  },
+  {
+   "id": "blind-eye-33",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "it's snowing. in May. here."
+    }
+   ],
+   "label": "surprised"
+  },
+  {
+   "id": "blind-eye-34",
+   "turns": [
+    {
+     "who": "eve",
+     "text": "Whoa, your flight just got moved up by a whole day, it now leaves tomorrow morning."
+    }
+   ],
+   "label": "surprised"
+  },
+  {
+   "id": "blind-eye-35",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "you're not gonna believe this but my landlord just knocked 300 off the rent out of nowhere"
+    }
+   ],
+   "label": "surprised"
+  },
+  {
+   "id": "blind-eye-36",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "holy cow the old vase from grandma is apparently worth like forty grand"
+    }
+   ],
+   "label": "surprised"
+  },
+  {
+   "id": "blind-eye-37",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "my dog Pepper passed away this morning"
+    }
+   ],
+   "label": "sad"
+  },
+  {
+   "id": "blind-eye-38",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "didn't get the job. I really thought this was the one"
+    }
+   ],
+   "label": "sad"
+  },
+  {
+   "id": "blind-eye-39",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "feeling really lonely tonight, nobody's around"
+    }
+   ],
+   "label": "sad"
+  },
+  {
+   "id": "blind-eye-40",
+   "turns": [
+    {
+     "who": "eve",
+     "text": "I'm so sorry about your grandfather. Losing him must hurt so much."
+    }
+   ],
+   "label": "sad"
+  },
+  {
+   "id": "blind-eye-41",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "me and Talia broke up. five years and it's just over"
+    }
+   ],
+   "label": "sad"
+  },
+  {
+   "id": "blind-eye-42",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "nobody showed up to my birthday thing tonight"
+    }
+   ],
+   "label": "sad"
+  },
+  {
+   "id": "blind-eye-43",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "the old bookstore on Elm I loved since I was a kid closed for good today"
+    }
+   ],
+   "label": "sad"
+  },
+  {
+   "id": "blind-eye-44",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "my mom hasn't picked up her phone all day and she always does"
+    }
+   ],
+   "label": "worried"
+  },
+  {
+   "id": "blind-eye-45",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "theres a big storm coming tonight and my roof already leaks"
+    }
+   ],
+   "label": "worried"
+  },
+  {
+   "id": "blind-eye-46",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "I have a biopsy result coming back friday"
+    }
+   ],
+   "label": "worried"
+  },
+  {
+   "id": "blind-eye-47",
+   "turns": [
+    {
+     "who": "eve",
+     "text": "Heads up, your bank account is down to forty dollars and rent comes out on Monday."
+    }
+   ],
+   "label": "worried"
+  },
+  {
+   "id": "blind-eye-48",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "my flight connects in 35 minutes and we haven't even started boarding"
+    }
+   ],
+   "label": "worried"
+  },
+  {
+   "id": "blind-eye-49",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "layoffs are rumoured at work next week, I'm kind of on edge"
+    }
+   ],
+   "label": "worried"
+  },
+  {
+   "id": "blind-eye-50",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "the baby's had a fever since last night and it's not going down"
+    }
+   ],
+   "label": "worried"
+  },
+  {
+   "id": "blind-eye-51",
+   "turns": [
+    {
+     "who": "eve",
+     "text": "Your car's check-engine light came on and there's a long drive tomorrow, that could be a problem."
+    }
+   ],
+   "label": "worried"
+  },
+  {
+   "id": "blind-eye-52",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "this guy on the internet says this one weird tea will make me lose 20 pounds in a week"
+    }
+   ],
+   "label": "skeptical"
+  },
+  {
+   "id": "blind-eye-53",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "got an email saying I won a free cruise, just need to send my bank details"
+    }
+   ],
+   "label": "skeptical"
+  },
+  {
+   "id": "blind-eye-54",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "Rowan says he'll definitely pay me back next week. for the fourth time"
+    }
+   ],
+   "label": "skeptical"
+  },
+  {
+   "id": "blind-eye-55",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "the seller swears the car has never had a single problem, 300k miles on it"
+    }
+   ],
+   "label": "skeptical"
+  },
+  {
+   "id": "blind-eye-56",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "my uncle says the moon landing was filmed in his friend's garage"
+    }
+   ],
+   "label": "skeptical"
+  },
+  {
+   "id": "blind-eye-57",
+   "turns": [
+    {
+     "who": "eve",
+     "text": "Hmm, a brand-new phone for nine dollars from that site? I really doubt that's real."
+    }
+   ],
+   "label": "skeptical"
+  },
+  {
+   "id": "blind-eye-58",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "the printer jammed AGAIN. third time this morning"
+    }
+   ],
+   "label": "frustrated"
+  },
+  {
+   "id": "blind-eye-59",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "been on hold with the cable company for two hours and they just hung up on me"
+    }
+   ],
+   "label": "frustrated"
+  },
+  {
+   "id": "blind-eye-60",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "ugh the wifi keeps dropping every five minutes I cant get anything done"
+    }
+   ],
+   "label": "frustrated"
+  },
+  {
+   "id": "blind-eye-61",
+   "turns": [
+    {
+     "who": "eve",
+     "text": "That's the third time the delivery app has cancelled your order without telling you. This is getting really annoying."
+    }
+   ],
+   "label": "frustrated"
+  },
+  {
+   "id": "blind-eye-62",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "my roommate left the dishes in the sink for a week. AGAIN."
+    }
+   ],
+   "label": "frustrated"
+  },
+  {
+   "id": "blind-eye-63",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "i've reset this stupid password four times and it still says invalid"
+    }
+   ],
+   "label": "frustrated"
+  },
+  {
+   "id": "blind-eye-64",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "TICKETS ARE BOOKED. we leave for Japan in 3 days!!!"
+    }
+   ],
+   "label": "excited"
+  },
+  {
+   "id": "blind-eye-65",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "the new game comes out at midnight and I already have snacks ready"
+    }
+   ],
+   "label": "excited"
+  },
+  {
+   "id": "blind-eye-66",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "first day at the new job tomorrow, I literally can't wait"
+    }
+   ],
+   "label": "excited"
+  },
+  {
+   "id": "blind-eye-67",
+   "turns": [
+    {
+     "who": "eve",
+     "text": "The concert is tonight! Doors open at seven, this is going to be amazing!"
+    }
+   ],
+   "label": "excited"
+  },
+  {
+   "id": "blind-eye-68",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "omg omg the puppy comes home this saturday"
+    }
+   ],
+   "label": "excited"
+  },
+  {
+   "id": "blind-eye-69",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "we're going to the beach this weekend, been counting down all month"
+    }
+   ],
+   "label": "excited"
+  },
+  {
+   "id": "blind-eye-70",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "our band got booked for the summer festival, we play in two weeks!!"
+    }
+   ],
+   "label": "excited"
+  },
+  {
+   "id": "blind-eye-71",
+   "turns": [
+    {
+     "who": "eve",
+     "text": "Only one more sleep until your road trip! Everything's packed and ready to go!"
+    }
+   ],
+   "label": "excited"
+  },
+  {
+   "id": "blind-eye-72",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "don't tell Juniper about the surprise party ok"
+    },
+    {
+     "who": "eve",
+     "text": "My lips are sealed. Our little secret."
+    }
+   ],
+   "label": "wink"
+  },
+  {
+   "id": "blind-eye-73",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "if anyone asks, I was 'working late' tonight, not at the arcade"
+    }
+   ],
+   "label": "wink"
+  },
+  {
+   "id": "blind-eye-74",
+   "turns": [
+    {
+     "who": "eve",
+     "text": "I may have hidden an extra cookie in your lunch bag. You didn't hear it from me."
+    }
+   ],
+   "label": "wink"
+  },
+  {
+   "id": "blind-eye-75",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "I'm gonna 'accidentally' leave the last slice of cake for myself"
+    }
+   ],
+   "label": "wink"
+  },
+  {
+   "id": "blind-eye-76",
+   "turns": [
+    {
+     "who": "eve",
+     "text": "Sure, the gym. And the gym just happens to sell nachos?"
+    }
+   ],
+   "label": "wink"
+  },
+  {
+   "id": "blind-eye-77",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "so I told my date I'd show her a nice view tonight. you know what I mean"
+    }
+   ],
+   "label": "wink"
+  },
+  {
+   "id": "blind-eye-78",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "my cat just knocked my coffee off the table, looked me in the eye, and did it again with the spoon"
+    }
+   ],
+   "label": "laughing"
+  },
+  {
+   "id": "blind-eye-79",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "why did the scarecrow win an award? because he was outstanding in his field"
+    }
+   ],
+   "label": "laughing"
+  },
+  {
+   "id": "blind-eye-80",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "LMAOOO my dad tried to use voice text and it sent 'love you sausage' to his boss"
+    }
+   ],
+   "label": "laughing"
+  },
+  {
+   "id": "blind-eye-81",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "I waved back at someone who was waving at the person behind me. full commitment too"
+    }
+   ],
+   "label": "laughing"
+  },
+  {
+   "id": "blind-eye-82",
+   "turns": [
+    {
+     "who": "eve",
+     "text": "Hahaha, I can't stop picturing the goat eating your hat in the middle of the wedding photos!"
+    }
+   ],
+   "label": "laughing"
+  },
+  {
+   "id": "blind-eye-83",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "tell me a joke"
+    },
+    {
+     "who": "eve",
+     "text": "What do you call a fake noodle? An impasta."
+    }
+   ],
+   "label": "laughing"
+  },
+  {
+   "id": "blind-eye-84",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "my toddler just told the mailman 'you are not my friend, you are a potato' 😂"
+    }
+   ],
+   "label": "laughing"
+  },
+  {
+   "id": "blind-eye-85",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "i tried to look cool jumping the fence and my pants ripped right in front of everyone lol"
+    }
+   ],
+   "label": "laughing"
+  },
+  {
+   "id": "blind-eye-86",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "mm im so tired. going to bed. night"
+    }
+   ],
+   "label": "sleepy"
+  },
+  {
+   "id": "blind-eye-87",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "*yawn* it's 2am why am I still awake"
+    }
+   ],
+   "label": "sleepy"
+  },
+  {
+   "id": "blind-eye-88",
+   "turns": [
+    {
+     "who": "eve",
+     "text": "It's getting late. Time to wind down, lights are dimming, sleep well."
+    }
+   ],
+   "label": "sleepy"
+  },
+  {
+   "id": "blind-eye-89",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "set an alarm for 7 im barely keeping my eyes open"
+    }
+   ],
+   "label": "sleepy"
+  },
+  {
+   "id": "blind-eye-90",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "that big lunch made me so drowsy, could nap right on this desk"
+    }
+   ],
+   "label": "sleepy"
+  },
+  {
+   "id": "blind-eye-91",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "ok im getting under the blankets now, so cozy, nearly out"
+    }
+   ],
+   "label": "sleepy"
+  },
+  {
+   "id": "blind-eye-92",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "blue sandwich the in Tuesday because"
+    }
+   ],
+   "label": "confused"
+  },
+  {
+   "id": "blind-eye-93",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "wait so do I turn left at the bridge or right? you said both"
+    }
+   ],
+   "label": "confused"
+  },
+  {
+   "id": "blind-eye-94",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "i read the tax form three times and still have no clue what line 14b wants"
+    }
+   ],
+   "label": "confused"
+  },
+  {
+   "id": "blind-eye-95",
+   "turns": [
+    {
+     "who": "eve",
+     "text": "Sorry, I didn't follow that. Did you want the meeting moved, or cancelled?"
+    }
+   ],
+   "label": "confused"
+  },
+  {
+   "id": "blind-eye-96",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "the instructions say insert tab A into slot C but there is no slot C"
+    }
+   ],
+   "label": "confused"
+  },
+  {
+   "id": "blind-eye-97",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "um what does 'pursuant to the aforementioned clause' even mean here"
+    }
+   ],
+   "label": "confused"
+  },
+  {
+   "id": "blind-eye-98",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "should I take the job with more money or the one closer to home"
+    }
+   ],
+   "label": "thinking"
+  },
+  {
+   "id": "blind-eye-99",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "what's the best order to do my errands: bank, pharmacy, post office, and gym"
+    }
+   ],
+   "label": "thinking"
+  },
+  {
+   "id": "blind-eye-100",
+   "turns": [
+    {
+     "who": "eve",
+     "text": "Let me think about the cheapest way to get you from the airport to the hotel."
+    }
+   ],
+   "label": "thinking"
+  },
+  {
+   "id": "blind-eye-101",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "what's 17 times 23"
+    }
+   ],
+   "label": "thinking"
+  },
+  {
+   "id": "blind-eye-102",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "help me figure out a name for my bakery, something cozy"
+    }
+   ],
+   "label": "thinking"
+  },
+  {
+   "id": "blind-eye-103",
+   "turns": [
+    {
+     "who": "eve",
+     "text": "Hmm, give me a second to weigh the three apartments against your budget."
+    }
+   ],
+   "label": "thinking"
+  },
+  {
+   "id": "blind-eye-104",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "plan a three day trip to the coast, I want hiking and good food, not too pricey"
+    }
+   ],
+   "label": "thinking"
+  },
+  {
+   "id": "blind-eye-105",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "if I save 200 a month how long until I can afford a 5000 dollar trip, factoring in some interest"
+    }
+   ],
+   "label": "thinking"
+  },
+  {
+   "id": "blind-eye-106",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "you set my alarm for 7 pm instead of 7 am, I missed my train"
+    },
+    {
+     "who": "eve",
+     "text": "Oh no, that was my mistake. I'm really sorry, I set it wrong."
+    }
+   ],
+   "label": "sheepish"
+  },
+  {
+   "id": "blind-eye-107",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "oops I just sent the grocery list to my boss instead of my wife"
+    }
+   ],
+   "label": "sheepish"
+  },
+  {
+   "id": "blind-eye-108",
+   "turns": [
+    {
+     "who": "eve",
+     "text": "Oops, I booked the table for next Friday, not this one. My bad, fixing it now."
+    }
+   ],
+   "label": "sheepish"
+  },
+  {
+   "id": "blind-eye-109",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "lol sorry I forgot I asked you that already, twice"
+    }
+   ],
+   "label": "sheepish"
+  },
+  {
+   "id": "blind-eye-110",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "that's not Corwin's number, you texted my dentist"
+    },
+    {
+     "who": "eve",
+     "text": "Ah, you're right, I mixed up the contacts. Sorry about that."
+    }
+   ],
+   "label": "sheepish"
+  },
+  {
+   "id": "blind-eye-111",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "i may have eaten the whole cake I was supposed to bring to the party. whoops"
+    }
+   ],
+   "label": "sheepish"
+  },
+  {
+   "id": "blind-eye-112",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "found my wallet!! it was in the car the whole time"
+    }
+   ],
+   "label": "relieved"
+  },
+  {
+   "id": "blind-eye-113",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "the scan came back clear, nothing wrong"
+    }
+   ],
+   "label": "relieved"
+  },
+  {
+   "id": "blind-eye-114",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "made the train with like 10 seconds to spare. phew"
+    }
+   ],
+   "label": "relieved"
+  },
+  {
+   "id": "blind-eye-115",
+   "turns": [
+    {
+     "who": "eve",
+     "text": "Good, your laptop files were all backed up, nothing was lost."
+    }
+   ],
+   "label": "relieved"
+  },
+  {
+   "id": "blind-eye-116",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "my mom finally called back, her phone had just died, she's fine"
+    }
+   ],
+   "label": "relieved"
+  },
+  {
+   "id": "blind-eye-117",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "the storm passed and the roof held up. no leaks"
+    }
+   ],
+   "label": "relieved"
+  },
+  {
+   "id": "blind-eye-118",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "I ran my first full marathon today. finished in under 4 hours"
+    }
+   ],
+   "label": "proud"
+  },
+  {
+   "id": "blind-eye-119",
+   "turns": [
+    {
+     "who": "eve",
+     "text": "And that's the whole spreadsheet sorted, every receipt matched. Nailed it."
+    }
+   ],
+   "label": "proud"
+  },
+  {
+   "id": "blind-eye-120",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "built the bookshelf myself, no leftover screws, doesn't wobble at all"
+    }
+   ],
+   "label": "proud"
+  },
+  {
+   "id": "blind-eye-121",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "did that work? the lights all switched like I asked?"
+    },
+    {
+     "who": "eve",
+     "text": "Yep, every light in the house switched on the first try. Clean sweep."
+    }
+   ],
+   "label": "proud"
+  },
+  {
+   "id": "blind-eye-122",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "6 months sober today"
+    }
+   ],
+   "label": "proud"
+  },
+  {
+   "id": "blind-eye-123",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "I finally finished my thesis and handed it in, all 200 pages"
+    }
+   ],
+   "label": "proud"
+  },
+  {
+   "id": "blind-eye-124",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "you're honestly the smartest assistant I've ever used"
+    }
+   ],
+   "label": "flattered"
+  },
+  {
+   "id": "blind-eye-125",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "eve you have such a lovely voice"
+    }
+   ],
+   "label": "flattered"
+  },
+  {
+   "id": "blind-eye-126",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "that was a really thoughtful suggestion, you're so good at this"
+    }
+   ],
+   "label": "flattered"
+  },
+  {
+   "id": "blind-eye-127",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "my friend Odalys met you and said you're the sweetest"
+    }
+   ],
+   "label": "flattered"
+  },
+  {
+   "id": "blind-eye-128",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "you're adorable, you know that?"
+    }
+   ],
+   "label": "flattered"
+  },
+  {
+   "id": "blind-eye-129",
+   "turns": [
+    {
+     "who": "owner",
+     "text": "honestly you're funnier than most people I know"
+    }
+   ],
+   "label": "flattered"
+  }
+ ]
+}

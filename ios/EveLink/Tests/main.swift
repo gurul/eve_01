@@ -1422,12 +1422,26 @@ check(FaceExpressionRequest(id: 1, label: .sad, ttlMs: 60_000).ttl == 6 && expre
       "a long ttl becomes 6 s")
 check(FaceExpressionRequest(id: 1, label: .sad, ttlMs: 500).ttl == 0.5 && FaceExpressionRequest(id: 1, label: .sad, ttlMs: 6000).ttl == 6,
       "the bounds themselves are kept")
-// The picker's labels, in its order (bridge eye_model.LABELS).
+// The picker's labels, in its order (bridge eye_model.LABELS): the board's eleven, then the 2026-10-12 seven.
+let boardLabels: [FaceExpressionLabel] = [.calm, .happy, .curious, .affection, .surprised, .sad, .worried, .skeptical,
+                                          .frustrated, .excited, .wink]
 check(FaceExpressionLabel.allCases.map(\.rawValue) == ["calm", "happy", "curious", "affection", "surprised", "sad", "worried",
-      "skeptical", "frustrated", "excited", "wink"], "the eleven labels in the picker's order")
+      "skeptical", "frustrated", "excited", "wink", "laughing", "sleepy", "confused", "sheepish", "relieved",
+      "proud", "flattered"], "the eighteen labels in the picker's order")
+// The bridge's own list, when this checkout has it (eye_model.CRITERIA's keys, in order).
+let eyeModel = (try? String(contentsOfFile: "bridge/src/eve_bridge/eye_model.py", encoding: .utf8)) ?? ""
+if let open = eyeModel.range(of: "CRITERIA = {"), let close = eyeModel[open.upperBound...].range(of: "\n}") {
+    let keys = eyeModel[open.upperBound..<close.lowerBound].split(separator: "\n").compactMap { line -> String? in
+        let t = line.trimmingCharacters(in: .whitespaces)
+        guard t.hasPrefix("\""), let end = t.dropFirst().firstIndex(of: "\"") else { return nil }
+        return String(t[t.index(after: t.startIndex)..<end])
+    }
+    check(keys == FaceExpressionLabel.allCases.map(\.rawValue), "the bridge's eye_model.CRITERIA order: \(keys)")
+}
 // Every label's shape is the firmware's: parse expression.h's style() and compare each row and the default.
 let firmwareHeader = (try? String(contentsOfFile: "firmware/claude_pet_stackchan/src/expression.h", encoding: .utf8)) ?? ""
 var firmwareRows: [String: [Int]] = [:]
+// The board's eleven are checked against it; a new label's row, if the firmware has one, may carry more fields.
 for line in firmwareHeader.split(separator: "\n") {
     let text = line.trimmingCharacters(in: .whitespaces)
     guard text.hasPrefix("case ") || text.hasPrefix("default:"), let open = text.firstIndex(of: "{"),
@@ -1435,13 +1449,18 @@ for line in firmwareHeader.split(separator: "\n") {
     let name = text.hasPrefix("default:") ? "calm"
         : String(text.dropFirst(5).prefix { $0 != ":" }).lowercased()
     let fields = text[text.index(after: open)..<close].split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
-    guard fields.count == 7 else { continue }
+    guard fields.count >= 7 else { continue }
     firmwareRows[name] = fields.prefix(6).compactMap { Int($0) } + [fields[6] == "true" ? 1 : 0]
 }
-check(firmwareRows.count == 11, "expression.h read: \(firmwareRows.count) style rows (10 labels and the default)")
+check(boardLabels.allSatisfy { firmwareRows[$0.rawValue] != nil }, "expression.h read: \(firmwareRows.count) style rows (10 labels and the default)")
 for label in FaceExpressionLabel.allCases {
     let s = label.style
     let ours = [s.left, s.right, s.width, s.radius, s.lid.rawValue, s.blink, s.curious ? 1 : 0]
+    guard boardLabels.contains(label) else {
+        check(s.leftOpen == Double(s.left) / 96 && s.wide == Double(s.width) / 96 && s.corner == Double(s.radius) / 22,
+              "\(label.rawValue): ratios of the board's rest eye")
+        continue
+    }
     check(firmwareRows[label.rawValue] == ours, "\(label.rawValue): shape \(ours) is the firmware's \(firmwareRows[label.rawValue] ?? [])")
     // and scaled to the phone face: the board's 96 px eye and 22 px corner are the face's rest eye and corner
     check(s.leftOpen == Double(s.left) / 96 && s.rightOpen == Double(s.right) / 96 && s.wide == Double(s.width) / 96
@@ -1501,7 +1520,15 @@ check(abs(FaceWink.curve(11, width: 91) - -6.93) < 0.01, "a rounded corner zone 
 check(FaceWink.curve(5, width: 0) == 0, "no width: flat")
 // VoiceOver words.
 check(FaceExpressionLabel.allCases.map(\.spoken) == ["calm", "happy", "curious", "fond", "surprised", "sad", "worried",
-      "skeptical", "frustrated", "excited", "winking"], "spoken words for each label")
+      "skeptical", "frustrated", "excited", "winking", "laughing", "sleepy", "confused", "sheepish",
+      "relieved", "proud", "flattered, blushing"], "spoken words for each label")
+check(Set(FaceExpressionLabel.allCases.map(\.spoken)).count == FaceExpressionLabel.allCases.count, "no two read the same")
+// A request with no ttl_ms lasts its label's own time (expression.h Request.ttl, per kind); the eleven keep 4 s.
+check(expressionMessage(#"{"type":"expression","id":3,"label":"laughing"}"#)?.ttl == 3
+      && expressionMessage(#"{"type":"expression","id":3,"label":"sleepy"}"#)?.ttl == 5
+      && expressionMessage(#"{"type":"expression","id":3,"label":"confused","ttl_ms":2000}"#)?.ttl == 2
+      && boardLabels.allSatisfy { expressionMessage(#"{"type":"expression","id":3,"label":"\#($0.rawValue)"}"#)?.ttl == 4 },
+      "no ttl: the label's own (laughing 3 s, sleepy 5 s), the board's eleven 4 s")
 print("EXPRESSIONS_OK")
 if failures > 0 { print("\(failures) check(s) failed"); exit(1) }
 print("eve link: all checks passed")

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Run the real eleven-choice checkpoint on explicit synthetic conversation cases."""
+"""Run the real Laya checkpoint over every eye label on explicit synthetic conversation cases.
+
+The cases cover the original eleven labels only (the seven added 2026-10-12 are scored by jev_eyes_eval.py).
+"""
 
 import hashlib
 import json
@@ -120,7 +123,7 @@ def main():
             print(r["expected"], "->", r["label"], r["text"])
     assert len(results) == 39 and sum(r["label"] == r["expected"] for r in results[:36]) >= 28
     assert all(r["label"] == "wink" for r in results[-3:])
-    assert set(LABELS) <= {r["label"] for r in results}
+    assert set(LABELS[:11]) <= {r["label"] for r in results}
 
 
 if __name__ == "__main__":

@@ -293,7 +293,7 @@ The [Telegram door](docs/stackchan/telegram.md) is **off by default**. With it o
 
 ### Experimental
 
-- **Live expressions.** eve picks one of eleven temporary eye expressions,
+- **Live expressions.** eve picks one of eighteen temporary eye expressions (the board's eleven plus laughing, sleepy, confused, sheepish, relieved, proud and flattered on the phone),
   including a wink, from conversation and diary text, even while speaking. Jev
   (TypeSafe's typed-decision model, one `choice` per turn, ~200 ms) picks by default;
   `EVE_EXPRESSION_BACKEND=laya` keeps the original local Laya checkpoint, which
@@ -554,6 +554,7 @@ Every message is shaped for the phone by `telegram_format.py`.
 | Feature | What it does |
 |---|---|
 | Chat and tasks | Chat with eve, start and stop a Mac task, answer a task's question, receive a camera photo. A task shows one progress message with a Stop button; the result arrives as a reply to your request. |
+| Small talk (`EVE_SMALL_TALK`, off until its blind bar passes) | A message that is exactly a small-talk phrase from a fixed list ("hi", "thanks", "good night", "lol"), with no attachment and nothing waiting on you, is answered by one Haiku 5.5 call (`small_talk.py`) in eve's voice in about 1.5 s; anything else, or any failure, goes to the full brain. On a match the message and your profile's "How they like to talk" section go to Anthropic through OpenRouter; no chat history. See [small talk](docs/small-talk.md#what-leaves-the-mac). |
 | Images | Send photos or image files with captions (still JPEG/PNG/WebP/GIF, up to 10 MB). See [image routing and retention](docs/stackchan/telegram.md#receiving-images). |
 | `rundown` | Today's email, calendar, Slack and Obsidian todos through the packaged [rundown skill](bridge/src/eve_bridge/skills/rundown/SKILL.md). Read-only; names disconnected sources, never result limits. |
 | `claude on` | Streams Claude Code's visible text to the phone (never the gray tool lines or thinking) and types your replies in; tool calls run as in bypass mode. Jev judges each relayed shell command for risk (shadow by default). |

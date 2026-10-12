@@ -738,6 +738,25 @@ def profile_for_voice(cfg: RecallConfig) -> str:
     return _clip_lines(text.strip(), MAX_VOICE_PROFILE_CHARS)
 
 
+TALKING_HEADING = "## How they like to talk"
+
+
+def talking_section(cfg: RecallConfig) -> str:
+    """The profile page's "How they like to talk" section, its heading and lines, from the whole page (closed facts
+    and hidden lines dropped, never clipped here); "" when the page has none. For the small-talk lane
+    (small_talk.voice_from_profile clips it). Not read from profile_for_voice: that one is cut to
+    MAX_VOICE_PROFILE_CHARS with fresh stars on top, and this section, the page's last, is the first to go."""
+    page = _drop_hidden(_open_only(_profile_page(cfg)), hidden_match(cfg))
+    out: list[str] = []
+    inside = False
+    for line in page.splitlines():
+        if line.startswith("## "):
+            inside = line.strip() == TALKING_HEADING
+        if inside:
+            out.append(line)
+    return "\n".join(out).strip()
+
+
 def _journal_title(path: Path) -> str:
     try:
         raw = path.read_text(encoding="utf-8")
