@@ -64,6 +64,20 @@ The adapter passes ordinary OS environment variables and optional `CODEX_HOME`;
 Eve's keys and desktop session/pipe variables are not forwarded. Codex uses
 its own ordinary local sign-in/configuration. A task has a ten-minute wall limit.
 
+## Saved logins, cards and 2FA codes: `eve_vault`
+
+When the vault holds an item, each task's thread is started with eve's `eve_vault`
+MCP server (`config.mcp_servers` on `thread/start`) and a paragraph telling Codex to
+call `vault_fill` instead of typing a password, card number or code. `vault_fill`
+finds the field in the page through the Accessibility API and sets its value: Codex
+never sees it. Codex's approval forms for `vault_list` and `vault_fill` (Codex 0.159
+names the tool only in the form's message) are accepted without asking the owner;
+nothing else is. A prewarmed thread started before the vault had items, or after it
+lost its last one, is replaced on the same app-server when the task starts. Verified
+end to end on 2026-10-12 (`bridge/tools/vault_codex_e2e.py`): a real task signed in
+to a local page, whose server received exactly the saved password. See
+[the vault](../vault.md).
+
 ## Separate API-key billing
 
 `EVE_CODEX_AUTH` accepts `plan` (the default) or `api`. Plan mode preserves

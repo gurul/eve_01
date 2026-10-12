@@ -265,6 +265,12 @@ own profile.
   that tab and disconnects. It never closes your context, your windows or
   your other tabs. The same approval gate applies: a sensitive control (buy,
   send, delete, pay…) stops the plan until you say yes.
+- **What it never reads.** The contents of a password field, a card field
+  (`autocomplete="cc-…"`) or a one-time-code field never go to the models.
+  The lane sees only the field's label. It never types into a password field,
+  including one that "show password" has turned into plain text. It can still
+  type into card and code fields. Saved logins, cards and 2FA codes are filled
+  from [the vault](../vault.md) by a `fill` step, so no model sees them.
 - **If it's off.** When remote debugging is off or Chrome isn't running, the
   lane says how to switch it on and never guesses.
 - **Your click is the gate.** Chrome asks **"Allow remote debugging?"** for

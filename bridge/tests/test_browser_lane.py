@@ -388,3 +388,43 @@ def test_only_a_browser_only_goal_goes_to_the_chrome_lane() -> None:
                  "Send the picture I just took on Photo Booth to me", "play my liked songs on Spotify",
                  "open the desktop app for youtube", "open Notes"):
         assert not only(goal), goal
+
+
+# What was typed into a secret field must never reach a snapshot: an unlabelled password used its value as
+# its name, and a card number (a plain text box) was copied into `value` for the planner and Jev to read.
+SECRETS = {"pw": "hunter2-canary", "shown": "plain-pw-canary", "card": "4242424242424242",
+           "cvc": "987", "otp": "135790", "search": "ramen-control"}
+SECRET_FORM = """<!doctype html><html><head><title>Checkout</title></head><body><form>
+<input id="pw" type="password">
+<input id="shown" type="text" autocomplete="current-password">
+<label for="card">Card number</label><input id="card" autocomplete="cc-number">
+<label for="cvc">Security code</label><input id="cvc" autocomplete="billing cc-csc">
+<label for="otp">Code</label><input id="otp" autocomplete="one-time-code">
+<label for="search">Search</label><input id="search" type="search">
+</form><script>const v = %s; for (const k in v) document.getElementById(k).value = v[k];</script></body></html>"""
+
+
+@live
+def test_what_is_typed_into_a_secret_field_never_reaches_the_snapshot(tmp_path: Path) -> None:
+    import json
+    srv, url = _serve(tmp_path, "checkout.html", SECRET_FORM % json.dumps(SECRETS))
+    lane = lane_for(tmp_path)
+
+    async def go() -> tuple[dict[str, Any], dict[str, Any]]:
+        await lane.open_url(url)
+        snap = await lane._run(lambda: lane._ensure().snapshot())
+        outline = await lane.outline()
+        await lane.close()
+        return {c.label: c for c in snap.elements}, {"snap": [c.to_dict() for c in snap.elements], **outline}
+
+    try:
+        by_label, seen = asyncio.run(go())
+    finally:
+        srv.shutdown()
+    dump = json.dumps(seen)
+    for key, secret in SECRETS.items():
+        if key != "search":
+            assert secret not in dump, (key, dump)
+    assert by_label["Search"].value == "ramen-control"            # an ordinary field is still read
+    assert by_label["Card number"].value == "" and not by_label["Card number"].secure   # still typeable
+    assert sum(c["secure"] for c in seen["snap"]) == 2, dump    # the password and the shown password

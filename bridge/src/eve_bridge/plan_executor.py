@@ -13,6 +13,9 @@ Per step:
                         with Jev agreeing; or Jev's pick among them under the same cut-offs. Then the lane's
                         focus_and_type, which pastes only when the focus really is that field
   press_key             one key. Return submits only a search the human dictated; anything else asks first.
+  fill                  the effector's fill_from_vault (browser_lane's page; vault.py): code finds the form's
+                        fields and types a vault item's values. No model picks the field or sees a value; an
+                        effector without a vault (the Mac's) refuses it.
   checkpoint            stop and hand back: the planner said it could not see past this point
 
 Before a click or a type, effectors that know how (the browser page) dismiss a cookie/consent notice with a
@@ -197,7 +200,7 @@ def run_plan(plan: Plan, *, senses: Any, effectors: Any, asker: Optional[Callabl
         if step.consequential and i not in ok:
             return stop("needs_human", i, "the plan marked this step consequential", step.describe())
 
-        if step.kind in ("click", "type") and not dry_run:
+        if step.kind in ("click", "type", "fill") and not dry_run:
             _clear_consent(effectors, i, out)
         entry = Entry(i + 1, step.describe(), "refused")
         if dry_run and step.kind != "click":
@@ -280,6 +283,19 @@ def run_plan(plan: Plan, *, senses: Any, effectors: Any, asker: Optional[Callabl
                 return stop("partial", i, "focus_changed")
             entry.effect = "unverifiable"                        # pasted; only an `expect` can confirm it
             typed = (is_search_field(field_c), step.text_source, step.text)
+
+        elif step.kind == "fill":
+            fill = getattr(effectors, "fill_from_vault", None)
+            try:
+                said = fill(step.text) if callable(fill) else "refused: the vault fills only in the browser"
+            except Exception as e:  # noqa: BLE001 — an effector that raised applied nothing we can vouch for
+                said = f"refused: {type(e).__name__}"
+            entry.how, entry.note = "code", str(said)
+            if not str(said).startswith("filled "):
+                out.ledger.append(entry)
+                return stop("partial", i, "fill_refused")
+            entry.effect = "unverifiable" if " but " in str(said) else "confirmed"
+            typed = None
 
         elif step.kind == "press_key":
             submit = step.key in ("return",)

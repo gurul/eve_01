@@ -20,8 +20,9 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
-from . import codex_auth, pricing, spend, telegram_images
+from . import codex_auth, pricing, spend, telegram_images, vault_mcp
 from .agent_contract import AgentEvent
+from .vault import Vault
 
 log = logging.getLogger(__name__)
 
@@ -61,6 +62,15 @@ or the desktop as a substitute. Do any tab preservation before this final captur
 If capture fails, say so; do not claim a picture was sent.
 """
 INSTRUCTIONS += OWNER_ACTION_INSTRUCTIONS + BROWSER_INSTRUCTIONS
+# Added only when the vault holds an item (vault.py; the eve_vault server, vault_mcp.py, is then in the thread).
+VAULT_INSTRUCTIONS = """The eve_vault tool holds the owner's saved sign-ins, cards and 2FA secrets; vault_list shows
+their ids. When a page asks for a username, password, card number, expiry, security code or one-time code
+that the vault has, call vault_fill with the id, the part and the page's URL (and the field's label when the
+page has several fields of that kind). vault_fill puts the value into that field of the page; you never see it.
+Keep the page as its window's active tab. Fill each field the form needs this way (a sign-in usually needs
+username and password), then continue. Never type a password, card number or code yourself, never ask the
+owner for one the vault has, and never put one in a message.
+"""
 # Preserve the plan row; API-key processes are metered once their turn ends.
 PLAN_NOTE = 'ChatGPT plan, not per-call'
 
@@ -170,6 +180,23 @@ def routine_access(params: dict[str, Any]) -> bool:
     return origin is not None and (transfer == 'download' or origin == 'https://web.telegram.org')
 
 
+VAULT_TOOL_ASK = re.compile(r'^Allow the eve_vault MCP server to run tool "([a-z_]+)"\?$')
+
+
+def vault_tool_call(params: dict[str, Any]) -> bool:
+    """Codex's approval form for a call to eve's own vault server (vault_mcp.py), and nothing else. Codex
+    0.159 names the tool only in the form's message ('Allow the eve_vault MCP server to run tool "vault_list"?',
+    live 2026-10-12: no tool_name in _meta), so either place is read."""
+    schema, meta = params.get('requestedSchema'), params.get('_meta')
+    if not (params.get('serverName') == vault_mcp.SERVER_NAME and params.get('mode') == 'form'
+            and isinstance(schema, dict) and not schema.get('properties') and not schema.get('required')
+            and isinstance(meta, dict) and meta.get('codex_approval_kind') == 'mcp_tool_call'):
+        return False
+    asked = VAULT_TOOL_ASK.match(str(params.get('message') or ''))
+    tool = meta.get('tool_name') or (asked.group(1) if asked else '')
+    return tool in vault_mcp.TOOL_NAMES
+
+
 def executable() -> str:
     configured = os.environ.get('EVE_CODEX_BIN')
     if configured:
@@ -204,6 +231,8 @@ class CodexComputerAgent:
         self.site_access = (site_access if site_access is not None else
                             os.environ.get('EVE_CODEX_SITE_ACCESS', self.routine_permissions))
         self.browser_used = False
+        self.vault = Vault()                         # vault.py: the eve_vault server joins a thread that has items
+        self._vault_on = False                       # did the current thread get it
         self.browser_screenshot: telegram_images.ReceivedImage | None = None
         self.browser_tab_id: str | None = None
         self._proc: asyncio.subprocess.Process | None = None
@@ -482,6 +511,10 @@ class CodexComputerAgent:
                     log.info('codex: routine access allowed by owner preference: %s',
                              params['_meta']['tool_name'])
                     response['result'] = {'action': 'accept', 'content': {}}
+                elif method == 'mcpServer/elicitation/request' and vault_tool_call(params):
+                    # eve's own vault server: its tools fill a field with a saved value and answer what they
+                    # did, never the value; the site binding and field checks live in vault_mcp.
+                    response['result'] = {'action': 'accept', 'content': {}}
                 elif method == 'mcpServer/elicitation/request':
                     schema = params.get('requestedSchema', {})
                     if (params.get('serverName') == 'cua_repl' and params.get('mode') == 'form'
@@ -545,10 +578,34 @@ class CodexComputerAgent:
         await self._rpc('initialize', {'clientInfo': {'name': 'eve_computer_use', 'version': '0.1.0'}})
         await self._send({'method': 'initialized', 'params': {}})
 
+    def _thread_params(self) -> dict[str, Any]:
+        """thread/start's params: with the vault's server and paragraph when the vault holds an item."""
+        params: dict[str, Any] = {'ephemeral': True, 'cwd': str(Path.home()), 'sandbox': 'read-only',
+                                  'approvalPolicy': 'on-request', 'developerInstructions': INSTRUCTIONS}
+        try:
+            has_vault = bool(self.vault.items())
+        except Exception:  # noqa: BLE001 — an unreadable index is an empty vault, never a failed task
+            has_vault = False
+        self._vault_on = has_vault
+        if has_vault:
+            params['developerInstructions'] = INSTRUCTIONS + VAULT_INSTRUCTIONS
+            params['config'] = {'mcp_servers': {vault_mcp.SERVER_NAME: vault_mcp.server_config()}}
+        return params
+
+    def _vault_changed(self) -> bool:
+        """The vault gained its first item, or lost its last, since this thread was started: a prewarmed
+        thread (codex_warm.py) would run the task without the vault, or offer an empty one."""
+        try:
+            return bool(self.vault.items()) != self._vault_on
+        except Exception:  # noqa: BLE001
+            return False
+
     async def _start(self) -> None:
         await self._launch()
-        result = await self._rpc('thread/start', {'ephemeral': True, 'cwd': str(Path.home()),
-            'sandbox': 'read-only', 'approvalPolicy': 'on-request', 'developerInstructions': INSTRUCTIONS})
+        await self._open_thread()
+
+    async def _open_thread(self) -> None:
+        result = await self._rpc('thread/start', self._thread_params())
         self._thread_started(result)
         cursor = None
         found = False
@@ -612,6 +669,8 @@ class CodexComputerAgent:
             async with asyncio.timeout(self.max_secs):
                 if self._warmed_at is None:
                     await self._start()
+                elif self._vault_changed():
+                    await self._open_thread()            # same app-server, a thread with the vault as it is now
                 result = await self._rpc('turn/start', {'threadId': self.thread_id,
                     'input': [{'type': 'text', 'text': goal}]})
                 self.turn_id = result['turn']['id']

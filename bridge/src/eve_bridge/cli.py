@@ -23,6 +23,10 @@ def main(argv: list[str] | None = None) -> int:
         # eve's tools for a Work session (eve_mcp.py): before the env file, so the server holds none of its keys
         from . import eve_mcp
         return eve_mcp.main(rest[1:])
+    if rest[:1] == ["vault-mcp"]:
+        # the vault's fill tool for Codex tasks (vault_mcp.py): no env file either, it needs none of its keys
+        from . import vault_mcp
+        return vault_mcp.main(rest[1:])
     # Secrets and knobs the service cannot inherit from a shell
     # (OPENAI_API_KEY, EVE_*) — read before any subcommand looks at
     # os.environ. Existing variables win; the file only fills gaps.
@@ -35,6 +39,9 @@ def main(argv: list[str] | None = None) -> int:
     if rest[:1] == ["app"]:
         from . import app_template
         return app_template.cli(rest[1:])
+    if rest[:1] == ["vault"]:
+        from . import vault
+        return vault.cli(rest[1:] or ["--help"])
     parser = argparse.ArgumentParser(prog="eve-bridge")
     parser.add_argument("--version", action="version", version=f"eve-bridge {__version__}")
     sub = parser.add_subparsers(dest="cmd")

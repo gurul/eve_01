@@ -107,6 +107,12 @@ WEB_WORDS = re.compile(
 # 0 of 15 runs across five models). Off to the side (carousels, off-canvas menus) is still left out.
 # Every earlier data-eve-id is cleared first, so a control that is no longer collected can never answer
 # to an id that now belongs to another.
+# A secret field's contents are never read: a password (by type, or by autocomplete when "show password"
+# has made it plain text), a card field (autocomplete cc-*), a one-time code. Its value was copied into the
+# snapshot, and became its name when it had no label, so what was typed into it reached the planner and Jev
+# on the next step. Password fields are also `secure`, so the lane never types into them; card and code
+# fields stay typeable. A field the vault filled (data-eve-filled, _FILL_FIELDS_JS) is secret too, whatever its
+# attributes say: a card number in a field with no autocomplete hint, the username of a login.
 _COLLECT_JS = """() => {
   const sel = 'a[href],button,input,textarea,select,summary,[role=button],[role=link],[role=tab],[role=menuitem],' +
               '[role=checkbox],[role=radio],[role=textbox],[role=combobox],[role=option],[role=switch],' +
@@ -122,12 +128,17 @@ _COLLECT_JS = """() => {
     if (t === 'textarea') return 'textbox'; if (t === 'select') return 'combobox';
     if (t === 'summary') return 'button'; if (e.isContentEditable) return 'textbox';
     return t; };
+  const tokens = (e) => (e.getAttribute('autocomplete') || '').toLowerCase().split(/\\s+/);
+  const passwordLike = (e) => (e.type || '').toLowerCase() === 'password' ||
+    tokens(e).some(a => a === 'current-password' || a === 'new-password');
+  const secret = (e) => passwordLike(e) || e.hasAttribute('data-eve-filled') ||
+    tokens(e).some(a => a.startsWith('cc-') || a === 'one-time-code');
   const nameOf = (e) => {
     const lab = e.getAttribute('aria-label'); if (lab) return lab;
     const by = e.getAttribute('aria-labelledby');
     if (by) { const t = by.split(/\\s+/).map(id => (document.getElementById(id) || {}).innerText || '').join(' ').trim(); if (t) return t; }
     if (e.labels && e.labels.length) { const t = Array.from(e.labels).map(l => l.innerText).join(' ').trim(); if (t) return t; }
-    const own = (e.innerText || e.value || e.placeholder || e.title || e.getAttribute('alt') || '').trim();
+    const own = (e.innerText || (secret(e) ? '' : e.value) || e.placeholder || e.title || e.getAttribute('alt') || '').trim();
     if (own) return own;
     const img = e.querySelector('img[alt],svg[aria-label],[aria-label]');
     return img ? (img.getAttribute('alt') || img.getAttribute('aria-label') || '').trim() : ''; };
@@ -145,12 +156,13 @@ _COLLECT_JS = """() => {
     if (role === 'checkbox' || role === 'switch' || role === 'menuitemcheckbox') value = (e.checked || e.getAttribute('aria-checked') === 'true') ? 'checked' : 'unchecked';
     else if (role === 'radio' || role === 'menuitemradio' || role === 'tab' || role === 'option') value = (e.checked || e.getAttribute('aria-checked') === 'true' || e.getAttribute('aria-selected') === 'true') ? 'selected' : '';
     else if (e.getAttribute('aria-expanded') !== null) value = e.getAttribute('aria-expanded') === 'true' ? 'expanded' : 'collapsed';
+    else if (secret(e)) value = '';
     else if ((role === 'textbox' || role === 'searchbox' || role === 'combobox') && typeof e.value === 'string') value = e.value.slice(0, 40);
     const editable = ['textbox', 'searchbox', 'combobox'].includes(role) && !(e.tagName.toLowerCase() === 'select');
     e.setAttribute('data-eve-id', String(i));
     out.push({id: String(i++), role, name, value, x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width),
               h: Math.round(r.height), enabled: !(e.disabled || e.getAttribute('aria-disabled') === 'true'),
-              secure: role === 'password', editable, dialog: !!e.closest('dialog,[role=dialog],[role=alertdialog]'),
+              secure: role === 'password' || passwordLike(e), editable, dialog: !!e.closest('dialog,[role=dialog],[role=alertdialog]'),
               focused: document.activeElement === e, offscreen: r.bottom < 0 || r.top > H,
               href: e.tagName.toLowerCase() === 'a' && e.hasAttribute('href') ? e.href : ''});
     if (out.length >= %d) break; }
@@ -552,6 +564,73 @@ def observed_site(value: Any) -> str:
         return ""
 
 
+# The fields a vault item fills (vault.py; plan_contract's `fill` step), found by code from what a field IS
+# (autocomplete, type) and what it is CALLED (label, name, id, placeholder), never from what is in it. Each is
+# tagged data-eve-fill=<n> and returned as [n, part, tag]; the lane types the values with Playwright. Jev does
+# not pick these fields: a password field is secure and never in its pool (fast_lane.editable_pool), and an
+# unlabelled login form, the common case, has nothing for it to read.
+#   login  the password field (current-password before new-password), and the username: autocomplete
+#          username/email, else the last text field before the password in its form; on a username-only page
+#          (a two-step sign-in), the one field that looks like it.
+#   card   cc-number, cc-exp (or cc-exp-month and cc-exp-year, selects included), cc-csc, cc-name; a field
+#          with no cc-* hint by its label.
+#   totp   autocomplete one-time-code, else a field called a code; a row of 4-8 one-character boxes, one digit
+#          each; else the focused field, else the page's only text field.
+_FILL_FIELDS_JS = r"""(kind) => {
+  for (const e of document.querySelectorAll('[data-eve-fill]')) e.removeAttribute('data-eve-fill');
+  const vis = (e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e);
+    return r.width >= 2 && r.height >= 2 && cs.visibility !== 'hidden' && cs.display !== 'none' && !e.disabled && !e.readOnly; };
+  const tokens = (e) => (e.getAttribute('autocomplete') || '').toLowerCase().split(/\s+/);
+  const has = (e, t) => tokens(e).includes(t);
+  const words = (e) => { const parts = [e.getAttribute('aria-label'), e.getAttribute('name'), e.id, e.getAttribute('placeholder'), e.title];
+    if (e.labels) for (const l of e.labels) parts.push(l.innerText);
+    return parts.filter(Boolean).join(' ').toLowerCase(); };
+  const skip = ['hidden', 'submit', 'button', 'reset', 'checkbox', 'radio', 'file', 'image', 'range', 'color', 'search'];
+  const fields = Array.from(document.querySelectorAll('input,select,textarea')).filter(e => !skip.includes((e.type || '').toLowerCase()) && vis(e));
+  const textish = (e) => e.tagName === 'INPUT' && ['text', 'email', 'tel', 'number', 'url'].includes((e.type || 'text').toLowerCase());
+  const out = [];
+  const mark = (e, part) => { if (!e || out.some(o => o[1] === part) || e.hasAttribute('data-eve-fill')) return;
+    e.setAttribute('data-eve-fill', String(out.length)); out.push([String(out.length), part, e.tagName.toLowerCase()]); };
+  if (kind === 'login') {
+    const pwds = fields.filter(e => (e.type || '').toLowerCase() === 'password' || has(e, 'current-password'));
+    const pw = pwds.find(e => has(e, 'current-password')) || pwds.find(e => !has(e, 'new-password')) || pwds[0];
+    const inScope = (e) => !pw || !pw.form || e.form === pw.form;
+    const named = (e) => has(e, 'username') || has(e, 'email') || (e.type || '').toLowerCase() === 'email';
+    let user = fields.find(e => e !== pw && textish(e) && inScope(e) && named(e));
+    if (!user && pw) { const before = fields.filter(e => e !== pw && textish(e) && inScope(e) && (e.compareDocumentPosition(pw) & Node.DOCUMENT_POSITION_FOLLOWING));
+      user = before[before.length - 1]; }
+    if (!user && !pw) { const looks = fields.filter(e => textish(e) && (named(e) || /user|e-?mail|login|account|phone/.test(words(e))));
+      user = looks.length === 1 ? looks[0] : (fields.filter(textish).length === 1 ? fields.filter(textish)[0] : null); }
+    mark(user, 'username'); mark(pw, 'password');
+  } else if (kind === 'card') {
+    const hinted = (e) => tokens(e).some(a => a.startsWith('cc-'));
+    const by = (tok, rx) => fields.find(e => has(e, tok)) || fields.find(e => !hinted(e) && rx.test(words(e)));
+    mark(by('cc-number', /card.?num|cc.?num|card no|number on card|\bpan\b/), 'number');
+    const month = fields.find(e => has(e, 'cc-exp-month')) || fields.find(e => !hinted(e) && /exp.*(month|\bmm\b)/.test(words(e)));
+    const year = fields.find(e => has(e, 'cc-exp-year')) || fields.find(e => !hinted(e) && /exp.*(year|\byy)/.test(words(e)));
+    if (month && year && month !== year) { mark(month, 'exp_month'); mark(year, 'exp_year'); }
+    else mark(fields.find(e => has(e, 'cc-exp')) || fields.find(e => !hinted(e) && e.tagName === 'INPUT' &&
+      /expir|exp.?date|mm.?\/.?yy|valid.?thru/.test(words(e))), 'exp');
+    mark(by('cc-csc', /cvc|cvv|csc|security.?code|card.?code|verification.?(code|number)/), 'cvc');
+    mark(by('cc-name', /name.?on.?card|card.?holder|cardholder/), 'name');
+  } else if (kind === 'totp') {
+    const otp = fields.find(e => has(e, 'one-time-code') && !(e.maxLength === 1)) ||
+      fields.find(e => textish(e) && e.maxLength !== 1 && /otp|one.?time|2fa|two.?factor|verification|auth.*code|security.?code|passcode|\bcode\b|token/.test(words(e)));
+    const singles = fields.filter(e => textish(e) && e.maxLength === 1);
+    if (otp) mark(otp, 'code');
+    else if (singles.length >= 4 && singles.length <= 8) singles.forEach((e, i) => { e.setAttribute('data-eve-fill', String(out.length)); out.push([String(out.length), 'code#' + i, 'input']); });
+    else { const a = document.activeElement; const t = fields.filter(textish);
+      mark(a && t.includes(a) ? a : (t.length === 1 ? t[0] : null), 'code'); }
+  }
+  return out; }"""
+
+# What a screenshot paints over: every secret field (as the collector decides it) and every field the vault
+# filled. Playwright's own mask, so the pixels never leave the browser unmasked.
+SECRET_FIELDS = ('input[type=password i], [autocomplete*="cc-" i], [autocomplete*="one-time-code" i], '
+                 '[autocomplete*="current-password" i], [autocomplete*="new-password" i], [data-eve-filled]')
+MASK_COLOR = "#000000"
+
+
 def snapshot_from_page(raw: Mapping[str, Any], seq: int, secs: float = 0.0) -> Snapshot:
     """The page's collected elements as the Snapshot the gate and Jev already read."""
     elements: list[Candidate] = []
@@ -610,9 +689,10 @@ class _Page:
     """Senses and effectors over one Playwright page, on the lane's thread. The methods and their return
     strings are the contract desktop_helpers' adapter keeps, because run_plan and run_delegate read them."""
 
-    def __init__(self, page: Any, clock: Callable[[], float] = time.perf_counter) -> None:
+    def __init__(self, page: Any, clock: Callable[[], float] = time.perf_counter, vault: Any = None) -> None:
         self.page = page
         self.clock = clock
+        self.vault = vault                        # vault.Vault, or None: the fill effector refuses
         self.approve: Optional[str] = None
         self._seq = 0
         self._snapshot: Optional[Snapshot] = None
@@ -731,6 +811,62 @@ class _Page:
             return f"refused: could not type into {c.label!r} ({type(e).__name__})"
         return f"typed {len(text)} characters into {c.role} {c.label!r}"
 
+    def fill_from_vault(self, handle: str) -> str:
+        """Fill the page's form from a vault item (vault.py): code finds the fields (_FILL_FIELDS_JS) and types
+        the values; the result names the parts filled, never a value. A login or 2FA item fills only on its own
+        site (vault.Vault.fill_values). "refused: ..." means nothing was typed."""
+        from .vault import VaultError
+        if self.vault is None:
+            return "refused: there is no vault"
+        try:
+            item, values = self.vault.fill_values(handle, self.page.url)
+        except VaultError as e:
+            return f"refused: {e}"
+        try:
+            found = self._read_dom(lambda: self.page.evaluate(_FILL_FIELDS_JS, item.kind))
+        except Exception as e:  # noqa: BLE001
+            return f"refused: could not read the form ({type(e).__name__})"
+        todo = [(str(fid), str(part), str(tag)) for fid, part, tag in found or []
+                if str(part).partition("#")[0] in values]
+        if not todo:
+            return f"refused: no field on this page for the {item.kind} {item.label!r}"
+        filled: list[str] = []
+        try:
+            for fid, part, tag in todo:
+                base, _, index = part.partition("#")
+                value = values[base] if not index else values[base][int(index):int(index) + 1]
+                loc = self.page.locator(f'[data-eve-fill="{fid}"]').first
+                if tag == "select":
+                    choices = list(dict.fromkeys((value, value.lstrip("0"), value[-2:])))
+                    if not any(self._select(loc, c) for c in choices):
+                        raise ValueError(f"no {base} option")
+                else:
+                    loc.fill(value, timeout=SNAPSHOT_TIMEOUT_MS)
+                loc.evaluate("e => e.setAttribute('data-eve-filled', '')")
+                if base not in filled:
+                    filled.append(base)
+        except Exception as e:  # noqa: BLE001 — a field that would not take the value
+            what = f"could not fill the {part.partition('#')[0]} ({type(e).__name__})"
+            return (f"filled {', '.join(filled)} from {item.label!r} but {what}" if filled
+                    else f"refused: {what}")
+        finally:
+            values.clear()
+        empty = self.page.evaluate("ids => ids.filter(i => { const e = document.querySelector(`[data-eve-fill=\"${i}\"]`);"
+                                   " return !e || !e.value; }).length", [fid for fid, _, _ in todo])
+        if empty:
+            return f"filled {', '.join(filled)} from {item.label!r} but {empty} field(s) stayed empty"
+        return f"filled {', '.join(filled)} from {item.label!r}"
+
+    @staticmethod
+    def _select(loc: Any, choice: str) -> bool:
+        for how in ({"value": choice}, {"label": choice}):
+            try:
+                loc.select_option(**how, timeout=1000)
+                return True
+            except Exception:  # noqa: BLE001 — not this spelling
+                continue
+        return False
+
     def clear_consent(self) -> str:
         """Dismiss a cookie/consent notice (CONSENT_TEXT) with a refusing or closing button. The line says what
         was pressed, "" when there was no such notice or no safe button. Never raises."""
@@ -792,8 +928,10 @@ class BrowserLane:
     """Owns the browser and its thread. Every public coroutine hands one job to that thread."""
 
     def __init__(self, config: BrowserLaneConfig, *, step_asker: Any = None,
-                 launcher: Optional[Callable[[], Any]] = None) -> None:
+                 launcher: Optional[Callable[[], Any]] = None, vault: Any = None) -> None:
+        from .vault import Vault
         self.config = config
+        self.vault = vault if vault is not None else Vault()   # what the `fill` step fills from (vault.py)
         self._step_asker = step_asker
         self._launcher = launcher
         self._pool = concurrent.futures.ThreadPoolExecutor(max_workers=1, thread_name_prefix="browser-lane")
@@ -841,7 +979,7 @@ class BrowserLane:
             self._context = self._pick_profile(self.config.chrome_profile)   # the owner's profile: their logins
             page = self._context.new_page()                   # eve's own tab; the owner's tabs are never touched
             page.bring_to_front()
-            self._page = _Page(page)
+            self._page = _Page(page, vault=self.vault)
             return self._page
         if self._context is None:
             if self._launcher is not None:
@@ -863,7 +1001,7 @@ class BrowserLane:
             pages = list(self._context.pages)
             page = pages[0] if pages else self._context.new_page()
         page.bring_to_front()
-        self._page = _Page(page)
+        self._page = _Page(page, vault=self.vault)
         return self._page
 
     def _profiles(self) -> dict[str, Any]:
@@ -939,7 +1077,7 @@ class BrowserLane:
             self._context = target
             page = target.new_page()
             page.bring_to_front()
-            self._page = _Page(page)
+            self._page = _Page(page, vault=self.vault)
         return email
 
     def _alive(self) -> bool:
@@ -1016,7 +1154,8 @@ class BrowserLane:
             log.info("browser lane: %s", cleared)
         snap = p.snapshot()
         return {"app": "browser", "lines": outline_lines(snap), "title": snap.title,
-                "url": navigation_destination(p.current_url()), "site": observed_site(p.current_url())}
+                "url": navigation_destination(p.current_url()), "site": observed_site(p.current_url()),
+                "vault": self.vault.lines() if self.vault is not None else []}
 
     async def outline(self) -> dict[str, Any]:
         return await self._run(self._outline)
@@ -1079,7 +1218,8 @@ class BrowserLane:
         if self._context is None:
             return None
         try:
-            return self._ensure().page.screenshot(type="jpeg", quality=85)
+            page = self._ensure().page
+            return page.screenshot(type="jpeg", quality=85, mask=[page.locator(SECRET_FIELDS)], mask_color=MASK_COLOR)
         except Exception:  # noqa: BLE001
             return None
 

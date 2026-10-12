@@ -135,6 +135,11 @@ listening without a connected board needs `EVE_MIC_ALWAYS=1`. The
   that is one or two clicks on the window in front ("switch to week view") is
   clicked in about a second before Codex starts ([the desk lane](docs/stackchan/routing.md#clicking-the-front-window-before-codex-the-desk-lane)). See
   [how a task is routed](#how-a-computer-task-is-routed).
+- **Signs in and pays without a model seeing the secret.** Saved logins, cards and
+  2FA secrets live in the Keychain (`eve-bridge vault add`). A task names an item by
+  its id and code fills the page: the browser lane through a `fill` step, Codex
+  through its `vault_fill` tool. Logins and 2FA codes fill only on their own site.
+  See [the vault](docs/vault.md).
 - **Takes notes.** `eve-bridge take-notes start` records a room-note session;
   stopping it writes the full transcript, split by voice ("Speaker 1", "Speaker 2"),
   and detailed notes on top: summary, speakers, topics, decisions, actions, open
@@ -638,6 +643,7 @@ Persistent data lives under `~/.config/eve-bridge/`:
 | `firetv.json` | The paired Fire TV: its address, port, mDNS name and model (mode 600). See [Fire TV](docs/firetv.md). |
 | `agentcard/` | Private purchase attempt journal: conversation references and cart identities/outcomes for duplicate prevention and reconciliation. No access token, delivery address or raw payment-card response. The optional address JSON is a separate private file. See [AgentCard](docs/agentcard.md). |
 | `chief/` | The chief of staff's cards (each job's title, steps and checks as eve summarised them, with a pointer to where you said it rather than your words), their event and attention logs (ids, numbers and short code words), and the lessons from failed steps. Mode 600. See [chief of staff](docs/stackchan/chief.md). |
+| `vault.json` | The vault's index: ids, kinds, labels and sites of saved logins, cards and 2FA secrets, never a value (mode 600). The values are in the macOS Keychain. See [the vault](docs/vault.md). |
 | `spend/` | The daily spend ledger (one JSONL file per local day: provider, model, feature, dollars, token counts, never words) and `providers.json`, the providers' own figures. See [what eve spends](docs/stackchan/spending.md). |
 
 - `eve-bridge mic off` stops wake-word microphone capture until re-enabled.

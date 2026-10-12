@@ -55,6 +55,14 @@ def _spend_ledger_in_tmp(_test_dir):
 
 
 @pytest.fixture(autouse=True)
+def _vault_in_tmp(_test_dir, monkeypatch: pytest.MonkeyPatch):
+    """Every test's vault (vault.py) is a temporary index and a keychain file that does not exist, never the
+    owner's: a BrowserLane builds a Vault, and its outline lists the vault's items."""
+    monkeypatch.setenv("EVE_VAULT_INDEX", str(_test_dir / "vault.json"))
+    monkeypatch.setenv("EVE_VAULT_KEYCHAIN", str(_test_dir / "no-such.keychain-db"))
+
+
+@pytest.fixture(autouse=True)
 def _watch_list_in_tmp(_test_dir, monkeypatch: pytest.MonkeyPatch):
     """Every test's watch list (watch.py) is a temporary file, never the owner's real one: the daemon builds a
     Watcher whenever the Telegram door is on, and a Watcher reads its file when it is made."""

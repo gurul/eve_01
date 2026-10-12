@@ -1242,7 +1242,8 @@ class ComputerAgent:
                                   effort=self.config.plan_exec_effort,
                                   timeout=self.config.api_timeout_secs, reads=reads, browser=browser,
                                   site=(str(outline.get("site") or "") or urlsplit(str(outline.get("url") or "")).hostname or "") if browser else "",
-                                  done=done, again=again, current_url=str(outline.get("url") or "") if browser else "")
+                                  done=done, again=again, current_url=str(outline.get("url") or "") if browser else "",
+                                  vault=[str(x) for x in outline.get("vault") or []] if browser else None)
             try:
                 response = await self._interruptible(self._create(req, 0))
                 self._meter(response)
