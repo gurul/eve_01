@@ -1,27 +1,26 @@
 #!/usr/bin/env python3
-"""Score the small-talk lane (small_talk.py) on a case set, with the production gate and the real Haiku.
+"""Score the small-talk lane (small_talk.py) on a case set, with the production phrase list and the real Haiku.
 
     env $(grep -E '^(OPENROUTER_API_KEY)=' ~/.config/eve-bridge/env | xargs) \\
-        .venv/bin/python tools/small_talk_eval.py tests/fixtures/small_talk_dev.json --coverage 80 --p50 1.8 --p95 3.0
+        .venv/bin/python tools/small_talk_eval.py tests/fixtures/small_talk_dev.json --coverage 70 --p50 1.8 --p95 3.0
 
 The set: {"cases": [{"id", "text", "history": [{"role": "owner"|"eve", "text"}], "state": {"awaiting_confirmation",
-"awaiting_answer", "running_task", "attachment"}, "kind": "small_talk"|"needs_brain"}]}.
+"awaiting_answer", "running_task", "attachment"}, "kind": "small_talk"|"needs_brain"}]}. The lane never reads the
+history; a case whose history leaves eve waiting on the owner says so in its state.
 
-For each case: the production gate (small_talk.gate) with the case's state, its history (no times, so an eve
-question at the end of it counts as recent, as the cautious reading does) and whether a code path owns the words
-(small_talk.code_owned); when the gate passes, the production call (small_talk.ask: the same prompt, schema, timeout
-and code checks). The lane answered = the gate passed and the call returned a reply. Then one judge call per lane
-reply (JUDGE_MODEL at low effort) with JUDGE_QUESTION.
+For each case: the production gate (small_talk.gate: the phrase list, then the case's state); when it passes, the
+production call (small_talk.ask: the same prompt, limits and timeout). The lane answered = the gate passed and the
+call returned a reply. Then one judge call per lane reply (JUDGE_MODEL at low effort) with JUDGE_QUESTION.
 
 The voice: production adds the owner's "How they like to talk" profile section to the prompt when memory is on, as
 on the owner's Mac. So the whole set is scored once per --voice, and the bar must hold on every one: "none" (the
 default voice alone, memory off), "sample" (SAMPLE_VOICE, a fictional section in the profile's format and about its
 size, leaning chatty), or a file holding such a section. Default: none and sample.
 
-The bar (docs/small-talk-gates.md S3): needs_brain cases answered by the lane = 0; small_talk coverage >= --coverage %;
+The bar (docs/small-talk-gates.md S3b): needs_brain cases answered by the lane = 0; small_talk coverage >= --coverage %;
 judge yes = 0; p50 and p95 of the Haiku calls' wall time <= --p50 / --p95 s; provider errors (a timeout, an error, no
-key) = 0. Prints every miss with its reply, the totals and the cost, and SMALL_TALK_BAR_OK only when all hold on every voice; exits 1
-otherwise. Calls run CONCURRENCY at a time, so the latency measured is a call's own, not a queue's.
+key) = 0. Prints every miss with its reply, the totals and the cost, and SMALL_TALK_BAR_OK only when all hold on every
+voice; exits 1 otherwise. Calls run CONCURRENCY at a time, so the latency measured is a call's own, not a queue's.
 """
 
 from __future__ import annotations
@@ -69,12 +68,7 @@ def state_of(case: dict[str, Any]) -> small_talk.State:
     return small_talk.State(attachment=bool(s.get("attachment")),
                             awaiting_confirmation=bool(s.get("awaiting_confirmation")),
                             awaiting_answer=bool(s.get("awaiting_answer")),
-                            running_task=bool(s.get("running_task")),
-                            owned=small_talk.code_owned(case.get("text") or ""))
-
-
-def history_of(case: dict[str, Any]) -> list[tuple[str, str]]:
-    return [("eve" if h.get("role") == "eve" else "user", str(h.get("text") or "")) for h in case.get("history") or []]
+                            running_task=bool(s.get("running_task")))
 
 
 def percentile(values: list[float], p: float) -> float:
@@ -122,14 +116,12 @@ async def run(cases: list[dict[str, Any]], voice: str = "") -> list[dict[str, An
 
     async def one(case: dict[str, Any]) -> dict[str, Any]:
         row: dict[str, Any] = {"id": case.get("id"), "kind": case["kind"], "text": case.get("text") or ""}
-        history = history_of(case)
-        row["gate"] = small_talk.gate(row["text"], state_of(case), history)
+        row["gate"] = small_talk.gate(row["text"], state_of(case))
         if row["gate"]:
             return row
         async with sem:
-            answer = await small_talk.ask(row["text"], history, voice, client=lane_client, record_spend=False)
-        row.update(called=True, secs=answer.secs, reason=answer.reason, error=answer.error,
-                   reply=answer.reply or answer.refused,
+            answer = await small_talk.ask(row["text"], voice, client=lane_client, record_spend=False)
+        row.update(called=True, secs=answer.secs, reason=answer.reason, error=answer.error, reply=answer.reply,
                    cost=answer.cost or 0.0, answered=answer.answered)
         if answer.answered:
             async with sem:
@@ -177,8 +169,6 @@ def score(rows: list[dict[str, Any]], coverage: float, p50: float, p95: float) -
           f"outcomes {json.dumps(gates, sort_keys=True)}")
     for name, (value, ok) in checks.items():
         print(f"  {'PASS' if ok else 'FAIL'}  {name}: {value}")
-    handed = [r["secs"] for r in rows if r.get("called") and r.get("reason") == "handoff"]
-    print(f"hand-off cost on the brain's path: p50 {percentile(handed, 0.5):.2f} s over {len(handed)} hand-offs")
     print(f"cost ${cost:.4f} (lane and judge, OpenRouter's reported figures)")
     ok = all(ok for _, ok in checks.values())
     print("the bar holds" if ok else "the bar fails")

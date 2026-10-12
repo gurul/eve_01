@@ -176,9 +176,6 @@ CHANNEL = "telegram"                # this door's name in the transcript (transc
 TODAY_CHARS = 32000                 # today's transcript in the instructions
 THINK_CONTEXT_CHARS = 6000          # the owner's profile and today, for think_hard (think.CONTEXT_MAX_CHARS)
 TOOL_LINE_CHARS = 1500              # one tool result in the transcript, at most
-# What the small-talk lane did with a turn (_small_talk_lane): answered it, or wrote the owner's line and handed off.
-LANE_ANSWERED = "answered"
-LANE_NOTED = "noted"
 PROMPT_CACHE_KEY = "eve-telegram"  # every turn shares one prefix: route them to the same cache
 # The tool results worth keeping in the transcript: what eve found out or did for the owner. The memory
 # tools are not here (their results are memory already), nor the owner's apps (third-party mail and files
@@ -2405,9 +2402,6 @@ class TelegramInlet:
         # goes to the brain, today's behaviour). Tests lend a fake.
         self._small_talk_ask = ((small_talk.ask if small_talk.enabled() else None) if small_talk_ask is _FROM_ENV
                                 else small_talk_ask)
-        # where the lane wrote the owner's line before a hand-off: (its _turn_kinds index, its RAM turns index, its
-        # chat-log seq)
-        self._lane_note: tuple[int, int, Optional[int]] = (0, 0, None)
         # Concerts, games and shows by place and date (events.py): lent while TICKETMASTER_API_KEY is set, its
         # requests counted by the watcher's limiter when one runs (the same key's quota).
         self._events = events.Events(limiter=lambda: self._watcher.limiter if self._watcher is not None else None)
@@ -3167,8 +3161,8 @@ class TelegramInlet:
             # the time, the weather, a sum...: answered by code, no model turn and no search (quick_answers.py)
             self._spawn(self._quick_answer(inbound, ask), "telegram-quick")
             return
-        # Every code path above has had its say: a short message may now be answered by the small-talk lane, inside
-        # the turn (small_talk.py, _small_talk_lane), before the routers, the prompt and the brain.
+        # Every code path above has had its say: a small-talk phrase may now be answered by the small-talk lane,
+        # inside the turn (small_talk.py, _small_talk_lane), before the routers, the prompt and the brain.
         self._spawn(self._turn(inbound, lane=True), "telegram-turn")
 
     # -- the / menu's switches, shared by the code words (_handle) and the brain's menu tools (_tool_menu) --
@@ -4528,21 +4522,16 @@ class TelegramInlet:
             # as _note marks them: whole (an app turn's history) and as one plain line (every other turn's)
             tool_gate.MARKS.add(*outside, *(history_text(t, False) for t in outside))
 
-    def _current_turns(self, now: Optional[float] = None) -> list[tuple[str, str]]:
+    def _current_turns(self) -> list[tuple[str, str]]:
         """The owner's and eve's lines of the conversation going on now: with the chat log, the lines after its
         newest quiet spell (idle_close_secs) or restart, so a link or a message from hours or days ago is never
         "that link" or the follow-up's context (review, 2026-10-08). Without it, the RAM turns, which a quiet
-        spell already clears. ``now`` (wall clock): a message arriving then that is not in the log yet (the
-        small-talk lane reads before it notes the message); a quiet spell or a restart between the log's newest
-        line and ``now`` starts a new conversation, so there are no lines yet."""
+        spell already clears."""
         if self._chat_log is None:
             return list(self.turns)
         try:
             lines = self._chat_log.lines(self._log_chat())
         except Exception:  # noqa: BLE001
-            return []
-        if now is not None and lines and (now - lines[-1].t >= self.config.idle_close_secs
-                                          or (lines[-1].boot and lines[-1].boot != self._chat_log.boot)):
             return []
         start = 0
         for i in range(len(lines) - 1, 0, -1):
@@ -4581,15 +4570,11 @@ class TelegramInlet:
             return "(after a restart)"
         return gap_note(secs, restart)
 
-    def _log_history(self, upto: Optional[int] = None) -> list[dict[str, Any]]:
-        """The history items from the chat log's window; ``upto``: only its lines up to that seq (the message the
-        small-talk lane wrote, _answer_turn), none written after it."""
+    def _log_history(self) -> list[dict[str, Any]]:
         from .link_chat import history_text
 
         app = _FROM_APP.get() is not None             # an app turn reads eve's blocks as written (history_text)
         window, older = self._log_window()
-        if upto is not None:
-            window = [ln for ln in window if ln.seq <= upto]
         items = [message_item("developer", OLDER_NOTE)] if older else []
         prev = None
         for ln in window:
@@ -4694,17 +4679,14 @@ class TelegramInlet:
             except Exception as e:  # noqa: BLE001
                 log.warning("telegram: close marker not written (%s)", type(e).__name__)
 
-    def _history(self, *, upto: Optional[int] = None) -> list[dict[str, Any]]:
-        """The history items. ``upto`` (RAM turns only): the turns before that index, the message being answered
-        and anything after it left out, when the small-talk lane already wrote it (_answer_turn)."""
+    def _history(self) -> list[dict[str, Any]]:
         if self._chat_log is not None:
             return self._log_history()
         from .link_chat import history_text
 
         app = _FROM_APP.get() is not None
-        turns = self.turns[:upto] if upto is not None else self.turns
         return [message_item("user", text) if who == "user" else message_item("assistant", history_text(text, app))
-                for who, text in turns[-HISTORY_TURNS:]]
+                for who, text in self.turns[-HISTORY_TURNS:]]
 
     @staticmethod
     def _shown(kinds: Sequence[str]) -> int:
@@ -4788,7 +4770,8 @@ class TelegramInlet:
         return waiting, running
 
     def _small_talk_state(self, inbound: Inbound) -> small_talk.State:
-        """What waits on the owner as this message arrives, read from the inlet's own state, for small_talk.gate."""
+        """What waits on the owner as this message arrives, read from the inlet's own state, for small_talk.gate.
+        Anything it cannot read counts as waiting."""
         live = self._live_question()
         permission = self._permission_future is not None and not self._permission_future.done()
         confirming = permission or (live is not None and (live.firm or live.strict or {"yes", "no"} <= live.words))
@@ -4808,44 +4791,6 @@ class TelegramInlet:
                           or (self._claude_on_job is not None and not self._claude_on_job.done())),
             tapped=inbound.tapped)
 
-    def _small_talk_history(self) -> Optional[tuple[list[tuple[str, str]], list[tuple[str, str]], Optional[float],
-                                                    float]]:
-        """(the conversation going on now as Haiku is shown it: owner/eve lines, plain; what the gate reads: those
-        lines, or eve's last line alone when a quiet spell or a restart ended that conversation; when eve's last
-        line was written; now on that clock), or None when the chat log cannot be read (the lane stands aside).
-        Read before this message is noted, so the quiet spell before it counts (_current_turns ``now``): after
-        one, Haiku is shown no earlier lines, as the brain shows them only past a gap note; the gate still sees
-        eve's last line, so a question she asked within QUESTION_WINDOW_S keeps the message the brain's."""
-        from .link_chat import history_text
-
-        def plain(turns: Any) -> list[tuple[str, str]]:
-            return [(who, history_text(text, False) if who == "eve" else text) for who, text in turns]
-
-        if self._chat_log is None:
-            turns = plain(self.turns)
-            return turns, turns, self._last_turn_at, self._clock()
-        try:
-            lines = self._chat_log.lines(self._log_chat())
-        except Exception:  # noqa: BLE001
-            return None
-        now = self._wall()
-        last = next((ln for ln in reversed(lines) if ln.who == "eve"), None)
-        turns = plain(self._current_turns(now))
-        gated = turns if turns or last is None else plain([("eve", last.text)])
-        return turns, gated, (last.t if last is not None else None), now
-
-    def _last_seq(self, text: str) -> Optional[int]:
-        """The seq of the chat log's newest line when it is the owner's ``text`` (just written); None without a
-        log, when it cannot be read, or when the line was not written (the brain then adds the message itself)."""
-        if self._chat_log is None:
-            return None
-        try:
-            lines = self._chat_log.lines(self._log_chat())
-        except Exception:  # noqa: BLE001
-            return None
-        last = lines[-1] if lines else None
-        return last.seq if last is not None and last.who == "user" and last.text == text else None
-
     def _small_talk_voice(self) -> str:
         """The owner's "how they like to talk" from the profile, when memory is on; "" otherwise. Blocking. Read
         from the whole page (Memory.talking_section), never from the clipped voice profile, whose cut drops this
@@ -4859,61 +4804,41 @@ class TelegramInlet:
             log.warning("telegram: small talk: profile unavailable (%s)", type(e).__name__)
             return ""
 
-    async def _small_talk_lane(self, inbound: Inbound) -> str:
-        """The small-talk lane, inside the turn's lock → ANSWERED (the turn is over), NOTED (Haiku handed off after
-        the owner's line was written: the brain answers and must not write it again) or "" (the lane is off or the
-        gate stood aside: nothing was written or said). Either way the brain is shown the same words and the
-        same history it would have been.
-
-        The owner's line is written as soon as the gate passes, before the call, as the brain writes it before
-        its own: a message a code path answers during the call (lights, music) lands after it in the transcript
-        and the chat log, in the order the owner sent them."""
+    async def _small_talk_lane(self, inbound: Inbound) -> bool:
+        """The small-talk lane, inside the turn's lock: True when it answered (the turn is over); False when the
+        brain answers, with nothing written or said (off, not a small-talk phrase, eve waiting on the owner, a
+        call, the think grade, or Haiku failed)."""
         ask = self._small_talk_ask
-        if ask is None:
-            return ""
-        t0 = self._clock()
-        history: list[tuple[str, str]] = []
-        if _FROM_CALL.get() is not None:
-            reason = "call"                               # a call reads its answer aloud as the brain streams it
-        elif _FROM_APP.get() is not None and _APP_GRADE.get() == "think":
-            reason = "think_grade"                        # the owner asked for the thinking model
-        else:
-            if self._chat_log is not None and self._memory is not None and self._log_chat() not in self._seeded_chats:
-                await asyncio.to_thread(self._seed_log)
-            seen = self._small_talk_history()
-            if seen is None:
-                reason = "history"
-            else:
-                history, gated, last_eve_at, now = seen
-                reason = small_talk.gate(inbound.text, self._small_talk_state(inbound), gated,
-                                         last_eve_at=last_eve_at, now=now)
-        if reason:
-            log.debug("telegram: small talk: not for the lane (%s)", reason)
-            return ""
-        self._note("user", inbound.text, "say")
-        self._lane_note = (len(self._turn_kinds) - 1, len(self.turns) - 1, self._last_seq(inbound.text))
+        if ask is None or not small_talk.matches(inbound.text):
+            return False
+        if _FROM_CALL.get() is not None or (_FROM_APP.get() is not None and _APP_GRADE.get() == "think"):
+            return False                  # a call reads its answer aloud as the brain streams it; the thinking model
+        if small_talk.gate(inbound.text, self._small_talk_state(inbound)):
+            return False
+        t0, arrived = self._clock(), self._wall()
         voice = await asyncio.to_thread(self._small_talk_voice)
         self._keep_typing(inbound.chat_id, "turn", TYPING_TURN_SECS)
         try:
-            answer = await ask(inbound.text, history, voice)
+            answer = await ask(inbound.text, voice)
         except asyncio.CancelledError:
             raise
-        except Exception as e:  # noqa: BLE001 — a lane that breaks hands off, never costs the turn
+        except Exception as e:  # noqa: BLE001 — a lane that breaks costs nothing: the brain answers
             answer = small_talk.Answer(reason="error", error=type(e).__name__)
         finally:
             self._stop_typing(inbound.chat_id, "turn")
         if not answer.answered:
             # reasons and seconds only, never the message or the reply
-            log.info("telegram: small talk handed off (%s%s) after %.1f s", answer.reason,
+            log.info("telegram: small talk fell through (%s%s) after %.1f s", answer.reason,
                      f" {answer.error}" if answer.error else "", answer.secs)
-            return LANE_NOTED
-        # the history Haiku read may hold outside words (a read's line, a tainted reply): then so may its reply
-        shown = " ".join(text for _, text in history[-small_talk.HISTORY_TURNS:])
-        self._note("eve", answer.reply, outside=bool(tool_gate.carried(shown)))
+            return False
+        if self._chat_log is not None and self._memory is not None and self._log_chat() not in self._seeded_chats:
+            await asyncio.to_thread(self._seed_log)
+        self._note("user", inbound.text, "say", at=arrived)
+        self._note("eve", answer.reply)
         await self._say(inbound.chat_id, answer.reply)
         await self._chief_heard(inbound.chat_id, inbound.text)
         log.info("telegram: turn answered in %.1f s (small talk, %s)", self._clock() - t0, answer.model)
-        return LANE_ANSWERED
+        return True
 
     # -- one turn --
     async def _turn(self, inbound: Inbound, *, image: Optional[telegram_images.ReceivedImage] = None,
@@ -4942,16 +4867,12 @@ class TelegramInlet:
                            lane: bool = False) -> None:
         """One message's turn. ``handoff``: daily_rundown handed this message on (_rundown_handoff): it is answered
         as a rundown, and its words are already in the transcript and the chief's ear from the turn that handed it
-        on, so neither hears them twice. ``lane``: the small-talk lane reads it first (_small_talk_lane); when the
-        lane answers, nothing below runs; when it hands off, the turn goes on exactly as it would have."""
+        on, so neither hears them twice. ``lane``: the small-talk lane may answer it first (_small_talk_lane); when
+        it does, nothing below runs; when it does not, nothing was written or said and the turn goes on as ever."""
         async with self._turn_lock:
-            laned = ""
-            if lane and not handoff and image is None and not images and not inbound.uploads:
-                laned = await self._small_talk_lane(inbound)
-                if laned == LANE_ANSWERED:
-                    return
-            # the lane wrote the owner's line before its call, then handed off: the history already ends in it
-            noted = laned == LANE_NOTED
+            if (lane and not handoff and image is None and not images and not inbound.uploads
+                    and await self._small_talk_lane(inbound)):
+                return
             chat_id = inbound.chat_id
             self._turn_request = inbound.message_id          # a task this turn starts replies to it
             self._streamed = None
@@ -4979,17 +4900,8 @@ class TelegramInlet:
             if self._chat_log is not None and self._memory is not None and self._log_chat() not in self._seeded_chats:
                 await asyncio.to_thread(self._seed_log)
             # with the chat log, a quiet spell or a restart before this message is a gap note right before it
-            # the lane wrote the message (at kinds index ``at``, RAM turns index ``turn_at``, log seq ``upto``); a
-            # code path may have written lines since (lights during the call): the history ends at the message, as
-            # if it had just arrived
-            at, turn_at, upto = self._lane_note if noted else (len(self._turn_kinds), None, None)
-            if noted and self._chat_log is not None and upto is not None:
-                items = self._log_history(upto=upto)      # its gap note and the message, as rendered from the log
-            else:
-                items = self._history(upto=turn_at) + self._gap_before_now(arrived) + [user_item]
-            # the history's lines, as the transcript has them
-            shown = self._turn_kinds[:at][-HISTORY_TURNS:]
-            mine = self._turn_kinds[at:at + 1]
+            items = self._history() + self._gap_before_now(arrived) + [user_item]
+            shown = self._turn_kinds[-HISTORY_TURNS:]       # the history's lines, as the transcript has them
             daily = handoff or (not attached and rundown.matches(inbound.text))
             carried_in = ""
             if daily:
@@ -5003,13 +4915,11 @@ class TelegramInlet:
                 carried_in = tool_gate.source("daily_rundown") if fed else ""
                 items = [message_item("user", inbound.text), message_item("developer", skill)]
                 shown = []
-            if not handoff and not noted:
+            if not handoff:
                 self._note("user", (inbound.text + " " + _attached(inbound)).strip() if attached else inbound.text,
                            "image" if pictures else "say", said=inbound.text if attached else None, at=arrived,
                            att=_att_of(inbound))
-            if not noted:
-                mine = self._turn_kinds[-1:]
-            tail = self._shown([*shown, *mine]) if mine else 0
+            tail = self._shown([*shown, self._turn_kinds[-1]]) if self._turn_kinds else 0
             # "typing…" for the whole turn, not only its first 5 s (owner, 2026-09-23), gone before the reply.
             self._keep_typing(chat_id, "turn", TYPING_TURN_SECS)
             usage = {"in": 0, "cached": 0, "out": 0, "instr": 0}
