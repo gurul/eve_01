@@ -9,33 +9,39 @@ Scope: the owner, 2026-10-12: "make it so that apps are variable in agents.md, p
   EXPECT: REGISTRY_OK
   EVIDENCE: 2026-10-12, worktree, bridge leaf: `21 passed` then REGISTRY_OK (the CHECK as written). Covers the contract for all five apps, frozen tool-gate sets, labels/prefixes, chat and voice tool order and blocks with fake hubs, switch-off per app (daemon hub, chat, voice, controls listing and `apps`, code path, eval lending), and the scaffold round trip (generated tests 7 passed in a subprocess, ruff clean, registry imports with `demo` last, a second run and bad names refused with no file changed, `--dry-run` writes nothing).
   EVIDENCE (rerun after the review fixes, 2026-10-12, the CHECK as written above): `22 passed` then REGISTRY_OK. The tests now hold today's values for the owner's five apps and let a newer app through (A8); the switch-off test now asserts the intent eval lends every tools app whatever the shell's switches say (request bytes independent of the environment, as before the registry); a new test refuses names that take another app's tool prefix (`camera`), an eval label or one of eve's tools (`music`, `screenshot`, `stealth`) or a wiring-site attribute (`quick`, `today`, `config`, `gate`, `brief`, `conn`, `link`, `calls`, `port`).
+  EVIDENCE (orchestrator, merged with main 80d593d, 2026-10-12): 22 passed | REGISTRY_OK
 
 - [x] A2: Nothing the models see changed: the full bridge suite (its byte-exact request-body tests included) and lint pass.
   CHECK: uv run --project bridge --extra dev --extra miniapp --extra tls --extra composio --with matplotlib pytest -q -p no:cacheprovider -n 8 --dist loadgroup -c bridge/pyproject.toml --rootdir bridge bridge/tests && (cd bridge && uv run --extra dev ruff check src tests tools) && echo BRIDGE_OK
   EXPECT: BRIDGE_OK
   EVIDENCE: 2026-10-12, worktree at branch point d30549c: full suite `6683 passed, 28 skipped, 2 xfailed` twice in a row (baseline before the refactor: `6659 passed, 31 skipped, 2 xfailed`; +21 are test_app_registry.py, and 3 tests that skipped in the baseline now run, not investigated); no existing byte-exact test edited (only test_link_chat's two controls dicts gained `apps`); `ruff check src tests tools`: All checks passed. One earlier full run had 1 failure that did not reproduce in the next two runs; its name was not captured.
   EVIDENCE (rerun after the review fixes, 2026-10-12, the CHECK as written above): `6684 passed, 28 skipped, 2 xfailed in 140.99s`, then `All checks passed!` and BRIDGE_OK. No byte-exact request-body test edited; the only test edits are test_app_registry.py and test_link_chat.py's controls tests (a newer app gets a default status body there).
+  EVIDENCE (orchestrator, merged with main 80d593d, 2026-10-12): 6940 passed, 28 skipped, 2 xfailed; ruff All checks passed! | BRIDGE_OK
 
 - [x] A3: The intent eval on the existing camera, location and science blind sets still clears each one's own bar after the refactor (same tools, same order, same words).
   CHECK: cd bridge && env $(grep -E '^(OPENROUTER_API_KEY)=' ~/.config/eve-bridge/env | xargs) sh -c '.venv/bin/python tools/intent_eval.py tests/fixtures/intent_camera_blind.json --require camera_aim=90 --require camera_photo=75 && .venv/bin/python tools/intent_eval.py tests/fixtures/intent_location_blind.json --require phone_location=90 && .venv/bin/python tools/intent_eval.py tests/fixtures/intent_science_blind.json --require science_search=90' && echo INTENT_SETS_OK
   EXPECT: INTENT_SETS_OK
   EVIDENCE: 2026-10-12, production routing (gpt-6-luna, Jev): camera blind 29/30 (camera_aim 20/20, camera_photo 4/4), location blind 31/32 (phone_location 20/20), science blind 33/34 (science_search 21/22); INTENT_BAR_OK on each, then INTENT_SETS_OK. HARD_NEGATIVE_ACTED 0 and PROVIDER_ERRORS 0 on all three; Jev timed out on 3 cases per set. Cost $0.32.
+  EVIDENCE (orchestrator, merged with main 80d593d, 2026-10-12): camera 30/30; location phone_location 19/20 (30/32); science science_search 21/22 (33/34); NEVER_FIRED 0, HARD_NEGATIVE_ACTED 0, PROVIDER_ERRORS 0 each — same as before the registry | INTENT_BAR_OK x3
 
 - [x] A4: The phone lists apps from the registry, opens the native sheet for apps that have one and the generic sheet for any other; the app's tests and the iPhone build pass.
   CHECK: sh ios/EveLink/Tests/run.sh && sh ios/EveLink/build.sh && echo APP_OK
   EXPECT: APP_OK
   EVIDENCE: 2026-10-12, worktree: EXPRESSIONS_OK, "eve link: all checks passed", CAPTIONS_OK, FACE_OK, the device build succeeded (`built: .../EveLink.app`), then APP_OK. Build only; nothing installed on a phone (that is A7).
+  EVIDENCE (orchestrator, merged with main 80d593d, 2026-10-12): eve link: all checks passed; built EveLink.app | APP_OK
 
 - [x] A5: The docs are true: AGENTS.md presents the owner's apps as examples with their switches, links docs/adding-an-app.md, lists REA and hwlog as resources, and calls account connections "connected accounts"; every file path the new docs name exists.
   CHECK: python3 -c "import re,os,sys; t=open('AGENTS.md').read()+open('docs/adding-an-app.md').read(); need=['morluto/rea','gurul/hardware-logging','docs/adding-an-app.md','eve-bridge app new','onnected accounts']; miss=[n for n in need if n not in t]; paths=[p for p in set(re.findall(r'\x60((?:bridge|ios|docs)/[A-Za-z0-9_./-]+\.[a-z]+)\x60', t)) if not os.path.exists(p)]; print(miss or paths or 'DOCS_OK'); sys.exit(1 if miss or paths else 0)"
   EXPECT: DOCS_OK
   EVIDENCE: 2026-10-12: DOCS_OK; positive control: the same regex reports a backticked `docs/nope.md` as missing.
   EVIDENCE (rerun after the docs fixes from the new-contributor trial, 2026-10-12): DOCS_OK. The fixes: the scaffold is run with `uv run --project bridge eve-bridge app new` (a fresh worktree has no bridge/.venv); turning an app on comes after merging into the main checkout; AGENTS.md rule 3 uses `env $(grep …) <command>`, not `export`; a "Change the tools" section; `clean` defined as reads that bring in no outside text; the registry line's `symbol` and `detail` placeholders called out; `TOOLS` and `INSTRUCTIONS` in the contract (and in `app_registry.check`); the single-file test command passes `-p no:cacheprovider`; the A1 and A2 CHECKs match AGENTS.md.
+  EVIDENCE (orchestrator, merged with main 80d593d, 2026-10-12): DOCS_OK
 
 - [x] A6: No personal data or token-shaped strings in the diff.
   CHECK: git diff main | grep -v 'CHECK: git diff main' | python3 -c "import re,sys; d=sys.stdin.read(); bad=[p for p in (r'guru\.lingamallu', r'@gmail\.com', r'guruchara[n]', r'Bearer [A-Za-z0-9_-]{20,}', r'sk-[A-Za-z0-9]{20,}', r'/Users/') if re.search(p, d)]; print(bad or 'DIFF_CLEAN'); sys.exit(1 if bad else 0)"
   EXPECT: DIFF_CLEAN
   EVIDENCE: 2026-10-12: DIFF_CLEAN on `git diff d30549c` plus the untracked new files (main has moved on since the branch point, so `git diff main` also shows main's own commits reversed).
+  EVIDENCE (orchestrator, merged with main 80d593d, 2026-10-12): DIFF_CLEAN
 
 - [ ] A7: The owner's apps still work on his phone (Lights, Music, Camera) after the refactor.
   MANUAL: the owner's word.
