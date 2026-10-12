@@ -112,6 +112,7 @@ from . import (
     second_brain,
     self_context,
     share,
+    small_talk,
     spend,
     spotify,
     system_context,
@@ -2318,6 +2319,7 @@ class TelegramInlet:
                  toolset_mode: Optional[str] = None,
                  toolset_route: Any = _FROM_ENV,
                  grader: Any = _FROM_ENV,
+                 small_talk_ask: Any = _FROM_ENV,
                  screen: Callable[[], Optional[Path]] = capture_screen,
                  scene: Any = None, head: Any = None,
                  on_explore: Optional[Callable[[], Any]] = None,
@@ -2396,6 +2398,10 @@ class TelegramInlet:
         # Jev's grade of an "auto" app turn (grade_router.py): made once here; None (EVE_GRADE_ROUTER=off, or
         # no Jev route) leaves every auto turn as it was.
         self._grader = grade_router.make_grader() if grader is _FROM_ENV else grader
+        # Small talk answered fast by Haiku (small_talk.py, EVE_SMALL_TALK): its one call, or None (off: every turn
+        # goes to the brain, today's behaviour). Tests lend a fake.
+        self._small_talk_ask = ((small_talk.ask if small_talk.enabled() else None) if small_talk_ask is _FROM_ENV
+                                else small_talk_ask)
         # Concerts, games and shows by place and date (events.py): lent while TICKETMASTER_API_KEY is set, its
         # requests counted by the watcher's limiter when one runs (the same key's quota).
         self._events = events.Events(limiter=lambda: self._watcher.limiter if self._watcher is not None else None)
@@ -3155,7 +3161,9 @@ class TelegramInlet:
             # the time, the weather, a sum...: answered by code, no model turn and no search (quick_answers.py)
             self._spawn(self._quick_answer(inbound, ask), "telegram-quick")
             return
-        self._spawn(self._turn(inbound), "telegram-turn")
+        # Every code path above has had its say: a small-talk phrase may now be answered by the small-talk lane,
+        # inside the turn (small_talk.py, _small_talk_lane), before the routers, the prompt and the brain.
+        self._spawn(self._turn(inbound, lane=True), "telegram-turn")
 
     # -- the / menu's switches, shared by the code words (_handle) and the brain's menu tools (_tool_menu) --
     def _codex_switch(self, chat_id: int, action: str, selection: Optional[str]) -> bool:
@@ -4747,13 +4755,104 @@ class TelegramInlet:
             return ""
         return "\n\n".join(x for x in (profile, today) if x)
 
+    # -- the small-talk lane (small_talk.py, owner 2026-10-12: "hi shouldn't take this long") --
+    def _chief_waits(self) -> tuple[bool, bool]:
+        """(a chief card waits on the owner's answer, a chief job is running): its Go, its question or its budget;
+        a step under way. A ledger that cannot be read is both, the cautious reading."""
+        if self.chief is None:
+            return False, False
+        try:
+            cards = self.chief.ledger.open()
+        except Exception:  # noqa: BLE001
+            return True, True
+        waiting = any(c.status == "waiting" and c.waiting_for in ("go", "question", "budget") for c in cards)
+        running = any(p.status == "running" for c in cards for p in c.phases)
+        return waiting, running
+
+    def _small_talk_state(self, inbound: Inbound) -> small_talk.State:
+        """What waits on the owner as this message arrives, read from the inlet's own state, for small_talk.gate.
+        Anything it cannot read counts as waiting."""
+        live = self._live_question()
+        permission = self._permission_future is not None and not self._permission_future.done()
+        confirming = permission or (live is not None and (live.firm or live.strict or {"yes", "no"} <= live.words))
+        chief_waiting, chief_running = self._chief_waits()
+        purchase = self._purchases is not None and self._purchases.active(inbound.chat_id)
+        # a relay on (Claude Code or Codex) is a conversation with an agent: its questions arrive as chat lines
+        relay = bool(self.claude) or self._codex_chat is not None
+        try:
+            desk = bool(self._busy())
+        except Exception:  # noqa: BLE001
+            desk = True
+        return small_talk.State(
+            attachment=inbound.image is not None or bool(inbound.uploads),
+            awaiting_confirmation=confirming or purchase,
+            awaiting_answer=self._awaiting_answer or live is not None or chief_waiting or relay,
+            running_task=(self.task_running or chief_running or desk
+                          or (self._claude_on_job is not None and not self._claude_on_job.done())),
+            tapped=inbound.tapped)
+
+    def _small_talk_voice(self) -> str:
+        """The owner's "how they like to talk" from the profile, when memory is on; "" otherwise. Blocking. Read
+        from the whole page (Memory.talking_section), never from the clipped voice profile, whose cut drops this
+        section first. A memory without it (a test's stand-in) lends its voice profile."""
+        if self._memory is None:
+            return ""
+        try:
+            section = getattr(self._memory, "talking_section", None)
+            return small_talk.voice_from_profile(section() if callable(section) else self._memory.profile_for_voice())
+        except Exception as e:  # noqa: BLE001
+            log.warning("telegram: small talk: profile unavailable (%s)", type(e).__name__)
+            return ""
+
+    async def _small_talk_lane(self, inbound: Inbound) -> bool:
+        """The small-talk lane, inside the turn's lock: True when it answered (the turn is over); False when the
+        brain answers, with nothing written or said (off, not a small-talk phrase, eve waiting on the owner, a
+        call, the think grade, or Haiku failed)."""
+        ask = self._small_talk_ask
+        if ask is None or not small_talk.matches(inbound.text):
+            return False
+        if _FROM_CALL.get() is not None or (_FROM_APP.get() is not None and _APP_GRADE.get() == "think"):
+            return False                  # a call reads its answer aloud as the brain streams it; the thinking model
+        if small_talk.gate(inbound.text, self._small_talk_state(inbound)):
+            return False
+        t0, arrived = self._clock(), self._wall()
+        voice = await asyncio.to_thread(self._small_talk_voice)
+        self._keep_typing(inbound.chat_id, "turn", TYPING_TURN_SECS)
+        try:
+            answer = await ask(inbound.text, voice)
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:  # noqa: BLE001 — a lane that breaks costs nothing: the brain answers
+            answer = small_talk.Answer(reason="error", error=type(e).__name__)
+        finally:
+            self._stop_typing(inbound.chat_id, "turn")
+        if not answer.answered:
+            # reasons and seconds only, never the message or the reply
+            log.info("telegram: small talk fell through (%s%s) after %.1f s", answer.reason,
+                     f" {answer.error}" if answer.error else "", answer.secs)
+            return False
+        if self._chat_log is not None and self._memory is not None and self._log_chat() not in self._seeded_chats:
+            await asyncio.to_thread(self._seed_log)
+        self._note("user", inbound.text, "say", at=arrived)
+        self._note("eve", answer.reply)
+        await self._say(inbound.chat_id, answer.reply)
+        await self._chief_heard(inbound.chat_id, inbound.text)
+        log.info("telegram: turn answered in %.1f s (small talk, %s)", self._clock() - t0, answer.model)
+        return True
+
     # -- one turn --
     async def _turn(self, inbound: Inbound, *, image: Optional[telegram_images.ReceivedImage] = None,
-                    images: Sequence[telegram_images.ReceivedImage] = (), handoff: bool = False) -> None:
+                    images: Sequence[telegram_images.ReceivedImage] = (), handoff: bool = False,
+                    lane: bool = False) -> None:
+        """One message's turn, one at a time. ``lane``: the message came straight from _handle's last step, past
+        every code path, so the small-talk lane may answer it (_small_talk_lane); never while another of the owner's
+        turns was in flight when it arrived (the owner may be adding to that one)."""
         key = id(inbound)
+        queued = bool(self._open_turns)
         self._open_turns[key] = (inbound.chat_id, inbound.message_id)
         try:
-            await self._answer_turn(inbound, image=image, images=images, handoff=handoff)
+            await self._answer_turn(inbound, image=image, images=images, handoff=handoff,
+                                    lane=lane and not queued)
         finally:
             self._open_turns.pop(key, None)
             after, self._after_turn = self._after_turn, []
@@ -4764,11 +4863,16 @@ class TelegramInlet:
                     log.warning("telegram: an end-of-turn step failed (%s)", type(e).__name__)
 
     async def _answer_turn(self, inbound: Inbound, *, image: Optional[telegram_images.ReceivedImage] = None,
-                           images: Sequence[telegram_images.ReceivedImage] = (), handoff: bool = False) -> None:
+                           images: Sequence[telegram_images.ReceivedImage] = (), handoff: bool = False,
+                           lane: bool = False) -> None:
         """One message's turn. ``handoff``: daily_rundown handed this message on (_rundown_handoff): it is answered
         as a rundown, and its words are already in the transcript and the chief's ear from the turn that handed it
-        on, so neither hears them twice."""
+        on, so neither hears them twice. ``lane``: the small-talk lane may answer it first (_small_talk_lane); when
+        it does, nothing below runs; when it does not, nothing was written or said and the turn goes on as ever."""
         async with self._turn_lock:
+            if (lane and not handoff and image is None and not images and not inbound.uploads
+                    and await self._small_talk_lane(inbound)):
+                return
             chat_id = inbound.chat_id
             self._turn_request = inbound.message_id          # a task this turn starts replies to it
             self._streamed = None

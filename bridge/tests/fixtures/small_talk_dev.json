@@ -1,0 +1,1284 @@
+{
+ "cases": [
+  {
+   "id": "d01",
+   "text": "hi",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d02",
+   "text": "hey eve",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d03",
+   "text": "good morning!",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d04",
+   "text": "thanks!",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d05",
+   "text": "thank you so much",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d06",
+   "text": "lol",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d07",
+   "text": "haha nice",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d08",
+   "text": "how are you?",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d09",
+   "text": "what's up",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d10",
+   "text": "good night eve",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d11",
+   "text": "love you eve",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d12",
+   "text": "you're the best",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d13",
+   "text": "bye for now",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d14",
+   "text": "see you later",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d15",
+   "text": "I'm so tired today",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d16",
+   "text": "ugh mondays",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d17",
+   "text": "sup",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d18",
+   "text": "you there?",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d19",
+   "text": "who are you?",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d20",
+   "text": "tell me a joke",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d21",
+   "text": "I'm bored",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d22",
+   "text": "morning! sleep well?",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d23",
+   "text": "hello hello",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d24",
+   "text": "ok cool",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d25",
+   "text": "nice one, thanks",
+   "history": [
+    {
+     "role": "owner",
+     "text": "turn off the lights in the study"
+    },
+    {
+     "role": "eve",
+     "text": "The study lights are off."
+    }
+   ],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d26",
+   "text": "cool thanks",
+   "history": [
+    {
+     "role": "owner",
+     "text": "did my parcel ship"
+    },
+    {
+     "role": "eve",
+     "text": "Yes, it shipped this morning and should arrive Thursday."
+    }
+   ],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d27",
+   "text": "haha",
+   "history": [
+    {
+     "role": "owner",
+     "text": "tell me a joke"
+    },
+    {
+     "role": "eve",
+     "text": "Why did the scarecrow win an award? He was outstanding in his field."
+    }
+   ],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d28",
+   "text": "you too!",
+   "history": [
+    {
+     "role": "owner",
+     "text": "heading out"
+    },
+    {
+     "role": "eve",
+     "text": "Have a good one, Jonah."
+    }
+   ],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d29",
+   "text": "all good now",
+   "history": [
+    {
+     "role": "owner",
+     "text": "the printer is jammed again"
+    },
+    {
+     "role": "eve",
+     "text": "Ugh, sorry. Did pulling the tray help?"
+    },
+    {
+     "role": "owner",
+     "text": "yes it worked"
+    },
+    {
+     "role": "eve",
+     "text": "Nice, glad it's sorted."
+    }
+   ],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d30",
+   "text": "what's on my calendar",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d31",
+   "text": "remind me at 5 to call Priya",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d32",
+   "text": "did Maya email me back",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d33",
+   "text": "who won the game last night",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d34",
+   "text": "remember I like oat milk",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d35",
+   "text": "how's the task going",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d36",
+   "text": "send it",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d37",
+   "text": "any news today?",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d38",
+   "text": "book a table for two",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d39",
+   "text": "what did we talk about yesterday",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d40",
+   "text": "is the bakery open now",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d41",
+   "text": "where am I right now",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d42",
+   "text": "check my inbox",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d43",
+   "text": "text Leo I'm running late",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d44",
+   "text": "what's the latest on the rent card",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d45",
+   "text": "add milk to my list",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d46",
+   "text": "how much did the flights cost",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d47",
+   "text": "open my notes",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d48",
+   "text": "take a photo",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d49",
+   "text": "what was that link again",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d50",
+   "text": "summarise my unread mail",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d51",
+   "text": "find the pdf from Ana",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d52",
+   "text": "is it going to rain later",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d53",
+   "text": "which one is cheaper",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d54",
+   "text": "do the second one",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d55",
+   "text": "can you check again",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d56",
+   "text": "what's my next meeting",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d57",
+   "text": "and tomorrow?",
+   "history": [
+    {
+     "role": "owner",
+     "text": "what's on today"
+    },
+    {
+     "role": "eve",
+     "text": "Two meetings, at ten and at three."
+    }
+   ],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d58",
+   "text": "ok go ahead",
+   "history": [
+    {
+     "role": "owner",
+     "text": "order the usual groceries"
+    },
+    {
+     "role": "eve",
+     "text": "The basket comes to 64 dollars. Place the order?"
+    }
+   ],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d59",
+   "text": "yes",
+   "history": [
+    {
+     "role": "owner",
+     "text": "delete the old screenshots"
+    },
+    {
+     "role": "eve",
+     "text": "That's 42 files on the Desktop. Delete them?"
+    }
+   ],
+   "state": {
+    "awaiting_confirmation": true,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d60",
+   "text": "hi",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": true,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d61",
+   "text": "thanks",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": true,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d62",
+   "text": "hey",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": true,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d63",
+   "text": "lol",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": true
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d64",
+   "text": "hmm not sure",
+   "history": [
+    {
+     "role": "owner",
+     "text": "pick a restaurant for Friday"
+    },
+    {
+     "role": "eve",
+     "text": "Lupa or the ramen place on 5th?"
+    }
+   ],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d65",
+   "text": "the blue one",
+   "history": [
+    {
+     "role": "owner",
+     "text": "show me the two jackets"
+    },
+    {
+     "role": "eve",
+     "text": "Here are both. The navy is 80, the olive is 95."
+    }
+   ],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d66",
+   "text": "good morning eve ☀️",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d67",
+   "text": "I got the job!!",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d68",
+   "text": "ugh traffic was awful",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d69",
+   "text": "you're funny",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d70",
+   "text": "what's your favourite colour?",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d71",
+   "text": "do you like music?",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d72",
+   "text": "miss me?",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d73",
+   "text": "sorry, was busy",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d74",
+   "text": "ok thanks bye",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d75",
+   "text": "happy friday!",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d76",
+   "text": "gm",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d77",
+   "text": "nvm",
+   "history": [
+    {
+     "role": "owner",
+     "text": "hey quick thing"
+    },
+    {
+     "role": "eve",
+     "text": "Sure, go ahead."
+    }
+   ],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "small_talk"
+  },
+  {
+   "id": "d78",
+   "text": "what do you think of Sam?",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d79",
+   "text": "how old am I",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d80",
+   "text": "what's my sister's name",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d81",
+   "text": "good morning, anything I should know?",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d82",
+   "text": "hi, did the package come?",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d83",
+   "text": "lol ok send it",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d84",
+   "text": "night, wake me at 7",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d85",
+   "text": "how's my day look",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d86",
+   "text": "who is the president of France",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d87",
+   "text": "how are my stocks",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d88",
+   "text": "is Ana free tonight",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d89",
+   "text": "dim the lights",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d90",
+   "text": "turn on the fan",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d91",
+   "text": "what's the wifi password",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d92",
+   "text": "where did I park",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d93",
+   "text": "call mom",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d94",
+   "text": "thanks, now do the same for Leo",
+   "history": [
+    {
+     "role": "owner",
+     "text": "send Mia the slides"
+    },
+    {
+     "role": "eve",
+     "text": "Sent the slides to Mia."
+    }
+   ],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d95",
+   "text": "who are you",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d96",
+   "text": "what are you exactly?",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  },
+  {
+   "id": "d97",
+   "text": "can you read my email?",
+   "history": [],
+   "state": {
+    "awaiting_confirmation": false,
+    "awaiting_answer": false,
+    "running_task": false,
+    "attachment": false
+   },
+   "kind": "needs_brain"
+  }
+ ]
+}
