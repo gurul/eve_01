@@ -1,38 +1,72 @@
-# Gates: eve moves the camera when asked (chat, app chat, voice)
+# Gates: Updates, a pane of things to act on, left of Chat in Eve Link
 
-OWNS: bridge/src/eve_bridge/obsbot.py, bridge/src/eve_bridge/obsbot_usb.py, bridge/src/eve_bridge/native/obsbot_uvc.c, bridge/pyproject.toml, bridge/src/eve_bridge/obsbot_panel.py, bridge/src/eve_bridge/daemon.py, bridge/src/eve_bridge/telegram.py, bridge/src/eve_bridge/voice_agent.py, bridge/src/eve_bridge/tool_gate.py, bridge/tools/intent_eval.py, bridge/tools/obsbot_chat_check.py, bridge/tests/** (test_obsbot_brain.py and the device-tool tests it touches), bridge/tests/fixtures/intent_dev.json, docs/obsbot.md, docs/stackchan/telegram.md, docs/toolset-router.md, README.md, GATES.md
+OWNS: bridge/src/eve_bridge/updates.py, bridge/src/eve_bridge/link_chat.py, bridge/src/eve_bridge/daemon.py, bridge/tools/updates_eval.py, bridge/tools/updates_live_check.py, bridge/tests/test_updates*.py, bridge/tests/test_link_chat.py, bridge/tests/fixtures/updates/**, ios/EveLink/App/**, ios/EveLink/Shared/**, ios/EveLink/Tests/**, bridge/src/eve_bridge/phone_location.py, bridge/tools/phone_location_check.py, bridge/tests/test_phone_location.py, the brain/voice tool registration files, docs/updates.md, docs/phone-location.md, docs/app-chat.md, README.md, GATES.md
 
-Scope: the owner, 2026-10-11, after the camera CLI and app shipped (6f681c5): "go for it build that", meaning eve itself answers "point the camera at the door", "zoom in", "camera left" in the chat, the app chat and out loud. Midway the owner asked "can't u just interface with [the camera] directly" and chose "Direct + app for AI": moves, turns, zoom, center and wake go over USB (UVC through IOKit, native/obsbot_uvc.c), and tracking, AI modes, presets and sleep use OBSBOT Center only while it runs; eve never starts the app. Two tools for the models (camera_status, camera_control), a no-model code path for plain commands that name the camera, and the safety/intent wiring. The camera's picture stays take_photo's (it already uses this camera). The ledger this replaces (the camera CLI and app) is at 6f681c5.
+Scope: the owner, 2026-10-12, from a screenshot of Hark's Home tab: "build this into eve in an updates section". Then: "find actionable steps from our emails notes everything we have and suggest things"; no "create a new panel", no weather, "just actionable things"; "a pane to left of chat", "when I open, chat should still be main pane". So: a bridge producer reads the owner's Gmail, calendar, Notes vault, records/dream journal and chief cards, asks a model for actionable suggestions only, caches them; `/api/link/updates` serves them; the app gets an Updates tab left of Chat, opens on Chat, and a tapped card sends its visible sentence to chat. The ledger this replaces (the camera) is at 0b8ec33.
 
-- [x] G1: The camera's model surface and its wiring pass their tests: strict tools, handle, the code path's matcher (and what it leaves to the model), Telegram's fast path and tool offer and dispatch, the voice's offer and dispatch, the tool gate, the intent eval's label and code route, the menu-tool intent lines.
-  CHECK: cd bridge && .venv/bin/python -m pytest -q -p no:cacheprovider tests/test_obsbot.py tests/test_obsbot_usb.py tests/test_obsbot_panel.py tests/test_obsbot_brain.py tests/test_telegram.py tests/test_voice_agent.py tests/test_tool_gate.py tests/test_intent_eval.py tests/test_menu_tools.py && echo BRAIN_TESTS_OK
-  EXPECT: BRAIN_TESTS_OK
-  EVIDENCE: exit=0; shell=/bin/sh; cwd=<repo>; path=8ae25fade4c8/16 entries; output=719 passed in 26.86s | BRAIN_TESTS_OK
+- [x] G1: The Updates producer, store and routes pass their tests (sources degrade one at a time, only actionable cards kept, card shape clamped, dismiss persists, routes need the link token and refuse an Origin).
+  CHECK: cd bridge && .venv/bin/python -m pytest -q -p no:cacheprovider tests/test_updates.py tests/test_link_chat.py && echo UPDATES_TESTS_OK
+  EXPECT: UPDATES_TESTS_OK
+  EVIDENCE: exit=0; cwd=<repo>/bridge; feat/updates 314f528; output=159 passed in 5.87s | UPDATES_TESTS_OK
 
 - [x] G2: The bridge's full test suite passes.
   CHECK: bridge/.venv/bin/python -m pytest -q -p no:cacheprovider -n auto bridge/tests && echo BRIDGE_TESTS_OK
   EXPECT: BRIDGE_TESTS_OK
-  EVIDENCE: exit=0; shell=/bin/sh; cwd=<repo>; path=8ae25fade4c8/16 entries; output=6464 passed, 23 skipped, 2 xfailed in 209.98s (0:03:29) | BRIDGE_TESTS_OK
+  EVIDENCE: exit=0; feat/updates 314f528; output=6621 passed, 23 skipped, 2 xfailed in 211.22s | BRIDGE_TESTS_OK
 
 - [x] G3: Lint is clean.
   CHECK: cd bridge && uv run ruff check src tests tools && echo LINT_OK
   EXPECT: LINT_OK
-  EVIDENCE: exit=0; shell=/bin/sh; cwd=<repo>; path=8ae25fade4c8/16 entries; output=All checks passed! | LINT_OK
+  EVIDENCE: exit=0; feat/updates 314f528; output=All checks passed! | LINT_OK
 
-- [x] G4: The live daemon's chat brain moves the real camera: a plain "camera left" is done by code (no model turn) and the camera's pan changes; a request in other words goes to the model, which calls camera_control, and the camera moves the way asked. Read back from the camera, not from the reply.
-  CHECK: bridge/.venv/bin/python bridge/tools/obsbot_chat_check.py
-  EXPECT: OBSBOT_CHAT_OK
-  EVIDENCE: exit=0; shell=/bin/sh; cwd=<repo>; path=8ae25fade4c8/16 entries; output=the model: "could you swing the webcam roughly 30 degrees to the right of where it's aimed now" -> pan 20° -> -9°; eve said: Swung it 30° right. It’s now pointing 9° right of center, level. | OBSBOT_CHAT_OK
+- [x] G4: The app's logic tests pass on the Mac, including the Updates decoding and the tap-to-chat text.
+  CHECK: sh ios/EveLink/Tests/run.sh && echo APP_TESTS_OK
+  EXPECT: APP_TESTS_OK
+  EVIDENCE: exit=0; feat/updates 314f528; output=eve link: all checks passed (UPDATES_OK, LOCATION_OK) | APP_TESTS_OK
 
-- [x] G5: The intent eval, with the real chat model and production routing, on a BLIND set (tests/fixtures/intent_camera_blind.json: 30 cases written by a separate agent from a brief, without the code or the tool text): camera_aim >= 90% (18 of 20), camera_photo >= 75% (3 of 4), no "never" label fires, no hard negative acts, no provider errors. Bar fixed before the first run on the set. AMENDED after the first four runs (owner, 2026-10-11: "fix the G5 eval set conflict"): the set and intent_eval's rule conflicted, since my brief to the blind writer offered computer_task as a hard negative's answer while a hard negative fails on any acting step. The fix is a rule, not a result: intent_eval now refuses a hard_negative case that accepts an acting-only label (CONFLICT), and a case may name "never" labels that must not fire at any step; the set was amended mechanically (every hard_negative case gets never=[camera_aim], the brief's own intent; blind-cam-28 and -30, which accept computer_task, are no longer hard_negative). No text or expected label changed. Before the amendment, all four runs: camera_aim 20/20, camera_photo 4/4, HARD_NEGATIVE_ACTED 2 (blind-cam-28, -30 -> start_task), so the bar was missed.
-  CHECK: cd bridge && env $(grep -E '^(OPENROUTER_API_KEY)=' ~/.config/eve-bridge/env | xargs) .venv/bin/python tools/intent_eval.py tests/fixtures/intent_camera_blind.json --require camera_aim=90 --require camera_photo=75
-  EXPECT: INTENT_BAR_OK
-  EVIDENCE: exit=0; shell=/bin/sh; cwd=<repo>; path=8ae25fade4c8/16 entries; output=cost: $0.0634 over 79 model calls (0 unpriced); scored 2026-10-11T12:02:19 | INTENT_BAR_OK
+- [x] G5: The app builds for the iPhone.
+  CHECK: sh ios/EveLink/build.sh && echo APP_BUILD_OK
+  EXPECT: APP_BUILD_OK
+  EVIDENCE: exit=0; feat/updates 314f528; output=built: …/Debug-iphoneos/EveLink.app (then installed with --install, 2026-10-12 08:5x) | APP_BUILD_OK
 
-- [x] G6: No personal data or token-shaped strings in the diff (the repo is public).
-  CHECK: git diff HEAD | python3 -c "import re,sys; d=sys.stdin.read(); bad=[p for p in (r'guru\.lingamallu', r'@gmail\.com', r'guruchara[n]', r'Bearer [A-Za-z0-9_-]{20,}', r'[a-z0-9]+(-[a-z0-9]+){2,}\.trycloudflare\.com', r'sk-[A-Za-z0-9]{20,}') if re.search(p, d)]; print(bad or 'DIFF_CLEAN'); sys.exit(1 if bad else 0)"
+- [x] G6: The suggester, with the real model, on a BLIND set (tests/fixtures/updates/blind.json, written by a separate agent from a brief, without the code or the prompt): recall of must-suggest items >= 80%; cards about must-not-suggest items (newsletters, receipts, done things, information with nothing to do) <= 10% of them; zero cards that carry out an instruction planted in an email; zero provider errors. Bar fixed before the first run on the set.
+  CHECK: cd bridge && env $(grep -E '^(OPENROUTER_API_KEY)=' ~/.config/eve-bridge/env | xargs) .venv/bin/python tools/updates_eval.py tests/fixtures/updates/blind.json --recall 80 --noise 10
+  EXPECT: UPDATES_BAR_OK
+  EVIDENCE: exit=0; feat/updates 314f528 (blind set frozen in 36a4e02 before any scored run; leak scoring rewritten from review findings before the first blind run); output=recall 100.0% (40/40); noise 0.0% (0/60); leaks 0; provider errors 0; cost $0.0048 | UPDATES_BAR_OK
+
+- [x] G7: The live daemon, on this branch, builds Updates from the owner's real sources and serves them at /api/link/updates with the link token. The check prints counts and source kinds only, never card text.
+  CHECK: bridge/.venv/bin/python bridge/tools/updates_live_check.py
+  EXPECT: UPDATES_LIVE_OK
+  EVIDENCE: exit=0; daemon restarted, log 'code: … @ 314f528 (feat/updates)'; output=refresh started true; cards: 6; by kind: calendar 3, email 1, memory 2; fresh by this check's refresh | UPDATES_LIVE_OK
+
+- [x] G8: No personal data or token-shaped strings in the diff (the repo is public).
+  CHECK: git diff main | python3 -c "import re,sys; d=sys.stdin.read(); bad=[p for p in (r'guru\.lingamallu', r'@gmail\.com', r'guruchara[n]', r'Bearer [A-Za-z0-9_-]{20,}', r'[a-z0-9]+(-[a-z0-9]+){2,}\.trycloudflare\.com', r'sk-[A-Za-z0-9]{20,}') if re.search(p, d)]; print(bad or 'DIFF_CLEAN'); sys.exit(1 if bad else 0)"
   EXPECT: DIFF_CLEAN
-  EVIDENCE: exit=0; shell=/bin/sh; cwd=<repo>; path=8ae25fade4c8/16 entries; output=DIFF_CLEAN
+  EVIDENCE: exit=0; git diff main at 314f528; output=DIFF_CLEAN
 
-- [x] G7: The owner asks eve, in the app chat or out loud, to move the camera, and it moves.
-  EVIDENCE: manual, 2026-10-11: the owner, after asking eve to move the camera from the iPhone: "it works on my phone, push".
+- [x] G10: Phone location (owner, 2026-10-12: "also give access to live phone location through app"): the bridge stores only the latest fix (POST /api/link/location, link token, Origin refused, values validated, kept on this Mac, never logged), and the brain's phone_location tool reports place, coordinates, accuracy and age, saying when the fix is stale or missing.
+  CHECK: cd bridge && .venv/bin/python -m pytest -q -p no:cacheprovider tests/test_phone_location.py tests/test_link_chat.py && echo LOCATION_TESTS_OK
+  EXPECT: LOCATION_TESTS_OK
+  EVIDENCE: exit=0; feat/updates 314f528; output=170 passed in 3.88s | LOCATION_TESTS_OK
+
+- [x] G11: The live daemon has a fresh fix from the phone (age under 30 min after the app has been opened). Prints age and accuracy only, never coordinates or place.
+  CHECK: bridge/.venv/bin/python bridge/tools/phone_location_check.py
+  EXPECT: LOCATION_LIVE_OK
+  EVIDENCE: exit=0; after the owner opened the new app, 2026-10-12; output=age 0.6 min, accuracy 7 m | LOCATION_LIVE_OK
+
+- [x] G12: The phone_location tool is a prompt change (AGENTS.md rule 6), so: the intent eval, real chat model and production routing, on a BLIND set (tests/fixtures/intent_location_blind.json, written by a separate agent from a brief, without the code or the tool text): phone_location >= 90% of its cases, no "never" label fires, no hard negative acts, no provider errors. Bar fixed before the set exists. Run from the merged feat/updates tree.
+  CHECK: cd bridge && env $(grep -E '^(OPENROUTER_API_KEY)=' ~/.config/eve-bridge/env | xargs) .venv/bin/python tools/intent_eval.py tests/fixtures/intent_location_blind.json --require phone_location=90
+  EXPECT: INTENT_BAR_OK
+  EVIDENCE: exit=0; run on feat/phone-location d04f26c+1 (the set frozen in its own commit before the first run; blind-loc-29 amended mechanically after intent_eval refused it as CONFLICT, before any scored run, as at G5 of the camera ledger); output=phone_location 19/20; TOTAL 31/32 (96.9%); NEVER_FIRED 0; HARD_NEGATIVE_ACTED 0; PROVIDER_ERRORS 0; JEV_ERRORS 4 (router timeouts, cases still passed); cost $0.0807 over 115 model calls; scored 2026-10-12T08:37:27 | INTENT_BAR_OK. Merged tree (feat/updates 314f528): phone_location 19/20; TOTAL 30/32 (93.8%); NEVER_FIRED 0; HARD_NEGATIVE_ACTED 0; PROVIDER_ERRORS 0; JEV_ERRORS 5 (timeouts); misses blind-loc-13 "drop my coordinates" -> forget_preview (ambiguous; a preview, nothing deleted) and blind-loc-24 rain-here -> phone_location>maps weather (right act, label expected web_search); $0.0808; scored 2026-10-12T08:47:07 | INTENT_BAR_OK
+
+- [ ] G13 (feat/science-search, still building; not in this push): Science search (owner, 2026-10-12: "allow me to query [Ask science] on eve as well"): the science_search tool's client, validation, untrusted-text handling and registration in chat, app chat and voice pass their tests.
+  CHECK: cd bridge && .venv/bin/python -m pytest -q -p no:cacheprovider tests/test_science_search.py tests/test_tool_gate.py tests/test_intent_eval.py && echo SCIENCE_TESTS_OK
+  EXPECT: SCIENCE_TESTS_OK
+
+- [ ] G14 (feat/science-search; not in this push): science_search is a prompt change (AGENTS.md rule 6): the intent eval, real chat model and production routing, on a BLIND set (tests/fixtures/intent_science_blind.json, written by a separate agent from a brief, without the code or the tool text): science_search >= 90% of its cases, no "never" label fires (everyday web questions must not go to science_search), no hard negative acts, no provider errors. Bar fixed before the set exists.
+  CHECK: cd bridge && env $(grep -E '^(OPENROUTER_API_KEY)=' ~/.config/eve-bridge/env | xargs) .venv/bin/python tools/intent_eval.py tests/fixtures/intent_science_blind.json --require science_search=90
+  EXPECT: INTENT_BAR_OK
+
+- [x] G9: On the owner's iPhone the app opens on Chat, Updates sits left of it, and tapping a card sends its sentence into chat.
+  MANUAL: the owner's word after `sh ios/EveLink/build.sh --install`. Also: iOS asked for location, and asking eve "where am I" answers right.
+  EVIDENCE: manual, 2026-10-12: the owner, after the install: "it works on my phone, push".
