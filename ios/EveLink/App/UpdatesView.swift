@@ -1,7 +1,7 @@
 // The Updates pane (docs/updates.md), left of the Chat: things to act on that eve found in the owner's mail, calendar,
 // notes, memory and projects. Owner, 2026-10-12: "just actionable things", no weather, "when I open, chat should still
 // be main pane". Each card reads as one sentence, a verb chip then the rest; a tap sends exactly that sentence (and
-// where it came from) to the chat, so nothing the owner cannot see goes to eve. Dismiss takes a card away for 30 days.
+// where it came from) to the chat, so nothing the owner cannot see goes to eve. Dismiss (a long press) takes a card away for 30 days; a sideways swipe changes the pane.
 import SwiftUI
 
 @MainActor
@@ -144,12 +144,31 @@ struct UpdatesView: View {
 
     private var bar: some View {
         HStack(spacing: 8) {
-            Text("Updates").font(.headline)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Updates").font(.headline)
+                TimelineView(.periodic(from: .now, by: 60)) { tl in
+                    if let age = UpdatesAge.label(model.list.generatedAt, now: tl.date) {
+                        Text(model.busy ? "Looking for new updates…" : age)
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+            }
             Spacer()
             if model.busy {
                 ProgressView()
                     .controlSize(.small)
+                    .frame(width: 36, height: 36)
                     .accessibilityLabel("Looking for new updates")
+            } else {
+                Button { Task { await model.refresh() } } label: {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.body.weight(.medium))
+                        .frame(width: 36, height: 36)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+                .accessibilityLabel("Refresh updates")
             }
         }
         .frame(minHeight: 36)
@@ -166,9 +185,6 @@ struct UpdatesView: View {
                     .listRowBackground(Color.eveBackground)
                     .listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets(top: 5, leading: 16, bottom: 5, trailing: 16))
-                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                        Button("Dismiss", role: .destructive) { model.dismiss(card) }
-                    }
                     .contextMenu {
                         Button("Dismiss", systemImage: "xmark") { model.dismiss(card) }
                     } preview: {

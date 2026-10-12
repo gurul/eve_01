@@ -17,6 +17,16 @@
 > expressions are enabled (`expressions.json`). No Jev key, or no network: the worker reports the error in its
 > status and shows ordinary phase eyes; set `laya` to stay local.
 
+> **2026-10-12: the phone's eyes.** The owner asked "can u route the expressions into the eyes": the board is
+> retired, so Eve Link's voice-mode face now draws them. The daemon runs a second worker for the phone
+> (`Daemon._start_phone_expressions`): the owner's words and each sentence eve reads out on an Eve Link call whose
+> app says it can draw them are offered to it, and each pick goes back on that call as one `expression` message
+> ([voice mode, Expressions](../../voice-mode.md#expressions)). It is **on by default** and needs no
+> `expressions.json`; `EVE_PHONE_EXPRESSIONS=0` turns it off. It loads Jev only at the first offer, so with no
+> phone call it makes no Jev call; during one, the last turn or two leave the Mac for Jev, as above.
+> `bridge/tools/expression_live.py react "text"` shows on the phone when no board is connected and a call is
+> live; `status` reports the phone's worker under `phone`.
+
 Laya (or Jev) controls **eyes only**. Eve's original chirps, caption babble, sound settings, and phase sounds are preserved. The owner explicitly requested reverting the experimental Laya chirps after trying them.
 
 The model runs in the Mac bridge; the ESP32 renders its temporary expression overlay during speech and idle/explore. Spoken user turns, stable clauses in Eve's streamed replies, and diary thoughts selected for the screen feed one dedicated worker. One pending event replaces older work; inference stays off the daemon event loop. Events are sent at most every 1.2 seconds, discarded after four seconds, and independently expired by the board.

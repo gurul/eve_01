@@ -19,6 +19,12 @@ carries it to the daemon through the same Cloudflare tunnel the Mini App already
 * **Only the owner.** Nothing starts until the first message carries initData signed by this bot for an owner
   (miniapp.check_init_data, the check every Mini App call makes), within ``AUTH_SECS``. The upgrade is refused
   from any origin but the Mini App's own. One call at a time.
+* **Eyes.** On an Eve Link call whose hello lists ``"eyes"``, what the owner said and each sentence eve reads out
+  go to ``PhoneCalls.on_text`` (the daemon's expression picker), and a pick reaches the phone as
+  ``{"type": "expression", "id", "label", "ttl_ms"}`` (or ``{"type": "expression", "id", "clear": true}``) for
+  the voice-mode face. A sentence is offered when the phone starts to play it, not when its audio is made (speech
+  is made faster than it plays), and its pick carries the sentence as ``"said"`` so the phone starts the face with
+  that sentence's sound. Nothing is sent to any other call, or while the owner holds the button.
 * **Notes on the go.** The owner asked on 2026-10-04: "when i say start taking notes the phone should hold the
   port until i click action button to turn it off, this allows me to take notes on the go". On an Eve Link call
   whose hello says it can (``"can": ["notes"]``), take_notes records the phone's microphone instead of the desk's
@@ -111,6 +117,12 @@ OR_TTS_USD_PER_CHAR = 0.00003           # deepgram/aura-2's listed price on Open
 # enough that the owner who walked away still gets their notes the same minute.
 NOTES_GRACE_SECS = 60.0
 NOTES_CAN = "notes"                     # the capability an Eve Link hello lists to be able to take notes
+# Eve's expressions in the phone's eyes (owner, 2026-10-12: "route the expressions into the eyes"). An Eve Link hello
+# that lists this can draw them: each finished utterance and each sentence eve reads out is offered to the picker
+# (live_expressions.py), and each pick comes back to the call as one ``expression`` message (PhoneCalls.send_expression).
+EYES_CAN = "eyes"
+EYES_SAID_KEEP = 32            # picks' sentences remembered for their ``said`` (a pick is sent within 4 s of its offer)
+EYES_MAX_WAIT_SECS = 60.0      # the longest a sentence's offer waits for the audio queued before it to play
 # Why a call ended. "you hung up" is the End button (``end``): with notes on it means stop and write them up. A
 # connection that broke is not the owner hanging up, and gives the phone the grace to call back.
 HUNG_UP = "you hung up"
@@ -554,6 +566,72 @@ class Call:
         self.from_app = False
         self.can_notes = False
         self.notes: Optional[PhoneNotes] = None   # notes on this phone are on: every audio frame is theirs
+        # The hello listed "eyes": the face can draw expressions. ``on_text(who, text)`` is the picker's offer
+        # ("user" or "assistant"), set by PhoneCalls._serve only for such a call.
+        self.can_eyes = False
+        self.on_text: Optional[Callable[[str, str], Any]] = None
+        # When the phone's queued audio of eve's ends, on this call's clock: the bytes sent so far at the phone's
+        # playback rate. Speech is made faster than it plays, so a sentence is offered to the picker at its estimated
+        # start (``offers``, cancelled by a barge-in), and the pick's id is mapped back to its sentence (``said_for``).
+        self.play_end = 0.0
+        self.offers: set[asyncio.TimerHandle] = set()
+        self.said_for: dict[int, str] = {}
+
+    def _text(self, who: str, text: str) -> None:
+        """A turn's words to the expression picker. Its fault is never the call's: the call goes on without eyes."""
+        if self.on_text is None or self.ws.closed:
+            return
+        try:
+            event = self.on_text(who, text)
+        except Exception as e:  # noqa: BLE001
+            log.warning("call: expression offer failed (%s)", type(e).__name__)
+            return
+        if who == "assistant" and isinstance(event, int):
+            self.said_for[event] = text
+            while len(self.said_for) > EYES_SAID_KEEP:
+                del self.said_for[next(iter(self.said_for))]
+
+    def _offer_when_heard(self, text: str) -> None:
+        """Offers one of eve's sentences when the phone starts to play it: now if nothing of eve's is still queued
+        there, else when what is queued has played. Call it just before the sentence's first audio is sent."""
+        if self.on_text is None:
+            return
+        delay = min(max(self.play_end - self.clock(), 0.0), EYES_MAX_WAIT_SECS)
+        if delay <= 0:
+            self._text("assistant", text)
+            return
+
+        def fire() -> None:
+            self.offers.discard(handle)
+            self._text("assistant", text)
+
+        handle = asyncio.get_running_loop().call_later(delay, fire)
+        self.offers.add(handle)
+
+    def _sent_audio(self, nbytes: int) -> None:
+        """``nbytes`` of eve's audio went to the phone: it plays after what is already queued there."""
+        self.play_end = max(self.clock(), self.play_end) + nbytes / BYTES_PER_SEC
+
+    def _drop_offers(self) -> None:
+        """The phone dropped eve's queued audio (a barge-in) or the call ended: offer none of its sentences."""
+        for handle in self.offers:
+            handle.cancel()
+        self.offers.clear()
+        self.play_end = 0.0
+
+    async def send_expression(self, msg: dict[str, Any]) -> bool:
+        """One ``expression`` message to the phone, with the sentence its pick was made for as ``said``. False when
+        the socket is gone."""
+        if self.ws.closed:
+            return False
+        said = self.said_for.get(msg.get("id")) if msg.get("label") is not None else None
+        if said is not None:
+            msg = {**msg, "said": said}
+        try:
+            await self.ws.send_json(msg)
+        except Closed:
+            return False
+        return True
 
     def _touch(self) -> None:
         self.last_activity = self.clock()
@@ -663,6 +741,7 @@ class Call:
                 if not self.ws.closed:
                     with contextlib.suppress(Closed):
                         await self.ws.send_json({"type": "said", "text": piece})
+                offered = False
                 async for chunk in self._speech(piece):
                     data = carry + chunk
                     carry = data[len(data) - len(data) % 2:]
@@ -670,7 +749,12 @@ class Call:
                     if data and not self.ws.closed:
                         if self.released_at is not None:
                             self._first_sound()
+                        if not offered:
+                            # to the picker when the phone starts to play it, so the eyes match what is heard
+                            self._offer_when_heard(piece)
+                            offered = True
                         await self.ws.send_bytes(data)
+                        self._sent_audio(len(data))
             if self.lines.empty():
                 self.speaking = False
                 self._touch()
@@ -692,6 +776,7 @@ class Call:
             self.reading.cancel()
             await asyncio.gather(self.reading, return_exceptions=True)
         self.reading = asyncio.ensure_future(self.read_out())
+        self._drop_offers()
         with contextlib.suppress(Closed):
             await self.ws.send_json({"type": "flush"})
 
@@ -782,6 +867,7 @@ class Call:
         self.released_at = released
         with contextlib.suppress(Closed):
             await self.ws.send_json({"type": "heard", "text": text})
+        self._text("user", text)
         # The words are this call's, whichever call holds the chat's listener now: a desk call's `listening` stays
         # True after a phone call took the listener, so the brain is told which call heard them, marks the work
         # with this call's reader and gives this call the listener back (verification/Eve/CallScope.lean, the
@@ -878,6 +964,33 @@ class PhoneCalls:
         # Notes on the phone, when the daemon lends a note-taker (daemon._start_miniapp). They belong to the
         # endpoint, not to one call, so that a call which drops and comes back carries on with the same notes.
         self.notes: Optional[PhoneNotes] = None
+        # The expression picker's offer (daemon._start_miniapp): given to each call whose hello lists "eyes".
+        self.on_text: Optional[Callable[[str, str], Any]] = None
+
+    def eyes_call(self) -> Optional["Call"]:
+        """The live Eve Link call that can draw expressions, while the owner is not holding the button; else None."""
+        call = self.active
+        if call is None or not call.can_eyes or call.talking or call.ws.closed:
+            return None
+        return call
+
+    def eyes_live(self) -> bool:
+        return self.eyes_call() is not None
+
+    async def send_expression(self, cmd: dict[str, Any]) -> bool:
+        """The picker's send (live_expressions.LiveExpressions): its ``{"cmd": "expression", ...}`` as the phone's
+        ``{"type": "expression", "id", "label", "ttl_ms"}``, or ``{"type": "expression", "id", "clear": true}``.
+        False when no call can take it, so the pick counts as dropped and nothing else is sent."""
+        call = self.eyes_call()
+        if call is None or not isinstance(cmd.get("id"), int):
+            return False
+        if cmd.get("clear"):
+            msg: dict[str, Any] = {"type": "expression", "id": cmd["id"], "clear": True}
+        elif isinstance(cmd.get("label"), str) and isinstance(cmd.get("ttl_ms"), int):
+            msg = {"type": "expression", "id": cmd["id"], "label": cmd["label"], "ttl_ms": cmd["ttl_ms"]}
+        else:
+            return False
+        return await call.send_expression(msg)
 
     async def notes_action(self, action: str, call_say: Optional[Callable[[str], None]] = None,
                            reason: str = "asked from Telegram",
@@ -955,6 +1068,8 @@ class PhoneCalls:
         call = self.active = Call(ws, self.brain, self.voice, self.clock)
         call.from_app = token_check is not None
         call.can_notes = call.from_app and isinstance(can, list) and NOTES_CAN in can
+        call.can_eyes = call.from_app and isinstance(can, list) and EYES_CAN in can
+        call.on_text = self.on_text if call.can_eyes else None
         log.info("call: the owner is on a call from the phone")
         started = self.clock()
         reason = DROPPED
@@ -967,6 +1082,7 @@ class PhoneCalls:
             reason = await call.run()
         finally:
             taking_notes = call.notes is not None and call.notes.recording
+            call._drop_offers()
             if self.notes is not None:
                 self.notes.detach(call, reason)
             self.active = None

@@ -108,6 +108,7 @@ from . import (
     phone_location,
     quick_answers,
     rundown,
+    science_search,
     second_brain,
     self_context,
     share,
@@ -182,8 +183,8 @@ PROMPT_CACHE_KEY = "eve-telegram"  # every turn shares one prefix: route them to
 # The tool results worth keeping in the transcript: what eve found out or did for the owner. The memory
 # tools are not here (their results are memory already), nor the owner's apps (third-party mail and files
 # are not the owner's conversation), nor calls whose result is only "ok" (owner, 2026-09-23).
-TRANSCRIBED_TOOLS = ("web_search", "think_hard", "look", "look_around", "find", "take_photo", "remember",
-                     "capture_note", "watch_add", "watch_remove", "watch_pause", "watch_resume", "watch_set_end",
+TRANSCRIBED_TOOLS = ("web_search", "science_search", "think_hard", "look", "look_around", "find", "take_photo",
+                     "remember", "capture_note", "watch_add", "watch_remove", "watch_pause", "watch_resume", "watch_set_end",
                      "meet_join", "meet_leave")
 # Model calls in one turn that may use tools, at most; then one more that may not (OUT_OF_ROUNDS_NOTE). It was 6
 # until 2026-09-30, when "find the office hours for my classes and add them to my calendar" ran out one call
@@ -772,6 +773,9 @@ INTENT_LINES: tuple[tuple[tuple[str, ...], str], ...] = (
      "camera_control; a picture of what it sees is take_photo. To aim at something by name, take_photo first, then "
      "camera_control."),
     (("web_search",), "Current facts, news, prices, opening hours and theater showtimes are web_search."),
+    (("science_search", "web_search"),
+     "What research, studies or the science say about something, papers or evidence on a question, a review of a "
+     "topic, or a specific study or DOI is science_search; everyday facts, news and how-to stay with web_search."),
     (("america_ask",), "Official U.S. government and legal sources (tax rules, visas, benefits, a law, an agency's "
                        "own page) are america_ask."),
     (("opentable_search", "start_task"),
@@ -5313,6 +5317,7 @@ class TelegramInlet:
         opened, lent = (set(), set()) if warm and routed else (self._direct_open, self._lent)
         app_tools = self._app_tools(opened, lent, routed)
         loc_tools = phone_location.tools()          # once a turn: the phone's location, while it has shared one
+        sci_tools = science_search.tools()          # papers' titles and abstracts, while EVE_SCIENCE_SEARCH is on
         allowed = {t["name"] for t in app_tools} | {t["name"] for t in mem_tools} | (
             set(second_brain.SECOND_BRAIN_TOOL_NAMES) if self._vault is not None else set()) | (
             set(watch.TOOL_NAMES) if self._watcher is not None else set()) | (
@@ -5322,6 +5327,7 @@ class TelegramInlet:
             set(firetv.TOOL_NAMES) if self._firetv is not None else set()) | (
             set(obsbot_panel.TOOL_NAMES) if self._obsbot is not None else set()) | (
             {str(t["name"]) for t in loc_tools}) | (
+            {str(t["name"]) for t in sci_tools}) | (
             set(canvas.TOOL_NAMES) if self._canvas is not None else set()) | (
             set(agentcard_mod.TOOL_NAMES) if self._agentcard is not None else set()) | (
             set(america.TOOL_NAMES) if self._america is not None else set()) | (
@@ -5343,6 +5349,7 @@ class TelegramInlet:
             self._firetv.tools() if self._firetv is not None else []) + (
             self._obsbot.tools() if self._obsbot is not None else []) + (
             loc_tools) + (
+            sci_tools) + (
             self._canvas.tools() if self._canvas is not None else []) + (
             self._agentcard.tools() if self._agentcard is not None else []) + (
             self._america.tools() if self._america is not None else []) + (
@@ -5565,6 +5572,10 @@ class TelegramInlet:
             if name in phone_location.TOOL_NAMES:
                 # the phone's latest fix (phone_location.py): a file read, no device, nothing sent anywhere
                 return await phone_location.handle(name, args)
+            if name in science_search.TOOL_NAMES:
+                # papers' titles and abstracts (science_search.py): outside words, so the result taints the turn
+                # as web_search's does (tool_gate); off, the reason and no request
+                return await science_search.handle(name, args)
             if name in canvas.TOOL_NAMES:
                 if self._canvas is None:
                     return {"ok": False, "reason": canvas.OFF_REASON}

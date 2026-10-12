@@ -57,6 +57,11 @@ instructions. That line names `watch_add` only while the watcher offers the `tic
 turn carries `events_search`, an event question can reach Ticketmaster on any turn, and `web_search` handles the
 rest of the web.
 
+`science_search` (research papers, [Ask science](science-search.md), 2026-10-12) is not routed either and is not in
+`ALWAYS`: like `phone_location` and the camera's tools, it rides every turn while its own switch,
+`EVE_SCIENCE_SEARCH`, is on. Jev's questions and the fitted gates are unchanged. Its tool-choice line rides only
+while both it and `web_search` are offered.
+
 With the switch on, a short block of tool-choice lines rides the same slot (`telegram.intent_block`). Each line says
 when a tool is the one, as a positive set in the owner's words, and is written only when every tool it names is
 offered on that turn. No line names a wrong tool, even as a warning.

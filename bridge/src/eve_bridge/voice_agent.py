@@ -88,7 +88,17 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Awaitable, Callable, Optional
 
-from . import consent, obsbot_panel, phone_location, self_context, spend, system_context, tool_gate, websearch
+from . import (
+    consent,
+    obsbot_panel,
+    phone_location,
+    science_search,
+    self_context,
+    spend,
+    system_context,
+    tool_gate,
+    websearch,
+)
 from . import firetv as firetv_mod
 from . import head as head_mod
 from . import lights as lights_mod
@@ -142,8 +152,8 @@ THINK_TODAY_CHARS = 6000       # today's talk handed to think_hard with the prof
 # The results eve answers from. Their text is kept as a "tool" line, so "what did the search say" and
 # "the second one" still resolve later. Head moves, sound, lessons and forget are actions, not answers;
 # recent_conversation returns lines the transcript already holds.
-ANSWER_TOOLS = frozenset({websearch.TOOL_NAME, "think_hard", "look", "look_around", "find", "take_photo",
-                          "memory_search", "memory_read"})
+ANSWER_TOOLS = frozenset({websearch.TOOL_NAME, science_search.TOOL_NAME, "think_hard", "look", "look_around", "find",
+                          "take_photo", "memory_search", "memory_read"})
 TRANSCRIPT_WHO = {"user": "owner", "assistant": "eve"}
 
 # The Live model owns voice, timing and interruptions. Tool workflow lives in
@@ -559,6 +569,8 @@ def session_config(config: VoiceConfig, brief: str = "",
     lights_block += "" if not cam_tools else "\n\n" + obsbot.instructions()
     # the phone's latest location (phone_location.py), once the Eve Link app has shared one: never in a lesson
     loc_tools = [] if listening else phone_location.tools()
+    # papers' titles and abstracts (science_search.py), while EVE_SCIENCE_SEARCH is on: never in a lesson
+    sci_tools = [] if listening else science_search.tools()
     return {
         "model": config.model,
         "instructions": INSTRUCTIONS + config.about + profile_block(profile) + today_block(today) + context
@@ -580,7 +592,7 @@ def session_config(config: VoiceConfig, brief: str = "",
                                 + (think_aloud_mod.backend_instructions(think_aloud) if listening else "")
                                 + lights_block,
                 "tools": TOOLS + (websearch.tools_for(config.search) if config.web_search else []) + extra + meeting
-                         + light_tools + music_tools + tv_tools + cam_tools + loc_tools,
+                         + light_tools + music_tools + tv_tools + cam_tools + loc_tools + sci_tools,
                 "tool_choice": "auto",
                 "reasoning": {"effort": config.backend_effort},
                 "parallel_tool_calls": False,
@@ -1632,7 +1644,7 @@ class VoiceSession:
         elif (name in ("look", "look_around", "find", "think_hard", "lesson", "take_photo", websearch.TOOL_NAME)
               or name in self._memory_tool_names or name in MEET_TOOL_NAMES or name in lights_mod.TOOL_NAMES
               or name in spotify_mod.TOOL_NAMES or name in VOICE_FIRETV_TOOLS or name in VOICE_OBSBOT_TOOLS
-              or name in phone_location.TOOL_NAMES):
+              or name in phone_location.TOOL_NAMES or name in science_search.TOOL_NAMES):
             # Seconds (or a minute, for think_hard) of camera, head, model or disk work:
             # answered from a background task, so Live events (the owner talking,
             # captions) keep flowing meanwhile.
@@ -1799,6 +1811,10 @@ class VoiceSession:
                     # the phone's latest fix (phone_location.py): a small file read, here so the taint gate sees
                     # its result as it sees every read's (the place name is the phone's geocoder's words)
                     result = await phone_location.handle(name, args)
+                elif name in science_search.TOOL_NAMES:
+                    # papers' titles and abstracts (science_search.py): a second of network; outside words, so the
+                    # taint gate marks the conversation after it, as after a web search
+                    result = await science_search.handle(name, args)
                 else:
                     result = await self._find(str(args.get("target", "")))
             except asyncio.CancelledError:

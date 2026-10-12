@@ -20,6 +20,8 @@ final class ChatModel: NSObject, ObservableObject {
     }
 
     let relay: Relay
+    /// A quick sideways swipe on the chat (true: finger moved left): the screen moves one pane (PaneSwipe).
+    var onPaneSwipe: ((Bool) -> Void)?
     private(set) lazy var webView: WKWebView = makeWebView()
     private lazy var transport: ChatTransport = {
         let t = ChatTransport(
@@ -294,6 +296,12 @@ final class ChatModel: NSObject, ObservableObject {
         scroll.maximumZoomScale = 1
         scroll.pinchGestureRecognizer?.isEnabled = false
         scroll.keyboardDismissMode = .interactive
+        for direction in [UISwipeGestureRecognizer.Direction.left, .right] {
+            let swipe = UISwipeGestureRecognizer(target: self, action: #selector(paneSwiped(_:)))
+            swipe.direction = direction
+            swipe.delegate = self                       // alongside the page's own scrolling, never instead of it
+            web.addGestureRecognizer(swipe)
+        }
         #if DEBUG
         web.isInspectable = true
         #endif
@@ -446,4 +454,13 @@ struct ChatWebView: UIViewRepresentable {
     let model: ChatModel
     func makeUIView(context: Context) -> WKWebView { model.webView }
     func updateUIView(_ view: WKWebView, context: Context) {}
+}
+
+extension ChatModel: UIGestureRecognizerDelegate {
+    @objc fileprivate func paneSwiped(_ g: UISwipeGestureRecognizer) {
+        onPaneSwipe?(g.direction == .left)
+    }
+
+    func gestureRecognizer(_ g: UIGestureRecognizer,
+                           shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool { true }
 }

@@ -51,7 +51,7 @@ from .ipc import IPCServer
 from .jsonl_tailer import JSONLTailer
 from .learning.think_aloud import LISTEN_ACTIONS
 from .listen_key import Stopper, start_listen_key
-from .live_expressions import LiveExpressions
+from .live_expressions import LiveExpressions, phone_expressions_on
 from .matchers import MatcherConfig, classify_command
 from .matchers import load_config as load_matcher_config
 from .memory_bus import MemoryBus
@@ -205,6 +205,7 @@ class Daemon:
                                            muted=lambda: self._sound.muted,
                                            phase=lambda: getattr(self, "_agent_state", "idle"))
         self._expression_audition = None
+        self._phone_expressions = None     # the phone's picker, made with the Mini App (_start_miniapp)
         # The owner's microphone switch (`eve-bridge mic`, or the menu-bar
         # app): persisted, and one of the two things the mic policy checks.
         self._mic = SoundSetting(name="mic")
@@ -1525,6 +1526,7 @@ class Daemon:
                 inlet.link_uploads = server.link.uploads
                 server.calls.notes = Daemon._phone_notes(self, inlet)
                 inlet._phone_notes = server.calls.notes_action
+            Daemon._start_phone_expressions(self, server.calls, tasks)
         tasks.append(asyncio.create_task(self._miniapp.run(), name="miniapp"))
         if getattr(self, "_telegram", None) is not None:
             # "make me a habit tracker" texted to eve builds an app (apps_maker.ChatMaker); its Open button
@@ -1967,6 +1969,19 @@ class Daemon:
         log.info("think aloud: %s", "listening" if on else "off")
         Daemon._sync_listen_pose(self)
 
+    def _start_phone_expressions(self, calls: Any, tasks: list) -> None:
+        """eve's expressions in the phone's eyes (owner, 2026-10-12: "route the expressions into the eyes"): a
+        picker of its own for Eve Link's voice mode, fed by the call's turns and sending only to a live call whose
+        app can draw them. On unless EVE_PHONE_EXPRESSIONS=0; the board's switch file is not involved."""
+        if not phone_expressions_on():
+            log.info("expressions: the phone's eyes are off (EVE_PHONE_EXPRESSIONS)")
+            return
+        service = LiveExpressions(calls.send_expression, connected=calls.eyes_live, enabled=True, lazy=True,
+                                  phase=lambda: "speaking" if getattr(calls.active, "speaking", False) else "idle")
+        self._phone_expressions = service
+        calls.on_text = service.offer
+        tasks.append(asyncio.create_task(service.run(), name="phone-expressions"))
+
     def _on_expression_text(self, who: str, text: str) -> None:
         service = getattr(self, "_expressions", None)
         if service is not None:
@@ -2369,7 +2384,11 @@ class Daemon:
             text = req.get("text")
             if not isinstance(text, str) or not text.strip() or len(text) > 2000:
                 return {"ok": False, "error": "text must contain 1..2000 characters"}
-            if not service.enabled or not service.ready or not self.ble.connected:
+            phone = getattr(self, "_phone_expressions", None)
+            if (action == "react" and not self.ble.connected and phone is not None and phone.enabled
+                    and phone.connected()):
+                service = phone                 # no board: a react shows on the live phone call's face
+            elif not service.enabled or not service.ready or not self.ble.connected:
                 return {"ok": False, "error": "expressions are not ready or board is disconnected"}
             if action == "audition":
                 phase = req.get("phase", "speaking")
@@ -2394,7 +2413,9 @@ class Daemon:
             return {"ok": event is not None, "id": event, "expressions": service.status()}
         elif action != "status":
             return {"ok": False, "error": "unknown expression action"}
-        return {"ok": True, "connected": self.ble.connected, "expressions": service.status()}
+        phone = getattr(self, "_phone_expressions", None)
+        return {"ok": True, "connected": self.ble.connected, "expressions": service.status(),
+                "phone": None if phone is None else {"connected": phone.connected(), **phone.status()}}
 
     async def _ipc_explore(self, req: dict[str, Any]) -> dict[str, Any]:
         # `eve-bridge explore [start|stop|status]`: the owner sends
