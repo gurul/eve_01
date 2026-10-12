@@ -17,10 +17,12 @@ Bar, PRE-REGISTERED 2026-10-12 before the new label set or its blind set exists:
 - [ ] X3: New labels are recognised. On a BLIND set (tests/fixtures/emotion_blind_v2.json, written by a separate agent from label names and plain glosses, without the Jev criteria text), Jev with the production question: top-1 accuracy >= 65% over all cases; every label with >= 5 cases has recall >= 55%; p50 latency <= 400 ms; errors <= 2%.
   CHECK: cd bridge && env $(grep -E '^(EVE_JEV_[A-Z_]*|JEV_[A-Z_]*|OPENROUTER_API_KEY)=' ~/.config/eve-bridge/env | xargs) .venv/bin/python tools/jev_eyes_eval.py --blind tests/fixtures/emotion_blind_v2.json --min-acc 65 --min-recall 55 --max-p50-ms 400
   EXPECT: EYES_BAR_OK
+  EVIDENCE: FAILED, exit=1, 2026-10-12, first scored run on the blind set (frozen in 36f0eb9 before any label existed in code): n=129, top-1 86.8%, errors 0, p50 283 ms, p95 697 ms, $0.0039; every label >= 55% except thinking 3/8 = 37.5% (read as calm x3, curious x2); laughing 5/8, happy 5/8, curious 5/8 | EYES_BAR_FAIL. Not retuned against this set.
 
-- [ ] X4: Old labels do not blur. On the existing 84 cases (tests/fixtures/emotion, folded as on 2026-09-24): scenario tests >= 57.5% and confirmation cases >= 67.2% (baseline minus 5 points each).
+- [x] X4: Old labels do not blur. On the existing 84 cases (tests/fixtures/emotion, folded as on 2026-09-24): scenario tests >= 57.5% and confirmation cases >= 67.2% (baseline minus 5 points each).
   CHECK: cd bridge && env $(grep -E '^(EVE_JEV_[A-Z_]*|JEV_[A-Z_]*|OPENROUTER_API_KEY)=' ~/.config/eve-bridge/env | xargs) .venv/bin/python tools/jev_eyes_eval.py --legacy --min-scenario 57.5 --min-confirm 67.2
   EXPECT: EYES_LEGACY_OK
+  EVIDENCE: exit=0, same tree: scenarios 64.6%, confirmations 69.4%; one legacy miss lands on a new label (secret_costume-1 surprised -> proud) | EYES_LEGACY_OK
 
 - [ ] X5: No personal data or token-shaped strings in the diff.
   CHECK: git diff main | grep -v 'CHECK: git diff main' | python3 -c "import re,sys; d=sys.stdin.read(); bad=[p for p in (r'guru\.lingamallu', r'@gmail\.com', r'guruchara[n]', r'Bearer [A-Za-z0-9_-]{20,}', r'sk-[A-Za-z0-9]{20,}', r'/Users/') if re.search(p, d)]; print(bad or 'DIFF_CLEAN'); sys.exit(1 if bad else 0)"
