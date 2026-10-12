@@ -44,6 +44,8 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any, Callable, Mapping, Optional, Sequence
 
+from . import phone_location
+
 log = logging.getLogger(__name__)
 
 ENV_SWITCH = "EVE_UPDATES"
@@ -542,7 +544,24 @@ async def gather(sources: Sources, *, now: Optional[datetime] = None, tz: Option
     items = [i for i in items if i["id"] not in gone]
     log.info("updates: gathered %d items (%s), %d hidden or dismissed", len(items),
              ", ".join(f"{n} {s}" for n, s, _ in got), before - len(items))
-    return {"now": now.isoformat(timespec="seconds"), "tz": tz or local_zone(), "items": items}
+    snap: dict[str, Any] = {"now": now.isoformat(timespec="seconds"), "tz": tz or local_zone(), "items": items}
+    place = here()
+    if place:
+        snap["where"] = place
+    return snap
+
+
+def here() -> Optional[str]:
+    """Where the phone is now, by its place name only (phone_location.py), when the fix is fresh; None otherwise.
+    Coordinates never reach the model or the store."""
+    try:
+        fix = phone_location.fresh()
+    except Exception as e:  # noqa: BLE001 — no place is fine; Updates never depends on it
+        log.warning("updates: the phone's place could not be read (%s)", type(e).__name__)
+        return None
+    if fix is None or not fix.place:
+        return None
+    return _clip(fix.place, 80) or None
 
 
 # ---- the suggester ----------------------------------------------------------------------------------------
@@ -563,6 +582,8 @@ Each suggestion has these fields:
 - entity: the company, person or thing the suggestion is about, at most 40 characters, or null.
 - refs: the ids of the snapshot items the suggestion comes from, copied exactly. At least one. Merge items about the same matter into one suggestion that cites them all.
 - due: the date it must be done by as YYYY-MM-DD, when the items give one; otherwise null.
+
+The snapshot may say "where": the place the owner's phone is right now. Use it only to sharpen a suggestion that is already worth making on its own, for example an errand from their to-dos that can be done near there. Never suggest something only because of where they are.
 
 At most 8 suggestions, most urgent first: the nearest deadline first, then a person waiting on the owner, then the rest. Read relative dates against the snapshot's "now" and time zone. Leave out anything whose date has passed, unless it is still undone and still matters, like an overdue bill.
 
@@ -586,6 +607,7 @@ def prompt_input(snapshot: Mapping[str, Any]) -> str:
     """What the model reads: the snapshot as JSON inside one data block. ``<`` is escaped inside the JSON, so no
     text in an item can close the block."""
     data = {"now": snapshot.get("now"), "tz": snapshot.get("tz"),
+            **({"where": snapshot["where"]} if snapshot.get("where") else {}),
             "items": [{k: it[k] for k in ("id", "kind", "title", "from", "when", "body") if k in it}
                       for it in snapshot.get("items") or []]}
     blob = json.dumps(data, ensure_ascii=False, indent=1).replace("<", "\\u003c")

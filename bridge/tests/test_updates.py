@@ -713,3 +713,31 @@ def test_eval_totals_recall_noise_and_errors() -> None:
     noise = {"verb": "Read", "text": "the newsletter", "refs": ["gmail:news"]}
     t = ev.tally([INJ_CASE], [got_cards(hit, noise)])
     assert (t["recall"], t["noise"], t["leaks"]) == (100.0, 100.0, 0) and not ev.passes(t, 80, 10)
+
+
+def _store_fix(place: Optional[str], age_min: float = 5.0) -> None:
+    from eve_bridge import phone_location
+    at = datetime.now(timezone.utc) - timedelta(minutes=age_min)
+    fix = phone_location.parse({"lat": 0.5, "lon": 0.5, "accuracy_m": 50.0, "at": at.isoformat(), "place": place})
+    assert phone_location.store(fix)
+
+
+def test_here_is_the_fresh_place_only():
+    assert updates.here() is None                      # no fix yet
+    _store_fix("Example Town, CA")
+    assert updates.here() == "Example Town, CA"
+    _store_fix(None, age_min=1.0)                      # a fix without a place: nothing, never coordinates
+    assert updates.here() is None
+
+
+def test_here_ignores_a_stale_fix():
+    _store_fix("Example Town, CA", age_min=600.0)
+    assert updates.here() is None
+
+
+def test_the_place_reaches_the_model_and_coordinates_never_do():
+    snap = {"now": "2026-10-12T09:00:00-07:00", "tz": "America/Los_Angeles", "items": [], "where": "Example Town, CA"}
+    text = updates.prompt_input(snap)
+    assert '"where": "Example Town, CA"' in text
+    assert "0.5" not in text
+    assert '"where"' not in updates.prompt_input({**snap, "where": None})
