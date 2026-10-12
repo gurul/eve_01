@@ -121,3 +121,19 @@ def test_install_replaces_the_hooks_from_before_the_rename(temp_settings: Path) 
     starts = [h["command"] for g in data["hooks"]["SessionStart"] for h in g["hooks"]]
     assert any(c.endswith("-m eve_bridge.hooks.session_start") for c in starts)
     assert all(g["hooks"] for e in data["hooks"].values() for g in e)          # no empty groups left behind
+
+
+def test_hooks_run_isolated_so_the_session_folder_is_not_on_the_import_path(tmp_path, monkeypatch):
+    """A hook runs in the session's folder; with plain ``-m`` a planted json.py there ran instead of the stdlib's."""
+    import subprocess
+    import sys
+
+    from eve_bridge import installer
+    cmd = installer._hook_command("eve_bridge.hooks.stop")
+    assert " -I -m eve_bridge.hooks.stop" in cmd
+    (tmp_path / "json.py").write_text("print('HIJACKED')\n")
+    probe = "import json, sys; print('ok' if 'HIJACKED' not in open(json.__file__).read() else 'bad')"
+    isolated = subprocess.run([sys.executable, "-I", "-c", probe], cwd=tmp_path, capture_output=True, text=True)
+    assert isolated.stdout.strip() == "ok"
+    plain = subprocess.run([sys.executable, "-m", "json.tool", "--help"], cwd=tmp_path, capture_output=True, text=True)
+    assert "HIJACKED" in plain.stdout                                  # positive control: the hole is real without -I

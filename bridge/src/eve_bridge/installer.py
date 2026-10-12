@@ -60,7 +60,10 @@ def _python_executable() -> str:
 
 
 def _hook_command(module: str) -> str:
-    return f"{_python_executable()} -m {module}"
+    """``-I`` (isolated): Claude Code runs a hook in the session's folder, and plain ``-m`` puts that folder first
+    on ``sys.path``, so a ``json.py`` planted there ran as the hook (shown 2026-10-12). Isolated mode leaves the
+    folder and the PYTHON* variables out; the venv's own packages still load."""
+    return f"{_python_executable()} -I -m {module}"
 
 
 def _is_our_entry(hook_obj: dict[str, Any]) -> bool:
