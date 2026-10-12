@@ -1,5 +1,5 @@
 {
- "provenance": "Development set, fictional cases written by the bridge agent on 2026-10-12 to sanity-check the eight eye labels added that day. Not blind; spent as soon as it is run.",
+ "provenance": "Development set, fictional cases written by the bridge agent on 2026-10-12 to sanity-check the eight eye labels added that day. Its thinking cases were removed when thinking was dropped (2026-10-12). Not blind; spent as soon as it is run.",
  "cases": [
   {
    "id": "dev-laughing-1",
@@ -114,48 +114,6 @@
     }
    ],
    "label": "confused"
-  },
-  {
-   "id": "dev-thinking-1",
-   "turns": [
-    {
-     "who": "owner",
-     "text": "Should I take the train or drive to the coast on Saturday?"
-    },
-    {
-     "who": "eve",
-     "text": "Hmm, let me think about that for a second."
-    }
-   ],
-   "label": "thinking"
-  },
-  {
-   "id": "dev-thinking-2",
-   "turns": [
-    {
-     "who": "owner",
-     "text": "What's a good name for the new plant?"
-    },
-    {
-     "who": "eve",
-     "text": "Ooh, give me a moment to mull that over."
-    }
-   ],
-   "label": "thinking"
-  },
-  {
-   "id": "dev-thinking-3",
-   "turns": [
-    {
-     "who": "owner",
-     "text": "Which of these three flats is the best deal?"
-    },
-    {
-     "who": "eve",
-     "text": "There are a few things to weigh here. Give me a second."
-    }
-   ],
-   "label": "thinking"
   },
   {
    "id": "dev-sheepish-1",

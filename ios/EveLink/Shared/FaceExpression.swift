@@ -16,18 +16,18 @@ enum FaceMood: Sendable, Equatable, CaseIterable {
     case idle, listening, thinking, speaking, muted, connecting
 }
 
-/// The picker's labels, in its order (bridge eye_model.LABELS): the board's eleven, then the eight of the 2026-10-12
-/// round (docs/expressions-design.json). The names are the firmware's names.
+/// The picker's labels, in its order (bridge eye_model.LABELS): the board's eleven, then the seven of the 2026-10-12
+/// round (docs/expressions-design.json; its thinking failed the blind bar and was dropped: the face's own thinking mood
+/// covers eve working on an answer). The names are the firmware's names.
 enum FaceExpressionLabel: String, CaseIterable, Sendable {
     case calm, happy, curious, affection, surprised, sad, worried, skeptical, frustrated, excited, wink
-    case laughing, sleepy, confused, thinking, sheepish, relieved, proud, flattered
+    case laughing, sleepy, confused, sheepish, relieved, proud, flattered
 
     /// What VoiceOver says after the face's mood ("speaking, happy").
     var spoken: String {
         switch self {
         case .affection: "fond"
         case .wink: "winking"
-        case .thinking: "mulling it over"     // the mood is often "thinking" too: never "thinking, thinking"
         case .flattered: "flattered, blushing"
         default: rawValue
         }
@@ -54,8 +54,6 @@ enum FaceExpressionLabel: String, CaseIterable, Sendable {
         case .sleepy:     FaceExpressionStyle(left: 40, right: 40, width: 96, radius: 18, lid: .flat, blink: 6, curious: false,
                                               blinkShut: 0.4, ttlMs: 5000)
         case .confused:   FaceExpressionStyle(left: 100, right: 88, width: 92, radius: 22, lid: .none, blink: 3, curious: false,
-                                              ttlMs: 3500)
-        case .thinking:   FaceExpressionStyle(left: 84, right: 84, width: 88, radius: 24, lid: .flat, blink: 3, curious: false,
                                               ttlMs: 3500)
         case .sheepish:   FaceExpressionStyle(left: 78, right: 78, width: 92, radius: 22, lid: .flat, blink: 2, curious: false)
         case .relieved:   FaceExpressionStyle(left: 86, right: 86, width: 98, radius: 26, lid: .droopSmile, blink: 4,
@@ -170,7 +168,6 @@ extension FaceExpressionLabel {
         case .laughing: 1.2
         case .sleepy: 4
         case .confused: 2.15
-        case .thinking: 1.9
         case .sheepish: 2.45
         case .relieved: 1.9
         case .proud: 1.8
@@ -212,9 +209,7 @@ extension FaceExpressionLabel {
     static let sweatSize = 15.0
     static let sparkleSize = 12.0
     static let blushSize = 20.0
-    /// Gaze heights, board px, past the design's (-14 and +4) so thinking reads as up-and-away and sheepish as
-    /// down-and-away even without their marks.
-    static let thinkingUp = -22.0
+    /// Sheepish's gaze height, board px, past the design's +4 so it reads as down-and-away even without its mark.
     static let sheepishDown = 10.0
 
     /// The pose `t` seconds after the label showed. With Reduce Motion: the end pose held, nothing bouncing, swaying
@@ -265,16 +260,6 @@ extension FaceExpressionLabel {
                 let angle = track(t, [(0, -10)] + swaps.map { ($0.0, -10 * $0.1) } + [(2.15, -5)])
                 p.overlays = [FaceOverlay(kind: .question, anchor: .aboveCentre, size: Self.questionSize, scale: pop,
                                           angle: angle)]
-            }
-        case .thinking:
-            // Up and to the viewer's left, held 1.6 s, then one slow 300 ms saccade up and right, held. No blinks
-            // during the holds.
-            if still {
-                p.gaze = (16, Self.thinkingUp)
-                p.blinks = false
-            } else {
-                p.gaze = (track(t, [(0, 0), (0.25, -16), (1.6, -16), (1.9, 16)]), track(t, [(0, 0), (0.25, Self.thinkingUp)]))
-                p.blinks = t >= 1.6 && t < 1.9
             }
         case .sheepish:
             // Eyes to the side and a little down, two 2 px shuffles in the first second, a 300 ms glance back to

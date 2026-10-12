@@ -18,6 +18,7 @@ Bar, PRE-REGISTERED 2026-10-12 before the new label set or its blind set exists:
   CHECK: cd bridge && env $(grep -E '^(EVE_JEV_[A-Z_]*|JEV_[A-Z_]*|OPENROUTER_API_KEY)=' ~/.config/eve-bridge/env | xargs) .venv/bin/python tools/jev_eyes_eval.py --blind tests/fixtures/emotion_blind_v2.json --min-acc 65 --min-recall 55 --max-p50-ms 400
   EXPECT: EYES_BAR_OK
   EVIDENCE: FAILED, exit=1, 2026-10-12, first scored run on the blind set (frozen in 36f0eb9 before any label existed in code): n=129, top-1 86.8%, errors 0, p50 283 ms, p95 697 ms, $0.0039; every label >= 55% except thinking 3/8 = 37.5% (read as calm x3, curious x2); laughing 5/8, happy 5/8, curious 5/8 | EYES_BAR_FAIL. Not retuned against this set.
+  DECISION 2026-10-12 (owner: 'ship 7, drop thinking'): thinking removed after the blind run; the other seven new labels ship. This choice was made with the blind result in hand, so X3 is not re-scored on the same set; a fresh blind set would be needed to confirm the seven.
 
 - [x] X4: Old labels do not blur. On the existing 84 cases (tests/fixtures/emotion, folded as on 2026-09-24): scenario tests >= 57.5% and confirmation cases >= 67.2% (baseline minus 5 points each).
   CHECK: cd bridge && env $(grep -E '^(EVE_JEV_[A-Z_]*|JEV_[A-Z_]*|OPENROUTER_API_KEY)=' ~/.config/eve-bridge/env | xargs) .venv/bin/python tools/jev_eyes_eval.py --legacy --min-scenario 57.5 --min-confirm 67.2

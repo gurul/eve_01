@@ -17,18 +17,27 @@ import jev_eyes_eval as ev  # noqa: E402
 
 ORIGINAL = ("calm", "happy", "curious", "affection", "surprised", "sad", "worried", "skeptical", "frustrated",
             "excited", "wink")
-ADDED = ("laughing", "sleepy", "confused", "thinking", "sheepish", "relieved", "proud", "flattered")
+ADDED = ("laughing", "sleepy", "confused", "sheepish", "relieved", "proud", "flattered")
+DROPPED = ("thinking",)        # designed, failed its blind bar (owner, 2026-10-12: "ship 7, drop thinking")
 DESIGN = json.loads((Path(__file__).resolve().parents[2] / "docs/expressions-design.json").read_text())
+SHIPPED = [label for label in DESIGN["labels"] if label["name"] not in DROPPED]
 
 
-def test_labels_are_the_original_eleven_then_the_eight_in_wire_order():
+def test_labels_are_the_original_eleven_then_the_seven_in_wire_order():
     assert LABELS == ORIGINAL + ADDED
-    assert tuple(label["name"] for label in DESIGN["labels"]) == ADDED
+    assert tuple(label["name"] for label in SHIPPED) == ADDED
     assert "startled" not in LABELS
 
 
+def test_the_dropped_label_is_gone_everywhere():
+    for label in DROPPED:
+        assert label in {d["name"] for d in DESIGN["labels"]}     # the design keeps it as history
+        assert label not in LABELS and label not in CRITERIA and label not in TTL_MS
+        assert label not in EYE_CHOICE["eye"]["criteria"] and label not in QUESTION and label not in ev.FOLD
+
+
 def test_new_criteria_are_the_designs_text_and_the_old_ones_are_untouched():
-    for label in DESIGN["labels"]:
+    for label in SHIPPED:
         assert CRITERIA[label["name"]] == label["criterion"]
     assert CRITERIA["wink"] == "playful teasing, a cheeky aside or asking for a wink"
     assert CRITERIA["calm"] == "neutral facts, routine questions or instructions"
@@ -43,9 +52,9 @@ def test_every_question_carries_every_label():
 
 
 def test_ttls_follow_the_design_and_clamp():
-    design = {"laughing": 3000, "sleepy": 5000, "confused": 3500, "thinking": 3500, "sheepish": 4000,
+    design = {"laughing": 3000, "sleepy": 5000, "confused": 3500, "sheepish": 4000,
               "relieved": 3500, "proud": 4000, "flattered": 4000}
-    for label in DESIGN["labels"]:                            # the design's prose says "TTL 3.5 s."
+    for label in SHIPPED:                                     # the design's prose says "TTL 3.5 s."
         assert f"TTL {design[label['name']] / 1000:g} s" in label["shape"]
     assert set(TTL_MS) == set(LABELS)
     assert all(TTL_MS[label] == 4000 for label in ORIGINAL)
@@ -124,7 +133,7 @@ def test_fold_covers_every_label_onto_the_six_and_none_new_to_startled():
     assert [label for label, six in ev.FOLD.items() if six == "startled"] == ["worried"]
     assert {label: ev.FOLD[label] for label in ADDED} == {
         "laughing": "happy", "proud": "happy", "relieved": "happy", "flattered": "affection",
-        "confused": "curious", "thinking": "curious", "sleepy": "calm", "sheepish": "calm"}
+        "confused": "curious", "sleepy": "calm", "sheepish": "calm"}
     assert ev.LEGACY_LABELS == frozenset(ORIGINAL)
 
 
@@ -145,8 +154,8 @@ class Fake:
 def test_legacy_scoring_folds_and_the_verdict_holds_both_bars():
     sets = {"scenarios-test": [{"id": "a", "label": "happy", "text": "ha"}, {"id": "b", "label": "calm", "text": "x"}],
             "confirmation": [{"id": "c", "label": "curious", "text": "eh"}, {"id": "d", "label": "calm", "text": "boom"}]}
-    result = ev.score("jev", Fake({"ha": "laughing", "x": "thinking", "eh": "confused"}), sets)
-    assert result["sets"]["scenarios-test"]["accuracy"] == 0.5          # laughing→happy hit, thinking→curious miss
+    result = ev.score("jev", Fake({"ha": "laughing", "x": "proud", "eh": "confused"}), sets)
+    assert result["sets"]["scenarios-test"]["accuracy"] == 0.5          # laughing→happy hit, proud→happy miss
     assert result["sets"]["confirmation"]["accuracy"] == 0.5            # confused→curious hit, the error a miss
     assert result["sets"]["confirmation"]["errors"] == 1
     assert ev.legacy_verdict(result, 50, 50) == (True, [])

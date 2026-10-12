@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run the real Laya checkpoint over every eye label on explicit synthetic conversation cases.
 
-The cases cover the original eleven labels only (the eight added 2026-10-12 are scored by jev_eyes_eval.py).
+The cases cover the original eleven labels only (the seven added 2026-10-12 are scored by jev_eyes_eval.py).
 """
 
 import hashlib

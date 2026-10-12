@@ -1295,12 +1295,12 @@ check(FaceExpressionRequest(id: 1, label: .sad, ttlMs: 60_000).ttl == 6 && expre
       "a long ttl becomes 6 s")
 check(FaceExpressionRequest(id: 1, label: .sad, ttlMs: 500).ttl == 0.5 && FaceExpressionRequest(id: 1, label: .sad, ttlMs: 6000).ttl == 6,
       "the bounds themselves are kept")
-// The picker's labels, in its order (bridge eye_model.LABELS): the board's eleven, then the 2026-10-12 eight.
+// The picker's labels, in its order (bridge eye_model.LABELS): the board's eleven, then the 2026-10-12 seven.
 let boardLabels: [FaceExpressionLabel] = [.calm, .happy, .curious, .affection, .surprised, .sad, .worried, .skeptical,
                                           .frustrated, .excited, .wink]
 check(FaceExpressionLabel.allCases.map(\.rawValue) == ["calm", "happy", "curious", "affection", "surprised", "sad", "worried",
-      "skeptical", "frustrated", "excited", "wink", "laughing", "sleepy", "confused", "thinking", "sheepish", "relieved",
-      "proud", "flattered"], "the nineteen labels in the picker's order")
+      "skeptical", "frustrated", "excited", "wink", "laughing", "sleepy", "confused", "sheepish", "relieved",
+      "proud", "flattered"], "the eighteen labels in the picker's order")
 // The bridge's own list, when this checkout has it (eye_model.CRITERIA's keys, in order).
 let eyeModel = (try? String(contentsOfFile: "bridge/src/eve_bridge/eye_model.py", encoding: .utf8)) ?? ""
 if let open = eyeModel.range(of: "CRITERIA = {"), let close = eyeModel[open.upperBound...].range(of: "\n}") {
@@ -1393,13 +1393,13 @@ check(abs(FaceWink.curve(11, width: 91) - -6.93) < 0.01, "a rounded corner zone 
 check(FaceWink.curve(5, width: 0) == 0, "no width: flat")
 // VoiceOver words.
 check(FaceExpressionLabel.allCases.map(\.spoken) == ["calm", "happy", "curious", "fond", "surprised", "sad", "worried",
-      "skeptical", "frustrated", "excited", "winking", "laughing", "sleepy", "confused", "mulling it over", "sheepish",
+      "skeptical", "frustrated", "excited", "winking", "laughing", "sleepy", "confused", "sheepish",
       "relieved", "proud", "flattered, blushing"], "spoken words for each label")
 check(Set(FaceExpressionLabel.allCases.map(\.spoken)).count == FaceExpressionLabel.allCases.count, "no two read the same")
 // A request with no ttl_ms lasts its label's own time (expression.h Request.ttl, per kind); the eleven keep 4 s.
 check(expressionMessage(#"{"type":"expression","id":3,"label":"laughing"}"#)?.ttl == 3
       && expressionMessage(#"{"type":"expression","id":3,"label":"sleepy"}"#)?.ttl == 5
-      && expressionMessage(#"{"type":"expression","id":3,"label":"thinking","ttl_ms":2000}"#)?.ttl == 2
+      && expressionMessage(#"{"type":"expression","id":3,"label":"confused","ttl_ms":2000}"#)?.ttl == 2
       && boardLabels.allSatisfy { expressionMessage(#"{"type":"expression","id":3,"label":"\#($0.rawValue)"}"#)?.ttl == 4 },
       "no ttl: the label's own (laughing 3 s, sleepy 5 s), the board's eleven 4 s")
 print("EXPRESSIONS_OK")

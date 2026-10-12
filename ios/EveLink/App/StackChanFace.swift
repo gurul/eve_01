@@ -397,7 +397,7 @@ final class FaceMotion {
         let shutFor = expression == nil ? Self.blinkShut : style.blinkShut
         if !reduceMotion, mood != .muted, !winking {
             if now >= nextBlink {
-                // A shape may hold its blinks (laughing, thinking's holds): the blink waits for the next chance.
+                // A shape may hold its blinks (laughing, proud's and relieved's holds): the blink waits for the next chance.
                 if pose?.blinks ?? true { blinkUntil = now + shutFor }
                 nextBlink = now + pick(expression == nil ? Self.blinkEvery : style.blinkEvery)
             }

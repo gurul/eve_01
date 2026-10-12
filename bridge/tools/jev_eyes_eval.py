@@ -44,9 +44,9 @@ FOLD = {                                    # every eye label → the six the ha
     "affection": "affection", "happy": "happy", "excited": "happy", "wink": "happy",
     "calm": "calm", "skeptical": "calm", "frustrated": "calm", "sad": "calm",
     "curious": "curious", "surprised": "surprised", "worried": "startled",
-    # the eight added 2026-10-12 (docs/expressions-design.json); none folds to startled
+    # the seven added 2026-10-12 (docs/expressions-design.json; thinking dropped); none folds to startled
     "laughing": "happy", "proud": "happy", "relieved": "happy", "flattered": "affection",
-    "confused": "curious", "thinking": "curious", "sleepy": "calm", "sheepish": "calm",
+    "confused": "curious", "sleepy": "calm", "sheepish": "calm",
 }
 assert set(FOLD) == set(LABELS) and set(FOLD.values()) == set(SIX)
 LEGACY_LABELS = frozenset(LABELS[:11])      # the labels the 2026-09-24 baseline was measured with

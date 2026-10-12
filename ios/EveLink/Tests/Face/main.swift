@@ -33,10 +33,11 @@ func check(_ ok: Bool, _ what: String) { print(ok ? "ok  " : "FAIL", what); if !
     newExpressions()
     print(fails == 0 ? "FACE_OK" : "FACE_FAILED \(fails)")
 }
-// The 2026-10-12 round (docs/expressions-design.json): eight labels, their shapes, motion and marks.
+// The 2026-10-12 round (docs/expressions-design.json; its thinking dropped after the blind run): seven labels, their
+// shapes, motion and marks.
 let boardEleven: [FaceExpressionLabel] = [.calm, .happy, .curious, .affection, .surprised, .sad, .worried, .skeptical,
                                           .frustrated, .excited, .wink]
-let newEight: [FaceExpressionLabel] = [.laughing, .sleepy, .confused, .thinking, .sheepish, .relieved, .proud, .flattered]
+let newSeven: [FaceExpressionLabel] = [.laughing, .sleepy, .confused, .sheepish, .relieved, .proud, .flattered]
 
 /// Two poses the same to within `tol` (float rounding in the loop's remainder).
 func same(_ a: FaceExpressionPose, _ b: FaceExpressionPose, tol: Double = 1e-6) -> Bool {
@@ -56,7 +57,7 @@ let samples = (0...600).map { Double($0) / 100 }
 
 @MainActor func newExpressions() {
     let near = { (a: Double, b: Double, tol: Double) in abs(a - b) <= tol }
-    check(FaceExpressionLabel.allCases == boardEleven + newEight, "nineteen labels: the board's eleven, then the eight")
+    check(FaceExpressionLabel.allCases == boardEleven + newSeven, "eighteen labels: the board's eleven, then the seven")
 
     // Every label has a style the face can draw.
     for label in FaceExpressionLabel.allCases {
@@ -72,13 +73,12 @@ let samples = (0...600).map { Double($0) / 100 }
         .laughing: Spec(l: 94, r: 94, w: 100, rad: 22, lid: .smile, depth: 1.4, blink: 3, ttl: 3000),
         .sleepy: Spec(l: 40, r: 40, w: 96, rad: 18, lid: .flat, depth: 1, blink: 6, ttl: 5000),
         .confused: Spec(l: 100, r: 88, w: 92, rad: 22, lid: .none, depth: 1, blink: 3, ttl: 3500),
-        .thinking: Spec(l: 84, r: 84, w: 88, rad: 24, lid: .flat, depth: 1, blink: 3, ttl: 3500),
         .sheepish: Spec(l: 78, r: 78, w: 92, rad: 22, lid: .flat, depth: 1, blink: 2, ttl: 4000),
         .relieved: Spec(l: 86, r: 86, w: 98, rad: 26, lid: .droopSmile, depth: 1, blink: 4, ttl: 3500),
         .proud: Spec(l: 80, r: 80, w: 100, rad: 24, lid: .smile, depth: 0.5, blink: 3, ttl: 4000),
         .flattered: Spec(l: 66, r: 66, w: 100, rad: 28, lid: .smile, depth: 0.8, blink: 4, ttl: 4000),
     ]
-    for label in newEight {
+    for label in newSeven {
         let s = label.style, d = design[label]!
         check(s.left == d.l && s.right == d.r && s.width == d.w && s.radius == d.rad && s.lid == d.lid
               && s.depth == d.depth && s.blink == d.blink && s.ttlMs == d.ttl && !s.curious,
@@ -86,7 +86,7 @@ let samples = (0...600).map { Double($0) / 100 }
     }
     check(near(94 * (1 - FaceExpressionLabel.laughing.style.smile / 2), 28, 0.5),
           "laughing's crescent: 70% cover leaves the design's 28 px of a 94 px eye")
-    check(FaceExpressionLabel.sleepy.style.blinkShut == 0.4 && newEight.filter { $0 != .sleepy }
+    check(FaceExpressionLabel.sleepy.style.blinkShut == 0.4 && newSeven.filter { $0 != .sleepy }
               .allSatisfy { $0.style.blinkShut == 0.11 }, "only sleepy blinks slowly (400 ms)")
     check(FaceExpressionLabel.relieved.style.droop == 0.5 && FaceExpressionLabel.relieved.style.smile == 0.7,
           "relieved: the droop at half of sad's over a smile at 70% of happy's (so it never reads as sad)")
@@ -150,9 +150,9 @@ let samples = (0...600).map { Double($0) / 100 }
         let seen = Set(samples.flatMap { t in label.pose(at: t).overlays.filter { $0.scale > 0 }.map(\.kind) })
         check(seen == label.overlayKinds, "\(name): marks \(seen.map(\.rawValue).sorted())")
     }
-    check(Set(newEight.flatMap(\.overlayKinds)) == Set(FaceOverlay.Kind.allCases)
-          && [FaceExpressionLabel.laughing, .thinking, .relieved].allSatisfy { $0.overlayKinds.isEmpty },
-          "z, ?, sweat, sparkle and blush each belong to one label; laughing, thinking and relieved have none")
+    check(Set(newSeven.flatMap(\.overlayKinds)) == Set(FaceOverlay.Kind.allCases)
+          && [FaceExpressionLabel.laughing, .relieved].allSatisfy { $0.overlayKinds.isEmpty },
+          "z, ?, sweat, sparkle and blush each belong to one label; laughing and relieved have none")
 
     // Each label's motion, against the design's words.
     let laugh = { (t: Double) in FaceExpressionLabel.laughing.pose(at: t) }
@@ -184,14 +184,9 @@ let samples = (0...600).map { Double($0) / 100 }
           && c(0.8).overlays[0].angle == 10 && c(0.5).overlays[0].anchor == .aboveCentre && c(0.5).overlays[0].size == 22,
           "a 22 px ? over the pair pops in at 200 ms and tips toward the taller eye")
 
-    let think = { (t: Double) in FaceExpressionLabel.thinking.pose(at: t) }
-    check(think(1.0).gaze! == (-16, -22) && think(2.5).gaze! == (16, -22) && near(think(1.75).gaze!.x, 0, 1e-9),
-          "thinking looks up (22 px) and left 1.6 s, then one 300 ms saccade up-right")
-    check(!think(1.0).blinks && !think(2.5).blinks && think(1.7).blinks, "thinking never blinks during its holds")
-
     let sheep = { (t: Double) in FaceExpressionLabel.sheepish.pose(at: t) }
     check(sheep(1.5).gaze! == (14, 10) && sheep(2.2).gaze! == (0, 0) && sheep(3).gaze! == (14, 10)
-          && FaceExpressionLabel.thinking.pose(at: 3).gaze!.y < -20 && sheep(3).gaze!.y >= 10,
+          && sheep(3).gaze!.y >= 10,
           "sheepish looks aside and down, glances back at 2 s for 300 ms, and away again")
     let shuffle = stride(from: 0.0, to: 1, by: 0.005).map { abs(sheep($0).jiggle.x) }.max() ?? 0
     check(near(shuffle, 2, 0.01) && sheep(1.2).jiggle.x == 0, "two 2 px shuffles in the first second")
@@ -255,16 +250,16 @@ let samples = (0...600).map { Double($0) / 100 }
     // The motion runs from when the id first showed: a new id starts it again.
     let again = FaceMotion(random: { 0.5 })
     var g = FaceFrame(x: 0, y: 0, open: 1, wide: 1)
-    for i in 0...150 {
-        g = again.step(now: Double(i) / 60, mood: .idle, level: 0, expression: FaceExpressionShown(id: 3, label: .thinking),
+    for i in 0...54 {
+        g = again.step(now: Double(i) / 60, mood: .idle, level: 0, expression: FaceExpressionShown(id: 3, label: .confused),
                        reduceMotion: false)
     }
-    check(g.x > 10, "thinking looks right after its saccade: \(g.x)")
-    for i in 151...170 {
-        g = again.step(now: Double(i) / 60, mood: .idle, level: 0, expression: FaceExpressionShown(id: 4, label: .thinking),
+    check(g.x > 4, "confused looks right on its first swap: \(g.x)")
+    for i in 55...75 {
+        g = again.step(now: Double(i) / 60, mood: .idle, level: 0, expression: FaceExpressionShown(id: 4, label: .confused),
                        reduceMotion: false)
     }
-    check(g.x < 0, "a new thinking request looks left first again: \(g.x)")
+    check(g.x < 0, "a new confused request looks left first again: \(g.x)")
     // Cut off while the eyes are shut (the owner talks, the time to live ends, the next sentence's pick): the
     // eyes reopen over a few frames, not in one.
     for (label, at) in [(FaceExpressionLabel.relieved, 0.3), (.proud, 1.65)] {
@@ -284,7 +279,7 @@ let samples = (0...600).map { Double($0) / 100 }
     }
     // VoiceOver names each.
     check(FaceExpressionLabel.allCases.allSatisfy { StackChanFace.spoken(.speaking, $0) == "speaking, \($0.spoken)" }
-          && StackChanFace.spoken(.thinking, .thinking) == "thinking, mulling it over", "VoiceOver names every expression")
+          && StackChanFace.spoken(.thinking, .confused) == "thinking, confused", "VoiceOver names every expression")
 }
 
 MainActor.assumeIsolated { run() }
