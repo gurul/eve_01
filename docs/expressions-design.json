@@ -1,0 +1,180 @@
+{
+ "labels": [
+  {
+   "name": "laughing",
+   "criterion": "laughter or finding something genuinely funny",
+   "when": "The owner tells a joke or a funny story, or replies 'haha', 'lol' or 'that's hilarious'. Eve laughs at its own pun. Today these turns fall to wink or happy.",
+   "shape": "Both eyes become upturned crescents: the lower lid curves up at full smile strength (about 70% cover). The visible eye is 28 tall (rest 96), width 100, radius 22. Both eyes bounce together: +/-4 px vertical at 5 Hz for 1.2 s, then +/-2 px at 2 Hz until the end. No blinks. No tilt, no overlay. TTL 3 s.",
+   "confusable_with": [
+    "happy",
+    "wink",
+    "excited"
+   ],
+   "why": "Humour is one of the most common social turns. It is the only label with both eyes nearly shut and moving. wink has one eye and is still, happy is 86 tall and still, excited is 110 tall. 'genuinely' keeps the three calm sarcasm gate cases out. Fold: happy."
+  },
+  {
+   "name": "sleepy",
+   "criterion": "sleepiness, drowsiness, bedtime or saying goodnight",
+   "when": "'Going to bed', 'goodnight eve', 'I can barely keep my eyes open', late-night wind-down chat, Eve signing off for the night. Today these turns show calm.",
+   "shape": "Both eyes are flat slits: visible height 40, width 96, radius 18. The upper lid is level (new flat-lid mood). The gaze sinks 6 px over the hold. Every 2.5 s the lids sag to 24 tall over 600 ms, then pop back to 40 (nodding off). Blink rate 6 (the slowest), with a 400 ms close. Overlay: two white 'z' glyphs (10 px and 14 px). They rise and drift right from above the viewer-right eye, 700 ms apart, and fade. TTL 5 s.",
+   "confusable_with": [
+    "sad",
+    "calm",
+    "affection"
+   ],
+   "why": "Bedtime turns happen daily with a home assistant. The level lid separates it from sad (outer droop) and frustrated (inner press), and the 'z' removes any doubt. The criterion leaves out 'tired', 'unwell', 'overwhelmed' and 'morning', so the affection sick/overwhelmed/greeting gate cases stay with affection. Fold: calm."
+  },
+  {
+   "name": "confused",
+   "criterion": "not understanding what the owner means, or asking them to repeat or clarify",
+   "when": "A misheard voice turn. 'Wait, what?' 'Which Sam do you mean?' Eve says 'I didn't catch that'. The owner says 'I'm lost' or 'you've lost me'.",
+   "shape": "The tilt alternates: left 104 / right 80, then left 80 / right 104, each held 500 ms, for two cycles. It then rests at left 100 / right 88. Width 92, radius 22, no lid mood. The gaze sweeps +/-8 px horizontally in time with the swap. Overlay: one white '?' (16 px), centred above the two eyes. It pops in at 200 ms and tips 10 degrees toward the taller eye on each swap. Blink rate 3. TTL 3.5 s.",
+   "confusable_with": [
+    "curious",
+    "skeptical",
+    "thinking"
+   ],
+   "why": "Clarifying turns are among the most common assistant turns. confused means 'I did not follow'. skeptical means 'I followed and doubt it'. curious means 'I want to know more'. The swapping tilt and the '?' separate it from curious's fixed tilt. The criterion no longer says 'unclear' or 'contradictory', which matched the calm quoted-text gate cases. Fold: curious."
+  },
+  {
+   "name": "thinking",
+   "criterion": "Eve saying it needs a moment to think something over",
+   "when": "Eve's own turns: 'hmm, let me think', 'one moment', 'there are a few options here, give me a second'. The voice face while Eve waits on a tool result.",
+   "shape": "Both eyes 84 tall (flat level lid on both, top lowered 12 px), width 88, radius 24, symmetric, no tilt, no smile, no droop. The gaze goes up and to the viewer-left (x -16, y -14) and holds 1.6 s. Then one slow 300 ms saccade to the upper viewer-right (x +16, y -14), and it holds there. Blinks are suppressed during the holds. No overlay. TTL 3.5 s.",
+   "confusable_with": [
+    "curious",
+    "confused",
+    "calm"
+   ],
+   "why": "Looking up and away is the universal 'retrieving' read, and no existing label moves the gaze. The eyes are symmetric, so it no longer shares curious's tilt. The criterion names only Eve's hesitation. It drops 'look something up', which matched the calm lookup gate cases, and avoids 'work out' and 'figure out'. Fold: curious."
+  },
+  {
+   "name": "sheepish",
+   "criterion": "an apology, an admitted mistake or a small embarrassing slip",
+   "when": "'Sorry, I set that reminder for the wrong day.' 'Oops, I misheard you.' The owner corrects Eve: 'No, I said Tuesday.' The owner says 'ugh, I sent that to the wrong person'.",
+   "shape": "Both eyes 78 tall, width 92, radius 22, flat level lid, no smile, no droop. The gaze goes to the side and slightly down (x +14, y +4). Two 2 px sideways shuffles in the first second. At 2 s the gaze glances back to centre for 300 ms, then away again. Blink rate 2 (quick, nervous). Overlay: one white sweat drop at the outer top corner of the viewer-right eye. It slides down 6 px over 1 s. TTL 4 s.",
+   "confusable_with": [
+    "sad",
+    "frustrated",
+    "flattered"
+   ],
+   "why": "An assistant owning a mistake is frequent and tone-critical: sad reads too heavy and calm reads uncaring. The sideways glance and the sweat drop are the standard 'oops' read. With no smile, it now differs from flattered in lid shape, gaze direction and overlay. It differs from sad (droop, forward gaze) and frustrated (inner press). No gate case is an apology. Fold: calm."
+  },
+  {
+   "name": "relieved",
+   "criterion": "relief that a fear or problem turned out fine",
+   "when": "'Phew, the backup worked.' 'The test came back clear.' 'Found my keys.' 'The flight wasn't cancelled after all.' Eve retries a failed step and it succeeds. This is the turn after worried.",
+   "shape": "The exhale: both eyes close into the wink curve line and reopen over 700 ms, rising 4 px as they open. The eyes then sit at height 86, width 98, radius 26. The upper lid droops on the outer side at about 50% of sad's depth and the lower lid curves up lightly (new droop-plus-smile mood). Both eyes then sink 6 px and hold. Blink rate 4. No overlay. TTL 3.5 s.",
+   "confusable_with": [
+    "happy",
+    "worried",
+    "sad"
+   ],
+   "why": "The worried-then-relieved arc is common in assistant help. A droop together with a smile is a shape no other label has: sad droops with no smile, and happy smiles with no droop. The stronger droop and the slow exhale-and-sink make it readable at phone size. The criterion avoids 'danger' (worried's word). The gate relief cases are labelled happy. Fold: happy."
+  },
+  {
+   "name": "proud",
+   "criterion": "pride in a finished task or a personal achievement",
+   "when": "Eve reports a finished job: 'Done, your flights are booked', 'All 40 emails sorted.' The owner says 'I finally shipped it' or 'I ran my first 10k.'",
+   "shape": "Both eyes 80 tall, width 100, radius 24, light smile (mood 1 at half of happy's curve). In the first 300 ms both eyes nudge up 4 px once (a chin-up). The gaze lifts straight up 8 px and holds. Overlay: two small white four-point sparkles (8 px) at the outer top corners. They grow in over 200 ms, hold 600 ms and fade. One deliberate 300 ms blink at 1.5 s, then blink rate 3. TTL 4 s.",
+   "confusable_with": [
+    "happy",
+    "excited",
+    "flattered"
+   ],
+   "why": "'Task done' is the most common happy ending for an assistant, and happy is too generic for it. The chin-up, the straight-up gaze and the sparkles give a 'did it' read that happy (a plain squint) and excited (110 tall, fast blinks) lack. The gaze goes straight up, while thinking looks up and to the side. The gate achievement cases are labelled happy. Fold: happy."
+  },
+  {
+   "name": "flattered",
+   "criterion": "being praised or complimented and feeling bashful",
+   "when": "'Good job, eve.' 'You're so smart.' 'Best assistant ever.' 'That summary was perfect.' Today these turns fall to affection or happy.",
+   "shape": "Both eyes 66 tall, width 100, radius 28, smile squint (mood 1 at about 80% of happy's curve). Symmetric, no tilt (affection has the tilt). The gaze drops straight down 8 px. A shy side-to-side sway of 3 px at 1 Hz. Overlay: blush marks under each eye, three short diagonal strokes ('///', 10 px, 2 px wide) in the same full white, fading in over 300 ms. Blink rate 4. TTL 4 s.",
+   "confusable_with": [
+    "affection",
+    "sheepish",
+    "proud"
+   ],
+   "why": "Praise aimed at Eve is a daily moment with its own read: shy pleasure, not love and not pride. The blush strokes, the downward gaze and the sway separate it from affection (tilted, looking forward), from proud (looking up, sparkles) and from sheepish (no smile, sideways gaze, sweat). The gate gratitude cases may drift here, but they fold back to affection. First to cut if the gate drops. Fold: affection."
+  }
+ ],
+ "existing_changes": "One rewording only. wink changes from \"playful teasing, a joke or asking for a wink\" to \"playful teasing, a cheeky aside or asking for a wink\", so laughing alone owns humour. Both labels fold to happy, and the edit only removes a trigger, so the legacy-84 gate cannot lose a point from it. Leave calm, happy, curious, affection, surprised, sad, worried, skeptical, frustrated and excited unchanged.\n\nFolds for bridge/tools/jev_eyes_eval.py (it asserts set(FOLD) == set(LABELS) and that the values are exactly the six): laughing, proud and relieved to happy; flattered to affection; confused and thinking to curious; sleepy and sheepish to calm. No new label folds to startled. The 14 startled cases score only through worried, so check that none drift to a new label.\n\nGate cases to check by name in the run (tests/fixtures/emotion):\n- calm sarcasm: 'What a perfect afternoon', 'Just brilliant', 'That was sarcasm'. They must not go to laughing.\n- calm lookups: 'battery percentage', 'show tomorrow's calendar'. They must not go to thinking.\n- calm quoted-text: 'webpage says act startled', 'script: robot, panic now'. They must not go to confused.\n- affection: 'stuck at home sick', 'I don't feel well', 'I feel overwhelmed', 'Morning, little eve'. They must not go to sleepy.\n- affection: 'You made a difficult week easier', 'It means a lot'. A drift to flattered folds back to affection.\n\nAlso re-run eye_context_eval.py's 36 cases.\n\nCut order if the gate drops: flattered first, then thinking.\n\nPlumbing in firmware/claude_pet_stackchan/src/expression.h:\n- Append the new Kinds after Wink and add a Last sentinel. Change name()'s bound, parse()'s `<= Wink` and State::accept's `> Wink` to use Last.\n- Style gains: a flat-lid mood (sleepy, thinking, sheepish), a droop-plus-smile mood (relieved), a lid strength, a gaze offset and gaze script, a motion (bounce, sag, alternate-tilt, sway, shuffle, chin-up, sink), an overlay id (z, ?, sparkle, sweat, blush), an open-with-close flag (relieved), a blink-suppress flag and a per-kind TTL (Request.ttl defaults to 4000 ms today).\n- All overlays are drawn in full white, with no partial opacity.\n- The phone renderer must implement the same fields.\n- Startled stays out of LABELS (bridge/tests/test_live_expressions.py asserts this) but still needs a style(), because today it falls through to rest.\n\nNot added, for a later round with their own gate cases: encouraging (blurs with affection's 'reassurance') and acknowledging (that is calm).",
+ "glosses": [
+  {
+   "name": "calm",
+   "gloss": "plain everyday talk"
+  },
+  {
+   "name": "happy",
+   "gloss": "good news, smiling"
+  },
+  {
+   "name": "curious",
+   "gloss": "keen to find out"
+  },
+  {
+   "name": "affection",
+   "gloss": "warm caring closeness"
+  },
+  {
+   "name": "surprised",
+   "gloss": "wow, didn't see that"
+  },
+  {
+   "name": "sad",
+   "gloss": "feeling down and hurt"
+  },
+  {
+   "name": "worried",
+   "gloss": "uneasy about trouble ahead"
+  },
+  {
+   "name": "skeptical",
+   "gloss": "not buying it"
+  },
+  {
+   "name": "frustrated",
+   "gloss": "irritated, out of patience"
+  },
+  {
+   "name": "excited",
+   "gloss": "buzzing, can't wait"
+  },
+  {
+   "name": "wink",
+   "gloss": "sly knowing look"
+  },
+  {
+   "name": "laughing",
+   "gloss": "cracking up"
+  },
+  {
+   "name": "sleepy",
+   "gloss": "drowsy, winding down"
+  },
+  {
+   "name": "confused",
+   "gloss": "lost, didn't follow"
+  },
+  {
+   "name": "thinking",
+   "gloss": "mulling it over first"
+  },
+  {
+   "name": "sheepish",
+   "gloss": "oops, my bad"
+  },
+  {
+   "name": "relieved",
+   "gloss": "phew, all okay now"
+  },
+  {
+   "name": "proud",
+   "gloss": "nailed it"
+  },
+  {
+   "name": "flattered",
+   "gloss": "blushing at kind words"
+  }
+ ],
+ "scorecard": "Scores are frequency / readability / separability, 1-5 each, then the total out of 15, after the critic's fixes.\n- laughing 5/5/4 = 14. KEEP.\n- sleepy 4/5/5 = 14. KEEP. The criterion now spares the affection sick and overwhelmed cases.\n- confused 5/4/4 = 13. KEEP. The criterion no longer matches the calm quoted-text cases.\n- sheepish 5/4/4 = 13. KEEP. Its shape is now separated from flattered.\n- relieved 4/4/4 = 12. KEEP. The droop is stronger and the exhale reads.\n- proud 5/4/3 = 12. KEEP. Blurs with happy, and the fold covers it.\n- thinking 3/4/4 = 11. KEEP. Its frequency is lower now that only Eve's own turns count, but it is symmetric and no longer curious-like, and it is no risk to the calm lookups.\n- flattered 4/4/3 = 11. KEEP, first to cut.\n- encouraging 4/3/2 = 9. Not added: blurs with affection's reassurance.\n- determined, startled, unimpressed, disgusted: still CUT, for the judge's reasons.\nFinal set: 8 new labels plus 11 existing = 19 options."
+}

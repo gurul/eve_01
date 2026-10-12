@@ -289,7 +289,7 @@ The [Telegram door](docs/stackchan/telegram.md) is **off by default**. With it o
 
 ### Experimental
 
-- **Live expressions.** eve picks one of eleven temporary eye expressions,
+- **Live expressions.** eve picks one of eighteen temporary eye expressions (the board's eleven plus laughing, sleepy, confused, sheepish, relieved, proud and flattered on the phone),
   including a wink, from conversation and diary text, even while speaking. Jev
   (TypeSafe's typed-decision model, one `choice` per turn, ~200 ms) picks by default;
   `EVE_EXPRESSION_BACKEND=laya` keeps the original local Laya checkpoint, which

@@ -257,8 +257,9 @@ private struct LiveFace: View {
                         levels.eveSaid("You have two meetings today: standup at ten and lunch.")
                         // eve's expression for the sentence: a different label each turn.
                         let labels = FaceExpressionLabel.allCases
-                        levels.showExpression(FaceExpressionRequest(id: UInt32(t * 10) + 1,
-                                                                    label: labels[Int(t / 9) % labels.count], ttlMs: 4000))
+                        let label = labels[Int(t / 9) % labels.count]
+                        levels.showExpression(FaceExpressionRequest(id: UInt32(t * 10) + 1, label: label,
+                                                                    ttlMs: label.style.ttlMs))
                     }
                     levels.evePCM(chunk)
                 default:
