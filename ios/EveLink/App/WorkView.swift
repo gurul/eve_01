@@ -189,9 +189,11 @@ struct WorkView: View {
             ForEach(jobs.open + jobs.finished) { j in
                 Button { job = j } label: { JobRow(job: j) }
                     .listRowBackground(Color.eveBackground)
-                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                    .contextMenu {                     // a long press: a sideways swipe changes the pane
                         if j.actions.contains(.hide) {     // a finished job: gone from Work for good
-                            Button("Delete", role: .destructive) { Task { _ = await work.act(.hide, on: j) } }
+                            Button("Delete", systemImage: "trash", role: .destructive) {
+                                Task { _ = await work.act(.hide, on: j) }
+                            }
                         }
                     }
             }

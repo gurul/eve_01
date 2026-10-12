@@ -175,14 +175,14 @@ The prompt asks; code decides (`clean_cards`, then the app's own clamps):
   composer's path. If the chat page is not ready yet (a cold start into
   Updates), the text waits and is sent when it is. If eve is still answering,
   nothing is sent, and the pane says to tap the card again when eve is done.
-- **Dismiss.** Swipe left, the context menu, or the VoiceOver action. The card
+- **Dismiss.** A long press (the context menu), or the VoiceOver action. A sideways swipe changes the pane, so cards have no swipe action. The card
   goes at once and comes back in its place if the Mac refuses. A dismiss hides
   every source the card cites for 30 days, so a later card from the same email
   or note stays away too. The pane reads the list again after every dismiss,
   so another card citing the same source goes at the same time.
 - **The source line** under the sentence wraps and is never cut short: the
   tap sends it whole, so all of it is on the card.
-- **Refresh.** Pull down. The app asks for a rebuild, then reads every 2
+- **Refresh.** Pull down, or tap the refresh button by the title (under it, "Updated 5 min ago" from the Mac's last build; a spinner while it rebuilds). The app asks for a rebuild, then reads every 2
   seconds until the Mac says it is done, for at most 60 seconds. When the pane
   opens while the Mac is already rebuilding, it reads in the background the
   same way. A spinner in the pane's bar shows while it waits.

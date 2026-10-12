@@ -64,8 +64,13 @@ screen but the controls below until there are messages.
 - **Updates** (`App/UpdatesView.swift`): cards that each read as one
   sentence, a verb chip then the rest ("**Review** your storage plan before the
   new price starts Oct 23"). A tap switches to Chat and sends exactly that
-  sentence, with a second line naming where it came from; swipe left to
-  dismiss; pull down to refresh. See [Updates](updates.md).
+  sentence, with a second line naming where it came from; long-press to
+  dismiss; pull down or tap the refresh button to refresh. See [Updates](updates.md).
+- **Swiping between panes** (owner, 2026-10-12): a sideways swipe moves one
+  pane left or right through Updates | Chat | Apps | Work (`Shared/PaneSwipe.swift`:
+  at least 70 points and twice as sideways as vertical; on the chat, a quick
+  flick on the web view). Rows in these lists have no swipe actions for that
+  reason: a finished job's Delete is a long press, as an Updates card's Dismiss.
 - **Apps** and **Work** (`App/WorkView.swift`, one plain list each). **Apps**
   is eve's controls (Music, Lights, Remote); **Work** is the chief's jobs.
   Pull down to refresh; each also refreshes when its tab opens, and both are
@@ -629,7 +634,7 @@ same one retry at a new address as the chat:
 | `GET /api/link/jobs` | `{"jobs": [card + "line", "steps_done", "needs_you", "actions"], "needs_you": n}`: open cards first, then the last 20 finished. 503 when the chief is off. |
 | `POST /api/link/jobs` | New job. Body `{"goal", "detail"?, "client_id"?}`: goal 1 to 1000 characters after trimming, detail at most 2000, client_id at most 64; a JSON object of at most 64 kB. The words are heard as an app turn, as `POST /api/link/turn` hears typed words, led by `"Take this on as a job: "` (`link_chat.JOB_LEAD`, which names no act, so it never grounds a one-way step) and the details after `"Details: "`. The brain's own `take_on` files the card, with its parse, door floor, backbrief and every chief rule; nothing in the endpoint files or approves anything. The request waits for that turn (90 s at most) and answers `{"ok": true, "job": <one card, as GET gives it>, "said": [...]}` for the card that turn's own `take_on` filed (`TelegramInlet.app_filed`, keyed by the app turn's id; a card another turn files during the wait is never returned), or `{"ok": false, "reason", "said"}` when it filed none (`said`: eve's lines on the turn, OpenUI made plain). The same `client_id` within 10 minutes waits for the first request's turn, never a second card. 503 when the chief is off or the chat is not running; 400 or 413 for a bad body. |
 | `POST /api/link/jobs/<id>/<go\|done\|drop\|raise\|happened\|didnt>` | The chief's own `approve` / `done` / `drop` / `raise_budget` / `happened` / `didnt`, and its dict: `{"ok": true, ...}` or `{"ok": false, "reason": ...}`. A Go here is the owner's yes, as "go c12" in Telegram, and may carry `{"rev": n}`. A Go on a card whose act may already have happened is refused (`ok: false`); answer `happened` or `didnt` first. |
-| `POST /api/link/jobs/<id>/hide` | A finished job leaves the Work list for good: swipe left on it, Delete in its sheet, or Clear finished in the bar. Only the list forgets it (`~/.config/eve-bridge/chat/hidden-jobs.json`); the chief's ledger keeps the card. An open job is refused (`ok: false`): Drop it first. |
+| `POST /api/link/jobs/<id>/hide` | A finished job leaves the Work list for good: long-press it, Delete in its sheet, or Clear finished in the bar. Only the list forgets it (`~/.config/eve-bridge/chat/hidden-jobs.json`); the chief's ledger keeps the card. An open job is refused (`ok: false`): Drop it first. |
 | `GET /api/link/controls` | `{"lights": [{"name", "room"?}], "spotify": bool, "firetv": bool, "memory": bool, "notes": bool, "pika": bool, "obsbot": bool}`: which of the Mini App's Lights, Music and TV remote cards, the Memory card, Notes, Pika and the camera this Mac has. |
 | `POST /api/link/controls/obsbot` | The OBSBOT webcam (`obsbot_panel.ObsbotPanel`): `{"action": "status"}`, `{"action": "hold", "dir": "up"\|"down"\|"left"\|"right", "hold"}` every 150 ms while held, `{"action": "stop", "hold"}`, `{"action": "move", "pan", "pitch"}`, `center`, `wake`, `sleep`, `{"action": "zoom", "level"}`, `{"action": "track", "on"}`, `{"action": "mode", "name"}`, `{"action": "preset", "n"}`, `close`; `{"ok", "line", ...}`. 404 when no OBSBOT camera is plugged in (and OBSBOT Center isn't installed) or `EVE_OBSBOT=0`. See [obsbot.md](obsbot.md). |
 | `GET /api/link/controls/obsbot/stream` | The webcam's picture as `multipart/x-mixed-replace` JPEGs (Pika's format), the fallback when WebRTC (`{"action": "rtc", "sdp"}` on the panel) can't connect. Any number of viewers share one capture. 503 `{"ok": false, "line"}` when the camera or the camera permission is missing. |

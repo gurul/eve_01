@@ -1119,6 +1119,18 @@ check(UpdatesAck.decode(Data(#"{"ok": true, "started": true}"#.utf8)) == Updates
 check(WorkFailure.from(status: 503, body: Data(), for: .updates).message == "eve's updates are off."
       && WorkFailure.from(status: 404, body: Data(), for: .updates).message.contains("update it on the Mac"),
       "updates failures")
+let ageNow = ISO8601DateFormatter().date(from: "2026-10-12T16:00:00Z")!
+check(UpdatesAge.label("2026-10-12T08:59:40-07:00", now: ageNow) == "Updated just now"
+      && UpdatesAge.label("2026-10-12T15:55:00Z", now: ageNow) == "Updated 5 min ago"
+      && UpdatesAge.label("2026-10-12T13:00:00Z", now: ageNow) == "Updated 3 h ago"
+      && UpdatesAge.label("2026-10-11T12:00:00Z", now: ageNow) == "Updated yesterday"
+      && UpdatesAge.label("2026-10-08T16:00:00Z", now: ageNow) == "Updated 4 days ago"
+      && UpdatesAge.label(nil, now: ageNow) == nil && UpdatesAge.label("soon", now: ageNow) == nil,
+      "updated-ago label")
+check(PaneSwipe.target(index: 1, count: 4, dx: -120, dy: 10) == 2 && PaneSwipe.target(index: 1, count: 4, dx: 120, dy: 10) == 0
+      && PaneSwipe.target(index: 0, count: 4, dx: 120, dy: 0) == nil && PaneSwipe.target(index: 3, count: 4, dx: -120, dy: 0) == nil
+      && PaneSwipe.target(index: 1, count: 4, dx: -40, dy: 0) == nil && PaneSwipe.target(index: 1, count: 4, dx: -120, dy: 80) == nil,
+      "pane swipe: sideways and far enough, within the panes")
 print("UPDATES_OK")
 
 // The phone's location (Shared/PhoneLocation.swift). Fictional points only: the null island at 0,0 and offsets from it.

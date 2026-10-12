@@ -197,6 +197,23 @@ enum UpdateDue {
 /// The list as the pane shows it, with the bookkeeping that keeps it honest when answers cross: a card dismissed here
 /// stays gone even if a read that started before the dismiss lands after it, an older read never overwrites a newer
 /// one, and a dismiss that fails puts the card back where it was.
+/// "Updated 5 min ago" over the cards, from the feed's generated_at. nil when there is no time or it cannot be read.
+enum UpdatesAge {
+    static func label(_ generatedAt: String?, now: Date = Date()) -> String? {
+        guard let s = generatedAt else { return nil }
+        let f = ISO8601DateFormatter()
+        guard let at = f.date(from: s) ?? { f.formatOptions.insert(.withFractionalSeconds); return f.date(from: s) }()
+        else { return nil }
+        let mins = Int(max(0, now.timeIntervalSince(at)) / 60)
+        switch mins {
+        case 0: return "Updated just now"
+        case 1..<60: return "Updated \(mins) min ago"
+        case 60..<1440: return "Updated \(mins / 60) h ago"
+        default: return mins < 2880 ? "Updated yesterday" : "Updated \(mins / 1440) days ago"
+        }
+    }
+}
+
 struct UpdatesList: Equatable, Sendable {
     private(set) var cards: [UpdateCard]?
     private(set) var generatedAt: String?
