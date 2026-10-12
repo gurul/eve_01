@@ -10,6 +10,7 @@
 //                                        a Go sends {"rev": n}, the card's revision the sheet showed; their dict back
 //   GET  /api/link/apps                  {"apps": [{"slug", "name", "updated"}]}; 503 when the app builder is off
 //   POST /api/link/apps/<slug>/open      {"url": "<tunnel origin>/apps/<slug>/?t=<app token>"}; 404 for no such app
+//   /api/link/sessions…                  the Work tab's Claude Code sessions: WorkSessions.swift
 import Foundation
 
 /// What the owner can do to a job from the phone. The daemon lists only the ones that apply now: an act that may
@@ -370,11 +371,17 @@ final class WorkClient {
 }
 
 enum WorkFailure {
+    /// A session that is gone: its sheet stops reading it and closes the reply box.
+    static let sessionEnded = "That session has ended."
+
     /// Which half of the Work view asked: a 503 means its own part of eve is off.
-    enum Kind: Sendable { case jobs, apps, controls, updates }
+    enum Kind: Sendable { case jobs, apps, controls, updates, sessions }
 
     /// The chat's words, with the Work view's own for an off chief or app builder and an app that is gone.
     static func from(status: Int, body: Data, for kind: Kind) -> ChatFailure {
+        if kind == .sessions, let line = sessionLine(status: status, body: body) {
+            return ChatFailure(message: line, addressMayHaveMoved: false)
+        }
         switch status {
         case 503:
             let off = switch kind {
@@ -382,6 +389,7 @@ enum WorkFailure {
             case .apps: "eve's app builder is off."
             case .controls: "eve's controls are off."
             case .updates: "eve's updates are off."
+            case .sessions: "eve's Work sessions are off."
             }
             return ChatFailure(message: off, addressMayHaveMoved: false)
         case 404 where kind == .controls:
@@ -394,6 +402,21 @@ enum WorkFailure {
             return ChatFailure(message: "This eve has no Updates yet: update it on the Mac.", addressMayHaveMoved: false)
         case 404: return ChatFailure(message: "That isn't there any more.", addressMayHaveMoved: false)
         default: return ChatFailure.from(status: status, body: body)
+        }
+    }
+
+    /// A session route's own words: its "reason" for a refused task, an ended session (409) or a terminal that
+    /// would not open (503); an ended or unknown session's 404. nil leaves the status to the shared words above.
+    /// An ended session's 409 carries "code": "ended"; it reads as `sessionEnded`, so the sheet can tell.
+    static func sessionLine(status: Int, body: Data) -> String? {
+        let obj = (try? JSONSerialization.jsonObject(with: body)) as? [String: Any]
+        let reason = (obj?["reason"] as? String).flatMap { $0.isEmpty ? nil : $0 }
+        if status == 409, obj?["code"] as? String == "ended" { return sessionEnded }
+        switch status {
+        case 400, 409: return reason ?? (status == 409 ? sessionEnded : "eve refused that.")
+        case 503: return reason ?? "eve's Work sessions are off."
+        case 404: return sessionEnded
+        default: return nil
         }
     }
 }

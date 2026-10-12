@@ -334,6 +334,7 @@ TASK_FAILED_TITLE = "Task failed"
 TASK_ASKS_TITLE = "The task asks"
 APP_ASKS_TITLE = "Before I do that"
 GATE_TITLE = "Check first"             # the taint gate's question (tool_gate.py, _gate)
+SESSION_TITLE = "from Claude in Work"  # appended to the title of a question a Work session's tool call asks
 CLAUDE_TITLE = "Claude"
 CLAUDE_ASKS_TITLE = "Claude asks"
 CLAUDE_WAITS_TITLE = "Claude is waiting on you"
@@ -1207,6 +1208,12 @@ _FROM_APP: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar("teleg
 # The speed dial's grade of the app turn the work running now began on (GRADES), set by hear(grade=…) beside
 # _FROM_APP; "auto" for everything else, which is the chat exactly as it was.
 _APP_GRADE: contextvars.ContextVar[str] = contextvars.ContextVar("telegram_app_grade", default="auto")
+# A Work session's tool call running now (session_call, eve_mcp.py, docs/work-sessions.md): ``{"sid", "unanswered"}``,
+# None for everything else. While it is set, the call counts as having read outside text (SESSION_READ) without
+# touching the chat turn's own ``_taint``, the owner's questions say they come from a Work session, and a question
+# that times out is reported as unanswered. A ContextVar for the same reason as _FROM_APP.
+_SESSION: contextvars.ContextVar[Optional[dict[str, Any]]] = contextvars.ContextVar("telegram_work_session",
+                                                                                     default=None)
 
 
 def graded(payload: dict[str, Any], config: TelegramConfig, grade: str) -> dict[str, Any]:
@@ -1648,6 +1655,21 @@ class _QuestionWaiting(Exception):
 
 QUESTION_WAITING_REASON = ("another question is waiting for the owner; nothing was asked and nothing was done. Tell "
                            "the owner to answer that question first, then try again.")
+
+# A Work session's tool calls (session_tools, session_call; eve_mcp.py, docs/work-sessions.md). A session reads repos
+# and the web, so every call it makes counts as coming after outside text: the gate's question names this as the read.
+SESSION_READ = "what a Claude Code session wrote"
+# Tools the chat offers that a session does not get: the ones that steer eve's own chat or relays, pair the phone, or
+# start, steer or stop a computer task on the Mac's screen (a session already runs on the Mac), and the / menu's
+# hand-offs, whose result is a message to the owner's chat that ends the chat's turn.
+SESSION_HIDDEN: frozenset[str] = frozenset({
+    "claude_relay", "codex_relay", "start_coding_session", "set_stealth", "pair_eve_link",
+    "start_task", "steer_task", "stop_task",
+}) | menu_tools.HANDS_OFF
+SESSION_NOT_OFFERED = ("not run: that is not one of eve's tools for a Work session. tools/list has every tool a "
+                       "session may call.")
+SESSION_NO_CHAT = "not run: eve's chat isn't running, or no owner has texted it yet, so nobody can be asked."
+OWNER_NO_ANSWER = "the owner did not answer, so it did not run. Do not try it again unless the owner asks."
 
 # A Mac task that sends email, while Gmail is up and may send: refused before the gate asks, so the model sends it
 # with Gmail's own tool, which shows the owner the whole email (apps_mcp.WHOLE_ASKS). On 2026-10-09 "Email me a test
@@ -5225,48 +5247,12 @@ class TelegramInlet:
         # offer (review, 2026-10-05; the owner's rule: no name in a prompt that is not offered).
         lend_blocks = not routed and not (self._daily and not warm)
         opened, lent = (set(), set()) if warm and routed else (self._direct_open, self._lent)
-        app_tools = self._app_tools(opened, lent, routed)
-        loc_tools = phone_location.tools()          # once a turn: the phone's location, while it has shared one
-        sci_tools = science_search.tools()          # papers' titles and abstracts, while EVE_SCIENCE_SEARCH is on
-        allowed = {t["name"] for t in app_tools} | {t["name"] for t in mem_tools} | (
-            set(second_brain.SECOND_BRAIN_TOOL_NAMES) if self._vault is not None else set()) | (
-            set(watch.TOOL_NAMES) if self._watcher is not None else set()) | (
-            set(meet.TOOL_NAMES) if self._meeter is not None else set()) | (
-            set(lights.TOOL_NAMES) if self._lights is not None else set()) | (
-            set(spotify.TOOL_NAMES) if self._spotify is not None else set()) | (
-            set(firetv.TOOL_NAMES) if self._firetv is not None else set()) | (
-            set(obsbot_panel.TOOL_NAMES) if self._obsbot is not None else set()) | (
-            {str(t["name"]) for t in loc_tools}) | (
-            {str(t["name"]) for t in sci_tools}) | (
-            set(canvas.TOOL_NAMES) if self._canvas is not None else set()) | (
-            set(agentcard_mod.TOOL_NAMES) if self._agentcard is not None else set()) | (
-            set(america.TOOL_NAMES) if self._america is not None else set()) | (
-            set(opentable.TOOL_NAMES) if self._opentable_enabled else set()) | (
-            set(share.TOOL_NAMES) if self._share is not None else set()) | (
-            set(chief_mod.TOOL_NAMES) if self.chief is not None else set()) | (
-            {RECENT_MESSAGES_TOOL["name"]} if self._chat_log is not None else set()) | {
-            str(t["name"]) for t in self._menu_tools()}
+        lists = self._tool_lists(opened, lent, routed)
+        app_tools, watch_tools = lists["app_tools"], lists["watch_tools"]
         # a direct app's tool that this turn did not open is still the bridge's to answer (AllowedNames); with the
         # router on, so is a Composio tool while the workspace is closed (_tool opens it and runs the call)
-        allowed = AllowedNames(allowed, self._routed_owns if routed else
+        allowed = AllowedNames(lists["allowed"], self._routed_owns if routed else
                                getattr(self._direct, "owns", None) if self._direct is not None else None)
-        # Optional shared chat/call services contribute their tools and instructions here:
-        # all ride one slot (the chief's enums and block name only its live steps and checks, chief.tools)
-        watch_tools = self._menu_tools() + (self._watcher.tools() if self._watcher is not None else []) + (
-            self._meeter.tools() if self._meeter is not None else []) + (
-            self._lights.tools() if self._lights is not None else []) + (
-            self._spotify.tools() if self._spotify is not None else []) + (
-            self._firetv.tools() if self._firetv is not None else []) + (
-            self._obsbot.tools() if self._obsbot is not None else []) + (
-            loc_tools) + (
-            sci_tools) + (
-            self._canvas.tools() if self._canvas is not None else []) + (
-            self._agentcard.tools() if self._agentcard is not None else []) + (
-            self._america.tools() if self._america is not None else []) + (
-            opentable.tools(wide=menu_tools.enabled()) if self._opentable_enabled else []) + (
-            # routed: Share's tools are a lent toolset, last in the list (_app_tools)
-            self._share.tools() if self._share is not None and not routed else []) + (
-            chief_mod.tools(self.chief.live) if self.chief is not None else [])
         # a rundown offers only its read tools (rundown.tools), so events_search's line and the tool-choice lines
         # ride every other turn; each line names only tools this turn offers (intent_block)
         everyday = not (self._daily and not warm)
@@ -5305,10 +5291,112 @@ class TelegramInlet:
                  "memory_tools": mem_tools, "watch_tools": watch_tools, "watch_block": watch_block,
                  "direct_apps": self._direct_up(),
                  "recall": recall_line(self._chat_log is not None, self._memory is not None),
-                 "chat_tools": [RECENT_MESSAGES_TOOL] if self._chat_log is not None else []}
+                 "chat_tools": lists["chat_tools"]}
         if routed:
             parts["lent_block"] = self._lent_block(lent)
         return parts, allowed, app_tools
+
+    def _tool_lists(self, opened: set[str], lent: set[str], routed: bool) -> dict[str, Any]:
+        """The tool lists one turn offers, and their callable names: what ``_turn_parts`` sends and what a Work
+        session's eve MCP server offers (``session_tools``), built in one place so the two cannot drift
+        (docs/work-sessions.md). ``allowed`` is a plain set here; ``_turn_parts`` wraps it in AllowedNames."""
+        mem_tools = self._memory_tools()
+        app_tools = self._app_tools(opened, lent, routed)
+        loc_tools = phone_location.tools()          # once a turn: the phone's location, while it has shared one
+        sci_tools = science_search.tools()          # papers' titles and abstracts, while EVE_SCIENCE_SEARCH is on
+        allowed = {t["name"] for t in app_tools} | {t["name"] for t in mem_tools} | (
+            set(second_brain.SECOND_BRAIN_TOOL_NAMES) if self._vault is not None else set()) | (
+            set(watch.TOOL_NAMES) if self._watcher is not None else set()) | (
+            set(meet.TOOL_NAMES) if self._meeter is not None else set()) | (
+            set(lights.TOOL_NAMES) if self._lights is not None else set()) | (
+            set(spotify.TOOL_NAMES) if self._spotify is not None else set()) | (
+            set(firetv.TOOL_NAMES) if self._firetv is not None else set()) | (
+            set(obsbot_panel.TOOL_NAMES) if self._obsbot is not None else set()) | (
+            {str(t["name"]) for t in loc_tools}) | (
+            {str(t["name"]) for t in sci_tools}) | (
+            set(canvas.TOOL_NAMES) if self._canvas is not None else set()) | (
+            set(agentcard_mod.TOOL_NAMES) if self._agentcard is not None else set()) | (
+            set(america.TOOL_NAMES) if self._america is not None else set()) | (
+            set(opentable.TOOL_NAMES) if self._opentable_enabled else set()) | (
+            set(share.TOOL_NAMES) if self._share is not None else set()) | (
+            set(chief_mod.TOOL_NAMES) if self.chief is not None else set()) | (
+            {RECENT_MESSAGES_TOOL["name"]} if self._chat_log is not None else set()) | {
+            str(t["name"]) for t in self._menu_tools()}
+        # Optional shared chat/call services contribute their tools and instructions here:
+        # all ride one slot (the chief's enums and block name only its live steps and checks, chief.tools)
+        watch_tools = self._menu_tools() + (self._watcher.tools() if self._watcher is not None else []) + (
+            self._meeter.tools() if self._meeter is not None else []) + (
+            self._lights.tools() if self._lights is not None else []) + (
+            self._spotify.tools() if self._spotify is not None else []) + (
+            self._firetv.tools() if self._firetv is not None else []) + (
+            self._obsbot.tools() if self._obsbot is not None else []) + (
+            loc_tools) + (
+            sci_tools) + (
+            self._canvas.tools() if self._canvas is not None else []) + (
+            self._agentcard.tools() if self._agentcard is not None else []) + (
+            self._america.tools() if self._america is not None else []) + (
+            opentable.tools(wide=menu_tools.enabled()) if self._opentable_enabled else []) + (
+            # routed: Share's tools are a lent toolset, last in the list (_app_tools)
+            self._share.tools() if self._share is not None and not routed else []) + (
+            chief_mod.tools(self.chief.live) if self.chief is not None else [])
+        return {"memory_tools": mem_tools, "app_tools": app_tools, "watch_tools": watch_tools, "allowed": allowed,
+                "chat_tools": [RECENT_MESSAGES_TOOL] if self._chat_log is not None else []}
+
+    # -- a Work session's tools (eve_mcp.py, docs/work-sessions.md) --
+    def session_tools(self) -> tuple[list[dict[str, Any]], set[str]]:
+        """The tools a Work session's eve MCP server offers, and their names: the chat brain's own lists
+        (``_tool_lists``) as an unrouted turn with every up direct app opened offers them, less SESSION_HIDDEN and
+        any tool that is not a plain function (the hosted web search has no MCP form). Never a second copy: a
+        tool that comes or goes for the chat comes or goes here on the next tools/list."""
+        lists = self._tool_lists(set(self._direct_up()), set(), routed=False)
+        offered = tools_for(self.config, lists["memory_tools"], lists["app_tools"], self._vault is not None,
+                            lists["watch_tools"], lists["chat_tools"])
+        out: list[dict[str, Any]] = []
+        seen: set[str] = set()
+        for t in offered:
+            name = t.get("name") if isinstance(t, dict) else None
+            if t.get("type") != "function" or not isinstance(name, str) or not name:
+                continue
+            if name in SESSION_HIDDEN or name in seen:
+                continue
+            seen.add(name)
+            out.append(t)
+        return out, seen
+
+    async def session_call(self, name: str, args: Any, *, sid: str) -> tuple[dict[str, Any], str]:
+        """One tool call from a Work session → (its result, the outside source it read, or ""). The call takes the
+        chat's own path: a name the session was not offered is refused; ``tool_gate.needs_confirmation`` with
+        SESSION_READ as the read (so recording, joining and answering ask, as after any read), then ``_gate``,
+        which asks the owner on the phone and waits (``_ask_user``, ``config.ask_timeout_secs``); then ``_tool``,
+        where the apps' own policies ask for their consequential writes, purchases and shares as in the chat.
+        A question nobody answers ends as OWNER_NO_ANSWER. The chat turn's ``_taint`` is never read or written
+        here. Known side effect: a direct app the call names is opened for the chat's next turn too
+        (``_direct_tool``'s ensure_open), as a call from the chat would."""
+        chat_id = self._chat_id
+        if chat_id is None:
+            return {"ok": False, "reason": SESSION_NO_CHAT}, ""
+        _, allowed = self.session_tools()
+        if not isinstance(name, str) or name not in allowed:
+            log.info("telegram: work session %s: refused a name it was not offered", sid[:8])
+            return {"ok": False, "reason": SESSION_NOT_OFFERED}, ""
+        args = dict(args) if isinstance(args, dict) else {}
+        session: dict[str, Any] = {"sid": sid, "unanswered": False}
+        token = _SESSION.set(session)
+        try:
+            if tool_gate.needs_confirmation(name, args, SESSION_READ):
+                result = await self._gate(name, args, chat_id, read=SESSION_READ) or await self._tool(
+                    name, args, chat_id)
+            else:
+                result = await self._tool(name, args, chat_id)
+        finally:
+            _SESSION.reset(token)
+        if not isinstance(result, dict):
+            result = {"ok": True, "result": result}
+        if session["unanswered"] and result.get("ok") is False:
+            result = {"ok": False, "reason": OWNER_NO_ANSWER}
+        outside = tool_gate.source(name) if tool_gate.taints(name, args) else ""
+        log.info("telegram: work session %s: %s %s", sid[:8], name, "ok" if result.get("ok", True) else "not ok")
+        return result, outside
 
     # -- the always-carried toolsets (toolset_router.ALWAYS, 2026-10-08) --
     def _menu_tools(self) -> list[dict[str, Any]]:
@@ -6500,6 +6588,11 @@ class TelegramInlet:
             log.warning("telegram: the apps' tools are unavailable (%s)", type(e).__name__)
             return out
 
+    def _read_now(self) -> str:
+        """What the work running now has read from outside eve: a Work session's tool call counts as having read
+        what the session wrote (SESSION_READ, ``_SESSION``); anything else is the chat turn's own ``_taint``."""
+        return SESSION_READ if _SESSION.get() is not None else self._taint
+
     def _direct_up(self) -> list[str]:
         """The direct apps that are up now (apps_mcp.AppsBridge.apps); none before the bridge has started."""
         if self._direct is None or not getattr(self._direct, "started", False):
@@ -6537,7 +6630,7 @@ class TelegramInlet:
                 log.info("telegram: apps: %s refused unasked (too long to show whole)", name)
                 return dict(tool_gate.TOO_LONG)
             answer = await self._ask_user(question, chat_id, title=APP_ASKS_TITLE, choices=ALLOW_DENY, firm=True,
-                                          outside=bool(self._taint))
+                                          outside=bool(self._read_now()))
             if consent.bare_decision(answer) != "allow":
                 return {"ok": False, "reason": "the owner said no; do not retry it"}
         return await asyncio.to_thread(self._direct.execute, name, args)
@@ -6572,14 +6665,16 @@ class TelegramInlet:
                 return {"ok": False, "reason": QUESTION_WAITING_REASON}
         return await self._share.handle(name, args)
 
-    async def _gate(self, name: str, args: dict[str, Any], chat_id: int) -> Optional[dict[str, Any]]:
+    async def _gate(self, name: str, args: dict[str, Any], chat_id: int,
+                    read: Optional[str] = None) -> Optional[dict[str, Any]]:
         """The taint gate's question (tool_gate.py): None when the owner said yes and the call may run, else the
         call's result. Firm (only a bare yes or a tap answers it, relay or not), asked only while no other question
         waits (as _ask_alone: a yes meant for another question must not approve this one). The history gets a
-        neutral line in place of the question, so no words from the read become eve's own."""
+        neutral line in place of the question, so no words from the read become eve's own. ``read``: what was read
+        before the call (a Work session passes SESSION_READ); by default the turn's own taint (``_read_now``)."""
         if self._live_question() is not None:
             return {"ok": False, "reason": QUESTION_WAITING_REASON}
-        read = self._taint or "your request"
+        read = read or self._read_now() or "your request"
         asked = tool_gate.question(name, args, read)
         if asked is None:
             # too long to show whole: the owner is never asked to approve words they cannot read (tool_gate.py)
@@ -6628,7 +6723,7 @@ class TelegramInlet:
                 log.info("telegram: apps: %s refused unasked (too long to show whole)", name)
                 return dict(tool_gate.TOO_LONG)
             answer = await self._ask_user(question, chat_id, title=APP_ASKS_TITLE, choices=ALLOW_DENY, firm=True,
-                                          outside=bool(self._taint))
+                                          outside=bool(self._read_now()))
             if consent.bare_decision(answer) != "allow":
                 return {"ok": False, "reason": "the owner said no; do not retry it"}
         return await asyncio.to_thread(self._apps.execute, name, args)
@@ -6835,6 +6930,9 @@ class TelegramInlet:
         line is marked, so a later turn that shows it starts tainted (tool_gate.py; v3 safety review)."""
         loop = asyncio.get_running_loop()
         future = loop.create_future()
+        session = _SESSION.get()
+        if session is not None:
+            title = f"{title} ({SESSION_TITLE})"     # the owner sees the question is a Work session's, not the chat's
         choices = tuple(answer_choices(question) if choices is None else choices)
         # A free question: any next message answers it.
         asked = self._open_question(future, chat_id, strict=bool(choices), words=frozenset(c.value for c in choices),
@@ -6874,6 +6972,8 @@ class TelegramInlet:
             raise
         except asyncio.TimeoutError:
             await self._say(chat_id, UNANSWERED_LINE)
+            if session is not None:
+                session["unanswered"] = True        # session_call reports OWNER_NO_ANSWER, not a plain refusal
             return f"no (no answer within {int(self.config.ask_timeout_secs)} seconds)"
         finally:
             self._close_question(asked)

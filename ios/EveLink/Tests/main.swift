@@ -1403,5 +1403,139 @@ check(expressionMessage(#"{"type":"expression","id":3,"label":"laughing"}"#)?.tt
       && boardLabels.allSatisfy { expressionMessage(#"{"type":"expression","id":3,"label":"\#($0.rawValue)"}"#)?.ttl == 4 },
       "no ttl: the label's own (laughing 3 s, sleepy 5 s), the board's eleven 4 s")
 print("EXPRESSIONS_OK")
+// ---- Work sessions (Shared/WorkSessions.swift, docs/work-sessions.md) ----------------------------------------------
+let sid1 = "0b6f3c1e-2a4d-4f6a-9c1b-1234567890ab"
+let sid2 = "9e8d7c6b-5a49-4382-a1b0-fedcba987654"
+let sessionsJSON = """
+{"ok": true, "folder": "work", "sessions": [
+  {"id": "\(sid1)", "folder": "work", "title": "Fix the flaky upload test", "state": "working",
+   "last_activity": 1000, "last_line": "Running the suite\\n  again", "from_work": true, "can_reply": true, "can_stop": true},
+  {"id": "\(sid2)", "folder": "eve", "title": "", "state": "waiting", "last_activity": 900,
+   "last_line": "Shall I push?", "from_work": false},
+  {"id": "aaaa", "state": "idle", "last_activity": 1200},
+  {"id": "bbbb", "state": "thinking-hard", "last_activity": 1100},
+  {"id": "", "state": "idle"},
+  {"title": "no id"},
+  {"id": "\(sid1)", "state": "idle"}
+]}
+"""
+let sessionList = WorkSessionList.decode(Data(sessionsJSON.utf8))
+check(sessionList?.folder == "work" && sessionList?.sessions.count == 4, "sessions: no id and a repeated id left out")
+check(sessionList?.sessions.map(\.id) == [sid2, sid1, "aaaa", "bbbb"],
+      "sessions: waiting first, then working, then idle newest first")
+check(sessionList?.waiting == 1, "one session waits on the owner")
+let s1 = sessionList?.sessions.first { $0.id == sid1 }
+check(s1?.state == .working && s1?.title == "Fix the flaky upload test" && s1?.lastLine == "Running the suite again"
+      && s1?.lastActivity == Date(timeIntervalSince1970: 1000) && s1?.fromWork == true && s1?.canReply == true
+      && s1?.canStop == true && s1?.headline == "Fix the flaky upload test" && s1?.subline == "Running the suite again",
+      "a Work session decodes, its last line on one line")
+let s2 = sessionList?.sessions.first { $0.id == sid2 }
+check(s2?.state == .waiting && s2?.headline == "Shall I push?" && s2?.subline == "" && s2?.canReply == false
+      && s2?.canStop == false && s2?.fromWork == false, "a session eve didn't start: read-only, its last line the headline")
+check(sessionList?.sessions.first { $0.id == "bbbb" }?.state == .idle, "an unknown state reads as idle")
+check(sessionList?.sessions.first { $0.id == "aaaa" }?.headline == "Claude Code", "nothing to show: a plain name")
+check(WorkSessionList.decode(Data("[]".utf8)) == nil && WorkSessionList.decode(Data("nope".utf8)) == nil
+      && WorkSessionList.decode(Data(#"{"ok": true, "sessions": []}"#.utf8))?.sessions == [], "bad payloads are nil")
+let longTitle = WorkSession(json: ["id": "x", "title": String(repeating: "t", count: 300),
+                                   "last_line": String(repeating: "l", count: 900), "last_activity": -5])
+check(longTitle?.title.count == WorkSession.maxTitle && longTitle?.lastLine.count == WorkSession.maxLine
+      && longTitle?.lastActivity == nil, "texts clipped to the contract; no time for a bad one")
+check(WorkSessionState.allCases.map(\.label) == ["Starting", "Working", "Waiting on you", "Idle", "Ended"],
+      "the state chips")
+check(WorkSessionState.waiting.rank < WorkSessionState.working.rank && WorkSessionState.working.rank
+      == WorkSessionState.starting.rank && WorkSessionState.working.rank < WorkSessionState.idle.rank
+      && !WorkSessionState.ended.live && WorkSessionState.idle.live, "the state order: waiting, working, idle")
+let agoNow = Date(timeIntervalSince1970: 100_000)
+check(WorkSession.ago(Date(timeIntervalSince1970: 99_990), now: agoNow) == "just now"
+      && WorkSession.ago(Date(timeIntervalSince1970: 99_700), now: agoNow) == "5 min ago"
+      && WorkSession.ago(Date(timeIntervalSince1970: 92_000), now: agoNow) == "2 h ago"
+      && WorkSession.ago(Date(timeIntervalSince1970: 10_000), now: agoNow) == "1 d ago"
+      && WorkSession.ago(Date(timeIntervalSince1970: 100_500), now: agoNow) == "just now"
+      && WorkSession.ago(nil, now: agoNow) == "", "the row's last activity")
+
+let detailJSON = """
+{"ok": true, "session": {"id": "\(sid1)", "folder": "work", "title": "Fix it", "state": "waiting", "can_reply": true},
+ "turns": [{"role": "owner", "text": "Fix the flaky upload test", "at": 900},
+           {"role": "claude", "text": "\(String(repeating: "c", count: 2500))", "at": 950},
+           {"role": "tool", "text": "ls"}, {"role": "claude", "text": "   "}, {"role": "claude"},
+           {"role": "claude", "text": "Done. Shall I push?"}],
+ "cut": true}
+"""
+let detail = WorkSessionDetail.decode(Data(detailJSON.utf8))
+check(detail?.session.id == sid1 && detail?.session.state == .waiting && detail?.cut == true, "a session's detail")
+check(detail?.turns.map(\.role) == [.owner, .claude, .claude] && detail?.turns.map(\.id) == [0, 1, 2],
+      "turns: unknown roles and empty texts left out, numbered in order")
+check(detail?.turns[1].text.count == WorkSessionTurn.maxText && detail?.turns[0].at == Date(timeIntervalSince1970: 900)
+      && detail?.turns[2].at == nil && detail?.turns[2].text == "Done. Shall I push?", "turn texts clipped, times kept")
+check(WorkSessionDetail.decode(Data(#"{"ok": true, "turns": []}"#.utf8)) == nil
+      && WorkSessionDetail.decode(Data(#"{"ok": true, "session": {"id": "x"}}"#.utf8))?.turns == []
+      && WorkSessionDetail.decode(Data(#"{"ok": true, "session": {"id": "x"}}"#.utf8))?.cut == false,
+      "a detail without a session is nil; without turns, empty")
+check(WorkSessionDetail.decode(Data(#"{"ok": true, "session": {"id": "x", "state": "ended"}, "ended": true}"#.utf8))?.session.state == .ended
+      && WorkSessionDetail.decode(Data(#"{"ok": true, "session": {"id": "x", "state": "idle"}, "ended": true}"#.utf8))?.session.state == .ended
+      && WorkSessionDetail.decode(Data(#"{"ok": true, "session": {"id": "x", "state": "idle"}, "ended": false}"#.utf8))?.session.state == .idle,
+      "an ended session's detail reads as ended (its state or the ended flag)")
+
+let sessionStarted = WorkSessionStart.decode(Data(#"{"ok": true, "session": {"id": "\#(sid1)", "state": "starting"}}"#.utf8))
+check(sessionStarted.session?.state == .starting && sessionStarted.reason == nil, "a start answers the new session")
+check(WorkSessionStart.decode(Data(#"{"ok": false, "reason": "the terminal didn't open"}"#.utf8))
+      == WorkSessionStart(session: nil, reason: "the terminal didn't open")
+      && WorkSessionStart.decode(Data(#"{"ok": true}"#.utf8)).reason == "eve didn't start a session."
+      && WorkSessionStart.decode(Data("x".utf8)).session == nil, "a start without a session says why")
+
+let listReq = WorkSessionRequests.list(ep)
+check(listReq.httpMethod == "GET" && listReq.url?.absoluteString == "https://a-b.trycloudflare.com/api/link/sessions"
+      && listReq.value(forHTTPHeaderField: "Authorization") == "Bearer " + ep.token
+      && listReq.value(forHTTPHeaderField: "Origin") == nil && listReq.httpBody == nil, "the sessions request")
+let task = "  Fix the flaky upload test; don't push.\n\"quoted\" $(rm -rf ~) `x`  "
+let startSessionReq = WorkSessionRequests.start(ep, task: task, clientID: "ws-1")
+let startSessionBody = (try? JSONSerialization.jsonObject(with: startSessionReq.httpBody ?? Data())) as? [String: String]
+check(startSessionReq.httpMethod == "POST" && startSessionReq.url?.path == "/api/link/sessions/start"
+      && startSessionReq.value(forHTTPHeaderField: "Content-Type") == "application/json"
+      && startSessionReq.value(forHTTPHeaderField: "Authorization") == "Bearer " + ep.token
+      && startSessionReq.timeoutInterval == WorkSessionRequests.startTimeout
+      && startSessionBody == ["task": "Fix the flaky upload test; don't push.\n\"quoted\" $(rm -rf ~) `x`", "client_id": "ws-1"],
+      "the start request: the task as typed, trimmed, in the JSON body only")
+check(startSessionReq.url?.absoluteString.contains("rm") == false, "the task is never in the URL")
+let longTask = WorkSessionRequests.start(ep, task: String(repeating: "t", count: 5000), clientID: String(repeating: "c", count: 99))
+let longTaskBody = (try? JSONSerialization.jsonObject(with: longTask.httpBody ?? Data())) as? [String: String]
+check(longTaskBody?["task"]?.count == WorkSessionRequests.maxTask && longTaskBody?["client_id"]?.count == 64,
+      "a task is at most 4000 characters, a client id 64")
+let detailReq = WorkSessionRequests.detail(ep, id: sid1)
+check(detailReq.httpMethod == "GET" && detailReq.url?.path == "/api/link/sessions/\(sid1)", "the detail request")
+let replyReq = WorkSessionRequests.reply(ep, id: sid1, text: " yes, push it \n")
+check(replyReq.httpMethod == "POST" && replyReq.url?.path == "/api/link/sessions/\(sid1)/reply"
+      && (try? JSONSerialization.jsonObject(with: replyReq.httpBody ?? Data())) as? [String: String] == ["text": "yes, push it"]
+      && replyReq.value(forHTTPHeaderField: "Authorization") == "Bearer " + ep.token, "the reply request")
+let longReply = WorkSessionRequests.reply(ep, id: sid1, text: String(repeating: "r", count: 4500))
+check(((try? JSONSerialization.jsonObject(with: longReply.httpBody ?? Data())) as? [String: String])?["text"]?.count
+      == WorkSessionRequests.maxReply, "a reply is at most 4000 characters")
+let stopReq = WorkSessionRequests.stop(ep, id: sid1)
+check(stopReq.httpMethod == "POST" && stopReq.url?.path == "/api/link/sessions/\(sid1)/stop"
+      && stopReq.httpBody == Data("{}".utf8), "the stop request")
+check(WorkSessionRequests.detail(ep, id: "a/../b").url?.absoluteString
+      == "https://a-b.trycloudflare.com/api/link/sessions/a%2F..%2Fb", "a / in an id is escaped, never a path")
+
+check(WorkFailure.from(status: 503, body: Data(#"{"ok": false, "error": "Work sessions are off on this Mac"}"#.utf8),
+                       for: .sessions).message == "eve's Work sessions are off.", "sessions off: 503")
+check(WorkFailure.from(status: 503, body: Data(#"{"ok": false, "reason": "the terminal didn't open"}"#.utf8),
+                       for: .sessions).message == "the terminal didn't open", "a start that failed says why")
+check(WorkFailure.from(status: 409, body: Data(#"{"ok": false, "reason": "can't reach that session's window"}"#.utf8),
+                       for: .sessions).message == "can't reach that session's window"
+      && WorkFailure.from(status: 409, body: Data(), for: .sessions).message == "That session has ended.",
+      "a reply that can't land: 409")
+check(WorkFailure.from(status: 409, body: Data(#"{"ok": false, "reason": "that session has ended", "code": "ended"}"#.utf8),
+                       for: .sessions).message == WorkFailure.sessionEnded
+      && WorkFailure.from(status: 409, body: Data(#"{"ok": false, "reason": "that session is still starting", "code": "x"}"#.utf8),
+                          for: .sessions).message == "that session is still starting",
+      "the bridge's ended 409 (code \"ended\") reads as sessionEnded, so the sheet closes its reply box")
+check(WorkFailure.from(status: 404, body: Data(), for: .sessions).message == "That session has ended."
+      && WorkFailure.from(status: 400, body: Data(#"{"ok": false, "reason": "the task is empty"}"#.utf8),
+                          for: .sessions).message == "the task is empty", "404 and 400")
+check(WorkFailure.from(status: 401, body: Data(), for: .sessions).message.hasPrefix("Eve Link's pairing is out of date")
+      && WorkFailure.from(status: 530, body: Data(), for: .sessions).addressMayHaveMoved,
+      "the shared words otherwise: 401 re-pair, 530 retried at the new address")
+check(WorkFailure.from(status: 503, body: Data(), for: .jobs).message == "eve's chief is off.", "jobs keep their words")
+print("WORK_SESSIONS_OK")
 if failures > 0 { print("\(failures) check(s) failed"); exit(1) }
 print("eve link: all checks passed")

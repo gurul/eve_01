@@ -18,11 +18,15 @@ from .learning import LESSON_ACTIONS
 
 
 def main(argv: list[str] | None = None) -> int:
+    rest = sys.argv[1:] if argv is None else list(argv)
+    if rest[:1] == ["mcp"]:
+        # eve's tools for a Work session (eve_mcp.py): before the env file, so the server holds none of its keys
+        from . import eve_mcp
+        return eve_mcp.main(rest[1:])
     # Secrets and knobs the service cannot inherit from a shell
     # (OPENAI_API_KEY, EVE_*) — read before any subcommand looks at
     # os.environ. Existing variables win; the file only fills gaps.
     load_env_file()
-    rest = sys.argv[1:] if argv is None else list(argv)
     if rest[:1] == ["lights"]:
         # everything after "lights" is the lights CLI's own (argparse's REMAINDER drops a leading --help)
         from . import lights
