@@ -2,8 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>EveKeychainGroup</key>
-	<string>$(AppIdentifierPrefix)com.github.eve-bridge.EveLink.shared</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -33,6 +31,12 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>EveKeychainGroup</key>
+	<string>$(AppIdentifierPrefix)com.github.eve-bridge.EveLink.shared</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>eve uses where your phone is to answer things like what's near you and how long to get home. It stays on your Mac. With Always, Eve Link tells eve when you have moved a good distance, even when the app is closed.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>eve uses where your phone is to answer things like what's near you and how long to get home. It stays on your Mac.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Eve Link sends what you say to eve when you hold Talk or press the Action Button, and types what you say when you tap the mic in Chat.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
@@ -47,6 +51,7 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>
+		<string>location</string>
 	</array>
 	<key>UILaunchScreen</key>
 	<dict/>

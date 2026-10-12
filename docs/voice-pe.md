@@ -191,8 +191,10 @@ Music commands work the same way. "Pause the music", "next song" or "music
 volume 40" is handled by code, and anything more ("put on something chill")
 goes to the model with the Spotify tools. See [Spotify](spotify.md).
 
-"Here" is `EVE_WEATHER_PLACE` in `~/.config/eve-bridge/env` (a
-place name), or `EVE_WEATHER_LAT` and `EVE_WEATHER_LON`. A named
+"Here" is the phone's location while Eve Link sent it in the last hour
+([phone location](phone-location.md)), else `EVE_WEATHER_PLACE` in
+`~/.config/eve-bridge/env` (a place name), or `EVE_WEATHER_LAT` and
+`EVE_WEATHER_LON`. A named
 place ("weather in Tokyo", "time in New York") is looked up with Open-Meteo's
 geocoder.
 

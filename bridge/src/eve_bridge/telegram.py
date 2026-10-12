@@ -105,6 +105,7 @@ from . import (
     menu_tools,
     obsbot_panel,
     opentable,
+    phone_location,
     quick_answers,
     rundown,
     second_brain,
@@ -5117,6 +5118,7 @@ class TelegramInlet:
         lend_blocks = not routed and not (self._daily and not warm)
         opened, lent = (set(), set()) if warm and routed else (self._direct_open, self._lent)
         app_tools = self._app_tools(opened, lent, routed)
+        loc_tools = phone_location.tools()          # once a turn: the phone's location, while it has shared one
         allowed = {t["name"] for t in app_tools} | {t["name"] for t in mem_tools} | (
             set(second_brain.SECOND_BRAIN_TOOL_NAMES) if self._vault is not None else set()) | (
             set(watch.TOOL_NAMES) if self._watcher is not None else set()) | (
@@ -5125,6 +5127,7 @@ class TelegramInlet:
             set(spotify.TOOL_NAMES) if self._spotify is not None else set()) | (
             set(firetv.TOOL_NAMES) if self._firetv is not None else set()) | (
             set(obsbot_panel.TOOL_NAMES) if self._obsbot is not None else set()) | (
+            {str(t["name"]) for t in loc_tools}) | (
             set(canvas.TOOL_NAMES) if self._canvas is not None else set()) | (
             set(agentcard_mod.TOOL_NAMES) if self._agentcard is not None else set()) | (
             set(america.TOOL_NAMES) if self._america is not None else set()) | (
@@ -5145,6 +5148,7 @@ class TelegramInlet:
             self._spotify.tools() if self._spotify is not None else []) + (
             self._firetv.tools() if self._firetv is not None else []) + (
             self._obsbot.tools() if self._obsbot is not None else []) + (
+            loc_tools) + (
             self._canvas.tools() if self._canvas is not None else []) + (
             self._agentcard.tools() if self._agentcard is not None else []) + (
             self._america.tools() if self._america is not None else []) + (
@@ -5364,6 +5368,9 @@ class TelegramInlet:
                 if self._obsbot is None:
                     return {"ok": False, "reason": obsbot_panel.OFF_REASON}
                 return await self._obsbot.handle(name, args)
+            if name in phone_location.TOOL_NAMES:
+                # the phone's latest fix (phone_location.py): a file read, no device, nothing sent anywhere
+                return await phone_location.handle(name, args)
             if name in canvas.TOOL_NAMES:
                 if self._canvas is None:
                     return {"ok": False, "reason": canvas.OFF_REASON}

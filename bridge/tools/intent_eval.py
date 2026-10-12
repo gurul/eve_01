@@ -14,7 +14,9 @@ are exactly LABELS: a capability per tool (``label``), ``ask`` and ``none`` for 
 mapped to labels (``score``). A case passes when (a) its first action maps to an acceptable label, or (b) its first
 action is a read-only lookup from PREP and its second action, made after the lookup returned a stub result
 (``prep_stub``: short and neutral, nothing of the owner's is read), maps to one. PREP is exactly list_files, the
-calendar's list/search events, Gmail's search/read threads, memory_search, watch_list, jobs_list and search_notes. A
+calendar's list/search events, Gmail's search/read threads, memory_search, watch_list, jobs_list, search_notes and
+phone_location (the phone's fix, read before "near me" or "from here" acts; it stays its own label when the
+location itself is the answer). A
 reply with no tool is ``none`` when the case's primary is ``none``, whether or not it ends in a question; on every
 other case it is ``ask`` when it ends in a question, else ``none``. A code path that answers before the model is the
 tool it runs. A case whose group is ``hard_negative`` or whose primary is ``none`` or ``ask`` is a hard negative: an
@@ -85,7 +87,7 @@ LABELS = (
     "gov_legal_lookup",
     "restaurant_booking", "events", "jobs_and_reminders", "app_builder", "calendar_read", "calendar_write",
     "email_read", "email_send", "contacts_read", "maps_directions", "github", "slack", "notion", "linear",
-    "claude_relay", "codex", "spend_report", "stealth", "stop_task", "phone_pairing", "ask", "none",
+    "claude_relay", "codex", "spend_report", "stealth", "stop_task", "phone_pairing", "phone_location", "ask", "none",
 )
 
 # The production switches (owner's Mac, 2026-10-08), set when the shell has not set them.
@@ -103,7 +105,7 @@ TOOL_LABELS: dict[str, str] = {
     "take_on": "jobs_and_reminders", "close_card": "jobs_and_reminders", "open_apps": "app_builder",
     "find_contact": "contacts_read", "claude_relay": "claude_relay", "codex_relay": "codex",
     "spend_report": "spend_report", "set_stealth": "stealth", "stop_task": "stop_task",
-    "pair_eve_link": "phone_pairing", "read_file": "mac_files_read",
+    "pair_eve_link": "phone_pairing", "read_file": "mac_files_read", "phone_location": "phone_location",
 }
 _PREFIXES = (("watch_", "price_watch"), ("meet_", "meet"), ("lights_", "lights"), ("spotify_", "music"),
              ("firetv_", "tv_control"), ("camera_", "camera_aim"))
@@ -264,7 +266,8 @@ def reply_label(text: str, primary: str = "") -> str:
 # The read-only lookups a turn may make before it acts: exactly these. A case whose first action is one of them is
 # scored on its second action, made after the lookup returned a stub (PREP_STUB).
 PREP = frozenset({"list_files", "calendar__list_events", "calendar__search_events", "gmail__search_threads",
-                  "gmail__get_thread", "memory_search", "watch_list", "jobs_list", "search_notes"})
+                  "gmail__get_thread", "memory_search", "watch_list", "jobs_list", "search_notes",
+                  "phone_location"})
 
 
 @dataclass(frozen=True)
@@ -351,6 +354,10 @@ def prep_stub(name: str, args: Mapping[str, Any], text: str) -> dict[str, Any]:
         return {"ok": True, "jobs": []}
     if name == "search_notes":
         return {"ok": True, "notes": []}
+    if name == "phone_location":
+        # the fictional fix _phone_fix stores (a city center), as the tool would read it back
+        return {"place": "San Francisco, CA", "lat": 37.7749, "lon": -122.4194, "accuracy_m": 20.0, "age_min": 0,
+                "stale": False}
     return {"ok": True}
 
 
@@ -714,6 +721,7 @@ def _environment(scratch: Path, model: str, menu: str) -> list[str]:
         "EVE_TELEGRAM": "1", "EVE_TELEGRAM_TOKEN": "0:eval", "EVE_TELEGRAM_OWNER": "1",
         "EVE_SPEND_DIR": str(scratch / "spend"), "EVE_WATCH_FILE": str(scratch / "watches.json"),
         "EVE_CHAT_LOG_FILE": str(scratch / "chat" / "log.json"),
+        "EVE_PHONE_LOCATION_FILE": str(scratch / "phone-location.json"),
     })
     for key in ("EVE_TELEGRAM_MODEL", "EVE_JEV_ROUTE", "EVE_TOOLSET_ROUTER", "EVE_OPENTABLE",
                 "EVE_CHIEF", "EVE_GRADE_ROUTER", "EVE_MENU_TOOLS"):
@@ -768,6 +776,7 @@ def _brain(scratch: Path, allow_keywords: bool) -> tuple[Any, list[str], Any]:
         share=_Lent(share.TOOLS, share.INSTRUCTIONS), memory=_Memory(), vault=SimpleNamespace(root=scratch / "vault"),
         chat_log=chat_log.ChatLog(scratch / "chat" / "log.json"), direct=direct, apps=_Workspace(),
         opentable_enabled=True, agent_factory=lambda *a, **k: None, brief=lambda: "")
+    _phone_fix()
     inlet = tg.TelegramInlet(cfg, _NoApi(), create, **lent)
     if chief.enabled():
         inlet.chief = SimpleNamespace(live=chief.LIVE, for_turn=lambda: "")
@@ -787,10 +796,23 @@ def _brain(scratch: Path, allow_keywords: bool) -> tuple[Any, list[str], Any]:
              f"chief {'on' if inlet.chief is not None else 'off'}",
              "this checkout has: " + ", ".join(f"{k} {'yes' if v else 'no'}" for k, v in have.items()),
              "lent: own tools, web_search, memory, chat log, second brain, watch, meet, lights, spotify, fire tv, "
-             "obsbot camera, "
+             "obsbot camera, phone location, "
              "america, share, opentable, chief, maker, direct apps (" + ", ".join(direct.apps) + "), workspace"]
     writes = {n for n in direct.names if "__" in n and not direct.reads(n)}
     return inlet, notes, writes
+
+
+def _phone_fix() -> None:
+    """A fictional fresh fix (a city center) in the scratch file, so the turn offers phone_location as it does on a
+    Mac whose phone shares its location. Nothing when this checkout has no phone_location."""
+    try:
+        from eve_bridge import phone_location
+    except ImportError:
+        return
+    from datetime import timezone
+
+    phone_location.store(phone_location.Fix(lat=37.7749, lon=-122.4194, accuracy_m=20.0,
+                                            at=datetime.now(timezone.utc), place="San Francisco, CA"))
 
 
 def _has(module: str) -> bool:

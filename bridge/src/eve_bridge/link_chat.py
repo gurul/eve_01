@@ -97,6 +97,10 @@ view and does all its networking natively (ios/EveLink); this module is the daem
   owner, 2026-10-11: "build in an app into eve for obsbot"): the OBSBOT webcam through OBSBOT Center's OSC, with
   hold-to-turn arrows the way Pika drives, and its picture in Pika's multipart format. Listed while OBSBOT Center
   is installed and EVE_OBSBOT isn't 0.
+* ``POST /api/link/location`` (phone_location.py; owner, 2026-10-12: "give access to live phone location through
+  app"): ``{"lat", "lon", "accuracy_m", "at", "place", "speed_mps"}``, the phone's latest fix, kept as the only one
+  (no history) for eve's ``phone_location`` tool; ``{"ok": true}``. 400 for a body that is not a fix, 403 while
+  ``EVE_PHONE_LOCATION`` is 0. A fix older than the one kept is ignored. Logged as its age and accuracy only.
 * ``GET /api/link/today`` (link_today.py, docs/widget.md): the home-screen widget's one read. What needs the owner
   and what is going (the chief's open cards and the watches), the calendar's events left today and what plays now
   (Spotify, the TV), each source within its own short limit; one that is off or fails is left out and named in
@@ -159,11 +163,12 @@ CONTROLS = ("lights", "spotify", "firetv", "memory", "notes", "pika", "obsbot") 
 PIKA_STREAM_PATH = "/api/link/controls/pika/stream"   # pika.py: the car's video, one viewer
 OBSBOT_STREAM_PATH = "/api/link/controls/obsbot/stream"   # obsbot_panel.py: the webcam's picture, one viewer
 TODAY_PATH = "/api/link/today"           # link_today.py: the home-screen widget's one read
+LOCATION_PATH = "/api/link/location"     # phone_location.py: the phone's latest fix
 # one kept upload's bytes, full size; anything after the prefix that is not 32 hex is a 404 (never a path)
 FILE_RE = re.compile(r"^/api/link/file/([^/]{0,64})$")
 PATHS = (TURN_PATH, MESSAGES_PATH, JOBS_PATH, APPS_PATH, UPLOAD_PATH, CONTROLS_PATH, TODAY_PATH, PIKA_STREAM_PATH,
-         OBSBOT_STREAM_PATH)
-POST_PATHS = (TURN_PATH, UPLOAD_PATH)
+         OBSBOT_STREAM_PATH, LOCATION_PATH)
+POST_PATHS = (TURN_PATH, UPLOAD_PATH, LOCATION_PATH)
 GRADES = ("auto", "instant", "think")    # telegram.GRADES: the speed dial
 JOB_ACTIONS = ("go", "done", "drop", "raise", "happened", "didnt", "hide")
 HIDDEN_JOBS_FILE = "~/.config/eve-bridge/chat/hidden-jobs.json"   # the finished cards the owner removed from Work
@@ -219,6 +224,7 @@ NO_CONTROL = {"lights": "eve has no lights on this computer.",
               "pika": "Pika isn't set up on this Mac (EVE_PIKA and pika.json).",
               "obsbot": "The camera is off on this Mac (no OBSBOT camera is plugged in, or EVE_OBSBOT=0)."}
 NO_MEMORY = "eve's memory is off on this Mac (EVE_MEMORY), so there is no conversation to read"
+NO_LOCATION = "phone location is off on this Mac (EVE_PHONE_LOCATION=0)"
 
 PROMPT_PATH = Path(__file__).with_name("openui_prompt.txt")
 # What an app turn's instructions end with (app_block), in this order: APP_RULE, the openui-lang reference
@@ -775,6 +781,9 @@ class LinkChat:
         if path == TODAY_PATH:
             await self._json(writer, 200, await self.today.gather(self._inlet(), apps))
             return
+        if path == LOCATION_PATH:
+            await self._location(headers, reader, writer)
+            return
         inlet = self._inlet()
         if inlet is None or getattr(inlet, "_chat_id", None) is None:
             await self._json(writer, 503, {"ok": False, "error": NO_CHAT})
@@ -1222,6 +1231,35 @@ class LinkChat:
             await self._json(writer, 400, {"ok": False, "error": "the body must be a JSON object"})
             return None
         return body
+
+    async def _location(self, headers: dict[str, str], reader: asyncio.StreamReader,
+                        writer: asyncio.StreamWriter) -> None:
+        """``POST /api/link/location``: the phone's latest fix (phone_location.py). 403 while EVE_PHONE_LOCATION is
+        off, 400 for a body that is not a fix; an older fix than the one kept is answered ok and ignored. The log
+        says the fix's age and accuracy, never where it is."""
+        from . import phone_location
+
+        if not phone_location.enabled():
+            await self._discard(reader, _length(headers))
+            await self._json(writer, 403, {"ok": False, "error": NO_LOCATION})
+            return
+        body = await self._optional_body(headers, reader, writer)
+        if body is None:
+            return
+        try:
+            fix = phone_location.parse(body)
+        except phone_location.BadFix as e:
+            await self._json(writer, 400, {"ok": False, "error": str(e)})
+            return
+        try:
+            kept = await asyncio.to_thread(phone_location.store, fix)
+        except OSError as e:
+            log.warning("link chat: the location was not kept (%s)", type(e).__name__)
+            await self._json(writer, 500, {"ok": False, "error": "the Mac could not keep the location"})
+            return
+        log.info("link chat: location %s (%s)", "updated" if kept else "ignored, not newer",
+                 phone_location.describe(fix))
+        await self._json(writer, 200, {"ok": True})
 
     async def _apps(self, apps: Any, headers: dict[str, str], writer: asyncio.StreamWriter,
                     slug: Optional[str]) -> None:

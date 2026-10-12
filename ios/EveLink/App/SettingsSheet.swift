@@ -9,6 +9,7 @@ struct SettingsSheet: View {
     @ObservedObject var log: Diag
     @ObservedObject var work: WorkModel
     @Binding var talkError: String?
+    @ObservedObject private var location = LocationSharer.shared
     @State private var pasted = ""
     @State private var pasteFailed = false
     @State private var copied = false
@@ -46,6 +47,7 @@ struct SettingsSheet: View {
                     row("Call", relay.callStatus)
                     if !relay.lastHeard.isEmpty { row("Heard", relay.lastHeard) }
                 }
+                locationSection
                 if work.controls?.memory == true {
                     Section {
                         NavigationLink {
@@ -121,6 +123,49 @@ struct SettingsSheet: View {
         }
         .presentationDragIndicator(.visible)
         .task { if work.controls == nil { await work.refreshControls() } }
+    }
+
+    /// Share location (docs/app-chat.md, "Location"): the switch, what iOS allows, when the Mac last heard.
+    private var locationSection: some View {
+        Section {
+            Toggle("Share location", isOn: Binding(get: { location.enabled }, set: { location.setEnabled($0) }))
+            row("Permission", location.permission.title + (location.approximate ? ", approximate" : ""))
+            TimelineView(.periodic(from: .now, by: 30)) { context in
+                row("Last sent", LocationAge.words(since: location.lastSent, now: context.date))
+            }
+            if location.enabled, let problem = location.problem {
+                Text(problem).font(.footnote).foregroundStyle(.orange)
+            }
+            if location.enabled {
+                switch location.permission {
+                case .notAsked:
+                    Button("Allow location") { location.askIfNeeded() }
+                        .disabled(relay.pairing == nil)
+                case .denied:
+                    Text("Location is off for Eve Link. Turn it on in Settings > Eve Link > Location.")
+                        .font(.footnote).foregroundStyle(.orange)
+                    Button("Open Settings") { location.openSettings() }
+                case .restricted:
+                    Text("This phone doesn't allow location for apps (Screen Time or a profile).")
+                        .font(.footnote).foregroundStyle(.orange)
+                case .whileUsing:
+                    Text("eve sees where you are only while Eve Link is open. Choose Always in Settings so it keeps up when the app is closed.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                    Button("Open Settings") { location.openSettings() }
+                case .always:
+                    EmptyView()
+                }
+                if location.permission.granted, location.approximate {
+                    Text("Precise Location is off, so eve only knows the area you're in. Turn it on in Settings > Eve Link > Location.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                    Button("Open Settings") { location.openSettings() }
+                }
+            }
+        } header: {
+            Text("Location")
+        } footer: {
+            Text("eve uses where your phone is to answer things like what's near you and how long to get home. It stays on your Mac: only the latest place is kept there.")
+        }
     }
 
     private func row(_ label: String, _ value: String) -> some View {

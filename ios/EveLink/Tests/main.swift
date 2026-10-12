@@ -1002,5 +1002,106 @@ net.answers["old-name.trycloudflare.com"] = (200, Data("not json".utf8))
 check(await loadToday(paired).problem == .unreachable, "an answer that makes no sense is not shown")
 try? FileManager.default.removeItem(at: cacheURL)
 print("TODAY_OK")
+
+// The phone's location (Shared/PhoneLocation.swift). Fictional points only: the null island at 0,0 and offsets from it.
+let locT0 = Date(timeIntervalSince1970: 1_800_000_000)
+check(LocationFix(lat: 0, lon: 0, accuracyM: 65, at: locT0) != nil, "a fix at 0,0 is a fix")
+check(LocationFix(lat: 91, lon: 0, accuracyM: 65, at: locT0) == nil && LocationFix(lat: 0, lon: -181, accuracyM: 65, at: locT0) == nil,
+      "off the globe refused")
+check(LocationFix(lat: .nan, lon: 0, accuracyM: 65, at: locT0) == nil && LocationFix(lat: 0, lon: .infinity, accuracyM: 65, at: locT0) == nil,
+      "non-finite refused")
+check(LocationFix(lat: 0, lon: 0, accuracyM: -1, at: locT0) == nil && LocationFix(lat: 0, lon: 0, accuracyM: 0, at: locT0) == nil,
+      "Core Location's invalid accuracy refused")
+check(LocationFix(lat: 0, lon: 0, accuracyM: 60_000, at: locT0) == nil, "a fix coarser than 50 km refused")
+check(LocationFix(lat: 0, lon: 0, accuracyM: 65, at: locT0, speedMps: -1)?.speedMps == nil, "speed -1 is no speed")
+check(LocationFix(lat: 0, lon: 0, accuracyM: 65, at: locT0, speedMps: 1.5)?.speedMps == 1.5, "a walking speed is kept")
+// 0.001 degree of latitude is ~111 m everywhere.
+let oneMilli = LocationFix.distance((0, 0), (0.001, 0))
+check(abs(oneMilli - 111.2) < 0.5, "haversine: 0.001 deg lat ~ 111 m (\(oneMilli))")
+check(LocationFix.distance((0, 179.9995), (0, -179.9995)) < 120, "the antimeridian is a short hop")
+
+// The body: every contract key, null for no place and no speed, UTC stamp.
+let fixA = LocationFix(lat: 0.0000004, lon: 0, accuracyM: 65.04, at: locT0, speedMps: nil)!
+let bodyA = PhoneLocationBody(fixA, place: "  ")
+let objA = (try? JSONSerialization.jsonObject(with: bodyA.json())) as? [String: Any] ?? [:]
+check(Set(objA.keys) == ["lat", "lon", "accuracy_m", "at", "place", "speed_mps"], "body keys are the contract's: \(objA.keys.sorted())")
+check(objA["place"] is NSNull && objA["speed_mps"] is NSNull, "place and speed_mps are null, not missing")
+check(objA["at"] as? String == "2027-01-15T08:00:00Z", "at is ISO 8601 UTC: \(objA["at"] ?? "")")
+check((objA["lat"] as? NSNumber)?.doubleValue == 0 && (objA["accuracy_m"] as? NSNumber)?.doubleValue == 65.0,
+      "coordinates to 6 decimals, accuracy to 0.1 m")
+let bodyB = PhoneLocationBody(LocationFix(lat: 0, lon: 0, accuracyM: 10, at: locT0, speedMps: 2.04)!, place: "Springfield, IL")
+let objB = (try? JSONSerialization.jsonObject(with: bodyB.json())) as? [String: Any] ?? [:]
+check(objB["place"] as? String == "Springfield, IL" && (objB["speed_mps"] as? NSNumber)?.doubleValue == 2.0, "place and speed sent")
+check(PhoneLocationBody(fixA, place: String(repeating: "x", count: 500)).place?.count == PlaceRule.maxLength, "place capped")
+check((try? JSONDecoder().decode(PhoneLocationBody.self, from: bodyB.json())) == bodyB, "the body round-trips")
+
+// The request: the link route, bearer token, JSON.
+let locEP = ChatEndpoint(base: URL(string: "https://example.invalid")!, token: String(repeating: "t", count: 32))
+let locReq = LocationRequests.post(locEP, bodyB)
+check(locReq.url?.absoluteString == "https://example.invalid/api/link/location" && locReq.httpMethod == "POST"
+      && locReq.value(forHTTPHeaderField: "Authorization") == "Bearer " + String(repeating: "t", count: 32)
+      && locReq.value(forHTTPHeaderField: "Content-Type") == "application/json" && locReq.httpBody == bodyB.json(),
+      "POST /api/link/location with the link token")
+
+// The throttle.
+func locFixAt(_ lat: Double, _ acc: Double, _ dt: TimeInterval) -> LocationFix {
+    LocationFix(lat: lat, lon: 0, accuracyM: acc, at: locT0.addingTimeInterval(dt))!
+}
+let locBase = locFixAt(0, 65, 0)
+func locThrottle(_ f: LocationFix, last: LocationFix?, nowAfter: TimeInterval? = nil, fg: Bool = true) -> LocationThrottle.Decision {
+    LocationThrottle.decide(f, last: last, now: nowAfter.map { locT0.addingTimeInterval($0) } ?? f.at.addingTimeInterval(1),
+                            foreground: fg)
+}
+check(locThrottle(locBase, last: nil) == .send(.first), "the first fix is sent")
+check(locThrottle(locBase, last: nil, nowAfter: 11 * 60) == .skip(.old), "a fix 11 min old on arrival is not live")
+check(locThrottle(locFixAt(0.002, 65, 60), last: locBase) == .send(.moved), "222 m moved: sent")
+check(locThrottle(locFixAt(0.0008, 65, 60), last: locBase) == .skip(.same), "89 m moved: not sent")
+check(locThrottle(locFixAt(0.002, 400, 60), last: locBase) == .skip(.same), "222 m inside a 400 m circle is noise")
+check(locThrottle(locFixAt(0.002, 65, 5), last: locBase) == .skip(.tooSoon), "moves 5 s apart wait for the gap")
+check(locThrottle(locFixAt(0, 65, 0), last: locBase) == .skip(.notNewer) && locThrottle(locFixAt(0.01, 65, -60), last: locBase) == .skip(.notNewer),
+      "same or older time: not sent (the Mac would ignore it)")
+check(locThrottle(locFixAt(0, 10, 60), last: locFixAt(0, 1000, 0)) == .send(.sharper), "1000 m -> 10 m: sharper, sent")
+check(locThrottle(locFixAt(0, 40, 60), last: locBase) == .skip(.same), "65 m -> 40 m is not a lot sharper")
+check(locThrottle(locFixAt(0, 65, 10 * 60), last: locBase) == .send(.refresh), "same place, 10 min later, app open: refreshed")
+check(locThrottle(locFixAt(0, 65, 10 * 60), last: locBase, fg: false) == .skip(.same), "in the background 10 min is not enough")
+check(locThrottle(locFixAt(0, 65, 30 * 60), last: locBase, fg: false) == .send(.refresh), "background: refreshed at 30 min")
+// Core Location's stale cached first fix, then a fresh one at the same spot: the fresh one goes, by its own time.
+let cachedOld = locFixAt(0, 65, -3600)
+check(locThrottle(cachedOld, last: nil, nowAfter: 0) == .skip(.old), "an hour-old cached fix is not sent")
+check(locThrottle(locFixAt(0, 65, 2), last: locFixAt(0, 65, -3600)) == .send(.refresh), "fresh fix after an old send is sent")
+
+// The place line and its cache.
+check(PlaceRule.line(name: "1 Main St", city: "Springfield, IL", accuracyM: 30) == "1 Main St, Springfield, IL", "street + city")
+check(PlaceRule.line(name: "1 Main St", city: "Springfield, IL", accuracyM: 900) == "Springfield, IL", "coarse fix: city only")
+check(PlaceRule.line(name: "Springfield", city: "Springfield, IL", accuracyM: 30) == "Springfield", "no doubled city")
+check(PlaceRule.line(name: nil, city: nil, accuracyM: 30) == nil && PlaceRule.line(name: " ", city: "", accuracyM: 900) == nil,
+      "nothing named: nil")
+let cachedPlace = PlaceRule.Cached(lat: 0, lon: 0, place: "Springfield, IL", at: locT0, accuracyM: 65)
+check(PlaceRule.reuse(cachedPlace, for: locFixAt(0.001, 65, 60)) == "Springfield, IL", "111 m away: the cached name")
+check(PlaceRule.reuse(cachedPlace, for: locFixAt(0.002, 65, 60)) == nil, "222 m away: named again")
+check(PlaceRule.reuse(nil, for: locBase) == nil, "nothing cached")
+let coarsePlace = PlaceRule.Cached(lat: 0, lon: 0, place: "Springfield, IL", at: locT0, accuracyM: 3000)
+check(PlaceRule.reuse(coarsePlace, for: locFixAt(0, 3000, 60)) == "Springfield, IL" && PlaceRule.reuse(coarsePlace, for: locFixAt(0, 30, 60)) == nil,
+      "a city name is not reused for a street-level fix")
+check(PlaceRule.mayLookUp(last: nil, now: locT0) && !PlaceRule.mayLookUp(last: locT0, now: locT0.addingTimeInterval(30))
+      && PlaceRule.mayLookUp(last: locT0, now: locT0.addingTimeInterval(60)), "one lookup a minute")
+check(PlaceRule.mayLookUp(last: locT0, now: locT0.addingTimeInterval(-5)), "a clock set back does not block lookups")
+
+// The Mac's replies.
+check(LocationReply.from(status: 200, body: Data(#"{"ok": true}"#.utf8)) == .ok, "200 ok")
+check(LocationReply.from(status: 200, body: Data("nope".utf8)) != .ok, "200 without ok is not ok")
+check(LocationReply.from(status: 403, body: Data()) == .offOnMac && LocationReply.offOnMac.problem?.contains("EVE_PHONE_LOCATION") == true,
+      "403: off on the Mac")
+check(LocationReply.from(status: 404, body: Data()) == .outdated, "404: an older eve")
+check(LocationReply.from(status: 400, body: Data()) == .rejected && LocationReply.from(status: 401, body: Data()) == .refused,
+      "400 rejected, 401 pairing")
+check(LocationReply.from(status: 530, body: Data()).addressMayHaveMoved && !LocationReply.from(status: 500, body: Data()).addressMayHaveMoved,
+      "530: the tunnel moved; 500 did not")
+check(LocationReply.ok.problem == nil, "ok has no problem line")
+check(LocationAge.words(since: nil, now: locT0) == "Not yet" && LocationAge.words(since: locT0, now: locT0.addingTimeInterval(20)) == "Just now"
+      && LocationAge.words(since: locT0, now: locT0.addingTimeInterval(4 * 60 + 5)) == "4 min ago"
+      && LocationAge.words(since: locT0, now: locT0.addingTimeInterval(2 * 3600)) == "2 h ago"
+      && LocationAge.words(since: locT0, now: locT0.addingTimeInterval(86_400 * 3)) == "3 days ago", "last sent ages")
+print("LOCATION_OK")
 if failures > 0 { print("\(failures) check(s) failed"); exit(1) }
 print("eve link: all checks passed")

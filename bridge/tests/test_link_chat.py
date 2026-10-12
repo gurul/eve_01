@@ -1601,3 +1601,152 @@ def test_a_bare_program_after_prose_is_stripped_like_the_app_draws_it() -> None:
     assert link_chat.strip_openui(text) == "Here you go:\n" + link_chat.OPENUI_PLACEHOLDER
     assert link_chat.strip_openui("root = 5 is not a program") == "root = 5 is not a program"
     assert link_chat.strip_openui("prose\nroot = Card([x])") .endswith(link_chat.OPENUI_PLACEHOLDER)
+
+
+# ---- the phone's location (phone_location.py) -------------------------------------------------------------
+
+LOCATION_FIX = {"lat": 0.0, "lon": 0.0, "accuracy_m": 15.0, "at": "", "place": "Null Island", "speed_mps": None}
+
+
+def location(minutes_ago: float = 1.0, **kw: Any) -> dict[str, Any]:
+    from datetime import timezone
+
+    out = dict(LOCATION_FIX, at=(datetime.now(timezone.utc) - timedelta(minutes=minutes_ago)).isoformat())
+    out.update(kw)
+    return out
+
+
+def test_the_phone_location_needs_the_link_token_and_no_origin(tmp_path: Path) -> None:
+    from eve_bridge import phone_location
+
+    async def go() -> None:
+        server, port, token = await serve(tmp_path, FakeInlet(store_at(tmp_path)))
+        path = link_chat.LOCATION_PATH
+        assert (await http(port, "POST", path, location()))[0] == 401                         # no token
+        assert (await http(port, "POST", path, location(), token=token[:-1]))[0] == 401        # nearly right
+        for origin in ("https://evil.example", "null"):
+            assert (await http(port, "POST", path, location(), token=token, origin=origin))[0] == 403
+        assert phone_location.load(phone_location.state_path()) is None                       # nothing was kept
+        assert (await http(port, "GET", path, token=token))[0] == 405                          # POST only
+        status, _, raw = await http(port, "POST", path, location(), token=token)               # positive control
+        assert status == 200 and json.loads(raw) == {"ok": True}
+        assert phone_location.load(phone_location.state_path()).place == "Null Island"
+        await server.close()
+
+    asyncio.run(go())
+
+
+@pytest.mark.parametrize("bad", [
+    b"", b"{not json", b"[1, 2]", location(lat=91), location(lon="0"), location(accuracy_m=-3),
+    location(at="2026-10-12T17:55:00"), location(minutes_ago=-30), location(place=5), location(speed_mps="x"),
+    {"lat": 0.0, "lon": 0.0}, location(lat=10 ** 400),          # too big for a float: a 400, not a dropped socket
+])
+def test_a_body_that_is_not_a_fix_is_a_400_and_keeps_nothing(tmp_path: Path, bad: Any) -> None:
+    from eve_bridge import phone_location
+
+    async def go() -> None:
+        server, port, token = await serve(tmp_path, FakeInlet(store_at(tmp_path)))
+        status, _, raw = await http(port, "POST", link_chat.LOCATION_PATH, bad, token=token)
+        assert status == 400 and json.loads(raw)["ok"] is False and json.loads(raw)["error"]
+        assert not phone_location.state_path().exists()
+        await server.close()
+
+    asyncio.run(go())
+
+
+def test_a_body_too_big_is_a_413(tmp_path: Path) -> None:
+    async def go() -> None:
+        server, port, token = await serve(tmp_path, FakeInlet(store_at(tmp_path)))
+        big = location(place="x" * (link_chat.MAX_BODY_BYTES + 1))
+        assert (await http(port, "POST", link_chat.LOCATION_PATH, big, token=token))[0] == 413
+        await server.close()
+
+    asyncio.run(go())
+
+
+def test_an_older_fix_is_ignored_and_the_log_never_says_where(tmp_path: Path,
+                                                              caplog: pytest.LogCaptureFixture) -> None:
+    from eve_bridge import phone_location
+
+    async def go() -> None:
+        server, port, token = await serve(tmp_path, FakeInlet(store_at(tmp_path)))
+        new = location(1, lat=37.7749, lon=-122.4194, place="San Francisco, CA")
+        assert (await http(port, "POST", link_chat.LOCATION_PATH, new, token=token))[0] == 200
+        old = location(10, lat=1.0, lon=1.0, place="Null Island")
+        status, _, raw = await http(port, "POST", link_chat.LOCATION_PATH, old, token=token)
+        assert status == 200 and json.loads(raw) == {"ok": True}
+        await server.close()
+
+    with caplog.at_level(logging.DEBUG):
+        asyncio.run(go())
+    kept = phone_location.load(phone_location.state_path())
+    assert kept is not None and (kept.lat, kept.place) == (37.7749, "San Francisco, CA")
+    said = "\n".join(r.getMessage() for r in caplog.records)
+    assert "location updated" in said and "location ignored" in said and "accuracy 15 m" in said
+    for secret in ("37.77", "122.4", "San Francisco", "Null Island", "1.0, 1.0"):
+        assert secret not in said
+
+
+def test_the_switch_off_is_a_403_and_keeps_nothing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from eve_bridge import phone_location
+
+    monkeypatch.setenv("EVE_PHONE_LOCATION", "0")
+
+    async def go() -> None:
+        server, port, token = await serve(tmp_path, FakeInlet(store_at(tmp_path)))
+        status, _, raw = await http(port, "POST", link_chat.LOCATION_PATH, location(), token=token)
+        assert status == 403 and json.loads(raw) == {"ok": False, "error": link_chat.NO_LOCATION}
+        assert (await http(port, "POST", link_chat.LOCATION_PATH, location()))[0] == 401   # the token still first
+        await server.close()
+
+    asyncio.run(go())
+    assert not phone_location.state_path().exists()
+
+
+def test_a_fix_that_cannot_be_kept_is_a_500(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from eve_bridge import phone_location
+
+    def full(*a: Any) -> bool:
+        raise OSError("disk full")
+
+    monkeypatch.setattr(phone_location, "store", full)
+
+    async def go() -> None:
+        server, port, token = await serve(tmp_path, FakeInlet(store_at(tmp_path)))
+        assert (await http(port, "POST", link_chat.LOCATION_PATH, location(), token=token))[0] == 500
+        await server.close()
+
+    asyncio.run(go())
+
+
+def test_the_location_route_needs_no_chat_running(tmp_path: Path) -> None:
+    from eve_bridge import phone_location
+
+    async def go() -> None:
+        inlet = FakeInlet(store_at(tmp_path))
+        inlet._chat_id = None                                    # the chat never started: still kept
+        server, port, token = await serve(tmp_path, inlet)
+        assert (await http(port, "POST", link_chat.LOCATION_PATH, location(), token=token))[0] == 200
+        await server.close()
+
+    asyncio.run(go())
+    assert phone_location.load(phone_location.state_path()) is not None
+
+
+def test_an_app_turn_offers_and_answers_the_phone_location_from_the_fix_it_posted(tmp_path: Path) -> None:
+    from eve_bridge import phone_location
+
+    rig, _ = real_rig(tmp_path, call("phone_location", {}), say("You're on Null Island."))
+
+    async def go() -> None:
+        server, port, token = await serve(tmp_path, rig.inlet, settle_secs=0.01)
+        assert (await http(port, "POST", link_chat.LOCATION_PATH, location(2), token=token))[0] == 200
+        status, _, body = await turn(port, token, "where am i right now", "c-loc")
+        assert status == 200 and events(body)[0] == ["You're on Null Island."]
+        await server.close()
+
+    asyncio.run(go())
+    first, second = rig.create.requests[:2]
+    assert phone_location.TOOL in first["tools"]
+    out = [json.loads(i["output"]) for i in second["input"] if i.get("type") == "function_call_output"]
+    assert out[-1]["place"] == "Null Island" and out[-1]["stale"] is False and out[-1]["age_min"] in (1, 2)

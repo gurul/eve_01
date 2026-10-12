@@ -57,8 +57,10 @@ targets:
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         NSMicrophoneUsageDescription: Eve Link sends what you say to eve when you hold Talk or press the Action Button, and types what you say when you tap the mic in Chat.
         NSSpeechRecognitionUsageDescription: Eve Link turns what you say into text in the message field when you tap the mic in Chat. Nothing is sent until you tap send.
+        NSLocationWhenInUseUsageDescription: eve uses where your phone is to answer things like what's near you and how long to get home. It stays on your Mac.
+        NSLocationAlwaysAndWhenInUseUsageDescription: eve uses where your phone is to answer things like what's near you and how long to get home. It stays on your Mac. With Always, Eve Link tells eve when you have moved a good distance, even when the app is closed.
         NSSupportsLiveActivities: true
-        UIBackgroundModes: [audio]
+        UIBackgroundModes: [audio, location]
         CFBundleURLTypes:
           - CFBundleURLName: com.github.eve-bridge.EveLink
             CFBundleURLSchemes: [evelink]
