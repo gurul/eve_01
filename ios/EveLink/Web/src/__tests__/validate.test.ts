@@ -24,6 +24,14 @@ describe("validate.mjs", () => {
     expect(p.status).toBe(1);
   }, 60_000);
 
+  it("passes a Card entry not named root and lists the warning", () => {
+    const p = run(JSON.stringify(['card = Card([h])\nh = CardHeader("Hi")']), "--batch");
+    const [r] = JSON.parse(p.stdout) as { ok: boolean; errors: string[]; warnings: string[] }[];
+    expect(r?.ok).toBe(true);
+    expect(r?.warnings.join()).toContain("no-root");
+    expect(p.status).toBe(0);
+  });
+
   it("passes one good program from stdin", () => {
     const p = run(GOOD);
     expect(p.status).toBe(0);

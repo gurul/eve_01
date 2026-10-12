@@ -16,7 +16,7 @@ This is the reference for the openui-lang block in an Eve Link reply. Inside the
 ## Component Signatures
 
 Arguments marked with ? are optional. Sub-components can be inline or referenced; prefer references for better streaming.
-Props typed `ActionExpression` accept an Action([@steps...]) expression. See the Action section for available steps (@ToAssistant, @OpenUrl).
+Props typed `ActionExpression` accept one @step, or Action([@steps...]) for several. See the Action section for available steps (@ToAssistant, @OpenUrl).
 Props marked `$binding<type>` accept a `$variable` reference for two-way binding.
 
 ### Content
@@ -66,8 +66,8 @@ FollowUpItem(text: string) — Clickable follow-up suggestion — when clicked, 
 - Use ListBlock with ListItem references for numbered lists.
 - Use FollowUpBlock with FollowUpItem references at the end of a response to suggest next actions.
 - A ListItem is clickable ONLY when given an action (5th argument); without one it is plain text.
-- Tapping a FollowUpItem sends its text to you as the owner's next message; so does tapping a ListItem whose action is Action([@ToAssistant("...")]).
-- Example: `list = ListBlock([item1, item2])` with `item1 = ListItem("Option A", "Details about A", null, null, Action([@ToAssistant("Tell me more about Option A")]))`
+- Tapping a FollowUpItem sends its text to you as the owner's next message; so does tapping a ListItem whose action is @ToAssistant("...").
+- Example: `list = ListBlock([item1, item2])` with `item1 = ListItem("Option A", "Details about A", null, null, @ToAssistant("Tell me more about Option A"))`
 
 ### Layout
 Tabs(items: TabItem[]) — Tabbed container
@@ -89,19 +89,19 @@ Card(children: (TextContent | CardHeader | Callout | ImageBlock | PieChart | Bar
 
 ## Action — Button Behavior
 
-Action([@steps...]) wires button clicks to operations. Steps are @-prefixed built-in actions. Steps execute in order.
-Buttons without an explicit Action prop automatically send their label to the assistant (equivalent to Action([@ToAssistant(label)])).
+An action wires a button click to operations. Pass one @-prefixed step bare, e.g. Button("Ask", @ToAssistant("Tell me more")). Put several steps in Action([...]), e.g. Button("Read", Action([@OpenUrl("https://example.com"), @ToAssistant("Summarize this page")])). Steps execute in order.
+Buttons without an action automatically send their label to the assistant (equivalent to @ToAssistant(label)).
 
 Available steps:
-- @ToAssistant("message") — Send a message to the assistant (for conversational buttons like "Tell me more", "Explain this")
-- @OpenUrl("https://...") — Navigate to a URL
+- @ToAssistant(message: string, context?: any) — Send a message to the assistant (for conversational buttons like "Tell me more", "Explain this"). The optional context is any value (object, array, string, number) passed to the assistant as hidden data, e.g. @ToAssistant("Show details", {orderId: 42})
+- @OpenUrl(url: string) — Navigate to a URL
 
 Example — simple nav:
 ```
-viewBtn = Button("View", Action([@OpenUrl("https://example.com")]))
+viewBtn = Button("View", @OpenUrl("https://example.com"))
 ```
 
-- Action can be assigned to a variable or inlined: go = Action([@ToAssistant("Go")]) then Button("Go", go), or Button("Go", Action([@ToAssistant("Go")])); both work
+- An action can be assigned to a variable or inlined: go = @ToAssistant("Go") then Button("Go", go), or Button("Go", @ToAssistant("Go")); both work
 
 ## Hoisting & Streaming (CRITICAL)
 
@@ -139,9 +139,9 @@ d1 = ListItem("Egg fried rice", "Leftover rice, eggs, frozen peas")
 d2 = ListItem("Pasta aglio e olio", "Spaghetti, garlic, chili, olive oil")
 d3 = ListItem("Black bean tacos", "Tortillas, beans, salsa, cheese")
 choose = Buttons([b1, b2, b3], "row")
-b1 = Button("Fried rice", Action([@ToAssistant("Give me the fried rice recipe")]), "secondary")
-b2 = Button("Pasta", Action([@ToAssistant("Give me the pasta recipe")]), "secondary")
-b3 = Button("Tacos", Action([@ToAssistant("Give me the taco recipe")]), "secondary")
+b1 = Button("Fried rice", @ToAssistant("Give me the fried rice recipe"), "secondary")
+b2 = Button("Pasta", @ToAssistant("Give me the pasta recipe"), "secondary")
+b3 = Button("Tacos", @ToAssistant("Give me the taco recipe"), "secondary")
 ```
 
 A chart from numbers the owner gave:
@@ -187,7 +187,7 @@ Before finishing, walk your output and verify:
 - Table is column-oriented: each Col holds its own data array of plain strings or numbers (never components), and every column's array must have the same length.
 - Every Form MUST have EXACTLY ONE submit Button with variant "primary" — that button validates the form; other buttons (secondary/tertiary escape hatches like "Just Surprise Me") skip validation, and there is never a reset button.
 - Validation rules ({ required: true, email: true, minLength: 8, ... }) are enforced with inline errors — use them for genuinely essential fields, but never require a free-text field where leaving it blank is meaningful.
-- Only add Buttons for real actions: form submit, @OpenUrl with a URL from a tool or the owner (never made up), or an @ToAssistant follow-up — never a button for an app action (open, download, export, edit) you cannot perform.
+- Only add Buttons for real actions: form submit, @OpenUrl with a URL from a tool or the owner (never made up), or an @ToAssistant follow-up. Never add a button for an app action (open, download, export, edit) you cannot perform.
 - Every Button label must accurately describe what clicking it does; use "primary" for the main action and "secondary"/"tertiary" only for lower-emphasis supporting actions.
 - Icon: always include the category argument — it enables fallback matching when the exact lucide name is unavailable.
 - Pass sources on Card ONLY when the answer relies on real references you actually have, and cite them inline in TextContent as [1], [2] (1-based index into sources).

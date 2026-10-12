@@ -2,6 +2,9 @@
 allowBuilds:
   '@openuidev/lang-core': false
 minimumReleaseAgeExclude:
-  - '@openuidev/lang-core@0.3.2'
-  - '@openuidev/react-lang@0.3.2'
+  - '@openuidev/devtools@0.3.0'
+  - '@openuidev/lang-core@1.0.0'
+  - '@openuidev/react-headless@0.18.0'
+  - '@openuidev/react-lang@1.0.0'
+  - '@openuidev/react-ui@0.18.0'
   - vite@8.3.4

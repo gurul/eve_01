@@ -16,6 +16,8 @@ export async function dispatchCardAction(event: ActionEvent, send: Send, busy: b
   if (busy || pending.has(send)) return "Wait for Eve to finish, then tap your choice again.";
   const human = event.humanFriendlyMessage ?? "";
   const context: unknown[] = [`User clicked: ${human}`];
+  // @ToAssistant(message, context): hidden data the card passes along with the tap
+  if (event.params?.["context"] !== undefined) context.push(event.params["context"]);
   if (event.formState) context.push(event.formState);
   pending.add(send);
   try {

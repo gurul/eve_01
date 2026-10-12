@@ -21,6 +21,13 @@ describe("card actions", () => {
     expect(ownerText(message.content)).toContain("Plan my evening");
   });
 
+  it("passes @ToAssistant's hidden context along with the tap", async () => {
+    const send = vi.fn(async (_message: { role: "user"; content: string }) => {});
+    await dispatchCardAction({ ...choice, params: { context: { orderId: 42 } } }, send, false, vi.fn());
+    const message = send.mock.calls[0]?.[0] as { role: string; content: string };
+    expect(ownerText(message.content)).toContain('{"orderId":42}');
+  });
+
   it("reports busy and suppresses rapid submissions across cards sharing the same chat", async () => {
     let finish!: () => void;
     const send = vi.fn((_message: {role: "user"; content: string}) => new Promise<void>((resolve) => { finish = resolve; }));

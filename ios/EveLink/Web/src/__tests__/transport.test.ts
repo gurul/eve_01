@@ -118,7 +118,7 @@ describe("bridge transport", () => {
   });
 
   it("a live markdown reply carries the mark OpenUI needs to show it while it streams", async () => {
-    // OpenUI 0.17.0 InterleavedTurn shows a live turn's message only when its
+    // OpenUI (react-ui 0.18.0) InterleavedTurn shows a live turn's message only when its
     // text has "```openui-lang" or a `root =` line (hasLangSyntax).
     const { posts, bridge } = setup();
     const llm = createBridgeLLM(bridge, new Ledger({ append: () => {}, lastRole: () => undefined }));

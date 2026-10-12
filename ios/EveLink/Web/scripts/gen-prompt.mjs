@@ -97,9 +97,9 @@ d1 = ListItem("Egg fried rice", "Leftover rice, eggs, frozen peas")
 d2 = ListItem("Pasta aglio e olio", "Spaghetti, garlic, chili, olive oil")
 d3 = ListItem("Black bean tacos", "Tortillas, beans, salsa, cheese")
 choose = Buttons([b1, b2, b3], "row")
-b1 = Button("Fried rice", Action([@ToAssistant("Give me the fried rice recipe")]), "secondary")
-b2 = Button("Pasta", Action([@ToAssistant("Give me the pasta recipe")]), "secondary")
-b3 = Button("Tacos", Action([@ToAssistant("Give me the taco recipe")]), "secondary")
+b1 = Button("Fried rice", @ToAssistant("Give me the fried rice recipe"), "secondary")
+b2 = Button("Pasta", @ToAssistant("Give me the pasta recipe"), "secondary")
+b3 = Button("Tacos", @ToAssistant("Give me the taco recipe"), "secondary")
 \`\`\``,
   `A chart from numbers the owner gave:
 
@@ -169,9 +169,9 @@ let prompt = generateSystemPrompt({
 }).trim();
 
 // Some of the library's text names things a program cannot write. Two syntax rules show a placeholder component
-// name; show real components instead. Three notes and a rule name actions by an older form ("continue_conversation",
-// "open_url", an action object), and one example uses a name it never defines; name the action steps this library
-// has (@ToAssistant, @OpenUrl) and write examples that parse.
+// name, and one note uses an action name it never defines; show real components and a defined action instead. The
+// ListItem note, its example and the Buttons rule speak of "the LLM" and "the user"; name the owner instead, and write
+// the example as a program.
 const REWRITES = [
   [/component calls TypeName\(arg1, arg2, \.\.\.\)/, 'component calls such as CardHeader("Title", "Subtitle")'],
   [
@@ -179,20 +179,20 @@ const REWRITES = [
     '`Buttons([yes, no], "row")` NOT `Buttons([yes, no], direction: "row")`',
   ],
   [
-    /Clicking a FollowUpItem, or a ListItem with a continue_conversation action, sends text to the LLM as a user message\./,
-    'Tapping a FollowUpItem sends its text to you as the owner\'s next message; so does tapping a ListItem whose action is Action([@ToAssistant("...")]).',
+    /Clicking a FollowUpItem, or a ListItem with a @ToAssistant action, sends text to the LLM as a user message\./,
+    'Tapping a FollowUpItem sends its text to you as the owner\'s next message; so does tapping a ListItem whose action is @ToAssistant("...").',
   ],
   [
-    /Example: list = ListBlock\(\[item1, item2\]\) {2}item1 = ListItem\("Option A", "Details about A", null, null, \{ type: "continue_conversation", context: "Option A" \}\)/,
-    'Example: `list = ListBlock([item1, item2])` with `item1 = ListItem("Option A", "Details about A", null, null, Action([@ToAssistant("Tell me more about Option A")]))`',
-  ],
-  [
-    /open_url with a URL from a tool or the user \(never fabricated\), or a continue_conversation follow-up/,
-    "@OpenUrl with a URL from a tool or the owner (never made up), or an @ToAssistant follow-up",
+    /Example: list = ListBlock\(\[item1, item2\]\) {2}item1 = ListItem\("Option A", "Details about A", null, null, @ToAssistant\("Option A"\)\)/,
+    'Example: `list = ListBlock([item1, item2])` with `item1 = ListItem("Option A", "Details about A", null, null, @ToAssistant("Tell me more about Option A"))`',
   ],
   [
     /Button\("Go", onSubmit\) and Button\("Go", Action\(\[\.\.\.\]\)\) both work/,
-    'go = Action([@ToAssistant("Go")]) then Button("Go", go), or Button("Go", Action([@ToAssistant("Go")])); both work',
+    'go = @ToAssistant("Go") then Button("Go", go), or Button("Go", @ToAssistant("Go")); both work',
+  ],
+  [
+    /a URL from a tool or the user \(never fabricated\), or a @ToAssistant follow-up\. Never add/,
+    "a URL from a tool or the owner (never made up), or an @ToAssistant follow-up. Never add",
   ],
 ];
 for (const [from, to] of REWRITES) {
@@ -221,9 +221,9 @@ for (const step of STEPS) {
 }
 const snake = [...new Set(prompt.match(/\b[a-z]+_[a-z_]+\b/g) ?? [])];
 if (snake.length) throw new Error(`the reference names identifiers no program can write: ${snake.join(", ")}`);
-if (/\{\s*type:/.test(prompt)) throw new Error("the reference writes an action as an object; use Action([@Step(...)])");
+if (/\{\s*type:/.test(prompt)) throw new Error("the reference writes an action as an object; use @Step(...), or Action([...]) for several");
 // The inline example the ListBlock note gives parses, as the examples do.
-const inline = 'root = Card([list])\nlist = ListBlock([item1, item2])\nitem1 = ListItem("Option A", "Details about A", null, null, Action([@ToAssistant("Tell me more about Option A")]))\nitem2 = ListItem("Option B")';
+const inline = 'root = Card([list])\nlist = ListBlock([item1, item2])\nitem1 = ListItem("Option A", "Details about A", null, null, @ToAssistant("Tell me more about Option A"))\nitem2 = ListItem("Option B")';
 if (!prompt.includes(inline.split("\n")[2])) throw new Error("the ListBlock note's example changed; update its check");
 {
   const r = parser.parse(inline);

@@ -10,7 +10,9 @@
 // (Card), with no validation error (an unknown component, a missing required
 // argument, too many arguments, a wrong type), no reference left undefined,
 // and no truncated input. Statements nothing reaches from root are reported
-// as `orphaned` but do not fail it: the app renders the rest.
+// as `orphaned` but do not fail it: the app renders the rest. Parser warnings
+// (a Card entry not named `root`) are reported as `warnings` and do not fail it
+// either: the app renders those too.
 //
 // Exit status: 0 when every program passes, 1 when one fails, 2 on bad usage.
 // Input is read as a stream and output is left to drain, so a batch of any size
@@ -30,16 +32,17 @@ const { createParser } = await import("@openuidev/react-lang");
 
 const parser = createParser(openuiChatLibrary.toJSONSchema(), openuiChatLibrary.root);
 
-/** One program → { ok, root, errors, orphaned }. Never throws. */
+/** One program → { ok, root, errors, warnings, orphaned }. Never throws. */
 export function check(code) {
   const text = String(code ?? "");
   let result;
   try {
     result = parser.parse(text);
   } catch (e) {
-    return { ok: false, root: null, errors: [`parse-exception: ${e instanceof Error ? e.message : String(e)}`], orphaned: [] };
+    return { ok: false, root: null, errors: [`parse-exception: ${e instanceof Error ? e.message : String(e)}`], warnings: [], orphaned: [] };
   }
   const errors = [];
+  const warnings = [];
   const meta = result.meta;
   if (!result.root) errors.push("no root: the program must define root = Card(...)");
   else if (openuiChatLibrary.root && result.root.typeName !== openuiChatLibrary.root)
@@ -47,8 +50,8 @@ export function check(code) {
   if (meta.incomplete) errors.push("incomplete: the program is cut off");
   for (const name of meta.unresolved) errors.push(`unresolved: ${name} is used but never defined`);
   // the parser's unknown-component message lists the whole catalog after " Available components:"; one line is enough
-  for (const e of meta.errors) errors.push(`${e.code}: ${e.message.split(" Available components:")[0]}`);
-  return { ok: errors.length === 0, root: result.root?.typeName ?? null, errors, orphaned: meta.orphaned };
+  for (const e of meta.errors) (e.severity === "warning" ? warnings : errors).push(`${e.code}: ${e.message.split(" Available components:")[0]}`);
+  return { ok: errors.length === 0, root: result.root?.typeName ?? null, errors, warnings, orphaned: meta.orphaned };
 }
 
 /** All of stdin, read as a stream: readFileSync(0) fails with EAGAIN on a large pipe (over the 64 KB pipe buffer). */

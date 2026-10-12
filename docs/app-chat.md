@@ -579,7 +579,7 @@ source. Forget by words, in the chat or the Memory card, is the way to remove on
   so the build moves every `:hover` rule into `@media (hover: hover)`
   (`vite.config.ts`, `hoverOnlyWithPointer`). A tapped button does not stay
   highlighted.
-- A markdown reply streams in word by word. OpenUI 0.17.0 shows a live reply
+- A markdown reply streams in word by word. OpenUI (react-ui 0.18.0) shows a live reply
   only when its text has an OpenUI Lang fence, so the page puts an empty
   ```` ```openui-lang ```` fence in front of each live reply
   (`llm.ts`, `liveMarkdownAdapter`) and the renderer drops it (`replyParts.ts`,
@@ -866,12 +866,20 @@ only the components that suit a phone chat (`CHAT_COMPONENTS`):
   buttons, a chart from numbers the owner gave, and a comparison table.
 - The two syntax rules that show a placeholder component name now show real
   components.
-- The library's notes name actions in an older form ("continue_conversation",
-  "open_url", an action object) and one example uses a name it never defines.
-  Those are rewritten to the two action steps the library has, `@ToAssistant`
-  and `@OpenUrl`. The script stops with an error if the reference names any
-  other step, a snake_case identifier or an action object, and it parses the
-  ListBlock note's inline example.
+- The app is on OpenUI Lang 1.0 (react-lang 1.0.0, react-ui 0.18.0). One
+  action step goes bare, `Button("Go", @ToAssistant("Go"))`; several go in
+  `Action([...])`. The examples use the bare form, as the library's own prompt
+  does. The script stops with an error if the reference names any step other
+  than `@ToAssistant` and `@OpenUrl`, a snake_case identifier or an action
+  object, and it parses the ListBlock note's inline example.
+- A few library notes speak of "the LLM" and "the user", and one uses an
+  action name it never defines (`onSubmit`). Those are rewritten to name the
+  owner and a defined action.
+- A tap on `@ToAssistant(message, context)` sends the context along with the
+  tap's text and the form values (`cardActions.ts`).
+- A card whose Card statement is not named `root` still renders. OpenUI 1.0
+  reports it as a `no-root` warning; the app and `validate.mjs` fail a card
+  only on errors (`validate.mjs` lists warnings under `warnings`).
 - Before writing, the script parses each example with the app's parser. It
   also stops with an error if the reference names a component it does not
   describe.
@@ -883,8 +891,8 @@ only the components that suit a phone chat (`CHAT_COMPONENTS`):
 
 | | Before | After |
 |---|---|---|
-| `openui_prompt.txt` | 54,241 | 16,683 |
-| The whole app block (rule, reference, reminder) | about 54,400 | 18,722 |
+| `openui_prompt.txt` | 54,241 | 16,942 |
+| The whole app block (rule, reference, reminder) | about 54,400 | 18,974 |
 | An app turn's instructions, first round (dev eval) | 59,438 | about 24,100 |
 
 The last figure is 23,927, measured in the dev eval, plus the 164 characters

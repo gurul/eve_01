@@ -94,8 +94,10 @@ export function inspectUi(code: string): UiProgram {
     return { code, text: "", renderable: false, complete: false, hasControls: false };
   }
   const root = result.root;
+  // A warning (a Card entry not named `root`) still renders; only errors stop a card.
+  const errors = result.meta.errors.filter((e) => e.severity !== "warning");
   const renderable = !!root && root.typeName === openuiChatLibrary.root &&
-    array(root.props.children).some(element) && result.meta.errors.length === 0 &&
+    array(root.props.children).some(element) && errors.length === 0 &&
     result.queryStatements.length === 0 && result.mutationStatements.length === 0;
   return {
     code,

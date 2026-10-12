@@ -24,6 +24,12 @@ describe("generated card recovery", () => {
     expect(selectUi(inspectUi(GOOD), partial, false)?.complete).toBe(true);
   });
 
+  it("renders a Card entry not named root: OpenUI 1.0 reports it as a warning, not an error", () => {
+    const named = inspectUi('card = Card([h])\nh = CardHeader("Dinner")');
+    expect(named.renderable).toBe(true);
+    expect(named.complete).toBe(true);
+  });
+
   it("rejects unresolved, empty, unknown and wrong-root final programs", () => {
     for (const code of ['root = Card([missing])', 'root = Card([])', 'root = MissingCard([])', 'root = TextContent("Hi")', 'not a program']) {
       expect(inspectUi(code).complete, code).toBe(false);
