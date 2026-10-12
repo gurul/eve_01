@@ -3,7 +3,12 @@
 The eye is picked by Jev (``EVE_EXPRESSION_BACKEND=jev``, the default since 2026-09-24) or by the
 original local Laya checkpoint (``laya``; the trained heads did worse on fresh scenarios). Top-choice
 selection here is an explicit policy, NOT a claim that a confidence gate passed. Failures emit nothing;
-the board expires cues.
+the receiver (the retired StackChan board, or Eve Link's voice-mode face) expires cues.
+
+Two instances run in the daemon. The board's is switched by ``EVE_EXPRESSIONS_FILE`` (off unless it says
+``{"enabled": true}``). The phone's (owner, 2026-10-12: "route the expressions into the eyes") is on unless
+``EVE_PHONE_EXPRESSIONS=0``, never reads or writes that file, and loads its model only when a phone call first
+offers it a turn (``lazy``), so a Mac that never calls from the phone makes no Jev call for it.
 """
 
 from __future__ import annotations
@@ -24,6 +29,13 @@ log = logging.getLogger(__name__)
 DEFAULT_MODEL = Path("~/.config/eve-bridge/models/laya-multilingual-mlx").expanduser()
 BACKENDS = ("jev", "laya")
 DEFAULT_BACKEND = "jev"
+OFF_WORDS = ("0", "false", "off", "no")
+
+
+def phone_expressions_on(env=None) -> bool:
+    """The phone's switch: on unless ``EVE_PHONE_EXPRESSIONS`` is 0, false, off or no."""
+    value = ((os.environ if env is None else env).get("EVE_PHONE_EXPRESSIONS") or "").strip().lower()
+    return value not in OFF_WORDS
 
 
 def backend_from_env(env=None) -> str:
@@ -46,17 +58,23 @@ class LiveExpressions:
         path=None,
         model_factory=None,
         clock=time.monotonic,
+        enabled=None,
+        lazy=False,
     ):
         self.send, self.connected, self.muted, self.phase = send, connected, muted, phase
         self.clock = clock
-        self.path = Path(
-            path or os.environ.get("EVE_EXPRESSIONS_FILE", "~/.config/eve-bridge/expressions.json")
-        ).expanduser()
-        self.enabled = False
-        try:
-            self.enabled = json.loads(self.path.read_text()).get("enabled") is True
-        except (OSError, ValueError, AttributeError):
-            pass
+        self.lazy = lazy                  # load the model at the first offer, not at start
+        self.path = None                  # ``enabled`` given: the switch is the caller's, no file is read or written
+        self.enabled = bool(enabled)
+        if enabled is None:
+            self.path = Path(
+                path or os.environ.get("EVE_EXPRESSIONS_FILE", "~/.config/eve-bridge/expressions.json")
+            ).expanduser()
+            self.enabled = False
+            try:
+                self.enabled = json.loads(self.path.read_text()).get("enabled") is True
+            except (OSError, ValueError, AttributeError):
+                pass
         self.backend = backend_from_env()
         self.model_path = Path(os.environ.get("EVE_EXPRESSION_MODEL", str(DEFAULT_MODEL))).expanduser()
         self.factory = model_factory or self._load
@@ -118,10 +136,11 @@ class LiveExpressions:
         self.pending = None
         self.last_text = None
         self.context = ConversationContext()
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        tmp = self.path.with_suffix(".tmp")
-        tmp.write_text(json.dumps({"enabled": self.enabled}) + "\n")
-        tmp.replace(self.path)
+        if self.path is not None:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            tmp = self.path.with_suffix(".tmp")
+            tmp.write_text(json.dumps({"enabled": self.enabled}) + "\n")
+            tmp.replace(self.path)
         self.wake.set()
         if not on and self.connected():
             await self.send({"cmd": "expression", "id": self._next_id(), "clear": True})
@@ -172,7 +191,7 @@ class LiveExpressions:
         loop = asyncio.get_running_loop()
         try:
             while not self.closed:
-                if self.enabled and self.model is None:
+                if self.enabled and self.model is None and (not self.lazy or self.pending is not None):
                     try:
                         self.model = await loop.run_in_executor(self.executor, self.factory)
                         self.ready, self.error = True, ""
@@ -181,6 +200,9 @@ class LiveExpressions:
                     except Exception as exc:  # optional worker must never crash the daemon
                         self.ready, self.error = False, f"{type(exc).__name__}: {exc}"[:180]
                         log.warning("expressions: %s", self.error)
+                        if self.lazy and self.pending is not None:
+                            self.pending = None        # a lazy worker retries at the next offer, not forever
+                            self.dropped += 1
                         await asyncio.sleep(10)
                         continue
                 if not self.enabled or self.pending is None:
@@ -207,7 +229,7 @@ class LiveExpressions:
                     ttl = max(500, min(4000, int((4 - age) * 1000)))
                     cmd = {"cmd": "expression", "id": event, "label": label, "ttl_ms": ttl, "chirp": False}
                     if await self.send(cmd) is False:
-                        raise RuntimeError("board send failed")
+                        raise RuntimeError("expression send failed")
                     self.last_sent_at = self.clock()
                     self.sent += 1
                     self.last = {

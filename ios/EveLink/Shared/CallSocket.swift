@@ -2,10 +2,10 @@
 // phone_call.py), through the Mini App's tunnel.
 //
 // The wire is the Mini App's "Call eve": 24 kHz mono 16-bit PCM in binary frames both ways; JSON text frames
-// {"type": "talk" | "done" | "end" | "ping"} up, {"type": "state" | "heard" | "said" | "flush" | "ended"} down ("said": a sentence of eve's, just before
-// its sound, for voice mode's captions). The first
-// message proves the owner: here {"token": …, "can": ["notes"]}, the link token /stick made, and what this build can
-// do. "notes" says it can take notes on the phone (docs/action-button.md, Notes on the go): the daemon then sends
+// {"type": "talk" | "done" | "end" | "ping"} up, {"type": "state" | "heard" | "said" | "expression" | "flush" | "ended"} down ("said": a sentence of eve's, just before
+// its sound, for voice mode's captions; "expression": a label for voice mode's face, Shared/FaceExpression.swift). The first
+// message proves the owner: here {"token": …, "can": ["notes", "eyes"]}, the link token /stick made, and what this build can
+// do. "eyes" says it can draw eve's expressions, so the daemon sends them. "notes" says it can take notes on the phone (docs/action-button.md, Notes on the go): the daemon then sends
 // {"type": "state", "state": "notes", "started": <unix s>, "words": <n>}, the phone streams its microphone with no
 // talk or done, and {"type": "notes_stop"} stops the notes. While notes are on eve answers each ping with
 // {"type": "pong"}: a notes call that hears nothing for NotesLiveness.deadAfter is closed as a drop, and Relay dials
@@ -18,6 +18,7 @@ enum CallEvent {
     case notes(started: Date?, words: Int)     // notes on the phone are on (sent again after a reply or a call back)
     case heard(String)
     case said(String)              // a sentence of eve's, sent just before its sound (voice mode's captions)
+    case expression(FaceExpressionRequest)   // eve's expression for voice mode's face (Shared/FaceExpression.swift)
     case audio([Int16])
     case flush
     case ended(String)
@@ -50,7 +51,7 @@ final class CallSocket {
         t.resume()
         endedByEve = false
         liveness = NotesLiveness()
-        t.send(.string(Self.json(["token": token, "can": ["notes"]]))) { _ in }
+        t.send(.string(Self.json(["token": token, "can": ["notes", "eyes"]]))) { _ in }
         receive(t)
         pinger = Task { [weak self] in
             while !Task.isCancelled {
@@ -140,6 +141,8 @@ final class CallSocket {
                 }
             case "heard": onEvent?(.heard(obj["text"] as? String ?? ""))
             case "said": onEvent?(.said(obj["text"] as? String ?? ""))
+            case "expression":
+                if let request = FaceExpressionRequest.decode(obj) { onEvent?(.expression(request)) }
             case "flush": onEvent?(.flush)
             case "ended":
                 if let t = task {

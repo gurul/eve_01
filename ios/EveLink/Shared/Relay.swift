@@ -43,6 +43,8 @@ protocol VoiceLevelSink: AnyObject {
     /// The owner's words as eve heard them, and a sentence of eve's reply (shown when its sound plays).
     func ownerSaid(_ text: String)
     func eveSaid(_ text: String)
+    /// eve's expression for the face (Shared/FaceExpression.swift), as the call's "expression" message brought it.
+    func showExpression(_ request: FaceExpressionRequest)
 }
 
 @MainActor
@@ -217,6 +219,8 @@ final class Relay: ObservableObject {
             voiceLevels?.ownerSaid(text)
         case .said(let text):
             if replyToPhone { voiceLevels?.eveSaid(text) }
+        case .expression(let request):
+            if replyToPhone { voiceLevels?.showExpression(request) }
         case .audio(let pcm):
             if replyToPhone {
                 phone?.play(pcm)

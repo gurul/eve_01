@@ -202,9 +202,11 @@ private struct LiveFace: View {
     let muted: Bool
 
     var body: some View {
+        let mood = Self.mood(muted: muted, speaker: levels.speaker, status: levels.status)
         VStack(spacing: 22) {
-            StackChanFace(mood: Self.mood(muted: muted, speaker: levels.speaker, status: levels.status),
-                          level: levels.level)
+            // eve's expression shows only while he rests, thinks or speaks (FaceExpressionState.allowed).
+            StackChanFace(mood: mood, level: levels.level,
+                          expression: FaceExpressionState.gate(levels.expression, mood: mood))
             VoiceCaptionView(caption: levels.caption)
                 .padding(.horizontal, 28)
         }
@@ -251,7 +253,13 @@ private struct LiveFace: View {
                     levels.status = "eve is thinking…"
                 case 4..<8:
                     levels.status = "eve is speaking"
-                    if cycle < 4.1 { levels.eveSaid("You have two meetings today: standup at ten and lunch.") }
+                    if cycle < 4.1 {
+                        levels.eveSaid("You have two meetings today: standup at ten and lunch.")
+                        // eve's expression for the sentence: a different label each turn.
+                        let labels = FaceExpressionLabel.allCases
+                        levels.showExpression(FaceExpressionRequest(id: UInt32(t * 10) + 1,
+                                                                    label: labels[Int(t / 9) % labels.count], ttlMs: 4000))
+                    }
                     levels.evePCM(chunk)
                 default:
                     levels.status = "Listening"

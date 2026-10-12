@@ -1233,5 +1233,148 @@ check(LocationAge.words(since: nil, now: locT0) == "Not yet" && LocationAge.word
       && LocationAge.words(since: locT0, now: locT0.addingTimeInterval(2 * 3600)) == "2 h ago"
       && LocationAge.words(since: locT0, now: locT0.addingTimeInterval(86_400 * 3)) == "3 days ago", "last sent ages")
 print("LOCATION_OK")
+// eve's expressions in the voice-mode face (Shared/FaceExpression.swift, docs/voice-mode.md, Expressions).
+func expressionMessage(_ json: String) -> FaceExpressionRequest? {
+    guard let obj = try? JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any] else { return nil }
+    return FaceExpressionRequest.decode(obj)
+}
+// The wire: a label with id and ttl, a clear, and everything the board refuses.
+check(expressionMessage(#"{"type":"expression","id":7,"label":"happy","ttl_ms":2500}"#)
+      == FaceExpressionRequest(id: 7, label: .happy, ttlMs: 2500), "a label decodes")
+check(expressionMessage(#"{"type":"expression","id":7,"label":"happy","ttl_ms":2500}"#)?.ttl == 2.5, "ttl in seconds")
+check(expressionMessage(#"{"type":"expression","id":4294967295,"label":"wink","ttl_ms":4000}"#)?.id == UInt32.max,
+      "the largest uint32 id")
+check(expressionMessage(#"{"type":"expression","id":9,"clear":true}"#) == FaceExpressionRequest(id: 9, label: nil),
+      "a clear decodes with no label")
+check(expressionMessage(#"{"type":"expression","id":9,"label":"sad","clear":true}"#)?.label == nil, "clear wins over a label")
+check(expressionMessage(#"{"type":"expression","id":3,"label":"sad"}"#)?.ttl == 4.0, "no ttl: the board's 4 s")
+check(expressionMessage(#"{"type":"expression","id":3,"label":"sad","ttl_ms":"900"}"#)?.ttl == 4.0, "a string ttl: 4 s")
+check(expressionMessage(#"{"type":"expression","id":0,"label":"happy","ttl_ms":2000}"#) == nil, "id 0 refused")
+check(expressionMessage(#"{"type":"expression","label":"happy","ttl_ms":2000}"#) == nil, "no id refused")
+check(expressionMessage(#"{"type":"expression","id":-4,"label":"happy"}"#) == nil
+      && expressionMessage(#"{"type":"expression","id":2.5,"label":"happy"}"#) == nil
+      && expressionMessage(#"{"type":"expression","id":4294967296,"label":"happy"}"#) == nil
+      && expressionMessage(#"{"type":"expression","id":"5","label":"happy"}"#) == nil
+      && expressionMessage(#"{"type":"expression","id":true,"label":"happy"}"#) == nil, "ids that are not a uint32 refused")
+check(expressionMessage(#"{"type":"expression","id":5,"label":"startled"}"#) == nil
+      && expressionMessage(#"{"type":"expression","id":5,"label":"Happy"}"#) == nil
+      && expressionMessage(#"{"type":"expression","id":5}"#) == nil, "unknown, misspelt or missing labels refused")
+check(expressionMessage(#"{"type":"expression","id":5,"clear":1}"#) == nil, "clear must be a boolean")
+check(expressionMessage(#"{"type":"expression","id":7,"label":"happy","ttl_ms":2500,"said":" Green now! "}"#)?.said
+      == "Green now!", "the sentence a pick was made for decodes, trimmed")
+check(expressionMessage(#"{"type":"expression","id":7,"label":"happy","said":5}"#)?.said == nil
+      && expressionMessage(#"{"type":"expression","id":7,"label":"happy","said":"  "}"#)?.said == nil
+      && expressionMessage(#"{"type":"expression","id":9,"clear":true,"said":"x"}"#)?.said == nil,
+      "no sentence for a non-string, a blank one, or a clear")
+// A pick that starts later (its sentence still queued) waits; the one showing holds until then.
+var queued = FaceExpressionState()
+queued.accept(FaceExpressionRequest(id: 1, label: .sad, ttlMs: 4000), now: 0)
+check(queued.accept(FaceExpressionRequest(id: 2, label: .happy, ttlMs: 1000), now: 0.5, start: 3)
+      && queued.shown(now: 2.9)?.label == .sad && queued.waiting(now: 2.9), "a later start waits; the one showing holds")
+check(queued.shown(now: 3)?.label == .happy && queued.shown(now: 3.99)?.label == .happy && queued.shown(now: 4) == nil,
+      "then shows for its ttl from its start")
+check(!queued.accept(FaceExpressionRequest(id: 2, label: .wink), now: 1), "the id check is on arrival")
+var flushed = FaceExpressionState()
+flushed.accept(FaceExpressionRequest(id: 1, label: .sad), now: 0)
+flushed.accept(FaceExpressionRequest(id: 2, label: .happy), now: 0.5, start: 3)
+flushed.dropWaiting(now: 1)
+check(flushed.shown(now: 3.5)?.label == .sad && !flushed.waiting(now: 1), "a flush drops what waits, not what shows")
+var cleared = FaceExpressionState()
+cleared.accept(FaceExpressionRequest(id: 1, label: .happy), now: 0, start: 2)
+check(cleared.accept(FaceExpressionRequest(id: 2, label: nil), now: 1, start: 5) && cleared.shown(now: 2) == nil
+      && !cleared.waiting(now: 1), "a clear is at once and drops what waits")
+var earlier = FaceExpressionState()
+earlier.accept(FaceExpressionRequest(id: 1, label: .happy), now: 0, start: 5)
+check(earlier.accept(FaceExpressionRequest(id: 2, label: .sad), now: 1) && earlier.shown(now: 4.9)?.label == .sad
+      && earlier.shown(now: 5.5) == nil && !earlier.waiting(now: 1),
+      "a newer pick that starts sooner outranks one still waiting")
+// ttl clamped to 0.5...6 s, as expression.h State.accept.
+check(FaceExpressionRequest(id: 1, label: .sad, ttlMs: 100).ttl == 0.5 && FaceExpressionRequest(id: 1, label: .sad, ttlMs: 0).ttl == 0.5,
+      "a short ttl becomes 0.5 s")
+check(FaceExpressionRequest(id: 1, label: .sad, ttlMs: 60_000).ttl == 6 && expressionMessage(#"{"type":"expression","id":1,"label":"sad","ttl_ms":4000000000}"#)?.ttl == 6,
+      "a long ttl becomes 6 s")
+check(FaceExpressionRequest(id: 1, label: .sad, ttlMs: 500).ttl == 0.5 && FaceExpressionRequest(id: 1, label: .sad, ttlMs: 6000).ttl == 6,
+      "the bounds themselves are kept")
+// The picker's labels, in its order (bridge eye_model.LABELS).
+check(FaceExpressionLabel.allCases.map(\.rawValue) == ["calm", "happy", "curious", "affection", "surprised", "sad", "worried",
+      "skeptical", "frustrated", "excited", "wink"], "the eleven labels in the picker's order")
+// Every label's shape is the firmware's: parse expression.h's style() and compare each row and the default.
+let firmwareHeader = (try? String(contentsOfFile: "firmware/claude_pet_stackchan/src/expression.h", encoding: .utf8)) ?? ""
+var firmwareRows: [String: [Int]] = [:]
+for line in firmwareHeader.split(separator: "\n") {
+    let text = line.trimmingCharacters(in: .whitespaces)
+    guard text.hasPrefix("case ") || text.hasPrefix("default:"), let open = text.firstIndex(of: "{"),
+          let close = text.firstIndex(of: "}"), text.contains("return") else { continue }
+    let name = text.hasPrefix("default:") ? "calm"
+        : String(text.dropFirst(5).prefix { $0 != ":" }).lowercased()
+    let fields = text[text.index(after: open)..<close].split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+    guard fields.count == 7 else { continue }
+    firmwareRows[name] = fields.prefix(6).compactMap { Int($0) } + [fields[6] == "true" ? 1 : 0]
+}
+check(firmwareRows.count == 11, "expression.h read: \(firmwareRows.count) style rows (10 labels and the default)")
+for label in FaceExpressionLabel.allCases {
+    let s = label.style
+    let ours = [s.left, s.right, s.width, s.radius, s.lid.rawValue, s.blink, s.curious ? 1 : 0]
+    check(firmwareRows[label.rawValue] == ours, "\(label.rawValue): shape \(ours) is the firmware's \(firmwareRows[label.rawValue] ?? [])")
+    // and scaled to the phone face: the board's 96 px eye and 22 px corner are the face's rest eye and corner
+    check(s.leftOpen == Double(s.left) / 96 && s.rightOpen == Double(s.right) / 96 && s.wide == Double(s.width) / 96
+          && s.corner == Double(s.radius) / 22 && s.blinkEvery == Double(s.blink)...Double(s.blink + 1),
+          "\(label.rawValue): ratios of the board's rest eye")
+}
+check(FaceExpressionLabel.calm.style.leftOpen == 1 && FaceExpressionLabel.calm.style.wide == 1
+      && FaceExpressionLabel.calm.style.corner == 1 && FaceExpressionLabel.calm.style.lid == .none, "calm is the rest eye")
+check(FaceExpressionLabel.skeptical.style.leftOpen < 0.61 && FaceExpressionLabel.skeptical.style.rightOpen == 1,
+      "skeptical squints the viewer's left eye only")
+check(FaceExpressionLabel.sad.style.lid == .droop && FaceExpressionLabel.frustrated.style.lid == .brow
+      && FaceExpressionLabel.happy.style.lid == .smile, "sad droops, frustrated frowns, happy smiles")
+// Only newer ids are taken (int32 wrap-around, as the board compares), and a shape lasts its ttl.
+var faceState = FaceExpressionState()
+check(faceState.accept(FaceExpressionRequest(id: 10, label: .happy, ttlMs: 1000), now: 100), "first request taken")
+check(faceState.shown(now: 100) == FaceExpressionShown(id: 10, label: .happy), "shown at once")
+check(!faceState.accept(FaceExpressionRequest(id: 10, label: .sad), now: 100.2), "the same id refused")
+check(!faceState.accept(FaceExpressionRequest(id: 9, label: .sad), now: 100.2), "an older id refused")
+check(faceState.shown(now: 100.2)?.label == .happy, "a refused request changes nothing")
+check(faceState.shown(now: 100.99)?.label == .happy && faceState.shown(now: 101.0) == nil
+      && faceState.shown(now: 107) == nil, "gone when its ttl has run")
+check(faceState.shown(now: 99) == nil, "a clock set back shows nothing")
+check(faceState.accept(FaceExpressionRequest(id: 11, label: .sad, ttlMs: 3000), now: 101.5)
+      && faceState.shown(now: 104.4)?.label == .sad && faceState.shown(now: 104.5) == nil, "a newer one: its own ttl from arrival")
+check(faceState.accept(FaceExpressionRequest(id: 12, label: nil), now: 101.6) && faceState.shown(now: 101.6) == nil,
+      "a clear ends the one showing")
+check(!faceState.accept(FaceExpressionRequest(id: 11, label: .sad), now: 101.7) && faceState.shown(now: 101.7) == nil,
+      "an older request after a clear refused")
+var wrapState = FaceExpressionState()
+wrapState.accept(FaceExpressionRequest(id: UInt32.max - 1, label: .happy), now: 0)
+check(wrapState.accept(FaceExpressionRequest(id: 3, label: .sad), now: 1), "a newer id across the uint32 wrap taken")
+check(!wrapState.accept(FaceExpressionRequest(id: UInt32.max, label: .wink), now: 2), "an older id across the wrap refused")
+check(!wrapState.accept(FaceExpressionRequest(id: 0, label: .wink), now: 2), "id 0 never taken")
+check(FaceExpressionState.newer(1, than: 0) && !FaceExpressionState.newer(0x8000_0001, than: 1)
+      && FaceExpressionState.newer(0x8000_0000, than: 1), "half the id space ahead is newer, more is older")
+// Never while the owner talks, the microphone is muted or the call is connecting.
+check(FaceMood.allCases.filter(FaceExpressionState.allowed) == [.idle, .thinking, .speaking],
+      "expressions show resting, thinking or speaking only")
+let happyShown = FaceExpressionShown(id: 1, label: .happy)
+check(FaceExpressionState.gate(happyShown, mood: .listening) == nil && FaceExpressionState.gate(happyShown, mood: .muted) == nil
+      && FaceExpressionState.gate(happyShown, mood: .connecting) == nil, "hidden while listening, muted or connecting")
+check(FaceExpressionState.gate(happyShown, mood: .speaking) == happyShown, "shown while eve speaks")
+// The wink: once per id, 0.65 s, ended early when it stops showing.
+var faceWink = FaceWink()
+let winkShown = FaceExpressionShown(id: 20, label: .wink)
+check(faceWink.step(winkShown, now: 10) && faceWink.step(winkShown, now: 10.64), "a wink holds 0.65 s")
+check(!faceWink.step(winkShown, now: 10.65) && !faceWink.step(winkShown, now: 11), "then the eye opens")
+check(!faceWink.step(winkShown, now: 12), "the same request never winks twice")
+check(faceWink.step(FaceExpressionShown(id: 21, label: .wink), now: 13), "a new wink request winks again")
+check(!faceWink.step(nil, now: 13.1) && !faceWink.step(FaceExpressionShown(id: 21, label: .wink), now: 13.2),
+      "the owner talking ends the wink, and it does not resume")
+check(!faceWink.step(FaceExpressionShown(id: 22, label: .happy), now: 14), "other labels never wink")
+// The closed lid's arch: flat middle 8 px up, rounded 22 px corner zones (expression.h winkCurveY).
+check(FaceWink.curve(0, width: 91) == 0 && FaceWink.curve(91, width: 91) == 0, "the lid's ends sit on the centre line")
+check(FaceWink.curve(45, width: 91) == -8 && FaceWink.curve(22, width: 91) == -8, "its middle is raised 8 px")
+check(abs(FaceWink.curve(11, width: 91) - -6.93) < 0.01, "a rounded corner zone between")
+check(FaceWink.curve(5, width: 0) == 0, "no width: flat")
+// VoiceOver words.
+check(FaceExpressionLabel.allCases.map(\.spoken) == ["calm", "happy", "curious", "fond", "surprised", "sad", "worried",
+      "skeptical", "frustrated", "excited", "winking"], "spoken words for each label")
+print("EXPRESSIONS_OK")
 if failures > 0 { print("\(failures) check(s) failed"); exit(1) }
 print("eve link: all checks passed")

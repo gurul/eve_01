@@ -294,8 +294,10 @@ The [Telegram door](docs/stackchan/telegram.md) is **off by default**. With it o
   including a wink, from conversation and diary text, even while speaking. Jev
   (TypeSafe's typed-decision model, one `choice` per turn, ~200 ms) picks by default;
   `EVE_EXPRESSION_BACKEND=laya` keeps the original local Laya checkpoint, which
-  scored 15–20 points lower on the hand-written cases. The board renders the cues;
-  the picker controls the eyes only. See [controls, limits and measurements](docs/stackchan/laya-expressions/README.md)
+  scored 15–20 points lower on the hand-written cases. Eve Link's voice-mode face
+  draws the cues during a phone call (on unless `EVE_PHONE_EXPRESSIONS=0`;
+  [voice mode](docs/voice-mode.md#expressions)); the retired board rendered them too.
+  The picker controls the eyes only. See [controls, limits and measurements](docs/stackchan/laya-expressions/README.md)
   and the [expression-tuning study](docs/stackchan/laya-emotion/README.md).
 
 ## Get started

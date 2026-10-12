@@ -64,11 +64,16 @@ simulator; not yet tried on the owner's iPhone.
   state. `VoiceStatus.text` (Shared/PhoneTurn.swift) maps the call to the line.
 - **Haptics**: a soft tap when eve starts speaking, a light tap on mute, a
   medium tap on close.
+- **eve's expressions** (since 2026-10-12): while eve rests, thinks or
+  speaks, the eyes take the shape the StackChan board drew for what is being
+  said (a smile, a droop, a frown, a wink…) for a few seconds
+  ([Expressions](#expressions)).
 - **VoiceOver**: every control has a label. The face reads as "eve" with
-  its mood ("listening", "thinking"…), and each caption is read as "You: …" or
-  "eve: …".
+  its mood ("listening", "thinking"…) and any expression ("speaking, happy"),
+  and each caption is read as "You: …" or "eve: …".
 - **Reduce Motion**: the eyes do not blink, glance or bounce. Only their
-  openness follows the call.
+  openness follows the call. An expression's shape changes at once, with no
+  easing.
 
 ## The hands-free call (not used by voice mode since 2026-10-08)
 
@@ -121,14 +126,135 @@ nothing to send yet).
 Not done: barge-in by voice. While eve thinks or speaks nothing from the
 microphone goes to eve or to the face; tap the face to cut him off.
 
+## Expressions
+
+Owner, 2026-10-12: "can u route the expressions into the eyes". The daemon's
+expression picker (`live_expressions.py`, Jev by default; the
+[live expressions](stackchan/laya-expressions/README.md) page has its
+measurements) now feeds this face, which the retired StackChan board used to
+show.
+
+**The bridge's side.**
+
+- The app's hello lists `"eyes"` (`{"token": …, "can": ["notes", "eyes"]}`).
+  Only such a call is fed or sent anything (`Call.can_eyes`); an older build
+  sees no change.
+- What the owner said (after `heard`) and each sentence eve reads out are
+  offered to a picker of the phone's own (`Daemon._start_phone_expressions`).
+  The offer is a cheap call on the voice loop; the model runs on its own
+  thread, so a slow or failed pick never holds up a reply.
+- **A sentence is offered when the phone starts to play it**, not when its
+  audio is made. Speech is made faster than it plays, so the call keeps an
+  estimate of when the phone's queued audio ends (`Call.play_end`: the bytes
+  sent at 24 kHz) and offers each sentence at its start
+  (`Call._offer_when_heard`). The picker's 1.2 s gap and newest-wins rule then
+  run on playback time, so a fast reply no longer offers every sentence in the
+  first second and shows the last one's face over the first one's words. A
+  barge-in (`interrupt`) and the call's end cancel the offers still waiting.
+- One pick at a time: the newest turn wins, at most one is sent every 1.2 s,
+  and a pick more than 4 s after its words is dropped. A pick that fails or
+  times out sends nothing.
+- Nothing is sent when no Eve Link call is live, while the owner holds the
+  button (`Call.talking`), or when the socket has closed
+  (`PhoneCalls.eyes_call`).
+- **The switch.** On by default. `EVE_PHONE_EXPRESSIONS=0` (or `false`, `off`,
+  `no`) in the env file turns it off. It is separate from the board's
+  `expressions.json`. The phone's worker loads Jev at its first offer, so a
+  Mac that is never called from the phone makes no Jev call for it.
+
+**The message**, one JSON text frame on the call's WebSocket:
+
+```json
+{"type": "expression", "id": 3127894523, "label": "happy", "ttl_ms": 3600, "said": "And it's green now!"}
+{"type": "expression", "id": 3127894524, "clear": true}
+```
+
+- `id`: a nonzero uint32 that only grows (seeded from the clock, so it grows
+  across daemon restarts; it wraps at 2³²).
+- `label`: exactly one of calm, happy, curious, affection, surprised, sad,
+  worried, skeptical, frustrated, excited, wink (`eye_model.LABELS`).
+- `ttl_ms`: 500 to 4000, the board's 4 s less the time the pick took.
+- `said`: on a pick for one of eve's sentences, that sentence, exactly as its
+  `said` caption message carried it (`Call.said_for`). The owner's words and a
+  clear have none.
+- `clear`: the worker was switched off; drop what is showing.
+
+**The app's side.**
+
+- `CallSocket` decodes the message with `FaceExpressionRequest.decode`
+  (`Shared/FaceExpression.swift`), by the board's rules (`data.h`): the id must
+  be a nonzero whole uint32, the label one of the eleven, `clear` a real
+  boolean, a missing `ttl_ms` means 4000, and `said` is kept only if it is a
+  non-blank string. Anything else is dropped. An
+  older build ignores the message (`default: break`).
+- `Relay` hands it to `VoiceLevels.showExpression` while the phone has the
+  call. `FaceExpressionState.accept` takes it only if its id is newer than the
+  last one taken (an int32 wrap-around compare, as `expression.h`), checked on
+  arrival. It clamps the ttl to 0.5 to 6 s.
+- **It starts with its sentence.** A pick whose `said` matches a caption still
+  queued to play starts when that caption does (the playback clock eve's
+  captions use, `eveClock`); anything else starts on arrival. Its ttl runs from
+  that start. Until then the shape already showing holds
+  (`FaceExpressionState.timeline`). A newer pick that starts sooner drops one
+  still waiting; a clear ends what shows and drops what waits; eve's flush
+  (`eveFlushed`) drops what waits, since those sentences will not play.
+  `VoiceLevels.expression` is the shape until its ttl has run, and the meter
+  keeps ticking until then, so it starts and expires on time. The end of the
+  call (`reset`) clears it and the id order.
+- **When it shows.** Only while eve rests, thinks or speaks
+  (`FaceExpressionState.allowed`). It never shows while the owner talks (the
+  face is listening), when muted, or while connecting. A shape that is still
+  live shows again once the owner stops.
+- **The shapes** are the board's `expression.h` style table, unchanged, and
+  their heights are the eye: the board opens the eyes and sets the style's
+  heights over the agent face, so while an expression shows the mood's
+  openness (thinking's squint, speaking's 0.9 to 1.12) eases back to 1. Only
+  the blink and a small bounce with eve's voice (up to 10%) remain. The
+  board's eye at rest (96 px tall and wide, 22 px corner) stands for the
+  phone's rest eye (74 × 92 pt, 24 pt corner), so each number becomes a ratio:
+  each eye's height, the width, the corner, the blink pace (every *blink* to
+  *blink* + 1 s) and curiosity. The lids are RoboEyes':
+  - **smile** (happy, affection, excited): a rounded lid pushed up from below
+    cuts away the bottom half, so the eyes curve up.
+  - **droop** (sad, worried): each eye's outer top corner pulled down.
+  - **brow** (frustrated): each eye's inner top corner pulled down.
+  - **curious** (curious, affection, worried, skeptical): the eye on the side
+    the pair looks to grows by 8 board px.
+  - **wink**: once per id, the viewer's right eye shuts for 650 ms. When it has
+    collapsed, a curved closed lid replaces it, and a lifted brow shows over the
+    open eye (`FaceWink`, from `eyes.cpp`). There are no blinks or curiosity
+    during the wink.
+- Every shape eases in and out on critically damped springs (about a third of
+  a second). With **Reduce Motion** it changes at once, with no animation.
+- **VoiceOver** reads the face as its mood and the expression, for example
+  "speaking, happy".
+
+| Label | Left × right height | Width | Corner | Lid | Blink (s) | Curious |
+|---|---|---|---|---|---|---|
+| calm | 96 × 96 | 96 | 22 | none | 3 | no |
+| happy | 86 × 86 | 96 | 22 | smile | 3 | no |
+| curious | 100 × 88 | 96 | 22 | none | 3 | yes |
+| affection | 76 × 76 | 100 | 32 | smile | 5 | yes |
+| surprised | 110 × 110 | 84 | 36 | none | 5 | no |
+| sad | 72 × 72 | 92 | 22 | droop | 5 | no |
+| worried | 102 × 94 | 90 | 26 | droop | 2 | yes |
+| skeptical | 58 × 96 | 94 | 18 | none | 4 | yes |
+| frustrated | 70 × 70 | 94 | 16 | brow | 2 | no |
+| excited | 110 × 110 | 104 | 26 | smile | 1 | no |
+| wink | 96 × 96 | 96 | 22 | none (the wink) | 4 | no |
+
+Not verified yet: the shapes on the owner's iPhone in a real call (gate E6 in
+`docs/phone-eyes-gates.md`).
+
 ## Files
 
 | File | What it does |
 |---|---|
 | `ios/EveLink/App/VoiceCall.swift` | The host: starts and ends the hands-free call, owns the meter, sets the status line, the face's tap and hold (`TalkGesture`, moved from the Talk sheet), Settings and the voice settings sheet. |
 | `ios/EveLink/App/VoiceModeView.swift` | The screen. It shows the levels and reports taps through closures; it does not own the call. |
-| `ios/EveLink/App/StackChanFace.swift` | The face (`StackChanFace`, drawn with `Canvas` once per frame in a `TimelineView(.animation)`), its motion (`FaceMotion`: blinks, glances and openness on critically damped springs) and the caption view. |
-| `ios/EveLink/App/VoiceLevels.swift` | The level meter and the captions: PCM in, `level`, `speaker` and `caption` out. |
+| `ios/EveLink/App/StackChanFace.swift` | The face (`StackChanFace`, drawn with `Canvas` once per frame in a `TimelineView(.animation)`), its motion (`FaceMotion`: blinks, glances and openness on critically damped springs), eve's expression drawn over it (per-eye height, width, corner, RoboEyes' lids, the wink) and the caption view. |
+| `ios/EveLink/App/VoiceLevels.swift` | The level meter, the captions and the expression: PCM in, `level`, `speaker`, `caption` and `expression` out. |
+| `ios/EveLink/Shared/FaceExpression.swift` | `FaceMood`, the eleven labels and their shapes (from `expression.h`), the message's decoding, `FaceExpressionState` (newer ids, ttl, when a shape may show) and `FaceWink`: pure, checked on the Mac. |
 | `ios/EveLink/Shared/PhoneTurn.swift` | `SpeechOnset`, `HandsFree`, `VoiceStatus`: the pure logic, checked on the Mac. |
 | `ios/EveLink/Shared/Relay.swift` | `beginHandsFree`, `endHandsFree`, `muted`, `connected`, `callError`, `voiceLevels`, `handsFreeBackgrounded`, and the wait for queued playback before the mic reopens. |
 | `ios/EveLink/App/PhoneAudio.swift` | `earpiece`: the session's category without `.defaultToSpeaker`. |
@@ -167,6 +293,7 @@ voice mode is open:
 - eve's `flush`, and the start of each phone turn: `eveFlushed`.
 - the end of the call: `reset`.
 - eve's `heard` (the owner's words): `ownerSaid`; his `said` (a sentence, before its sound): `eveSaid`.
+- eve's `expression`: `showExpression`. The face reads `expression` through `FaceExpressionState.gate`.
 
 The earpiece choice changes the audio session's category. If it is changed
 mid-call, iOS reports a configuration change and `PhoneAudio.reconfigure`
@@ -181,7 +308,19 @@ with a scratch harness against `App/VoiceLevels.swift`. All 22 checks passed.
 These checks are not in `Tests/run.sh` yet: that script compiles a fixed list of
 files, and `VoiceLevels.swift` is not on it.
 
-`Tests/run.sh` checks the hands-free logic (`VOICE_MODE_OK`): hiss never starts
+`Tests/run.sh` checks the expressions (`EXPRESSIONS_OK`): decoding good, bad
+and clear messages; each label's shape against the numbers it reads from
+`expression.h` itself; newer ids only, across the wrap; the ttl clamp and
+expiry; the moods that may show one; and the wink's 650 ms once per id. The
+captions run (`CAPTIONS_OK`) checks that `VoiceLevels` shows an expression,
+refuses an older id, expires it on its own clock and clears it at the call's end;
+and, with eve's audio queued ahead, that a pick for the next sentence waits for
+that sentence's sound, runs its ttl from there, and never shows if eve is
+flushed first. The face run (`FACE_OK`) builds the real `App/StackChanFace.swift`
+on the Mac and checks that `FaceMotion` settles each expression at its table
+height whatever the mood (surprised while thinking at 110/96, not 0.89).
+
+`Tests/run.sh` also checks the hands-free logic (`VOICE_MODE_OK`): hiss never starts
 a turn, 120 ms of voice is not enough, 150 ms of voice starts it with the 0.5 s
 before it, a 5 ms full-scale click inside a 100 ms chunk is not speech, frames
 carry across chunk edges, when the microphone opens again and when it must not, the status

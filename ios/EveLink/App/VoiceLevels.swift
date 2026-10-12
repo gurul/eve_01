@@ -40,6 +40,9 @@ final class VoiceLevels {
     private(set) var caption: VoiceCaption?
     /// A caption stays this long after it was shown (eve's: after his voice stops).
     nonisolated static let captionHoldSeconds = 4.0
+    /// eve's expression while its time to live runs (Shared/FaceExpression.swift); the face gates it by its mood.
+    private(set) var expression: FaceExpressionShown?
+    @ObservationIgnored private var expressionState = FaceExpressionState()
 
     @ObservationIgnored private var pendingCaptions: [(at: Double, text: String)] = []   // eve's, on the playback clock
     @ObservationIgnored private var captionUntil = -Double.infinity
@@ -92,9 +95,29 @@ final class VoiceLevels {
         }
     }
 
+    /// An expression from eve's picker (the call's "expression" message): taken only if its id is newer than the
+    /// last one (checked now, on arrival). A pick for one of eve's sentences ("said") starts when that sentence's
+    /// sound starts, on the same playback clock as its caption, so the eyes match what is heard; anything else starts
+    /// now. Its time to live runs from that start. A clear ends the one showing and drops any still waiting.
+    nonisolated func showExpression(_ request: FaceExpressionRequest) {
+        Self.onMain {
+            let now = Self.clock()
+            if self.expressionState.accept(request, now: now, start: self.expressionStart(request, now: now)) {
+                self.tick(now: now)
+            }
+        }
+    }
+
+    /// When an expression shows: when its sentence's caption is due, if that sentence is still queued to play; else now.
+    private func expressionStart(_ request: FaceExpressionRequest, now: Double) -> Double {
+        guard let said = request.said, let queued = pendingCaptions.first(where: { $0.text == said }) else { return now }
+        return max(now, queued.at)
+    }
+
     /// eve was interrupted (the call's flush): drop the levels still queued to play.
     func eveFlushed() {
         pendingCaptions.removeAll()
+        expressionState.dropWaiting(now: Self.clock())      // their sentences will not play
         eveQueue.removeAll()
         eveClock = 0
         tick(now: Self.clock())
@@ -114,6 +137,8 @@ final class VoiceLevels {
         pendingCaptions.removeAll()
         caption = nil
         captionUntil = -.infinity
+        expressionState = FaceExpressionState()
+        expression = nil
     }
 
     // MARK: Pure math
@@ -195,8 +220,10 @@ final class VoiceLevels {
         }
         if caption?.who == .eve, next == .eve { captionUntil = now + Self.captionHoldSeconds }
         if caption != nil, now > captionUntil, pendingCaptions.isEmpty { caption = nil }
+        let shown = expressionState.shown(now: now)
+        if expression != shown { expression = shown }
         return !eveQueue.isEmpty || now - ownerLast < Self.holdSeconds || value > 0
-            || !pendingCaptions.isEmpty || caption != nil
+            || !pendingCaptions.isEmpty || caption != nil || shown != nil || expressionState.waiting(now: now)
     }
 
     /// About 30 times a second while live, so silence decays to idle and eve's queue plays out without new PCM.
