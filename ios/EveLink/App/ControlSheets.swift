@@ -1,6 +1,7 @@
 // eve's controls as native sheets (docs/app-chat.md, "Work"): Music, Lights and the TV remote, the Telegram Mini
 // App's three cards (miniapp_page.html) with the same actions, drawn in SwiftUI. Every press goes to the card's own
-// panel on the Mac (ControlsClient.swift, link_chat.py); what the Mac answers is what the sheet shows.
+// panel on the Mac (ControlsClient.swift, link_chat.py); what the Mac answers is what the sheet shows. These are the
+// owner's apps; any other app in the Mac's registry needs no Swift: GenericAppSheet.swift draws it from its panel.
 import SwiftUI
 import UIKit
 

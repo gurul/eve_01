@@ -392,7 +392,7 @@ Since 2026-10-04, Gmail, Google Calendar, Google Drive, GitHub and Google Maps g
 and anything else you connect there. Drive and GitHub are kept out of the Composio
 session even when connected (`composio_tools.DIRECT_TOOLKITS`). Since 2026-10-05,
 Gmail and Google Calendar join it only for your **other** (work) account, and each
-call names it ([apps.md](../apps.md#your-apps-direct-and-composio-for-the-rest)). What follows is
+call names it ([apps.md](../apps.md#connected-accounts-direct-and-composio-for-the-rest)). What follows is
 Composio's design, unchanged for the apps it keeps. Examples below that name
 Gmail or the calendar date from before the split.
 

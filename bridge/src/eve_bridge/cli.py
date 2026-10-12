@@ -10,7 +10,7 @@ import signal
 import sys
 from typing import Any, Callable, Optional
 
-from . import __version__
+from . import __version__, app_registry
 from .daemon import Daemon
 from .envfile import load_env_file
 from .ipc import make_transport
@@ -23,19 +23,14 @@ def main(argv: list[str] | None = None) -> int:
     # os.environ. Existing variables win; the file only fills gaps.
     load_env_file()
     rest = sys.argv[1:] if argv is None else list(argv)
-    if rest[:1] == ["lights"]:
-        # everything after "lights" is the lights CLI's own (argparse's REMAINDER drops a leading --help)
-        from . import lights
-        return lights.cli(rest[1:] or ["--help"])
-    if rest[:1] == ["spotify"]:
-        from . import spotify
-        return spotify.cli(rest[1:] or ["--help"])
-    if rest[:1] == ["firetv"]:
-        from . import firetv
-        return firetv.cli(rest[1:] or ["--help"])
-    if rest[:1] in (["obsbot"], ["cam"]):
-        from . import obsbot
-        return obsbot.cli(rest[1:] or ["--help"])
+    # eve's apps' own CLIs (app_registry.APPS: lights, spotify, firetv, obsbot/cam, ...): everything after the word
+    # is the app's own (argparse's REMAINDER drops a leading --help)
+    for app in app_registry.APPS:
+        if rest[:1] and rest[0] in app.cli:
+            return app.cli_mod().cli(rest[1:] or ["--help"])
+    if rest[:1] == ["app"]:
+        from . import app_template
+        return app_template.cli(rest[1:])
     parser = argparse.ArgumentParser(prog="eve-bridge")
     parser.add_argument("--version", action="version", version=f"eve-bridge {__version__}")
     sub = parser.add_subparsers(dest="cmd")
@@ -210,37 +205,14 @@ def main(argv: list[str] | None = None) -> int:
     p_headcal.add_argument("--no-open", action="store_true", help="do not open a browser")
     p_headcal.add_argument("--socket", default=None, help="IPC path or host:port override")
 
-    p_lights = sub.add_parser(
-        "lights",
-        help="The owner's lights (Govee, HappyLighting, Sylvania/Tuya): scan, list, name, set. See docs/lights.md",
-        add_help=False,
-    )
-    p_lights.add_argument("lights_args", nargs=argparse.REMAINDER)
-
-    p_spotify = sub.add_parser(
-        "spotify",
-        help="The owner's Spotify (spotKnob's powers): login, status, devices, play, pause, next, previous, "
-             "volume, transfer. See docs/spotify.md",
-        add_help=False,
-    )
-    p_spotify.add_argument("spotify_args", nargs=argparse.REMAINDER)
-
-    p_firetv = sub.add_parser(
-        "firetv",
-        help="The owner's Fire TV over network ADB: pair, status, on, off, key, volume, mute, open, apps, "
-             "youtube, type, screenshot, forget. See docs/firetv.md",
-        add_help=False,
-    )
-    p_firetv.add_argument("firetv_args", nargs=argparse.REMAINDER)
-
-    p_obsbot = sub.add_parser(
-        "obsbot",
-        aliases=["cam"],
-        help="The OBSBOT Tiny 3 webcam through OBSBOT Center's OSC: setup, status, wake, sleep, move, nudge, "
-             "center, zoom, fov, preset, track, mode. See docs/obsbot.md",
-        add_help=False,
-    )
-    p_obsbot.add_argument("obsbot_args", nargs=argparse.REMAINDER)
+    for app in app_registry.APPS:                         # help only: main() hands these words to the app first
+        if app.cli:
+            p_app = sub.add_parser(app.cli[0], aliases=list(app.cli[1:]), help=app.cli_help, add_help=False)
+            p_app.add_argument(f"{app.slot}_args", nargs=argparse.REMAINDER)
+    p_new = sub.add_parser("app", help="Your own apps: new <name> [--dry-run] writes one (a module, its test, its doc "
+                                       "and its registry line); list shows them. See docs/adding-an-app.md",
+                           add_help=False)
+    p_new.add_argument("app_args", nargs=argparse.REMAINDER)
 
     p_chrome = sub.add_parser(
         "chrome-profile",

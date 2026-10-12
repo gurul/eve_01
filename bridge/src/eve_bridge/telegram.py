@@ -86,6 +86,7 @@ from . import (
     agentcard_tools,
     america,
     app_reflex,
+    app_registry,
     apps_maker,
     apps_mcp,
     canvas,
@@ -96,14 +97,11 @@ from . import (
     composio_tools,
     consent,
     events,
-    firetv,
     grade_router,
-    lights,
     link_reactions,
     meet,
     memory_sources,
     menu_tools,
-    obsbot_panel,
     opentable,
     phone_location,
     quick_answers,
@@ -113,7 +111,6 @@ from . import (
     self_context,
     share,
     spend,
-    spotify,
     system_context,
     telegram_images,
     tool_gate,
@@ -720,6 +717,15 @@ _FROM_ENV: Any = object()            # TelegramInlet(toolset_route=...) not give
 # since 2026-10-06: without the board it is the Mac's camera (daemon._mac_photo). Hidden, "take a photo from my
 # Mac" went to start_task, took 70 s in Codex, and came back as a file.
 ROBOT_BODY_TOOLS = frozenset({"look", "look_around", "find", "move_head", "go_explore", "set_sound"})
+
+
+def _code_match(app: Any, hub: Any, text: str) -> Any:
+    """An app's code-path command in ``text``, or None: the module's own ``match`` when it has one (it matches with
+    no hub, so a switched-on app that is not set up can say so), else the hub's (the lights match their names)."""
+    match = getattr(app.mod(), "match", None)
+    if match is not None:
+        return match(text)
+    return hub.match(text) if hub is not None else None
 
 
 def robot_enabled(environ: Any = None) -> bool:
@@ -2306,10 +2312,6 @@ class TelegramInlet:
                  watcher: Optional[watch.Watcher] = None,
                  chief: Optional[chief_mod.Chief] = None,
                  meeter: Optional[meet.Meeter] = None,
-                 lights: Optional[lights.Lights] = None,
-                 spotify: Optional[spotify.Spotify] = None,
-                 firetv: Optional[firetv.FireTV] = None,
-                 obsbot: Any = None,
                  canvas: Optional[canvas.Canvas] = None,
                  agentcard: Any = None,
                  america: Any = None,
@@ -2333,7 +2335,8 @@ class TelegramInlet:
                  codex_folders: Callable[[], list[Path]] = codex_chat.accessible_folders,
                  permission_timeout_secs: float = DEFAULT_PERMISSION_TIMEOUT_SECS,
                  clock: Callable[[], float] = time.monotonic, wall: Callable[[], float] = time.time,
-                 sleep: Callable[[float], Awaitable[None]] = asyncio.sleep) -> None:
+                 sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
+                 **app_hubs: Any) -> None:
         self.config = config
         self.api = api
         self._create = create
@@ -2372,10 +2375,11 @@ class TelegramInlet:
         self._turn_said = ""                               # the owner's words in the running turn: take_on's door
         self._chief_task: Optional[tuple[str, int]] = None   # (card id, step) of the running task, when a chief's
         self._meeter = meeter                              # meet.Meeter, or None (EVE_MEET=0, no Chrome attach)
-        self._lights = lights                              # lights.Lights, or None (EVE_LIGHTS=0, no lights file)
-        self._spotify = spotify                            # spotify.Spotify, or None (EVE_SPOTIFY=0, no login)
-        self._firetv = firetv                              # firetv.FireTV, or None (EVE_FIRETV=0, never paired)
-        self._obsbot = obsbot                              # obsbot_panel.ObsbotPanel: the webcam, or None (none here)
+        # eve's apps (app_registry.APPS: lights, spotify, firetv, obsbot, ...): each hub at self._<slot>, or None when
+        # it is off or not set up on this Mac. Read on every call (_live_apps), so a test or the eval may set one.
+        app_registry.check_hubs(app_hubs)
+        for app in app_registry.with_tools():
+            setattr(self, "_" + app.slot, app_hubs.get(app.slot))
         self._canvas = canvas                              # canvas.Canvas, or None (no CANVAS_BASE_URL/CANVAS_API_TOKEN)
         self._agentcard = agentcard
         self._purchases = agentcard_tools.AgentCardTools(agentcard) if agentcard is not None else None
@@ -3116,39 +3120,24 @@ class TelegramInlet:
         if word == "/start":
             self._spawn(self._say(inbound.chat_id, HELLO_LINE), "telegram-say")
             return
-        tv_cmd = None if inbound.tapped else firetv.match(inbound.text)
-        if tv_cmd is not None and self._firetv is None and firetv.enabled():
-            # a TV command with no paired TV: say so, rather than send it to a model with no TV tools
-            self._spawn(self._say(inbound.chat_id, firetv.NOT_SET_UP_LINE), "telegram-firetv")
-            return
-        if tv_cmd is not None and self._firetv is not None:
-            # "turn on the tv", "tv volume 30", "open youtube on the tv": done by code, no model turn (firetv.py).
-            # Before lights and Spotify: a light named "TV strip" would claim "turn on the tv", and the matcher
-            # leaves "play the music on the tv" to Spotify's transfer.
-            self._spawn(self._firetv_by_code(inbound, tv_cmd), "telegram-firetv")
-            return
-        cam_cmd = None if inbound.tapped else obsbot_panel.match(inbound.text)
-        if cam_cmd is not None and self._obsbot is None and obsbot_panel.enabled():
-            self._spawn(self._say(inbound.chat_id, obsbot_panel.NOT_SET_UP_LINE), "telegram-obsbot")
-            return
-        if cam_cmd is not None and self._obsbot is not None:
-            # "camera left", "zoom the camera in", "center the camera": done by code, no model turn
-            # (obsbot_panel.py). Every pattern names the camera, so no TV, light or music command reaches it.
-            self._spawn(self._obsbot_by_code(inbound, cam_cmd), "telegram-obsbot")
-            return
-        light_cmd = None if inbound.tapped or self._lights is None else self._lights.match(inbound.text)
-        if light_cmd is not None:
-            # "lights off", "lamp blue at 40%": done by code, no model turn (lights.py)
-            self._spawn(self._lights_by_code(inbound, light_cmd), "telegram-lights")
-            return
-        music_cmd = None if inbound.tapped else spotify.match(inbound.text)
-        if music_cmd is not None and self._spotify is None and spotify.enabled():
-            # a music command with no Spotify login: say so, rather than send it to a model with no Spotify tools
-            self._spawn(self._say(inbound.chat_id, spotify.NOT_SET_UP_LINE), "telegram-spotify")
-            return
-        if music_cmd is not None and self._spotify is not None:
-            # "pause the music", "next song", "play Daft Punk on Spotify": done by code, no model turn (spotify.py)
-            self._spawn(self._spotify_by_code(inbound, music_cmd), "telegram-spotify")
+        # eve's apps' code paths (app_registry.by_code): a plain command done by code, no model turn. The TV first:
+        # a light named "TV strip" would claim "turn on the tv", and the TV's matcher leaves "play the music on the
+        # tv" to Spotify's transfer. The camera's patterns all name the camera, so no TV, light or music command
+        # reaches it.
+        for app in app_registry.by_code():
+            hub = getattr(self, "_" + app.slot, None)
+            cmd = None if inbound.tapped else _code_match(app, hub, inbound.text)
+            if cmd is None:
+                continue
+            if hub is None:
+                mod = app.mod()
+                if getattr(mod, "NOT_SET_UP_LINE", None) and mod.enabled():
+                    # a command for an app that is switched on but not set up: say so, rather than send it to a
+                    # model with none of its tools
+                    self._spawn(self._say(inbound.chat_id, mod.NOT_SET_UP_LINE), "telegram-" + app.slot)
+                    return
+                continue
+            self._spawn(self._app_by_code(app, hub, inbound, cmd), "telegram-" + app.slot)
             return
         ask = None if inbound.tapped else self._quick.match(inbound.text)
         if ask is not None:
@@ -3218,40 +3207,23 @@ class TelegramInlet:
         log.info("telegram: stealth %s", "on" if on else "off")
         self._spawn(self._say(chat_id, STEALTH_ON_LINE if on else STEALTH_OFF_LINE), "telegram-say")
 
-    async def _lights_by_code(self, inbound: Inbound, cmd: lights.Command) -> None:
-        """A message that is only a light command, done by code; the line says which lights changed."""
-        assert self._lights is not None
-        line = await self._lights.run(cmd)
+    async def _app_by_code(self, app: app_registry.App, hub: Any, inbound: Inbound, cmd: Any) -> None:
+        """A message that is only an app's command, done by code; the line says what the app did. An app with a
+        ``code_taint_tool`` (Spotify: a play by name answers with the catalog's words) keeps its line as outside
+        words when that tool's call would taint, so the next turn that shows it starts tainted (tool_gate)."""
+        line = await hub.run(cmd)
         self._note("user", inbound.text)
-        self._note("eve", line)
+        if app.code_taint_tool:
+            self._note("eve", line, outside=tool_gate.taints(app.code_taint_tool, {
+                "action": getattr(cmd, "action", None), "query": getattr(cmd, "query", None)}))
+        else:
+            self._note("eve", line)
         await self._say(inbound.chat_id, line)
 
-    async def _spotify_by_code(self, inbound: Inbound, cmd: spotify.Command) -> None:
-        """A message that is only a music command, done by code; the line says what Spotify did."""
-        assert self._spotify is not None
-        line = await self._spotify.run(cmd)
-        self._note("user", inbound.text)
-        # a play by name, a skip or "what's playing" answers with the catalog's words (a track, an artist, a public
-        # playlist and its owner): kept as outside words, so the next turn that shows it starts tainted (tool_gate)
-        self._note("eve", line, outside=tool_gate.taints("spotify_control", {"action": cmd.action,
-                                                                                  "query": cmd.query}))
-        await self._say(inbound.chat_id, line)
-
-    async def _firetv_by_code(self, inbound: Inbound, cmd: firetv.Command) -> None:
-        """A message that is only a TV command, done by code; the line says what the TV did."""
-        assert self._firetv is not None
-        line = await self._firetv.run(cmd)
-        self._note("user", inbound.text)
-        self._note("eve", line)
-        await self._say(inbound.chat_id, line)
-
-    async def _obsbot_by_code(self, inbound: Inbound, cmd: obsbot_panel.Command) -> None:
-        """A message that is only a camera command, done by code; the line says where the camera ended up."""
-        assert self._obsbot is not None
-        line = await self._obsbot.run(cmd)
-        self._note("user", inbound.text)
-        self._note("eve", line)
-        await self._say(inbound.chat_id, line)
+    def _live_apps(self) -> list[tuple[app_registry.App, Any]]:
+        """The tools apps whose hub is here, in tool order (app_registry.APPS): the order the model reads them in."""
+        return [(app, hub) for app in app_registry.with_tools()
+                if (hub := getattr(self, "_" + app.slot, None)) is not None]
 
     async def _quick_answer(self, inbound: Inbound, ask: quick_answers.Ask) -> None:
         """A standard question, answered by code. When the source fails the model answers, as it always did."""
@@ -5124,14 +5096,12 @@ class TelegramInlet:
         app_tools = self._app_tools(opened, lent, routed)
         loc_tools = phone_location.tools()          # once a turn: the phone's location, while it has shared one
         sci_tools = science_search.tools()          # papers' titles and abstracts, while EVE_SCIENCE_SEARCH is on
+        live = self._live_apps()                    # eve's apps with a hub here, in tool order (app_registry)
         allowed = {t["name"] for t in app_tools} | {t["name"] for t in mem_tools} | (
             set(second_brain.SECOND_BRAIN_TOOL_NAMES) if self._vault is not None else set()) | (
             set(watch.TOOL_NAMES) if self._watcher is not None else set()) | (
-            set(meet.TOOL_NAMES) if self._meeter is not None else set()) | (
-            set(lights.TOOL_NAMES) if self._lights is not None else set()) | (
-            set(spotify.TOOL_NAMES) if self._spotify is not None else set()) | (
-            set(firetv.TOOL_NAMES) if self._firetv is not None else set()) | (
-            set(obsbot_panel.TOOL_NAMES) if self._obsbot is not None else set()) | (
+            set(meet.TOOL_NAMES) if self._meeter is not None else set()) | {
+            n for app, _ in live for n in app.mod().TOOL_NAMES} | (
             {str(t["name"]) for t in loc_tools}) | (
             {str(t["name"]) for t in sci_tools}) | (
             set(canvas.TOOL_NAMES) if self._canvas is not None else set()) | (
@@ -5149,11 +5119,8 @@ class TelegramInlet:
         # Optional shared chat/call services contribute their tools and instructions here:
         # all ride one slot (the chief's enums and block name only its live steps and checks, chief.tools)
         watch_tools = self._menu_tools() + (self._watcher.tools() if self._watcher is not None else []) + (
-            self._meeter.tools() if self._meeter is not None else []) + (
-            self._lights.tools() if self._lights is not None else []) + (
-            self._spotify.tools() if self._spotify is not None else []) + (
-            self._firetv.tools() if self._firetv is not None else []) + (
-            self._obsbot.tools() if self._obsbot is not None else []) + (
+            self._meeter.tools() if self._meeter is not None else []) + [
+            t for _, hub in live for t in hub.tools()] + (
             loc_tools) + (
             sci_tools) + (
             self._canvas.tools() if self._canvas is not None else []) + (
@@ -5172,10 +5139,7 @@ class TelegramInlet:
         watch_block = "\n\n".join(b for b in (choice, self._events_line() if everyday else "",
                                                 self._watcher.instructions() if self._watcher is not None else "",
                                                 self._meeter.instructions() if self._meeter is not None else "",
-                                                self._lights.instructions() if self._lights is not None else "",
-                                                self._spotify.instructions() if self._spotify is not None else "",
-                                                self._firetv.instructions() if self._firetv is not None else "",
-                                                self._obsbot.instructions() if self._obsbot is not None else "",
+                                                *(hub.instructions() for _, hub in live),
                                                 self._canvas.instructions() if self._canvas is not None else "",
                                                 self._agentcard.instructions() if self._agentcard is not None else "",
                                                 self._america.instructions() if self._america is not None else "",
@@ -5346,35 +5310,26 @@ class TelegramInlet:
                 if self._meeter is None:
                     return {"ok": False, "reason": meet.OFF_REASON}
                 return await self._meeter.handle(name, args)
-            if name in lights.TOOL_NAMES:
-                if self._lights is None:
-                    return {"ok": False, "reason": lights.OFF_REASON}
-                return await self._lights.handle(name, args)
-            if name in spotify.TOOL_NAMES:
-                if self._spotify is None:
-                    return {"ok": False, "reason": spotify.OFF_REASON}
-                return await self._spotify.handle(name, args)
-            if name in firetv.TOOL_NAMES:
-                if self._firetv is None:
-                    return {"ok": False, "reason": firetv.OFF_REASON}
-                if name == "firetv_screenshot":
-                    # the picture goes to the owner's chat; the model can't see it, so it is told in words what
-                    # the TV reports at the same moment ("shows"), never the path. The file is only needed until
-                    # it is sent, so it is deleted then: shots would otherwise pile up in the cache
-                    shot = await self._firetv.screenshot_for_model()
-                    if not shot.get("ok") or not shot.get("path"):
-                        return {"ok": False, "reason": str(shot.get("reason") or "the TV sent no picture")}
-                    path = Path(shot["path"])
-                    try:
-                        await self._send_media(chat_id, path, "The TV right now")   # the app keeps its own copy
-                    finally:
-                        path.unlink(missing_ok=True)
-                    return {"ok": True, "sent": "photo", "shows": str(shot.get("shows") or "")}
-                return await self._firetv.handle(name, args)
-            if name in obsbot_panel.TOOL_NAMES:
-                if self._obsbot is None:
-                    return {"ok": False, "reason": obsbot_panel.OFF_REASON}
-                return await self._obsbot.handle(name, args)
+            if name == "firetv_screenshot" and self._firetv is not None:
+                # the picture goes to the owner's chat; the model can't see it, so it is told in words what
+                # the TV reports at the same moment ("shows"), never the path. The file is only needed until
+                # it is sent, so it is deleted then: shots would otherwise pile up in the cache
+                shot = await self._firetv.screenshot_for_model()
+                if not shot.get("ok") or not shot.get("path"):
+                    return {"ok": False, "reason": str(shot.get("reason") or "the TV sent no picture")}
+                path = Path(shot["path"])
+                try:
+                    await self._send_media(chat_id, path, "The TV right now")   # the app keeps its own copy
+                finally:
+                    path.unlink(missing_ok=True)
+                return {"ok": True, "sent": "photo", "shows": str(shot.get("shows") or "")}
+            app = app_registry.owner(name)
+            if app is not None:
+                # eve's apps (app_registry.APPS): the hub's own handle, or the app's off reason
+                hub = getattr(self, "_" + app.slot, None)
+                if hub is None:
+                    return {"ok": False, "reason": app.mod().OFF_REASON}
+                return await hub.handle(name, args)
             if name in phone_location.TOOL_NAMES:
                 # the phone's latest fix (phone_location.py): a file read, no device, nothing sent anywhere
                 return await phone_location.handle(name, args)

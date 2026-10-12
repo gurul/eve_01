@@ -72,7 +72,8 @@ screen but the controls below until there are messages.
   flick on the web view). Rows in these lists have no swipe actions for that
   reason: a finished job's Delete is a long press, as an Updates card's Dismiss.
 - **Apps** and **Work** (`App/WorkView.swift`, one plain list each). **Apps**
-  is eve's controls (Music, Lights, Remote); **Work** is the chief's jobs.
+  is Notes and the Mac's apps (the owner's are Music, Lights, Remote, Pika and
+  Camera; any app added to the registry shows up too); **Work** is the chief's jobs.
   Pull down to refresh; each also refreshes when its tab opens, and both are
   read at launch, so a tab opens on data, not "Loading…".
   - A job shows its title, one muted status line ("Waiting on your Go",
@@ -111,7 +112,22 @@ screen but the controls below until there are messages.
     SF Symbol in a rounded square, the name, and one muted line ("Spotify",
     "3 lights", "Fire TV"). A tap opens a native sheet (`App/ControlSheets.swift`)
     with the same actions as the Mini App card, and the Mac's line under the
-    controls (VoiceOver reads it out):
+    controls (VoiceOver reads it out).
+
+    Since 2026-10-12 the rows come from the Mac's app registry (`bridge/src/eve_bridge/app_registry.py`;
+    [adding-an-app.md](adding-an-app.md)): `GET /api/link/controls` carries an `apps` list, each entry an id, a
+    title, an SF Symbol, a muted detail and `sheet` (`native` or `generic`), and the tab lists them in the Mac's
+    order after Notes (`ControlsInfo.rows`, `Shared/ControlsClient.swift`). The owner's apps keep their native
+    sheets below. Any other app, or one the Mac marks `generic`, opens the **generic sheet**
+    (`App/GenericAppSheet.swift`), drawn from the app's own panel: on open it sends `{"action": "status"}`, and the
+    answer's `status` is the headline, its `controls` (buttons, toggles and sliders) the body, and its `line` the
+    muted line under them. A button sends `{"action"}`, a toggle `{"action", "on"}`, a slider `{"action", "value"}`
+    when the finger lifts (a VoiceOver swipe sends at once). The press shows at once; the controls wait while it is
+    on its way, a failure or refusal puts the old setting back and says why in red, and an answer without
+    `controls` keeps the ones shown. Unknown control types are skipped, at most 24 are drawn, and a slider whose
+    `min` is not below its `max` is dropped. An SF Symbol this iOS does not have shows a plain grid. The Memory and
+    Notes ids are never registry rows. A Mac older than the registry sends no `apps`, and the tab lists the legacy
+    keys' rows as before. The native sheets:
     - **Notes** (`App/NotesView.swift`, `Shared/NotesText.swift`, `link_notes.py`; owner, 2026-10-10: "an app
       where I can look at my notes and interact with them change delete updates", "essentially like a mini
       notion", "make sure it's mobile native"): the second brain's vault (docs/stackchan/second-brain.md), listed
@@ -613,7 +629,8 @@ has none of it (checked: the strings `EVE_PAIR_URL`, `eveScreen` and
   screen open).
 - `-eveGrade auto | instant | think`: preselects the speed dial.
 - `-eveKeyboard YES` (with `chat`): puts the cursor in the composer.
-- `-eveControl notes|spotify|lights|firetv|pika|obsbot|memory` (with `apps`): opens that control's sheet.
+- `-eveControl notes|spotify|lights|firetv|pika|obsbot|memory|<app id>` (with `apps`): opens that control's sheet;
+  any other id the Mac lists opens its generic sheet.
 - `-eveNote <vault path>` (with `-eveControl notes`): opens that note's page.
 - `-eveActivity listening|thinking|speaking|waiting|notes`: puts up the call's Live Activity in that phase
   (simulator screenshots leave the Dynamic Island out; check it on a phone).
@@ -635,7 +652,8 @@ same one retry at a new address as the chat:
 | `POST /api/link/jobs` | New job. Body `{"goal", "detail"?, "client_id"?}`: goal 1 to 1000 characters after trimming, detail at most 2000, client_id at most 64; a JSON object of at most 64 kB. The words are heard as an app turn, as `POST /api/link/turn` hears typed words, led by `"Take this on as a job: "` (`link_chat.JOB_LEAD`, which names no act, so it never grounds a one-way step) and the details after `"Details: "`. The brain's own `take_on` files the card, with its parse, door floor, backbrief and every chief rule; nothing in the endpoint files or approves anything. The request waits for that turn (90 s at most) and answers `{"ok": true, "job": <one card, as GET gives it>, "said": [...]}` for the card that turn's own `take_on` filed (`TelegramInlet.app_filed`, keyed by the app turn's id; a card another turn files during the wait is never returned), or `{"ok": false, "reason", "said"}` when it filed none (`said`: eve's lines on the turn, OpenUI made plain). The same `client_id` within 10 minutes waits for the first request's turn, never a second card. 503 when the chief is off or the chat is not running; 400 or 413 for a bad body. |
 | `POST /api/link/jobs/<id>/<go\|done\|drop\|raise\|happened\|didnt>` | The chief's own `approve` / `done` / `drop` / `raise_budget` / `happened` / `didnt`, and its dict: `{"ok": true, ...}` or `{"ok": false, "reason": ...}`. A Go here is the owner's yes, as "go c12" in Telegram, and may carry `{"rev": n}`. A Go on a card whose act may already have happened is refused (`ok: false`); answer `happened` or `didnt` first. |
 | `POST /api/link/jobs/<id>/hide` | A finished job leaves the Work list for good: long-press it, Delete in its sheet, or Clear finished in the bar. Only the list forgets it (`~/.config/eve-bridge/chat/hidden-jobs.json`); the chief's ledger keeps the card. An open job is refused (`ok: false`): Drop it first. |
-| `GET /api/link/controls` | `{"lights": [{"name", "room"?}], "spotify": bool, "firetv": bool, "memory": bool, "notes": bool, "pika": bool, "obsbot": bool}`: which of the Mini App's Lights, Music and TV remote cards, the Memory card, Notes, Pika and the camera this Mac has. |
+| `GET /api/link/controls` | `{"lights": [{"name", "room"?}], "spotify": bool, "firetv": bool, "memory": bool, "notes": bool, "pika": bool, "obsbot": bool, "apps": [{"id", "title", "symbol", "detail", "sheet"}]}`: which of the Mini App's Lights, Music and TV remote cards, the Memory card, Notes, Pika and the camera this Mac has, and (`apps`, 2026-10-12) the registry's present apps in the order the Apps tab lists them. An app build older than `apps` ignores it. |
+| `POST /api/link/controls/<id>` | An app with no native sheet (the generic sheet): the app's `panel(body)`. Bodies `{"action": "status"}`, `{"action"}`, `{"action", "on"}`, `{"action", "value"}`; the answer `{"ok", "ui": 1, "line", "status"?, "controls"?: [{"type": "button"\|"toggle"\|"slider", "id", "label", "action", ...}]}`. See [adding-an-app.md](adding-an-app.md). |
 | `POST /api/link/controls/obsbot` | The OBSBOT webcam (`obsbot_panel.ObsbotPanel`): `{"action": "status"}`, `{"action": "hold", "dir": "up"\|"down"\|"left"\|"right", "hold"}` every 150 ms while held, `{"action": "stop", "hold"}`, `{"action": "move", "pan", "pitch"}`, `center`, `wake`, `sleep`, `{"action": "zoom", "level"}`, `{"action": "track", "on"}`, `{"action": "mode", "name"}`, `{"action": "preset", "n"}`, `close`; `{"ok", "line", ...}`. 404 when no OBSBOT camera is plugged in (and OBSBOT Center isn't installed) or `EVE_OBSBOT=0`. See [obsbot.md](obsbot.md). |
 | `GET /api/link/controls/obsbot/stream` | The webcam's picture as `multipart/x-mixed-replace` JPEGs (Pika's format), the fallback when WebRTC (`{"action": "rtc", "sdp"}` on the panel) can't connect. Any number of viewers share one capture. 503 `{"ok": false, "line"}` when the camera or the camera permission is missing. |
 | `POST /api/link/controls/pika` | Pika, the car (`pika.Pika`): `{"action": "drive", "dir": "forward"\|"back"\|"left"\|"right", "hold"}` every 150 ms while held, `{"action": "stop", "hold"}`, `{"action": "close"}` and `{"action": "status"}`; `{"ok", "line", "stopped"?}`. 404 unless `EVE_PIKA=1` and its config. See [pika.md](pika.md). |
@@ -979,7 +997,12 @@ has, Music first), the two requests, the lights choices, the colour hex both
 ways, each card's answer (artwork only from Spotify's image host), the remote's
 press queue (in order, d-pad taps coalesced, the newest volume wins), a
 missing device's words, and Pika: its row, hold-to-drive (only the driving key's release stops, a press the Mac
-ended stops beating), the two requests, and the video's JPEG splitter. In `bridge/`, `tests/test_link_code_words.py` checks that every base word is accepted
+ended stops beating), the two requests, and the video's JPEG splitter. `APP_REGISTRY_OK` checks the registry's
+`apps` list (the Mac's order, native or generic sheet, Memory and Notes never rows, bad ids and repeats dropped, an
+older Mac's legacy rows), the generic panel (the contract's example, read from
+`bridge/tests/fixtures/app_panel_example.json` when the bridge has written it; unknown types, empty sliders and the
+24-control cap), each control's body, the sheet's model (one press at a time, taken back on a failure, an answer
+without controls keeping them) and the generic press request. In `bridge/`, `tests/test_link_code_words.py` checks that every base word is accepted
 when typed in the app (`hear(app=...)`, with `test_telegram.py`'s menu checks) and that Telegram's menu is set
 from `TelegramInlet.menu_commands`. `tests/test_link_chat.py` checks the
 controls door: the link token, any Origin refused, an unknown control and a

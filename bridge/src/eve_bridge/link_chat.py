@@ -90,6 +90,10 @@ view and does all its networking natively (ios/EveLink); this module is the daem
   (lights.Lights, spotify.Spotify, firetv.FireTV), the same objects the Mini App's ``/api/lights``,
   ``/api/spotify`` and ``/api/firetv`` call, read off its server on every request, and the same JSON back. 404
   for a control this Mac does not have.
+* The controls listing also carries ``apps`` (2026-10-12, app_registry.py, docs/adding-an-app.md): the phone's Apps
+  list, each present app's id, title, symbol, detail and sheet ("native" or "generic"), in the registry's phone
+  order. The legacy keys keep their values for older phones. An app with no Swift answers the phone's generic sheet
+  from its ``panel(body)`` (the contract is in docs/adding-an-app.md).
 * ``POST /api/link/controls/pika`` and ``GET /api/link/controls/pika/stream`` (pika.py, docs/pika.md; owner,
   2026-10-10: "can we build a controller for pika as an app"): hold-to-drive for the owner's robot car, and its
   video as multipart JPEGs, one viewer. Listed only with EVE_PIKA=1 and its config; 404 otherwise.
@@ -152,7 +156,7 @@ from pathlib import Path
 from typing import Any, Callable, Collection, Optional
 from urllib.parse import parse_qsl
 
-from . import memory_sources
+from . import app_registry, memory_sources
 
 log = logging.getLogger(__name__)
 
@@ -164,10 +168,15 @@ UPLOAD_PATH = "/api/link/upload"
 JOB_ACTION_RE = re.compile(r"^/api/link/jobs/(c\d{1,6})/([a-z]{1,16})$")
 APP_OPEN_RE = re.compile(r"^/api/link/apps/([A-Za-z0-9_-]{1,80})/open$")
 CONTROLS_PATH = "/api/link/controls"
-CONTROL_RE = re.compile(r"^/api/link/controls/([a-z]{1,16})$")
-CONTROLS = ("lights", "spotify", "firetv", "memory", "notes", "pika", "obsbot")  # the Mini App server's attributes, each with ``panel(body)``
-PIKA_STREAM_PATH = "/api/link/controls/pika/stream"   # pika.py: the car's video, one viewer
-OBSBOT_STREAM_PATH = "/api/link/controls/obsbot/stream"   # obsbot_panel.py: the webcam's picture, one viewer
+CONTROL_RE = re.compile(r"^/api/link/controls/([a-z][a-z0-9]{0,15})$")   # an app's slot (app_registry.name_problem)
+# The Mini App server's attributes, each with ``panel(body)``: eve's apps (app_registry.APPS) and eve's own Memory and
+# Notes panels
+CONTROLS = tuple(a.slot for a in app_registry.APPS if a.controls) + ("memory", "notes")
+# GET /api/link/controls/<slot>/stream for an app with a picture (pika.py: the car's video; obsbot_panel.py: the
+# webcam's), one viewer
+STREAM_PATHS: dict[str, str] = {f"{CONTROLS_PATH}/{a.slot}/stream": a.slot for a in app_registry.APPS if a.stream}
+PIKA_STREAM_PATH = "/api/link/controls/pika/stream"
+OBSBOT_STREAM_PATH = "/api/link/controls/obsbot/stream"
 TODAY_PATH = "/api/link/today"           # link_today.py: the home-screen widget's one read
 UPDATES_PATH = "/api/link/updates"       # updates.py: the Updates pane's cards
 UPDATES_DISMISS_PATH = "/api/link/updates/dismiss"
@@ -175,8 +184,8 @@ UPDATES_REFRESH_PATH = "/api/link/updates/refresh"
 LOCATION_PATH = "/api/link/location"     # phone_location.py: the phone's latest fix
 # one kept upload's bytes, full size; anything after the prefix that is not 32 hex is a 404 (never a path)
 FILE_RE = re.compile(r"^/api/link/file/([^/]{0,64})$")
-PATHS = (TURN_PATH, MESSAGES_PATH, JOBS_PATH, APPS_PATH, UPLOAD_PATH, CONTROLS_PATH, TODAY_PATH, PIKA_STREAM_PATH,
-         OBSBOT_STREAM_PATH, UPDATES_PATH, UPDATES_DISMISS_PATH, UPDATES_REFRESH_PATH, LOCATION_PATH)
+PATHS = (TURN_PATH, MESSAGES_PATH, JOBS_PATH, APPS_PATH, UPLOAD_PATH, CONTROLS_PATH, TODAY_PATH, *STREAM_PATHS,
+         UPDATES_PATH, UPDATES_DISMISS_PATH, UPDATES_REFRESH_PATH, LOCATION_PATH)
 POST_PATHS = (TURN_PATH, UPLOAD_PATH, UPDATES_DISMISS_PATH, UPDATES_REFRESH_PATH, LOCATION_PATH)
 MAX_CARD_ID_CHARS = 64                # a dismissed Updates card's id (updates.card_id: 12 hex)
 GRADES = ("auto", "instant", "think")    # telegram.GRADES: the speed dial
@@ -226,13 +235,9 @@ REASONS = {200: "OK", 400: "Bad Request", 401: "Unauthorized", 403: "Forbidden",
 NO_CHAT = "eve's chat isn't running, or no owner has texted it yet"
 NO_CHIEF = "eve's chief of staff is off on this Mac (EVE_CHIEF), so there are no jobs"
 NO_APPS = "the app builder is off on this Mac, so there are no apps"
-NO_CONTROL = {"lights": "eve has no lights on this computer.",
-              "spotify": "eve has no Spotify login on this computer.",
-              "firetv": "eve has no TV on this computer.",
+NO_CONTROL = {**{a.slot: a.no_control for a in app_registry.APPS},
               "memory": "eve's memory is off on this Mac (EVE_MEMORY).",
-              "notes": "Your notes are off on this Mac (EVE_SECOND_BRAIN).",
-              "pika": "Pika isn't set up on this Mac (EVE_PIKA and pika.json).",
-              "obsbot": "The camera is off on this Mac (no OBSBOT camera is plugged in, or EVE_OBSBOT=0)."}
+              "notes": "Your notes are off on this Mac (EVE_SECOND_BRAIN)."}
 NO_MEMORY = "eve's memory is off on this Mac (EVE_MEMORY), so there is no conversation to read"
 NO_LOCATION = "phone location is off on this Mac (EVE_PHONE_LOCATION=0)"
 
@@ -282,6 +287,51 @@ APP_LINE = ("This turn is from the Eve Link app: use one openui-lang block when 
 # ---- the generative UI prompt ----------------------------------------------------------------------------
 
 _prompt: dict[str, Any] = {"key": None, "text": "", "warned": False}
+
+
+# The keys an Eve Link from before the registry reads (2026-10-12): the owner's five apps. An app added since is
+# listed only in ``apps``.
+LEGACY_CONTROLS = ("lights", "spotify", "firetv", "pika", "obsbot")
+
+
+def controls_listing(get: Callable[[str], Any]) -> dict[str, Any]:
+    """``GET /api/link/controls``: which of eve's controls this Mac has. ``get(name)`` is the Mini App server's
+    attribute, read now. The legacy keys keep their meaning for an installed app: ``lights`` is the lights' names and
+    rooms (``listing()``), every other app and eve's Memory and Notes a bool. ``apps`` (added 2026-10-12) is the
+    phone's Apps list from the registry (app_registry.for_phone): only the apps present here, each with its row's
+    words and which sheet opens it ("native" when the phone has Swift for it, else "generic"). An older phone reads
+    only the keys it knows."""
+    def here(hub: Any) -> bool:
+        return hub is not None and bool(getattr(hub, "available", True))
+
+    legacy: dict[str, Any] = {}
+    for slot in LEGACY_CONTROLS:                       # the legacy keys, in their order; a newer app has none
+        app = app_registry.get(slot)
+        if app is None:
+            continue
+        hub = get(app.slot)
+        legacy[app.slot] = (hub.listing() if hub is not None else []) if app.listing else here(hub)
+        if app.slot == "firetv":
+            # the Memory card (link_memory.py): its object is always there, its memory only while EVE_MEMORY is on
+            # and the daemon has built it; Notes (link_notes.py): while the second brain is on and its vault is there
+            legacy["memory"] = here(get("memory"))
+            legacy["notes"] = here(get("notes"))
+    legacy.setdefault("memory", here(get("memory")))
+    legacy.setdefault("notes", here(get("notes")))
+    rows: list[dict[str, str]] = []
+    for app in app_registry.for_phone():
+        hub = get(app.slot)
+        listed = (legacy[app.slot] if app.slot in legacy else hub.listing()) if app.listing and here(hub) else None
+        if not here(hub) or (app.listing and not listed):
+            continue
+        detail = app.detail
+        if app.listing:
+            n = len(listed)
+            detail = f"{n} light" if n == 1 else f"{n} lights"
+        rows.append({"id": app.slot, "title": app.title, "symbol": app.symbol, "detail": detail,
+                     "sheet": "native" if app.native_sheet else "generic"})
+    legacy["apps"] = rows
+    return legacy
 
 
 def app_block(path: Optional[Path] = None) -> str:
@@ -783,8 +833,8 @@ class LinkChat:
         if path == CONTROLS_PATH or control is not None:
             await self._controls(apps, headers, reader, writer, control.group(1) if control else None)
             return
-        if path in (PIKA_STREAM_PATH, OBSBOT_STREAM_PATH):
-            name = "pika" if path == PIKA_STREAM_PATH else "obsbot"
+        if path in STREAM_PATHS:
+            name = STREAM_PATHS[path]
             target = getattr(apps, name, None) if apps is not None else None
             if target is None or not getattr(target, "available", True):
                 await self._json(writer, 404, {"ok": False, "line": NO_CONTROL[name]})
@@ -1323,29 +1373,14 @@ class LinkChat:
 
     async def _controls(self, server: Any, headers: dict[str, str], reader: asyncio.StreamReader,
                         writer: asyncio.StreamWriter, name: Optional[str]) -> None:
-        """``GET /api/link/controls``: which of the Lights, Music and TV remote cards this Mac has.
-        ``POST /api/link/controls/<name>``: that card's ``panel(body)``, its JSON as it is. The objects are the
+        """``GET /api/link/controls``: which of eve's apps and panels this Mac has (controls_listing).
+        ``POST /api/link/controls/<name>``: that app's or panel's ``panel(body)``, its JSON as it is. The objects are the
         Mini App server's own (set by the daemon), read now, so a card that came or went since is seen."""
         def get(n: str) -> Any:
             return getattr(server, n, None) if server is not None else None
 
         if name is None:
-            lights = get("lights")
-            memory = get("memory")
-            notes = get("notes")
-            await self._json(writer, 200, {"lights": lights.listing() if lights is not None else [],
-                                           "spotify": get("spotify") is not None,
-                                           "firetv": get("firetv") is not None,
-                                           # the Memory card (link_memory.py): its object is always there, its
-                                           # memory only while EVE_MEMORY is on and the daemon has built it
-                                           "memory": memory is not None and bool(getattr(memory, "available", True)),
-                                           # Notes (link_notes.py): while the second brain is on and its vault is there
-                                           "notes": notes is not None and bool(getattr(notes, "available", True)),
-                                           # Pika, the car (pika.py): only with EVE_PIKA=1 and its config
-                                           "pika": get("pika") is not None,
-                                           # the OBSBOT webcam (obsbot_panel.py): while OBSBOT Center is installed
-                                           "obsbot": get("obsbot") is not None
-                                           and bool(getattr(get("obsbot"), "available", True))})
+            await self._json(writer, 200, controls_listing(get))
             return
         target = get(name)
         if target is not None and not getattr(target, "available", True):

@@ -87,11 +87,12 @@ The environment it needs, and sets when the shell has not: `EVE_TELEGRAM_MODEL=g
 `EVE_JEV_ROUTE=openrouter`, `EVE_OPENTABLE=1`, `EVE_MENU_TOOLS=on` (pass `--menu-tools off` to score
 the switch off). `EVE_TOOLSET_ROUTER`, `EVE_CHIEF` and `EVE_GRADE_ROUTER` stay at their defaults,
 as in production. Keys: only `OPENROUTER_API_KEY` (every model call and Jev) and `TICKETMASTER_API_KEY` (for
-`events_search` to be lent), exported by the command:
+`events_search` to be lent), scoped to the one command with `env` (never `export $(…)`: with a key missing it
+prints every exported variable):
 
 ```bash
-export $(grep -E '^(OPENROUTER_API_KEY|TICKETMASTER_API_KEY)=' ~/.config/eve-bridge/env | xargs)
-cd bridge && uv run python tools/intent_eval.py CASES.json
+cd bridge && env $(grep -E '^(OPENROUTER_API_KEY|TICKETMASTER_API_KEY)=' ~/.config/eve-bridge/env | xargs) \
+  uv run python tools/intent_eval.py CASES.json
 ```
 
 It refuses to run on keywords alone unless `--allow-keywords` is given. It lends every service with eve's own

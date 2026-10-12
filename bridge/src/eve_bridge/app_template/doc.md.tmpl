@@ -1,0 +1,51 @@
+# $Name
+
+An app for eve, written by `eve-bridge app new $name`. Replace this page's placeholders as the app grows; the
+walk-through is [adding an app](adding-an-app.md).
+
+## What it does
+
+Today: an on/off switch kept in memory, so the module, its tests and the phone sheet work with no device. Describe
+the real device or service here once the module talks to it.
+
+## Switch
+
+`$SWITCH=1` in `~/.config/eve-bridge/env` turns it on; anything else leaves it off. Restart the daemon after
+changing it (the daemon runs from the main checkout, so merge the app there first). Off, the app is gone
+everywhere: no tools in the chat or the voice, no row on the phone, no code path. The intent eval lends every
+registered app whatever its switch, so an eval run does not depend on the shell.
+
+## Tools
+
+| Tool | Acts? | What it does |
+|---|---|---|
+| `${name}_status` | no (in `clean`: a read that brings in no outside text) | whether it is on |
+| `${name}_set` | yes (declared in `acting`, so the tool gate treats it as an act) | turns it on or off |
+
+## The phone
+
+Eve Link lists it under Apps once it is on, and opens eve's generic sheet: the status, a Power toggle and a
+Say hello button, from the module's `panel(body)`. The sheet's JSON is described in
+[adding an app](adding-an-app.md#the-phone).
+
+## Test it
+
+```bash
+uv run --project bridge --extra dev pytest -q -p no:cacheprovider -c bridge/pyproject.toml --rootdir bridge \
+  bridge/tests/test_$name.py
+```
+
+## Before it is on by default
+
+Turning an app on changes what the models read. Before `default_on=True` in its registry line, pre-register a bar
+and score a blind intent-eval set written by someone who did not see the change (AGENTS.md rule 6).
+
+## Resources
+
+- [REA](https://github.com/morluto/rea) ("Reverse Engineer Anything"): an MCP for agents that inspects app
+  binaries, Electron/JS apps and websites without source, and explains how a feature works. Use it to learn how a
+  device's own app talks to the device when there is no public API, and only for devices and software you own and
+  may inspect. Setup: `npx rea-agents setup`.
+- [hwlog](https://github.com/gurul/hardware-logging): crash-aware serial logging for embedded boards, built for
+  coding agents (persistent sessions, decoded backtraces, flash-safe port arbitration, an MCP server). Use it when
+  the app has firmware on a board.

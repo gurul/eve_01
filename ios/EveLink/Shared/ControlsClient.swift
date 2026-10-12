@@ -1,9 +1,14 @@
-// eve's own controls in the Work view (docs/app-chat.md, "Work"): the Telegram Mini App's Music, Lights and TV remote
-// cards, drawn natively. The daemon's link door hands each body to the card's own panel (link_chat.py), so the actions
-// and answers are exactly the Mini App's (miniapp_page.html). Foundation only, so Tests/main.swift checks it on the Mac.
+// eve's controls in the Work view (docs/app-chat.md, "Work"): the Telegram Mini App's Music, Lights and TV remote
+// cards, drawn natively, and any other app the Mac's registry has (app_registry.py), drawn by the generic sheet
+// (GenericAppSheet.swift). The daemon's link door hands each body to the app's own panel (link_chat.py), so the
+// actions and answers are exactly the Mini App's (miniapp_page.html). Foundation only, so Tests/main.swift checks it
+// on the Mac.
 //
 //   GET  /api/link/controls             {"lights": [{"name", "room"?}], "spotify": bool, "firetv": bool, "memory": bool,
-//                                        "notes": bool, "pika": bool, "obsbot": bool}
+//                                        "notes": bool, "pika": bool, "obsbot": bool,
+//                                        "apps": [{"id", "title", "symbol", "detail", "sheet": "native"|"generic"}]}
+//                                       ("apps": the present apps in the Mac's order; an older Mac has no "apps",
+//                                        and the legacy keys give the rows)
 //   POST /api/link/controls/lights      {"action": "status"} | {"action": "set", "target", "power"|"color"|"brightness"}
 //   POST /api/link/controls/spotify     {"action": "status"|"play"|"pause"|"next"|"previous"|"volume"|"transfer"|"mode"}
 //   POST /api/link/controls/firetv      {"action": "status"|"up"|...|"volume"|"volume_change"|"open_app"|"power_on"...}
@@ -12,6 +17,8 @@
 //                                       (link_memory.py)
 //   POST /api/link/controls/pika        hold-to-drive for the car, and its video (PikaDrive.swift, pika.py)
 //   POST /api/link/controls/obsbot      the OBSBOT webcam, and its picture (ObsbotControl.swift, obsbot_panel.py)
+//   POST /api/link/controls/<id>        any other app: {"action": "status"} first, then {"action"}, {"action", "on"}
+//                                        or {"action", "value"}; the answer is an AppPanel (docs/adding-an-app.md)
 //   404 with {"ok": false, "line"} for a control this Mac does not have.
 import Foundation
 
@@ -62,6 +69,8 @@ struct ControlsInfo: Equatable, Sendable {
     var notes: Bool = false         // Notes (2026-10-10, link_notes.py): on while the second brain's vault is there
     var pika: Bool = false          // Pika, the car (2026-10-10, pika.py): only with EVE_PIKA=1 and its config
     var obsbot: Bool = false        // the OBSBOT webcam (2026-10-11, obsbot_panel.py): while OBSBOT Center is installed
+    /// The Mac's own list of its apps (app_registry.py, 2026-10-12), in its order; nil from a Mac older than that.
+    var entries: [AppEntry]? = nil
 
     var available: [ControlKind] {
         ControlKind.allCases.filter { kind in
@@ -81,6 +90,26 @@ struct ControlsInfo: Equatable, Sendable {
     /// to settings").
     var apps: [ControlKind] { available.filter { $0 != .memory } }
 
+    /// The Apps tab's rows. Notes first when the Mac has it (it is eve's own, not a registry app), then the Mac's
+    /// apps in the Mac's order: the native sheet for an app the phone has Swift for, the generic sheet for any other.
+    /// A Mac with no "apps" list gives today's rows from the legacy keys.
+    var rows: [AppRow] {
+        guard let entries else { return apps.map(AppRow.native) }
+        var out: [AppRow] = notes ? [.native(.notes)] : []
+        var seen: Set<String> = [ControlKind.notes.rawValue, ControlKind.memory.rawValue]   // never a registry row
+        for e in entries where seen.insert(e.id).inserted {
+            if e.sheet == AppEntry.nativeSheet, let kind = ControlKind(rawValue: e.id) {
+                out.append(.native(kind))
+            } else {
+                out.append(.generic(e))
+            }
+        }
+        return out
+    }
+
+    /// The Mac's words for a native app's row, when it sent them.
+    func entry(for kind: ControlKind) -> AppEntry? { entries?.first { $0.id == kind.rawValue } }
+
     static func decode(_ data: Data) -> ControlsInfo? {
         guard let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
         let lights = (obj["lights"] as? [[String: Any]] ?? []).compactMap { l -> LightName? in
@@ -90,7 +119,72 @@ struct ControlsInfo: Equatable, Sendable {
         return ControlsInfo(lights: lights, spotify: obj["spotify"] as? Bool ?? false,
                             firetv: obj["firetv"] as? Bool ?? false, memory: obj["memory"] as? Bool ?? false,
                             notes: obj["notes"] as? Bool ?? false, pika: obj["pika"] as? Bool ?? false,
-                            obsbot: obj["obsbot"] as? Bool ?? false)
+                            obsbot: obj["obsbot"] as? Bool ?? false,
+                            entries: (obj["apps"] as? [Any]).map { $0.compactMap(AppEntry.init(json:)) })
+    }
+}
+
+/// One app as the Mac lists it under "apps" (app_registry.for_phone): its slot, the row's words and SF Symbol, and
+/// whether the phone has a native sheet for it.
+struct AppEntry: Equatable, Sendable, Hashable, Identifiable {
+    var id: String              // the slot: POST /api/link/controls/<id>
+    var title: String
+    var symbol: String          // an SF Symbol name; the row falls back when this iOS does not have it
+    var detail: String
+    var sheet: String           // "native" | "generic"; anything else is generic
+
+    static let nativeSheet = "native"
+    static let fallbackSymbol = "square.grid.2x2"
+    static let maxTitle = 40
+    static let maxDetail = 80
+
+    /// The registry's slot rule (app_template: ^[a-z][a-z0-9]{1,15}$; link_chat's CONTROL_RE allows one letter).
+    static func validID(_ id: String) -> Bool {
+        guard let first = id.unicodeScalars.first, id.unicodeScalars.count <= 16, ("a"..."z").contains(first) else {
+            return false
+        }
+        return id.unicodeScalars.allSatisfy { ("a"..."z").contains($0) || ("0"..."9").contains($0) }
+    }
+
+    init(id: String, title: String, symbol: String = AppEntry.fallbackSymbol, detail: String = "",
+         sheet: String = "generic") {
+        self.id = id
+        self.title = title
+        self.symbol = symbol
+        self.detail = detail
+        self.sheet = sheet
+    }
+
+    /// An entry with a valid id; the other fields are optional and trimmed.
+    init?(json: Any) {
+        guard let o = json as? [String: Any], let id = o["id"] as? String, Self.validID(id) else { return nil }
+        let title = AppText.trimmed(o["title"] as? String, Self.maxTitle)
+        let symbol = AppText.trimmed(o["symbol"] as? String, 64)
+        self.init(id: id, title: title.isEmpty ? id.prefix(1).uppercased() + id.dropFirst() : title,
+                  symbol: symbol.isEmpty ? Self.fallbackSymbol : symbol,
+                  detail: AppText.trimmed(o["detail"] as? String, Self.maxDetail),
+                  sheet: o["sheet"] as? String ?? "generic")
+    }
+}
+
+/// One row of the Apps tab: an app with a native sheet, or one the generic sheet draws.
+enum AppRow: Equatable, Sendable, Hashable, Identifiable {
+    case native(ControlKind)
+    case generic(AppEntry)
+
+    var id: String {
+        switch self {
+        case .native(let kind): kind.rawValue
+        case .generic(let entry): entry.id
+        }
+    }
+}
+
+enum AppText {
+    /// Whitespace-trimmed and cut to `limit` characters (with an ellipsis when cut); "" for nil.
+    static func trimmed(_ s: String?, _ limit: Int) -> String {
+        let t = (s ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        return t.count <= limit ? t : String(t.prefix(max(0, limit - 1))) + "…"
     }
 }
 
@@ -367,6 +461,177 @@ struct TvQueue: Equatable, Sendable {
     }
 }
 
+// ---- any other app: the generic sheet (GenericAppSheet.swift, docs/adding-an-app.md) ---------------------------------
+
+/// One control the app's panel offers. Unknown types never get here: the decoder skips them, so the format can grow.
+struct AppControl: Equatable, Sendable, Hashable, Identifiable {
+    enum Kind: Equatable, Sendable, Hashable {
+        case button(symbol: String?, destructive: Bool)
+        case toggle(on: Bool)
+        case slider(value: Double, min: Double, max: Double, step: Double?)
+    }
+
+    var id: String
+    var label: String
+    var action: String
+    var kind: Kind
+
+    static let maxLabel = 40
+
+    /// A control from the panel's JSON, or nil: an unknown type, no action, or a slider whose range is empty.
+    init?(json: Any) {
+        guard let o = json as? [String: Any], let type = o["type"] as? String,
+              let action = o["action"] as? String, !action.isEmpty, action.count <= 64 else { return nil }
+        let id = (o["id"] as? String).flatMap { $0.isEmpty || $0.count > 64 ? nil : $0 } ?? action
+        let label = AppText.trimmed(o["label"] as? String, Self.maxLabel)
+        switch type {
+        case "button":
+            let symbol = AppText.trimmed(o["symbol"] as? String, 64)
+            kind = .button(symbol: symbol.isEmpty ? nil : symbol, destructive: o["role"] as? String == "destructive")
+        case "toggle":
+            kind = .toggle(on: o["on"] as? Bool ?? false)
+        case "slider":
+            guard let lo = Self.number(o["min"]), let hi = Self.number(o["max"]), lo < hi else { return nil }
+            let step = Self.number(o["step"]).flatMap { $0 > 0 && $0 <= hi - lo ? $0 : nil }
+            let value = Self.snap(Self.number(o["value"]) ?? lo, min: lo, max: hi, step: step)
+            kind = .slider(value: value, min: lo, max: hi, step: step)
+        default:
+            return nil
+        }
+        self.id = id
+        self.label = label.isEmpty ? action : label
+        self.action = action
+    }
+
+    init(id: String, label: String, action: String, kind: Kind) {
+        self.id = id
+        self.label = label
+        self.action = action
+        self.kind = kind
+    }
+
+    /// What a press sends: {"action"} for a button, {"action", "on"} for a toggle, {"action", "value"} for a slider.
+    /// `on` and `value` are the new setting; without one the control's current setting goes.
+    func body(on: Bool? = nil, value: Double? = nil) -> [String: Any] {
+        var b: [String: Any] = ["action": action]
+        switch kind {
+        case .button: break
+        case .toggle(let now): b["on"] = on ?? now
+        case .slider(let now, let lo, let hi, let step):
+            let v = Self.snap(value ?? now, min: lo, max: hi, step: step)
+            b["value"] = v == v.rounded() && abs(v) < 1e15 ? Int(v) as Any : v as Any
+        }
+        return b
+    }
+
+    /// The same control showing a new setting (what the phone shows while the Mac answers).
+    func showing(on: Bool? = nil, value: Double? = nil) -> AppControl {
+        var c = self
+        switch kind {
+        case .button: break
+        case .toggle(let now): c.kind = .toggle(on: on ?? now)
+        case .slider(let now, let lo, let hi, let step):
+            c.kind = .slider(value: Self.snap(value ?? now, min: lo, max: hi, step: step), min: lo, max: hi, step: step)
+        }
+        return c
+    }
+
+    /// `value` held to min...max, on a step from min when there is one.
+    static func snap(_ value: Double, min lo: Double, max hi: Double, step: Double?) -> Double {
+        guard value.isFinite else { return lo }
+        var v = Swift.min(hi, Swift.max(lo, value))
+        if let step, step > 0 {
+            v = lo + ((v - lo) / step).rounded() * step
+            v = Swift.min(hi, Swift.max(lo, v))
+        }
+        return v
+    }
+
+    /// A finite JSON number; true and false are not numbers here.
+    static func number(_ any: Any?) -> Double? {
+        guard let n = any as? NSNumber, CFGetTypeID(n) != CFBooleanGetTypeID() else { return nil }
+        let d = n.doubleValue
+        return d.isFinite ? d : nil
+    }
+}
+
+/// The app's answer to a press (app_registry.panel): the headline status, the muted line, and the controls. nil
+/// controls means the answer has none, and the sheet keeps the ones it shows.
+struct AppPanel: Equatable, Sendable {
+    var ok: Bool
+    var ui: Int
+    var line: String
+    var status: String?
+    var controls: [AppControl]?
+
+    static let maxControls = 24
+    static let maxLine = 300
+    static let maxStatus = 120
+
+    static func decode(_ data: Data) -> AppPanel? {
+        guard let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+        var controls: [AppControl]?
+        if let raw = obj["controls"] as? [Any] {
+            var seen = Set<String>()
+            controls = Array(raw.compactMap(AppControl.init(json:)).filter { seen.insert($0.id).inserted }
+                .prefix(maxControls))
+        }
+        let line = AppText.trimmed((obj["line"] as? String) ?? (obj["reason"] as? String), maxLine)
+        let status = AppText.trimmed(obj["status"] as? String, maxStatus)
+        return AppPanel(ok: obj["ok"] as? Bool ?? false, ui: (obj["ui"] as? NSNumber)?.intValue ?? 1, line: line,
+                        status: status.isEmpty ? nil : status, controls: controls)
+    }
+}
+
+/// What the generic sheet shows, as plain values: each answer redraws it, an answer without controls keeps the last
+/// ones, a press shows its new setting at once and takes it back if the press fails. One press at a time.
+struct AppPanelModel: Equatable, Sendable {
+    private(set) var status: String?
+    private(set) var line = ""
+    private(set) var failed = false
+    private(set) var controls: [AppControl] = []
+    private(set) var busy = false
+    private(set) var answered = false            // the first answer came (until then the sheet shows a spinner)
+    private var before: [AppControl]?             // what to show again if the press on its way fails
+
+    static let noAnswer = "eve didn't answer. Is the Mac awake?"
+
+    /// The body for a press on `control`, showing its new setting; nil while another press is on its way.
+    mutating func press(_ control: AppControl, on: Bool? = nil, value: Double? = nil) -> [String: Any]? {
+        guard !busy, let i = controls.firstIndex(where: { $0.id == control.id }) else { return nil }
+        busy = true
+        before = controls
+        controls[i] = controls[i].showing(on: on, value: value)
+        return controls[i].body(on: on, value: value)
+    }
+
+    /// A status read is on its way (on open, or a pull to refresh); nil while another call is.
+    mutating func refresh() -> [String: Any]? {
+        guard !busy else { return nil }
+        busy = true
+        before = nil
+        return ["action": "status"]
+    }
+
+    /// The Mac answered, or did not.
+    mutating func finish(_ result: Result<AppPanel, ChatFailure>) {
+        busy = false
+        answered = true
+        switch result {
+        case .success(let p):
+            if let c = p.controls { controls = c } else if !p.ok, let before { controls = before }
+            if let s = p.status { status = s }
+            line = p.line.isEmpty && !p.ok ? "That didn't work." : p.line
+            failed = !p.ok
+        case .failure(let f):
+            if let before { controls = before }
+            line = f.message.isEmpty ? Self.noAnswer : f.message
+            failed = true
+        }
+        before = nil
+    }
+}
+
 // ---- the requests -------------------------------------------------------------------------------------------------
 
 enum ControlsRequests {
@@ -375,7 +640,12 @@ enum ControlsRequests {
     }
 
     static func press(_ ep: ChatEndpoint, _ kind: ControlKind, body: [String: Any]) -> URLRequest {
-        var r = WorkRequests.request(ep, ["api", "link", "controls", kind.rawValue], post: true, body: body)
+        pressApp(ep, id: kind.rawValue, body: body)
+    }
+
+    /// A press on any app by its slot: the same door as the native sheets' (POST /api/link/controls/<id>).
+    static func pressApp(_ ep: ChatEndpoint, id: String, body: [String: Any]) -> URLRequest {
+        var r = WorkRequests.request(ep, ["api", "link", "controls", id], post: true, body: body)
         r.timeoutInterval = 30          // a Bluetooth light or a sleeping TV takes a few seconds
         return r
     }
@@ -400,6 +670,11 @@ extension WorkClient {
 
     func memory(_ body: [String: Any]) async -> Result<MemoryReply, ChatFailure> {
         await call(.controls, { ControlsRequests.press($0, .memory, body: body) }) { data, _ in MemoryReply.decode(data) }
+    }
+
+    /// A press on an app the generic sheet draws.
+    func app(_ id: String, _ body: [String: Any]) async -> Result<AppPanel, ChatFailure> {
+        await call(.controls, { ControlsRequests.pressApp($0, id: id, body: body) }) { data, _ in AppPanel.decode(data) }
     }
 
     func notes(_ body: [String: Any]) async -> Result<NotesReply, ChatFailure> {

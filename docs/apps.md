@@ -1,6 +1,11 @@
-# Your apps: direct, and Composio for the rest
+# Connected accounts: direct, and Composio for the rest
 
-eve reaches your everyday apps **directly**, with no broker in the middle:
+This page is about **connected accounts**: services eve signs in to on your behalf
+(Google, GitHub, Maps, and Composio for the rest). eve's own **apps** (lights, music,
+a camera, a TV, a car: modules in this repository that drive a device) are a different
+thing; to build one, see [adding an app](adding-an-app.md).
+
+eve reaches your everyday accounts **directly**, with no broker in the middle:
 
 | App | How eve reaches it | What it may do |
 |---|---|---|
