@@ -16,9 +16,10 @@ Scope: the owner, 2026-10-12: "can work essentially be a new terminal session in
   CHECK: sh ios/EveLink/Tests/run.sh && sh ios/EveLink/build.sh && echo APP_OK
   EXPECT: APP_OK
 
-- [ ] W4: Live on this Mac: a session started through the route opens a terminal running claude in ~/Documents/personal/work, shows up in the list within 15 s, and its reply appears in detail; the check stops it after. Prints counts and states only.
+- [x] W4: Live on this Mac: a session started through the route opens a terminal running claude in ~/Documents/personal/work, shows up in the list within 15 s, and its reply appears in detail; the check stops it after. Prints counts and states only.
   CHECK: bridge/.venv/bin/python bridge/tools/work_sessions_check.py
   EXPECT: WORK_LIVE_OK
+  EVIDENCE: exit=0, 2026-10-12, main a32872d (daemon restarted on it): start 200 in 2.1 s; listed working after 3.4 s in personal/work; claude process found by session id in personal/work; detail 1+1 turns after 5.7 s; reply 200, detail 2+2 turns; stop 200, gone from the list | WORK_LIVE_OK
 
 - [ ] W7: Each Work session has eve's tools (owner, 2026-10-12: "plus access to all the tools and things eve already has"): an eve MCP server the session loads offers the same tools the chat brain has (mail, calendar, contacts, memory, notes, location, science, lights, music, camera, watches, share...), each call runs through the same tool gate, and an acting tool (send, buy, delete...) asks the owner on the phone exactly as in chat; a session cannot reach a tool the brain could not.
   CHECK: cd bridge && .venv/bin/python -m pytest -q -p no:cacheprovider tests/test_eve_mcp.py && echo EVE_MCP_OK
