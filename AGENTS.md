@@ -12,7 +12,8 @@ directives, no `era-code`.
 
 A Python daemon on a Mac (`bridge/`) is the host. It runs one chat brain for every
 door: the **Eve Link** iPhone app (`ios/EveLink/`, chat, photos, voice on the
-Action Button, lights, music, TV, the chief's jobs), Telegram (optional, muted by
+Action Button, the owner's apps (lights, music, a camera, a TV, a car) and the chief's
+jobs; the apps are examples, not a fixed set, and yours can be different), Telegram (optional, muted by
 default now), a hold-to-talk desk controller, and an optional robot face. Every
 model call goes through one key, `OPENROUTER_API_KEY`. Claude Code sessions on the
 same Mac are watched through hooks, so eve can relay their questions to the phone.
@@ -29,7 +30,9 @@ same Mac are watched through hooks, so eve can relay their questions to the phon
 3. **Secrets live in `~/.config/eve-bridge/env`** (mode 600, `KEY=VALUE`, no
    inline comments). Never print, `cat`, `echo` or `source` that file. To see which
    keys exist: `grep -oE '^[A-Z_]+=' ~/.config/eve-bridge/env`. To use one key
-   for one command: `export $(grep -E '^(KEY_NAME)=' ~/.config/eve-bridge/env | xargs); <command>`.
+   for one command: `env $(grep -E '^(KEY_NAME)=' ~/.config/eve-bridge/env | xargs) <command>`.
+   Never use `export $(grep … | xargs)`: when the key is missing, `export` runs with
+   no arguments and prints every exported variable, keys included.
 4. **Keep `/docs` and `README.md` current in the same change** as the code. A
    behaviour, switch, command or API that changed without its doc is a defect.
 5. **Work in a worktree, not in the main checkout.** The daemon runs from the main
@@ -185,7 +188,13 @@ bridge/.venv/bin/eve-bridge notify test    # the phone shows "Notifications from
 
 Details: [notifications](docs/notifications.md).
 
-### 4. Your own apps (optional)
+### 4. Connected accounts (optional)
+
+These are accounts eve signs in to (Google, GitHub and Maps, and Composio for the
+rest), documented in [connected accounts](docs/apps.md). They are a different thing
+from eve's apps (section 5): an app is a module in this repository that drives a
+device or a service; a connected account is someone else's service eve calls on your
+behalf.
 
 **Google (Gmail, Calendar, Drive, Contacts).** In a Google Cloud project of your
 own: enable the **Gmail**, **Google Calendar**, **Google Drive** and **People**
@@ -196,30 +205,83 @@ JSON as `~/.config/eve-bridge/google-oauth-client.json`. Then:
 ```bash
 echo 'EVE_APPS=1' >> ~/.config/eve-bridge/env
 bridge/.venv/bin/eve-bridge apps login google     # a browser sign-in; allow everything
-bridge/.venv/bin/eve-bridge apps status           # each app: up via rest, its tools, its policy
+bridge/.venv/bin/eve-bridge apps status           # each account: up via rest, its tools, its policy
 ```
 
 Gmail reads, and sends only after the owner's yes on the whole email; the calendar
-may change; Drive asks; Contacts only looks ([your apps](docs/apps.md)).
+may change; Drive asks; Contacts only looks ([connected accounts](docs/apps.md)).
 
 **GitHub and Maps.** `EVE_GITHUB_MCP_TOKEN=<fine-grained token>` and
 `EVE_GOOGLE_MAPS_KEY=<Maps Grounding Lite key>` in the env file, then
 restart. eve lists the owner's repositories once a day so "my car repo" is
-found ([apps](docs/apps.md#your-github-repositories-by-name)).
+found ([connected accounts](docs/apps.md#your-github-repositories-by-name)).
 
 **Slack, Notion, Linear** go through Composio: `EVE_COMPOSIO=1` and
 `COMPOSIO_API_KEY` ([Telegram doc, the apps](docs/stackchan/telegram.md#the-apps-composio)).
 
-### 5. Devices on the desk (optional)
+### 5. Apps (optional): the owner's picks
+
+eve's apps are variable: these are just the ones its owner wants. Each is one module
+and one line in `bridge/src/eve_bridge/app_registry.py`; turn any off with its switch.
+Every place an app reaches (the chat's and the voice's tools, the code path that
+answers "lights off" with no model turn, the tool gate, the phone's Apps list, the
+CLI, the intent eval) reads that registry, so an app switched off is gone everywhere.
+
+| App | Module | Switch | Default | Doc |
+|---|---|---|---|---|
+| Lights (Govee, WiZ, HappyLighting, Tuya) | `bridge/src/eve_bridge/lights.py` | `EVE_LIGHTS` | on once `~/.config/eve-bridge/lights.json` lists lights | [lights](docs/lights.md) |
+| Music (Spotify) | `bridge/src/eve_bridge/spotify.py` | `EVE_SPOTIFY` | on once `eve-bridge spotify login` has run | [Spotify](docs/spotify.md) |
+| TV remote (Fire TV) | `bridge/src/eve_bridge/firetv.py` | `EVE_FIRETV` | on once `eve-bridge firetv pair` has run | [Fire TV](docs/firetv.md) |
+| Camera (OBSBOT webcam) | `bridge/src/eve_bridge/obsbot_panel.py` | `EVE_OBSBOT` | on while an OBSBOT camera is plugged in | [OBSBOT](docs/obsbot.md) |
+| Pika (a robot car) | `bridge/src/eve_bridge/pika.py` | `EVE_PIKA` | off; `EVE_PIKA=1` and `~/.config/eve-bridge/pika.json` | [Pika](docs/pika.md) |
+
+A switch set to `0` turns an app off (`EVE_PIKA` is off unless it is `1`).
+`bridge/.venv/bin/eve-bridge app list` shows each app, its switch and whether it is on.
+
+Devices on the desk that are not apps (they are eve's own body and doors):
 
 | Device | Doc | Env |
 |---|---|---|
 | M5StackChan robot (face, head, camera) | [build](docs/stackchan/build.md), [voice](docs/stackchan/voice.md) | the serial glob above; `OPENAI_API_KEY` for the wake-word voice |
 | Home Assistant Voice PE (button, dial, speaker) | [Voice PE](docs/voice-pe.md) | `EVE_CONTROLLER_SERIAL=<its USB serial>` |
-| Lights (Govee, WiZ, HappyLighting, Tuya) | [lights](docs/lights.md) | on once `~/.config/eve-bridge/lights.json` lists them |
-| Spotify | [Spotify](docs/spotify.md) | on once `eve-bridge spotify login` has run |
-| Fire TV | [Fire TV](docs/firetv.md) | on once `eve-bridge firetv pair` has run |
 | Mac menu-bar app and widget | [widget](docs/stackchan/widget.md) | `eve-bridge install --notes-widget` |
+
+### 5a. Build your own app
+
+In a worktree (rule 5), from its root:
+
+```bash
+uv run --project bridge eve-bridge app new fan --dry-run   # what it would write
+uv run --project bridge eve-bridge app new fan
+```
+
+`uv run --project bridge` makes the worktree's own venv on first use; a fresh worktree
+has no `bridge/.venv`, so `bridge/.venv/bin/eve-bridge` is only there in the main
+checkout.
+
+It writes four things: the module (`bridge/src/eve_bridge/<name>.py`: an on/off switch
+kept in memory, a read tool, an acting tool, and a phone sheet), its test
+(`bridge/tests/test_<name>.py`), its doc (`docs/<name>.md`) and one line at the end of
+the registry. It passes its own tests and the whole suite as written (no other test or
+doc needs an edit), and it is off by default, so nothing the chat and voice models read
+changes until its switch is on. To turn it on, merge it into the branch the main
+checkout runs, then set `EVE_<NAME>=1` in the env file and restart the daemon. The
+phone shows it under Apps with eve's generic sheet; no Swift is needed. The
+walk-through, from changing its tools to the blind eval before it is on by default, is
+[adding an app](docs/adding-an-app.md).
+
+### Resources for building apps
+
+- **REA** ([github.com/morluto/rea](https://github.com/morluto/rea)), "Reverse
+  Engineer Anything": an MCP for agents that inspects app binaries, Electron/JS apps
+  and websites without source, explains how a feature works and helps rebuild it.
+  Setup: `npx rea-agents setup`. Use it to learn how a device's own app talks to the
+  device when there is no public API, and only on devices and software you own and may
+  inspect.
+- **hwlog** ([github.com/gurul/hardware-logging](https://github.com/gurul/hardware-logging)):
+  the owner's crash-aware serial logging for embedded boards, built for coding agents:
+  persistent sessions, decoded backtraces, flash-safe port arbitration and an MCP
+  server. Use it when an app has firmware on a board.
 
 ### 6. The one check that covers everything
 
@@ -239,7 +301,7 @@ are on) and `share: on`. Then send one message from the phone.
   `uv run --project bridge --extra dev --extra miniapp --extra tls --extra composio --with matplotlib pytest -q -p no:cacheprovider -n 8 --dist loadgroup -c bridge/pyproject.toml --rootdir bridge bridge/tests`.
   About 6,100 tests in 2.5 minutes on 8 workers (13 minutes serial; `-n` is not
   in the config on purpose, so single-file runs and the docs' gate commands stay
-  serial). `cd bridge && uv run --extra dev ruff check src tests` for lint.
+  serial). `cd bridge && uv run --extra dev ruff check src tests tools` for lint.
 - **The phone app's logic on the Mac:** `sh ios/EveLink/Tests/run.sh` (PCM,
   turns, pairing, voice-mode captions). Building the app: `sh ios/EveLink/build.sh`.
 - **The Lean models:** `PATH=$HOME/.elan/bin:$PATH node verification/check-all.mjs`
@@ -248,8 +310,10 @@ are on) and `share: on`. Then send one message from the phone.
   then confirm the `code: … @ <commit>` line in the log is the commit you merged.
 - **Where things are.** The daemon: `bridge/src/eve_bridge/daemon.py`. The
   chat brain and every tool it offers: `telegram.py` (large; grep for `_tool_`).
-  Tool safety: `tool_gate.py`, `consent.py`. Routing: `toolset_router.py`,
-  `grade_router.py`, `search_router.py`. The owner's apps: `apps_mcp.py`,
+  Tool safety: `tool_gate.py`, `consent.py`. eve's apps: `app_registry.py` (one line
+  each; every wiring site reads it), `app_template/` (`eve-bridge app new`), and the
+  phone's generic sheet `ios/EveLink/App/GenericAppSheet.swift`. Routing: `toolset_router.py`,
+  `grade_router.py`, `search_router.py`. Connected accounts: `apps_mcp.py`,
   `google_rest.py`, `github_repos.py`, `composio_tools.py`. Sharing files:
   `share.py`. The phone: `link_chat.py`, `phone_call.py`, `stick_link.py`,
   `link_uploads.py`, `link_reactions.py`, `notify.py`. Memory: `memory.py`,

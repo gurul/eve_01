@@ -89,6 +89,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any, Awaitable, Callable, Optional
 
 from . import (
+    app_registry,
     consent,
     obsbot_panel,
     phone_location,
@@ -101,8 +102,6 @@ from . import (
 )
 from . import firetv as firetv_mod
 from . import head as head_mod
-from . import lights as lights_mod
-from . import spotify as spotify_mod
 from .agent_contract import AgentEvent
 from .caption_pager import CaptionPager, Event, PagerConfig, caption_instructions
 from .computer_agent import ComputerAgent
@@ -460,11 +459,31 @@ MEET_TOOLS: list[dict[str, Any]] = [
      "parameters": {"type": "object", "properties": {}, "additionalProperties": False}},
 ]
 MEET_TOOL_NAMES = frozenset(t["name"] for t in MEET_TOOLS)
-# The Fire TV's tools out loud: all but the screenshot, whose picture is sent to a chat (firetv.py)
-VOICE_FIRETV_TOOLS = frozenset(n for n in firetv_mod.TOOL_NAMES if n != "firetv_screenshot")
-VOICE_FIRETV_NOTE = "Out loud you can't see the TV's screen: when you need to know what it shows, ask the owner."
-# The webcam's tools out loud (obsbot_panel.py): both; they move the camera and read where it points
+# eve's apps out loud (app_registry.APPS): each app's tools but its voice_omit ones, its block with its
+# voice_kwargs, then its voice_note. These names are the TV's and the webcam's, read from the registry.
+_FIRETV_APP = app_registry.get("firetv")
+VOICE_FIRETV_TOOLS = frozenset(n for n in firetv_mod.TOOL_NAMES if n not in _FIRETV_APP.voice_omit)
+VOICE_FIRETV_NOTE = _FIRETV_APP.voice_note
 VOICE_OBSBOT_TOOLS = obsbot_panel.TOOL_NAMES
+
+
+def _app_voice(listening: bool, hubs: dict[str, Any]) -> tuple[list[dict[str, Any]], str]:
+    """The apps' tools and blocks out loud, in tool order; none in a lesson. Each block is "\n\n" + its instructions
+    (with the app's voice_kwargs) + "\n" + its voice_note when it has one, and only when the app offers a tool."""
+    tools: list[dict[str, Any]] = []
+    block = ""
+    if listening:
+        return tools, block
+    for app in app_registry.with_tools():
+        hub = hubs.get(app.slot)
+        if hub is None:
+            continue
+        mine = [t for t in hub.tools() if t["name"] not in app.voice_omit]
+        if not mine:
+            continue
+        tools += mine
+        block += "\n\n" + hub.instructions(**app.voice_kwargs) + ("\n" + app.voice_note if app.voice_note else "")
+    return tools, block
 
 DEFAULT_CAPTION_CPS = PagerConfig().read_cps
 
@@ -524,8 +543,7 @@ def session_config(config: VoiceConfig, brief: str = "",
                    backend_profile: str = "", today: str = "", backend_today: str = "",
                    memory_tools: Optional[list[dict[str, Any]]] = None,
                    meet_tools: Optional[list[dict[str, Any]]] = None,
-                   lights: Any = None, spotify: Any = None, firetv: Any = None,
-                   obsbot: Any = None) -> dict[str, Any]:
+                   **app_hubs: Any) -> dict[str, Any]:
     """The `session.start` payload (Live API, openai 3.13).
 
     There is no `output_modalities` and no turn-detection block: gpt-live-1 is
@@ -554,19 +572,10 @@ def session_config(config: VoiceConfig, brief: str = "",
         memory_tools = None
     extra = list(memory_tools or [])
     meeting = [] if listening else list(meet_tools or [])      # a lesson never sends eve into a call
-    # the owner's lights (lights.py), when there are any: the backend gets the tools and the list of lights
-    light_tools = [] if listening or lights is None else lights.tools()
-    lights_block = "" if not light_tools else "\n\n" + lights.instructions()
-    # the owner's Spotify (spotify.py), when logged in: the same slot, never in a lesson
-    music_tools = [] if listening or spotify is None else spotify.tools()
-    lights_block += "" if not music_tools else "\n\n" + spotify.instructions()
-    # the owner's Fire TV (firetv.py), when paired: the same slot, never in a lesson. No screenshot out loud: the
-    # picture goes to a chat, and a voice conversation has none
-    tv_tools = [] if listening or firetv is None else [t for t in firetv.tools() if t["name"] in VOICE_FIRETV_TOOLS]
-    lights_block += "" if not tv_tools else "\n\n" + firetv.instructions(screenshot=False) + "\n" + VOICE_FIRETV_NOTE
-    # the owner's webcam (obsbot_panel.py), when there is one: the same slot, never in a lesson
-    cam_tools = [] if listening or obsbot is None else obsbot.tools()
-    lights_block += "" if not cam_tools else "\n\n" + obsbot.instructions()
+    # eve's apps (app_registry.APPS: the lights, Spotify, the Fire TV, the webcam, ...), each when its hub is here:
+    # the backend gets their tools and blocks in tool order, never in a lesson
+    app_registry.check_hubs(app_hubs)
+    app_tools, apps_block = _app_voice(listening, app_hubs)
     # the phone's latest location (phone_location.py), once the Eve Link app has shared one: never in a lesson
     loc_tools = [] if listening else phone_location.tools()
     # papers' titles and abstracts (science_search.py), while EVE_SCIENCE_SEARCH is on: never in a lesson
@@ -590,9 +599,9 @@ def session_config(config: VoiceConfig, brief: str = "",
                                 + backend_profile_block(backend_profile)
                                 + today_block(backend_today, BACKEND_TODAY_HEADER) + context
                                 + (think_aloud_mod.backend_instructions(think_aloud) if listening else "")
-                                + lights_block,
+                                + apps_block,
                 "tools": TOOLS + (websearch.tools_for(config.search) if config.web_search else []) + extra + meeting
-                         + light_tools + music_tools + tv_tools + cam_tools + loc_tools + sci_tools,
+                         + app_tools + loc_tools + sci_tools,
                 "tool_choice": "auto",
                 "reasoning": {"effort": config.backend_effort},
                 "parallel_tool_calls": False,
@@ -745,6 +754,11 @@ class VoiceSession:
     _live_billed = False
     _backend_searches = 0
 
+    @property
+    def apps(self) -> dict[str, Any]:
+        """eve's apps' hubs by slot (app_registry), read off this session's attributes (self.lights, ...) now."""
+        return {app.slot: getattr(self, app.slot, None) for app in app_registry.with_tools()}
+
     def __init__(
         self,
         connection: Any,                                   # Live connection (async ctx manager already entered)
@@ -782,16 +796,12 @@ class VoiceSession:
         on_expression: Optional[Callable[[str, str], None]] = None,
         mac_busy: Callable[[], bool] = lambda: False,       # a task from another door (telegram.py) has the Mac
         meeter: Any = None,                                 # meet.Meeter, or None: "join my meeting" out loud
-        lights: Any = None,                                 # lights.Lights, or None: "lights off" out loud
-        spotify: Any = None,                                # spotify.Spotify, or None: "pause the music" out loud
-        firetv: Any = None,                                 # firetv.FireTV, or None: "turn on the tv" out loud
-        obsbot: Any = None,                                 # obsbot_panel.ObsbotPanel, or None: "camera left" out loud
+        **app_hubs: Any,                                    # eve's apps by slot (app_registry): "lights off" out loud
     ) -> None:
         self.meeter = meeter
-        self.lights = lights
-        self.spotify = spotify
-        self.firetv = firetv
-        self.obsbot = obsbot
+        app_registry.check_hubs(app_hubs)
+        for app in app_registry.with_tools():               # self.lights, self.spotify, ...: None when not here
+            setattr(self, app.slot, app_hubs.get(app.slot))
         self.on_expression = on_expression
         self.mac_busy = mac_busy
         self._expression_chars = 0
@@ -941,7 +951,7 @@ class VoiceSession:
         cfg = session_config(self.config, self.brief, self._think_aloud, profile,
                              backend_profile=backend_profile, today=self.today, backend_today=self.backend_today,
                              memory_tools=memory_tools, meet_tools=MEET_TOOLS if self.meeter is not None else None,
-                             lights=self.lights, spotify=self.spotify, firetv=self.firetv, obsbot=self.obsbot)
+                             **self.apps)
         log.info("voice: prompt front %d chars, backend %d chars",
                  len(cfg["instructions"]), len(cfg["delegation"]["responses"]["instructions"]))
         await self.conn.session.start(session=cfg)
@@ -1642,8 +1652,8 @@ class VoiceSession:
             else:
                 result = {"ok": False, "reason": "on must be true or false"}
         elif (name in ("look", "look_around", "find", "think_hard", "lesson", "take_photo", websearch.TOOL_NAME)
-              or name in self._memory_tool_names or name in MEET_TOOL_NAMES or name in lights_mod.TOOL_NAMES
-              or name in spotify_mod.TOOL_NAMES or name in VOICE_FIRETV_TOOLS or name in VOICE_OBSBOT_TOOLS
+              or name in self._memory_tool_names or name in MEET_TOOL_NAMES
+              or app_registry.owner(name, voice=True) is not None
               or name in phone_location.TOOL_NAMES or name in science_search.TOOL_NAMES):
             # Seconds (or a minute, for think_hard) of camera, head, model or disk work:
             # answered from a background task, so Live events (the owner talking,
@@ -1791,22 +1801,13 @@ class VoiceSession:
                     result = await self._memory_tool(name, args)
                 elif name in MEET_TOOL_NAMES:
                     result = await self._meeting(name, args)
-                elif name in lights_mod.TOOL_NAMES:
-                    # a Bluetooth light can take seconds to connect: a slow tool, like the camera
-                    result = (await self.lights.handle(name, args) if self.lights is not None
-                              else {"ok": False, "reason": lights_mod.OFF_REASON})
-                elif name in spotify_mod.TOOL_NAMES:
-                    # a Web API round trip, and opening the Mac's Spotify can take seconds
-                    result = (await self.spotify.handle(name, args) if self.spotify is not None
-                              else {"ok": False, "reason": spotify_mod.OFF_REASON})
-                elif name in VOICE_FIRETV_TOOLS:
-                    # an ``input`` key on the TV starts a Java VM there (~1.2 s): a slow tool, like the lights
-                    result = (await self.firetv.handle(name, args) if self.firetv is not None
-                              else {"ok": False, "reason": firetv_mod.OFF_REASON})
-                elif name in VOICE_OBSBOT_TOOLS:
-                    # a move reads the camera back until it stops (~1-3 s): a slow tool, like the TV
-                    result = (await self.obsbot.handle(name, args) if self.obsbot is not None
-                              else {"ok": False, "reason": obsbot_panel.OFF_REASON})
+                elif (app := app_registry.owner(name, voice=True)) is not None:
+                    # eve's apps (app_registry.APPS): a Bluetooth light can take seconds to connect, Spotify is a
+                    # Web API round trip, an ``input`` key on the TV starts a Java VM there (~1.2 s), a camera move
+                    # reads the camera back until it stops: slow tools, like the camera
+                    hub = self.apps.get(app.slot)
+                    result = (await hub.handle(name, args) if hub is not None
+                              else {"ok": False, "reason": app.mod().OFF_REASON})
                 elif name in phone_location.TOOL_NAMES:
                     # the phone's latest fix (phone_location.py): a small file read, here so the taint gate sees
                     # its result as it sees every read's (the place name is the phone's geocoder's words)
@@ -2302,10 +2303,7 @@ async def open_session(
     on_expression: Optional[Callable[[str, str], None]] = None,
     mac_busy: Callable[[], bool] = lambda: False,
     meeter: Any = None,
-    lights: Any = None,
-    spotify: Any = None,
-    firetv: Any = None,
-    obsbot: Any = None,
+    **app_hubs: Any,
 ) -> None:
     """Run one full conversation on the real Live API — captions to the robot,
     or the real speaker in audio mode.
@@ -2340,7 +2338,7 @@ async def open_session(
                                    think_aloud=think_aloud, lesson_wake=lesson_wake, on_spoken_idea=on_spoken_idea,
                                    on_think_aloud=on_think_aloud, head_pose=head_pose, gate=gate,
                                    on_expression=on_expression, mac_busy=mac_busy, meeter=meeter,
-                                   lights=lights, spotify=spotify, firetv=firetv, obsbot=obsbot)
+                                   **app_hubs)
             if on_open is not None:
                 on_open(session)
             try:

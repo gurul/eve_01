@@ -12,6 +12,10 @@ PE. It helps with computer tasks, notes, lights, music and the TV, and keeps a d
 of what it notices. Every model call goes through one key, `OPENROUTER_API_KEY`
 ([OpenRouter](docs/openrouter.md)).
 
+The lights, music, TV, camera and car are the owner's apps, examples rather than a fixed
+set: anyone can add their own with `eve-bridge app new <name>`
+([adding an app](docs/adding-an-app.md)).
+
 Setting it up for yourself, or having an agent do it: [Get started](#get-started)
 is the path, and [AGENTS.md](AGENTS.md) is the same path written for an agent, with a
 check after every step and the rules of the repository.
@@ -382,7 +386,7 @@ the reply plays with captions.
 
 - **Gmail, Calendar, Drive, Contacts:** `EVE_APPS=1`, a Google Cloud OAuth
   client saved as `~/.config/eve-bridge/google-oauth-client.json`, then
-  `eve-bridge apps login google` ([your apps](docs/apps.md#set-it-up)). Gmail
+  `eve-bridge apps login google` ([connected accounts](docs/apps.md#set-it-up)). Gmail
   sends only after your yes on the whole email; routine private calendar and Drive edits run; consequential changes ask;
   Contacts only looks.
 - **GitHub and Maps:** `EVE_GITHUB_MCP_TOKEN` and `EVE_GOOGLE_MAPS_KEY`
@@ -558,7 +562,7 @@ Every message is shaped for the phone by `telegram_format.py`.
 | `codex on` / `codex <folder>` | Starts a new Codex chat in a saved folder, with approvals relayed to Telegram. Each turn shows one progress message with a Stop button. `stop` interrupts, `codex off` returns to eve, `eve:` addresses eve directly. |
 | `new claude` | Opens a coding session in Warp from a few short texts. |
 | Memory (`EVE_MEMORY=1`) | One memory for both channels ([memory.md](docs/stackchan/memory.md)): every line kept in a local per-day transcript, records and a profile rewritten by a nightly dream, and a self-hosted mem0 index (`EVE_MEM0=0` turns just that off). Tools: `memory_search`, `memory_read`, `forget_preview`, `forget_apply`. |
-| Your apps (`EVE_APPS=1`) | Gmail (reads; sends after your yes to each email, shown whole), Google Calendar (writable: events, invites, free time), Google Drive, Google Contacts (read only), GitHub and Google Maps, directly: Google's own APIs and GitHub's and Maps' MCP servers, no broker. Known routine private edits run; sending, deleting, publishing and permission changes ask first. Unknown writes still ask. Apps load per turn as the message names them. Set up with `eve-bridge apps login google`; see [your apps](docs/apps.md). |
+| Your apps (`EVE_APPS=1`) | Gmail (reads; sends after your yes to each email, shown whole), Google Calendar (writable: events, invites, free time), Google Drive, Google Contacts (read only), GitHub and Google Maps, directly: Google's own APIs and GitHub's and Maps' MCP servers, no broker. Known routine private edits run; sending, deleting, publishing and permission changes ask first. Unknown writes still ask. Apps load per turn as the message names them. Set up with `eve-bridge apps login google`; see [connected accounts](docs/apps.md). |
 | Composio (`EVE_COMPOSIO=1`) | Slack, Notion, Linear and the long tail by API (`composio_tools.py`), each change asked first. |
 | Camera (`EVE_OBSBOT`, on by default) | The OBSBOT webcam: the chat's and the voice's `camera_status` and `camera_control`, Eve Link's Camera screen and `eve-bridge obsbot`. Moves go over USB; OBSBOT's own features through OBSBOT Center while it runs. On while an OBSBOT camera is plugged in (or OBSBOT Center is installed); `EVE_OBSBOT=0` turns it off. See [OBSBOT](docs/obsbot.md). |
 | Phone location (`EVE_PHONE_LOCATION`, on by default) | Eve Link shares the iPhone's latest location with the Mac (`POST /api/link/location`, only the newest fix kept, never logged), so the chat's and the voice's `phone_location` answers "where am I" and quick answers' weather uses where you are. See [phone location](docs/phone-location.md). |

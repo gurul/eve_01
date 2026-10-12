@@ -1501,13 +1501,17 @@ def test_controls_list_what_this_mac_has(tmp_path: Path) -> None:
         server, port, token = await serve(tmp_path, FakeInlet(store_at(tmp_path)))
         status, _, body = await http(port, "GET", link_chat.CONTROLS_PATH, token=token)
         assert status == 200 and json.loads(body) == {"lights": [], "spotify": False, "firetv": False, "memory": False,
-                                                       "notes": False, "pika": False, "obsbot": False}
+                                                       "notes": False, "pika": False, "obsbot": False, "apps": []}
         server.lights = FakePanel({}, listing=[{"name": "desk lamp", "room": "office"}, {"name": "strip"}])
         server.spotify = FakePanel({})
         status, _, body = await http(port, "GET", link_chat.CONTROLS_PATH, token=token)
         assert status == 200 and json.loads(body) == {
             "lights": [{"name": "desk lamp", "room": "office"}, {"name": "strip"}], "spotify": True, "firetv": False,
-            "memory": False, "notes": False, "pika": False, "obsbot": False}
+            "memory": False, "notes": False, "pika": False, "obsbot": False,
+            # the phone's Apps list (app_registry.for_phone): only what is here, in the phone's order
+            "apps": [{"id": "spotify", "title": "Music", "symbol": "music.note", "detail": "Spotify", "sheet": "native"},
+                     {"id": "lights", "title": "Lights", "symbol": "lightbulb", "detail": "2 lights",
+                      "sheet": "native"}]}
         # the Memory card's object is always there (link_memory.py); it is listed only while its memory is built
         from eve_bridge.link_memory import MemoryPanel
 
@@ -1568,6 +1572,9 @@ def test_a_control_is_the_cards_own_panel_body_in_json_out(tmp_path: Path) -> No
                   "notes": {"action": "list"},
                   "spotify": {"action": "volume", "volume": 30},
                   "firetv": {"action": "volume_change", "change": 5}}
+        for name in link_chat.CONTROLS:                         # an app added since: its generic sheet's status read
+            answers.setdefault(name, {"ok": True, "ui": 1, "status": "On"})
+            bodies.setdefault(name, {"action": "status"})
         panels = {n: FakePanel(a) for n, a in answers.items()}
         for name, panel in panels.items():
             setattr(server, name, panel)

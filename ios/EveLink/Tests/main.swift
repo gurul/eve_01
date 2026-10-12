@@ -868,6 +868,133 @@ let ctlPressBody = (try? JSONSerialization.jsonObject(with: ctlPress.httpBody ??
 check(ctlPress.httpMethod == "POST" && ctlPress.url?.path == "/api/link/controls/firetv"
       && ctlPress.value(forHTTPHeaderField: "Authorization") == "Bearer tok"
       && ctlPressBody["action"] as? String == "up" && ctlPressBody["repeat"] as? Int == 3, "a remote press request")
+// The registry's apps (app_registry.py, 2026-10-12): the Mac's "apps" list in its order, native or generic sheets.
+// An older Mac (no "apps"): today's rows from the legacy keys, unchanged.
+check(withAll?.entries == nil && withAll?.rows == [.native(.notes), .native(.spotify), .native(.lights), .native(.firetv)],
+      "no apps key: the legacy rows, Notes first, Memory never")
+check(withCam?.rows == [.native(.firetv), .native(.pika), .native(.obsbot)], "no apps key: Pika and Camera from the legacy keys")
+let regJSON = #"""
+{"lights":[{"name":"desk lamp","room":"office"}],"spotify":true,"firetv":false,"memory":true,"notes":true,"pika":false,
+ "obsbot":true,
+ "apps":[{"id":"spotify","title":"Music","symbol":"music.note","detail":"Spotify","sheet":"native"},
+         {"id":"lights","title":"Lights","symbol":"lightbulb","detail":"1 light","sheet":"native"},
+         {"id":"obsbot","title":"Camera","symbol":"web.camera","detail":"OBSBOT webcam","sheet":"native"},
+         {"id":"fan","title":"Fan","symbol":"fan","detail":"Desk fan","sheet":"generic"},
+         {"id":"memory","title":"Memory","sheet":"native"},{"id":"notes","title":"Notes","sheet":"native"},
+         {"id":"Bad/Id","title":"x"},{"title":"no id"},{"id":"fan","title":"Fan again"},
+         {"id":"kettle"},{"id":"heater","title":"Heater","sheet":"native"},{"id":"car9","sheet":"sideways"}]}
+"""#
+let reg = ControlsInfo.decode(Data(regJSON.utf8))
+let fan = AppEntry(id: "fan", title: "Fan", symbol: "fan", detail: "Desk fan", sheet: "generic")
+check(reg?.rows.map(\.id) == ["notes", "spotify", "lights", "obsbot", "fan", "kettle", "heater", "car9"],
+      "the Mac's order after Notes; Memory, Notes, bad ids and repeats are no rows")
+check(reg?.rows.prefix(4) == [.native(.notes), .native(.spotify), .native(.lights), .native(.obsbot)],
+      "the owner's apps open their native sheets")
+check(reg?.rows[4] == .generic(fan), "an app with no Swift opens the generic sheet")
+check(reg?.rows[5] == .generic(AppEntry(id: "kettle", title: "Kettle")), "a bare entry: its id as the title, the fallback symbol")
+if case .generic(let heater)? = reg?.rows[6] { check(heater.title == "Heater", "native asked for, but the phone has no sheet: generic") }
+else { check(false, "native asked for, but the phone has no sheet: generic") }
+if case .generic(let car)? = reg?.rows[7] { check(car.sheet == "sideways" && car.title == "Car9", "an unknown sheet kind: generic") }
+else { check(false, "an unknown sheet kind: generic") }
+let tvGeneric = ControlsInfo.decode(Data(#"{"lights":[],"spotify":false,"firetv":true,"apps":[{"id":"firetv","title":"TV","sheet":"generic"}]}"#.utf8))
+check(tvGeneric?.rows == [.generic(AppEntry(id: "firetv", title: "TV", detail: "", sheet: "generic"))],
+      "the Mac's sheet decides: a known app it marks generic opens the generic sheet")
+check(reg?.entry(for: .lights)?.detail == "1 light" && reg?.entry(for: .firetv) == nil, "a native row reads the Mac's words")
+let noNotes = ControlsInfo.decode(Data(#"{"lights":[],"spotify":false,"firetv":false,"notes":false,"apps":[{"id":"fan"}]}"#.utf8))
+check(noNotes?.rows == [.generic(AppEntry(id: "fan", title: "Fan"))], "no Notes on this Mac: only the apps")
+check(ControlsInfo.decode(Data(#"{"lights":[],"spotify":true,"firetv":false,"apps":[]}"#.utf8))?.rows == [],
+      "an empty apps list is the Mac's word: no rows, not the legacy ones")
+check(ControlsInfo.decode(Data(#"{"lights":[],"spotify":true,"firetv":false,"apps":"junk"}"#.utf8))?.rows == [.native(.spotify)],
+      "an apps value that is not a list: the legacy rows")
+check(AppEntry.validID("fan") && AppEntry.validID("a") && AppEntry.validID("cam2") && !AppEntry.validID("2cam")
+      && !AppEntry.validID("Fan") && !AppEntry.validID("a-b") && !AppEntry.validID("") && !AppEntry.validID(String(repeating: "a", count: 17)),
+      "the registry's slot rule")
+let longTitle = AppEntry(json: ["id": "fan", "title": String(repeating: "x", count: 100)])
+check(longTitle?.title.count == AppEntry.maxTitle && longTitle?.title.hasSuffix("…") == true, "a long title is trimmed")
+// The generic sheet's panel (docs/adding-an-app.md): the same example the bridge's check_panel validates.
+let panelInline = #"""
+{"ok": true, "ui": 1,
+ "line": "The fan is on.",
+ "status": "On · speed 3",
+ "controls": [
+   {"type": "toggle", "id": "power", "label": "Power", "on": true, "action": "power"},
+   {"type": "slider", "id": "speed", "label": "Speed", "value": 3, "min": 1, "max": 5, "step": 1, "action": "speed"},
+   {"type": "button", "id": "boost", "label": "Boost", "symbol": "bolt", "action": "boost"},
+   {"type": "button", "id": "off",   "label": "Turn off", "action": "off", "role": "destructive"}
+ ]}
+"""#
+let panelFixture = (try? Data(contentsOf: URL(fileURLWithPath: "bridge/tests/fixtures/app_panel_example.json")))
+let panelExample = AppPanel.decode(panelFixture ?? Data(panelInline.utf8))
+print(panelFixture == nil ? "app panel: the inline example (no bridge fixture yet)" : "app panel: the bridge's fixture")
+let powerCtl = AppControl(id: "power", label: "Power", action: "power", kind: .toggle(on: true))
+let speedCtl = AppControl(id: "speed", label: "Speed", action: "speed", kind: .slider(value: 3, min: 1, max: 5, step: 1))
+let boostCtl = AppControl(id: "boost", label: "Boost", action: "boost", kind: .button(symbol: "bolt", destructive: false))
+let offCtl = AppControl(id: "off", label: "Turn off", action: "off", kind: .button(symbol: nil, destructive: true))
+check(panelExample == AppPanel(ok: true, ui: 1, line: "The fan is on.", status: "On · speed 3",
+                               controls: [powerCtl, speedCtl, boostCtl, offCtl]), "the contract's example decodes")
+let oddPanel = AppPanel.decode(Data(#"""
+{"ok":true,"ui":2,"controls":[{"type":"dial","id":"d","action":"spin"},{"type":"slider","id":"s","action":"s","min":5,"max":5},
+ {"type":"slider","id":"t","action":"t","min":9,"max":1},{"type":"button","id":"nolabel","action":"go"},
+ {"type":"button","label":"No action"},{"type":"toggle","id":"nolabel","action":"again"},
+ {"type":"slider","id":"w","action":"w","min":0,"max":10,"value":42,"step":0},
+ {"type":"slider","id":"b","action":"b","min":true,"max":10}]}
+"""#.utf8))
+check(oddPanel?.controls?.map(\.id) == ["nolabel", "w"],
+      "unknown types, empty sliders, no action, a repeated id and a boolean bound are dropped")
+check(oddPanel?.controls?.first?.label == "go" && oddPanel?.ui == 2, "a control with no label shows its action")
+check(oddPanel?.controls?.last?.kind == .slider(value: 10, min: 0, max: 10, step: nil), "a value past the end is held, a zero step dropped")
+let manyJSON = "{\"ok\":true,\"controls\":[" + (0..<30).map { #"{"type":"button","id":"b\#($0)","action":"a\#($0)"}"# }
+    .joined(separator: ",") + "]}"
+check(AppPanel.decode(Data(manyJSON.utf8))?.controls?.count == AppPanel.maxControls, "at most 24 controls")
+check(AppPanel.decode(Data(#"{"ok":true,"line":"Boosted."}"#.utf8))?.controls == nil, "an answer with no controls says so")
+check(AppPanel.decode(Data(#"{"ok":false,"reason":"The fan is unplugged."}"#.utf8))
+      == AppPanel(ok: false, ui: 1, line: "The fan is unplugged.", status: nil, controls: nil), "a refusal's line")
+check(AppPanel.decode(Data("[]".utf8)) == nil, "an answer that is not an object is refused")
+// What each control sends back.
+check(boostCtl.body() as NSDictionary == ["action": "boost"] as NSDictionary, "a button sends its action")
+check(powerCtl.body(on: false) as NSDictionary == ["action": "power", "on": false] as NSDictionary, "a toggle sends its new setting")
+check(speedCtl.body(value: 4.4) as NSDictionary == ["action": "speed", "value": 4] as NSDictionary
+      && speedCtl.body(value: 4.4)["value"] is Int, "a slider sends its value on its step, whole as a whole number")
+check(speedCtl.body(value: 99)["value"] as? Int == 5 && speedCtl.body(value: -3)["value"] as? Int == 1, "held to the range")
+let fineCtl = AppControl(id: "f", label: "F", action: "f", kind: .slider(value: 0, min: 0, max: 1, step: nil))
+check(fineCtl.body(value: 0.25)["value"] as? Double == 0.25, "a slider with no step sends what was set")
+check(AppControl.snap(7, min: 1, max: 10, step: 3) == 7 && AppControl.snap(8.6, min: 1, max: 10, step: 3) == 10
+      && AppControl.snap(.nan, min: 1, max: 10, step: nil) == 1, "steps count from min")
+// The sheet's model: one press at a time, shown at once, taken back on a failure; an answer without controls keeps them.
+var appModel = AppPanelModel()
+check(!appModel.answered && appModel.controls.isEmpty, "a new sheet waits for its first answer")
+check(appModel.refresh() as NSDictionary? == ["action": "status"] as NSDictionary, "the sheet opens with a status read")
+check(appModel.refresh() == nil && appModel.busy, "a second call waits for the first")
+appModel.finish(.success(panelExample!))
+check(appModel.answered && !appModel.busy && appModel.status == "On · speed 3" && appModel.line == "The fan is on."
+      && appModel.controls.count == 4 && !appModel.failed, "the first answer draws the sheet")
+check(appModel.press(powerCtl, on: false) as NSDictionary? == ["action": "power", "on": false] as NSDictionary,
+      "a toggle press")
+check(appModel.controls.first?.kind == .toggle(on: false) && appModel.press(boostCtl) == nil, "shown at once; one press at a time")
+appModel.finish(.success(AppPanel(ok: true, ui: 1, line: "Off.", status: nil, controls: nil)))
+check(appModel.controls.first?.kind == .toggle(on: false) && appModel.line == "Off." && appModel.status == "On · speed 3",
+      "an answer with no controls or status keeps the last ones")
+_ = appModel.press(speedCtl, value: 5)
+appModel.finish(.failure(ChatFailure(message: "eve didn't answer.", addressMayHaveMoved: false)))
+check(appModel.controls[1].kind == .slider(value: 3, min: 1, max: 5, step: 1) && appModel.failed
+      && appModel.line == "eve didn't answer.", "a failed press takes its setting back and says why")
+_ = appModel.press(powerCtl, on: true)
+appModel.finish(.success(AppPanel(ok: false, ui: 1, line: "", status: nil, controls: nil)))
+check(appModel.controls.first?.kind == .toggle(on: false) && appModel.failed && appModel.line == "That didn't work.",
+      "a refusal takes the setting back")
+_ = appModel.press(offCtl)
+appModel.finish(.success(AppPanel(ok: true, ui: 1, line: "Off.", status: "Off", controls: [powerCtl])))
+check(appModel.controls == [powerCtl] && appModel.status == "Off" && !appModel.failed, "an answer with controls redraws them")
+check(appModel.press(speedCtl, value: 2) == nil && !appModel.busy, "a control that is gone sends nothing")
+// The request: the same door as the native sheets.
+let appPress = ControlsRequests.pressApp(ctlEP, id: "fan", body: powerCtl.body(on: true))
+let appPressBody = (try? JSONSerialization.jsonObject(with: appPress.httpBody ?? Data())) as? [String: Any] ?? [:]
+check(appPress.httpMethod == "POST" && appPress.url?.path == "/api/link/controls/fan"
+      && appPress.value(forHTTPHeaderField: "Authorization") == "Bearer tok" && appPress.timeoutInterval == 30
+      && appPressBody["action"] as? String == "power" && appPressBody["on"] as? Bool == true, "a generic press request")
+check(ControlsRequests.press(ctlEP, .lights, body: [:]).url == ControlsRequests.pressApp(ctlEP, id: "lights", body: [:]).url,
+      "a native press is the same request")
+print("APP_REGISTRY_OK")
 check(TvPress(action: "select").body.count == 1, "one tap sends no repeat")
 check(LightChoice.choices([LightName(name: "lamp", room: "office")]).map(\.value) == ["all"], "one light: All only")
 check(LightChoice.choices([LightName(name: "lamp", room: "office"), LightName(name: "strip", room: "office"),
@@ -1436,10 +1563,10 @@ check(sessionList?.sessions.first { $0.id == "bbbb" }?.state == .idle, "an unkno
 check(sessionList?.sessions.first { $0.id == "aaaa" }?.headline == "Claude Code", "nothing to show: a plain name")
 check(WorkSessionList.decode(Data("[]".utf8)) == nil && WorkSessionList.decode(Data("nope".utf8)) == nil
       && WorkSessionList.decode(Data(#"{"ok": true, "sessions": []}"#.utf8))?.sessions == [], "bad payloads are nil")
-let longTitle = WorkSession(json: ["id": "x", "title": String(repeating: "t", count: 300),
-                                   "last_line": String(repeating: "l", count: 900), "last_activity": -5])
-check(longTitle?.title.count == WorkSession.maxTitle && longTitle?.lastLine.count == WorkSession.maxLine
-      && longTitle?.lastActivity == nil, "texts clipped to the contract; no time for a bad one")
+let longSession = WorkSession(json: ["id": "x", "title": String(repeating: "t", count: 300),
+                                     "last_line": String(repeating: "l", count: 900), "last_activity": -5])
+check(longSession?.title.count == WorkSession.maxTitle && longSession?.lastLine.count == WorkSession.maxLine
+      && longSession?.lastActivity == nil, "texts clipped to the contract; no time for a bad one")
 check(WorkSessionState.allCases.map(\.label) == ["Starting", "Working", "Waiting on you", "Idle", "Ended"],
       "the state chips")
 check(WorkSessionState.waiting.rank < WorkSessionState.working.rank && WorkSessionState.working.rank

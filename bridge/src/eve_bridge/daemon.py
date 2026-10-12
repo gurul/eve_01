@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Any, Optional
 if TYPE_CHECKING:
     from .key_tap import KeyTapper
 
-from . import claude_live, mac_camera, mem0_memory, openrouter, photos, voice_agent
+from . import app_registry, claude_live, mac_camera, mem0_memory, openrouter, photos, voice_agent
 from . import dream as dream_mod
 from . import follow as follow_mod
 from . import memory as memory_mod
@@ -474,16 +474,12 @@ class Daemon:
             if getattr(self, "_meeter", None) is not None:
                 await self._meeter.close()                  # a call in progress: its notes are written
             await Daemon._close_notes(self)                 # notes in progress, the phone's and the room's
-            if getattr(self, "_lights", None) is not None:
-                await self._lights.close()                  # a held Bluetooth connection goes back to the phone app
             if getattr(self, "_music_mode", None) is not None:
                 await self._music_mode.close()
-            if getattr(self, "_spotify", None) is not None:
-                await self._spotify.close()
-            if getattr(self, "_firetv", None) is not None:
-                await self._firetv.close()
-            if getattr(self, "_obsbot", None) is not None:
-                await self._obsbot.close()
+            for app in app_registry.APPS:                   # eve's apps that were made: a held Bluetooth light goes
+                hub = getattr(self, "_" + app.slot, None)   # back to the phone app, the car stops, the camera's
+                if hub is not None:                         # picture ends (re-entrant: the Mini App closes some too)
+                    await hub.close()
             if getattr(self, "_canvas", None) is not None:
                 await self._canvas.close()
             if getattr(self, "_chrome_lane", None) is not None:
@@ -1209,10 +1205,7 @@ class Daemon:
                                            on_open=lambda session: Daemon._on_voice_session(self, session),
                                            mac_busy=lambda: Daemon._texted_task_running(self),
                                            meeter=getattr(self, "_meeter", None),
-                                           lights=Daemon._lights_hub(self),
-                                           spotify=Daemon._spotify_hub(self),
-                                           firetv=Daemon._firetv_hub(self),
-                                           obsbot=Daemon._obsbot_hub(self))
+                                           **Daemon._app_hubs(self, tools_only=True))
         except asyncio.CancelledError:
             self._explore_after_conversation = None      # hushed: stay put
             self._think_aloud_wish = None                # a hush or a stop cancels a pending listen too
@@ -1384,9 +1377,7 @@ class Daemon:
         if chat_log is not None and memory is not None:
             memory.chat_log = chat_log
         inlet = telegram_mod.make_inlet(
-            tg, watcher=watcher, meeter=self._meeter, lights=Daemon._lights_hub(self),
-            spotify=Daemon._spotify_hub(self), firetv=Daemon._firetv_hub(self),
-            obsbot=Daemon._obsbot_hub(self),
+            tg, watcher=watcher, meeter=self._meeter, **Daemon._app_hubs(self, tools_only=True),
             canvas=Daemon._make_canvas(self),
             share=Daemon._make_share(self) if tg.enabled else None,
             agentcard=self._agentcard,
@@ -1491,9 +1482,10 @@ class Daemon:
 
         server = getattr(self._miniapp, "server", None)
         if server is not None:
-            server.lights = Daemon._lights_hub(self)        # the Lights card, when there are lights (lights.py)
-            server.spotify = Daemon._spotify_hub(self)      # the Music card, when Spotify is logged in (spotify.py)
-            server.firetv = Daemon._firetv_hub(self)        # the TV remote card, when the TV is paired (firetv.py)
+            # eve's apps (app_registry.APPS): the Mini App's Lights, Music and TV cards and Eve Link's Apps, each
+            # the hub the chat and the voice share, or None when it is off or not set up on this Mac
+            for slot, hub in Daemon._app_hubs(self).items():
+                setattr(server, slot, hub)
             from .link_memory import MemoryPanel
 
             # the Memory card (link_memory.py): the memory is built after this, on a thread, so it is read per call
@@ -1501,14 +1493,6 @@ class Daemon:
             from .link_notes import NotesPanel
 
             server.notes = NotesPanel()                      # Notes, the owner's vault (link_notes.py, second_brain.py)
-            from . import pika as pika_mod
-
-            # Pika, the car (pika.py, docs/pika.md): only with EVE_PIKA=1 and ~/.config/eve-bridge/pika.json
-            try:
-                server.pika = pika_mod.make_pika()
-            except Exception:  # noqa: BLE001 — a car that cannot load costs the car, never the daemon
-                log.exception("pika: could not load; Pika is off this run")
-            server.obsbot = Daemon._obsbot_hub(self)        # the camera's app screen (obsbot_panel.py)
             server.calls = PhoneCalls(
                 lambda init_data: miniapp.check_init_data(init_data, cfg.token, cfg.owner_ids),
                 getattr(self, "_telegram", None), make_voice())
@@ -1575,45 +1559,48 @@ class Daemon:
                  else "asked on the phone")
         return lane
 
-    def _lights_hub(self) -> Any:
-        """The owner's lights (lights.py), made once and shared by the chat and the voice; None when there are none
-        (no lights file) or EVE_LIGHTS=0. The file is read at the first ask: a restart picks up a new scan."""
-        if not hasattr(self, "_lights"):
-            from . import lights as lights_mod
-
+    def _app_hub(self, app: app_registry.App) -> Any:
+        """One of eve's apps (app_registry.APPS), made once and shared by the chat, the voice, the Mini App and Eve
+        Link; None when it is switched off or not set up (no lights file, no login, never paired, no camera). The
+        module's factory reads its own switch and files at the first ask, so a restart picks up a new scan. Making
+        one sends nothing to its device: the first command connects."""
+        attr = "_" + app.slot
+        if not hasattr(self, attr):
             try:
-                self._lights = lights_mod.make_lights()
-            except Exception:  # noqa: BLE001 — lights that cannot load cost the lights, never the daemon
-                log.exception("lights: could not load; lights are off this run")
-                self._lights = None
-        return self._lights
+                hub = getattr(app.mod(), app.make)()
+            except Exception:  # noqa: BLE001 — an app that cannot load costs that app, never the daemon
+                log.exception("%s: could not load; it is off this run", app.slot)
+                hub = None
+            setattr(self, attr, hub)
+            ctl = getattr(self, "_controller", None)
+            if app.slot == "spotify" and hub is not None and ctl is not None:
+                # Spotify mode on the Voice PE: its ring green, its dial the volume, its clicks the transport
+                from .music_mode import MusicMode
+
+                self._music_mode = MusicMode(hub, ctl.show, say=Daemon._board_say(self))
+                hub.mode = self._music_mode
+        return getattr(self, attr)
+
+    def _app_hubs(self, tools_only: bool = False) -> dict[str, Any]:
+        """Every app's hub by slot, in tool order (app_registry.APPS); ``tools_only``: the apps that give the models
+        tools (the chat's and the voice's kwargs). A ``_<slot>_hub`` method, where one is kept, is called instead,
+        so a test that replaces it still decides that app."""
+        apps = app_registry.with_tools() if tools_only else app_registry.APPS
+        out: dict[str, Any] = {}
+        for app in apps:
+            own = getattr(Daemon, f"_{app.slot}_hub", None)
+            out[app.slot] = own(self) if own is not None else Daemon._app_hub(self, app)
+        return out
+
+    # The lights', Spotify's and the TV's own names, kept for the tests that replace them (one line each).
+    def _lights_hub(self) -> Any:
+        return Daemon._app_hub(self, app_registry.get("lights"))
+
+    def _spotify_hub(self) -> Any:
+        return Daemon._app_hub(self, app_registry.get("spotify"))
 
     def _firetv_hub(self) -> Any:
-        """The owner's Fire TV (firetv.py), made once and shared by the chat and the voice; None when never paired
-        (no firetv.json) or EVE_FIRETV=0. Making it sends nothing to the TV: the first command connects."""
-        if not hasattr(self, "_firetv"):
-            from . import firetv as firetv_mod
-
-            try:
-                self._firetv = firetv_mod.make_firetv()
-            except Exception:  # noqa: BLE001 — a TV that cannot load costs the TV, never the daemon
-                log.exception("firetv: could not load; the Fire TV is off this run")
-                self._firetv = None
-        return self._firetv
-
-    def _obsbot_hub(self) -> Any:
-        """The OBSBOT webcam (obsbot_panel.py, docs/obsbot.md), made once and shared by the app's Camera screen,
-        the chat and the voice; None when EVE_OBSBOT=0 or no OBSBOT camera or app is on this Mac. Making it sends
-        nothing to the camera: the first command reads it."""
-        if not hasattr(self, "_obsbot"):
-            from . import obsbot_panel
-
-            try:
-                self._obsbot = obsbot_panel.make_panel()
-            except Exception:  # noqa: BLE001 — a camera that cannot load costs the camera, never the daemon
-                log.exception("obsbot: could not load; the camera is off this run")
-                self._obsbot = None
-        return self._obsbot
+        return Daemon._app_hub(self, app_registry.get("firetv"))
 
     def _make_canvas(self) -> Any:
         """The owner's Canvas (canvas.py), read only, for the Telegram brain; None when CANVAS_BASE_URL or
@@ -1663,26 +1650,6 @@ class Daemon:
                 log.warning("america: could not load (%s); legal information is off this run", type(exc).__name__)
                 self._america = None
         return self._america
-
-    def _spotify_hub(self) -> Any:
-        """The owner's Spotify (spotify.py), made once and shared by the chat, the voice and the Mini App; None
-        when never logged in or EVE_SPOTIFY=0."""
-        if not hasattr(self, "_spotify"):
-            from . import spotify as spotify_mod
-
-            try:
-                self._spotify = spotify_mod.make_spotify()
-            except Exception:  # noqa: BLE001 — a Spotify that cannot load costs Spotify, never the daemon
-                log.exception("spotify: could not load; Spotify is off this run")
-                self._spotify = None
-            ctl = getattr(self, "_controller", None)
-            if self._spotify is not None and ctl is not None:
-                # Spotify mode on the Voice PE: its ring green, its dial the volume, its clicks the transport
-                from .music_mode import MusicMode
-
-                self._music_mode = MusicMode(self._spotify, ctl.show, say=Daemon._board_say(self))
-                self._spotify.mode = self._music_mode
-        return self._spotify
 
     def _board_say(self) -> Any:
         """A few words on the Voice PE's speaker (the device picker's names), with the call voice; None without

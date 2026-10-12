@@ -2,9 +2,11 @@
 // (docs/work-sessions.md; owner, 2026-10-12: "can work essentially be a new terminal session"): each row a session's
 // state, folder, last line and last activity, refreshed while the tab is open; "+" starts one in the work folder with
 // the typed task (NewSessionSheet), and a session opens SessionSheet.swift. The chief's jobs stay below as a small
-// section while there are any (the menu's dot and Settings still point here). Apps is eve's own controls (Notes, the owner's vault, NotesView.swift; Music, Lights, Remote: the Mini App's
-// cards; Pika, the car, PikaView.swift), each opening its native sheet (ControlSheets.swift). Memory is in Settings (owner, 2026-10-10). The owner's built apps are not listed (owner,
-// 2026-10-08); the owner asked for "chat, apps, work" as three tabs the same evening.
+// section while there are any (the menu's dot and Settings still point here). Apps is Notes (the owner's vault,
+// NotesView.swift) and then the apps the Mac's registry lists, in its order (app_registry.py; ControlsInfo.rows): the
+// owner's own (Music, Lights, Remote, Pika, Camera) open their native sheets (ControlSheets.swift), any other app the
+// generic sheet (GenericAppSheet.swift). Memory is in Settings (owner, 2026-10-10). The owner's built apps are not
+// listed (owner, 2026-10-08); the owner asked for "chat, apps, work" as three tabs the same evening.
 import SwiftUI
 
 @MainActor
@@ -146,7 +148,7 @@ struct WorkView: View {
     /// Which tab this is: .apps lists the controls, anything else the jobs.
     let shows: HomeMode
     @State private var job: WorkJob?
-    @State private var control: ControlKind?
+    @State private var control: AppRow?
     @State private var session: WorkSession?
     @State private var newSession = false
     /// The session + New started: its sheet opens once the New session sheet has gone.
@@ -168,8 +170,11 @@ struct WorkView: View {
         .task(id: shows) {
             await reload()
             #if DEBUG && targetEnvironment(simulator)
-            if shows == .apps, let raw = DesignHook.control ?? (DesignHook.screen == "pika" ? "pika" : nil),
-               let kind = ControlKind(rawValue: raw) { control = kind }
+            if shows == .apps, let raw = DesignHook.control ?? (DesignHook.screen == "pika" ? "pika" : nil) {
+                // a row the Mac listed (a generic app too), else a native sheet by name (Memory, from Settings)
+                if let row = work.controls?.rows.first(where: { $0.id == raw }) { control = row }
+                else if let kind = ControlKind(rawValue: raw) { control = .native(kind) }
+            }
             #endif
             // Work: the sessions again every few seconds while the tab is open (the task ends with the tab).
             while shows == .work, !Task.isCancelled {
@@ -184,8 +189,11 @@ struct WorkView: View {
         .sheet(item: $session, onDismiss: { Task { await work.refreshSessions() } }) { shown in
             SessionSheet(work: work, fallback: shown)
         }
-        .sheet(item: $control) { kind in
-            ControlSheet(kind: kind, client: work.client, lights: work.controls?.lights ?? [])
+        .sheet(item: $control) { row in
+            switch row {
+            case .native(let kind): ControlSheet(kind: kind, client: work.client, lights: work.controls?.lights ?? [])
+            case .generic(let entry): GenericAppSheet(entry: entry, client: work.client)
+            }
         }
         .sheet(isPresented: $newSession, onDismiss: {
             if let s = started {
@@ -266,13 +274,13 @@ struct WorkView: View {
     }
 
     @ViewBuilder private var controlRows: some View {
-        if let controls = work.controls, !controls.apps.isEmpty {
-            ForEach(controls.apps) { kind in
-                Button { control = kind } label: { ControlRow(kind: kind, info: controls) }
+        if let controls = work.controls, !controls.rows.isEmpty {
+            ForEach(controls.rows) { row in
+                Button { control = row } label: { ControlRow(row: row, info: controls) }
                     .listRowBackground(Color.eveBackground)
             }
         } else {
-            quiet(work.controlsProblem ?? (work.controls == nil ? "Loading…" : "No notes, music, lights or TV on this Mac."))
+            quiet(work.controlsProblem ?? (work.controls == nil ? "Loading…" : "No notes or apps on this Mac."))
         }
     }
 
@@ -333,35 +341,59 @@ private struct StepLine: View {
     }
 }
 
-/// One of eve's controls: its symbol in a rounded square, its name, and what it reaches.
+/// One app: its symbol in a rounded square, its name, and what it reaches. The Mac's words when it sent them (the
+/// registry's title, SF Symbol and detail), else the phone's own for a native app.
 private struct ControlRow: View {
-    let kind: ControlKind
+    let row: AppRow
     let info: ControlsInfo
 
     var body: some View {
         HStack(spacing: 14) {
-            Image(systemName: kind.symbol)
+            Image(systemName: symbol)
                 .font(.system(size: 17, weight: .medium))
                 .foregroundStyle(.primary)
                 .frame(width: 36, height: 36)
                 .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(Color.eveFill))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
-                Text(kind.title).font(.body).foregroundStyle(.primary)
-                Text(detail).font(.subheadline).foregroundStyle(.secondary)
+                Text(title).font(.body).foregroundStyle(.primary)
+                if !detail.isEmpty {
+                    Text(detail).font(.subheadline).foregroundStyle(.secondary)
+                }
             }
             Spacer()
         }
         .padding(.vertical, 4)
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(kind.title). \(detail)")
-        .accessibilityHint("Opens the \(kind.title.lowercased()) controls")
+        .accessibilityLabel(detail.isEmpty ? title : "\(title). \(detail)")
+        .accessibilityHint("Opens the \(title.lowercased()) controls")
         .accessibilityAddTraits(.isButton)
     }
 
+    /// The Mac's entry for this row, if it sent one.
+    private var sent: AppEntry? {
+        switch row {
+        case .native(let kind): info.entry(for: kind)
+        case .generic(let entry): entry
+        }
+    }
+
+    private var title: String {
+        if let sent { return sent.title }
+        if case .native(let kind) = row { return kind.title }
+        return ""
+    }
+
+    private var symbol: String {
+        if case .native(let kind) = row { return AppSymbol.named(sent?.symbol, fallback: kind.symbol) }
+        return AppSymbol.named(sent?.symbol)
+    }
+
     private var detail: String {
-        switch kind {
+        if let sent, !sent.detail.isEmpty { return sent.detail }
+        guard case .native(let kind) = row else { return "" }
+        return switch kind {
         case .spotify: "Spotify"
         case .lights: info.lights.count == 1 ? "1 light" : "\(info.lights.count) lights"
         case .firetv: "Fire TV"

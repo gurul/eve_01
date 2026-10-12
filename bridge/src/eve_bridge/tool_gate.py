@@ -21,18 +21,18 @@ import unicodedata
 from collections import deque
 from typing import Any, Iterable, Mapping, Optional
 
+from . import app_registry
+
 # Tools that change something, open a session or send something, whatever their arguments. The direct apps' and
-# Composio's writes are decided by their own policies (telegram._direct_tool, _app_tool), not listed here.
+# Composio's writes are decided by their own policies (telegram._direct_tool, _app_tool), not listed here. eve's
+# apps (lights, music, the TV, the camera, ...) declare theirs in app_registry.py; every set below is eve's own
+# tools unioned with the apps' declarations.
 ACTING: frozenset[str] = frozenset({
     # the / menu's hand-offs (menu_tools.py): each sends a button, a link or a line, or flips a relay
     "claude_relay", "codex_relay", "set_stealth", "pair_eve_link",
     # the Mac and coding sessions: a task started, steered or stopped (a stop also drops a purchase's consent)
     "start_task", "steer_task", "stop_task", "start_coding_session", "screenshot", "take_photo", "send_file",
     "opentable_search",                          # a browser task in the owner's signed-in Chrome
-    # the home: every Fire TV action changes the TV (a key, the volume, an app, the power)
-    "lights_set", "lights_match", "spotify_control", "firetv_control",
-    # the webcam: every camera_control action moves it, zooms it, wakes or sleeps it, or changes its tracking
-    "camera_control",
     # the watcher, Meet, the room's notes, memory and the vault, the app maker, the chief
     "watch_add", "watch_remove", "watch_pause", "watch_resume", "watch_set_end",
     "meet_join", "meet_leave", "take_notes",
@@ -44,7 +44,7 @@ ACTING: frozenset[str] = frozenset({
     "agentcard_buy", "agentcard_confirm",
     # the voice's own (voice_agent.TOOLS): the robot sent off, its sound, a task's question answered, Meet
     "go_explore", "set_sound", "answer_question", "join_meeting", "leave_meeting",
-})
+}) | app_registry.ACTING()   # the apps' acts: every Fire TV action changes the TV, every camera_control moves it
 # Acting calls whose results still carry outside words: the page a new watch read first, what a photo or the
 # screen shows. They taint the turn after them like any read.
 ACTING_READS: frozenset[str] = frozenset({"watch_add", "take_photo", "screenshot",
@@ -53,18 +53,16 @@ ACTING_READS: frozenset[str] = frozenset({"watch_add", "take_photo", "screenshot
 # catalog's own text (a track's and an artist's names, a public playlist's name and its owner's display name) when it
 # plays something by name, skips, or says what is on (round-4 review). These actions answer with eve's own words
 # only; every other action, an unknown one included, taints the turn after it like any read.
-_OWN_WORDS_ACTIONS: dict[str, frozenset[str]] = {
-    "spotify_control": frozenset({"pause", "volume", "transfer", "mode_on", "mode_off", "mode"}),
-}
+_OWN_WORDS_ACTIONS: dict[str, frozenset[str]] = {**app_registry.OWN_WORDS()}
 # A call whose one read-only action only says what is on: that action is a read.
 _STATUS_ONLY: dict[str, str] = {"take_notes": "status"}
 
 # Calls whose results are eve's own state, with no text from outside: they never taint a turn. (task_status is
 # not one: it answers with the running task's own words.)
-CLEAN: frozenset[str] = frozenset({"spend_report", "lights_status", "firetv_status", "camera_status", "open_app",
+CLEAN: frozenset[str] = frozenset({"spend_report", "open_app",
                                    "open_apps",
                                    "move_head",
-                                   "forget_preview"})        # counts and a token, never the words (memory.py)
+                                   "forget_preview"}) | app_registry.CLEAN()   # forget_preview: counts and a token
 
 # What each kind of read is called in the owner's question ("after reading ..."); anything else is "a tool result".
 _SOURCES: dict[str, str] = {
@@ -80,9 +78,9 @@ _SOURCES: dict[str, str] = {
     # business's own name (phone_location.py)
     "phone_location": "the phone's location",
     "meet_join": "a meeting invite", "join_meeting": "a meeting invite",
-    "spotify_control": "Spotify", "spotify_now_playing": "Spotify",
     "watch_add": "the watched page", "take_photo": "a photo", "screenshot": "the screen", "look": "the camera",
     "look_around": "the camera", "find": "the camera",
+    **app_registry.SOURCES(),
 }
 TASK_RESULT = "a computer task's result"
 TASK_QUESTION = "a computer task's question"
@@ -222,9 +220,8 @@ SAY_CHARS = 220
 _SAY_HEADS: dict[str, str] = {
     "start_task": "start a computer task to", "steer_task": "tell the running task", "join_meeting": "join the meeting",
     "meet_join": "join the meeting", "answer_question": "answer the task's question with", "take_notes": "take notes",
-    "remember": "remember that", "watch_add": "watch", "spotify_control": "change the music",
-    "lights_set": "change the lights", "lights_match": "change the lights", "firetv_control": "use the TV",
-    "camera_control": "move the camera",
+    "remember": "remember that", "watch_add": "watch",
+    **app_registry.SAY(),
 }
 _SAY_WORDS: dict[str, str] = {"start_task": "goal", "steer_task": "text", "answer_question": "answer"}
 _SAY_FIXED: dict[str, str] = {"leave_meeting": "leave the meeting", "meet_leave": "leave the meeting",

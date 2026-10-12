@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Score which tool the chat brain picks for the owner's plain words: one label per case, production routing.
 
-    export $(grep -E '^(OPENROUTER_API_KEY|TICKETMASTER_API_KEY)=' ~/.config/eve-bridge/env | xargs)
-    cd bridge && uv run python tools/intent_eval.py CASES.json
+    cd bridge
+    env $(grep -E '^(OPENROUTER_API_KEY|TICKETMASTER_API_KEY)=' ~/.config/eve-bridge/env | xargs) uv run python tools/intent_eval.py CASES.json
 
 CASES.json is a list (or {"cases": [...]}) of ``{"id", "text", "primary", "expect": [...], "group"?, "never"?}``:
 the acceptable labels are ``primary`` and ``expect`` (both optional lists of labels; at least one is given).
@@ -76,6 +76,8 @@ from typing import Any, Mapping, Optional, Sequence
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+from eve_bridge import app_registry  # noqa: E402 — after the path; strings only, no app module is imported
+
 ATTEMPTS = 3                       # a request that fails to arrive is sent again; the model's answer never is
 NONE, ASK = "none", "ask"
 UNKNOWN = "unknown_tool"              # a call to a name the turn did not offer: no case accepts it
@@ -83,7 +85,8 @@ UNKNOWN = "unknown_tool"              # a call to a name the turn did not offer:
 LABELS = (
     "computer_task", "camera_photo", "screenshot", "send_file_to_owner", "mac_files_read", "room_notes",
     "memory_write", "coding_session", "deep_reasoning", "chat_history_recall", "memory_recall", "memory_forget",
-    "web_search", "notes", "todos_read", "price_watch", "meet", "lights", "music", "tv_control", "camera_aim",
+    "web_search", "notes", "todos_read", "price_watch", "meet",
+) + app_registry.labels() + (   # eve's apps, in tool order: lights, music, tv_control, camera_aim, ...
     "gov_legal_lookup",
     "restaurant_booking", "events", "jobs_and_reminders", "app_builder", "calendar_read", "calendar_write",
     "email_read", "email_send", "contacts_read", "maps_directions", "github", "slack", "notion", "linear",
@@ -109,8 +112,7 @@ TOOL_LABELS: dict[str, str] = {
     "pair_eve_link": "phone_pairing", "read_file": "mac_files_read", "phone_location": "phone_location",
     "science_search": "science_search",
 }
-_PREFIXES = (("watch_", "price_watch"), ("meet_", "meet"), ("lights_", "lights"), ("spotify_", "music"),
-             ("firetv_", "tv_control"), ("camera_", "camera_aim"))
+_PREFIXES = (("watch_", "price_watch"), ("meet_", "meet")) + app_registry.prefixes()
 _NOTES = ("capture_note", "search_notes", "read_note", "edit_note", "undo_note", "list_inbox", "file_note",
           "second_brain_workflow")
 _MAKER = ("make_app", "change_app", "delete_app", "list_apps", "rename_app", "restore_app", "undo_app")
@@ -427,17 +429,15 @@ def code_route(text: str, inlet: Any = None) -> str:
         return NONE
     if inlet is None:
         return ""
-    from eve_bridge import firetv, obsbot_panel, spotify
-
-    if getattr(inlet, "_firetv", None) is not None and firetv.match(text) is not None:
-        return "tv_control"
-    if getattr(inlet, "_obsbot", None) is not None and obsbot_panel.match(text) is not None:
-        return "camera_aim"
-    matcher = getattr(inlet, "_eval_lights", None)
-    if matcher is not None and matcher.match(text) is not None:
-        return "lights"
-    if getattr(inlet, "_spotify", None) is not None and spotify.match(text) is not None:
-        return "music"
+    # eve's apps' code paths, in _handle's order (app_registry.by_code: the TV, the camera, the lights, the music).
+    # An app's ``_eval_<slot>`` stand-in (the lights' two names) matches where the lent hub cannot.
+    for app in app_registry.by_code():
+        hub = getattr(inlet, "_eval_" + app.slot, None) or getattr(inlet, "_" + app.slot, None)
+        if hub is None:
+            continue
+        match = getattr(app.mod(), "match", None) or getattr(hub, "match", None)
+        if match is not None and match(text) is not None:
+            return app.label
     quick = getattr(inlet, "_quick", None)
     ask = quick.match(text) if quick is not None else None
     if ask is not None:
@@ -606,6 +606,18 @@ class _Lent:
         return []
 
 
+def lend_apps(blocks: Mapping[str, str]) -> dict[str, _Lent]:
+    """eve's apps as the brain sees them (app_registry): every tools app, whatever its switch says in this shell, so
+    the eval's request bytes never depend on the environment. Each is lent with its module's real TOOLS and its
+    INSTRUCTIONS, or the block in ``blocks`` (the lights' names two fictional lights)."""
+    out: dict[str, _Lent] = {}
+    for a in app_registry.with_tools():
+        mod = a.mod()
+        block = blocks[a.slot] if a.slot in blocks else getattr(mod, "INSTRUCTIONS", None)
+        out[a.slot] = _Lent(mod.TOOLS, block if block is not None else mod.INSTRUCTIONS_HEAD)
+    return out
+
+
 class _Memory:
     """memory.Memory as a turn reads it: the real tool schemas, an empty profile and day."""
     retry = False
@@ -737,13 +749,10 @@ def _brain(scratch: Path, allow_keywords: bool) -> tuple[Any, list[str], Any]:
         apps_maker,
         chat_log,
         chief,
-        firetv,
         lights,
         meet,
-        obsbot_panel,
         openrouter,
         share,
-        spotify,
         toolset_router,
         watch,
     )
@@ -770,11 +779,10 @@ def _brain(scratch: Path, allow_keywords: bool) -> tuple[Any, list[str], Any]:
     (scratch / "chat").mkdir(parents=True, exist_ok=True)
     direct = _direct_apps()
     lights_block = lights.INSTRUCTIONS_HEAD + "\nThe lights:\n- desk lamp (room: office)\n- ceiling (room: living room)"
+    lent_apps = lend_apps({"lights": lights_block})
     lent: dict[str, Any] = dict(
         watcher=watch.make_watcher(), meeter=_Lent(meet.TOOLS, meet.INSTRUCTIONS_BLOCK),
-        lights=_Lent(lights.TOOLS, lights_block), spotify=_Lent(spotify.TOOLS, spotify.INSTRUCTIONS),
-        firetv=_Lent(firetv.TOOLS, firetv.INSTRUCTIONS), america=_Lent([america.TOOL], america.INSTRUCTIONS),
-        obsbot=_Lent(obsbot_panel.TOOLS, obsbot_panel.INSTRUCTIONS),
+        **lent_apps, america=_Lent([america.TOOL], america.INSTRUCTIONS),
         share=_Lent(share.TOOLS, share.INSTRUCTIONS), memory=_Memory(), vault=SimpleNamespace(root=scratch / "vault"),
         chat_log=chat_log.ChatLog(scratch / "chat" / "log.json"), direct=direct, apps=_Workspace(),
         opentable_enabled=True, agent_factory=lambda *a, **k: None, brief=lambda: "")
@@ -797,8 +805,8 @@ def _brain(scratch: Path, allow_keywords: bool) -> tuple[Any, list[str], Any]:
              f"toolset router: {toolset_router.mode()} ({'Jev' if jev else 'keywords only'}), "
              f"chief {'on' if inlet.chief is not None else 'off'}",
              "this checkout has: " + ", ".join(f"{k} {'yes' if v else 'no'}" for k, v in have.items()),
-             "lent: own tools, web_search, memory, chat log, second brain, watch, meet, lights, spotify, fire tv, "
-             "obsbot camera, phone location, science search, "
+             "lent: own tools, web_search, memory, chat log, second brain, watch, meet, "
+             + "".join(f"{slot}, " for slot in lent_apps) + "phone location, science search, "
              "america, share, opentable, chief, maker, direct apps (" + ", ".join(direct.apps) + "), workspace"]
     writes = {n for n in direct.names if "__" in n and not direct.reads(n)}
     return inlet, notes, writes
@@ -846,8 +854,8 @@ def _watch_jev() -> None:
 
 # A code path's label that changes something when it runs (lights, the TV, a session, a booking's browser task).
 # Counted as acting whatever the words asked for, so a hard negative a matcher takes is never missed.
-CODE_ACTING = frozenset({"tv_control", "camera_aim", "lights", "music", "stealth", "claude_relay", "codex", "coding_session",
-                         "stop_task", "restaurant_booking", "meet", "screenshot"})
+CODE_ACTING = frozenset({"stealth", "claude_relay", "codex", "coding_session", "stop_task", "restaurant_booking", "meet",
+                         "screenshot"}) | {a.label for a in app_registry.by_code()}
 
 
 async def _ask(inlet: Any, case: Mapping[str, Any], i: int, writes: set[str]) -> Row:
