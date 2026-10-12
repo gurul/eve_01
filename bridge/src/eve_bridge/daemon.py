@@ -433,6 +433,12 @@ class Daemon:
         # The "Ask Claude" Mini App (miniapp.py): the owner's menu button opens a Claude chat inside Telegram,
         # served here through a Cloudflare quick tunnel. Off unless EVE_MINIAPP=1.
         Daemon._start_miniapp(self, tasks)
+        # Updates (updates.py, docs/updates.md): the Eve Link pane's cards, rebuilt in the background every
+        # EVE_UPDATES_EVERY_MIN in day time and once at start when stale. Only while the app's door is up; EVE_UPDATES=0
+        # turns it off.
+        link = getattr(getattr(getattr(self, "_miniapp", None), "server", None), "link", None)
+        if link is not None and getattr(link, "updates", None) is not None and link.updates.enabled:
+            tasks.append(asyncio.create_task(link.updates.loop(self._shutdown), name="updates"))
         # The providers' own spend figures (spend_sync.py): OpenRouter always, OpenAI and Anthropic with an admin
         # key; at start and hourly, on a worker thread. The Spending view shows them beside eve's own meter.
         from . import spend_sync

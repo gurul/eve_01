@@ -1601,3 +1601,116 @@ def test_a_bare_program_after_prose_is_stripped_like_the_app_draws_it() -> None:
     assert link_chat.strip_openui(text) == "Here you go:\n" + link_chat.OPENUI_PLACEHOLDER
     assert link_chat.strip_openui("root = 5 is not a program") == "root = 5 is not a program"
     assert link_chat.strip_openui("prose\nroot = Card([x])") .endswith(link_chat.OPENUI_PLACEHOLDER)
+
+
+# ---- Updates (updates.py): the pane left of Chat --------------------------------------------------------------
+
+class SlowUpdatesClient:
+    """The suggester's model, slow enough to see a refresh in flight; one Pay card citing the first item."""
+
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def complete(self, instructions: str, body: str) -> str:
+        self.calls += 1
+        time.sleep(0.3)
+        ref = json.loads(body.split("<snapshot>\n", 1)[1].rsplit("\n</snapshot>", 1)[0])["items"][0]["id"]
+        return json.dumps({"cards": [{"verb": "Pay", "text": "the water bill of $64 by Oct 20", "entity": "City Water",
+                                      "refs": [ref], "due": "2026-10-20"}]})
+
+
+def updates_at(tmp_path: Path, client: Any = None, env: Optional[dict[str, str]] = None) -> Any:
+    from eve_bridge.updates import Sources, Updates
+
+    class OneNote(Sources):
+        def apps(self, app: str) -> Any:
+            return None
+
+        def vault(self) -> Optional[Path]:
+            root = tmp_path / "vault"
+            root.mkdir(exist_ok=True)
+            (root / "bills.md").write_text("# Bills\n- [ ] Pay the water bill by Oct 20\n")
+            return root
+
+        def chief(self) -> Any:
+            return None
+
+    return Updates(path=tmp_path / "updates.json", sources=OneNote(records_dir=lambda: None, hidden=lambda: None),
+                   client=lambda: client, environ=env if env is not None else {})
+
+
+def test_updates_need_the_link_token_and_no_origin(tmp_path: Path) -> None:
+    async def go() -> None:
+        u = updates_at(tmp_path, SlowUpdatesClient())
+        u.store.put_cards([{"id": "abc123abc123", "verb": "Pay", "text": "x", "refs": ["note:bills.md"],
+                            "kind": "note", "source": "bills"}], "2026-10-12T09:00:00-07:00")
+        server, port, token = await serve(tmp_path, FakeInlet(store_at(tmp_path)), updates=u)
+        doors = (("GET", link_chat.UPDATES_PATH, None), ("POST", link_chat.UPDATES_DISMISS_PATH, {"id": "abc123abc123"}),
+                 ("POST", link_chat.UPDATES_REFRESH_PATH, {}))
+        for method, path, body in doors:
+            assert (await http(port, method, path, body))[0] == 401, path
+            assert (await http(port, method, path, body, token=token[:-1]))[0] == 401, path
+            assert (await http(port, method, path, body, token=token, origin="https://evil.example"))[0] == 403, path
+            assert (await http(port, method, path, body, token=token, origin="null"))[0] == 403, path
+        assert not u.refreshing and u.store.load()["dismissed"] == {}                  # nothing was done
+        assert (await http(port, "POST", link_chat.UPDATES_PATH, {}, token=token))[0] == 405
+        assert (await http(port, "GET", link_chat.UPDATES_REFRESH_PATH, token=token))[0] == 405
+        for method, path, body in doors:                                              # positive controls
+            assert (await http(port, method, path, body, token=token))[0] == 200, path
+        assert u.store.load()["dismissed"] == {"note:bills.md": u._now().date().isoformat()}
+        if u._task is not None:
+            await u._task
+        await server.close()
+
+    asyncio.run(go())
+
+
+def test_updates_serve_the_contract_dismiss_and_refresh_without_waiting(tmp_path: Path) -> None:
+    async def go() -> None:
+        client = SlowUpdatesClient()
+        u = updates_at(tmp_path, client)
+        server, port, token = await serve(tmp_path, FakeInlet(store_at(tmp_path)), updates=u)
+        status, _, body = await http(port, "GET", link_chat.UPDATES_PATH, token=token)
+        assert status == 200 and json.loads(body) == {"cards": [], "generated_at": None, "refreshing": False}
+
+        started = time.monotonic()
+        status, _, body = await http(port, "POST", link_chat.UPDATES_REFRESH_PATH, {}, token=token)
+        assert status == 200 and json.loads(body) == {"ok": True, "started": True}
+        assert time.monotonic() - started < 0.25                                     # it never waits on the model
+        status, _, body = await http(port, "POST", link_chat.UPDATES_REFRESH_PATH, b"", token=token)
+        assert json.loads(body) == {"ok": True, "started": False}                    # one at a time
+        assert json.loads((await http(port, "GET", link_chat.UPDATES_PATH, token=token))[2])["refreshing"] is True
+        await u._task
+        view = json.loads((await http(port, "GET", link_chat.UPDATES_PATH, token=token))[2])
+        assert view["refreshing"] is False and view["generated_at"] and client.calls == 1
+        [card] = view["cards"]
+        assert set(card) == {"id", "verb", "text", "entity", "kind", "source", "due"}
+        assert (card["verb"], card["kind"], card["source"], card["due"]) == ("Pay", "note", "bills", "2026-10-20")
+
+        for bad in ({}, {"id": 5}, {"id": ""}, {"id": "x" * 65}, [1]):
+            assert (await http(port, "POST", link_chat.UPDATES_DISMISS_PATH, bad, token=token))[0] == 400, bad
+        status, _, body = await http(port, "POST", link_chat.UPDATES_DISMISS_PATH, {"id": "feedfeedfeed"}, token=token)
+        assert status == 404 and json.loads(body)["ok"] is False                      # nothing dismissed: said so
+        assert u.store.load()["dismissed"] == {}
+        status, _, body = await http(port, "POST", link_chat.UPDATES_DISMISS_PATH, {"id": card["id"]}, token=token)
+        assert status == 200 and json.loads(body) == {"ok": True}
+        assert json.loads((await http(port, "GET", link_chat.UPDATES_PATH, token=token))[2])["cards"] == []
+        await server.close()
+
+    asyncio.run(go())
+
+
+def test_updates_off_answer_empty_and_read_nothing(tmp_path: Path) -> None:
+    async def go() -> None:
+        client = SlowUpdatesClient()
+        u = updates_at(tmp_path, client, env={"EVE_UPDATES": "0"})
+        u.store.put_cards([{"id": "abc123abc123", "verb": "Pay", "text": "x", "refs": ["note:bills.md"]}],
+                          "2026-10-12T09:00:00-07:00")
+        server, port, token = await serve(tmp_path, FakeInlet(store_at(tmp_path)), updates=u)
+        status, _, body = await http(port, "GET", link_chat.UPDATES_PATH, token=token)
+        assert status == 200 and json.loads(body) == {"cards": [], "generated_at": None, "refreshing": False}
+        status, _, body = await http(port, "POST", link_chat.UPDATES_REFRESH_PATH, {}, token=token)
+        assert json.loads(body) == {"ok": True, "started": False} and client.calls == 0
+        await server.close()
+
+    asyncio.run(go())

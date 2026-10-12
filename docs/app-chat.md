@@ -6,6 +6,11 @@ clean", like the ChatGPT app, and "I just don't want to interact with a webpage
 on my app". So the app is one native screen with no tab bar. Only eve's
 messages are a web view.
 
+The app opens on Chat every time (owner, 2026-10-12: "when I open, chat should
+still be main pane"). Left of Chat is **Updates**, a short list of things to
+act on that eve found in your mail, calendar, notes, memory and the chief's
+jobs. See [Updates](updates.md).
+
 ## The screen
 
 Pure black in dark mode (the system background in light). Nothing is on the
@@ -13,10 +18,14 @@ screen but the controls below until there are messages.
 
 - **Top bar.** At left, a round 44 pt button with a two-line menu glyph opens
   **Settings**. A small blue dot is on it when a job waits on the owner (a Go,
-  an answer or a budget raise). In the center, a capsule pill **Chat | Apps |
-  Work** (owner, 2026-10-08: "chat, apps, work"); the selected segment is a
-  lighter filled capsule. A tap swaps the content at once and only the
-  highlight slides. The chat's web view stays alive, hidden, on Apps and Work:
+  an answer or a budget raise). In the center, a capsule pill **Updates | Chat |
+  Apps | Work** (owner, 2026-10-08: "chat, apps, work"; Updates added left of
+  Chat on 2026-10-12); the selected segment is a lighter filled capsule. The
+  labels are subheadline size so four fit on a 375 pt screen. A tap swaps the
+  content at once and only the highlight slides. Every cold launch opens on
+  Chat, whatever tab was shown last; a link that opens the app
+  (`evelink://updates`, the widget's `evelink://work`) still wins. The chat's
+  web view stays alive, hidden, on Updates, Apps and Work:
   rebuilding it on every switch reloaded the page and made switching jittery. At right, a round 44 pt button
   opens **voice mode**. Its waveform is red and moves while a call is open.
   While the chat shows, the bar sits on a fade: the screen's color behind the
@@ -52,6 +61,11 @@ screen but the controls below until there are messages.
     start while a call is open. Opening voice mode or starting a call (the Action
     Button too) stops it first, and leaves the call's audio session alone. It
     also stops when the app goes to the background.
+- **Updates** (`App/UpdatesView.swift`): cards that each read as one
+  sentence, a verb chip then the rest ("**Review** your storage plan before the
+  new price starts Oct 23"). A tap switches to Chat and sends exactly that
+  sentence, with a second line naming where it came from; swipe left to
+  dismiss; pull down to refresh. See [Updates](updates.md).
 - **Apps** and **Work** (`App/WorkView.swift`, one plain list each). **Apps**
   is eve's controls (Music, Lights, Remote); **Work** is the chief's jobs.
   Pull down to refresh; each also refreshes when its tab opens, and both are
@@ -577,7 +591,7 @@ has none of it (checked: the strings `EVE_PAIR_URL`, `eveScreen` and
 
 - Environment `EVE_PAIR_URL=evelink://pair?u=…&t=…`: pairs at launch, as
   that link would, with no dialog.
-- `-eveScreen chat | apps | work | voice | settings | pika`: opens that screen (`pika`: Apps with the Pika
+- `-eveScreen updates | chat | apps | work | voice | settings | pika`: opens that screen (`pika`: Apps with the Pika
   screen open).
 - `-eveGrade auto | instant | think`: preselects the speed dial.
 - `-eveKeyboard YES` (with `chat`): puts the cursor in the composer.
@@ -612,6 +626,9 @@ same one retry at a new address as the chat:
 | `POST /api/link/controls/memory` | The Memory card (`link_memory.MemoryPanel`, over the chat's own `memory.Memory`): `{"action": "profile"}` (what eve knows about you), `{"action": "search", "query"}` (record facts, recalled meanings and the words said, as `memory_search` returns them, without the lines around a hit), `{"action": "forget", "query"}` (a preview: counts per store and a one-use token, never the words), `{"action": "apply", "token"}` (forgets what the preview counted), `{"action": "remember", "text"}` (the chat's "remember that": one claim starred for good), `{"action": "hide", "text"}` / `{"action": "unhide", "text"}` (*Don't mention this again*: the words are left out of the profile and every search, nothing deleted) and `{"action": "hidden"}` (`{"ok", "hidden": [...]}`). Listed as `"memory": true` only while the Mac's memory is on and built; 404 otherwise. |
 | `POST /api/link/controls/<lights\|spotify\|firetv>` | That card's own `panel(body)` (`lights.Lights`, `spotify.Spotify`, `firetv.FireTV`, the same objects the Mini App's `/api/lights`, `/api/spotify` and `/api/firetv` use), and its JSON as it is. The body is the Mini App's: `{"action": "status"}` reads; `{"action": "set", "target", "power"\|"color"\|"brightness"}` for lights; `play`, `pause`, `next`, `previous`, `volume`, `transfer`, `mode` for music; the d-pad keys (with `repeat`), `power_on`/`power_off`, media keys, `volume`, `volume_change`, `mute`/`unmute`, `open_app` for the TV. 404 with `{"ok": false, "line"}` for one this Mac does not have. JSON object bodies only, 64 kB at most. |
 | `GET /api/link/today` | The home-screen widget's one read: what needs the owner, what is going, the events left today and what plays now, each source within its own limit and left out when it fails. See [the widget](widget.md). |
+| `GET /api/link/updates` | The Updates pane's cards: `{"cards": [{"id", "verb", "text", "entity", "kind", "source", "due"}], "generated_at", "refreshing"}`, read from the kept store, never waiting on the model. Empty when `EVE_UPDATES=0`. See [Updates](updates.md). |
+| `POST /api/link/updates/dismiss` | `{"id"}`: that card's sources stay out of Updates for 30 days. `{"ok": true}`, also for the id of a card a rebuild replaced in the last 2 days; 404 `{"ok": false}` for an id the daemon does not know (the app puts the card back); 400 for a missing, empty or over-64-character id. |
+| `POST /api/link/updates/refresh` | Starts one rebuild in the background: `{"ok": true, "started": bool}` (`false` while one runs, when off, or without a model key). |
 | `GET /api/link/apps` | `{"apps": [{"slug", "name", "updated"}]}`. Not used by Work now (the built apps are not listed there); kept for later. |
 | `POST /api/link/apps/<slug>/open` | `{"url": "<tunnel origin>/apps/<slug>/?t=<app token>"}`; 404 for an app that is gone. Not used by Work now. |
 

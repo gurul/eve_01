@@ -101,6 +101,12 @@ view and does all its networking natively (ios/EveLink); this module is the daem
   and what is going (the chief's open cards and the watches), the calendar's events left today and what plays now
   (Spotify, the TV), each source within its own short limit; one that is off or fails is left out and named in
   ``sources``, never failing the answer.
+* ``GET /api/link/updates``, ``POST /api/link/updates/dismiss`` ``{"id"}`` and ``POST /api/link/updates/refresh``
+  (updates.py, docs/updates.md; owner, 2026-10-12: "find actionable steps from our emails notes everything we have and
+  suggest things"): the Updates pane's cards, each one sentence (a verb and the rest), made in the background from
+  the owner's mail, calendar, notes, journal and the chief's cards. Dismiss hides every card citing the dismissed
+  card's sources for 30 days; refresh starts one rebuild and never waits for the model (``started: false`` while one
+  runs). With ``EVE_UPDATES=0`` the list is empty and nothing is read.
 
 **Who may call.** The link token (stick_link.LinkToken), as ``Authorization: Bearer``, checked in constant time.
 A browser sends an Origin on every cross-site fetch and the app's URLSession sends none, so any Origin is refused
@@ -159,11 +165,15 @@ CONTROLS = ("lights", "spotify", "firetv", "memory", "notes", "pika", "obsbot") 
 PIKA_STREAM_PATH = "/api/link/controls/pika/stream"   # pika.py: the car's video, one viewer
 OBSBOT_STREAM_PATH = "/api/link/controls/obsbot/stream"   # obsbot_panel.py: the webcam's picture, one viewer
 TODAY_PATH = "/api/link/today"           # link_today.py: the home-screen widget's one read
+UPDATES_PATH = "/api/link/updates"       # updates.py: the Updates pane's cards
+UPDATES_DISMISS_PATH = "/api/link/updates/dismiss"
+UPDATES_REFRESH_PATH = "/api/link/updates/refresh"
 # one kept upload's bytes, full size; anything after the prefix that is not 32 hex is a 404 (never a path)
 FILE_RE = re.compile(r"^/api/link/file/([^/]{0,64})$")
 PATHS = (TURN_PATH, MESSAGES_PATH, JOBS_PATH, APPS_PATH, UPLOAD_PATH, CONTROLS_PATH, TODAY_PATH, PIKA_STREAM_PATH,
-         OBSBOT_STREAM_PATH)
-POST_PATHS = (TURN_PATH, UPLOAD_PATH)
+         OBSBOT_STREAM_PATH, UPDATES_PATH, UPDATES_DISMISS_PATH, UPDATES_REFRESH_PATH)
+POST_PATHS = (TURN_PATH, UPLOAD_PATH, UPDATES_DISMISS_PATH, UPDATES_REFRESH_PATH)
+MAX_CARD_ID_CHARS = 64                # a dismissed Updates card's id (updates.card_id: 12 hex)
 GRADES = ("auto", "instant", "think")    # telegram.GRADES: the speed dial
 JOB_ACTIONS = ("go", "done", "drop", "raise", "happened", "didnt", "hide")
 HIDDEN_JOBS_FILE = "~/.config/eve-bridge/chat/hidden-jobs.json"   # the finished cards the owner removed from Work
@@ -620,11 +630,14 @@ class LinkChat:
     def __init__(self, inlet: Callable[[], Any], *, clock: Callable[[], float] = time.monotonic,
                  turn_secs: float = TURN_SECS, ping_secs: float = PING_SECS, settle_secs: float = SETTLE_SECS,
                  poll_secs: float = POLL_SECS, uploads: Any = None, today: Any = None,
-                 job_secs: float = JOB_SECS, hidden: Optional[HiddenJobs] = None) -> None:
+                 job_secs: float = JOB_SECS, hidden: Optional[HiddenJobs] = None, updates: Any = None) -> None:
         from .link_today import Today
         from .link_uploads import UploadStore
+        from .updates import Updates
 
         self.today = today if today is not None else Today()   # link_today.Today: the widget's feed
+        # updates.Updates: the Updates pane's cards; the daemon runs its refresh loop (daemon.Daemon.run)
+        self.updates = updates if updates is not None else Updates(inlet)
         self._inlet = inlet
         self.uploads = uploads if uploads is not None else UploadStore()   # link_uploads.UploadStore
         self._clock = clock
@@ -774,6 +787,9 @@ class LinkChat:
             return
         if path == TODAY_PATH:
             await self._json(writer, 200, await self.today.gather(self._inlet(), apps))
+            return
+        if path in (UPDATES_PATH, UPDATES_DISMISS_PATH, UPDATES_REFRESH_PATH):
+            await self._updates(path, headers, reader, writer)
             return
         inlet = self._inlet()
         if inlet is None or getattr(inlet, "_chat_id", None) is None:
@@ -1222,6 +1238,31 @@ class LinkChat:
             await self._json(writer, 400, {"ok": False, "error": "the body must be a JSON object"})
             return None
         return body
+
+    async def _updates(self, path: str, headers: dict[str, str], reader: asyncio.StreamReader,
+                       writer: asyncio.StreamWriter) -> None:
+        """``GET /api/link/updates``: the cards (updates.Updates.view). ``POST .../dismiss`` ``{"id"}``: that card's
+        sources are dismissed for 30 days (404 when the store does not know the id). ``POST .../refresh``: one
+        rebuild starts in the background; the answer never waits for it."""
+        if path == UPDATES_PATH:
+            await self._json(writer, 200, await asyncio.to_thread(self.updates.view))
+            return
+        body = await self._optional_body(headers, reader, writer)
+        if body is None:
+            return
+        if path == UPDATES_REFRESH_PATH:
+            await self._json(writer, 200, {"ok": True, "started": self.updates.refresh()})
+            return
+        cid = body.get("id")
+        if not isinstance(cid, str) or not cid.strip() or len(cid) > MAX_CARD_ID_CHARS:
+            await self._json(writer, 400, {"ok": False, "error": "id must be a card's id"})
+            return
+        if not await asyncio.to_thread(self.updates.dismiss, cid.strip()):
+            # an id the store does not know (not now, not among the cards a recent rebuild replaced): nothing was
+            # dismissed, so say so; the app puts the card back and reads the list again
+            await self._json(writer, 404, {"ok": False, "error": "no such card"})
+            return
+        await self._json(writer, 200, {"ok": True})
 
     async def _apps(self, apps: Any, headers: dict[str, str], writer: asyncio.StreamWriter,
                     slug: Optional[str]) -> None:

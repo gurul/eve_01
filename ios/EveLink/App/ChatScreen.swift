@@ -1,12 +1,13 @@
-// Eve Link's one screen (docs/app-chat.md): a top bar (Settings, the Chat | Work pill, Talk) over either the chat or
-// the Work lists. The chat is eve's messages, drawn by OpenUI in the bundled web view, above a native composer.
+// Eve Link's one screen (docs/app-chat.md): a top bar (Settings, the Updates | Chat | Apps | Work pill, Talk) over the
+// Updates pane (docs/updates.md), the chat or the Work lists. The app opens on Chat (EveLinkApp.init). The chat is eve's messages, drawn by OpenUI in the bundled web view, above a native composer.
 // Typing goes to the page with window.eveNative.send, so a typed turn looks exactly as one typed in OpenUI.
 import PhotosUI
 import SwiftUI
 import UIKit
 
+/// The pill's tabs, left to right. Updates sits left of Chat (owner, 2026-10-12: "a pane to left of chat").
 enum HomeMode: String, CaseIterable {
-    case chat, apps, work
+    case updates, chat, apps, work
     var title: String { rawValue.capitalized }
 }
 
@@ -14,6 +15,7 @@ struct HomeScreen: View {
     @ObservedObject var relay: Relay
     @ObservedObject var chat: ChatModel
     @ObservedObject var work: WorkModel
+    @ObservedObject var updates: UpdatesModel
     @ObservedObject var log: Diag
     @Binding var talkError: String?
     @AppStorage("home.mode") private var mode: HomeMode = .chat
@@ -27,6 +29,8 @@ struct HomeScreen: View {
     @State private var composerTop: CGFloat = 0
     /// The composer's dictation, held here so Talk, a call and the background can stop it.
     @StateObject private var dictation = Dictation()
+    /// An Updates card tapped before the page was ready (a cold start into Updates): sent once it is.
+    @State private var pendingAsk: String?
     @Environment(\.scenePhase) private var scenePhase
 
     private var chatShown: Bool { relay.pairing != nil && mode == .chat }
@@ -72,6 +76,8 @@ struct HomeScreen: View {
                             composerTop = $0
                             sendInsets()
                         }
+                } else if mode == .updates {
+                    UpdatesView(model: updates, ask: ask)
                 } else {
                     WorkView(work: work, shows: mode)
                 }
@@ -84,6 +90,11 @@ struct HomeScreen: View {
         }
         // The app keeps audio in the background for calls; dictation must not keep the mic on there.
         .onChange(of: scenePhase) { _, now in if now == .background { dictation.stop() } }
+        .onChange(of: chat.ready) { _, ready in
+            guard ready, let text = pendingAsk else { return }
+            pendingAsk = nil
+            chat.send(text)
+        }
         .sheet(isPresented: $showSettings) {
             SettingsSheet(relay: relay, log: log, work: work, talkError: $talkError)
         }
@@ -119,6 +130,22 @@ struct HomeScreen: View {
         chat.setInsets(top: barBottom - webFrame.minY + TopFade.overhang, bottom: webFrame.maxY - composerTop)
     }
 
+    /// A tapped Updates card: to the Chat, and its tap text sent as a typed turn (the composer's path). Exactly the
+    /// card's words: email text is untrusted, so nothing the owner cannot see goes to eve. false while a reply is
+    /// still streaming: nothing is sent and the pane stays.
+    private func ask(_ card: UpdateCard) -> Bool {
+        guard !chat.busy else { return false }
+        let text = UpdateTap.text(card)
+        dictation.stop()
+        mode = .chat
+        if chat.ready {
+            chat.send(text)
+        } else {
+            pendingAsk = text
+        }
+        return true
+    }
+
     /// Voice mode closes (its X, or Ask eve): the call ends with it.
     private func closeVoice() {
         relay.endHandsFree()
@@ -126,7 +153,8 @@ struct HomeScreen: View {
     }
 
     #if DEBUG && targetEnvironment(simulator)
-    /// The simulator's design hook (docs/app-chat.md): -eveScreen chat | apps | work | voice | settings | pika, -eveGrade,
+    /// The simulator's design hook (docs/app-chat.md): -eveScreen updates | chat | apps | work | voice | settings | pika,
+    /// -eveGrade,
     /// -eveKeyboard YES (chat with the keyboard up).
     private func openDesignScreen() {
         if let grade = DesignHook.grade.flatMap(ChatGrade.init(rawValue:)) { chat.grade = grade }
@@ -142,6 +170,7 @@ struct HomeScreen: View {
                     composerFocus += 1
                 }
             }
+        case "updates": mode = .updates
         case "work": mode = .work
         case "apps", "pika": mode = .apps               // pika: the Apps tab with the Pika screen open
         case "voice": showVoice = true
@@ -186,7 +215,7 @@ private struct ComposerFloor: View {
     }
 }
 
-/// Settings at left (a blue dot when a job waits on the owner), the Chat | Apps | Work pill, Talk at right.
+/// Settings at left (a blue dot when a job waits on the owner), the Updates | Chat | Apps | Work pill, Talk at right.
 private struct TopBar: View {
     @Binding var mode: HomeMode
     let needsYou: Bool
@@ -216,11 +245,15 @@ private struct TopBar: View {
                     Button {
                         mode = m                          // the content swaps at once; only the pill's highlight moves
                     } label: {
+                        // Four tabs between two 44 pt buttons: the subheadline size and tight padding fit a 375 pt
+                        // screen; larger text shrinks a little rather than wrap.
                         Text(m.title)
-                            .font(.body)
+                            .font(.subheadline)
                             .foregroundStyle(.primary)
-                            .frame(minWidth: 64, minHeight: 40)
-                            .padding(.horizontal, 4)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                            .padding(.horizontal, 10)
+                            .frame(minWidth: 52, minHeight: 40)
                             .background {
                                 if mode == m {
                                     Capsule().fill(Color.eveSelected).matchedGeometryEffect(id: "segment", in: pill)

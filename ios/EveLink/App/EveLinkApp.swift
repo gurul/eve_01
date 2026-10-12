@@ -1,5 +1,5 @@
 // Eve Link: talk to eve from the iPhone (docs/action-button.md). One screen (docs/app-chat.md): Chat texts eve,
-// Work lists the chief's jobs and the owner's apps, voice mode (and the Action Button through TalkIntent) carries each
+// Updates (left of it) lists things to act on (docs/updates.md), Work lists the chief's jobs and the owner's apps, voice mode (and the Action Button through TalkIntent) carries each
 // turn to eve as a call, and Settings holds pairing and diagnostics.
 import SwiftUI
 import WidgetKit
@@ -10,12 +10,20 @@ struct EveLinkApp: App {
     @StateObject private var log = Diag.shared
     @StateObject private var chat = ChatModel(relay: PhoneLink.relay)
     @StateObject private var work = WorkModel(relay: PhoneLink.relay)
+    @StateObject private var updates = UpdatesModel(relay: PhoneLink.relay)
     @State private var talkError: String?
     @Environment(\.scenePhase) private var scenePhase
 
+    /// Every cold launch opens on Chat, whatever tab was last shown (owner, 2026-10-12: "when I open, chat should
+    /// still be main pane"). A link that opens the app (evelink://updates, the widget's evelink://work) still wins:
+    /// onOpenURL runs after this.
+    init() {
+        UserDefaults.standard.set(HomeMode.chat.rawValue, forKey: "home.mode")
+    }
+
     var body: some Scene {
         WindowGroup {
-            HomeScreen(relay: relay, chat: chat, work: work, log: log, talkError: $talkError)
+            HomeScreen(relay: relay, chat: chat, work: work, updates: updates, log: log, talkError: $talkError)
                 .onChange(of: scenePhase) { _, now in
                     diag("app: \(now)")
                     chat.scene(now)
@@ -40,6 +48,9 @@ struct EveLinkApp: App {
                     case .chat:
                         // a tap on a notification (docs/notifications.md): the Chat
                         UserDefaults.standard.set(HomeMode.chat.rawValue, forKey: "home.mode")
+                    case .updates:
+                        // evelink://updates (a Shortcut, say): the Updates pane, left of the Chat
+                        UserDefaults.standard.set(HomeMode.updates.rawValue, forKey: "home.mode")
                     case nil: break
                     }
                 }
@@ -66,7 +77,7 @@ enum HomeWidget {
 
 #if DEBUG && targetEnvironment(simulator)
 /// For screenshots in the simulator only (docs/app-chat.md, "Design hook"); none of it is in a device build.
-/// EVE_PAIR_URL (environment) pairs; -eveScreen chat | apps | work | voice | settings | pika opens that screen (pika:
+/// EVE_PAIR_URL (environment) pairs; -eveScreen updates | chat | apps | work | voice | settings | pika opens that screen (pika:
 /// the Apps tab with the Pika screen open); -eveGrade
 /// auto | instant | think preselects the speed dial, -eveKeyboard YES puts the cursor in the chat's composer (launch
 /// arguments, read through UserDefaults). -eveControl notes | spotify | lights | firetv | pika | memory opens that control's sheet over

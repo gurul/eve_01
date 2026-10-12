@@ -371,7 +371,7 @@ final class WorkClient {
 
 enum WorkFailure {
     /// Which half of the Work view asked: a 503 means its own part of eve is off.
-    enum Kind: Sendable { case jobs, apps, controls }
+    enum Kind: Sendable { case jobs, apps, controls, updates }
 
     /// The chat's words, with the Work view's own for an off chief or app builder and an app that is gone.
     static func from(status: Int, body: Data, for kind: Kind) -> ChatFailure {
@@ -381,6 +381,7 @@ enum WorkFailure {
             case .jobs: "eve's chief is off."
             case .apps: "eve's app builder is off."
             case .controls: "eve's controls are off."
+            case .updates: "eve's updates are off."
             }
             return ChatFailure(message: off, addressMayHaveMoved: false)
         case 404 where kind == .controls:
@@ -389,6 +390,8 @@ enum WorkFailure {
             let line = (obj?["line"] as? String).flatMap { $0.isEmpty ? nil : $0 }
             return ChatFailure(message: line ?? "This eve has no controls yet: update it on the Mac.",
                                addressMayHaveMoved: false)
+        case 404 where kind == .updates:
+            return ChatFailure(message: "This eve has no Updates yet: update it on the Mac.", addressMayHaveMoved: false)
         case 404: return ChatFailure(message: "That isn't there any more.", addressMayHaveMoved: false)
         default: return ChatFailure.from(status: status, body: body)
         }

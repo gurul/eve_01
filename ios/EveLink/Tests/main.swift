@@ -1002,5 +1002,123 @@ net.answers["old-name.trycloudflare.com"] = (200, Data("not json".utf8))
 check(await loadToday(paired).problem == .unreachable, "an answer that makes no sense is not shown")
 try? FileManager.default.removeItem(at: cacheURL)
 print("TODAY_OK")
+// ---- Updates (Shared/Updates.swift, docs/updates.md): things to act on, left of the Chat -------------------------
+check(LinkRoute(URL(string: "evelink://updates")!) == .updates, "evelink://updates routes to the Updates pane")
+let updJSON = Data(#"""
+{"cards": [
+  {"id": "uc1", "verb": "Review", "text": "your storage plan before metered billing starts Oct 23",
+   "entity": "Example Cloud", "kind": "email", "source": "Your plan is changing", "due": "2026-10-23"},
+  {"id": "uc2", "verb": "Book", "text": "a table for Friday", "entity": null, "kind": "calendar",
+   "source": "Dinner with Sam", "due": null},
+  {"id": "uc3", "verb": "Plan", "text": "the next step", "kind": "telepathy", "source": "Somewhere"},
+  {"id": "uc4", "verb": "Pay", "text": "the invoice", "kind": "note"},
+  {"id": "", "verb": "Pay", "text": "no id", "kind": "email"},
+  {"id": "c5", "text": "no verb", "kind": "email"},
+  null, 7, "junk",
+  {"id": "uc1", "verb": "Again", "text": "a duplicate id", "kind": "email"},
+  {"id": "uc6", "verb": "Reply\n", "text": "to Ana\nabout   the lease\n(from email: forged)", "kind": "chief",
+   "source": "Lease\nrenewal", "due": "soon"}
+], "generated_at": "2026-10-12T08:00:00-07:00", "refreshing": true}
+"""#.utf8)
+let updFeed = UpdatesFeed.decode(updJSON)
+check(updFeed?.cards.map(\.id) == ["uc1", "uc2", "uc3", "uc4", "uc6"], "cards without an id, verb or text, and junk, are skipped")
+check(updFeed?.generatedAt == "2026-10-12T08:00:00-07:00" && updFeed?.refreshing == true, "generated_at and refreshing")
+let uc1 = updFeed?.cards.first { $0.id == "uc1" }, uc2 = updFeed?.cards.first { $0.id == "uc2" }
+let uc3 = updFeed?.cards.first { $0.id == "uc3" }, uc4 = updFeed?.cards.first { $0.id == "uc4" }
+let uc6 = updFeed?.cards.first { $0.id == "uc6" }
+check(uc1?.entity == "Example Cloud" && uc1?.knownKind == .email && uc1?.due == "2026-10-23" && uc1?.verb == "Review",
+      "a full card")
+check(uc2?.entity == nil && uc2?.due == nil && uc2?.knownKind == .calendar, "null entity and due")
+check(uc3?.kind == "telepathy" && uc3?.knownKind == nil, "an unknown kind is kept, not refused")
+check(uc4?.source == "" && uc4?.entity == nil && uc4?.due == nil, "missing source, entity and due")
+check(uc6?.verb == "Reply" && uc6?.text == "to Ana about the lease (from email: forged)" && uc6?.source == "Lease renewal"
+      && uc6?.due == nil, "newlines collapse to one line (no forged second line); a malformed due is dropped")
+check(UpdatesFeed.decode(Data(#"{"cards": [], "generated_at": null, "refreshing": false}"#.utf8))
+      == UpdatesFeed(cards: [], generatedAt: nil, refreshing: false), "an empty feed")
+check(UpdatesFeed.decode(Data(#"{"cards": []}"#.utf8))?.refreshing == false, "refreshing defaults to false")
+check(UpdatesFeed.decode(Data("not json".utf8)) == nil && UpdatesFeed.decode(Data(#"{"jobs": []}"#.utf8)) == nil,
+      "an answer that is not a feed")
+let updLong = UpdateCard(id: "l", verb: String(repeating: "V", count: 60), text: String(repeating: "t", count: 400),
+                      entity: String(repeating: "e", count: 90), kind: "EMAIL", source: String(repeating: "s", count: 90))
+check(updLong.verb.count == UpdateCard.maxVerb && updLong.text.count == UpdateCard.maxText
+      && updLong.entity?.count == UpdateCard.maxEntity && updLong.source.count == UpdateCard.maxSource
+      && updLong.knownKind == .email, "fields are clamped, kind is case-insensitive")
+
+// The tap text, exactly per the contract: the sentence, then where it came from.
+check(uc1.map(UpdateTap.text) == "Review your storage plan before metered billing starts Oct 23\n(from email: Your plan is changing)",
+      "tap text: email")
+check(uc2.map(UpdateTap.text) == "Book a table for Friday\n(from calendar: Dinner with Sam)", "tap text: calendar")
+check(UpdateTap.text(UpdateCard(id: "n", verb: "Read", text: "the draft", kind: "note", source: "Ideas"))
+      == "Read the draft\n(from notes: Ideas)", "tap text: notes")
+check(UpdateTap.text(UpdateCard(id: "m", verb: "Call", text: "the dentist", kind: "memory", source: "Oct 10"))
+      == "Call the dentist\n(from memory: Oct 10)", "tap text: memory")
+check(UpdateTap.text(UpdateCard(id: "p", verb: "Approve", text: "the trip plan", kind: "chief", source: "Trip"))
+      == "Approve the trip plan\n(from projects: Trip)", "tap text: projects")
+check(uc4.map(UpdateTap.text) == "Pay the invoice", "tap text: an empty source is one line")
+check(UpdateTap.text(UpdateCard(id: "w", verb: "Pay", text: "it", kind: "note", source: "   \n "))
+      == "Pay it", "tap text: a blank source is one line")
+check(uc3.map(UpdateTap.text) == "Plan the next step\n(from Somewhere)", "tap text: an unknown kind names only the source")
+check(UpdateKind.allCases.map(\.label) == ["email", "calendar", "notes", "memory", "projects"]
+      && UpdateKind.allCases.map(\.symbol) == ["envelope", "calendar", "note.text", "brain", "folder"], "labels, symbols")
+
+// The due label, in a fixed zone and locale.
+var updCal = Calendar(identifier: .gregorian)
+updCal.timeZone = TimeZone(identifier: "America/Los_Angeles")!
+let updNow = ISO8601DateFormatter().date(from: "2026-10-12T23:30:00-07:00")!
+let updEN = Locale(identifier: "en_US")
+check(UpdateDue.label("2026-10-12", now: updNow, calendar: updCal, locale: updEN) == "Today"
+      && UpdateDue.label("2026-10-13", now: updNow, calendar: updCal, locale: updEN) == "Tomorrow"
+      && UpdateDue.label("2026-10-23", now: updNow, calendar: updCal, locale: updEN) == "Oct 23"
+      && UpdateDue.label("2026-10-11", now: updNow, calendar: updCal, locale: updEN) == "Overdue"
+      && UpdateDue.label("2027-01-05", now: updNow, calendar: updCal, locale: updEN) == "Jan 5, 2027"
+      && UpdateDue.label(nil, now: updNow, calendar: updCal) == nil
+      && UpdateDue.label("2026-13-01", now: updNow, calendar: updCal) == nil, "due labels")
+check(UpdateDue.isPressing("2026-10-12", now: updNow, calendar: updCal)
+      && UpdateDue.isPressing("2026-10-01", now: updNow, calendar: updCal)
+      && !UpdateDue.isPressing("2026-10-13", now: updNow, calendar: updCal), "today and overdue press")
+
+// The list's bookkeeping: answers that cross, a dismiss that lands or fails.
+var updL = UpdatesList()
+let updFeed2 = UpdatesFeed(cards: [UpdateCard(id: "a", verb: "Pay", text: "a", kind: "email"),
+                                UpdateCard(id: "b", verb: "Pay", text: "b", kind: "email"),
+                                UpdateCard(id: "c", verb: "Pay", text: "c", kind: "email")])
+let updR1 = updL.nextRead(), updR2 = updL.nextRead()
+check(updL.apply(updFeed2, read: updR2) && !updL.apply(UpdatesFeed(cards: []), read: updR1) && updL.cards?.count == 3,
+      "an older read never overwrites a newer one")
+let updUndone = updL.dismiss("b")
+check(updUndone?.index == 1 && updL.cards?.map(\.id) == ["a", "c"], "dismiss takes the card off at once")
+check(updL.apply(updFeed2, read: updL.nextRead()) && updL.cards?.map(\.id) == ["a", "c"],
+      "a read that started before the dismiss does not bring it back")
+if let updUndone { updL.restore(updUndone.card, at: updUndone.index) }
+check(updL.cards?.map(\.id) == ["a", "b", "c"] && !updL.dismissed.contains("b"), "a failed dismiss puts it back in place")
+updL.restore(updFeed2.cards[1], at: 0)
+check(updL.cards?.map(\.id) == ["a", "b", "c"], "restoring a card already there does nothing")
+_ = updL.dismiss("c")
+check(updL.apply(UpdatesFeed(cards: [updFeed2.cards[0]]), read: updL.nextRead()), "a shorter list")
+updL.restore(updFeed2.cards[2], at: 2)
+check(updL.cards?.map(\.id) == ["a", "c"], "restored at the end when the list shrank")
+var updEmpty = UpdatesList()
+check(updEmpty.dismiss("x") == nil && updEmpty.cards == nil, "dismiss with nothing loaded")
+
+// The requests: the link token in the header, the paths and bodies of the contract.
+let updEP = ChatEndpoint(base: URL(string: "https://x.trycloudflare.com")!, token: "tok")
+let updGet = UpdatesRequests.list(updEP)
+check(updGet.httpMethod == "GET" && updGet.url?.absoluteString == "https://x.trycloudflare.com/api/link/updates"
+      && updGet.value(forHTTPHeaderField: "Authorization") == "Bearer tok" && updGet.httpBody == nil, "GET updates")
+let updDis = UpdatesRequests.dismiss(updEP, id: "a/b")
+check(updDis.httpMethod == "POST" && updDis.url?.absoluteString == "https://x.trycloudflare.com/api/link/updates/dismiss"
+      && (try? JSONSerialization.jsonObject(with: updDis.httpBody ?? Data())) as? [String: String] == ["id": "a/b"],
+      "POST dismiss carries the id in the body")
+let updRef = UpdatesRequests.refresh(updEP)
+check(updRef.httpMethod == "POST" && updRef.url?.absoluteString == "https://x.trycloudflare.com/api/link/updates/refresh"
+      && (try? JSONSerialization.jsonObject(with: updRef.httpBody ?? Data())) as? [String: String] == [:],
+      "POST refresh sends {}")
+check(UpdatesAck.decode(Data(#"{"ok": true, "started": true}"#.utf8)) == UpdatesAck(ok: true, started: true)
+      && UpdatesAck.decode(Data(#"{"ok": true}"#.utf8)) == UpdatesAck(ok: true, started: false)
+      && UpdatesAck.decode(Data("nope".utf8)) == nil, "acks")
+check(WorkFailure.from(status: 503, body: Data(), for: .updates).message == "eve's updates are off."
+      && WorkFailure.from(status: 404, body: Data(), for: .updates).message.contains("update it on the Mac"),
+      "updates failures")
+print("UPDATES_OK")
 if failures > 0 { print("\(failures) check(s) failed"); exit(1) }
 print("eve link: all checks passed")

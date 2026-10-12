@@ -17,6 +17,7 @@ enum LinkRoute: Equatable {
     case talk
     case work       // evelink://work: the home-screen widget's tap opens the Work view (docs/widget.md)
     case chat       // evelink://chat: a tap on a notification opens the Chat (docs/notifications.md)
+    case updates    // evelink://updates: the Updates pane, left of the Chat (docs/updates.md)
 
     init?(_ url: URL) {
         guard url.scheme?.lowercased() == "evelink" else { return nil }
@@ -25,6 +26,7 @@ enum LinkRoute: Equatable {
         case "talk": self = .talk
         case "work": self = .work
         case "chat": self = .chat
+        case "updates": self = .updates
         default: return nil
         }
     }
