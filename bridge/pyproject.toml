@@ -7,7 +7,7 @@ name = "eve-bridge"
 version = "0.1.2"
 description = "Bridge Claude Code CLI sessions to the claude-desktop-buddy BLE hardware (bypasses the desktop app)."
 readme = "README.md"
-license = { text = "MIT" }
+license = { text = "PolyForm-Noncommercial-1.0.0 AND MIT" }  # see LICENSE.md: MIT for the portions from Snow
 authors = [{ name = "Snow" }]
 requires-python = ">=3.11"
 keywords = ["claude-code", "ble", "hardware-eve", "m5stick", "esp32"]

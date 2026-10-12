@@ -678,6 +678,13 @@ and OpenAI's computer-use sample; the chirps draw on Marcelo Larios' R2D2 sound
 generator. Practice references and web lookups use TinyFish. Research behind the affect engine and diary
 is cited in [personality.md](docs/stackchan/personality.md).
 
-See the [bridge license](bridge/LICENSE), [canvas attribution](bridge/web-canvas/LICENSE.md),
+## License
+
+eve is under the [PolyForm Noncommercial License 1.0.0](LICENSE.md): use it, study it, change it and share it for
+personal, research, hobby and other noncommercial purposes, and for charities, schools and public bodies. No
+commercial use. Portions of `bridge/` come from software by Snow under the MIT License and stay under it
+([bridge license](bridge/LICENSE)).
+
+See also the [canvas attribution](bridge/web-canvas/LICENSE.md),
 [tldraw license](bridge/web-canvas/TLDRAW-LICENSE.md), and bundled font license
 notices for the respective components.
