@@ -18,6 +18,10 @@ Scope: the owner, 2026-10-12: "can simple interactions be handled with haiku for
   EXPECT: SMALL_TALK_BAR_OK
   EVIDENCE: FAILED, exit=1, 2026-10-12, first and only scored run on the blind set (frozen in its own commit before the run). voice none: needs_brain answered 0; coverage 88.6% (31/35); judge yes 1 (blind-st-30 '👍' -> 'Sounds good, Friday it is.'); p50 1.47 s, p95 1.90 s; provider errors 0. voice sample: needs_brain answered 0; coverage 77.1% (27/35, misses: 'glad that's sorted' replies caught by the claims guard, and Haiku correcting the owner's time-of-day greeting); judge yes 0; p50 1.43 s, p95 1.70 s. Hand-off cost on the brain's path p50 1.38-1.46 s. | SMALL_TALK_BAR_FAILED. Not tuned against this set; SHIPPED stays False. A v2 needs a fresh blind set.
 
+- [ ] S3b: The simple design (owner, 2026-10-12: "route to haiku only for small talk", "occams razor"): a fixed phrase list picks small talk by code, Haiku answers with no history or clock, everything else goes to the brain untouched. On a FRESH blind set (tests/fixtures/small_talk_blind_v2.json, written from a brief without the code; the v1 set is spent): needs_brain answered by the lane = 0; judge yes = 0; small_talk coverage >= 70% (a fixed list trades coverage for safety); lane p50 <= 1.8 s, p95 <= 3.0 s; provider errors 0. Bar written before the v2 set exists.
+  CHECK: cd bridge && env $(grep -E '^(OPENROUTER_API_KEY)=' ~/.config/eve-bridge/env | xargs) .venv/bin/python tools/small_talk_eval.py tests/fixtures/small_talk_blind_v2.json --coverage 70 --p50 1.8 --p95 3.0
+  EXPECT: SMALL_TALK_BAR_OK
+
 - [ ] S4: No personal data or token-shaped strings in the diff (the repo is public).
   CHECK: git diff main | python3 -c "import re,sys; d=sys.stdin.read(); bad=[p for p in (r'guru\.lingamallu', r'@gmail\.com', r'guruchara[n]', r'Bearer [A-Za-z0-9_-]{20,}', r'sk-[A-Za-z0-9]{20,}', r'/Users/') if re.search(p, d)]; print(bad or 'DIFF_CLEAN'); sys.exit(1 if bad else 0)"
   EXPECT: DIFF_CLEAN
