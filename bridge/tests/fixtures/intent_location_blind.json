@@ -1,37 +1,235 @@
 {
-  "about": "Blind holdout set for the phone-location capability, written 2026-10-12 from a short brief only, without opening the bridge source, the tools, or any prompt or tool description. Every case is the first message of a fresh chat sent from the owner's iPhone and is scored on the first capability the assistant reaches for; when the assistant reads the phone location and then does something else, it is scored on that second action. Three groups: 20 cases (ids 1-20, no group field) where the phone's location itself is the answer, so the primary is phone_location; 6 cases (ids 21-26, no group field) where the location only feeds another action, so the primary is that action and expect lists the other acceptable labels; and 6 hard negatives (ids 27-32, group hard_negative) that use location words but must never be answered by reading the phone's location. All places and phrasing are generic; no real personal places, names or addresses.",
-  "cases": [
-    {"id": "blind-loc-1", "text": "where am I right now", "primary": "phone_location", "expect": []},
-    {"id": "blind-loc-2", "text": "what town am i in", "primary": "phone_location", "expect": []},
-    {"id": "blind-loc-3", "text": "whats my current address roughly", "primary": "phone_location", "expect": []},
-    {"id": "blind-loc-4", "text": "am I still at the airport?", "primary": "phone_location", "expect": []},
-    {"id": "blind-loc-5", "text": "where's my phone at", "primary": "phone_location", "expect": []},
-    {"id": "blind-loc-6", "text": "did my phone make it to the office", "primary": "phone_location", "expect": []},
-    {"id": "blind-loc-7", "text": "wher am i", "primary": "phone_location", "expect": []},
-    {"id": "blind-loc-8", "text": "hey eve where exactly am I at the moment", "primary": "phone_location", "expect": []},
-    {"id": "blind-loc-9", "text": "what neighborhood is this", "primary": "phone_location", "expect": []},
-    {"id": "blind-loc-10", "text": "which street am I on", "primary": "phone_location", "expect": []},
-    {"id": "blind-loc-11", "text": "what city is my phone in right now", "primary": "phone_location", "expect": []},
-    {"id": "blind-loc-12", "text": "Okay so um can you tell me where I am currently located", "primary": "phone_location", "expect": []},
-    {"id": "blind-loc-13", "text": "drop my coordinates", "primary": "phone_location", "expect": []},
-    {"id": "blind-loc-14", "text": "am i home yet", "primary": "phone_location", "expect": []},
-    {"id": "blind-loc-15", "text": "fell asleep on the train, what stop area am I near", "primary": "phone_location", "expect": []},
-    {"id": "blind-loc-16", "text": "my location pls", "primary": "phone_location", "expect": []},
-    {"id": "blind-loc-17", "text": "Is my phone still at the gym or did I leave it there", "primary": "phone_location", "expect": []},
-    {"id": "blind-loc-18", "text": "what country am I in lol, just landed", "primary": "phone_location", "expect": []},
-    {"id": "blind-loc-19", "text": "lat long of where i'm standing", "primary": "phone_location", "expect": []},
-    {"id": "blind-loc-20", "text": "Where is my phone right now, period, question mark", "primary": "phone_location", "expect": []},
-    {"id": "blind-loc-21", "text": "coffee near me", "primary": "maps_directions", "expect": ["web_search"]},
-    {"id": "blind-loc-22", "text": "how long to drive home from here", "primary": "maps_directions", "expect": []},
-    {"id": "blind-loc-23", "text": "any concerts around here tonight", "primary": "events", "expect": ["web_search"]},
-    {"id": "blind-loc-24", "text": "is it going to rain where I am", "primary": "web_search", "expect": []},
-    {"id": "blind-loc-25", "text": "closest pharmacy that's open now", "primary": "maps_directions", "expect": ["web_search"]},
-    {"id": "blind-loc-26", "text": "get me a table for two somewhere close by at 8", "primary": "restaurant_booking", "expect": ["web_search", "maps_directions"]},
-    {"id": "blind-loc-27", "text": "where is Lisbon", "primary": "web_search", "expect": ["none"], "group": "hard_negative", "never": ["phone_location"]},
-    {"id": "blind-loc-28", "text": "what's the location of my dentist appointment tomorrow", "primary": "calendar_read", "expect": [], "group": "hard_negative", "never": ["phone_location"]},
-    {"id": "blind-loc-29", "text": "remember that I parked on level 3", "primary": "memory_write", "expect": [], "group": "hard_negative", "never": ["phone_location"]},
-    {"id": "blind-loc-30", "text": "where did I put the passport note", "primary": "notes", "expect": ["memory_recall"], "group": "hard_negative", "never": ["phone_location"]},
-    {"id": "blind-loc-31", "text": "what address did I tell you for the new office last week", "primary": "chat_history_recall", "expect": ["memory_recall"], "group": "hard_negative", "never": ["phone_location"]},
-    {"id": "blind-loc-32", "text": "directions from the central train station to the stadium", "primary": "maps_directions", "expect": [], "group": "hard_negative", "never": ["phone_location"]}
-  ]
+ "about": "Blind holdout set for the phone-location capability, written 2026-10-12 from a short brief only, without opening the bridge source, the tools, or any prompt or tool description. Every case is the first message of a fresh chat sent from the owner's iPhone and is scored on the first capability the assistant reaches for; when the assistant reads the phone location and then does something else, it is scored on that second action. Three groups: 20 cases (ids 1-20, no group field) where the phone's location itself is the answer, so the primary is phone_location; 6 cases (ids 21-26, no group field) where the location only feeds another action, so the primary is that action and expect lists the other acceptable labels; and 6 hard negatives (ids 27-32, group hard_negative) that use location words but must never be answered by reading the phone's location. All places and phrasing are generic; no real personal places, names or addresses. Amended 2026-10-12 before any scored run, mechanically: blind-loc-29's primary (memory_write) is reached only by an acting tool, which intent_eval refuses on a hard_negative case (CONFLICT); the brief, not the writer, allowed it. The case keeps never=[phone_location] and is no longer hard_negative. No text or label changed.",
+ "cases": [
+  {
+   "id": "blind-loc-1",
+   "text": "where am I right now",
+   "primary": "phone_location",
+   "expect": []
+  },
+  {
+   "id": "blind-loc-2",
+   "text": "what town am i in",
+   "primary": "phone_location",
+   "expect": []
+  },
+  {
+   "id": "blind-loc-3",
+   "text": "whats my current address roughly",
+   "primary": "phone_location",
+   "expect": []
+  },
+  {
+   "id": "blind-loc-4",
+   "text": "am I still at the airport?",
+   "primary": "phone_location",
+   "expect": []
+  },
+  {
+   "id": "blind-loc-5",
+   "text": "where's my phone at",
+   "primary": "phone_location",
+   "expect": []
+  },
+  {
+   "id": "blind-loc-6",
+   "text": "did my phone make it to the office",
+   "primary": "phone_location",
+   "expect": []
+  },
+  {
+   "id": "blind-loc-7",
+   "text": "wher am i",
+   "primary": "phone_location",
+   "expect": []
+  },
+  {
+   "id": "blind-loc-8",
+   "text": "hey eve where exactly am I at the moment",
+   "primary": "phone_location",
+   "expect": []
+  },
+  {
+   "id": "blind-loc-9",
+   "text": "what neighborhood is this",
+   "primary": "phone_location",
+   "expect": []
+  },
+  {
+   "id": "blind-loc-10",
+   "text": "which street am I on",
+   "primary": "phone_location",
+   "expect": []
+  },
+  {
+   "id": "blind-loc-11",
+   "text": "what city is my phone in right now",
+   "primary": "phone_location",
+   "expect": []
+  },
+  {
+   "id": "blind-loc-12",
+   "text": "Okay so um can you tell me where I am currently located",
+   "primary": "phone_location",
+   "expect": []
+  },
+  {
+   "id": "blind-loc-13",
+   "text": "drop my coordinates",
+   "primary": "phone_location",
+   "expect": []
+  },
+  {
+   "id": "blind-loc-14",
+   "text": "am i home yet",
+   "primary": "phone_location",
+   "expect": []
+  },
+  {
+   "id": "blind-loc-15",
+   "text": "fell asleep on the train, what stop area am I near",
+   "primary": "phone_location",
+   "expect": []
+  },
+  {
+   "id": "blind-loc-16",
+   "text": "my location pls",
+   "primary": "phone_location",
+   "expect": []
+  },
+  {
+   "id": "blind-loc-17",
+   "text": "Is my phone still at the gym or did I leave it there",
+   "primary": "phone_location",
+   "expect": []
+  },
+  {
+   "id": "blind-loc-18",
+   "text": "what country am I in lol, just landed",
+   "primary": "phone_location",
+   "expect": []
+  },
+  {
+   "id": "blind-loc-19",
+   "text": "lat long of where i'm standing",
+   "primary": "phone_location",
+   "expect": []
+  },
+  {
+   "id": "blind-loc-20",
+   "text": "Where is my phone right now, period, question mark",
+   "primary": "phone_location",
+   "expect": []
+  },
+  {
+   "id": "blind-loc-21",
+   "text": "coffee near me",
+   "primary": "maps_directions",
+   "expect": [
+    "web_search"
+   ]
+  },
+  {
+   "id": "blind-loc-22",
+   "text": "how long to drive home from here",
+   "primary": "maps_directions",
+   "expect": []
+  },
+  {
+   "id": "blind-loc-23",
+   "text": "any concerts around here tonight",
+   "primary": "events",
+   "expect": [
+    "web_search"
+   ]
+  },
+  {
+   "id": "blind-loc-24",
+   "text": "is it going to rain where I am",
+   "primary": "web_search",
+   "expect": []
+  },
+  {
+   "id": "blind-loc-25",
+   "text": "closest pharmacy that's open now",
+   "primary": "maps_directions",
+   "expect": [
+    "web_search"
+   ]
+  },
+  {
+   "id": "blind-loc-26",
+   "text": "get me a table for two somewhere close by at 8",
+   "primary": "restaurant_booking",
+   "expect": [
+    "web_search",
+    "maps_directions"
+   ]
+  },
+  {
+   "id": "blind-loc-27",
+   "text": "where is Lisbon",
+   "primary": "web_search",
+   "expect": [
+    "none"
+   ],
+   "group": "hard_negative",
+   "never": [
+    "phone_location"
+   ]
+  },
+  {
+   "id": "blind-loc-28",
+   "text": "what's the location of my dentist appointment tomorrow",
+   "primary": "calendar_read",
+   "expect": [],
+   "group": "hard_negative",
+   "never": [
+    "phone_location"
+   ]
+  },
+  {
+   "id": "blind-loc-29",
+   "text": "remember that I parked on level 3",
+   "primary": "memory_write",
+   "expect": [],
+   "never": [
+    "phone_location"
+   ]
+  },
+  {
+   "id": "blind-loc-30",
+   "text": "where did I put the passport note",
+   "primary": "notes",
+   "expect": [
+    "memory_recall"
+   ],
+   "group": "hard_negative",
+   "never": [
+    "phone_location"
+   ]
+  },
+  {
+   "id": "blind-loc-31",
+   "text": "what address did I tell you for the new office last week",
+   "primary": "chat_history_recall",
+   "expect": [
+    "memory_recall"
+   ],
+   "group": "hard_negative",
+   "never": [
+    "phone_location"
+   ]
+  },
+  {
+   "id": "blind-loc-32",
+   "text": "directions from the central train station to the stadium",
+   "primary": "maps_directions",
+   "expect": [],
+   "group": "hard_negative",
+   "never": [
+    "phone_location"
+   ]
+  }
+ ]
 }
