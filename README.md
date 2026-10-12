@@ -321,7 +321,7 @@ You need macOS 14 or later, Python 3.12, Homebrew, and these keys in
 | `EVE_TELEGRAM_TOKEN`, `EVE_TELEGRAM_OWNER` | A bot token from **@BotFather** (`/newbot`) and your numeric user id from **@userinfobot**. eve's brain is wired through its Telegram door even when Telegram is muted; with `EVE_TELEGRAM=app` nothing is ever sent there. `EVE_TELEGRAM=1` also answers on Telegram. |
 
 ```bash
-git clone https://github.com/gurul/eve && cd eve
+git clone https://github.com/gurul/eve_01 eve && cd eve
 python3.12 -m venv bridge/.venv
 bridge/.venv/bin/python -m pip install -e './bridge[dev,miniapp]'
 brew install cloudflared qrencode               # the phone's tunnel, and pairing by QR code

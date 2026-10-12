@@ -82,7 +82,7 @@ only thing that tells you where you are. The whole path takes about an hour.
 ### 1. The daemon
 
 ```bash
-git clone https://github.com/gurul/eve && cd eve
+git clone https://github.com/gurul/eve_01 eve && cd eve
 python3.12 -m venv bridge/.venv
 bridge/.venv/bin/python -m pip install -e './bridge[dev,miniapp]'
 mkdir -p ~/.config/eve-bridge && touch ~/.config/eve-bridge/env

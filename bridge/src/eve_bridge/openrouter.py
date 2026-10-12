@@ -32,7 +32,7 @@ KEY_ENV = "OPENROUTER_API_KEY"
 BASE_URL = "https://openrouter.ai/api/v1"
 ANTHROPIC_BASE_URL = "https://openrouter.ai/api"       # the anthropic SDK adds /v1/messages itself
 PROVIDER = "openrouter"                                 # the spend ledger's provider name for these calls
-HEADERS = {"HTTP-Referer": "https://github.com/gurul/eve", "X-Title": "eve"}
+HEADERS = {"HTTP-Referer": "https://github.com/gurul/eve_01", "X-Title": "eve"}
 
 # Bare OpenAI model names: gpt-*, chatgpt-*, the o-series (o3, o4-mini), embeddings, transcribers, tts, whisper.
 _OPENAI = re.compile(r"^(?:gpt-|chatgpt-|o\d|text-embedding-|whisper|tts-|computer-use-)", re.I)

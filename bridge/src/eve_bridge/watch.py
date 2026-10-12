@@ -1514,7 +1514,7 @@ def openrouter(body: dict[str, Any], *, timeout: float = TIMEOUT_SECS + 10) -> d
                 body = {**body, "provider": prefs}
         _, text = http_request(OPENROUTER_URL, data=json.dumps(body).encode("utf-8"), timeout=timeout, headers={
             "Authorization": f"Bearer {key}", "Content-Type": "application/json", "Accept": "application/json",
-            "HTTP-Referer": "https://github.com/gurul/eve", "X-Title": "eve watch"})
+            "HTTP-Referer": "https://github.com/gurul/eve_01", "X-Title": "eve watch"})
     except FetchError as e:
         # OpenRouter's 429 is OpenRouter's: charged to the page's host, it held the wrong site and left the model
         # service unthrottled for every other watch (Lean verifier, 2026-09-25)
