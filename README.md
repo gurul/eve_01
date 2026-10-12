@@ -312,6 +312,21 @@ at [AGENTS.md](AGENTS.md): the same steps with the checks and the house rules.
 
 ### 1. The Mac
 
+**One line.** On a Mac with [Homebrew](https://brew.sh):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/gurul/eve_01/main/install.sh | bash
+```
+
+[`install.sh`](install.sh) clones eve to `~/eve`, builds the venv, installs
+`cloudflared` and `qrencode`, asks for the three keys below, and installs the
+hooks and the login service. It never overwrites a key you already set. Run it
+again to update. Options go after `bash -s --`: `--dir PATH`, `--no-service`,
+`--yes` (ask nothing). It ends with the steps it cannot do for you: the macOS
+permissions and the check. Then go to [2. The iPhone](#2-the-iphone).
+
+**By hand**, the same steps:
+
 You need macOS 14 or later, Python 3.12, Homebrew, and these keys in
 `~/.config/eve-bridge/env` (mode 600, one `KEY=VALUE` per line):
 

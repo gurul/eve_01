@@ -81,6 +81,11 @@ only thing that tells you where you are. The whole path takes about an hour.
 
 ### 1. The daemon
 
+`install.sh` at the repo root does this section up to the permissions, without
+prompts when given `--yes`:
+`curl -fsSL https://raw.githubusercontent.com/gurul/eve_01/main/install.sh | bash -s -- --yes`.
+It leaves empty `KEY=` lines for the keys it did not get. The manual steps:
+
 ```bash
 git clone https://github.com/gurul/eve_01 eve && cd eve
 python3.12 -m venv bridge/.venv
