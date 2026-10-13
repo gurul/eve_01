@@ -49,3 +49,15 @@ Source map:
 
 `pnpm-workspace.yaml` denies `@openuidev/lang-core`'s postinstall (it only
 sends install telemetry).
+
+## Staying on the newest OpenUI
+
+`sh tools/openui_update.sh` (from the repository root) checks npm for newer `@openuidev/react-lang`, `react-ui` and
+`react-headless`. When there is one, it bumps the pins in a worktree of its own (`../eve-openui-update`, never the
+live checkout), runs `pnpm install`, the tests, the type check, `gen-prompt` + `check-prompt`, the app's logic tests,
+the bridge's chat tests and an app build; all green and the iPhone reachable, it installs the app, fast-forwards the
+live checkout and restarts the daemon, so the card rules (Mac) and the renderer (phone) change together. Anything
+failing changes nothing live and eve says what failed. `--dry-run` only reports; `--schedule` runs it every night at
+04:50 (LaunchAgent `com.github.eve-bridge.openui-update`, log `~/Library/Logs/eve-openui-update.log`);
+`--unschedule` stops it. It never pushes.
+
