@@ -550,6 +550,14 @@ never markup.
 Not yet: ChatGPT's "mark relevant or not" and "delete a referenced chat" on a
 source. Forget by words, in the chat or the Memory card, is the way to remove one.
 
+## The whole history, infinite scroll
+
+Owner, 2026-10-13: "keep all chat history, i want infinite scroll". Nothing is pruned on the Mac (transcripts.py
+keeps every day). The page opens with the newest 100 lines however far back they go, and when the owner scrolls near
+the top it asks for the 100 before its first message (`GET /api/link/messages?before=<message id>` →
+`{"messages", "more"}`, through native's `messages` request with `before`), puts them above and keeps the message
+being read in place. `more: false` (the first day) ends it. An older page never moves the live poll's cursor.
+
 ## Horizontal History
 
 Owner, 2026-10-13: past topics as "swipeable horizontal cards", with bookmarks and a quick way back in; "remember
@@ -573,7 +581,7 @@ failed call: the first-message title and the rules above.
   above the composer (`HorizontalHistory.tsx`, `history.ts`): saved topics first (filled star), then recent ones, each
   once, swiped sideways with snap. Opening asks the Mac for fresh topics.
 - **A tap** closes the row and jumps to the first loaded message of that topic, which glows for a moment. When none
-  of it is loaded (the page holds the last 100 lines of 3 days), it sends `Let's pick up "<title>" again.` as the
+  of it is loaded yet (older pages load as the owner scrolls up), it sends `Let's pick up "<title>" again.` as the
   owner, through the composer's own path, and eve's memory does the rest.
 - **The star** saves or unsaves the topic at once and reverts with one line in the row if the Mac refuses. Saved
   topics are kept in `~/.config/eve-bridge/chat/bookmarks.json` (0600) by the topic's first message id, so a saved

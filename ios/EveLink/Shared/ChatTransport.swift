@@ -105,10 +105,11 @@ enum ChatRequests {
         return r
     }
 
-    static func messages(_ ep: ChatEndpoint, after: String?, wait: Int) -> URLRequest {
+    static func messages(_ ep: ChatEndpoint, after: String?, wait: Int, before: String? = nil) -> URLRequest {
         var c = URLComponents(url: ep.base.appendingPathComponent("api/link/messages"), resolvingAgainstBaseURL: false)!
         var items: [URLQueryItem] = []
         if let after { items.append(URLQueryItem(name: "after", value: after)) }
+        if let before { items.append(URLQueryItem(name: "before", value: before)) }
         if wait > 0 { items.append(URLQueryItem(name: "wait", value: String(wait))) }
         c.queryItems = items.isEmpty ? nil : items
         var r = URLRequest(url: c.url!)
@@ -328,7 +329,8 @@ final class ChatTransport {
     }
 
     /// GET the messages and hand back the response body as text.
-    func messages(id: String, after: String?, wait: Int, onEnd: @escaping @MainActor (Result<String, ChatFailure>) -> Void) {
+    func messages(id: String, after: String?, wait: Int, before: String? = nil,
+                  onEnd: @escaping @MainActor (Result<String, ChatFailure>) -> Void) {
         cancel(id: id, as: .silent)
         let session = session
         tasks[id] = Task { [weak self] in
@@ -336,7 +338,8 @@ final class ChatTransport {
                                                                            addressMayHaveMoved: false))
             var retried = false
             while let ep = self?.endpoint() {
-                result = await Self.fetch(ChatRequests.messages(ep, after: after, wait: wait), session: session)
+                result = await Self.fetch(ChatRequests.messages(ep, after: after, wait: wait, before: before),
+                                          session: session)
                 if case .failure(let f) = result, f.addressMayHaveMoved, !retried, !Task.isCancelled,
                    let self, await self.refresh() {
                     retried = true

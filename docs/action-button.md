@@ -250,7 +250,8 @@ daemon restart the same `client_id` starts a new turn.
 from the transcript, so it also shows what was said in Telegram, on a call, or
 by a task that answered later.
 
-- **Without `after`:** the last 100 lines from the last 3 transcript days,
+- **Without `after`:** the newest 100 lines, however far back (older pages: `?before=<message id>`, docs/app-chat.md
+  "The whole history, infinite scroll"),
   oldest first.
 - **With `after`:** newer lines only, at most 200. The next poll gets the rest.
 - **With `wait`:** a long poll. It wakes when a transcript line is written,

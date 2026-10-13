@@ -14,7 +14,7 @@ export type OutboundMessage =
   | { type: "ready" }
   | { type: "turn"; id: string; text: string; client_id: string; attachments?: string[] }
   | { type: "cancel"; id: string }
-  | { type: "messages"; id: string; after?: string; wait: number }
+  | { type: "messages"; id: string; after?: string; wait: number; before?: string }
   | { type: "topics"; id: string }
   | { type: "bookmark"; id: string; topic: string; on: boolean }
   | { type: "haptic"; style: HapticStyle }
@@ -50,6 +50,8 @@ export interface MessagesPayload {
   busy: boolean;
   /** Every reaction the daemon keeps, by rid (reactions.ts sanitizes it). */
   reactions?: unknown;
+  /** An older page (requestOlder): whether still older messages exist. */
+  more?: boolean;
 }
 
 /** What native calls, installed as window.eveNative. */
@@ -122,6 +124,8 @@ export interface Bridge {
   openTurn(params: OpenTurnParams): Response;
   /** Horizontal History through native: GET /api/link/topics, or POST /api/link/topics/bookmark. */
   requestLink(message: { type: "topics" } | { type: "bookmark"; topic: string; on: boolean }, timeoutMs?: number): Promise<unknown>;
+  /** Infinite scroll: the page just before message `before` (GET /api/link/messages?before=…). */
+  requestOlder(before: string, timeoutMs?: number): Promise<MessagesPayload>;
   /** GET /api/link/messages through native. */
   requestMessages(after: string | undefined, wait: number, timeoutMs?: number): Promise<MessagesPayload>;
   /** Who handles native's send(text). Calls made before this is set are queued. */
@@ -142,6 +146,7 @@ function parsePayload(json: string): MessagesPayload {
     cursor: typeof raw.cursor === "string" ? raw.cursor : "",
     busy: raw.busy === true,
     ...(raw.reactions !== undefined ? { reactions: raw.reactions } : {}),
+    ...(typeof raw.more === "boolean" ? { more: raw.more } : {}),
   };
 }
 
@@ -309,6 +314,19 @@ export function createBridge(post: Post): Bridge {
         const msg: OutboundMessage =
           after === undefined ? { type: "messages", id, wait } : { type: "messages", id, after, wait };
         post(msg);
+      });
+    },
+
+    requestOlder(before, timeoutMs = 20000) {
+      const id = uuid();
+      return new Promise<MessagesPayload>((resolve, reject) => {
+        const timer = setTimeout(() => {
+          if (!requests.delete(id)) return;
+          post({ type: "cancel", id });
+          reject(new Error("older messages timed out"));
+        }, timeoutMs);
+        requests.set(id, { resolve, reject, timer });
+        post({ type: "messages", id, before, wait: 0 });
       });
     },
 

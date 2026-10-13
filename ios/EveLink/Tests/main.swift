@@ -238,6 +238,10 @@ check(callJS.contains("n.onChunk(\"t1\",\"x\")") && callJS.contains("typeof n.on
 // Message dispatch: each JS -> native message, and what is refused.
 check(ChatBridgeMessage(body: ["type": "ready"]) == .ready, "ready")
 check(ChatBridgeMessage(body: ["type": "topics", "id": "q1"]) == .topics(id: "q1"), "topics")
+check(ChatBridgeMessage(body: ["type": "messages", "id": "m1", "before": "2026-10-01:7", "wait": 25])
+      == .messages(id: "m1", after: nil, wait: 0, before: "2026-10-01:7"), "older page: before, never a wait")
+check(ChatBridgeMessage(body: ["type": "messages", "id": "m1", "before": "../x"]) == .messages(id: "m1", after: nil, wait: 0),
+      "older page: a malformed before is dropped")
 check(ChatBridgeMessage(body: ["type": "bookmark", "id": "q2", "topic": "2026-10-13:12", "on": true])
       == .bookmark(id: "q2", topic: "2026-10-13:12", on: true), "bookmark")
 check(ChatBridgeMessage(body: ["type": "bookmark", "id": "q2", "topic": "../x", "on": true]) == nil,

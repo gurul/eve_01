@@ -9,7 +9,8 @@ enum ChatBridgeMessage: Equatable, Sendable {
     /// `attachments`: upload ids (POST /api/link/upload) the turn carries; the text may be empty with one.
     case turn(id: String, text: String, clientID: String, attachments: [String] = [])
     case cancel(id: String)
-    case messages(id: String, after: String?, wait: Int)
+    /// `before`: infinite scroll's older page (GET /api/link/messages?before=<message id>), never with `after`.
+    case messages(id: String, after: String?, wait: Int, before: String? = nil)
     case haptic(ChatHaptic)
     case openURL(URL)
     /// Open one attachment full size (a photo or file of the owner's or eve's): native fetches
@@ -59,7 +60,10 @@ enum ChatBridgeMessage: Equatable, Sendable {
             let after = (msg["after"] as? String).flatMap { $0.isEmpty ? nil : $0 }
             // JS numbers arrive as NSNumber; a missing or odd wait is no wait.
             let wait = (msg["wait"] as? NSNumber)?.doubleValue ?? 0
-            self = .messages(id: id, after: after, wait: wait.isFinite ? min(max(Int(wait), 0), Self.maxWait) : 0)
+            let before = (msg["before"] as? String).flatMap { ChatTopics.isID($0) ? $0 : nil }
+            self = .messages(id: id, after: before == nil ? after : nil,
+                             wait: before == nil && wait.isFinite ? min(max(Int(wait), 0), Self.maxWait) : 0,
+                             before: before)
         case "haptic":
             guard let style = (msg["style"] as? String).flatMap(ChatHaptic.init(rawValue:)) else { return nil }
             self = .haptic(style)

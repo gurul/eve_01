@@ -14,7 +14,8 @@ view and does all its networking natively (ios/EveLink); this module is the daem
   ``DEDUPE_SECS`` (the phone retried after a drop) is never heard twice: it streams the first turn's reply.
 * ``GET /api/link/messages?after=<cursor>&wait=<0..25>``: the conversation as the transcript has it
   (transcripts.py), so the app shows what was said in Telegram, on a call or by a task that answered later.
-  Without ``after``: the last ``HISTORY_LIMIT`` lines of the last ``HISTORY_DAYS`` transcript days. With it: newer
+  Without ``after``: the newest ``HISTORY_LIMIT`` lines, however far back. ``?before=<message id>``: the page just
+  before that message and whether older ones exist (infinite scroll; nothing is ever pruned). With ``after``: newer
   lines only, and with ``wait`` a long poll woken by the transcript's own append (``Transcripts.listeners``),
   with a re-read every ``POLL_SECS`` for writes from another process (the forget CLI).
 
@@ -235,7 +236,6 @@ SETTLE_SECS = 0.2                     # how often a stream checks whether the ow
 DEDUPE_SECS = 600.0                   # the same client_id within this is the same turn
 MAX_KEPT_TURNS = 256                  # remembered turns, for dedupe; the oldest finished ones go first
 HISTORY_LIMIT = 100                   # lines returned without a cursor
-HISTORY_DAYS = 3                      # transcript days read without a cursor
 PAGE_LIMIT = 200                      # lines returned after a cursor; the next poll takes the rest
 WAIT_MAX_SECS = 25.0                  # the longest long poll (the tunnel and URLSession both outlast it)
 CLOSE_SETTLE_SECS = 0.5               # on close, how long open streams get to write their end
@@ -493,14 +493,16 @@ def read_messages(store: Any, after: Optional[str] = None) -> tuple[list[dict[st
     Blocking (file reads, cached by transcripts.py): call it in a thread."""
     days = store.days()
     if after is None:
-        rows: list[dict[str, Any]] = []
+        # The newest HISTORY_LIMIT shown lines, however many days back they go (owner, 2026-10-13: "keep all chat
+        # history, i want infinite scroll"); older pages come from read_before.
         cursor = f"{store.day_of(store.now())}:-1"
-        for day in days[-HISTORY_DAYS:]:
+        for day in reversed(days):
             lines = store.lines(day)
-            rows.extend(r for r in (_row(day, i, ln) for i, ln in enumerate(lines)) if r is not None)
             if lines:
                 cursor = f"{day}:{len(lines) - 1}"
-        return rows[-HISTORY_LIMIT:], cursor
+                break
+        rows, _ = read_before(store, None)
+        return rows, cursor
     m = CURSOR_RE.match(after)
     if m is None:
         raise ValueError("bad cursor")
@@ -516,6 +518,32 @@ def read_messages(store: Any, after: Optional[str] = None) -> tuple[list[dict[st
                 if len(rows) >= PAGE_LIMIT:
                     return rows, cursor
     return rows, cursor
+
+
+def read_before(store: Any, before: Optional[str], limit: int = HISTORY_LIMIT) -> tuple[list[dict[str, Any]], bool]:
+    """(up to ``limit`` shown lines just before message ``before``, oldest first; whether older ones exist). None:
+    the newest. Infinite scroll's older pages (``?before=<id>``). Nothing is ever pruned (transcripts.py), so this
+    reaches the first day. Blocking: call it in a thread."""
+    if before is not None:
+        m = CURSOR_RE.match(before)
+        if m is None or m.group(2) == "-1":
+            raise ValueError("bad message id")
+        stop_day, stop_i = m.group(1), int(m.group(2))
+    else:
+        stop_day, stop_i = None, None
+    found: list[dict[str, Any]] = []
+    for day in reversed(store.days()):
+        if stop_day is not None and day > stop_day:
+            continue
+        lines = store.lines(day)
+        end = stop_i if day == stop_day else len(lines)
+        for i in range(min(end, len(lines)) - 1, -1, -1):
+            row = _row(day, i, lines[i])
+            if row is not None:
+                found.append(row)
+                if len(found) > limit:
+                    return list(reversed(found[:limit])), True
+    return list(reversed(found)), False
 
 
 def split_cursor(after: Optional[str]) -> tuple[Optional[str], Optional[int]]:
@@ -1069,6 +1097,9 @@ class LinkChat:
 
     async def _messages(self, inlet: Any, query: str, writer: asyncio.StreamWriter) -> None:
         q = dict(parse_qsl(query, keep_blank_values=True))
+        if q.get("before"):
+            await self._older(inlet, q["before"], writer)
+            return
         after = q.get("after") or None
         try:
             wait = min(max(float(q.get("wait") or 0), 0.0), WAIT_MAX_SECS)
@@ -1113,6 +1144,27 @@ class LinkChat:
             payload["cursor"] = f"{cursor}~{version}"
             payload["reactions"] = kept
         await self._json(writer, 200, payload)
+
+    async def _older(self, inlet: Any, before: str, writer: asyncio.StreamWriter) -> None:
+        """``GET /api/link/messages?before=<message id>``: the page of history just before that message, for infinite
+        scroll: ``{"messages", "more", "busy"}``. Never waits and never moves the live poll's cursor."""
+        store = getattr(inlet, "transcripts", None)
+        if store is None or not getattr(store, "enabled", False):
+            await self._json(writer, 503, {"ok": False, "error": NO_MEMORY})
+            return
+        try:
+            rows, more = await asyncio.to_thread(read_before, store, before)
+        except ValueError:
+            await self._json(writer, 400, {"ok": False, "error": "before must be a message id"})
+            return
+        await asyncio.to_thread(self._thumbs, rows)
+        reactions = getattr(inlet, "app_reactions", None)
+        if reactions is not None:
+            kept = reactions.snapshot()
+            for row in rows:
+                if row.get("rid") in kept:
+                    row["reaction"] = kept[row["rid"]]
+        await self._json(writer, 200, {"messages": rows, "more": more, "cursor": "", "busy": self._busy(inlet)})
 
     def _thumbs(self, rows: list[dict[str, Any]]) -> None:
         """Each attachment on the page of rows gets its ``thumb`` (images) and ``gone`` (expired) now. Blocking."""

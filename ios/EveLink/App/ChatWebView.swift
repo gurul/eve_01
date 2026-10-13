@@ -179,9 +179,9 @@ final class ChatModel: NSObject, ObservableObject {
                            })
         case .cancel(let id):
             transport.cancel(id: id, as: .silent)
-        case let .messages(id, after, wait):
+        case let .messages(id, after, wait, before):
             let lit = ChatJS.literal(id)
-            transport.messages(id: id, after: after, wait: wait) { [weak self] result in
+            transport.messages(id: id, after: after, wait: wait, before: before) { [weak self] result in
                 switch result {
                 case .success(let json): self?.js("onMessages", [lit, ChatJS.literal(json)])
                 case .failure(let f): self?.js("onError", [lit, ChatJS.literal(f.message)])

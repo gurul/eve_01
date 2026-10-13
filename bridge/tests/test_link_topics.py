@@ -180,3 +180,45 @@ def test_a_list_titles_in_the_background_without_racing_the_reply(tmp_path: Path
     assert "_lines" not in first["topics"][0] and titler.thread is not None
     titler.thread.join(5)
     assert link_topics.view(store, Bookmarks(tmp_path / "bm.json"), titler=titler)["topics"][0]["title"] == "Lisbon trip"
+
+
+# ---- infinite scroll: ?before=<message id> ------------------------------------------------------------------------
+
+def test_older_pages_reach_the_first_day_in_order(tmp_path: Path) -> None:
+    from eve_bridge.link_chat import HISTORY_LIMIT, read_before, read_messages
+
+    store = store_at(tmp_path)
+    for d in range(1, 6):                                       # five days, 60 lines each: 300 lines
+        for k in range(60):
+            store.append("telegram", "t-1", "owner" if k % 2 == 0 else "eve", "say", f"day {d} line {k}",
+                         now=at(f"2026-10-0{d}", f"{10 + k // 60}:{k % 60:02d}"))
+    first, cursor = read_messages(store)
+    assert len(first) == HISTORY_LIMIT and first[-1]["text"] == "day 5 line 59"          # beyond the last 3 days rule
+    assert cursor.startswith("2026-10-05:")
+    seen = list(first)
+    before, more = first[0]["id"], True
+    while more:
+        page, more = read_before(store, before)
+        assert page and page[-1]["t"] <= seen[0]["t"]
+        seen = page + seen
+        before = page[0]["id"]
+    assert len(seen) == 300 and seen[0]["text"] == "day 1 line 0"
+    assert [r["id"] for r in seen] == sorted({r["id"] for r in seen}, key=lambda i: (i.split(":")[0], int(i.split(":")[1])))
+
+
+def test_the_older_route_answers_a_page_and_refuses_a_bad_id(tmp_path: Path) -> None:
+    store = store_at(tmp_path)
+    for k in range(5):
+        store.append("telegram", "t-1", "owner", "say", f"line {k}", now=at("2026-10-13", f"09:0{k}"))
+
+    async def go() -> None:
+        server, port, token = await serve(tmp_path, FakeInlet(store))
+        status, _, body = await http(port, "GET", link_chat.MESSAGES_PATH + "?before=2026-10-13:3", token=token)
+        got = json.loads(body)
+        assert status == 200 and [m["text"] for m in got["messages"]] == ["line 0", "line 1", "line 2"]
+        assert got["more"] is False and got["cursor"] == ""
+        for bad in ("x", "2026-10-13:-1", "../a"):
+            assert (await http(port, "GET", link_chat.MESSAGES_PATH + f"?before={bad}", token=token))[0] == 400
+        await server.close()
+
+    asyncio.run(go())

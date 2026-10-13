@@ -17,7 +17,8 @@ import { createBridgeLLM } from "./llm";
 import type { Bridge } from "./nativeBridge";
 import { sources, type Source } from "./sources";
 import { EVE_THREAD, createEveStorage, startLivePoll, type Cursor } from "./storage";
-import { Ledger } from "./sync";
+import { Ledger, mapLines, separator } from "./sync";
+import { reactions as pageReactions } from "./reactions";
 import { darkTheme, lightTheme } from "./theme";
 
 const SCROLL_AREA = ".openui-agent-thread-scroll-area";
@@ -41,6 +42,7 @@ function NativeGlue({ bridge, wiring }: { bridge: Bridge; wiring: Wiring }) {
   const processMessage = useThread((s) => s.processMessage);
   const appendMessages = useThread((s) => s.appendMessages);
   const deleteMessage = useThread((s) => s.deleteMessage);
+  const setMessages = useThread((s) => s.setMessages);
   const messages = useThread((s) => s.messages);
   const isRunning = useThread((s) => s.isRunning);
   const isLoadingMessages = useThread((s) => s.isLoadingMessages);
@@ -193,6 +195,54 @@ function NativeGlue({ bridge, wiring }: { bridge: Bridge; wiring: Wiring }) {
       document.removeEventListener("visibilitychange", onVisible);
     };
   }, [bridge, wiring]);
+
+  // Infinite scroll (owner, 2026-10-13: "keep all chat history, i want infinite scroll"): near the top, the page
+  // before the first loaded message is fetched and put above, keeping what the owner is reading where it was.
+  // Nothing is ever pruned on the Mac, so this goes back to the first day; "more: false" ends it.
+  const older = useRef({ loading: false, more: true });
+  useEffect(() => {
+    const MESSAGE_ID = /^\d{4}-\d{2}-\d{2}:\d+$/;
+    const loadOlder = () => {
+      const el = document.querySelector<HTMLElement>(SCROLL_AREA);
+      const state = older.current;
+      if (!el || state.loading || !state.more || !wiring.historyLoaded.value) return;
+      if (el.scrollTop > 600 && el.scrollHeight > el.clientHeight) return;
+      const current = latest.current.messages;
+      const first = current.find((m) => MESSAGE_ID.test(m.id));
+      if (!first) return;
+      state.loading = true;
+      bridge
+        .requestOlder(first.id)
+        .then((payload) => {
+          state.more = payload.more === true;
+          pageReactions.ingest(payload);
+          const page = mapLines(payload.messages);
+          if (page.length === 0) return;
+          const now = latest.current.messages;
+          const join =
+            page.at(-1)?.role === "assistant" && now[0]?.role === "assistant" ? [separator(now[0].id)] : [];
+          const height = el.scrollHeight;
+          const top = el.scrollTop;
+          setMessages([...page, ...join, ...now]);
+          requestAnimationFrame(() => {
+            el.scrollTop = el.scrollHeight - height + top;   // the same message stays under the owner's eye
+          });
+        })
+        .catch(() => {})                                     // tried again on the next scroll near the top
+        .finally(() => {
+          state.loading = false;
+        });
+    };
+    const onScroll = (e: Event) => {
+      if (e.target instanceof HTMLElement && e.target.matches(SCROLL_AREA)) loadOlder();
+    };
+    document.addEventListener("scroll", onScroll, { capture: true, passive: true });
+    const first = setTimeout(loadOlder, 1500);               // a short first page: fill the screen
+    return () => {
+      document.removeEventListener("scroll", onScroll, { capture: true });
+      clearTimeout(first);
+    };
+  }, [bridge, setMessages, wiring]);
 
   // A turn the owner started elsewhere (Telegram, voice) is in flight.
   const showTyping = busy && !isRunning;
