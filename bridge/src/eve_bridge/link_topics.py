@@ -163,6 +163,7 @@ class Titler:
         self._ask = ask                     # tests: (system, text) -> {"title", "small_talk"}
         self._lock = threading.Lock()
         self._running = False
+        self.thread: Optional[threading.Thread] = None
 
     def load(self) -> dict[str, dict[str, Any]]:
         try:
@@ -213,8 +214,8 @@ class Titler:
         todo = [t for t in reversed(topics) if known.get(t["id"], {}).get("n") != t["count"]][:TITLES_PER_PASS]
         done = 0
         for t in todo:
-            text = "\n".join(f"{'Person' if who == 'owner' else 'eve'}: {line}" for who, line in t["_lines"] if line)
             try:
+                text = "\n".join(f"{'Person' if who == 'owner' else 'eve'}: {line}" for who, line in t["_lines"] if line)
                 got = self._call(text[:TOPIC_CHARS])
                 title = " ".join(str(got.get("title") or "").replace('"', "").split()).rstrip(" .")
                 if not title:
@@ -245,7 +246,8 @@ class Titler:
                 with self._lock:
                     self._running = False
 
-        threading.Thread(target=run, name="topic-titles", daemon=True).start()
+        self.thread = threading.Thread(target=run, name="topic-titles", daemon=True)
+        self.thread.start()
         return True
 
     def _has_key(self) -> bool:
@@ -261,7 +263,7 @@ def view(store: Any, bookmarks: Bookmarks, limit: int = DEFAULT_LIMIT, titler: O
     saved = bookmarks.load()
     if titler is not None:
         titler.apply(found)                         # model titles and small-talk calls already made
-        titler.kick(found)                          # and the rest, in the background, for the next look
+        titler.kick([dict(t) for t in found])       # and the rest, in the background, on copies the reply cannot strip
     found = [t for t in found if t.pop("important") or t["id"] in saved]       # small talk never makes a card
     for t in found:
         t.pop("_lines", None)

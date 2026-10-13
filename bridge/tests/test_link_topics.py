@@ -170,3 +170,13 @@ def test_a_failing_model_keeps_the_first_message_title(tmp_path: Path) -> None:
 def test_titles_off_never_ask(tmp_path: Path) -> None:
     titler = Titler(tmp_path / "titles.json", environ={"EVE_TOPIC_TITLES": "0"}, ask=lambda s, t: {"title": "x"})
     assert titler.kick(segment([row(0, 0, text="can you plan a three day Lisbon trip")])) is False
+
+
+def test_a_list_titles_in_the_background_without_racing_the_reply(tmp_path: Path) -> None:
+    store = store_at(tmp_path)
+    store.append("telegram", "t-1", "owner", "say", "plan the Lisbon trip for early November", now=at("2026-10-13", "09:00"))
+    titler = Titler(tmp_path / "titles.json", environ={}, ask=lambda s, t: {"title": "Lisbon trip", "small_talk": False})
+    first = link_topics.view(store, Bookmarks(tmp_path / "bm.json"), titler=titler)
+    assert "_lines" not in first["topics"][0] and titler.thread is not None
+    titler.thread.join(5)
+    assert link_topics.view(store, Bookmarks(tmp_path / "bm.json"), titler=titler)["topics"][0]["title"] == "Lisbon trip"
