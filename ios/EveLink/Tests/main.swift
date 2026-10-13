@@ -238,9 +238,6 @@ check(callJS.contains("n.onChunk(\"t1\",\"x\")") && callJS.contains("typeof n.on
 // Message dispatch: each JS -> native message, and what is refused.
 check(ChatBridgeMessage(body: ["type": "ready"]) == .ready, "ready")
 check(ChatBridgeMessage(body: ["type": "topics", "id": "q1"]) == .topics(id: "q1"), "topics")
-check(ChatBridgeMessage(body: ["type": "history", "open": true, "top": 610]) == .history(open: true, top: 610),
-      "history open, with where the row starts")
-check(ChatBridgeMessage(body: ["type": "history", "open": 1]) == nil, "history: open must be a bool")
 check(ChatBridgeMessage(body: ["type": "bookmark", "id": "q2", "topic": "2026-10-13:12", "on": true])
       == .bookmark(id: "q2", topic: "2026-10-13:12", on: true), "bookmark")
 check(ChatBridgeMessage(body: ["type": "bookmark", "id": "q2", "topic": "../x", "on": true]) == nil,
@@ -1264,10 +1261,6 @@ check(UpdatesAge.label("2026-10-12T08:59:40-07:00", now: ageNow) == "Updated jus
       && UpdatesAge.label("2026-10-08T16:00:00Z", now: ageNow) == "Updated 4 days ago"
       && UpdatesAge.label(nil, now: ageNow) == nil && UpdatesAge.label("soon", now: ageNow) == nil,
       "updated-ago label")
-check(PaneSwipe.target(index: 1, count: 4, dx: -120, dy: 10) == 2 && PaneSwipe.target(index: 1, count: 4, dx: 120, dy: 10) == 0
-      && PaneSwipe.target(index: 0, count: 4, dx: 120, dy: 0) == nil && PaneSwipe.target(index: 3, count: 4, dx: -120, dy: 0) == nil
-      && PaneSwipe.target(index: 1, count: 4, dx: -40, dy: 0) == nil && PaneSwipe.target(index: 1, count: 4, dx: -120, dy: 80) == nil,
-      "pane swipe: sideways and far enough, within the panes")
 print("UPDATES_OK")
 
 // The phone's location (Shared/PhoneLocation.swift). Fictional points only: the null island at 0,0 and offsets from it.

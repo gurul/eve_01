@@ -4,7 +4,7 @@
 // when that is no longer loaded, picks the topic back up with eve. The star
 // saves it (the daemon keeps bookmarks).
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { cards, parseTopics, pickUp, startOf, when, withBookmark, type Topic, type TopicsView } from "./history";
 import type { Bridge } from "./nativeBridge";
@@ -84,17 +84,6 @@ export function HorizontalHistory({ bridge, refreshKey }: { bridge: Bridge; refr
     [bridge, load],
   );
 
-  // Native's pane swipe stands aside for a swipe that starts on the cards (and only there), so swiping
-  // through history never changes the tab. Measured once the row has slid into place.
-  const nav = useRef<HTMLElement | null>(null);
-  useEffect(() => {
-    const report = () =>
-      bridge.post({ type: "history", open: shown, top: Math.round(nav.current?.getBoundingClientRect().top ?? 0) });
-    report();
-    const timer = setTimeout(report, 260);
-    return () => clearTimeout(timer);
-  }, [bridge, shown, view]);
-
   const open = (t: Topic) => {
     bridge.post({ type: "haptic", style: "light" });
     setShown(false);
@@ -117,7 +106,7 @@ export function HorizontalHistory({ bridge, refreshKey }: { bridge: Bridge; refr
   const { saved, recent } = cards(view);
   const now = Date.now() / 1000;
   return createPortal(
-    <nav ref={nav} className={`eve-history${shown ? "" : " eve-history--away"}`} aria-label="Conversation history" aria-hidden={!shown}>
+    <nav className={`eve-history${shown ? "" : " eve-history--away"}`} aria-label="Conversation history" aria-hidden={!shown}>
       {saved.length === 0 && recent.length === 0 && <p className="eve-history__note">No past topics yet.</p>}
       <div className="eve-history__row">
         {saved.map((t) => (

@@ -35,24 +35,6 @@ struct HomeScreen: View {
 
     private var chatShown: Bool { relay.pairing != nil && mode == .chat }
 
-    /// A sideways swipe on Updates, Apps or Work moves one pane (PaneSwipe); the chat's own swipe is in ChatModel.
-    private var paneSwipe: some Gesture {
-        DragGesture(minimumDistance: 24).onEnded { v in
-            let all = HomeMode.allCases
-            guard let i = all.firstIndex(of: mode),
-                  let n = PaneSwipe.target(index: i, count: all.count, dx: v.translation.width, dy: v.translation.height)
-            else { return }
-            mode = all[n]
-        }
-    }
-
-    /// One pane to the right (+1) or left (-1), within the pill's tabs.
-    private func page(_ step: Int) {
-        let all = HomeMode.allCases
-        guard relay.pairing != nil, let i = all.firstIndex(of: mode), all.indices.contains(i + step) else { return }
-        mode = all[i + step]
-    }
-
     var body: some View {
         ZStack(alignment: .top) {
             Color.eveBackground.ignoresSafeArea()
@@ -96,16 +78,13 @@ struct HomeScreen: View {
                         }
                 } else if mode == .updates {
                     UpdatesView(model: updates, ask: ask)
-                        .simultaneousGesture(paneSwipe)
                 } else {
                     WorkView(work: work, shows: mode)
-                        .simultaneousGesture(paneSwipe)
                 }
             }
         }
         // A call (voice mode, the Action Button) stops dictation before it starts the mic, and leaves the session alone.
         .onAppear {
-            chat.onPaneSwipe = { left in page(left ? 1 : -1) }
             let mic = dictation
             relay.beforeMic = { [weak mic] in mic?.stop(releaseSession: false) }
         }

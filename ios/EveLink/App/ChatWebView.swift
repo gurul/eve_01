@@ -20,12 +20,6 @@ final class ChatModel: NSObject, ObservableObject {
     }
 
     let relay: Relay
-    /// A quick sideways swipe on the chat (true: finger moved left): the screen moves one pane (PaneSwipe).
-    var onPaneSwipe: ((Bool) -> Void)?
-    /// Horizontal History's row is open on the page, from ``historyTop`` down: a swipe that starts on its cards is
-    /// theirs, and the pane swipe does not see it (``gestureRecognizer(_:shouldReceive:)``).
-    private(set) var historyOpen = false
-    private(set) var historyTop: CGFloat = 0
     private(set) lazy var webView: WKWebView = makeWebView()
     private lazy var transport: ChatTransport = {
         let t = ChatTransport(
@@ -193,9 +187,6 @@ final class ChatModel: NSObject, ObservableObject {
                 case .failure(let f): self?.js("onError", [lit, ChatJS.literal(f.message)])
                 }
             }
-        case let .history(open, top):
-            historyOpen = open
-            historyTop = CGFloat(top)
         case .topics(let id):
             linkJSON(id) { ChatRequests.topics($0) }
         case let .bookmark(id, topic, on):
@@ -324,12 +315,6 @@ final class ChatModel: NSObject, ObservableObject {
         scroll.maximumZoomScale = 1
         scroll.pinchGestureRecognizer?.isEnabled = false
         scroll.keyboardDismissMode = .interactive
-        for direction in [UISwipeGestureRecognizer.Direction.left, .right] {
-            let swipe = UISwipeGestureRecognizer(target: self, action: #selector(paneSwiped(_:)))
-            swipe.direction = direction
-            swipe.delegate = self                       // alongside the page's own scrolling, never instead of it
-            web.addGestureRecognizer(swipe)
-        }
         #if DEBUG
         web.isInspectable = true
         #endif
@@ -484,16 +469,3 @@ struct ChatWebView: UIViewRepresentable {
     func updateUIView(_ view: WKWebView, context: Context) {}
 }
 
-extension ChatModel: UIGestureRecognizerDelegate {
-    @objc fileprivate func paneSwiped(_ g: UISwipeGestureRecognizer) {
-        onPaneSwipe?(g.direction == .left)
-    }
-
-    func gestureRecognizer(_ g: UIGestureRecognizer,
-                           shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool { true }
-
-    /// A swipe that starts on the history cards scrolls the cards; anywhere else it still moves the panes.
-    func gestureRecognizer(_ g: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
-        !(historyOpen && touch.location(in: webView).y >= historyTop)
-    }
-}

@@ -17,7 +17,6 @@ export type OutboundMessage =
   | { type: "messages"; id: string; after?: string; wait: number }
   | { type: "topics"; id: string }
   | { type: "bookmark"; id: string; topic: string; on: boolean }
-  | { type: "history"; open: boolean; top: number }
   | { type: "haptic"; style: HapticStyle }
   | { type: "openURL"; url: string }
   /** Open one attachment full size: native fetches GET /api/link/file/<id> and shows Quick Look. */

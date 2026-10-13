@@ -66,11 +66,9 @@ screen but the controls below until there are messages.
   new price starts Oct 23"). A tap switches to Chat and sends exactly that
   sentence, with a second line naming where it came from; long-press to
   dismiss; pull down or tap the refresh button to refresh. See [Updates](updates.md).
-- **Swiping between panes** (owner, 2026-10-12): a sideways swipe moves one
-  pane left or right through Updates | Chat | Apps | Work (`Shared/PaneSwipe.swift`:
-  at least 70 points and twice as sideways as vertical; on the chat, a quick
-  flick on the web view). Rows in these lists have no swipe actions for that
-  reason: a finished job's Delete is a long press, as an Updates card's Dismiss.
+- **Changing panes** is the tab pill only (owner, 2026-10-13: "remove swiping between panes"; it was added
+  2026-10-12 and fought the history cards' sideways swipe). A finished job's Delete is a long press, as an Updates
+  card's Dismiss.
 - **Apps** and **Work** (`App/WorkView.swift`, one plain list each). **Apps**
   is Notes and the Mac's apps (the owner's are Music, Lights, Remote, Pika and
   Camera; any app added to the registry shows up too); **Work** is the chief's jobs.
