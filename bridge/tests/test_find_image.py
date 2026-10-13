@@ -64,3 +64,19 @@ def test_live_wikipedia_gives_a_landmark_its_picture() -> None:
 
 def test_the_brain_is_offered_the_tool_when_on() -> None:
     assert [t["name"] for t in find_image.tools({})] == ["find_image"]
+
+
+def test_only_an_app_turn_is_offered_the_picture_tool(monkeypatch: pytest.MonkeyPatch) -> None:
+    from test_telegram import FakeApi, FakeCreate, Rig
+
+    from eve_bridge import telegram
+
+    monkeypatch.setenv("EVE_FIND_IMAGE", "1")
+    rig = Rig(FakeApi(), FakeCreate())
+    spoken = rig.inlet._tool_lists(set(), set(), False)["allowed"]
+    mark = telegram._FROM_APP.set("t-1")
+    try:
+        typed = rig.inlet._tool_lists(set(), set(), False)["allowed"]
+    finally:
+        telegram._FROM_APP.reset(mark)
+    assert "find_image" in typed and "find_image" not in spoken           # a call is spoken: no picture tool

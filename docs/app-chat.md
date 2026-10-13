@@ -853,6 +853,8 @@ only an image URL from a tool result, the conversation or the owner, never an in
   the page's original lead picture only when it is a JPEG, PNG or WebP of at least 800 x 400 (no logos or drawings),
   else `ok: false` and the card goes without. Its page title is outside words, so it taints the turn like a web search.
   `EVE_FIND_IMAGE=0` turns it off. The app loads the picture itself (`img-src https:` in the page's CSP).
+- **Voice is spoken, not drawn**: a call, voice mode or the Action Button is not an app turn, so it gets neither the
+  card rules (`app_block`) nor `find_image`, and the app-only speed grading does not run; its prompt stays short.
 
 ## When a reply uses OpenUI
 

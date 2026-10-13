@@ -5275,7 +5275,10 @@ class TelegramInlet:
         app_tools = self._app_tools(opened, lent, routed)
         loc_tools = phone_location.tools()          # once a turn: the phone's location, while it has shared one
         sci_tools = science_search.tools()          # papers' titles and abstracts, while EVE_SCIENCE_SEARCH is on
-        pic_tools = find_image.tools()              # a real picture for a card (Wikipedia), while EVE_FIND_IMAGE is on
+        # a real picture for a card (Wikipedia), while EVE_FIND_IMAGE is on: app turns only, the one place a card is
+        # drawn; a call is spoken, so it never pays for the tool or the lookup (owner, 2026-10-13: voice "should be
+        # faster")
+        pic_tools = find_image.tools() if _FROM_APP.get() is not None else []
         live = self._live_apps()                    # eve's apps with a hub here, in tool order (app_registry)
         allowed = {t["name"] for t in app_tools} | {t["name"] for t in mem_tools} | (
             set(second_brain.SECOND_BRAIN_TOOL_NAMES) if self._vault is not None else set()) | (
