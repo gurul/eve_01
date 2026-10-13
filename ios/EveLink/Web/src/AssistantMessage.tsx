@@ -67,7 +67,7 @@ export const EveAssistantMessage = memo(function EveAssistantMessage({
   if (parts.length === 0 && media.length === 0) return null;
 
   return (
-    <div className="openui-agent-thread-message-assistant eve-message">
+    <div className="openui-agent-thread-message-assistant eve-message" data-mid={message.id}>
       <div className="openui-agent-thread-message-assistant__content">
         <AttachmentList items={media} side="eve" />
         {parts.map((part, i) =>

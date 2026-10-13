@@ -43,6 +43,7 @@ Source map:
 | `src/AssistantMessage.tsx` | Renders those parts (MarkDownRenderer / react-lang Renderer), and eve's own pictures and files above them |
 | `src/attachments.ts` | Attachments: sanitizing, the owner's binary parts, eve's media kept by message id |
 | `src/AttachmentList.tsx` | Thumbnails and chips for a message's attachments; a tap asks native to open one full size |
+| `src/history.ts`, `src/HorizontalHistory.tsx` | Horizontal History: topic cards over the chat, the star, the jump back (docs/app-chat.md) |
 | `src/App.tsx` | AgentInterface with only the message list; native send/scroll/busy glue |
 | `src/theme.ts`, `src/native.css` | iOS system colors and font, no zoom/callouts/tap highlight |
 

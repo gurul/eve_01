@@ -11,6 +11,7 @@ import { createPortal } from "react-dom";
 import { EveAssistantMessage } from "./AssistantMessage";
 import { ownerParts, type Attachment } from "./attachments";
 import { EveUserMessage } from "./UserMessage";
+import { HorizontalHistory } from "./HorizontalHistory";
 import { applyInsets, domInsetTarget } from "./insets";
 import { createBridgeLLM } from "./llm";
 import type { Bridge } from "./nativeBridge";
@@ -195,14 +196,18 @@ function NativeGlue({ bridge, wiring }: { bridge: Bridge; wiring: Wiring }) {
 
   // A turn the owner started elsewhere (Telegram, voice) is in flight.
   const showTyping = busy && !isRunning;
-  return showTyping
-    ? createPortal(
-        <div className="eve-typing" aria-label="eve is replying">
-          <DotMatrixLoader variant="compact" />
-        </div>,
-        document.body,
-      )
-    : null;
+  return (
+    <>
+      <HorizontalHistory bridge={bridge} refreshKey={settled} />
+      {showTyping &&
+        createPortal(
+          <div className="eve-typing" aria-label="eve is replying">
+            <DotMatrixLoader variant="compact" />
+          </div>,
+          document.body,
+        )}
+    </>
+  );
 }
 
 export function App({ bridge }: { bridge: Bridge }) {

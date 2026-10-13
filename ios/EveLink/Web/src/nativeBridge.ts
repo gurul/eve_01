@@ -15,6 +15,8 @@ export type OutboundMessage =
   | { type: "turn"; id: string; text: string; client_id: string; attachments?: string[] }
   | { type: "cancel"; id: string }
   | { type: "messages"; id: string; after?: string; wait: number }
+  | { type: "topics"; id: string }
+  | { type: "bookmark"; id: string; topic: string; on: boolean }
   | { type: "haptic"; style: HapticStyle }
   | { type: "openURL"; url: string }
   /** Open one attachment full size: native fetches GET /api/link/file/<id> and shows Quick Look. */
@@ -56,6 +58,8 @@ export interface EveNative {
   onDone(id: string): void;
   onError(id: string, message: string): void;
   onMessages(id: string, json: string): void;
+  /** A Horizontal History request's JSON (topics, bookmark). */
+  onLink(id: string, json: string): void;
   /** The composer's words, and (as JSON) what native uploaded with them. */
   send(text: string, attachments?: string): void;
   setBusy(busy: boolean): void;
@@ -102,7 +106,8 @@ interface TurnEntry {
 }
 
 interface RequestEntry {
-  resolve: (payload: MessagesPayload) => void;
+  // A messages payload, or a Horizontal History answer (requestLink).
+  resolve: (payload: MessagesPayload & unknown) => void;
   reject: (error: Error) => void;
   timer: ReturnType<typeof setTimeout>;
 }
@@ -113,6 +118,8 @@ export interface Bridge {
   post: Post;
   /** Start a turn; the Response body is fed by onChunk/onDone/onError. */
   openTurn(params: OpenTurnParams): Response;
+  /** Horizontal History through native: GET /api/link/topics, or POST /api/link/topics/bookmark. */
+  requestLink(message: { type: "topics" } | { type: "bookmark"; topic: string; on: boolean }, timeoutMs?: number): Promise<unknown>;
   /** GET /api/link/messages through native. */
   requestMessages(after: string | undefined, wait: number, timeoutMs?: number): Promise<MessagesPayload>;
   /** Who handles native's send(text). Calls made before this is set are queued. */
@@ -207,6 +214,17 @@ export function createBridge(post: Post): Bridge {
         req.reject(e instanceof Error ? e : new Error(String(e)));
       }
     },
+    onLink(id, json) {
+      const req = requests.get(id);
+      if (!req) return;
+      requests.delete(id);
+      clearTimeout(req.timer);
+      try {
+        req.resolve(JSON.parse(json));
+      } catch (e) {
+        req.reject(e instanceof Error ? e : new Error(String(e)));
+      }
+    },
     send(text, json) {
       const attachments = parseNativeAttachments(json);
       if (typeof text !== "string" || (!text.trim() && attachments.length === 0)) return;
@@ -283,6 +301,19 @@ export function createBridge(post: Post): Bridge {
         const msg: OutboundMessage =
           after === undefined ? { type: "messages", id, wait } : { type: "messages", id, after, wait };
         post(msg);
+      });
+    },
+
+    requestLink(message, timeoutMs = 15000) {
+      const id = uuid();
+      return new Promise<unknown>((resolve, reject) => {
+        const timer = setTimeout(() => {
+          if (!requests.delete(id)) return;
+          post({ type: "cancel", id });
+          reject(new Error("request timed out"));
+        }, timeoutMs);
+        requests.set(id, { resolve, reject, timer });
+        post({ ...message, id });
       });
     },
 

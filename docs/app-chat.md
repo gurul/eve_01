@@ -552,6 +552,33 @@ never markup.
 Not yet: ChatGPT's "mark relevant or not" and "delete a referenced chat" on a
 source. Forget by words, in the chat or the Memory card, is the way to remove one.
 
+## Horizontal History
+
+Owner, 2026-10-13: past topics as "swipeable horizontal cards", with bookmarks and a quick way back in; "remember
+occams razor".
+
+eve has one continuous conversation, so a topic is a run of messages with no pause longer than 45 minutes
+(`link_topics.py`, `GAP_SECS`). Its title is its first owner message, plain and cut at a word; the card's preview is
+eve's last reply in it. No model is asked anything. The daemon reads the last 30 transcript days.
+
+- **The row** (`HorizontalHistory.tsx`, `history.ts`) sits over the top of the chat, under the native top bar:
+  saved topics first (filled star), then recent ones, each once, swiped sideways with snap. It is there when the
+  page opens and when the owner scrolls up, and slides away while they scroll down. The list keeps room for it
+  above the first message (`--eve-history-h`), so hiding it never moves what is being read. No topics: no row.
+- **A tap** jumps to the first loaded message of that topic and makes it glow for a moment. When none of it is
+  loaded (the page holds the last 100 lines of 3 days), it sends `Let's pick up "<title>" again.` as the owner, through
+  the composer's own path, and eve's memory does the rest.
+- **The star** saves or unsaves the topic at once and reverts with one line under the row if the Mac refuses.
+  Saved topics are kept in `~/.config/eve-bridge/chat/bookmarks.json` (0600) by the topic's first message id, so a
+  saved topic stays saved while it grows. One whose first message was forgotten drops out.
+- **Routes** (link token, any Origin refused, like every `/api/link` route): `GET /api/link/topics?limit=<1..60>` →
+  `{"topics": [newest first], "bookmarked": [newest bookmark first]}`, each `{id, first_id, last_id, started_at,
+  ended_at, count, title, preview, bookmarked}`; `POST /api/link/topics/bookmark` `{"id", "on"}` → `{"ok", "bookmarked"}`
+  (400 for a malformed body, 404 for a topic the last 30 days do not have).
+- **Bridge**: the page posts `{type: "topics", id}` and `{type: "bookmark", id, topic, on}`; native calls those routes
+  (`ChatTransport.json`) and answers with `eveNative.onLink(id, json)` or `onError`. Each bubble carries its message
+  id as `data-mid` for the jump.
+
 ## Why it does not feel like a web page
 
 - The page is in the app. There is no load from the network and no loading

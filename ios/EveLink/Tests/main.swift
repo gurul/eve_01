@@ -237,6 +237,13 @@ check(callJS.contains("n.onChunk(\"t1\",\"x\")") && callJS.contains("typeof n.on
 
 // Message dispatch: each JS -> native message, and what is refused.
 check(ChatBridgeMessage(body: ["type": "ready"]) == .ready, "ready")
+check(ChatBridgeMessage(body: ["type": "topics", "id": "q1"]) == .topics(id: "q1"), "topics")
+check(ChatBridgeMessage(body: ["type": "bookmark", "id": "q2", "topic": "2026-10-13:12", "on": true])
+      == .bookmark(id: "q2", topic: "2026-10-13:12", on: true), "bookmark")
+check(ChatBridgeMessage(body: ["type": "bookmark", "id": "q2", "topic": "../x", "on": true]) == nil,
+      "bookmark: a topic id that is not <day>:<line> is refused")
+check(ChatBridgeMessage(body: ["type": "bookmark", "id": "q2", "topic": "2026-10-13:12", "on": "yes"]) == nil,
+      "bookmark: on must be a bool")
 check(ChatBridgeMessage(body: ["type": "turn", "id": "t1", "text": "  hi there \n", "client_id": "c1"])
       == .turn(id: "t1", text: "hi there", clientID: "c1"), "turn, text trimmed")
 check(ChatBridgeMessage(body: ["type": "turn", "id": "t1", "text": "   ", "client_id": "c1"]) == nil, "blank turn refused")

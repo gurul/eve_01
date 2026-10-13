@@ -86,6 +86,25 @@ enum ChatRequests {
         return r
     }
 
+    /// Horizontal History's cards (GET /api/link/topics).
+    static func topics(_ ep: ChatEndpoint) -> URLRequest {
+        var r = URLRequest(url: ep.base.appendingPathComponent("api/link/topics"))
+        r.setValue("Bearer \(ep.token)", forHTTPHeaderField: "Authorization")
+        r.setValue("application/json", forHTTPHeaderField: "Accept")
+        return r
+    }
+
+    /// Save or unsave a topic (POST /api/link/topics/bookmark {"id", "on"}).
+    static func bookmark(_ ep: ChatEndpoint, topic: String, on: Bool) -> URLRequest {
+        var r = URLRequest(url: ep.base.appendingPathComponent("api/link/topics/bookmark"))
+        r.httpMethod = "POST"
+        r.setValue("Bearer \(ep.token)", forHTTPHeaderField: "Authorization")
+        r.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        r.setValue("application/json", forHTTPHeaderField: "Accept")
+        r.httpBody = try? JSONSerialization.data(withJSONObject: ["id": topic, "on": on])
+        return r
+    }
+
     static func messages(_ ep: ChatEndpoint, after: String?, wait: Int) -> URLRequest {
         var c = URLComponents(url: ep.base.appendingPathComponent("api/link/messages"), resolvingAgainstBaseURL: false)!
         var items: [URLQueryItem] = []
@@ -318,6 +337,33 @@ final class ChatTransport {
             var retried = false
             while let ep = self?.endpoint() {
                 result = await Self.fetch(ChatRequests.messages(ep, after: after, wait: wait), session: session)
+                if case .failure(let f) = result, f.addressMayHaveMoved, !retried, !Task.isCancelled,
+                   let self, await self.refresh() {
+                    retried = true
+                    continue
+                }
+                break
+            }
+            guard let self else { return }
+            let cancelled = Task.isCancelled
+            self.cancelledAs[id] = nil
+            self.tasks[id] = nil
+            if !cancelled { onEnd(result) }
+        }
+    }
+
+    /// One small JSON request for the page (Horizontal History), with one retry at eve's new address like
+    /// ``messages``; the body comes back as text for onLink.
+    func json(id: String, _ build: @escaping (ChatEndpoint) -> URLRequest,
+              onEnd: @escaping @MainActor (Result<String, ChatFailure>) -> Void) {
+        cancel(id: id, as: .silent)
+        let session = session
+        tasks[id] = Task { [weak self] in
+            var result: Result<String, ChatFailure> = .failure(ChatFailure(message: "Eve Link isn't paired.",
+                                                                           addressMayHaveMoved: false))
+            var retried = false
+            while let ep = self?.endpoint() {
+                result = await Self.fetch(build(ep), session: session)
                 if case .failure(let f) = result, f.addressMayHaveMoved, !retried, !Task.isCancelled,
                    let self, await self.refresh() {
                     retried = true

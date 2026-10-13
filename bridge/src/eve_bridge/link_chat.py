@@ -109,6 +109,9 @@ view and does all its networking natively (ios/EveLink); this module is the daem
   and what is going (the chief's open cards and the watches), the calendar's events left today and what plays now
   (Spotify, the TV), each source within its own short limit; one that is off or fails is left out and named in
   ``sources``, never failing the answer.
+* ``GET /api/link/topics?limit=<1..60>`` and ``POST /api/link/topics/bookmark`` ``{"id", "on"}`` (link_topics.py,
+  docs/app-chat.md "Horizontal History"): the chat cut into topics at pauses longer than 45 minutes, newest first, and
+  the saved ones; a bookmark is kept by the topic's first message id. 404 for a topic the last 30 days do not have.
 * ``GET /api/link/updates``, ``POST /api/link/updates/dismiss`` ``{"id"}`` and ``POST /api/link/updates/refresh``
   (updates.py, docs/updates.md; owner, 2026-10-12: "find actionable steps from our emails notes everything we have and
   suggest things"): the Updates pane's cards, each one sentence (a verb and the rest), made in the background from
@@ -189,6 +192,8 @@ TODAY_PATH = "/api/link/today"           # link_today.py: the home-screen widget
 UPDATES_PATH = "/api/link/updates"       # updates.py: the Updates pane's cards
 UPDATES_DISMISS_PATH = "/api/link/updates/dismiss"
 UPDATES_REFRESH_PATH = "/api/link/updates/refresh"
+TOPICS_PATH = "/api/link/topics"         # link_topics.py: Horizontal History's cards
+TOPICS_BOOKMARK_PATH = "/api/link/topics/bookmark"
 LOCATION_PATH = "/api/link/location"     # phone_location.py: the phone's latest fix
 SESSIONS_PATH = "/api/link/sessions"     # work_sessions.py: the Work tab's Claude Code sessions
 SESSION_START_PATH = "/api/link/sessions/start"
@@ -197,8 +202,10 @@ SESSION_RE = re.compile(r"^/api/link/sessions/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{
 # one kept upload's bytes, full size; anything after the prefix that is not 32 hex is a 404 (never a path)
 FILE_RE = re.compile(r"^/api/link/file/([^/]{0,64})$")
 PATHS = (TURN_PATH, MESSAGES_PATH, JOBS_PATH, APPS_PATH, UPLOAD_PATH, CONTROLS_PATH, TODAY_PATH, *STREAM_PATHS,
-         UPDATES_PATH, UPDATES_DISMISS_PATH, UPDATES_REFRESH_PATH, LOCATION_PATH, SESSIONS_PATH, SESSION_START_PATH)
-POST_PATHS = (TURN_PATH, UPLOAD_PATH, UPDATES_DISMISS_PATH, UPDATES_REFRESH_PATH, LOCATION_PATH, SESSION_START_PATH)
+         UPDATES_PATH, UPDATES_DISMISS_PATH, UPDATES_REFRESH_PATH, LOCATION_PATH, SESSIONS_PATH, SESSION_START_PATH,
+         TOPICS_PATH, TOPICS_BOOKMARK_PATH)
+POST_PATHS = (TURN_PATH, UPLOAD_PATH, UPDATES_DISMISS_PATH, UPDATES_REFRESH_PATH, LOCATION_PATH, SESSION_START_PATH,
+              TOPICS_BOOKMARK_PATH)
 MAX_CARD_ID_CHARS = 64                # a dismissed Updates card's id (updates.card_id: 12 hex)
 GRADES = ("auto", "instant", "think")    # telegram.GRADES: the speed dial
 JOB_ACTIONS = ("go", "done", "drop", "raise", "happened", "didnt", "hide")
@@ -700,14 +707,16 @@ class LinkChat:
                  turn_secs: float = TURN_SECS, ping_secs: float = PING_SECS, settle_secs: float = SETTLE_SECS,
                  poll_secs: float = POLL_SECS, uploads: Any = None, today: Any = None,
                  job_secs: float = JOB_SECS, hidden: Optional[HiddenJobs] = None, updates: Any = None,
-                 work: Optional[Callable[[], Any]] = None) -> None:
+                 work: Optional[Callable[[], Any]] = None, bookmarks: Any = None) -> None:
         from .link_today import Today
+        from .link_topics import Bookmarks
         from .link_uploads import UploadStore
         from .updates import Updates
 
         self.today = today if today is not None else Today()   # link_today.Today: the widget's feed
         # updates.Updates: the Updates pane's cards; the daemon runs its refresh loop (daemon.Daemon.run)
         self.updates = updates if updates is not None else Updates(inlet)
+        self.bookmarks = bookmarks if bookmarks is not None else Bookmarks()   # Horizontal History's saved topics
         self._inlet = inlet
         self._work = work                  # work_sessions.WorkSessions, read per request; None: the routes are a 503
         self.uploads = uploads if uploads is not None else UploadStore()   # link_uploads.UploadStore
@@ -875,6 +884,9 @@ class LinkChat:
             await self._json(writer, 503, {"ok": False, "error": NO_CHAT})
             return
         self._attach(inlet)
+        if path in (TOPICS_PATH, TOPICS_BOOKMARK_PATH):
+            await self._topics(inlet, path, query, headers, reader, writer)
+            return
         if path == TURN_PATH:
             await self._turn(inlet, headers, reader, writer)
         else:
@@ -1018,6 +1030,38 @@ class LinkChat:
                 self._streams.discard(me)
             if reading:
                 turn.readers -= 1
+
+    async def _topics(self, inlet: Any, path: str, query: str, headers: dict[str, str],
+                      reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        """``GET /api/link/topics``: Horizontal History's cards (link_topics.view). ``POST .../bookmark``
+        ``{"id", "on"}``: save or unsave the topic that starts at that message."""
+        from . import link_topics
+
+        store = getattr(inlet, "transcripts", None)
+        if store is None or not getattr(store, "enabled", False):
+            await self._json(writer, 503, {"ok": False, "error": NO_MEMORY})
+            return
+        if path == TOPICS_PATH:
+            q = dict(parse_qsl(query, keep_blank_values=True))
+            try:
+                limit = min(max(int(q.get("limit") or link_topics.DEFAULT_LIMIT), 1), link_topics.MAX_LIMIT)
+            except ValueError:
+                await self._json(writer, 400, {"ok": False, "error": "limit must be a whole number"})
+                return
+            await self._json(writer, 200, await asyncio.to_thread(link_topics.view, store, self.bookmarks, limit))
+            return
+        body = await self._optional_body(headers, reader, writer)
+        if body is None:
+            return
+        tid, on = body.get("id"), body.get("on")
+        if not isinstance(tid, str) or not link_topics.ID_RE.match(tid) or not isinstance(on, bool):
+            await self._json(writer, 400, {"ok": False, "error": "the body must be {\"id\": a topic's id, \"on\": true or false}"})
+            return
+        if on and not await asyncio.to_thread(link_topics.known, store, tid):
+            await self._json(writer, 404, {"ok": False, "error": "no such topic"})
+            return
+        await asyncio.to_thread(self.bookmarks.set, tid, on)
+        await self._json(writer, 200, {"ok": True, "bookmarked": on})
 
     async def _messages(self, inlet: Any, query: str, writer: asyncio.StreamWriter) -> None:
         q = dict(parse_qsl(query, keep_blank_values=True))

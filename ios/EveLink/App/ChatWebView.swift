@@ -183,12 +183,27 @@ final class ChatModel: NSObject, ObservableObject {
                 case .failure(let f): self?.js("onError", [lit, ChatJS.literal(f.message)])
                 }
             }
+        case .topics(let id):
+            linkJSON(id) { ChatRequests.topics($0) }
+        case let .bookmark(id, topic, on):
+            linkJSON(id) { ChatRequests.bookmark($0, topic: topic, on: on) }
         case .haptic(let style):
             Self.play(style)
         case .openURL(let url):
             open(url)
         case let .openAttachment(id, name, kind):
             openAttachment(id: id, name: name, kind: kind)
+        }
+    }
+
+    /// Horizontal History's requests: the daemon's JSON goes back to the page as text (onLink), a failure as onError.
+    private func linkJSON(_ id: String, _ build: @escaping (ChatEndpoint) -> URLRequest) {
+        let lit = ChatJS.literal(id)
+        transport.json(id: id, build) { [weak self] result in
+            switch result {
+            case .success(let json): self?.js("onLink", [lit, ChatJS.literal(json)])
+            case .failure(let f): self?.js("onError", [lit, ChatJS.literal(f.message)])
+            }
         }
     }
 
