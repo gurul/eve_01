@@ -9,7 +9,7 @@ from pathlib import Path
 from test_link_chat import FakeInlet, at, http, serve, store_at
 
 from eve_bridge import link_chat, link_topics
-from eve_bridge.link_topics import Bookmarks, segment
+from eve_bridge.link_topics import Bookmarks, Titler, segment
 
 
 def row(i: int, t: float, role: str = "owner", text: str = "hi") -> dict:
@@ -23,7 +23,8 @@ def test_a_pause_longer_than_45_minutes_starts_a_new_topic_and_exactly_45_does_n
             row(3, 60 + 2 * gap + 1, text="new thing")]            # longer: a new one
     a, b = segment(rows)
     assert (a["id"], a["last_id"], a["count"], a["title"]) == ("2026-10-13:0", "2026-10-13:2", 3, "plan the trip")
-    a.pop("important"), b.pop("important")
+    for t in (a, b):
+        t.pop("important"), t.pop("_lines")
     assert a["preview"] == "Sure: where to?" and (b["id"], b["count"]) == ("2026-10-13:3", 1)
 
 
@@ -97,7 +98,8 @@ def test_routes_list_save_and_refuse(tmp_path: Path) -> None:
     store.append("telegram", "t-1", "eve", "say", "Two meetings.", now=at(day, "14:00"))
 
     async def go() -> None:
-        server, port, token = await serve(tmp_path, FakeInlet(store), bookmarks=Bookmarks(tmp_path / "bm.json"))
+        server, port, token = await serve(tmp_path, FakeInlet(store), bookmarks=Bookmarks(tmp_path / "bm.json"),
+                                          titler=Titler(tmp_path / "titles.json", environ={"EVE_TOPIC_TITLES": "0"}))
         status, _, body = await http(port, "GET", link_chat.TOPICS_PATH, token=token)
         view = json.loads(body)
         assert status == 200 and [t["title"] for t in view["topics"]] == ["what's on my calendar for tomorrow?",
@@ -127,3 +129,44 @@ def test_routes_list_save_and_refuse(tmp_path: Path) -> None:
         await server.close()
 
     asyncio.run(go())
+
+
+def test_model_titles_are_cached_by_count_and_small_talk_hides_a_card(tmp_path: Path) -> None:
+    asked: list[str] = []
+
+    def ask(system: str, text: str) -> dict:
+        asked.append(text)
+        if "Lisbon" in text:
+            return {"title": "Lisbon trip in November.", "small_talk": False}
+        return {"title": "Checking in", "small_talk": True}
+
+    titler = Titler(tmp_path / "chat" / "titles.json", environ={}, ask=ask)
+    topics = segment([row(0, 0, text="can you plan a three day Lisbon trip"), row(1, 5, "eve", "Sure."),
+                      row(2, 5000, text="are you around this evening or busy with things"), row(3, 5005, "eve", "Here.")])
+    assert titler.title_pass(topics) == 2 and len(asked) == 2
+    assert "Person: can you plan a three day Lisbon trip" in asked[0] or "Person: can you plan" in asked[1]
+    assert (titler.path.stat().st_mode & 0o777) == 0o600
+    titler.apply(topics)
+    by_id = {t["id"]: t for t in topics}
+    assert by_id["2026-10-13:0"]["title"] == "Lisbon trip in November" and by_id["2026-10-13:0"]["important"] is True
+    assert by_id["2026-10-13:2"]["important"] is False                          # the model called it small talk
+    assert titler.title_pass(topics) == 0 and len(asked) == 2                   # cached: no second call
+    grown = segment([row(0, 0, text="can you plan a three day Lisbon trip"), row(1, 5, "eve", "Sure."),
+                     row(9, 60, text="add Porto for one night")])
+    assert titler.title_pass(grown) == 1 and len(asked) == 3                    # it grew: titled again
+
+
+def test_a_failing_model_keeps_the_first_message_title(tmp_path: Path) -> None:
+    def ask(system: str, text: str) -> dict:
+        raise TimeoutError
+
+    titler = Titler(tmp_path / "titles.json", environ={}, ask=ask)
+    topics = segment([row(0, 0, text="can you plan a three day Lisbon trip")])
+    assert titler.title_pass(topics) == 0 and not titler.path.exists()
+    titler.apply(topics)
+    assert topics[0]["title"] == "can you plan a three day Lisbon trip"
+
+
+def test_titles_off_never_ask(tmp_path: Path) -> None:
+    titler = Titler(tmp_path / "titles.json", environ={"EVE_TOPIC_TITLES": "0"}, ask=lambda s, t: {"title": "x"})
+    assert titler.kick(segment([row(0, 0, text="can you plan a three day Lisbon trip")])) is False

@@ -707,9 +707,10 @@ class LinkChat:
                  turn_secs: float = TURN_SECS, ping_secs: float = PING_SECS, settle_secs: float = SETTLE_SECS,
                  poll_secs: float = POLL_SECS, uploads: Any = None, today: Any = None,
                  job_secs: float = JOB_SECS, hidden: Optional[HiddenJobs] = None, updates: Any = None,
-                 work: Optional[Callable[[], Any]] = None, bookmarks: Any = None) -> None:
+                 work: Optional[Callable[[], Any]] = None, bookmarks: Any = None,
+                 titler: Any = None) -> None:
         from .link_today import Today
-        from .link_topics import Bookmarks
+        from .link_topics import Bookmarks, Titler
         from .link_uploads import UploadStore
         from .updates import Updates
 
@@ -717,6 +718,7 @@ class LinkChat:
         # updates.Updates: the Updates pane's cards; the daemon runs its refresh loop (daemon.Daemon.run)
         self.updates = updates if updates is not None else Updates(inlet)
         self.bookmarks = bookmarks if bookmarks is not None else Bookmarks()   # Horizontal History's saved topics
+        self.titler = titler if titler is not None else Titler()          # and their titles, from a cheap model
         self._inlet = inlet
         self._work = work                  # work_sessions.WorkSessions, read per request; None: the routes are a 503
         self.uploads = uploads if uploads is not None else UploadStore()   # link_uploads.UploadStore
@@ -1048,7 +1050,7 @@ class LinkChat:
             except ValueError:
                 await self._json(writer, 400, {"ok": False, "error": "limit must be a whole number"})
                 return
-            view = await asyncio.to_thread(link_topics.view, store, self.bookmarks, limit)
+            view = await asyncio.to_thread(link_topics.view, store, self.bookmarks, limit, self.titler)
             log.info("link chat: topics for the app: %d (%d saved)", len(view["topics"]), len(view["bookmarked"]))
             await self._json(writer, 200, view)
             return

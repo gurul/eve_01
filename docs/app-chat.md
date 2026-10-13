@@ -559,9 +559,17 @@ occams razor"; then "a button next to intensity", "important topics", "i dont ne
 
 eve has one continuous conversation, so a topic is a run of messages with no pause longer than 45 minutes
 (`link_topics.py`, `GAP_SECS`). Its title is the owner's first message that is not small talk (hi, thanks, ok and
-the like), plain and cut at a word; the card's preview is eve's last reply in it. No model is asked anything. A card
-is shown only for an important topic: the owner said at least 6 words beyond small talk, or the run went back and
-forth at least 4 messages. Saved topics always show. The daemon reads the last 30 transcript days.
+the like), plain and cut at a word; the card's preview is eve's last reply in it. A card is shown only for an
+important topic: the owner said at least 6 words beyond small talk, or the run went back and forth at least 4
+messages. Saved topics always show. The daemon reads the last 30 transcript days.
+
+**Model titles** (owner: "use a model for the titles"). After a list is served, a background pass asks the cheap
+background model (`deepseek/deepseek-v4.1-flash`, reasoning off; `EVE_TOPIC_TITLE_MODEL` moves it) to name up to 8
+untitled topics in 2 to 6 words and to say whether each was only small talk; a small-talk topic gets no card. The
+model reads the start of the topic (at most 3000 characters) through OpenRouter, like any chat turn. Answers are
+cached in `~/.config/eve-bridge/chat/topic-titles.json` (0600) by topic id and message count, so a topic is titled
+once and again only when it grows; the spend shows under "memory". `EVE_TOPIC_TITLES=0`, no OpenRouter key, or a
+failed call: the first-message title and the rules above.
 
 - **The button** (clock, next to the speed dial in the composer) opens and closes a row of cards that slides up just
   above the composer (`HorizontalHistory.tsx`, `history.ts`): saved topics first (filled star), then recent ones, each
