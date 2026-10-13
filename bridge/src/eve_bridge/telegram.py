@@ -6794,7 +6794,9 @@ class TelegramInlet:
                 sent = await self._send_file(chat_id, str(path), "From the task: " + path.name)
                 if not sent.get("ok"):
                     await self._say(chat_id, f"I couldn't send {path.name}: {sent.get('reason')}")
-            if getattr(self._agent, 'browser_used', False) or WANTS_SCREEN.search(goal):
+            # A picture only when the owner asked to see one (owner, 2026-10-13: "I don't need this browser shit for
+            # computer use"): a task that merely used a browser used to send its tab's last view, often a blank card.
+            if WANTS_SCREEN.search(goal):
                 result = await self._send_screen(chat_id, "the screen when the task ended")
                 if not result.get('ok'):
                     await self._say(chat_id, "I couldn't send the task picture: " + str(result.get('reason')))
