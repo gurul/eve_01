@@ -6642,3 +6642,32 @@ def test_the_same_file_is_sent_once_even_when_the_task_and_the_turn_both_send_it
     a, b, c = asyncio.run(go())
     assert sent == ["From the task: shot.jpg", "again"]
     assert a["ok"] and b["ok"] and "already sent" in b["note"] and c["ok"] and "note" not in c
+
+
+def test_assistant_text_from_a_session_eve_never_saw_is_not_relayed() -> None:
+    # 2026-10-12: claude-mem's observer (a background Claude whose hooks never reach eve) hit "Prompt is too long"
+    # on a photo's base64, and the tailer relayed that error to the phone as Claude's answer.
+    from eve_bridge.state import State
+
+    sent: list[tuple[str, str]] = []
+
+    class Inlet:
+        claude = True
+
+        async def relay_text(self, text: str, cwd: str = "") -> None:
+            sent.append((text, cwd))
+
+    async def heartbeat(*_a: Any, **_k: Any) -> None:
+        return None
+
+    d = SimpleNamespace(_telegram=Inlet(), state=State(), _push_heartbeat=heartbeat)
+    d.state.session_start("s1", cwd=REPO)                      # registered by turn_begin: no transcript_path
+
+    async def go() -> None:
+        await Daemon._on_assistant_text(d, "/h/.claude/projects/-observer/obs1.jsonl", "Prompt is too long", "u1")  # type: ignore[arg-type]
+        await Daemon._on_assistant_text(d, "/h/.claude/projects/-repo/s1.jsonl", "All green.", "u2")  # type: ignore[arg-type]
+        await asyncio.sleep(0)
+
+    asyncio.run(go())
+    assert sent == [("All green.", REPO)]
+    assert all("too long" not in e.text for e in d.state.entries)

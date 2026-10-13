@@ -3294,16 +3294,26 @@ class Daemon:
         lands on disk (typically <500 ms after Claude Code finishes the
         message). Emitting here beats the Stop hook, so the stick receives
         the '@ ...' entry while the user is still looking at the terminal —
-        before auto-off kicks in."""
+        before auto-off kicks in.
+
+        Only a session eve's hooks know: the tailer reads every transcript
+        under the roots, and a background Claude (claude-mem's observer,
+        whose hooks never reach eve) once had its "Prompt is too long" error
+        relayed to the phone as Claude's answer (2026-10-12). Claude Code
+        names a transcript <session_id>.jsonl."""
+        session = next((s for s in self.state.sessions.values()
+                        if s.transcript_path == _transcript_path), None) \
+            or self.state.sessions.get(os.path.splitext(os.path.basename(_transcript_path))[0])
+        if session is None:
+            log.debug("tailer: assistant text from an unknown session, not relayed")
+            return
         self.state.add_entry(f"@ {truncate_utf8_bytes(text, _ENTRY_PAYLOAD_MAX_BYTES)}")
         log.info("tailer: new assistant text → entry added (state.entries=%d)",
                  len(self.state.entries))
         await self._push_heartbeat(force=True)
         inlet = getattr(self, "_telegram", None)
         if inlet is not None and inlet.claude:
-            cwd = next((s.cwd for s in self.state.sessions.values()
-                        if s.transcript_path == _transcript_path and s.cwd), "")
-            asyncio.create_task(inlet.relay_text(text, cwd or ""))
+            asyncio.create_task(inlet.relay_text(text, session.cwd or ""))
 
     async def _turn_end_side_effects(self, celebrate_secs: float) -> None:
         """Post-response work for a turn_end event, run as a background task.
