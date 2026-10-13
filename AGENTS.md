@@ -277,12 +277,44 @@ walk-through, from changing its tools to the blind eval before it is on by defau
 
 ### Resources for building apps
 
+The reverse-engineering tools below are for devices, apps and games you own and may
+inspect, nothing else.
+
 - **REA** ([github.com/morluto/rea](https://github.com/morluto/rea)), "Reverse
   Engineer Anything": an MCP for agents that inspects app binaries, Electron/JS apps
   and websites without source, explains how a feature works and helps rebuild it.
   Setup: `npx rea-agents setup`. Use it to learn how a device's own app talks to the
   device when there is no public API, and only on devices and software you own and may
   inspect.
+- **Ghidra**
+  ([github.com/NationalSecurityAgency/ghidra](https://github.com/NationalSecurityAgency/ghidra)):
+  the NSA's free decompiler and disassembler for native binaries; most agent RE setups
+  sit on it.
+- **GhidraMCP**
+  ([github.com/LaurieWired/GhidraMCP](https://github.com/LaurieWired/GhidraMCP)): an
+  MCP server that lets an agent drive Ghidra, headless or in the GUI.
+- **ImHex** ([github.com/WerWolv/ImHex](https://github.com/WerWolv/ImHex)): a hex
+  editor with pattern language and an MCP server, for reading file formats and
+  firmware images.
+- **mitmproxy**
+  ([github.com/mitmproxy/mitmproxy](https://github.com/mitmproxy/mitmproxy)): an
+  intercepting HTTP/TLS proxy: watch what a phone or desktop app sends to map an API
+  it never documented.
+- **Frida** ([github.com/frida/frida](https://github.com/frida/frida)): runtime
+  hooking for desktop and mobile apps, scriptable from the CLI: trace the calls an app
+  makes while it runs.
+- **ILSpy** ([github.com/icsharpcode/ILSpy](https://github.com/icsharpcode/ILSpy)): a
+  .NET decompiler to C#, for Windows companion apps.
+- **Android RE skill**
+  ([github.com/SimoneAvogadro/android-reverse-engineering-skill](https://github.com/SimoneAvogadro/android-reverse-engineering-skill)):
+  a Claude Code skill that turns an APK into decompiled code and the API endpoints it
+  calls.
+- **Cpp2IL**
+  ([github.com/SamboyCoding/Cpp2IL](https://github.com/SamboyCoding/Cpp2IL)): turns a
+  Unity IL2CPP build back into .NET assemblies that ILSpy can read; work in progress.
+- **Universal Modder**
+  ([github.com/rehan-remade/universal-modder](https://github.com/rehan-remade/universal-modder)):
+  agent skills for recon, reverse engineering and modding PC games you own.
 - **hwlog** ([github.com/gurul/hardware-logging](https://github.com/gurul/hardware-logging)):
   the owner's crash-aware serial logging for embedded boards, built for coding agents:
   persistent sessions, decoded backtraces, flash-safe port arbitration and an MCP
