@@ -83,4 +83,15 @@ describe("bridge: Horizontal History requests", () => {
     bridge.native.onError((posts[1] as { id: string }).id, "Eve is not reachable");
     await expect(saved).rejects.toThrow("Eve is not reachable");
   });
+
+  it("hears the composer's history button", () => {
+    const bridge = createBridge(() => {});
+    let n = 0;
+    const off = bridge.onToggleHistory(() => n++);
+    bridge.native.toggleHistory();
+    bridge.native.toggleHistory();
+    off();
+    bridge.native.toggleHistory();
+    expect(n).toBe(2);
+  });
 });

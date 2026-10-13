@@ -1048,7 +1048,9 @@ class LinkChat:
             except ValueError:
                 await self._json(writer, 400, {"ok": False, "error": "limit must be a whole number"})
                 return
-            await self._json(writer, 200, await asyncio.to_thread(link_topics.view, store, self.bookmarks, limit))
+            view = await asyncio.to_thread(link_topics.view, store, self.bookmarks, limit)
+            log.info("link chat: topics for the app: %d (%d saved)", len(view["topics"]), len(view["bookmarked"]))
+            await self._json(writer, 200, view)
             return
         body = await self._optional_body(headers, reader, writer)
         if body is None:

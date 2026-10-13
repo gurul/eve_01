@@ -30,6 +30,12 @@ ID_RE = re.compile(r"^\d{4}-\d{2}-\d{2}:\d{1,7}$")    # a message id: <day>:<lin
 # what makes a line read badly on a card: markdown marks, an OpenUI program, a component action's context
 _PROGRAM = re.compile(r"```[\s\S]*?(```|$)|\n\n\[\"User clicked: [\s\S]*$")
 _MARKS = re.compile(r"[*_`#>|~\[\]]+")
+# Small talk: a message that only says hello, thanks or ok names nothing and makes nothing important.
+_GREETING = re.compile(r"^(hi+|hey+|hello|yo|hiya|sup|what'?s up|good (morning|afternoon|evening|night)|morning|"
+                       r"night|gm|gn|ok(ay)?|k|kk|cool|nice|great|perfect|thanks|thank you|thx|ty|lol|lmao|haha+|"
+                       r"yes|yeah|yep|no|nope|sure|got it|bye|cya|test(ing)?)( there)?( eve)?[\s!.,?]*$", re.I)
+SUBSTANCE_WORDS = 6           # an important topic: the owner said at least this many words beyond small talk,
+SUBSTANCE_COUNT = 4           # or it went back and forth at least this many messages
 
 
 def plain(text: str) -> str:
@@ -45,7 +51,8 @@ def clip(text: str, n: int) -> str:
 
 def segment(rows: Iterable[dict[str, Any]], gap: float = GAP_SECS) -> list[dict[str, Any]]:
     """Rows as link_chat._row makes them, oldest first → topics, oldest first. A run with no owner message (eve's
-    own reminders alone) is not a topic."""
+    own reminders alone) is not a topic. ``important``: the owner said something beyond small talk, and either
+    enough of it or the run went back and forth (owner, 2026-10-13: "important topics", "i dont need to see hi")."""
     runs: list[list[dict[str, Any]]] = []
     for row in rows:
         if runs and row["t"] - runs[-1][-1]["t"] <= gap:
@@ -54,10 +61,14 @@ def segment(rows: Iterable[dict[str, Any]], gap: float = GAP_SECS) -> list[dict[
             runs.append([row])
     out = []
     for run in runs:
-        first_owner = next((plain(r["text"]) for r in run if r["role"] == "owner" and plain(r["text"])), None)
-        if first_owner is None:
+        said = [plain(r["text"]) for r in run if r["role"] == "owner" and plain(r["text"])]
+        if not said:
             continue
-        out.append({"id": run[0]["id"], "first_id": run[0]["id"], "last_id": run[-1]["id"],
+        meant = [s for s in said if not _GREETING.match(s)]
+        first_owner = meant[0] if meant else said[0]
+        words = sum(len(s.split()) for s in meant)
+        important = bool(meant) and (words >= SUBSTANCE_WORDS or len(run) >= SUBSTANCE_COUNT)
+        out.append({"important": important,"id": run[0]["id"], "first_id": run[0]["id"], "last_id": run[-1]["id"],
                     "started_at": run[0]["t"], "ended_at": run[-1]["t"], "count": len(run),
                     "title": clip(first_owner, TITLE_CHARS),
                     "preview": clip(next((plain(r["text"]) for r in reversed(run)
@@ -102,10 +113,11 @@ class Bookmarks:
 
 
 def view(store: Any, bookmarks: Bookmarks, limit: int = DEFAULT_LIMIT) -> dict[str, Any]:
-    """``GET /api/link/topics``: the newest ``limit`` topics, and the saved ones (newest bookmark first), each with
+    """``GET /api/link/topics``: the newest ``limit`` important topics, and the saved ones (newest bookmark first), each with
     ``bookmarked``. A saved topic whose first message was forgotten drops out. Blocking: call it in a thread."""
     found = segment(read_rows(store))
     saved = bookmarks.load()
+    found = [t for t in found if t.pop("important") or t["id"] in saved]       # small talk never makes a card
     for t in found:
         t["bookmarked"] = t["id"] in saved
     by_id = {t["id"]: t for t in found}

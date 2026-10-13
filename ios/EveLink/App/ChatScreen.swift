@@ -385,6 +385,16 @@ struct ChatComposer: View {
                     AttachButton(full: roomLeft <= 0 || uploading, ready: chat.ready,
                                  photos: { showPhotos = true }, files: { showFiles = true })
                     Spacer()
+                    Button { chat.toggleHistory() } label: {
+                        Image(systemName: "clock.arrow.circlepath")
+                            .font(.system(size: 20, weight: .regular))
+                            .foregroundStyle(Color.primary)
+                            .frame(minWidth: 36, minHeight: 36)
+                            .contentShape(Rectangle())
+                    }
+                    .disabled(!chat.ready)
+                    .accessibilityLabel("History")
+                    .accessibilityHint("Past topics: swipe through, star one to save it, tap one to go back to it")
                     SpeedDial(grade: $chat.grade)
                     micButton
                     sendButton

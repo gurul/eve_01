@@ -101,8 +101,7 @@ textarea,
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   scrollbar-width: none;
-  /* --eve-history-h: the Horizontal History row's height, room above the first message (HorizontalHistory.tsx) */
-  padding-top: calc(var(--eve-inset-top) + var(--eve-history-h, 0px) + 8px) !important;
+  padding-top: calc(var(--eve-inset-top) + 8px) !important;
   padding-bottom: calc(var(--eve-inset-bottom) + 16px) !important;
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
@@ -465,7 +464,7 @@ textarea,
   gap: 16px;
 }
 
-/* Horizontal History (HorizontalHistory.tsx): topic cards over the top of the chat, swiped sideways. */
+/* Horizontal History (HorizontalHistory.tsx): topic cards that slide up above the composer, swiped sideways. */
 .eve-mid {
   display: contents;
 }
@@ -478,28 +477,29 @@ textarea,
   --eve-card-line: rgba(60, 60, 67, 0.12);
   --eve-star: #ff9f0a;
   position: fixed;
-  top: var(--eve-inset-top);
+  bottom: var(--eve-inset-bottom);
   left: 0;
   right: 0;
   z-index: 20;
+  padding-top: 4px;
   background: var(--eve-band);
   transition: transform 220ms ease, opacity 220ms ease;
 }
 
-/* A short fade under the row, like the one native draws under its top bar. */
-.eve-history::after {
+/* A short fade above the row, so the chat runs into it softly. */
+.eve-history::before {
   content: "";
   position: absolute;
   left: 0;
   right: 0;
-  top: 100%;
+  bottom: 100%;
   height: 14px;
-  background: linear-gradient(var(--eve-band), transparent);
+  background: linear-gradient(transparent, var(--eve-band));
   pointer-events: none;
 }
 
 .eve-history--away {
-  transform: translateY(-110%);
+  transform: translateY(24px);
   opacity: 0;
   pointer-events: none;
 }
@@ -618,7 +618,7 @@ textarea,
 }
 
 .eve-history__note {
-  margin: 0 16px 6px;
+  margin: 6px 16px;
   font-size: 12px;
   color: var(--eve-card-dim);
 }

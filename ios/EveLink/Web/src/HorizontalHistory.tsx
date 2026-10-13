@@ -1,10 +1,10 @@
-// Horizontal History: a swipeable row of topic cards over the top of the chat
-// (history.ts). It shows when the page opens and when the owner scrolls up,
-// and slides away while they read down. A tap jumps to where the topic starts
-// in the chat, or, when that is no longer loaded, picks the topic back up with
-// eve. The star saves it (the daemon keeps bookmarks).
+// Horizontal History: a swipeable row of topic cards that slides up above the
+// composer when the owner taps its history button (history.ts). A tap on a
+// card closes the row and jumps to where the topic starts in the chat, or,
+// when that is no longer loaded, picks the topic back up with eve. The star
+// saves it (the daemon keeps bookmarks).
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { cards, parseTopics, pickUp, startOf, when, withBookmark, type Topic, type TopicsView } from "./history";
 import type { Bridge } from "./nativeBridge";
@@ -52,9 +52,8 @@ function Card({ t, now, onOpen, onStar }: { t: Topic; now: number; onOpen: () =>
 
 export function HorizontalHistory({ bridge, refreshKey }: { bridge: Bridge; refreshKey: number }) {
   const [view, setView] = useState<TopicsView>({ topics: [], bookmarked: [] });
-  const [shown, setShown] = useState(true);
+  const [shown, setShown] = useState(false);
   const [note, setNote] = useState("");
-  const nav = useRef<HTMLElement | null>(null);
 
   const load = useCallback(() => {
     bridge
@@ -73,40 +72,21 @@ export function HorizontalHistory({ bridge, refreshKey }: { bridge: Bridge; refr
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [load]);
 
-  // Scrolling up shows the row, scrolling down hides it. The list mounts
-  // after this component, so it is looked up on each event.
-  useEffect(() => {
-    let last = -1;
-    const onScroll = (e: Event) => {
-      const el = e.target as HTMLElement;
-      if (!(el instanceof HTMLElement) || !el.matches(SCROLL_AREA)) return;
-      const y = el.scrollTop;
-      if (last >= 0 && Math.abs(y - last) > 8) setShown(y < last);
-      last = y;
-    };
-    document.addEventListener("scroll", onScroll, { capture: true, passive: true });
-    return () => document.removeEventListener("scroll", onScroll, { capture: true });
-  }, []);
-
-  // The row covers the top of the list: the list makes room for it above the first message (native.css,
-  // --eve-history-h). Kept while the row is away, so hiding it never moves what the owner is reading.
-  const hasCards = view.topics.length + view.bookmarked.length > 0;
-  useEffect(() => {
-    const root = document.documentElement.style;
-    const el = nav.current;
-    if (!hasCards || !el) {
-      root.setProperty("--eve-history-h", "0px");
-      return;
-    }
-    const set = () => root.setProperty("--eve-history-h", `${Math.ceil(el.getBoundingClientRect().height)}px`);
-    set();
-    const ro = new ResizeObserver(set);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [hasCards]);
+  // The composer's history button opens and closes the row; opening asks for fresh topics.
+  useEffect(
+    () =>
+      bridge.onToggleHistory(() =>
+        setShown((was) => {
+          if (!was) load();
+          return !was;
+        }),
+      ),
+    [bridge, load],
+  );
 
   const open = (t: Topic) => {
     bridge.post({ type: "haptic", style: "light" });
+    setShown(false);
     const start = startOf(t, loadedIds());
     if (start) jumpTo(start);
     else bridge.native.send(pickUp(t));
@@ -124,10 +104,10 @@ export function HorizontalHistory({ bridge, refreshKey }: { bridge: Bridge; refr
   };
 
   const { saved, recent } = cards(view);
-  if (saved.length === 0 && recent.length === 0) return null;
   const now = Date.now() / 1000;
   return createPortal(
-    <nav ref={nav} className={`eve-history${shown ? "" : " eve-history--away"}`} aria-label="Conversation history">
+    <nav className={`eve-history${shown ? "" : " eve-history--away"}`} aria-label="Conversation history" aria-hidden={!shown}>
+      {saved.length === 0 && recent.length === 0 && <p className="eve-history__note">No past topics yet.</p>}
       <div className="eve-history__row">
         {saved.map((t) => (
           <Card key={`s-${t.id}`} t={t} now={now} onOpen={() => open(t)} onStar={() => star(t)} />

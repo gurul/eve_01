@@ -73,6 +73,12 @@ final class ChatModel: NSObject, ObservableObject {
         transport.cancelTurns(as: .done)
     }
 
+    /// The composer's history button (Horizontal History, docs/app-chat.md): the page opens or closes its card row.
+    func toggleHistory() {
+        Self.play(.light)
+        js("toggleHistory")
+    }
+
     func scrollToBottom() {
         guard ready else { return }
         js("scrollToBottom")

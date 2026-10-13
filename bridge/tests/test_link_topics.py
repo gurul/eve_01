@@ -23,11 +23,31 @@ def test_a_pause_longer_than_45_minutes_starts_a_new_topic_and_exactly_45_does_n
             row(3, 60 + 2 * gap + 1, text="new thing")]            # longer: a new one
     a, b = segment(rows)
     assert (a["id"], a["last_id"], a["count"], a["title"]) == ("2026-10-13:0", "2026-10-13:2", 3, "plan the trip")
+    a.pop("important"), b.pop("important")
     assert a["preview"] == "Sure: where to?" and (b["id"], b["count"]) == ("2026-10-13:3", 1)
 
 
 def test_eves_own_lines_alone_are_not_a_topic() -> None:
     assert segment([row(0, 0, "eve", "Reminder: water the plants")]) == []
+
+
+def test_a_hello_is_not_a_title_the_next_message_is() -> None:
+    [t] = segment([row(0, 0, text="Hi eve!"), row(1, 5, "eve", "Hi!"), row(2, 30, text="what's on tomorrow?")])
+    assert t["title"] == "what's on tomorrow?"
+    [only] = segment([row(0, 0, text="hey"), row(1, 5, "eve", "Hey! What's up?")])
+    assert only["title"] == "hey" and only["important"] is False             # nothing else said
+
+
+def test_only_topics_with_substance_are_important() -> None:
+    small = segment([row(0, 0, text="hi"), row(1, 5, "eve", "Hi!"), row(2, 9, text="thanks")])
+    assert [t["important"] for t in small] == [False]                          # small talk, even three messages
+    short = segment([row(0, 0, text="call mom")])
+    assert [t["important"] for t in short] == [False]                          # two words, nothing back
+    said = segment([row(0, 0, text="find me a quiet cafe near the office")])
+    assert [t["important"] for t in said] == [True]                            # six words or more
+    talk = segment([row(0, 0, text="call mom"), row(1, 5, "eve", "Calling."), row(2, 9, text="later"),
+                    row(3, 12, "eve", "OK.")])
+    assert [t["important"] for t in talk] == [True]                            # it went back and forth
 
 
 def test_titles_are_plain_and_clipped_at_a_word() -> None:
@@ -52,16 +72,19 @@ def test_bookmarks_are_private_survive_and_unset(tmp_path: Path) -> None:
 def test_routes_list_save_and_refuse(tmp_path: Path) -> None:
     store = store_at(tmp_path)
     day = "2026-10-13"
-    store.append("telegram", "t-1", "owner", "say", "plan the Lisbon trip", now=at(day, "09:00"))
+    store.append("telegram", "t-1", "owner", "say", "plan the Lisbon trip for early November", now=at(day, "09:00"))
     store.append("telegram", "t-1", "eve", "say", "Three days works well.", now=at(day, "09:01"))
-    store.append("telegram", "t-1", "owner", "say", "what's on tomorrow?", now=at(day, "14:00"))
+    store.append("telegram", "t-1", "owner", "say", "hey", now=at(day, "12:00"))         # small talk: no card
+    store.append("telegram", "t-1", "eve", "say", "Hey!", now=at(day, "12:00"))
+    store.append("telegram", "t-1", "owner", "say", "what's on my calendar for tomorrow?", now=at(day, "14:00"))
     store.append("telegram", "t-1", "eve", "say", "Two meetings.", now=at(day, "14:00"))
 
     async def go() -> None:
         server, port, token = await serve(tmp_path, FakeInlet(store), bookmarks=Bookmarks(tmp_path / "bm.json"))
         status, _, body = await http(port, "GET", link_chat.TOPICS_PATH, token=token)
         view = json.loads(body)
-        assert status == 200 and [t["title"] for t in view["topics"]] == ["what's on tomorrow?", "plan the Lisbon trip"]
+        assert status == 200 and [t["title"] for t in view["topics"]] == ["what's on my calendar for tomorrow?",
+                                                                      "plan the Lisbon trip for early November"]
         first = view["topics"][1]
         assert set(first) == {"id", "first_id", "last_id", "started_at", "ended_at", "count", "title", "preview",
                               "bookmarked"} and first["bookmarked"] is False and view["bookmarked"] == []
@@ -70,7 +93,7 @@ def test_routes_list_save_and_refuse(tmp_path: Path) -> None:
                                      token=token)
         assert status == 200 and json.loads(body) == {"ok": True, "bookmarked": True}
         view = json.loads((await http(port, "GET", link_chat.TOPICS_PATH, token=token))[2])
-        assert [t["title"] for t in view["bookmarked"]] == ["plan the Lisbon trip"]
+        assert [t["title"] for t in view["bookmarked"]] == ["plan the Lisbon trip for early November"]
         assert view["topics"][1]["bookmarked"] is True
 
         assert (await http(port, "GET", link_chat.TOPICS_PATH + "?limit=1", token=token))[0] == 200

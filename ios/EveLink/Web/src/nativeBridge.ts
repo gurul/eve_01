@@ -64,6 +64,8 @@ export interface EveNative {
   send(text: string, attachments?: string): void;
   setBusy(busy: boolean): void;
   scrollToBottom(): void;
+  /** The composer's history button: open or close Horizontal History. */
+  toggleHistory(): void;
   /** Where the native top bar and composer cover the page, in CSS px (insets.ts). */
   setInsets(insets: Insets): void;
 }
@@ -126,6 +128,8 @@ export interface Bridge {
   setSendHandler(handler: SendHandler | null): void;
   onBusy(listener: (busy: boolean) => void): () => void;
   setScrollHandler(handler: (() => void) | null): void;
+  /** Hears the composer's history button. */
+  onToggleHistory(listener: () => void): () => void;
   /** Native's insets: the listener hears the last ones at once (if any), then every change. */
   onInsets(listener: (insets: Insets) => void): () => void;
 }
@@ -150,6 +154,7 @@ export function createBridge(post: Post): Bridge {
   let sendHandler: SendHandler | null = null;
   let scrollHandler: (() => void) | null = null;
   const insetListeners = new Set<(insets: Insets) => void>();
+  const historyListeners = new Set<() => void>();
   let lastInsets: Insets | null = null;
 
   const endTurn = (id: string): TurnEntry | undefined => {
@@ -236,6 +241,9 @@ export function createBridge(post: Post): Bridge {
     },
     scrollToBottom() {
       scrollHandler?.();
+    },
+    toggleHistory() {
+      for (const listener of historyListeners) listener();
     },
     setInsets(raw) {
       const insets = sanitizeInsets(raw);
@@ -331,6 +339,11 @@ export function createBridge(post: Post): Bridge {
 
     setScrollHandler(handler) {
       scrollHandler = handler;
+    },
+
+    onToggleHistory(listener) {
+      historyListeners.add(listener);
+      return () => historyListeners.delete(listener);
     },
 
     onInsets(listener) {
