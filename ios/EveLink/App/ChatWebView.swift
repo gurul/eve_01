@@ -22,6 +22,8 @@ final class ChatModel: NSObject, ObservableObject {
     let relay: Relay
     /// A quick sideways swipe on the chat (true: finger moved left): the screen moves one pane (PaneSwipe).
     var onPaneSwipe: ((Bool) -> Void)?
+    /// Horizontal History's row is open on the page: its cards take sideways swipes (``paneSwiped`` stands aside).
+    private(set) var historyOpen = false
     private(set) lazy var webView: WKWebView = makeWebView()
     private lazy var transport: ChatTransport = {
         let t = ChatTransport(
@@ -189,6 +191,8 @@ final class ChatModel: NSObject, ObservableObject {
                 case .failure(let f): self?.js("onError", [lit, ChatJS.literal(f.message)])
                 }
             }
+        case .history(let open):
+            historyOpen = open
         case .topics(let id):
             linkJSON(id) { ChatRequests.topics($0) }
         case let .bookmark(id, topic, on):
@@ -479,6 +483,7 @@ struct ChatWebView: UIViewRepresentable {
 
 extension ChatModel: UIGestureRecognizerDelegate {
     @objc fileprivate func paneSwiped(_ g: UISwipeGestureRecognizer) {
+        guard !historyOpen else { return }               // swiping through history cards, not between panes
         onPaneSwipe?(g.direction == .left)
     }
 

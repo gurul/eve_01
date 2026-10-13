@@ -84,6 +84,11 @@ export function HorizontalHistory({ bridge, refreshKey }: { bridge: Bridge; refr
     [bridge, load],
   );
 
+  // Native stands its pane swipe aside while the row is open, so swiping cards never changes the tab.
+  useEffect(() => {
+    bridge.post({ type: "history", open: shown });
+  }, [bridge, shown]);
+
   const open = (t: Topic) => {
     bridge.post({ type: "haptic", style: "light" });
     setShown(false);

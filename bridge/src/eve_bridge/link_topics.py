@@ -31,9 +31,15 @@ ID_RE = re.compile(r"^\d{4}-\d{2}-\d{2}:\d{1,7}$")    # a message id: <day>:<lin
 _PROGRAM = re.compile(r"```[\s\S]*?(```|$)|\n\n\[\"User clicked: [\s\S]*$")
 _MARKS = re.compile(r"[*_`#>|~\[\]]+")
 # Small talk: a message that only says hello, thanks or ok names nothing and makes nothing important.
-_GREETING = re.compile(r"^(hi+|hey+|hello|yo|hiya|sup|what'?s up|good (morning|afternoon|evening|night)|morning|"
-                       r"night|gm|gn|ok(ay)?|k|kk|cool|nice|great|perfect|thanks|thank you|thx|ty|lol|lmao|haha+|"
-                       r"yes|yeah|yep|no|nope|sure|got it|bye|cya|test(ing)?)( there)?( eve)?[\s!.,?]*$", re.I)
+_FRIEND = r"( (there|eve|friend|buddy|bro|dude|man|mate|pal))*"
+_GREETING = re.compile(
+    r"^((hi+|hey+|hello|yo|hiya|sup|morning|night|gm|gn|good (morning|afternoon|evening|night))" + _FRIEND +
+    r"|(how are (you|u|ya)|how r u|how('?s| is) it going|how('?s| are) (you|u) doing|how have you been|"
+    r"what'?s up|wassup|are (you|u) (there|awake|up|ok|okay)|(you|u) there)" + _FRIEND +
+    r"|(ok(ay)?|k|kk|cool|nice|great|perfect|awesome|thanks|thank (you|u)|thx|ty|lol|lmao|haha+|yes|yeah|yep|no|"
+    r"nope|sure|got it|bye|cya|test(ing)?|nm|not much|good|fine|i'?m good|all good)" + _FRIEND +
+    r")[\s!.,?]*$", re.I)
+TITLE_WORDS = 3               # a title says something: shorter messages (a garbled voice line) are passed over
 SUBSTANCE_WORDS = 6           # an important topic: the owner said at least this many words beyond small talk,
 SUBSTANCE_COUNT = 4           # or it went back and forth at least this many messages
 
@@ -65,7 +71,7 @@ def segment(rows: Iterable[dict[str, Any]], gap: float = GAP_SECS) -> list[dict[
         if not said:
             continue
         meant = [s for s in said if not _GREETING.match(s)]
-        first_owner = meant[0] if meant else said[0]
+        first_owner = next((s for s in meant if len(s.split()) >= TITLE_WORDS), meant[0] if meant else said[0])
         words = sum(len(s.split()) for s in meant)
         important = bool(meant) and (words >= SUBSTANCE_WORDS or len(run) >= SUBSTANCE_COUNT)
         out.append({"important": important,"id": run[0]["id"], "first_id": run[0]["id"], "last_id": run[-1]["id"],

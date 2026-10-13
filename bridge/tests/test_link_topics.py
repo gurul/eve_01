@@ -38,6 +38,21 @@ def test_a_hello_is_not_a_title_the_next_message_is() -> None:
     assert only["title"] == "hey" and only["important"] is False             # nothing else said
 
 
+def test_friendly_small_talk_is_small_talk() -> None:
+    for hello in ("Hey friend.", "How are you bro?", "Are you there friend?", "How are u", "hi eve!", "what's up",
+                  "how's it going", "I'm good", "thank you buddy"):
+        [t] = segment([row(0, 0, text=hello), row(1, 5, "eve", "Hi!"), row(2, 9, text=hello),
+                       row(3, 12, "eve", "Here.")])
+        assert t["important"] is False, hello
+    [t] = segment([row(0, 0, text="hey how do I fix the bike chain")])
+    assert t["important"] is True                                               # a hello that asks something
+
+
+def test_a_title_says_something() -> None:
+    [t] = segment([row(0, 0, text="Is gofrai."), row(1, 5, "eve", "Sorry?"), row(2, 9, text="Is the garage open today")])
+    assert t["title"] == "Is the garage open today"
+
+
 def test_only_topics_with_substance_are_important() -> None:
     small = segment([row(0, 0, text="hi"), row(1, 5, "eve", "Hi!"), row(2, 9, text="thanks")])
     assert [t["important"] for t in small] == [False]                          # small talk, even three messages
