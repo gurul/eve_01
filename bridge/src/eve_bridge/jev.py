@@ -14,6 +14,8 @@ set of assertions `_parse_choice` makes, so an answer that passes there passes h
 TWO ROUTES, one envelope:
   "typesafe"   POST https://api.typesafe.ai/v1/systemone      Bearer TYPESAFE_API_KEY
   "openrouter" POST https://openrouter.ai/api/alpha/decisions Bearer OPENROUTER_API_KEY
+  "ollama"     POST http://127.0.0.1:11434/v1/systemone       no key: an open decision model on this Mac (Ollama
+               0.35+ serves Jev's API; tev1 from Together AI, owner 2026-10-13: "its open source so run on device")
 The first is the one jev-ultrafast exercises and the default here. The second is alpha;
 it answers in the same envelope and is the route this Mac runs (2026-09-21: the head
 classifier, the request router, and tools/jev_step_eval.py's 155 four-question requests
@@ -56,7 +58,9 @@ from .decider import WARMUP_CONTEXT, WARMUP_OBJECTIVE, WARMUP_OPTIONS, Decider
 ROUTES = {
     "typesafe": ("https://api.typesafe.ai/v1/systemone", "TYPESAFE_API_KEY", "jev-latest"),
     "openrouter": ("https://openrouter.ai/api/alpha/decisions", "OPENROUTER_API_KEY", "typesafe/jev-1.13"),
+    "ollama": ("http://127.0.0.1:11434/v1/systemone", "", "tev1:0.8b"),
 }
+KEYLESS = frozenset({"ollama"})   # served on this Mac: nothing to send but the request
 DEFAULT_ROUTE = "typesafe"
 DEFAULT_TIMEOUT_S = 3.0        # a click-path budget, not jev-ultrafast's 25 s browser budget
 MAX_LEN = 32000                # Jev 1.13 context, per OpenRouter's /models endpoint (2026-09-21)
@@ -143,8 +147,8 @@ def route_config(env: Mapping[str, str], route: str = "") -> tuple[str, str, str
     if name not in ROUTES:
         raise JevError(f"EVE_JEV_ROUTE must be one of {tuple(ROUTES)}, not {name!r}")
     url, key_name, default_model = ROUTES[name]
-    key = (env.get(key_name) or "").strip()
-    if not key:
+    key = (env.get(key_name) or "").strip() if key_name else ""
+    if not key and name not in KEYLESS:
         raise JevError(f"{key_name} is not set (route {name})")
     model = (env.get("EVE_JEV_MODEL") or "").strip() or default_model
     return url, key, model
@@ -172,7 +176,7 @@ def make_predict(
         for attempt in range(RETRIES + 1):
             request = urllib.request.Request(
                 url, data=body, method="POST",
-                headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+                headers={**({"Authorization": f"Bearer {key}"} if key else {}), "Content-Type": "application/json"},
             )
             try:
                 with send(request, timeout=timeout_s) as response:

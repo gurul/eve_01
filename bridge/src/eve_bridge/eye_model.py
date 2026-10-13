@@ -85,14 +85,22 @@ class JevEyeModel:
 
     ``env`` (default ``os.environ``) supplies the route and key (jev.route_config: EVE_JEV_ROUTE and its
     key); ``opener`` is jev.make_predict's socket seam for tests. Raises jev.JevError at construction when no
-    key is set, so the worker reports "no Jev key" instead of failing on every turn."""
+    key is set, so the worker reports "no Jev key" instead of failing on every turn.
+
+    ``EVE_EXPRESSION_JEV_ROUTE`` gives the eyes a route of their own, leaving every other Jev router where it is:
+    ``ollama`` asks an open decision model on this Mac (tev1, owner 2026-10-13: "its open source so run on
+    device", for the face on an Action Button call); ``EVE_EXPRESSION_JEV_MODEL`` names it (that route's default
+    otherwise)."""
 
     def __init__(self, env: Optional[Mapping[str, str]] = None, *, opener: Optional[Callable[..., Any]] = None,
                  timeout_s: float = 0.0) -> None:
         from . import jev
 
         source = os.environ if env is None else env
-        url, key, self.model = jev.route_config(source)
+        route = (source.get("EVE_EXPRESSION_JEV_ROUTE") or "").strip().lower()
+        url, key, self.model = jev.route_config(source, route)
+        if route:
+            self.model = (source.get("EVE_EXPRESSION_JEV_MODEL") or "").strip() or jev.ROUTES[route][2]
         self._predict = jev.make_predict(url, key, self.model, timeout_s=timeout_s or jev.timeout_from_env(source),
                                          opener=opener)
 
