@@ -39,6 +39,11 @@ _GREETING = re.compile(
     r"|(ok(ay)?|k|kk|cool|nice|great|perfect|awesome|thanks|thank (you|u)|thx|ty|lol|lmao|haha+|yes|yeah|yep|no|"
     r"nope|sure|got it|bye|cya|test(ing)?|nm|not much|good|fine|i'?m good|all good)" + _FRIEND +
     r")[\s!.,?]*$", re.I)
+# A short message built around a pleasantry ("It's going amazing, how are you?") is small talk too.
+_PLEASANTRY = re.compile(r"\b(how are (you|u|ya)|how('?s| is) it going|what'?s (good|up|new)|how('?s| was| is) "
+                         r"(your|ur) (day|night|morning|weekend)|i'?m (good|great|fine|well|doing (well|good|great))|"
+                         r"(it'?s|its) going (good|great|well|amazing)|nice to (meet|see) you)\b", re.I)
+SMALL_TALK_WORDS = 7
 TITLE_WORDS = 3               # a title says something: shorter messages (a garbled voice line) are passed over
 SUBSTANCE_WORDS = 6           # an important topic: the owner said at least this many words beyond small talk,
 SUBSTANCE_COUNT = 4           # or it went back and forth at least this many messages
@@ -53,6 +58,10 @@ def clip(text: str, n: int) -> str:
         return text
     cut = text[: n - 1].rsplit(" ", 1)[0] if " " in text[: n - 1] else text[: n - 1]
     return cut.rstrip(" ,.;:-") + "…"
+
+
+def small_talk(text: str) -> bool:
+    return bool(_GREETING.match(text)) or (len(text.split()) <= SMALL_TALK_WORDS and bool(_PLEASANTRY.search(text)))
 
 
 def segment(rows: Iterable[dict[str, Any]], gap: float = GAP_SECS) -> list[dict[str, Any]]:
@@ -70,7 +79,7 @@ def segment(rows: Iterable[dict[str, Any]], gap: float = GAP_SECS) -> list[dict[
         said = [plain(r["text"]) for r in run if r["role"] == "owner" and plain(r["text"])]
         if not said:
             continue
-        meant = [s for s in said if not _GREETING.match(s)]
+        meant = [s for s in said if not small_talk(s)]
         first_owner = next((s for s in meant if len(s.split()) >= TITLE_WORDS), meant[0] if meant else said[0])
         words = sum(len(s.split()) for s in meant)
         important = bool(meant) and (words >= SUBSTANCE_WORDS or len(run) >= SUBSTANCE_COUNT)

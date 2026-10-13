@@ -39,11 +39,13 @@ def test_a_hello_is_not_a_title_the_next_message_is() -> None:
 
 
 def test_friendly_small_talk_is_small_talk() -> None:
-    for hello in ("Hey friend.", "How are you bro?", "Are you there friend?", "How are u", "hi eve!", "what's up",
+    for hello in ("It's going amazing, how are you?", "What's good, friend?", "Hey friend.", "How are you bro?", "Are you there friend?", "How are u", "hi eve!", "what's up",
                   "how's it going", "I'm good", "thank you buddy"):
         [t] = segment([row(0, 0, text=hello), row(1, 5, "eve", "Hi!"), row(2, 9, text=hello),
                        row(3, 12, "eve", "Here.")])
         assert t["important"] is False, hello
+    [t] = segment([row(0, 0, text="how are you at fixing bike chains when the link is bent?")])
+    assert t["important"] is True                                               # long enough to be a question
     [t] = segment([row(0, 0, text="hey how do I fix the bike chain")])
     assert t["important"] is True                                               # a hello that asks something
 
