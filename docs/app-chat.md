@@ -841,6 +841,21 @@ Eve continues to use its installed OpenUI runtime. Model instructions and the
 component reference are unchanged, so this change requires no new prompt eval.
 The reply-selection eval below remains the record for the current prompt.
 
+### Pictures in cards
+
+Owner, 2026-10-13: "use images when u can, especially for like concerts, places and things like that and a
+highquality one is available". A card shows a picture whenever a tool returned a real one and the subject has a look
+(a concert or show, a place, venue, city, artist, team, dish, product or thing): one subject leads the Card with an
+ImageBlock, several make a ListBlock with variant "image". The card reference (`gen-prompt.mjs` RULES) still allows
+only an image URL from a tool result, the conversation or the owner, never an invented one.
+
+- **Concerts and shows**: `events_search` returns each event's widest 16:9 Ticketmaster picture (`image`, at least
+  640 px wide, https only).
+- **Everything else**: `find_image(subject)` (`find_image.py`) makes one keyless call to Wikipedia's API and returns
+  the page's original lead picture only when it is a JPEG, PNG or WebP of at least 800 x 400 (no logos or drawings),
+  else `ok: false` and the card goes without. Its page title is outside words, so it taints the turn like a web search.
+  `EVE_FIND_IMAGE=0` turns it off. The app loads the picture itself (`img-src https:` in the page's CSP).
+
 ## When a reply uses OpenUI
 
 Owner, 2026-10-08: "make sure it uses openui features when its good for it to

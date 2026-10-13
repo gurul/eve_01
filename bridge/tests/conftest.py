@@ -163,3 +163,10 @@ def _science_search_pinned_off(monkeypatch: pytest.MonkeyPatch):
     Its own tests (test_science_search.py) switch it on and check every surface it rides. A plain `pytest` never
     sends a search: no faked model calls it, and its own tests use a mocked transport."""
     monkeypatch.setenv("EVE_SCIENCE_SEARCH", "0")
+
+
+@pytest.fixture(autouse=True)
+def _find_image_pinned_off(monkeypatch: pytest.MonkeyPatch):
+    """Pictures for cards ship on (find_image.py, 2026-10-13); like Ask science, a plain test runs with the tool off
+    so the request-body checks keep their bytes. Its own tests (test_find_image.py) pass their own environ."""
+    monkeypatch.setenv("EVE_FIND_IMAGE", "0")

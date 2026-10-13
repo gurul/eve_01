@@ -9,7 +9,7 @@ searched events by place and date.
 One tool, ``events_search``: a city (or "city, ST"), a date range in the owner's own days, a category and words.
 It returns at most MAX_EVENTS events, each trimmed to what a reply needs (the raw answer is about 9 KB an event):
 name, local date and time, venue, city, on-sale status, genre, a price range when Ticketmaster lists one (it often
-does not; a missing range is unknown, never free) and the ticket link.
+does not; a missing range is unknown, never free), the ticket link and its widest 16:9 picture (``image``, for a card).
 
 What it shares with watch.py: the API root (``watch.TM_API``), the guarded HTTP GET (``watch.http_request``: the
 address checks, no proxy, a hard deadline) and, when a Watcher runs, its rate limiter, so a search counts against
@@ -171,6 +171,14 @@ def _money(x: Any) -> str:
     return f"{v:.0f}" if v == int(v) else f"{v:.2f}"
 
 
+def best_image(images: Any) -> str:
+    """Ticketmaster's widest 16:9 picture (its listings carry several sizes), https only; "" when none is wide enough."""
+    good = [i for i in (images if isinstance(images, list) else []) if isinstance(i, Mapping)
+            and str(i.get("url") or "").startswith("https://") and i.get("ratio") == "16_9"
+            and int(i.get("width") or 0) >= 640 and not i.get("fallback")]
+    return str(max(good, key=lambda i: int(i.get("width") or 0))["url"]) if good else ""
+
+
 def trim(event: Mapping[str, Any]) -> dict[str, Any]:
     """One event as the brain needs it. Fields Ticketmaster left out are left out (or empty), never guessed."""
     venue = _first((event.get("_embedded") or {}).get("venues"))
@@ -189,6 +197,9 @@ def trim(event: Mapping[str, Any]) -> dict[str, Any]:
         "genre": "" if genre.lower() == "undefined" else genre,
         "url": str(event.get("url") or ""),
     }
+    image = best_image(event.get("images"))
+    if image:
+        out["image"] = image                          # for a card's picture (OpenUI ImageBlock / ListBlock image)
     price = _first(event.get("priceRanges"))
     lo, hi = _money(price.get("min")), _money(price.get("max"))
     if lo or hi:
