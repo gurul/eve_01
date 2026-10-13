@@ -422,6 +422,8 @@ about the Allow dialog and profiles.
     Gmail opened the inbox, and the check read signed in.
   - The same check on an empty profile read not signed in.
   - Quitting eve's Chrome left the owner's Chrome running.
+- **Steel instead.** `EVE_BROWSER_STEEL=1` swaps this Chrome for a local Steel
+  session (self-hosted, no key) and wins over `EVE_BROWSER_OWN`; see [Steel](../steel.md).
 - **Switching.** `EVE_BROWSER_OWN=1` turns the lane on by itself, so it
   doesn't need `EVE_BROWSER_ATTACH`. `EVE_CHROME_ACCESS` does nothing
   in this mode. The daemon's startup line reads

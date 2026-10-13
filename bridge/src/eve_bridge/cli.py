@@ -234,6 +234,14 @@ def main(argv: list[str] | None = None) -> int:
     p_chrome.add_argument("url", nargs="?", default="https://accounts.google.com/",
                           help="the page to open in it (default: Google sign-in)")
 
+    p_steel = sub.add_parser(
+        "steel-profile",
+        help="Sign in to sites in eve's Steel browser (EVE_BROWSER_STEEL): opens a Steel session in a window "
+             "on eve's Steel profile, waits for Enter, then closes it. See docs/steel.md",
+    )
+    p_steel.add_argument("url", nargs="?", default="https://accounts.google.com/",
+                         help="the page to open in it (default: Google sign-in)")
+
     p_sound = sub.add_parser(
         "sound",
         help="Mute or unmute eve (the head and lights keep moving), or show which it is",
@@ -491,6 +499,8 @@ def main(argv: list[str] | None = None) -> int:
                             format="%(asctime)s %(levelname)s %(name)s: %(message)s")
         from .notes_widget import run as widget_run
         return widget_run(once=args.once)
+    if args.cmd == "steel-profile":
+        return _run_steel_profile(args.url)
     if args.cmd == "chrome-profile":
         return _run_chrome_profile(args.url)
     if args.cmd == "status":
@@ -1257,6 +1267,40 @@ def _run_chrome_profile(url: str) -> int:
     if not cfg.own:
         print("Not in use yet: set EVE_BROWSER_OWN=1 in ~/.config/eve-bridge/env and restart the daemon.")
     return 0 if signed_in else 1
+
+
+def _run_steel_profile(url: str) -> int:
+    """Open eve's Steel browser in a window, on the page given, for the owner to sign in. Sign-ins are kept in
+    eve's Steel profile (steel_local.DEFAULT_PROFILE); Enter closes the window and saves them."""
+    from . import steel_local
+
+    cfg = steel_local.configured()
+    try:
+        endpoint = steel_local.start_session(cfg, visible=True)
+    except steel_local.SteelError as e:
+        print(f"eve-bridge: {e}", file=sys.stderr)
+        return 2
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        steel_local.release(cfg)
+        print("eve-bridge: Playwright is not installed (pip install -e '.[browser]')", file=sys.stderr)
+        return 2
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.connect_over_cdp(endpoint, timeout=30000)
+            context = browser.contexts[0] if browser.contexts else browser.new_context()
+            page = context.pages[0] if context.pages else context.new_page()
+            page.goto(url if "://" in url else "https://" + url, wait_until="domcontentloaded", timeout=30000)
+            print(f"eve's Steel browser is open for signing in (profile {cfg.profile}).")
+            try:
+                input("Sign in to each site eve may use, then press Enter here to save and close it. ")
+            except (EOFError, KeyboardInterrupt):
+                print()
+    finally:
+        steel_local.release(cfg)
+    print("Saved. Web tasks use this profile when EVE_BROWSER_STEEL=1.")
+    return 0
 
 
 async def _own_chrome_signed_in(cfg: Any) -> bool:

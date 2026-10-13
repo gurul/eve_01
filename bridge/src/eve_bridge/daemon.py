@@ -1549,6 +1549,10 @@ class Daemon:
         lane = browser_lane.BrowserLane(cfg, step_asker=browser_lane.make_step_asker(env))
         from . import chrome_consent
 
+        if cfg.steel:
+            log.info("chrome lane: on — web tasks try eve's Steel browser first (local Steel, no key, "
+                     "signed in with `eve-bridge steel-profile`); Codex is the floor; no Allow to press")
+            return lane
         if cfg.own:
             log.info("chrome lane: on — web tasks try eve's own Chrome first (%s, signed in with "
                      "`eve-bridge chrome-profile`); Codex is the floor; no Allow to press", cfg.own_dir)

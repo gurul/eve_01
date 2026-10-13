@@ -43,6 +43,11 @@ debugging?" and nobody presses anything. It stays open between tasks with the ow
 carries no automation flags and Google's sign-in accepts it. The trade: any program on the Mac can drive this
 Chrome through its port, so it holds only the accounts the owner signs into it, never the owner's own Chrome.
 Own mode is attach mode with a different endpoint: the same tab rules and the same gate apply.
+STEEL (owner, 2026-10-13: "replace browser with steel for eve", "local steel"). With ``EVE_BROWSER_STEEL=1`` the
+lane drives a Chrome run by the self-hosted Steel browser API on this Mac (steel_local.py): eve starts the server
+when nothing answers, opens a Steel session and attaches to its websocket. No API key, no window, no Allow; it
+turns the lane on by itself and takes precedence over own and attach mode. Its profile keeps eve's sign-ins in
+``~/.config/eve-bridge/steel-profile``. Closing the lane releases the session.
 
 In attach mode the lane works in a NEW TAB of its own — never one of the owner's — and closing it closes
 that tab and disconnects: the owner's browser, windows and tabs are never closed. The same gate applies as
@@ -230,6 +235,7 @@ class BrowserLaneConfig:
     chrome_profile: str = ""                      # attach: the Google account whose Chrome profile to work in
     own: bool = False                             # drive eve's own Chrome, not the owner's (implies attach)
     own_dir: Path = Path(DEFAULT_OWN_CHROME_DIR).expanduser()
+    steel: bool = False                           # drive a local Steel session (see STEEL; implies attach)
 
 
 def configured(environ: Any = None) -> BrowserLaneConfig:
@@ -237,11 +243,13 @@ def configured(environ: Any = None) -> BrowserLaneConfig:
     ``DevToolsActivePort`` is looked for; ``EVE_CHROME_DEBUG_PORT`` is the fallback port;
     ``EVE_CHROME_PROFILE`` names the Google account whose Chrome profile to work in).
     ``EVE_BROWSER_OWN=1`` drives eve's own Chrome instead, and turns the lane on by itself
-    (``EVE_OWN_CHROME_DIR`` moves its user data directory)."""
+    (``EVE_OWN_CHROME_DIR`` moves its user data directory). ``EVE_BROWSER_STEEL=1`` drives a local Steel
+    session instead of either (steel_local.py), and also turns the lane on by itself."""
     env = os.environ if environ is None else environ
     on = ("1", "true", "yes", "on")
-    own = (env.get("EVE_BROWSER_OWN") or "0").strip().lower() in on
-    attach = own or (env.get("EVE_BROWSER_ATTACH") or "0").strip().lower() in on
+    steel = (env.get("EVE_BROWSER_STEEL") or "0").strip().lower() in on
+    own = not steel and (env.get("EVE_BROWSER_OWN") or "0").strip().lower() in on
+    attach = steel or own or (env.get("EVE_BROWSER_ATTACH") or "0").strip().lower() in on
     own_dir = Path((env.get("EVE_OWN_CHROME_DIR") or "").strip() or DEFAULT_OWN_CHROME_DIR).expanduser()
     chrome_dir = Path((env.get("EVE_CHROME_DIR") or "").strip() or DEFAULT_CHROME_DIR).expanduser()
     try:
@@ -250,7 +258,7 @@ def configured(environ: Any = None) -> BrowserLaneConfig:
         debug_port = DEFAULT_DEBUG_PORT
     return BrowserLaneConfig(attach=attach, chrome_dir=chrome_dir, debug_port=debug_port,
                              chrome_profile=(env.get("EVE_CHROME_PROFILE") or "").strip().lower(),
-                             own=own, own_dir=own_dir)
+                             own=own, own_dir=own_dir, steel=steel)
 
 
 # Which Chrome profile a context is: the Google accounts signed in there, from Google's own account list,
@@ -956,7 +964,14 @@ class BrowserLane:
             except Exception:  # noqa: BLE001 — the owner closed the window: open a fresh one
                 self._page = None
         if self._context is None and self.config.attach and self._launcher is None:
-            if self.config.own:
+            if self.config.steel:
+                from . import steel_local
+
+                try:
+                    endpoint = steel_local.start_session(steel_local.configured())   # no key, no dialog, no window
+                except steel_local.SteelError as e:
+                    raise AttachError(str(e)) from None
+            elif self.config.own:
                 endpoint = start_own_chrome(self.config.own_dir)   # eve's Chrome: no dialog, no window needed
             else:
                 endpoint = devtools_endpoint(self.config.chrome_dir, self.config.debug_port)
@@ -1050,8 +1065,8 @@ class BrowserLane:
         return found
 
     def _pick_profile(self, wanted: str) -> Any:
-        if self.config.own:
-            return self._browser.contexts[0]               # eve's Chrome has one profile: its own
+        if self.config.own or self.config.steel:
+            return self._browser.contexts[0]               # eve's Chrome and Steel's have one profile: their own
         profiles = self._profiles() if wanted else {}
         if wanted and wanted not in profiles:
             raise AttachError(f"no open Chrome window for {wanted}: open one in that profile"
@@ -1101,8 +1116,8 @@ class BrowserLane:
                 return
             log.info("browser lane: the Chrome connection is gone (Chrome restarted?); reconnecting")
             await self._run(self._close)                 # then a fresh connection, and a fresh Allow
-        if self.config.own:
-            answer_prompt = None                       # eve's own Chrome never asks: there is nothing to press
+        if self.config.own or self.config.steel:
+            answer_prompt = None                       # eve's own Chrome and Steel never ask: there is nothing to press
         connecting = asyncio.ensure_future(self._run(self._ensure))
         answering = asyncio.ensure_future(answer_prompt()) if answer_prompt is not None else None
         try:
@@ -1132,6 +1147,10 @@ class BrowserLane:
             self._browser = self._context = self._pw = None
             self._page = None
             self._profile_map = None
+            if self.config.steel:
+                from . import steel_local
+
+                steel_local.release(steel_local.configured())   # Chrome closes and writes eve's sign-ins
             return
         for obj in (self._context, self._pw):
             try:

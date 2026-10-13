@@ -114,7 +114,9 @@ realtime voice) was left out on purpose. Its caption bookkeeping was replaced by
 Chrome's "Allow remote debugging?" for the Meet tab's connection is answered the
 same way as the Chrome lane's (`EVE_CHROME_ACCESS=allow` presses it). In
 eve's own Chrome (`EVE_BROWSER_OWN=1`) there is no dialog, and Meet joins
-as the account signed in there.
+as the account signed in there. With `EVE_BROWSER_STEEL=1` the other web tasks run in Steel,
+but Meet still joins from eve's own Chrome: Steel's Chrome is headless and muted
+([Steel](../steel.md)).
 
 ## Live test, 2026-09-25
 

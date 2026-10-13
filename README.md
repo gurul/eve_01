@@ -494,6 +494,11 @@ permission choices.
   a second Chrome that belongs to eve (`~/.config/eve-bridge/chrome`), so there
   is no “Allow remote debugging?” prompt at all. Sign it in once with
   `eve-bridge chrome-profile`. See [eve's own Chrome](docs/stackchan/routing.md#eves-own-chrome-no-allow-to-press).
+- **Or Steel, on this Mac (opt-in):** with `EVE_BROWSER_STEEL=1`, web goals run in a
+  Chrome driven by the self-hosted [Steel](https://github.com/steel-dev/steel-browser)
+  browser API on 127.0.0.1, with no API key and no prompt; eve starts it when needed.
+  Meet stays on eve's own Chrome. Sign it in with `eve-bridge steel-profile`. See
+  [Steel](docs/steel.md).
 - **Stopping:** `stop_task` interrupts Codex, even while a permission is pending.
 - **Codex billing:** `EVE_CODEX_AUTH=plan` is the default and uses your existing
   Codex sign-in. To bill Eve's Codex to an OpenAI API key instead (optional; nothing
