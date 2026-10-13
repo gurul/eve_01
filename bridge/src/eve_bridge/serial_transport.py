@@ -285,6 +285,7 @@ class EveSerial:
         loop = asyncio.get_running_loop()
         missing_since: Optional[float] = None
         next_missing_warn = 30.0
+        warn_at = 0.0
         while not self._stop.is_set():
             # Off the loop: with the board off the bus, IOKit's enumeration (list_ports.comports) takes 2-3 s,
             # and on the loop it froze every door, Telegram included (1,543+ stall reports, 2026-09-23/24).
@@ -297,11 +298,15 @@ class EveSerial:
                 if missing_since is None:
                     missing_since = now
                     next_missing_warn = 30.0
-                elif now - missing_since >= next_missing_warn:
+                    warn_at = now + next_missing_warn
+                elif now >= warn_at:
+                    # A deadline, not total time missing: compared with the capped gap, every
+                    # pass after 600 s warned, every 3 s (two thirds of the log by 2026-10-13).
                     log.warning(
                         "serial: no port matching %s for %.0fs — board unplugged?",
                         self.port_pattern, now - missing_since)
                     next_missing_warn = min(next_missing_warn * 2, 600.0)
+                    warn_at = now + next_missing_warn
                 await asyncio.sleep(RECONNECT_SECS)
                 continue
             if missing_since is not None:

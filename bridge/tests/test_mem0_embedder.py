@@ -50,7 +50,9 @@ def test_gemma_is_a_separate_768_store_under_its_own_home_read_from_the_cache_on
     emb = conf["embedder"]
     assert emb["provider"] == "huggingface"
     assert emb["config"]["model"] == "unsloth/embeddinggemma-300m" and emb["config"]["embedding_dims"] == 768
-    assert emb["config"]["model_kwargs"] == {"revision": mem0_memory.GEMMA_REVISION, "local_files_only": True}
+    # On CPU: the default MPS device held 1.2 GB of GPU memory for the life of the daemon.
+    assert emb["config"]["model_kwargs"] == {
+        "revision": mem0_memory.GEMMA_REVISION, "local_files_only": True, "device": "cpu"}
     assert len(mem0_memory.GEMMA_REVISION) == 40                       # a pinned commit, not a branch
     assert "huggingface_base_url" not in emb["config"]                 # local, not a hosted endpoint
     vs = conf["vector_store"]["config"]

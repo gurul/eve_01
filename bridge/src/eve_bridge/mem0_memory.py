@@ -151,7 +151,10 @@ def mem0_config(cfg: Mem0Config) -> dict[str, Any]:
             "llm": llm,
             "embedder": {"provider": "huggingface", "config": {
                 "model": GEMMA_MODEL, "embedding_dims": GEMMA_DIMS,
-                "model_kwargs": {"revision": GEMMA_REVISION, "local_files_only": True}}},
+                # CPU, not the default MPS: on the GPU fp32 weights held 1.2 GB of unified
+                # memory and a query took 151 ms; on CPU the process is 1.24 GB smaller and a
+                # query takes ~20 ms (measured 2026-10-13).
+                "model_kwargs": {"revision": GEMMA_REVISION, "local_files_only": True, "device": "cpu"}}},
             "vector_store": {"provider": "qdrant", "config": {
                 "collection_name": "eve_gemma", "path": str(cfg.home / "qdrant"), "on_disk": True,
                 "embedding_model_dims": GEMMA_DIMS}},

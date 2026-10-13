@@ -88,7 +88,9 @@ class JSONLTailer:
         # Watch for changes. watchfiles yields sets of (Change, path).
         try:
             watched = [str(r) for r in self.roots]
-            async for changes in awatch(*watched, recursive=True, stop_event=None):
+            # step=500: watchfiles' default 50 ms woke this thread 20 times a second
+            # with nothing to do; its own 1600 ms debounce already sets the latency.
+            async for changes in awatch(*watched, recursive=True, stop_event=None, step=500):
                 await self._handle_changes(changes)
                 await self._fire_pending_emits()
                 await self._emit()

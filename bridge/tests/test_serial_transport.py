@@ -13,6 +13,7 @@ _run() around asyncio.run(), rather than a pytest-asyncio dependency.
 from __future__ import annotations
 
 import asyncio
+import types
 from typing import Any, Coroutine, TypeVar
 
 import pytest
@@ -377,3 +378,31 @@ def test_when_the_usb_list_fails_a_skip_is_never_guessed_past(monkeypatch: pytes
     monkeypatch.setattr(list_ports, "comports", broken)
     assert serial_transport._resolve_port("/dev/cu.usbmodem*", frozenset({"0A:00:00:00:00:02"})) is None
     assert serial_transport._resolve_port("/dev/cu.usbmodem*") == CONTROLLER.device   # no skip: as before
+
+
+def test_unplugged_board_warning_backs_off_to_ten_minutes(monkeypatch: pytest.MonkeyPatch,
+                                                         caplog: pytest.LogCaptureFixture) -> None:
+    """With the board off the bus for hours, the warning comes at most every 10 minutes. The back-off
+    compared total time missing with the capped gap, so after 600 s every 3 s pass warned: 70k of the
+    log's 106k lines by 2026-10-13."""
+    clock = [0.0]
+    passes = [0]
+    bs = EveSerial(on_message=_noop, port="/dev/fake")
+
+    def no_port(_pattern: str, _skip: object = frozenset()) -> None:
+        passes[0] += 1
+        clock[0] += 3.0                      # one RECONNECT_SECS pass of real time
+        if clock[0] >= 6000:
+            bs._stop.set()
+        return None
+
+    monkeypatch.setattr(serial_transport, "_resolve_port", no_port)
+    # The module's own clock only: asyncio's loop reads time.monotonic too.
+    monkeypatch.setattr(serial_transport, "time", types.SimpleNamespace(monotonic=lambda: clock[0]))
+    monkeypatch.setattr(serial_transport, "RECONNECT_SECS", 0)
+    with caplog.at_level("WARNING", logger=serial_transport.log.name):
+        _run(asyncio.wait_for(bs.run(), 10))
+    warned = [r.getMessage() for r in caplog.records if "no port matching" in r.getMessage()]
+    assert passes[0] >= 1990
+    # 30 s, then doubling to the 600 s cap: 30, 90, 210, 450, 930, 1530 … 5730 → 13 warnings.
+    assert len(warned) == 13, warned

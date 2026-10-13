@@ -73,3 +73,32 @@ The first combined suite exposed two existing test assumptions: chief spend rows
 Hardware/provider checks were not run: no device was flashed, app installed or daemon restarted. To exercise the fixes on the handheld, update the daemon, stick firmware and Eve Link using their existing deployment instructions, then record repeated presses including quiet pauses and rapid interruptions. Compare reference text, first-word retention and release-to-text timing. A code regression fix does not prove that every intermittent model hallucination is eliminated.
 
 Further candidates were reviewed but lacked enough evidence for safe implementation: lesson summary projection/schema changes, chief event caching with redaction/concurrent-update invalidation, serial initialization cancellation, and browser polling under slow responses. These need representative workloads or device/browser checks before tuning.
+
+## Daemon footprint and the Zig question (2026-10-13)
+
+Asked whether rewriting the daemon in Zig, as the fx coding agent is written, would make it faster or smaller.
+Measured on the live daemon, read-only: **no**. The daemon is idle, not compute-bound. It averaged 0.6% CPU over
+4.5 h, and in `sample <pid> 10` the main thread waited in `kevent` for 7585 of 7650 samples. A turn's 2.7 s
+median (n=67, the `turn answered in` log lines) is network and model time; the local Python steps are single-digit
+milliseconds. `import eve_bridge.cli` takes 0.15 s, and the daemon starts once. A native port would remove none
+of that.
+
+The memory was one model. `footprint <pid>` reported 2.07 GB, 1.19 GB of it GPU memory. That was the opt-in
+EmbeddingGemma embedder (`EVE_MEM0_EMBEDDER=gemma`): sentence-transformers put its fp32 weights on MPS by
+default. Changes made:
+
+| Change | Measured |
+|---|---|
+| Gemma embedder pinned to CPU (`mem0_memory.py`) | Fresh process 1.85 GB → 0.62 GB footprint, no GPU. Vectors identical to MPS (cosine 1.0, so the existing store still matches). A 3-text batch takes 29 ms on CPU vs 63 ms on MPS. |
+| Serial "board unplugged?" warning back-off uses a deadline (`serial_transport.py`) | It compared total time missing with a gap capped at 600 s, so after 10 minutes it warned on every 3 s pass: 70,584 of the log's 105,971 lines. A test fails on the old code and passes on the new one. |
+| `awatch(..., step=500)` in `jsonl_tailer.py` | The watch thread woke every 50 ms with nothing to do. Its own 1600 ms debounce already sets the latency. |
+
+Not changed:
+
+- **Desk-call mic open (a 3.5 s stall).** `Pa_OpenStream` runs on the loop thread. Moving it to a worker thread
+  adds an await before the mic opens, which `verification/Eve/DeskCall.lean` (P1) rules out. Doing it needs a
+  close-wins flag on `Mic` and an updated model.
+- **Cold-import stalls at start.** One stack shows the loop thread blocked on the import lock while a warm-up
+  thread imported the same module. More warm-up threads move the wait, they do not remove it.
+- **fx itself** could be added as a separate coding lane (`fx ask --json`, or ACP). That is a new feature, not an
+  optimization. libfx exposes Node-API and WASM only, no C ABI.
