@@ -238,7 +238,8 @@ check(callJS.contains("n.onChunk(\"t1\",\"x\")") && callJS.contains("typeof n.on
 // Message dispatch: each JS -> native message, and what is refused.
 check(ChatBridgeMessage(body: ["type": "ready"]) == .ready, "ready")
 check(ChatBridgeMessage(body: ["type": "topics", "id": "q1"]) == .topics(id: "q1"), "topics")
-check(ChatBridgeMessage(body: ["type": "history", "open": true]) == .history(open: true), "history open")
+check(ChatBridgeMessage(body: ["type": "history", "open": true, "top": 610]) == .history(open: true, top: 610),
+      "history open, with where the row starts")
 check(ChatBridgeMessage(body: ["type": "history", "open": 1]) == nil, "history: open must be a bool")
 check(ChatBridgeMessage(body: ["type": "bookmark", "id": "q2", "topic": "2026-10-13:12", "on": true])
       == .bookmark(id: "q2", topic: "2026-10-13:12", on: true), "bookmark")

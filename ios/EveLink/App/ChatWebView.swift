@@ -22,8 +22,10 @@ final class ChatModel: NSObject, ObservableObject {
     let relay: Relay
     /// A quick sideways swipe on the chat (true: finger moved left): the screen moves one pane (PaneSwipe).
     var onPaneSwipe: ((Bool) -> Void)?
-    /// Horizontal History's row is open on the page: its cards take sideways swipes (``paneSwiped`` stands aside).
+    /// Horizontal History's row is open on the page, from ``historyTop`` down: a swipe that starts on its cards is
+    /// theirs, and the pane swipe does not see it (``gestureRecognizer(_:shouldReceive:)``).
     private(set) var historyOpen = false
+    private(set) var historyTop: CGFloat = 0
     private(set) lazy var webView: WKWebView = makeWebView()
     private lazy var transport: ChatTransport = {
         let t = ChatTransport(
@@ -191,8 +193,9 @@ final class ChatModel: NSObject, ObservableObject {
                 case .failure(let f): self?.js("onError", [lit, ChatJS.literal(f.message)])
                 }
             }
-        case .history(let open):
+        case let .history(open, top):
             historyOpen = open
+            historyTop = CGFloat(top)
         case .topics(let id):
             linkJSON(id) { ChatRequests.topics($0) }
         case let .bookmark(id, topic, on):
@@ -483,10 +486,14 @@ struct ChatWebView: UIViewRepresentable {
 
 extension ChatModel: UIGestureRecognizerDelegate {
     @objc fileprivate func paneSwiped(_ g: UISwipeGestureRecognizer) {
-        guard !historyOpen else { return }               // swiping through history cards, not between panes
         onPaneSwipe?(g.direction == .left)
     }
 
     func gestureRecognizer(_ g: UIGestureRecognizer,
                            shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool { true }
+
+    /// A swipe that starts on the history cards scrolls the cards; anywhere else it still moves the panes.
+    func gestureRecognizer(_ g: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        !(historyOpen && touch.location(in: webView).y >= historyTop)
+    }
 }

@@ -19,8 +19,9 @@ enum ChatBridgeMessage: Equatable, Sendable {
     case topics(id: String)
     /// Save or unsave the topic that starts at message `topic` (POST /api/link/topics/bookmark), answered through onLink.
     case bookmark(id: String, topic: String, on: Bool)
-    /// The page's history row opened or closed: while it is open, a sideways swipe scrolls cards, never panes.
-    case history(open: Bool)
+    /// The page's history row opened or closed, and where its top is (CSS px from the web view's top): a sideways
+    /// swipe that starts on the cards scrolls them, never the panes.
+    case history(open: Bool, top: Double)
 
     static let maxText = 4000
     static let maxID = 128
@@ -76,7 +77,8 @@ enum ChatBridgeMessage: Equatable, Sendable {
             self = .openAttachment(id: id, name: name, kind: kind)
         case "history":
             guard let open = msg["open"] as? Bool else { return nil }
-            self = .history(open: open)
+            let top = (msg["top"] as? NSNumber)?.doubleValue ?? 0
+            self = .history(open: open, top: top.isFinite ? max(top, 0) : 0)
         case "topics":
             guard let id = id() else { return nil }
             self = .topics(id: id)
