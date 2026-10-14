@@ -39,9 +39,9 @@
 set -euo pipefail
 
 # The release. tools/release_lite.sh stamps these three lines; a copy without them refuses to install.
-LITE_VERSION=""
-LITE_URL=""
-LITE_SHA256=""
+LITE_VERSION="0.1.2"
+LITE_URL="https://github.com/gurul/eve_01/releases/download/lite-v0.1.2/eve-lite-0.1.2.tar.gz"
+LITE_SHA256="0ea140ef2e5c36cf057f32bf09a6be7eac5347c8be67836382bf2623a26ca43e"
 # uv, from its GitHub release. The SHA-256 is the release's own uv-aarch64-apple-darwin.tar.gz.sha256 (2026-10-13).
 UV_VERSION="0.11.27"
 UV_URL="https://github.com/astral-sh/uv/releases/download/0.11.27/uv-aarch64-apple-darwin.tar.gz"

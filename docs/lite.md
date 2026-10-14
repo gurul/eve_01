@@ -22,12 +22,11 @@ installer writes. With `EVE_PROFILE` unset, eve is the owner's full eve, unchang
 
 Written 2026-10-13, on branch `feat/one-click-variant`.
 
-- **No release is published yet.** The install line downloads `install-lite.sh` from the newest published release of
-  github.com/gurul/eve_01, and no eve lite release has been published: until the owner runs `tools/release_lite.sh`
-  and publishes the draft it makes ([making a release](#making-a-release)), the line gets a 404. A copy of
-  `install-lite.sh` taken from the repository instead of a release refuses to install: it has no release to fetch.
-- **Not tried yet on a real phone, a fresh Mac or a real sign-in.** The checks that need the owner, a phone or a fresh
-  VM are listed under [Verified on](#verified-on), all pending.
+- **lite-v0.1.2 is published** (2026-10-14), so the install line works. The install line downloads `install-lite.sh`
+  from the newest published release of github.com/gurul/eve_01 ([making a release](#making-a-release)).
+- **Installed and set up on the owner's Mac (2026-10-14).** The owner installed it from the release's tarball, signed
+  in and reported that it works. The other checks that need a phone or a fresh VM are listed under
+  [Verified on](#verified-on), still pending.
 - **The lite prompts have not passed their blind eval.** The bar and the blind set are written
   ([the eval](evals/lite-prompt.md)); the scored run costs money and waits for the owner (AGENTS rule 6).
 - **Thirteen decisions were taken without the owner.** They are at the end, as [open questions](#the-owners-open-questions).
@@ -38,7 +37,7 @@ Written 2026-10-13, on branch `feat/one-click-variant`.
 curl -fsSL https://github.com/gurul/eve_01/releases/latest/download/install-lite.sh | bash
 ```
 
-No release is published yet, so this line does not work yet ([Status](#status)).
+This line installs the newest published release, lite-v0.1.2 at the time of writing ([Status](#status)).
 
 You need a Mac with Apple silicon (M1 or later) on macOS 14 or later, and to run it as yourself, not with `sudo`.
 Intel Macs and macOS 13 are not supported: cryptography's macOS wheels are for arm64 only, and av's arm64 wheel needs
@@ -412,6 +411,9 @@ The owner runs this on the commit that is to ship, with uv, pnpm and gh installe
 sh tools/release_lite.sh --dry-run   # checks everything and prints the plan; writes nothing; ends with DRY_RUN_OK
 sh tools/release_lite.sh             # builds lite-v<version>, then asks before drafting the GitHub release
 ```
+
+On a Mac where uv has never fetched a Python, the dry run stops at "uv export failed: uv.lock has no lite extra, or it
+is out of date": the export runs `--offline` and finds no interpreter. Run `uv python install` once, then again.
 
 It builds from the commit alone (it refuses while anything it builds from is not committed), in a scratch copy:
 1. the web page (`pnpm build:web`);

@@ -326,8 +326,7 @@ On an Apple-silicon Mac with macOS 14 or later:
 curl -fsSL https://github.com/gurul/eve_01/releases/latest/download/install-lite.sh | bash
 ```
 
-**No release is published yet**, so this line works only once the owner publishes the
-first eve lite release. eve lite needs no Xcode tools, no Homebrew and no git: it
+The first eve lite release, lite-v0.1.2, is published, so this line works. eve lite needs no Xcode tools, no Homebrew and no git: it
 installs into `~/.eve-lite` with its own Python, and its setup is two sign-ins in the
 browser, OpenRouter for the model key and Composio for the apps (optional), with no key
 pasted anywhere. Its app is a web page the Mac serves: the Mac's own browser opens it at
