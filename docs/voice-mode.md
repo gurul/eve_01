@@ -405,14 +405,13 @@ background hang-up, recovery after an interruption, and the earpiece switch. The
 face was checked in the simulator (iPhone 17 Pro Max, 2026-10-09); its captions
 need a real call.
 
-## Eyes on the owner's turn, and on-device expressions (2026-10-13)
+## Eyes on the owner's turn (2026-10-13)
 
 - While the owner holds the button the face listens with still eyes; it reacts once their words come back from
   speech-to-text (owner: "eyes should start reacting when the stt happens not before"). The Mac already offered the
   owner's words to the expression picker only after transcription; the phone's eyes had been bobbing with the mic level.
-- `EVE_EXPRESSION_JEV_ROUTE=ollama` points the expression picker (not the other Jev routers) at an open decision model
-  on this Mac through Ollama 0.35+'s `/v1/systemone` (no key; `EVE_EXPRESSION_JEV_MODEL`, default `tev1:0.8b`). Off by
-  default. Measured on the 84 legacy eye cases (`tools/jev_eyes_eval.py --legacy`): Jev over the network 62.5% / 69.4%
-  at ~250 ms p50; tev1 0.8B on this Mac 52.1% / 50.0% at ~15 ms; tev1 4B 58.3% / 63.9% at ~470 ms. Neither reaches the
-  bar (57.5 / 67.2), so Jev stays the default until a fine-tuned tev1 does.
+- Expressions stay on Jev. An open on-device decision model (tev1 through Ollama) was measured on the 84 legacy eye
+  cases (`tools/jev_eyes_eval.py --legacy`): Jev over the network 62.5% / 69.4% at ~250 ms p50; tev1 0.8B on this Mac
+  52.1% / 50.0% at ~15 ms; tev1 4B 58.3% / 63.9% at ~470 ms. Neither met the bar (57.5 / 67.2); the owner chose to keep
+  Jev, and the route was removed.
 
