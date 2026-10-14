@@ -52,7 +52,7 @@ def test_friendly_small_talk_is_small_talk() -> None:
 
 
 def test_a_title_says_something() -> None:
-    [t] = segment([row(0, 0, text="Is gofrai."), row(1, 5, "eve", "Sorry?"), row(2, 9, text="Is the garage open today")])
+    [t] = segment([row(0, 0, text="Is flumbo."), row(1, 5, "eve", "Sorry?"), row(2, 9, text="Is the garage open today")])
     assert t["title"] == "Is the garage open today"
 
 

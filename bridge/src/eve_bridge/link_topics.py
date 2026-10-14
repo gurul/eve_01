@@ -42,7 +42,7 @@ TITLE_SYSTEM = (
     "You name one conversation between a person and their assistant, eve, for a card in a list of past topics. "
     "Reply with one JSON object only: {\"title\": string, \"small_talk\": boolean}. The title is 2 to 6 words in "
     "sentence case with no end punctuation and no quotes: the subject the person cared about, the way a note's "
-    "heading reads (for example: Lisbon trip in November; Zelle charge from Oct 12; Webcam angle and tracking). "
+    "heading reads (for example: Lisbon trip in November; Gym membership refund; Webcam angle and tracking). "
     "small_talk is true when the conversation is only greetings, pleasantries and checking in, with no task, "
     "question or information exchanged; otherwise false.")
 ID_RE = re.compile(r"^\d{4}-\d{2}-\d{2}:\d{1,7}$")    # a message id: <day>:<line index>
