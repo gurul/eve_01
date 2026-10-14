@@ -65,6 +65,31 @@ cold), and leaves it running between tasks, like eve's own Chrome. Its log is
 - Sites that block automated Chrome may still block Steel's, stealth or not. Google
   sign-in through Steel is untested.
 
+## Staying on the newest Steel
+
+Owner, 2026-10-13: "setup a hook for steel opensource repo like we did for openui". The Steel checkout runs a local
+branch, `eve`: upstream plus eve's patch (the reported session timeout and `steel-local.sh`), committed so updates
+merge cleanly. `sh tools/steel_update.sh` fetches upstream; when there are new commits it merges them into a copy of
+`eve` in its own worktree (`../steel-browser-update`, a merge, never a rebase), installs with `node@22`, builds the
+API and smoke-tests it on a spare port (127.0.0.1:3100, DevTools 9334, a throwaway profile: a session opens and the
+scrape route reads example.com). All green: it fast-forwards `eve`, rebuilds the live checkout, stops the running
+server (eve starts the new build on its next web task) and updates the `steel` CLI. Anything failing changes nothing
+and eve says what failed (ntfy). `--dry-run` only reports; `--schedule` runs it nightly at 05:10 (LaunchAgent
+`com.github.eve-bridge.steel-update`, log `~/Library/Logs/eve-steel-update.log`); `--unschedule` stops it. It never
+pushes.
+
+## Speed, measured 2026-10-13
+
+The same steps through eve's browser lane (connect, then open and outline three pages):
+
+| | Connect (warm / cold) | Wikipedia | Hacker News | example.com |
+|---|---|---|---|---|
+| eve's own Chrome | 183 ms / 1.3 s | 549 ms | 476 ms | 452 ms |
+| Steel | 550 ms / 2.7 s | 357 ms | 226 ms | 240 ms |
+
+A page is 35-55% faster on Steel; connecting is slower (a fresh Steel session), but the daemon connects once on the
+first web task and keeps the lane.
+
 ## Tests, 2026-10-13
 
 `bridge/tests/test_steel_local.py`: configuration and precedence; the server start
