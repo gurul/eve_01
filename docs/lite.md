@@ -449,7 +449,7 @@ Nothing below has been run yet, except spike S1 and part of M2. Each row is fill
 | Check | What it needs | Status |
 |---|---|---|
 | M1 | A fresh macOS VM with no developer tools and no Homebrew: the install line raises no "install developer tools" dialog and no Bluetooth, Microphone, Accessibility or Screen Recording prompt; record the Background Items text, the install time and the disk used | pending |
-| M2 | iPhone Safari: scan, click through the certificate, pair, chat, a hold-to-talk round trip; then the CA install ends the warning | partial, 2026-10-14: an iPhone on the owner's Wi-Fi scanned the iPhone code, clicked through the warning and paired (`web devices`: "iPhone · Safari", `gurucharans-macbook-pro-2.local`, about 35 s after Add a phone); the owner: "paired, chat works". Hold-to-talk and the CA install still pending |
+| M2 | iPhone Safari: scan, click through the certificate, pair, chat, a hold-to-talk round trip; then the CA install ends the warning | partial, 2026-10-14: an iPhone on the owner's Wi-Fi scanned the iPhone code, clicked through the warning and paired (`web devices`: "iPhone · Safari", the Mac's `.local` name, about 35 s after Add a phone); the owner: "paired, chat works". Hold-to-talk and the CA install still pending |
 | M3 | Android Chrome: the same | pending |
 | M4 | A real OpenRouter sign-in through the setup page, with an account that has no credit and with a funded one | pending |
 | M5 | A real Composio Connect sign-in; connect Gmail; a read runs and a send asks | pending |
