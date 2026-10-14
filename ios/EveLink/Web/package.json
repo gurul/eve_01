@@ -6,6 +6,7 @@
   "description": "Eve Link chat: OpenUI message list rendered inside the app's WKWebView. Built into ../App/ChatWeb.",
   "scripts": {
     "build": "vite build",
+    "build:web": "vite build --config vite.web.config.ts",
     "gen-prompt": "node scripts/gen-prompt.mjs",
     "check-prompt": "node scripts/gen-prompt.mjs --check",
     "validate": "node scripts/validate.mjs",

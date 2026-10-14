@@ -1,0 +1,52 @@
+{
+  "name": "COMPOSIO_GET_TOOL_SCHEMAS",
+  "title": "Get Tool Schemas",
+  "description": "Retrieve input schemas for tools by slug. Returns complete parameter definitions required to execute each tool. Only pass tool slugs returned by COMPOSIO_SEARCH_TOOLS — never guess or fabricate slugs. If unsure of the exact slug, call COMPOSIO_SEARCH_TOOLS first.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "tool_slugs": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": "Array of tool slugs to retrieve schemas for. Pass valid tool slugs; never invent.\nExample: [\"GMAIL_SEND_EMAIL\",\"SLACK_SEND_MESSAGE\"]"
+      },
+      "include": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": [
+            "input_schema",
+            "output_schema"
+          ]
+        },
+        "description": "Schema fields to include. Defaults to [\"input_schema\"]. Include \"output_schema\" when calling tools in the workbench to validate response structure.\nExamples:\n  [\"input_schema\"]\n  [\"input_schema\",\"output_schema\"]",
+        "default": [
+          "input_schema"
+        ]
+      },
+      "session_id": {
+        "type": "string",
+        "description": "Pass the session_id if you received one from a prior COMPOSIO_SEARCH_TOOLS call."
+      }
+    },
+    "required": [
+      "tool_slugs"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "annotations": {
+    "scopes": [],
+    "readOnlyHint": true,
+    "openWorldHint": false,
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "updateHint": false
+  },
+  "execution": {
+    "taskSupport": "forbidden"
+  }
+}

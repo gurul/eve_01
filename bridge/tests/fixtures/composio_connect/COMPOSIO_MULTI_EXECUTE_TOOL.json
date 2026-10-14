@@ -1,0 +1,75 @@
+{
+  "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+  "title": "Multi Execute Composio Tools",
+  "description": "\n  Fast and parallel tool executor for tools discovered through COMPOSIO_SEARCH_TOOLS. Use this tool to execute up to 50 tools in parallel across apps only when they're logically independent (no ordering/output dependencies). Response contains structured outputs ready for immediate analysis - avoid reprocessing them via remote bash/workbench tools.\n\nPrerequisites:\n- Always use valid tool slugs and their arguments. NEVER invent tool slugs or argument fields. ALWAYS pass STRICTLY schema-compliant arguments with each tool execution.\n- Ensure an ACTIVE connection exists for the toolkits that are going to be executed. If none exists, MUST initiate one via COMPOSIO_MANAGE_CONNECTIONS before execution.\n- Only batch tools that are logically independent - no ordering, no output-to-input dependencies, and no intra-call chaining (tools in one call can't use each other's outputs). DO NOT pass dummy or placeholder inputs; always resolve required inputs using appropriate tools first.\n\nUsage guidelines:\n- If COMPOSIO_SEARCH_TOOLS returns a tool that can perform the task, prefer calling it via this executor. Do not write custom API calls or ad-hoc scripts for tasks that can be completed by available Composio tools.\n- Prefer parallel execution: group independent tools into a single multi-execute call where possible.\n- Predictively set sync_response_to_workbench=true if the response may be large or needed for later scripting. It still shows response inline; if the actual response data turns out small and easy to handle, keep everything inline and SKIP workbench usage.\n- Responses contain structured outputs for each tool. RULE: Small data - process yourself inline; large data - process in the workbench.\n- ALWAYS include inline references/links to sources in MARKDOWN format directly next to the relevant text. Eg provide slack thread links alongside with summary, render document links instead of raw IDs.\n\nRestrictions: Some tools or toolkits may be disabled in this environment. If the response indicates a restriction, inform the user and STOP execution immediately. Do NOT attempt workarounds or speculative actions.\n\n\n",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "tools": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "tool_slug": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The slug of the tool to execute — must be a valid tool slug; never invent.\nExamples:\n  \"GMAIL_SEND_EMAIL\"\n  \"SLACK_SEND_MESSAGE\"\n  \"GITHUB_CREATE_AN_ISSUE\""
+            },
+            "arguments": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": true,
+              "description": "The arguments to pass to the tool. Use exact field names and types; do not diverge from the tool's argument schema.\nExamples:\n  {\"body\":\"This is a test\",\"subject\":\"Hello\",\"to\":\"test@gmail.com\"}\n  {\"channel\":\"#general\",\"text\":\"Hello from Composio!\"}\n  {\"body\":\"Description of the issue\",\"labels\":[\"bug\"],\"title\":\"Bug Report\"}"
+            }
+          },
+          "required": [
+            "tool_slug",
+            "arguments"
+          ],
+          "additionalProperties": false,
+          "description": "MultiExecuteToolItem"
+        },
+        "minItems": 1,
+        "maxItems": 50,
+        "description": "List of logically independent tools to execute in parallel."
+      },
+      "thought": {
+        "type": "string",
+        "description": "One-sentence, concise, high-level rationale (no step-by-step)."
+      },
+      "sync_response_to_workbench": {
+        "type": "boolean",
+        "description": "Predictively set true when the response may be large or needed for later scripting. Saves the full response to the workbench while returning an inline preview. If the result is small, keep it inline. Default false."
+      },
+      "current_step": {
+        "type": "string",
+        "description": "Short enum for current step of the workflow execution. Eg FETCHING_EMAILS, GENERATING_REPLIES. Always include to keep execution aligned with the workflow."
+      },
+      "current_step_metric": {
+        "type": "string",
+        "description": "Progress metrics for the current step - use to track how far execution has advanced. Format as a string \"done/total units\" - example \"10/100 emails\", \"0/n messages\", \"3/10 pages\"."
+      },
+      "session_id": {
+        "type": "string",
+        "description": "Pass the session_id if you received one from a prior COMPOSIO_SEARCH_TOOLS call."
+      }
+    },
+    "required": [
+      "tools",
+      "sync_response_to_workbench"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "annotations": {
+    "scopes": [],
+    "readOnlyHint": false,
+    "openWorldHint": true,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "updateHint": false
+  },
+  "execution": {
+    "taskSupport": "forbidden"
+  }
+}

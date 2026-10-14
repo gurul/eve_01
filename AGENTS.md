@@ -57,6 +57,19 @@ same Mac are watched through hooks, so eve can relay their questions to the phon
    functions), update the model or add a theorem, and re-run `node verification/check-all.mjs`.
 10. **Logs carry counts, names and types, never what was said.** No message text,
     file contents, recipients or tokens in a log line.
+11. **eve lite never changes full eve.** `EVE_PROFILE=lite` is written only by eve lite's
+    installer, never on the owner's Mac, and every lite branch asks `profile.is_lite()`.
+    With `EVE_PROFILE` unset, what full eve's brain is told and offered, its Composio
+    verdicts, its plists and its daemon stay byte for byte as they were, and
+    `bridge/tools/owner_golden.py --check` must print `GOLDEN_OK`. A new `EVE_*` switch or
+    secret read by a module eve lite imports needs its reason in `profile.LITE_CLASSIFIED`
+    (or a secret's shape, so `profile.apply()` removes it), or `test_profile_classified.py`
+    fails. A new place that starts a developer tool (git, clang, python3: `toolchain.SHIMS`)
+    goes into `test_no_devtool_spawns.py`'s known sites with why it cannot open Apple's
+    install dialog in eve lite, or that test fails; a program eve lite's daemon must start
+    goes into `profile.EXEC_ALLOW`, or its process firewall refuses it. eve lite's work
+    leaves `daemon.py`, `miniapp.py`, `link_chat.py`, `install.sh` and `ios/EveLink/App/`
+    alone ([eve lite](docs/lite.md#why-full-eve-does-not-change)).
 
 ## Set eve up on a Mac and an iPhone
 
@@ -66,9 +79,14 @@ only thing that tells you where you are. The whole path takes about an hour.
 
 ### 0. What you need
 
+For someone without Xcode or Homebrew, or who wants no iPhone app, set up **eve lite**
+instead: one install line on an Apple-silicon Mac, two sign-ins in the browser, and eve as
+a web page on the Mac and on phones on the same Wi-Fi ([eve lite](docs/lite.md); no
+release is published yet, so its line does not work yet). Everything below is full eve.
+
 - A Mac on macOS 14 or later, with Python 3.12 (`python3.12 --version`), Homebrew,
-  Node 18+ (for the Lean check only), and Xcode 26 with `xcodegen`
-  (`brew install xcodegen`) for the phone app.
+  Node 22.12 or later with pnpm (the phone app's chat page, eve lite's web page and the
+  Lean check), and Xcode 26 with `xcodegen` (`brew install xcodegen`) for the phone app.
 - An OpenRouter key (`OPENROUTER_API_KEY`).
 - A Telegram bot token and your numeric Telegram user id. eve's brain is wired
   through the Telegram door even when Telegram is muted (`EVE_TELEGRAM=app`):
@@ -342,7 +360,12 @@ are on) and `share: on`. Then send one message from the phone.
 - **The phone app's logic on the Mac:** `sh ios/EveLink/Tests/run.sh` (PCM,
   turns, pairing, voice-mode captions). Building the app: `sh ios/EveLink/build.sh`.
 - **The Lean models:** `PATH=$HOME/.elan/bin:$PATH node verification/check-all.mjs`
-  (470 theorems, no `sorry`, no `native_decide`; [verification](docs/verification.md)).
+  (539 theorems, no `sorry`, no `native_decide`; [verification](docs/verification.md)).
+- **eve lite** (rule 11; [eve lite](docs/lite.md)): its gates, each with the command that
+  decides it, are in `docs/lite-gates.md`; gate L1, `tools/owner_golden.py --check` run
+  from `bridge/`, proves full eve unchanged. Its web page builds with
+  `cd ios/EveLink/Web && pnpm build:web`, into `bridge/src/eve_bridge/web_lite/`
+  (git-ignored).
 - **Restart the daemon after merging:** `launchctl kickstart -k gui/$(id -u)/com.github.eve-bridge.daemon`,
   then confirm the `code: … @ <commit>` line in the log is the commit you merged.
 - **Where things are.** The daemon: `bridge/src/eve_bridge/daemon.py`. The
@@ -356,7 +379,11 @@ are on) and `share: on`. Then send one message from the phone.
   `link_uploads.py`, `link_reactions.py`, `notify.py`. Memory: `memory.py`,
   `transcripts.py`, `chat_log.py`, `mem0_memory.py`, `dream.py`. The iPhone app:
   `ios/EveLink/App` (SwiftUI), `Shared` (logic tested on the Mac), `Web`
-  (the chat page, OpenUI). Models of the state machines: `verification/Eve`.
+  (the chat page, OpenUI). Models of the state machines: `verification/Eve`. eve lite:
+  `profile.py` (the switch, what it turns off, the process firewall), `lite.py` (its
+  daemon), `lite_web.py` (its two web doors), `lite_rtc.py` (WebRTC), `lite_tls.py`,
+  `lan_net.py`, `web_auth.py`, `onboarding.py` (the two sign-ins), `composio_connect.py`;
+  its web app is `ios/EveLink/Web/src/web` and its installer `install-lite.sh`.
 - **Evals and bars.** `bridge/tools/intent_eval.py CASES.json` scores which tool
   the brain picks (production routing, nothing executes). Pre-register the bar in a
   `BAR.md` beside the case file before running; keep the verdict beside it.
@@ -376,6 +403,7 @@ are on) and `share: on`. Then send one message from the phone.
 | The daemon runs an old commit | it runs the main checkout's branch; merge there and `kickstart` |
 | Tests fail on `docs/...` paths | run pytest from the repository root, not from `bridge/` |
 | 10–20 tests fail on missing modules | add `--extra miniapp --extra tls --extra composio --with matplotlib` |
+| eve lite misbehaves on someone's Mac | `~/.eve-lite/venv/bin/eve-bridge doctor` marks what to fix; its log is `~/Library/Logs/eve-lite.log` ([troubleshooting](docs/lite.md#troubleshooting)) |
 
 Setup failures seen on a clean machine, with their evidence, are recorded in
 [docs/SETUP-ISSUES.md](docs/SETUP-ISSUES.md).

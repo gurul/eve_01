@@ -11,6 +11,10 @@ still be main pane"). Left of Chat is **Updates**, a short list of things to
 act on that eve found in your mail, calendar, notes, memory and the chief's
 jobs. See [Updates](updates.md).
 
+[eve lite](lite.md) runs this same chat page in a browser, on the Mac and on phones
+on the same Wi-Fi, with a shell of its own around it and WebRTC in place of the
+tunnel: see [eve lite: the same chat in a browser](#eve-lite-the-same-chat-in-a-browser).
+
 ## The screen
 
 Pure black in dark mode (the system background in light). Nothing is on the
@@ -1097,3 +1101,74 @@ reply, and the folded and open markup with a source's words escaped.
   The reply itself shows in the chat when the app opens.
 - The page's own text size follows the system text style the page uses. The
   app does not pass the Dynamic Type size to the page.
+
+## eve lite: the same chat in a browser
+
+[eve lite](lite.md) has no iPhone app. The chat page above runs in a browser instead, served
+by the Mac (`lite_web.py`): on the Mac at `http://localhost:48780`, and on a phone or laptop on
+the same Wi-Fi at `https://<the Mac's name>.local:48781`, or the Mac's address on that port. The
+page's own files (`App.tsx`,
+`nativeBridge.ts`, `llm.ts`, `storage.ts`, `sync.ts`) are unchanged; a second build entry
+(`ios/EveLink/Web/src/web/`, [its source map](../ios/EveLink/Web/README.md#eve-lites-web-app-srcweb))
+plays the parts the app's native code plays.
+
+**The bridge.** `createBridge(webPost)` stands in for the app, and `host.ts` answers the same
+messages the app does:
+
+| Page message | What the browser does |
+|---|---|
+| `turn` | `POST /api/link/turn` with `{text, client_id, grade, attachments?}` on the transport below; the SSE text goes to `onChunk`, then `onDone` or `onError` |
+| `messages` | `GET /api/link/messages?after&wait`, then `onMessages` |
+| `cancel` | Cancels the request: a `cancel` frame on the link, or the fetch aborted |
+| `openURL` | An http(s) link in a new tab, with no opener and no referrer; `mailto:`, `tel:` and `sms:` to the system |
+| `openAttachment` | A photo full size in the page, with Save; a PDF in a new tab; any other file downloads |
+| `haptic` | `navigator.vibrate`, where the browser has it |
+| `ready` | The composer may send; the shell's insets reach the page |
+
+**The shell** draws what is native in the app, outside `App.tsx`: a top bar (Settings at left,
+"eve" and, while it matters, how chat reaches the Mac, and the voice button at right), and the
+composer ("Ask eve", **+** for up to 4 photos or files, a Think toggle, and send, which turns
+into stop). Think sends the grade `think`, otherwise `auto`. A photo goes as a JPEG of at most
+2048 px on its long side, as the app sends it; a HEIC or AVIF photo is converted in the browser
+when the browser can read it, since the daemon refuses HEIC. Each file is uploaded first, then
+the words go to the page with `window.eveNative.send`, as in the app.
+
+**The transport** (`transport.ts`). The daemon side is the unchanged `LinkChat.serve`, reached
+two ways:
+
+- **The `link` DataChannel** (`framing.ts`, `linkChannel.ts`; on the Mac, `lite_rtc.LinkChannel`)
+  carries the `/api/link` HTTP as messages. The page sends
+  `{"t":"req","id":n,"m":"GET|POST","p":"/api/link/turn|/api/link/messages","q":…,"h":{…},"b":…}`
+  and `{"t":"cancel","id":n}`. The Mac answers `{"t":"head","id":n,"s":<status>,"h":{…}}`, then
+  binary frames (the id as 4 bytes big-endian, then at most 16,384 bytes of the body, de-chunked),
+  then `{"t":"end","id":n}`, or `{"t":"err","id":n}` when the answer broke off. Only `turn` and
+  `messages` pass; any other path is a 404 there. A request's body is at most 60,000 bytes (an SCTP
+  message is at most 64 KiB), and at most 8 requests run at once on a channel; a request past either
+  goes over HTTPS. The Mac drops the page's `Origin` (`LinkChat` refuses any) and adds
+  `Authorization: Bearer <the peer's own secret>`. A request's body reaches `LinkChat` with no end of
+  file until a cancel or a closed channel, because `LinkChat` reads end of file as the client hanging
+  up.
+- **HTTPS** (or loopback HTTP on the Mac): `/api/web/link/{turn,messages,upload,file/<id>}`, behind
+  the device cookie. The door removes `Origin` and the cookie and passes the request to `LinkChat.serve`
+  with a nonce of the daemon's own as its Bearer token. Every other `/api/web/link/` path, and the
+  app's jobs, apps, controls, streams, today, updates, location and sessions routes, are a 404 at the
+  door. The iOS app's rule stays: any `Origin` on `/api/link` itself is refused.
+
+The Mac's own page always uses loopback. A phone uses the link: when the page opens it waits up to
+4 seconds for it, then chats over HTTPS and keeps trying WebRTC, 5 to 60 seconds apart, and new
+requests go back to the link once it opens. A request already on HTTPS finishes there. A turn whose
+link drops mid-reply carries on over HTTPS once, within 5 minutes of its start: the same `client_id`
+joins the same turn (the daemon hears a `client_id` once), and the events the page already showed
+are skipped (`sse.ts`). When the page shows again after the phone froze it, a link that does not
+answer a probe within 2.5 seconds is taken as dead, and WebRTC is tried again at once. A hidden page
+makes no new offer: the Mac keeps one link per device, and two tabs would close each other's.
+
+**What the daemon does differently** in eve lite: an app turn's block names eve's web app, not the
+iPhone app (`telegram.lite_app_block`); a line that no stream reads stays in the transcript, where the
+page's long poll finds it, because nothing reaches Telegram or ntfy; and the page keeps its streams
+while it is in the background, since nothing else would carry the rest of a reply.
+
+**What the browser cannot do:** no Updates, Apps or Work tabs; no notifications while the page is
+closed (eve's next answer is in the chat when it opens); no Action Button, Live Activities or widget;
+no voice notes from the composer; and nothing away from the home network. iOS freezes a page in the
+background, so a phone's link drops while it is away and comes back as above.

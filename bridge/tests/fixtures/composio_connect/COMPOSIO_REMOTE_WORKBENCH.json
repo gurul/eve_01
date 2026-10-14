@@ -1,0 +1,46 @@
+{
+  "name": "COMPOSIO_REMOTE_WORKBENCH",
+  "title": "Execute Code remotely in work bench",
+  "description": "\nUse this persistent Jupyter sandbox only for **remote files** or scripted **bulk tool executions**. Do not use it for inline data, quick parsing or summaries, or basic math.\n\nUSE IT TO\n- Parse or analyze tool outputs saved by COMPOSIO_MULTI_EXECUTE_TOOL, script multi-tool chains, or run known Composio tools in bulk.\n- Call APIs via proxy_execute when no Composio tool exists for that API.\n\n\nOUTPUTS\n- Returns compact results; long outputs become artifacts under `/mnt/files/.composio/output` (cloud-backed and persistent across sandbox restarts).\n\nRULES\n1. Work stepwise. State persists across cells, including variables, functions, imports, and files. Save resumable checkpoints to `/mnt/files/` and call this tool again for the next step.\n2. Top-level cells cannot use `return`; end with `output` or `print(output)`.\n3. Each cell has a hard 180-second limit. Use `ThreadPoolExecutor` for bulk operations and split large data into batches across cells.\n4. Schema safety: Never assume the response schema for run_composio_tool if not known already from previous tools. To inspect schema, either run a simple request **outside** the workbench or use invoke_llm helper.\n5. Use `invoke_llm` for summaries, analysis, or field extraction instead of ad hoc filtering.\n6. Avoid Meta Loops: Do not use run_composio_tool to call COMPOSIO_* meta tools. Only use it for app tools.\n7. Paginate until no `next_page_token` or cursor remains. Parallelize when page numbers are supported.\n8. Never hardcode data; load it from files or tool responses and iterate to build outputs.\n9. For user-downloadable files, call `upload_local_file`; never expose raw sandbox paths.\n\n\nENVIRONMENT & PRELOADED HELPERS\n- Home: `/home/user`. Do not import or redeclare these helpers:\n    - `run_composio_tool(tool_slug: str, arguments: dict) -> tuple[Dict[str, Any], str]`: Execute a known Composio **app** tool in loops, parallel, or bulk. Use an exact known name and schema. Results have top-level \"data\" and may be nested.\n    - `invoke_llm(query: str, reasoning_effort: Optional[Literal[\"low\",\"medium\",\"high\"]] = None) -> tuple[str, str]`: Run semantic tasks with at most 200k characters. reasoning_effort is an optional hint passed to the model (some models ignore it); omit it unless a task clearly needs \"high\" reasoning. Define the exact output JSON schema and batch items into small groups. Use f-strings or concatenation to preserve literal braces; with str.format, escape them as {{ }}.\n    - `upload_local_file(*file_paths) -> tuple[Dict[str, Any], str]`: Upload user-downloadable artifacts to Composio S3/R2. Multiple files are auto-zipped; success data includes s3_url, uploaded_file, type, s3key, and message.\n    - `proxy_execute(method: Literal[\"GET\",\"POST\",\"PUT\",\"DELETE\",\"PATCH\"], endpoint, toolkit, query_params=None, body=None, headers=None) -> tuple[Any, str]`: Call a toolkit API directly when no Composio tool exists. Only one toolkit can be invoked per workbench call.\n    - `web_search(query: str) -> tuple[str, str]`: Search the web for information.\n    - `smart_file_extract(sandbox_file_path: str, show_preview: bool = True) -> tuple[str, str]`: Extracts text from files in the sandbox (e.g., PDF, image).\n- All helpers return `(result, error)`; always check `error` before using `result`.\n- Parse responses defensively: inspect keys while narrowing because data can be nested.\n- For bulk calls, use `ThreadPoolExecutor` and set concurrency so the cell finishes within 180 seconds.\n\n",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "code_to_execute": {
+        "type": "string",
+        "description": "Python to run inside the persistent **remote Jupyter sandbox**. State (imports, variables, files) is preserved across executions. Keep code concise. Avoid unnecessary comments. **Hard 3-minute (180s) execution limit** — break large tasks into smaller cells.\nExamples:\n  \"import json, glob\\npaths = glob.glob(file_path)\\n...\"\n  \"result, error = run_composio_tool(tool_slug='SLACK_SEARCH_MESSAGES', arguments={'query': 'Rube'})\\nif error:\\n    print(error)\\nelse:\\n    messages = result.get('data', {}).get('messages', [])\""
+      },
+      "thought": {
+        "type": "string",
+        "description": "Brief objective for this step."
+      },
+      "current_step": {
+        "type": "string",
+        "description": "Short enum for current step of the workflow execution. Eg FETCHING_EMAILS, GENERATING_REPLIES. Always include to keep execution aligned with the workflow."
+      },
+      "current_step_metric": {
+        "type": "string",
+        "description": "Progress metrics for the current step - use to track how far execution has advanced. Format as a string \"done/total units\" - example \"10/100 emails\", \"0/n messages\", \"3/10 pages\"."
+      },
+      "session_id": {
+        "type": "string",
+        "description": "Pass the session_id if you received one from a prior COMPOSIO_SEARCH_TOOLS call."
+      }
+    },
+    "required": [
+      "code_to_execute"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "annotations": {
+    "scopes": [],
+    "readOnlyHint": false,
+    "openWorldHint": true,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "updateHint": false
+  },
+  "execution": {
+    "taskSupport": "forbidden"
+  }
+}

@@ -12,6 +12,9 @@ Put the key in `~/.config/eve-bridge/env`:
 OPENROUTER_API_KEY=your-openrouter-key
 ```
 
+In eve lite nobody pastes the key: its setup page signs in to OpenRouter in the browser and
+gets one made for it ([eve lite: the key from a browser sign-in](#eve-lite-the-key-from-a-browser-sign-in)).
+
 Two tools keep their own sign-ins and do not use this key:
 
 - **Codex** (computer tasks, Codex chat) uses its ChatGPT plan login
@@ -166,3 +169,40 @@ Decisions beta with an OpenAI key, for development only.
    `voice_agent.py` (the desk voice until wave 2), `phone_call.py` (the opt-in
    live ears), `spend_sync.py` (optional admin keys for the providers' own cost
    figures, never a model call), and `decisions.py` (development tools only).
+
+## eve lite: the key from a browser sign-in
+
+In [eve lite](lite.md) nobody types or pastes a key. Its setup page has OpenRouter make one,
+with OpenRouter's OAuth flow and PKCE (`onboarding.OpenRouterLogin`):
+
+1. **Sign in with OpenRouter** sends the browser to `https://openrouter.ai/auth` with a
+   `callback_url` of `http://localhost:<port>/onboard/openrouter/callback`, an S256
+   `code_challenge`, a single-use `state`, and `key_label` "eve lite on <this Mac>", the name the
+   key gets in the person's OpenRouter account. OpenRouter takes a localhost callback on any port.
+2. OpenRouter's consent page names the app by its callback's address, `localhost:48780`. The setup
+   page tells the person beforehand that this is eve.
+3. The callback is checked by its `state` alone: 128 random bits, good once, for 10 minutes. The
+   page's own cookie is `SameSite=Strict`, so the browser does not send it on OpenRouter's redirect
+   back, and it cannot be required. A missing, used or expired `state` is refused before anything
+   leaves the Mac.
+4. eve trades the code for the key at `https://openrouter.ai/api/v1/auth/keys`, with the JSON body
+   `{code, code_verifier, code_challenge_method: "S256"}`. The key is hidden from every log line at
+   once, written to `~/.config/eve-bridge/env` as `OPENROUTER_API_KEY` (atomically, mode 600, the
+   file's other lines kept), and the daemon restarts into it.
+5. The setup page, and **Settings → OpenRouter** after it, show what the key can spend: the smaller
+   of the account's balance (`/api/v1/credits`) and the key's own remaining limit (`/api/v1/key`).
+   A key made this way has no limit, and `/credits` may refuse a key that is not a management key,
+   so often there is no figure. The page then says the key has no credit only for an account that
+   has never bought any, and offers **Add credits** and **Check again**.
+
+- **No spend limit.** A key made by this sign-in has no spend limit, and eve lite sets no daily cap
+  of its own (open question 11 in [eve lite](lite.md#the-owners-open-questions)). Set a limit on the
+  key at openrouter.ai if you want one.
+- **No credit.** In eve lite, a turn that gets HTTP 402 from OpenRouter answers "OpenRouter has no
+  credit on this key. Add credits at openrouter.ai, then send that again." instead of the general
+  failure line. Full eve's line is unchanged.
+- **Everything else runs on that one key**, as above: the chat brain and its roles, speech to text
+  (`gpt-4o-transcribe`) and the call's voice (`deepgram/aura-2`), web search, the watches' model and
+  memory, with mem0 on OpenRouter's embedder (`EVE_MEM0_EMBEDDER=openrouter`, which eve lite forces).
+  eve lite has no desk voice, so it never needs `OPENAI_API_KEY`: at start it removes that key, and
+  every other secret but `OPENROUTER_API_KEY`, from its own environment.

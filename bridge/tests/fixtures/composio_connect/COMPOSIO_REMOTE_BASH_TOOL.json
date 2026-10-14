@@ -1,0 +1,34 @@
+{
+  "name": "COMPOSIO_REMOTE_BASH_TOOL",
+  "title": "Run bash commands",
+  "description": "\n  Execute bash commands in a REMOTE sandbox for file operations, data processing, and system tasks. Essential for handling large tool responses saved to remote files. **Hard 3-minute (180s) execution limit** — break large tasks into smaller commands.\n  PRIMARY USE CASES:\n- Process large tool responses saved by COMPOSIO_MULTI_EXECUTE_TOOL to remote sandbox\n- File system operations, extract specific information from JSON with shell tools like jq, awk, sed, grep, etc.\n- Commands run from /home/user directory by default\n    ",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "command": {
+        "type": "string",
+        "description": "The bash command to execute. **Hard 3-minute (180s) execution limit** — break large tasks into smaller commands."
+      },
+      "session_id": {
+        "type": "string",
+        "description": "Pass the session_id if you received one from a prior COMPOSIO_SEARCH_TOOLS call."
+      }
+    },
+    "required": [
+      "command"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "annotations": {
+    "scopes": [],
+    "readOnlyHint": false,
+    "openWorldHint": true,
+    "destructiveHint": true,
+    "idempotentHint": false,
+    "updateHint": false
+  },
+  "execution": {
+    "taskSupport": "forbidden"
+  }
+}

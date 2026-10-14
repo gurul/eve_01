@@ -1,0 +1,34 @@
+{
+  "fetched_at": "2026-10-13T21:01:41+00:00",
+  "source": "MCP initialize POSTs to Composio Connect with no sign-in (spike S1).",
+  "cases": [
+    {
+      "name": "no Authorization header",
+      "url": "https://connect.composio.dev/mcp",
+      "method": "POST",
+      "authorization": null,
+      "jsonrpc_method": "initialize",
+      "status": 401,
+      "content_type": "application/json",
+      "www_authenticate": "Bearer error=\"unauthorized\", error_description=\"No Authorization: Bearer header on request\", resource_metadata=\"https://connect.composio.dev/.well-known/oauth-protected-resource\"",
+      "body": {
+        "error": "Authorization required",
+        "reason": "No Authorization: Bearer header on request"
+      }
+    },
+    {
+      "name": "a bearer that is not a token",
+      "url": "https://connect.composio.dev/mcp",
+      "method": "POST",
+      "authorization": "Bearer <a made-up value, not a token>",
+      "jsonrpc_method": "initialize",
+      "status": 401,
+      "content_type": "application/json",
+      "www_authenticate": "Bearer error=\"unauthorized\", error_description=\"Bearer token rejected: not a valid AuthKit JWT for this resource, or no matching Composio account\", resource_metadata=\"https://connect.composio.dev/.well-known/oauth-protected-resource\"",
+      "body": {
+        "error": "Authorization required",
+        "reason": "Bearer token rejected: not a valid AuthKit JWT for this resource, or no matching Composio account"
+      }
+    }
+  ]
+}

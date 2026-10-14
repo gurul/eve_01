@@ -18,7 +18,9 @@ set: anyone can add their own with `eve-bridge app new <name>`
 
 Setting it up for yourself, or having an agent do it: [Get started](#get-started)
 is the path, and [AGENTS.md](AGENTS.md) is the same path written for an agent, with a
-check after every step and the rules of the repository.
+check after every step and the rules of the repository. Without Xcode, Homebrew or an
+iPhone, [eve lite](docs/lite.md) is one install line and two browser sign-ins, with eve
+in a web page.
 
 A **Python daemon on your Mac** connects these devices, tools and local stores.
 The devices are optional ways to reach and interact with eve: the StackChan gives
@@ -314,6 +316,26 @@ eve runs on a Mac and is used from an iPhone. The whole setup is about an hour;
 every step below ends with a check, because what goes wrong in this project goes
 wrong silently. If an agent (Claude Code, Codex) is doing the setup for you, point it
 at [AGENTS.md](AGENTS.md): the same steps with the checks and the house rules.
+Step 0 is the other way in: eve lite, one command and no iPhone app.
+
+### 0. One command: eve lite (no iPhone app, no Xcode)
+
+On an Apple-silicon Mac with macOS 14 or later:
+
+```bash
+curl -fsSL https://github.com/gurul/eve_01/releases/latest/download/install-lite.sh | bash
+```
+
+**No release is published yet**, so this line works only once the owner publishes the
+first eve lite release. eve lite needs no Xcode tools, no Homebrew and no git: it
+installs into `~/.eve-lite` with its own Python, and its setup is two sign-ins in the
+browser, OpenRouter for the model key and Composio for the apps (optional), with no key
+pasted anywhere. Its app is a web page the Mac serves: the Mac's own browser opens it at
+`http://localhost:48780`, and a phone or laptop on the same Wi-Fi pairs by QR code and
+talks to the Mac over WebRTC. It has eve's chat, memory, web search, watches,
+push-to-talk voice and Composio's apps, and none of the Mac's tasks, the devices,
+Telegram or the iPhone app. One macOS user has full eve or eve lite, not both. Everything
+else, from the sign-ins to uninstalling, is in [eve lite](docs/lite.md).
 
 ### 1. The Mac
 
@@ -630,6 +652,21 @@ With a TinyFish key, a computer task's text goes to Jev (TypeSafe's model,
 through TypeSafe or OpenRouter) to choose where it runs,
 and a public-web lookup's text goes to TinyFish as a search. The watcher sends only the page you asked it to watch.
 
+**eve lite** ([what leaves the Mac](docs/lite.md#what-leaves-the-mac)) listens on two
+ports of its own: 48780, the Mac's page, on loopback only; and 48781, the door for phones
+and laptops, from the first "Add a
+phone" until it is turned off, on every interface but only for private and on-link
+addresses, over TLS with a certificate the Mac makes (each port falls back to the next
+free one in 48782–48789 or 48790–48799). The link between a phone and the Mac is WebRTC
+with no STUN or TURN server, so it stays on the network. What leaves the Mac is
+OpenRouter (every model call, speech, web search and the sign-in), Composio (its sign-in
+and every app call), ScienceMadeReadable and Open-Meteo, and the pages you ask it to
+watch; nothing goes to Telegram, ntfy, Cloudflare, or Google's or OpenAI's APIs directly.
+Its data lives where full eve's does, in `~/.config/eve-bridge/`: `env` holds
+`EVE_PROFILE=lite` and the OpenRouter key, and `composio-connect.json`, `web.json`,
+`web-devices.json` and `web-tls/` are eve lite's own, all owner-only. The program itself
+is in `~/.eve-lite/`.
+
 Persistent data lives under `~/.config/eve-bridge/`:
 
 | Location | Contents |
@@ -663,10 +700,13 @@ Persistent data lives under `~/.config/eve-bridge/`:
 | `firmware/claude_pet_stackchan/` | Active StackChan firmware and C++ host tests | [Build and protocol](docs/stackchan/build.md), [design](DESIGN.md) |
 | `firmware/eve_voice_pe/` | Voice PE button, dial, ring and speaker firmware | [Voice PE build and controller setup](docs/voice-pe.md) |
 | `bridge/src/eve_bridge/` | Daemon, CLI, voice, desktop control, vision and memory | [Bridge reference](bridge/README.md), [voice](docs/stackchan/voice.md), [routing](docs/stackchan/routing.md), [Telegram](docs/stackchan/telegram.md) |
+| `install-lite.sh` | eve lite's one-line installer: uv, its own Python and hash-pinned wheels into `~/.eve-lite`, with no developer tools | [Install eve lite](docs/lite.md#install) |
+| `bridge/src/eve_bridge/profile.py`, `bridge/src/eve_bridge/lite*.py` | eve lite: `profile.py` (the `EVE_PROFILE` switch, what it turns off, the process firewall), `lite.py` (its daemon), `lite_web.py` (its two web doors), `lite_rtc.py` (WebRTC), `lite_tls.py` (its local certificate) | [How eve lite is built](docs/lite.md#how-it-is-built) |
 | `bridge/tests/`, `bridge/tools/` | Python tests, fixtures and routing/desktop evaluation tools | [Routing evaluations](docs/stackchan/routing.md) |
 | `widget/` | SwiftUI app, shared data readers, WidgetKit extension and Xcode project | [Widget setup](docs/stackchan/widget.md) |
 | `ios/EveLink/` | The Eve Link iPhone app: Updates (things to act on), chat with eve (with photos and files attached), the chief's jobs, Notes (your vault: pages, to-dos, edit, move, delete with undo), native Music, Lights and TV remote controls, Memory and Share location in Settings, voice mode (StackChan's face with captions, the Action Button talks), notes on the go | [Action Button](docs/action-button.md), [Chat in the app](docs/app-chat.md), [Updates](docs/updates.md), [voice mode](docs/voice-mode.md), [phone location](docs/phone-location.md) |
-| `verification/` | Lean 4 models of eve's state machines, 470 kernel-checked theorems | [Verification](docs/verification.md) |
+| `ios/EveLink/Web/src/web/` | eve lite's web app: the iPhone app's chat page in a browser, with its own shell, setup, pairing and voice | [Web app](ios/EveLink/Web/README.md#eve-lites-web-app-srcweb) |
+| `verification/` | Lean 4 models of eve's state machines, 539 kernel-checked theorems | [Verification](docs/verification.md) |
 | `AGENTS.md` | The setup runbook and the rules, for an agent working on eve | |
 | `tools/` | Firmware flashing and demo utilities | [Build](docs/stackchan/build.md) |
 | `docs/stackchan/` | Hardware notes, personality, vision and integration details | [Personality](docs/stackchan/personality.md), [vision](docs/stackchan/vision.md), [memory](docs/stackchan/memory.md), [Claude Code](docs/stackchan/claude-code-integration.md) |

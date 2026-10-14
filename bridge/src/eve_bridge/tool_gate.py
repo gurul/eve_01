@@ -82,6 +82,8 @@ _SOURCES: dict[str, str] = {
     "look_around": "the camera", "find": "the camera",
     **app_registry.SOURCES(),
 }
+# A Composio read in eve lite (EVE_PROFILE=lite), where Composio holds whichever apps the owner connected (source).
+COMPOSIO_LITE_SOURCE = "your connected apps"
 TASK_RESULT = "a computer task's result"
 TASK_QUESTION = "a computer task's question"
 ATTACHED = "the attached file"
@@ -133,14 +135,22 @@ def taints(name: str, args: Mapping[str, Any]) -> bool:
 
 
 def source(name: str) -> str:
-    """The read, in the owner's words, for the question."""
+    """The read, in the owner's words, for the question. In eve lite (profile.is_lite) Composio's reads are the
+    owner's own connected apps, whichever they are, never three named ones."""
     if name in _SOURCES:
         return _SOURCES[name]
     if "__" in name:
         return f"{name.split('__', 1)[0].capitalize()}"
     if name.startswith("COMPOSIO_"):
-        return "Slack, Notion or Linear"
+        return COMPOSIO_LITE_SOURCE if _lite() else "Slack, Notion or Linear"
     return "a tool result"
+
+
+def _lite() -> bool:
+    """eve lite (EVE_PROFILE=lite): profile.py is read when asked, so this module imports as it always has."""
+    from . import profile
+
+    return profile.is_lite()
 
 
 # The question shows the act whole; a call longer than this is refused unasked (``describe`` returns None).

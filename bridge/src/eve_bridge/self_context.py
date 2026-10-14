@@ -27,6 +27,11 @@ daemon builds its doors from, so it cannot drift from what runs:
   auto once its capture eval has passed). Off, the block is byte for byte what it was (P4, 2026-09-29). What the
   chief is doing lives in each turn's note (chief.for_turn), never here: this block is fixed from boot.
 
+eve lite (EVE_PROFILE=lite, profile.py; docs/plans/eve-lite.md M2) has a block of its own (``_lite_lines``): the
+chat brain of eve's web app and think_hard, web search, the watcher, memory, the web app as its one door, and its
+Composio Connect apps while the owner is signed in there. A part eve lite does not have gets no line at all, and no
+git is started for the commit line. With EVE_PROFILE unset every line above is what it was.
+
 No value is typed here: every model, engine and brand comes from the module that uses it, and a component that
 is off says so. The only fixed words are how each thing is described. Names are only ever the ones that are live
 now: never a retired one, not even as "not X" (the owner's rule for prompts: a name in a prompt is a sample of
@@ -97,7 +102,12 @@ def _quiet() -> Iterator[None]:
 @functools.lru_cache(maxsize=1)
 def running_commit() -> str:
     """The short sha of the checkout this package runs from, or "" (not a git checkout, no git). Read once per
-    process: a restart is what changes the running code, and a later checkout of another branch does not."""
+    process: a restart is what changes the running code, and a later checkout of another branch does not.
+
+    eve lite (EVE_PROFILE=lite) runs from a release with no checkout and starts no git (profile.py's firewall, the
+    developer-tools dialog a /usr/bin/git can open): "", with no process started."""
+    if _lite():
+        return ""
     try:
         out = subprocess.run(["git", "-C", str(Path(__file__).resolve().parent), "rev-parse", "--short", "HEAD"],
                              capture_output=True, text=True, timeout=2.0, check=False)
@@ -105,6 +115,13 @@ def running_commit() -> str:
         return ""
     sha = out.stdout.strip()
     return sha if out.returncode == 0 and sha.isalnum() and len(sha) <= 12 else ""
+
+
+def _lite(environ: Optional[Mapping[str, str]] = None) -> bool:
+    """eve lite (profile.is_lite), for ``environ`` or the process's environment: profile.py is read when asked."""
+    from . import profile
+
+    return profile.is_lite(environ)
 
 
 # ---- one line per area --------------------------------------------------------------------------
@@ -318,6 +335,8 @@ def lines(environ: Optional[Mapping[str, str]] = None, *, lights_path: Optional[
           commit: Optional[str] = None) -> list[str]:
     """The block's lines, in order. `lights_path` and `commit` are lent by tests (the lights file and the sha)."""
     env = os.environ if environ is None else environ
+    if _lite(env):
+        return _lite_lines(env, commit)
     sha = running_commit() if commit is None else commit
     with _quiet():
         out = _models(env) + [_search(env), _computer(env), _watch(env), _lights(env, lights_path), _memory(env),
@@ -326,6 +345,51 @@ def lines(environ: Optional[Mapping[str, str]] = None, *, lights_path: Optional[
     if sha:
         out.append(f"Running code: git commit {sha}.")
     return out
+
+
+# ---- eve lite (EVE_PROFILE=lite, profile.py) -----------------------------------------------------------
+
+def _lite_lines(env: Mapping[str, str], commit: Optional[str]) -> list[str]:
+    """eve lite's block: only what eve lite is made of (lite.py's LiteDaemon), each line read from the same
+    configured() as full eve's. Its one door is eve's web app; its apps are the owner's Composio Connect sign-in. The
+    Mac's tasks, the lights, the voice's halves, the Mini App, Canvas, sharing, the chief and purchases are not part
+    of it at all, so no line names them, not even as off. The commit is "" with no git started (running_commit);
+    a test may still lend one."""
+    with _quiet():
+        out = _lite_models(env) + [_search(env), _watch(env), _memory(env), LITE_DOORS] + _lite_apps()
+    if commit:
+        out.append(f"Running code: git commit {commit}.")
+    return out
+
+
+# eve lite's one door: the web app, in a browser on the Mac or on a phone or laptop on the same Wi-Fi (lite_web.py).
+LITE_DOORS = "Doors on: eve's web app."
+LITE_APPS = "Apps: the owner's apps connected in Composio, through the COMPOSIO tools."
+
+
+def _lite_models(env: Mapping[str, str]) -> list[str]:
+    """The chat brain (telegram.py's, the web app's only brain, for texts and push-to-talk alike) and think_hard."""
+    from . import openrouter, telegram, think
+
+    tg = telegram.configured(env)
+    out = [f"Chat brain (eve's web app: texts and push-to-talk): {tg.model}, {tg.effort} effort."]
+    tc = think.configured(env)
+    if tc.enabled and openrouter.available(env):
+        out.append(f"think_hard: {tc.model}, {tc.effort} effort.")
+    return out
+
+
+def _lite_apps() -> list[str]:
+    """One line while the owner is signed in to Composio Connect (onboarding writes CONNECT_TOKEN_FILE only once a
+    token arrives, so the file is the sign-in), else none: its apps are whichever the owner connected there, so none
+    is named. Its presence is all that is read here, never its tokens."""
+    from .onboarding import CONNECT_TOKEN_FILE
+
+    try:
+        signed_in = Path(CONNECT_TOKEN_FILE).expanduser().is_file()
+    except OSError:
+        signed_in = False
+    return [LITE_APPS] if signed_in else []
 
 
 def block(environ: Optional[Mapping[str, str]] = None, *, lights_path: Optional[Path] = None,

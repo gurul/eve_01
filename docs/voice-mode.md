@@ -9,6 +9,9 @@ Status: wired on 2026-10-08. The top bar's voice button (top right of Chat and
 Work) opens it, and it replaced the Talk sheet. Built and checked in the
 simulator; not yet tried on the owner's iPhone.
 
+[eve lite](lite.md) has no app: its voice is push-to-talk in the browser, into the same call,
+carried over WebRTC. See [eve lite: push-to-talk in a browser](#eve-lite-push-to-talk-in-a-browser).
+
 ## What the owner sees
 
 - A black screen with a light status bar.
@@ -404,3 +407,75 @@ speaks, the 0.25 s playback margin before the microphone reopens), the
 background hang-up, recovery after an interruption, and the earpiece switch. The
 face was checked in the simulator (iPhone 17 Pro Max, 2026-10-09); its captions
 need a real call.
+
+## eve lite: push-to-talk in a browser
+
+[eve lite](lite.md) has no iPhone app, so its voice is a view in the web app
+(`ios/EveLink/Web/src/web/VoiceView.tsx` and `voice.ts`), on the Mac's own page or a phone's.
+The waveform button at the top right opens it.
+
+**What the person sees.** Captions, what eve heard in one line and what eve said in another,
+over a status line ("Connecting…", "Hold to talk", "Listening…", "eve is thinking…", "eve is
+speaking") and one round mic button, with an × at the top to end the call. Hold the button (or
+Space or Return) and talk; let go, and eve answers aloud. A press while eve speaks cuts it off.
+The first press also starts the page's audio, since a browser plays sound only after a tap. The
+press ends by itself when the page is hidden or the window loses focus, since its release would
+never arrive. There is no face: StackChan's face is the app's own SwiftUI.
+
+**How it is carried.** The call is the one the app makes, `phone_call.PhoneCalls`, unchanged,
+driven through `PhoneCalls.serve_socket` by `lite_rtc.RtcCallSocket` in place of the WebSocket:
+
+- **The microphone** rides the WebRTC peer's audio transceiver. The page makes one `sendrecv`
+  audio transceiver with no track before its offer, and attaches the microphone with
+  `replaceTrack`, so nothing is renegotiated. On the Mac each decoded frame is resampled to 24 kHz
+  mono 16-bit PCM and passed to the call in 100 ms blocks, only between `talk` and `done`.
+- **eve's voice** comes back on the Mac's audio track (`lite_rtc.VoiceTrack`): the call's 24 kHz
+  PCM in 20 ms frames, paced in real time, with silence when nothing is queued; aiortc's Opus
+  encoder resamples it to 48 kHz stereo.
+- **The call's JSON** goes on a `call` DataChannel the page opens when voice starts, on the same
+  peer. The page sends `{"type":"talk"}` when the button goes down, `{"type":"done"}` when it comes
+  up, `{"type":"ping"}` every 10 s (the call ends after 30 s quiet), and `{"type":"end"}` to hang
+  up. The Mac builds the hello itself, `{"token": <the peer's own secret>, "can": []}`, so no
+  one-time call token is needed and a later call on the same peer just opens. It sends
+  `state`, `heard`, `said`, `flush` and `ended`, as to the app.
+
+**Timing.**
+
+- 300 ms of audio from before each `talk` is kept and replayed after it: `talk` can arrive after the
+  first words, since the DataChannel and the audio race.
+- `done` is held 250 ms on the Mac, so the press's last audio, which the DataChannel can overtake,
+  still arrives first. The page keeps its microphone on for 350 ms after the release for the same
+  reason.
+- A `said` caption waits in eve's audio queue as a marker, and goes out when its sentence starts to
+  leave the Mac: speech is made faster than it plays, so a caption sent with the text would run
+  ahead of the voice. `flush` empties the queue and its markers.
+
+**The microphone is captured per press.** It is live only while the button is held, plus the
+350 ms tail, so between presses the page is a plain playback page, and iOS plays eve on the
+loudspeaker at full volume rather than as a call. The cost is the moment the microphone takes to
+start at each press; `talk` goes at once, so eve stops at once. Spike S5 has not yet chosen between
+this and one capture for the whole call (`MIC_MODE` in `voice.ts`).
+
+**When it cannot connect,** the view says why and how to fix it:
+- no direct link to the Mac: macOS's Local Network privilege is off for python3.13, and on the Mac
+  **System Settings → Privacy & Security → Local Network** turns it on (Chrome on another Mac also
+  asks once for its own permission);
+- the microphone blocked: in Safari, **aA → Website Settings**; in Chrome, the icon left of the
+  address, then **Permissions**;
+- not a secure address: open eve from the `https://` link the Mac shows.
+
+One call at a time across every device: a new call ends the one still open. Voice needs the
+OpenRouter key on the Mac (speech to text and eve's voice both go through it).
+
+**What the browser cannot do,** next to the app: no Action Button, no Live Activity, no call from a
+locked phone or a page in the background, no face or expressions, no earpiece switch, and no notes
+on the go (the hello offers neither notes nor eyes).
+
+**Checks.** `bridge/tests/test_rtc_call_socket.py` (the hello first, a 48 kHz stereo frame out as
+24 kHz mono only between `talk` and `done`, the pre-roll, the post-roll, `said` released with its
+audio, `flush`), `test_voice_track.py` (480-sample frames with rising timestamps, silence when
+empty), `test_phone_call_serve_socket.py`, and `test_lite_rtc_loopback.py`, where two aiortc peers
+in one process complete a turn over `link` and a tone held on the microphone reaches the call; and
+the page's
+`src/web/__tests__/voice.test.ts`. Not yet tried in a real browser with a real phone: spikes S4 and
+S5, and manual gates M2 and M3.

@@ -1,0 +1,47 @@
+{
+  "name": "COMPOSIO_WAIT_FOR_CONNECTIONS",
+  "title": "Wait for connection",
+  "description": "\nWait for user auth to finish. Call only after the user confirms they have completed authentication.\nWait until mode=any/all toolkits reach a terminal state (ACTIVE/FAILED) or timeout.\n\nExample Input: { toolkits: [\"gmail\",\"outlook\"], mode: \"any\" }\n    ",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "toolkits": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "minItems": 1,
+        "description": "List of toolkit slugs to wait for."
+      },
+      "mode": {
+        "type": "string",
+        "enum": [
+          "any",
+          "all"
+        ],
+        "description": "Wait for ANY connection or ALL connections to reach active/failed state (default: any)",
+        "default": "any"
+      },
+      "session_id": {
+        "type": "string",
+        "description": "Pass the session_id if you received one from a prior COMPOSIO_SEARCH_TOOLS call."
+      }
+    },
+    "required": [
+      "toolkits"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "annotations": {
+    "scopes": [],
+    "readOnlyHint": true,
+    "openWorldHint": false,
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "updateHint": false
+  },
+  "execution": {
+    "taskSupport": "forbidden"
+  }
+}

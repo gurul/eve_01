@@ -1,0 +1,48 @@
+{
+  "fetched_at": "2026-10-13T20:56:07+00:00",
+  "source": "The one dynamic client registration (RFC 7591) spike S1 made: a throwaway public client.",
+  "endpoint": "https://login.composio.dev/oauth2/register",
+  "method": "POST",
+  "content_type_sent": "application/json",
+  "request": {
+    "client_name": "eve lite S1 spike (throwaway)",
+    "redirect_uris": [
+      "http://localhost:48780/onboard/composio/callback",
+      "http://127.0.0.1:48780/onboard/composio/callback"
+    ],
+    "token_endpoint_auth_method": "none",
+    "grant_types": [
+      "authorization_code",
+      "refresh_token"
+    ],
+    "response_types": [
+      "code"
+    ],
+    "scope": "openid profile email offline_access"
+  },
+  "status": 201,
+  "content_type": "application/json",
+  "response": {
+    "client_id": "client_S1SPIKEPLACEH0LDER00000000",
+    "client_id_issued_at": 1791924967,
+    "application_type": "web",
+    "client_name": "eve lite S1 spike (throwaway)",
+    "grant_types": [
+      "authorization_code",
+      "refresh_token"
+    ],
+    "redirect_uris": [
+      "http://localhost:48780/onboard/composio/callback",
+      "http://127.0.0.1:48780/onboard/composio/callback"
+    ],
+    "response_types": [
+      "code"
+    ],
+    "token_endpoint_auth_method": "none",
+    "scope": "openid profile email offline_access"
+  },
+  "redacted": {
+    "client_id": "replaced by a placeholder of the same shape: \"client_\" and 26 of [0-9A-Z]"
+  },
+  "not_returned": "no client_secret, and no registration_access_token or registration_client_uri, so the RFC 7592 management calls are not open to the app: a registered client stays registered"
+}

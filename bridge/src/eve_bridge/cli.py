@@ -1,17 +1,28 @@
-"""Entry point. `eve-bridge [daemon|install|uninstall|status|notes-widget|...]`."""
+"""Entry point. `eve-bridge [daemon|install|uninstall|status|notes-widget|...]`.
+
+Under EVE_PROFILE=lite (profile.py) the command line is eve lite's own, smaller one (`_lite_main`): `eve-bridge
+[daemon|install|uninstall|status|update|web|doctor|lite|memory]`."""
 
 from __future__ import annotations
 
 import argparse
 import asyncio
+import contextlib
+import json
 import logging
 import os
+import plistlib
+import re
+import shutil
 import signal
+import subprocess
 import sys
-from typing import Any, Callable, Optional
+import tempfile
+import time
+from pathlib import Path
+from typing import Any, Callable, Iterator, Optional
 
-from . import __version__, app_registry
-from .daemon import Daemon
+from . import __version__, app_registry, profile
 from .envfile import load_env_file
 from .ipc import make_transport
 from .learning import LESSON_ACTIONS
@@ -31,6 +42,15 @@ def main(argv: list[str] | None = None) -> int:
     # (OPENAI_API_KEY, EVE_*) — read before any subcommand looks at
     # os.environ. Existing variables win; the file only fills gaps.
     load_env_file()
+    # eve lite (EVE_PROFILE=lite, profile.py): its switches forced, its defaults filled and every other secret removed
+    # before any command reads the environment, then its own commands. Unset or "full" changes nothing here.
+    try:
+        applied = profile.apply(os.environ)
+    except profile.ProfileError as e:
+        print(f"eve-bridge: {e}", file=sys.stderr)
+        return EX_CONFIG
+    if profile.is_lite():
+        return _lite_main(rest, applied)
     # eve's apps' own CLIs (app_registry.APPS: lights, spotify, firetv, obsbot/cam, ...): everything after the word
     # is the app's own (argparse's REMAINDER drops a leading --help)
     for app in app_registry.APPS:
@@ -593,6 +613,10 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _run_daemon(args: argparse.Namespace) -> int:
+    # Here, not at the top: daemon.py brings BLE (bleak) and the rest of full eve's Mac with it, which no other command
+    # needs, and which eve lite's command line never loads (its daemon is lite.py).
+    from .daemon import Daemon
+
     logging.basicConfig(
         level=getattr(logging, args.log_level.upper(), logging.INFO),
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
@@ -1383,6 +1407,806 @@ def _run_apps(args: argparse.Namespace) -> int:
             state = "not signed in"
         print(f"  {server.label:16} {state}")
     return 0
+
+
+# ---- eve lite (EVE_PROFILE=lite) ------------------------------------------------------------------------------------
+#
+# eve lite (docs/plans/eve-lite.md, profile.py) is eve for people other than the owner: one install line, two browser
+# sign-ins and a web app on the Wi-Fi. Under EVE_PROFILE=lite, main() hands the command line to _lite_main, which has
+# eve lite's commands and no others: its daemon (lite.py), its login service (_service_launchd's lite unit), its web
+# app's sign-in and devices (`web`), a check of the whole install (`doctor`), its uninstall, and `memory forget`. Full
+# eve's commands (the robot, BLE, the Mac's lanes, Claude Code's hooks, Telegram, the iPhone app, self-update through
+# git) cannot be reached from it, and full eve's own command line is as it was.
+
+EX_CONFIG = 78                    # sysexits.h: EVE_PROFILE is neither full nor lite (profile.ProfileError)
+LITE_INSTALL_LINE = "curl -fsSL https://github.com/gurul/eve_01/releases/latest/download/install-lite.sh | bash"
+LITE_KEPT = ".eve-lite-kept"      # install-lite.sh's marker: the env file's SHA-256, when an uninstall kept the folder
+WEB_OPEN_WAIT_SECS = 20.0         # `web open` waits this long for eve to answer; a restart after a sign-in takes ~5 s
+IPC_POLL_SECS = 0.5
+OPEN = "/usr/bin/open"
+OSADECOMPILE = "/usr/bin/osadecompile"
+LAUNCH_SERVICES = Path("Library/Preferences/com.apple.LaunchServices/com.apple.launchservices.secure.plist")
+_CS_DARWIN_USER_TEMP_DIR = 65537  # <unistd.h>: confstr's name for this user's own temporary folder (os has no name)
+_BUNDLE_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9.-]{0,254}")
+_OPAQUE = re.compile(r"[A-Za-z0-9_\-+/=.%]{24,}")      # a run this long is a key or a code, never a word (lite_web)
+OK, INFO, FIX = "ok", "--", "!!"  # doctor's marks: fine; nothing to do (or optional); to fix
+
+# What eve lite's commands say: one plain line each.
+LITE_NOT_ANSWERING = ("eve is not answering on this Mac. `eve-bridge status` says whether its login service is "
+                      "installed and loaded; its log is ~/Library/Logs/eve-lite.log.")
+LITE_REFUSED = "eve did not do that. Try again."
+LITE_NO_HOOKS = ("eve lite does not use Claude Code's hooks, so there is nothing to install there. "
+                 "`eve-bridge install --service` installs eve lite's login service.")
+LITE_NO_HOOKS_GONE = ("eve lite installs no Claude Code hooks, so there is nothing to remove there. "
+                      "`eve-bridge lite uninstall` removes eve lite.")
+LITE_UPDATE = ("eve-bridge: eve lite does not update itself. Run its install line again; it keeps your settings and "
+               "memory:\n  " + LITE_INSTALL_LINE)
+LITE_MAC_ONLY = "eve-bridge: eve lite runs on a Mac (macOS 14 or later), not on {platform!r}."
+LITE_NOT_LOADED = ("eve-bridge: eve lite is not running on this Mac, and its login service is not loaded. "
+                   "`eve-bridge install --service` starts it.")
+LITE_NO_CODE = "eve-bridge: eve answered without a sign-in code. Try again."
+LITE_NO_BROWSER = ("eve-bridge: no browser opened. Run this in a Terminal on the Mac itself, signed in at its screen, "
+                   "or open Eve from Applications.")
+LITE_LOGIN_UNUSED = ("eve-bridge: the browser did not sign in to eve within two minutes, so that sign-in is gone. Run "
+                     "`eve-bridge web open` again, or open Eve from Applications.")
+
+
+def _seconds(text: str) -> float:
+    """--wait's value: seconds, from 0 to a day."""
+    try:
+        value = float(text)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"not a number of seconds: {text!r}") from None
+    if not 0.0 <= value <= 86400.0:                 # NaN fails here too
+        raise argparse.ArgumentTypeError(f"seconds from 0 to 86400, not {text!r}")
+    return value
+
+
+def _lite_parser() -> tuple[argparse.ArgumentParser, dict[str, argparse.ArgumentParser]]:
+    """eve lite's commands, and the parsers of those that take a subcommand (for their help)."""
+    parser = argparse.ArgumentParser(
+        prog="eve-bridge",
+        description="eve lite on this Mac: its daemon, its login service and its web app (docs/lite.md).")
+    parser.add_argument("--version", action="version", version=f"eve-bridge {__version__} (eve lite)")
+    sub = parser.add_subparsers(dest="cmd")
+
+    p_daemon = sub.add_parser("daemon", help="Run eve lite's daemon (its login service runs this)")
+    p_daemon.add_argument("--socket", default=None, help="IPC socket path override (a socket file)")
+    p_daemon.add_argument("--log-level", default="INFO")
+
+    p_install = sub.add_parser("install", help="With --service: install eve lite's login service")
+    p_install.add_argument("--service", action="store_true",
+                           help="Start eve lite now and at every login (launchd agent com.github.eve-bridge.lite)")
+    p_uninstall = sub.add_parser("uninstall", help="With --service: remove eve lite's login service")
+    p_uninstall.add_argument("--service", action="store_true", help="Stop eve lite and remove its launchd agent")
+    sub.add_parser("status", help="Whether eve lite is installed, running and signed in: yes or no for each")
+    p_update = sub.add_parser("update", help="Say how eve lite updates: by running its install line again")
+    p_update.add_argument("-y", "--yes", action="store_true", help=argparse.SUPPRESS)
+
+    p_web = sub.add_parser("web", help="eve's web app: open it on this Mac, and the browsers that can use it")
+    web_sub = p_web.add_subparsers(dest="web_cmd")
+    p_open = web_sub.add_parser("open", help="Open eve in this Mac's browser, signed in (Eve in Applications runs this)")
+    p_open.add_argument("--wait", type=_seconds, default=WEB_OPEN_WAIT_SECS, metavar="SECONDS",
+                        help=f"How long to wait for eve to answer (default {WEB_OPEN_WAIT_SECS:.0f})")
+    web_sub.add_parser("devices", help="List the browsers that can open eve")
+    p_revoke = web_sub.add_parser("revoke", help="Sign a browser out of eve: its id from `web devices`, or all")
+    p_revoke.add_argument("id", metavar="ID|all")
+    p_lan = web_sub.add_parser("lan", help="Turn phone access on or off: eve's door for phones on this Wi-Fi")
+    p_lan.add_argument("state", choices=("on", "off"))
+
+    sub.add_parser("doctor", help="Check eve lite on this Mac, part by part, and say what to fix")
+
+    p_lite = sub.add_parser("lite", help="eve lite itself: uninstall")
+    lite_sub = p_lite.add_subparsers(dest="lite_cmd")
+    p_remove = lite_sub.add_parser("uninstall", help="Remove eve lite from this Mac; asks before deleting its memory")
+    p_remove.add_argument("--dry-run", action="store_true", help="Say what it would remove, and remove nothing")
+
+    p_memory = sub.add_parser("memory", help="eve's memory: forget")
+    memory_sub = p_memory.add_subparsers(dest="memory_cmd")
+    p_forget = memory_sub.add_parser("forget", help="Count what matches in every store, then forget it on a yes")
+    p_forget.add_argument("query", help="The words to forget; a phrase in double quotes matches as written")
+    return parser, {"web": p_web, "lite": p_lite, "memory": p_memory}
+
+
+def _lite_main(argv: list[str], applied: list[str]) -> int:
+    """eve lite's command line (this section's comment). ``applied``: what profile.apply changed in this process, for
+    the daemon's log."""
+    parser, parents = _lite_parser()
+    args = parser.parse_args(argv)
+    if args.cmd is None:
+        parser.print_help()
+        return 1
+    if args.cmd == "daemon":
+        from . import lite
+
+        lite.setup_logging(args.log_level)
+        _say_profile(applied)
+        return lite.run_daemon(args)
+    if args.cmd in ("install", "uninstall"):
+        if not args.service:
+            print(LITE_NO_HOOKS if args.cmd == "install" else LITE_NO_HOOKS_GONE)
+            return 0
+        if sys.platform != "darwin":
+            print(LITE_MAC_ONLY.format(platform=sys.platform), file=sys.stderr)
+            return 2
+        from . import _service_launchd
+
+        return _service_launchd.install_lite() if args.cmd == "install" else _service_launchd.uninstall_lite()
+    if args.cmd == "update":
+        print(LITE_UPDATE, file=sys.stderr)
+        return 2
+    if args.cmd == "status":
+        return _lite_status()
+    if args.cmd == "doctor":
+        return _lite_doctor()
+    if getattr(args, f"{args.cmd}_cmd") is None:    # web, lite and memory take a subcommand
+        parents[args.cmd].print_help()
+        return 1
+    if args.cmd == "web":
+        if args.web_cmd == "open":
+            return _run_web_open(args.wait)
+        if args.web_cmd == "devices":
+            return _run_web_devices()
+        if args.web_cmd == "revoke":
+            return _run_web_revoke(args.id)
+        return _run_web_lan(args.state == "on")
+    if args.cmd == "lite":
+        return _lite_uninstall(dry_run=args.dry_run)
+    return _run_memory_store(args)
+
+
+def _say_profile(applied: list[str]) -> None:
+    """profile.apply ran before logging was set up, so its own line went nowhere: the daemon's log gets one now, with
+    names and a count only. A secret it removed is named, so the log says why a key in the env file does nothing."""
+    removed = [name for name in applied if profile.is_secret_name(name)
+               and name not in profile.LITE_FORCED and name not in profile.LITE_DEFAULTS]
+    logging.getLogger(__name__).info("profile: eve lite: %d switches set; removed %s", len(applied) - len(removed),
+                                     ", ".join(removed) or "nothing")
+
+
+# ---- talking to eve lite's daemon -----------------------------------------------------------------------------------
+
+def _lite_socket() -> str:
+    """eve lite's IPC socket, as its daemon takes it (lite.ipc_path: a socket file, never a TCP port). Read once per
+    command: a TCP address in EVE_BRIDGE_SOCK is said once, not on every poll."""
+    from . import lite
+
+    return str(lite.ipc_path())
+
+
+def _lite_ask(sock: str, event: dict[str, Any], timeout: float = 5.0) -> Optional[dict[str, Any]]:
+    """One request to eve lite's daemon on its 0600 socket (lite.py's IPC); None when nothing answers."""
+    from .hooks._client import post
+
+    answer = post(event, socket_path=sock, timeout=timeout, connect_timeout=2.0)
+    return answer if isinstance(answer, dict) else None
+
+
+def _lite_answered(answer: Optional[dict[str, Any]]) -> bool:
+    """Whether the daemon answered ``ok``; otherwise why not, on stderr."""
+    if answer is None:
+        print(f"eve-bridge: {LITE_NOT_ANSWERING}", file=sys.stderr)
+        return False
+    if answer.get("ok") is not True:
+        print(f"eve-bridge: {_plain_line(answer.get('error'), LITE_REFUSED)}", file=sys.stderr)
+        return False
+    return True
+
+
+def _shown(text: Any, limit: int = 300) -> str:
+    """``text`` without control or format characters (a terminal acts on them), at most ``limit`` characters."""
+    import unicodedata
+
+    value = text if isinstance(text, str) else str(text)
+    return "".join(ch for ch in value if unicodedata.category(ch)[0] != "C")[:limit]
+
+
+def _plain_line(text: Any, fallback: str) -> str:
+    """``text`` as one printable line; ``fallback`` when there is none, or when it holds a run that reads as a key or a
+    code (lite_web's rule: nothing eve shows carries one, whatever said it)."""
+    line = " ".join(_shown(text).split()) if isinstance(text, str) else ""
+    return fallback if not line or _OPAQUE.search(line) else line
+
+
+def _is_port(value: Any) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool) and 0 < value < 65536
+
+
+def _tilde(path: Any) -> str:
+    """``path`` with this user's home written ~, for a line on the screen."""
+    text, home = str(path), str(Path.home())
+    return "~" + text[len(home):] if text == home or text.startswith(home.rstrip("/") + "/") else text
+
+
+# ---- web open: this Mac's browser, signed in ------------------------------------------------------------------------
+
+def _run_web_open(wait: float) -> int:
+    """``eve-bridge web open`` (spec M4, the Mac's sign-in): this Mac's browser, signed in to eve. A one-time code comes
+    over the 0600 IPC socket and goes into a page in this user's own temporary folder (0600, mkstemp) that sends the
+    browser on to ``http://localhost:<port>/#login=<code>``; ``open`` opens that page. So the code is never printed,
+    logged or in a command line. The page is deleted once the browser signed in with it, once the code ran out (two
+    minutes), and on Ctrl-C, SIGTERM or SIGHUP. ``wait``: how long eve may take to answer, as it may be starting, or
+    restarting into a sign-in; when nothing answers and launchd has no eve lite loaded, nothing is coming, so it does not
+    wait. One line on stdout names the page's address (install-lite.sh reads its port)."""
+    from . import _service_launchd as launchd
+    from . import web_auth
+
+    sock = _lite_socket()
+    deadline = time.monotonic() + wait
+    asked_launchd = False
+    while True:
+        answer = _lite_ask(sock, {"evt": "web_login"})
+        if answer is not None and answer.get("ok") is True:
+            break
+        if answer is None and not asked_launchd:
+            asked_launchd = True
+            if not launchd.lite_loaded():
+                print(LITE_NOT_LOADED, file=sys.stderr)
+                return 1
+        if time.monotonic() >= deadline:
+            _lite_answered(answer)
+            return 1
+        time.sleep(IPC_POLL_SECS)
+    issued = time.monotonic()
+    code, port = answer.get("code"), answer.get("port")
+    if not (isinstance(code, str) and web_auth.TOKEN.fullmatch(code) and _is_port(port)):
+        print(LITE_NO_CODE, file=sys.stderr)
+        return 1
+    url = f"http://localhost:{port}"
+    try:
+        fd, page = tempfile.mkstemp(prefix="eve-open-", suffix=".html", dir=_user_tmp())
+    except OSError as e:
+        print(f"eve-bridge: the sign-in page could not be written ({type(e).__name__}).", file=sys.stderr)
+        return 1
+    try:
+        with os.fdopen(fd, "wb") as f:
+            f.write(_login_page(f"{url}/#login={code}"))
+        with _stop_on_signals():
+            if not _open_in_browser(page):
+                print(LITE_NO_BROWSER, file=sys.stderr)
+                return 1
+            print(f"eve is open in your browser: {url}", flush=True)
+            if not _login_used(sock, code, issued + web_auth.LOGIN_SECS):
+                print(LITE_LOGIN_UNUSED, file=sys.stderr)
+        return 0
+    finally:
+        with contextlib.suppress(OSError):
+            os.unlink(page)
+
+
+def _login_used(sock: str, code: str, until: float) -> bool:
+    """Wait until the browser signed in with ``code`` (lite.py's web_login_used), or until the monotonic ``until``."""
+    while True:
+        answer = _lite_ask(sock, {"evt": "web_login_used", "code": code})
+        if answer is not None and answer.get("used") is True:
+            return True
+        if time.monotonic() >= until:
+            return False
+        time.sleep(IPC_POLL_SECS)
+
+
+def _login_page(url: str) -> bytes:
+    """A page that sends the browser on to ``url`` at once and leaves no history entry (location.replace), with a meta
+    refresh where scripts are off. ``url`` was checked (a port, and a code of URL-safe characters), so it needs no
+    escaping in either place."""
+    return ("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">"
+            "<meta name=\"referrer\" content=\"no-referrer\">"
+            f"<meta http-equiv=\"refresh\" content=\"0; url={url}\">"
+            "<title>Opening eve</title></head><body>"
+            f"<script>location.replace({json.dumps(url)})</script>"
+            "<p>Opening eve…</p></body></html>").encode("utf-8")
+
+
+def _user_tmp() -> Optional[str]:
+    """This user's own temporary folder: $TMPDIR, else the one macOS keeps for the user (a start from launchd or
+    AppleScript may have no TMPDIR, or one that is gone, and /tmp is every account's); None, tempfile's own choice,
+    where neither is a folder."""
+    folder = os.environ.get("TMPDIR") or ""
+    if os.path.isdir(folder):
+        return folder
+    if sys.platform == "darwin":
+        try:
+            mine = os.confstr(_CS_DARWIN_USER_TEMP_DIR) or ""
+        except (OSError, ValueError):
+            mine = ""
+        if os.path.isdir(mine):
+            return mine
+    return None
+
+
+@contextlib.contextmanager
+def _stop_on_signals() -> Iterator[None]:
+    """SIGTERM and SIGHUP (a closed Terminal) end the command through Python's own exit, so its ``finally`` runs: the
+    page holding a sign-in code is deleted whatever stops ``web open``."""
+    def stop(signum: int, _frame: Any) -> None:
+        raise SystemExit(128 + signum)
+
+    saved: dict[int, Any] = {}
+    for sig in (signal.SIGTERM, signal.SIGHUP):
+        try:
+            saved[sig] = signal.signal(sig, stop)
+        except (ValueError, OSError):               # not the main thread: the default stays
+            pass
+    try:
+        yield
+    finally:
+        for sig, handler in saved.items():
+            signal.signal(sig, handler)
+
+
+def _default_browser() -> Optional[str]:
+    """The bundle id of the app LaunchServices opens http links with, the default browser; None when its record names
+    none (Safari, the default) or cannot be read."""
+    try:
+        with open(Path.home() / LAUNCH_SERVICES, "rb") as f:
+            data = plistlib.load(f)
+    except Exception:  # noqa: BLE001 — no record, or one that does not parse: the default browser is Safari
+        return None
+    handlers = data.get("LSHandlers") if isinstance(data, dict) else None
+    for scheme in ("http", "https"):
+        for handler in handlers if isinstance(handlers, list) else []:
+            if not isinstance(handler, dict) or str(handler.get("LSHandlerURLScheme", "")).lower() != scheme:
+                continue
+            bundle = handler.get("LSHandlerRoleAll")
+            if isinstance(bundle, str) and "." in bundle and _BUNDLE_ID.fullmatch(bundle):
+                return bundle
+    return None
+
+
+def _open_in_browser(path: str) -> bool:
+    """Open the page at ``path`` in the default browser, by the browser's bundle id: the app that opens .html files may
+    be an editor, which would show the page instead of following it. Plain ``open`` when no browser is named, or that
+    one does not start."""
+    browser = _default_browser()
+    for argv in ([OPEN, "-b", browser, path], [OPEN, path]) if browser else ([OPEN, path],):
+        try:
+            done = subprocess.run(argv, capture_output=True, timeout=30, check=False, stdin=subprocess.DEVNULL)
+        except (OSError, subprocess.SubprocessError):
+            continue
+        if done.returncode == 0:
+            return True
+    return False
+
+
+# ---- web devices, revoke, lan ---------------------------------------------------------------------------------------
+
+def _when(stamp: Any) -> str:
+    if not isinstance(stamp, (int, float)) or isinstance(stamp, bool) or stamp <= 0:
+        return "?"
+    try:
+        return time.strftime("%Y-%m-%d %H:%M", time.localtime(stamp))
+    except (OverflowError, OSError, ValueError):
+        return "?"
+
+
+def _run_web_devices() -> int:
+    """``eve-bridge web devices``: the browsers that can open eve, oldest first, by id, kind and browser."""
+    answer = _lite_ask(_lite_socket(), {"evt": "devices"})
+    if not _lite_answered(answer):
+        return 1
+    listed = answer.get("devices")
+    devices = [d for d in listed if isinstance(d, dict)] if isinstance(listed, list) else []
+    if not devices:
+        print("No browser can open eve yet. On this Mac, `eve-bridge web open`; for a phone, on eve's page: Settings, "
+              "Phone access, Add a phone.")
+        return 0
+    print(f"{len(devices)} browser{'s' if len(devices) != 1 else ''} can open eve:")
+    for d in devices:
+        print(f"  {_shown(d.get('id'), 8):8}  {_shown(d.get('label'), 64):24}  {_shown(d.get('host'), 64)}  "
+              f"paired {_when(d.get('created'))}, last seen {_when(d.get('last_seen'))}")
+    print("`eve-bridge web revoke <id>` signs one out; `eve-bridge web revoke all` signs them all out.")
+    return 0
+
+
+def _run_web_revoke(target: str) -> int:
+    """``eve-bridge web revoke <id|all>``: sign browsers out; their open links close (lite.py's revoke)."""
+    from . import web_auth
+
+    wanted = target.strip().lower()
+    if not (wanted == "all" or web_auth.DEVICE_ID.fullmatch(wanted)):
+        print("eve-bridge: give a browser's id from `eve-bridge web devices`, or all.", file=sys.stderr)
+        return 2
+    answer = _lite_ask(_lite_socket(), {"evt": "revoke", "id": wanted}, timeout=30.0)
+    if not _lite_answered(answer):
+        return 1
+    revoked = answer.get("revoked")
+    gone = [_shown(i, 8) for i in revoked if isinstance(i, str)] if isinstance(revoked, list) else []
+    if gone:
+        print("Signed out of eve: " + ", ".join(gone))
+        return 0
+    if wanted == "all":
+        print("No browser was signed in; nothing changed.")
+        return 0
+    print(f"No browser has the id {wanted}; nothing changed. `eve-bridge web devices` lists them.")
+    return 1
+
+
+def _run_web_lan(on: bool) -> int:
+    """``eve-bridge web lan on|off``: eve's door for phones and laptops on the Wi-Fi, remembered across restarts."""
+    answer = _lite_ask(_lite_socket(), {"evt": "lan", "on": on}, timeout=30.0)
+    if not _lite_answered(answer):
+        return 1
+    if answer.get("lan") is True:
+        print("Phone access is on: a phone or laptop on this Wi-Fi can open eve once it is paired (on eve's page: "
+              "Settings, Phone access, Add a phone).")
+    else:
+        print("Phone access is off: only this Mac's browser can open eve.")
+    return 0 if (answer.get("lan") is True) == on else 1
+
+
+# ---- status and doctor ----------------------------------------------------------------------------------------------
+
+def _is_file(path: Any) -> bool:
+    try:
+        return Path(path).expanduser().is_file()
+    except OSError:
+        return False
+
+
+def _lite_status() -> int:
+    """``eve-bridge status`` in eve lite: yes or no for each part, and nothing besides (no key, path, port or address).
+    The daemon's own answer when it runs; the sign-ins are read from this Mac's files when it does not."""
+    from . import _service_launchd as launchd
+    from . import onboarding, openrouter
+
+    answer = _lite_ask(_lite_socket(), {"evt": "status"})
+    live = answer is not None and answer.get("ok") is True
+    st: dict[str, Any] = answer if live and answer is not None else {}
+
+    def flag(name: str) -> bool:
+        return st.get(name) is True
+
+    rows = [
+        ("login service installed", launchd.lite_installed()),
+        ("login service loaded", launchd.lite_loaded()),
+        ("eve answering", live),
+        ("OpenRouter signed in", flag("openrouter") if live else openrouter.available()),
+        ("Composio signed in", flag("composio") if live else _is_file(onboarding.CONNECT_TOKEN_FILE)),
+        ("chat on", flag("chat")),
+        ("voice ready", flag("voice")),
+        ("phone access on", flag("lan")),
+    ]
+    width = max(len(name) for name, _ in rows)
+    print("eve lite on this Mac:")
+    for name, value in rows:
+        print(f"  {name:<{width}}  {'yes' if value else 'no'}")
+    return 0
+
+
+def _env_file_profile(path: Path) -> str:
+    """The EVE_PROFILE the env file at ``path`` sets (its last line that sets it, as envfile reads the file); "" when it
+    sets none or is not there, "unreadable" when it cannot be read."""
+    from .envfile import parse_env_file
+
+    try:
+        text = Path(path).expanduser().read_text(encoding="utf-8-sig")
+    except FileNotFoundError:
+        return ""
+    except (OSError, ValueError):
+        return "unreadable"
+    return parse_env_file(text).get(profile.PROFILE_ENV, "")
+
+
+def _sets_lite(value: str) -> bool:
+    try:
+        return profile.is_lite({profile.PROFILE_ENV: value})
+    except profile.ProfileError:
+        return False
+
+
+def _loose(path: Path) -> bool:
+    """Whether ``path``, when it is there, lets another account in: a group or other bit set (a private file is 0600,
+    a private folder 0700)."""
+    try:
+        return bool(path.stat().st_mode & 0o077)
+    except OSError:
+        return False
+
+
+def _lite_doctor() -> int:
+    """``eve-bridge doctor``: eve lite on this Mac, part by part, each with what to do about it, marked ok, -- (nothing
+    to do, or optional) or !! (to fix); exit 1 while anything is to fix. It prints no key, code or token: the daemon's
+    status holds words, booleans, ports and counts (lite.py), and files are checked by their mode only."""
+    from . import _service_launchd as launchd
+    from . import envfile, lite, lite_web, onboarding, openrouter, toolchain
+
+    rows: list[tuple[str, str]] = []
+
+    def say(mark: str, line: str) -> None:
+        rows.append((mark, line))
+
+    # the profile: the env file is what makes `eve-bridge` in a Terminal eve lite's
+    env_file = envfile.env_path()
+    if _sets_lite(_env_file_profile(env_file)):
+        say(OK, f"profile: {_tilde(env_file)} sets EVE_PROFILE=lite")
+    else:
+        say(FIX, f"profile: {_tilde(env_file)} does not set EVE_PROFILE=lite, so `eve-bridge` in a Terminal runs full "
+                 "eve's commands. Run eve lite's install line again.")
+
+    # the login service, and full eve beside it
+    plist = launchd.installed_lite_plist()
+    loaded = launchd.lite_loaded()
+    if plist is None:
+        say(FIX, "login service: not installed. `eve-bridge install --service` installs it.")
+    else:
+        env, argv = plist.get("EnvironmentVariables"), plist.get("ProgramArguments")
+        program = argv[0] if isinstance(argv, list) and argv else None
+        if not (isinstance(env, dict) and _sets_lite(str(env.get(profile.PROFILE_ENV) or ""))):
+            say(FIX, "login service: it does not pin EVE_PROFILE=lite. `eve-bridge install --service` writes it "
+                     "again.")
+        elif not (isinstance(program, str) and os.path.isfile(program) and os.access(program, os.X_OK)):
+            say(FIX, "login service: the Python it starts is gone. Run eve lite's install line again.")
+        elif not loaded:
+            say(FIX, "login service: installed, not loaded. `eve-bridge install --service` loads it.")
+        else:
+            say(OK, "login service: installed and loaded")
+    if lite.full_eve_installed():
+        say(FIX, f"full eve's login service is installed for this user ({lite.FULL_LABEL}), so eve lite stays down: "
+                 "a Mac account has one of them.")
+
+    # the daemon, by its own status
+    answer = _lite_ask(_lite_socket(), {"evt": "status"})
+    live = answer is not None and answer.get("ok") is True
+    st: dict[str, Any] = answer if live and answer is not None else {}
+    if not live:
+        say(FIX, "eve: not answering on this Mac. Its log is ~/Library/Logs/eve-lite.log"
+                 + ("" if loaded else "; `eve-bridge install --service` starts it") + ".")
+    elif st.get("restarting") is True:
+        say(INFO, "eve: restarting into a new sign-in; run this again in a few seconds")
+    elif st.get("state") == lite.READY:
+        say(OK if st.get("chat") is True else FIX,
+            "eve: running and set up" if st.get("chat") is True
+            else "eve: running, but its chat did not start. Its log is ~/Library/Logs/eve-lite.log.")
+    else:
+        say(INFO, "eve: running, waiting for the OpenRouter sign-in")
+    if not ((st.get("openrouter") is True) if live else openrouter.available()):
+        say(FIX, "OpenRouter: not signed in. `eve-bridge web open`, then Sign in with OpenRouter.")
+    elif live and st.get("openrouter_rejected") is True:
+        say(FIX, "OpenRouter: the key was turned down (it was deleted or revoked). `eve-bridge web open`, then "
+                 "Sign in with OpenRouter again.")
+    else:
+        say(OK, "OpenRouter: signed in")
+    if (st.get("composio") is True) if live else _is_file(onboarding.CONNECT_TOKEN_FILE):
+        say(OK, "Composio: signed in")
+    else:
+        say(INFO, "Composio: not signed in (optional: on eve's page, Settings, Apps)")
+    if live:
+        port, lan_port = st.get("port"), st.get("lan_port")
+        if st.get("page") is True and _is_port(port):
+            say(OK, f"the Mac's page: http://localhost:{port}")
+        else:
+            say(FIX, "the Mac's page: not up. If this stays so, every port it may use is taken: restart the Mac.")
+        if st.get("lan") is True:
+            say(OK, "phone access: on" + (f", port {lan_port}" if _is_port(lan_port) else ""))
+        else:
+            say(INFO, "phone access: off (on eve's page: Settings, Phone access, Add a phone)")
+        network = st.get("local_network")
+        if network == "ok":
+            say(OK, "Local Network: allowed")
+        elif network == "blocked":
+            say(FIX, "Local Network: blocked, so voice cannot reach a phone (chat still works over HTTPS). System "
+                     "Settings, Privacy & Security, Local Network: turn on python3.13.")
+        else:
+            say(INFO, "Local Network: not known yet (eve checks it when a phone pairs)")
+        if st.get("voice") is True:
+            say(OK, "voice: ready")
+        else:
+            say(INFO, "voice: off (it needs the OpenRouter sign-in; see ~/Library/Logs/eve-lite.log)")
+        refused = st.get("firewall") if isinstance(st.get("firewall"), dict) else {}
+        named = [f"{_shown(str(k).split(':', 1)[-1], 64)} ({int(v)})" for k, v in sorted(refused.items())
+                 if isinstance(v, int) and not isinstance(v, bool)]
+        if named:
+            say(INFO, "firewall: refused " + ", ".join(named) + ". eve lite starts no other program and stays out of "
+                      "private folders; nothing to do unless something you use stopped working.")
+        else:
+            say(OK, "firewall: nothing refused")
+
+    # the files: the page, and the private ones
+    web_root = Path(str(os.environ.get(lite_web.WEB_DIR_ENV) or "").strip() or lite_web.PACKAGED_WEB_DIR).expanduser()
+    if (web_root / "index.html").is_file():
+        say(OK, "web page: installed")
+    else:
+        say(FIX, "web page: not installed. Run eve lite's install line again.")
+    tls = lite.TLS_DIR.expanduser()
+    private = [env_file, Path(onboarding.CONNECT_TOKEN_FILE).expanduser(), lite.DEVICES_FILE.expanduser(),
+               Path(lite_web.WEB_FILE).expanduser(), tls, tls / "ca.key", tls / "leaf.key"]
+    loose = [_tilde(path) for path in private if _loose(path)]
+    if loose:
+        say(FIX, "private files: other accounts on this Mac can read " + ", ".join(loose)
+                 + ". `chmod 600` each file (700 a folder).")
+    else:
+        say(OK, "private files: this account's alone")
+    say(INFO, f"Python {sys.version.split()[0]}: {_tilde(sys.executable)}")
+    say(INFO, "Xcode's command line tools: " + ("installed" if toolchain.dev_tools_present() else "not installed")
+              + " (eve lite does not use them)")
+
+    print("eve lite on this Mac:")
+    for mark, line in rows:
+        print(f"  {mark}  {line}")
+    fixes = sum(1 for mark, _ in rows if mark == FIX)
+    print("Nothing to fix." if not fixes else f"{fixes} to fix, marked {FIX}.")
+    return 1 if fixes else 0
+
+
+# ---- lite uninstall ---------------------------------------------------------------------------------------------------
+
+def _kept_by_lite(kept: Path, env_file: Path) -> bool:
+    """install-lite.sh's kept_by_lite: the folder is as eve lite's uninstall kept it, that is the marker names the env
+    file's SHA-256 (or none, with no env file) and the env file has not changed since."""
+    import hashlib
+
+    try:
+        if not kept.is_file():
+            return False
+        lines = kept.read_text(encoding="utf-8").splitlines()
+    except (OSError, ValueError):
+        return False
+    want = ""
+    for line in lines:
+        if line.startswith("env_sha256="):
+            want = line[len("env_sha256="):]
+    if os.path.lexists(env_file):
+        try:
+            got = hashlib.sha256(env_file.read_bytes()).hexdigest()
+        except OSError:
+            return False
+    else:
+        got = "none"
+    return bool(want) and want == got
+
+
+def _mark_kept(kept: Path, env_file: Path) -> None:
+    """install-lite.sh's mark_kept: the marker that lets the install line take the kept folder back, while the env file
+    is what this left (its SHA-256), or there is none. Written whole (0600), as the installer writes it."""
+    import hashlib
+
+    digest = hashlib.sha256(env_file.read_bytes()).hexdigest() if os.path.lexists(env_file) else "none"
+    text = ("# eve lite was uninstalled and kept this folder. Its install line takes the folder back while env is\n"
+            "# what the uninstall left: the file with this SHA-256, or none at all.\n"
+            f"env_sha256={digest}\n")
+    fd, tmp = tempfile.mkstemp(prefix=f"{LITE_KEPT}.", dir=kept.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(text)
+        os.chmod(tmp, 0o600)
+        os.replace(tmp, kept)
+    except BaseException:
+        with contextlib.suppress(OSError):
+            os.unlink(tmp)
+        raise
+
+
+def _app_is_ours(app: Path) -> bool:
+    """install-lite.sh's app_is_ours: ``app`` is the Eve.app it made, whose script runs an eve lite venv's eve-bridge
+    (read with osadecompile, as the installer reads it). Any other Eve.app is someone else's, and stays."""
+    if not app.is_dir():
+        return False
+    try:
+        done = subprocess.run([OSADECOMPILE, str(app)], capture_output=True, text=True, timeout=20, check=False,
+                              stdin=subprocess.DEVNULL)
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return done.returncode == 0 and "/.eve-lite/venv/bin/eve-bridge" in done.stdout
+
+
+def _has_content(path: Path) -> bool:
+    """Whether the file holds any line that is not blank (a comment counts); an unreadable one does, so it is kept."""
+    try:
+        return any(line.strip() for line in path.read_text(encoding="utf-8-sig").splitlines())
+    except FileNotFoundError:
+        return False
+    except (OSError, ValueError):
+        return True
+
+
+def _remove(path: Path) -> bool:
+    """Remove ``path``, a file, a link (never what it points to) or a folder; True once it is gone. A failure is said
+    on stderr."""
+    try:
+        if path.is_symlink() or not path.is_dir():
+            path.unlink(missing_ok=True)
+        else:
+            shutil.rmtree(path)
+    except FileNotFoundError:
+        pass
+    except OSError as e:
+        print(f"eve-bridge: {_tilde(path)} was not removed ({type(e).__name__}); delete it yourself.", file=sys.stderr)
+        return False
+    return True
+
+
+def _yes(question: str, ask: Optional[Callable[[str], str]]) -> bool:
+    """y or yes typed at the terminal; no terminal means no (as install-lite.sh asks)."""
+    if ask is None:
+        if sys.stdin is None or not sys.stdin.isatty():
+            return False
+        ask = input
+    try:
+        answer = ask(question)
+    except EOFError:
+        answer = ""
+    return answer.strip().lower() in ("y", "yes")
+
+
+def _lite_uninstall(*, dry_run: bool, ask: Optional[Callable[[str], str]] = None) -> int:
+    """``eve-bridge lite uninstall``: what ``install-lite.sh --uninstall`` does, from eve lite itself. It stops eve lite
+    and removes its login service, Eve.app (only the one the installer made), ~/.eve-lite and eve lite's log. The env
+    file loses its EVE_PROFILE=lite line, so a full eve installed later never starts as eve lite. ~/.config/eve-bridge
+    holds eve's memory: when it is eve lite's alone (no full eve beside it) it asks before deleting it, and keeps it
+    when there is no terminal to ask; kept, it gets the installer's marker, so the install line takes it back.
+    ~/.eve-lite goes last: this program runs from it. A part that cannot be removed is said, the rest still goes, and
+    the exit is 1."""
+    import codecs
+
+    from . import _service_launchd as launchd
+    from .envfile import remove_key
+
+    codecs.lookup("utf-8-sig")         # every codec and module used below is loaded before ~/.eve-lite goes
+    home = Path.home()
+    lite_home, app = home / ".eve-lite", home / "Applications" / "Eve.app"
+    env_dir = home / ".config" / "eve-bridge"
+    env_file, kept = env_dir / "env", env_dir / LITE_KEPT
+    plist, log = launchd.lite_plist_path(), launchd.lite_log_path()
+    sets_lite = _sets_lite(_env_file_profile(env_file))
+    full = launchd.agent_path(launchd.LABEL).exists()
+    ours = not full and (sets_lite or _kept_by_lite(kept, env_file))
+    app_ours = _app_is_ours(app)
+    removed = [p for p in (plist, lite_home, log) if os.path.lexists(p)] + ([app] if app_ours else [])
+
+    if dry_run:
+        head = "eve-bridge lite uninstall, dry run. It would stop eve lite's login service if it is loaded"
+        print(head + (", and remove:" if removed else "; nothing else of eve lite's is left to remove."))
+        for path in removed:
+            print(f"  {_tilde(path)}")
+        if ours:
+            print("Then it would ask before deleting ~/.config/eve-bridge, which holds eve's memory. If it is kept, "
+                  + ("the folder loses only the EVE_PROFILE=lite line (the env file goes when nothing else is in it), "
+                     if sets_lite else "the folder stays as an earlier uninstall left it, ")
+                  + "and the install line takes it back.")
+        elif sets_lite:
+            print("It would also take the EVE_PROFILE=lite line out of ~/.config/eve-bridge/env, which full eve keeps.")
+        print("Nothing was written.")
+        return 0
+
+    forget_all = ours and _yes("Also delete eve's memory, chats and sign-ins in ~/.config/eve-bridge? [y/N] ", ask)
+    rc = 0
+    try:
+        launchd.uninstall_lite()                # the service first, so nothing runs from ~/.eve-lite while it goes
+    except OSError as e:
+        print(f"eve-bridge: eve lite's login service was not removed ({type(e).__name__}).", file=sys.stderr)
+        rc = 1
+    for path in ([app] if app_ours else []) + [log]:
+        if not _remove(path):
+            rc = 1
+    if forget_all:
+        if not _remove(env_dir):
+            rc = 1
+        final = "eve lite is uninstalled, with its memory and settings."
+    else:
+        try:
+            if sets_lite:
+                remove_key(env_file, profile.PROFILE_ENV)
+                if ours and not _has_content(env_file):
+                    env_file.unlink(missing_ok=True)    # it held nothing but the profile
+            if full:
+                kept.unlink(missing_ok=True)            # the folder is full eve's: nothing of eve lite's takes it back
+            elif ours:
+                _mark_kept(kept, env_file)
+        except (OSError, ValueError) as e:
+            print(f"eve-bridge: ~/.config/eve-bridge/env could not be changed ({type(e).__name__}): take its "
+                  "EVE_PROFILE line out yourself.", file=sys.stderr)
+            rc = 1
+        if full:
+            final = "eve lite is uninstalled. Full eve stays as it is."
+        elif ours:
+            final = ("eve lite is uninstalled. Its memory and settings stay in ~/.config/eve-bridge; the install "
+                     "line takes them back.")
+        else:
+            final = "eve lite is uninstalled."
+    if not _remove(lite_home):
+        rc = 1
+    print(final)
+    return rc
 
 
 if __name__ == "__main__":

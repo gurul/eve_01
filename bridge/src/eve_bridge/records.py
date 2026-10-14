@@ -62,7 +62,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Callable, Iterator, Optional
 
-from . import spend
+from . import spend, toolchain
 from .recall import RecallConfig
 
 log = logging.getLogger(__name__)
@@ -835,6 +835,10 @@ _COMMIT_CFG = ("-c", "user.name=eve", "-c", "user.email=eve@localhost", "-c", "c
 
 def _git(cwd: Path, *args: str, timeout: float = GIT_TIMEOUT_SECS) -> subprocess.CompletedProcess:
     env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}   # never another repo's GIT_DIR
+    if not toolchain.git_usable(env):
+        # eve lite, or /usr/bin/git on a Mac without the developer tools, where it opens their install dialog instead
+        # of running: every caller already reads an OSError as "no git" and keeps the records without history
+        raise OSError("git is not usable here (toolchain.git_usable)")
     return subprocess.run(["git", "-C", str(cwd), *args], capture_output=True, text=True, timeout=timeout,
                           env=env)
 

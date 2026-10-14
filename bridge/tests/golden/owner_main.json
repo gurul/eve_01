@@ -1,0 +1,1086 @@
+{
+ "about": "Recorded by bridge/tools/owner_golden.py --write from main's code at `base`, with EVE_PROFILE unset. Recorded again only for a deliberate change to full eve on main; never to make a lite change pass.",
+ "base": "d419b37",
+ "snapshot": {
+  "app_block": {
+   "chars": 18974,
+   "sha256": "d8bab0530fad1106f0912dbcfd60001029680b7e3062acef78e5e0e9fe61c373"
+  },
+  "cli": {
+   "daemon": {
+    "args": [],
+    "builds": "eve_bridge.daemon.Daemon",
+    "exit": null,
+    "kwargs": {
+     "device_address": null,
+     "device_name_prefix": "Claude",
+     "save_frames": null,
+     "serial_port": "/dev/cu.usbmodem*",
+     "socket_path": "<socket>"
+    }
+   }
+  },
+  "composio": {
+   "configured": {
+    "app_only": {
+     "enabled": false,
+     "state_path": "~/.config/eve-bridge/composio.json",
+     "timeout_secs": 60.0,
+     "toolkits": ["slack", "notion", "linear"],
+     "user_id": "telegram-4242"
+    },
+    "app_only_composio": {
+     "enabled": true,
+     "state_path": "~/.config/eve-bridge/composio.json",
+     "timeout_secs": 60.0,
+     "toolkits": ["slack", "notion", "linear"],
+     "user_id": "telegram-4242"
+    },
+    "telegram_on": {
+     "enabled": false,
+     "state_path": "~/.config/eve-bridge/composio.json",
+     "timeout_secs": 60.0,
+     "toolkits": ["slack", "notion", "linear"],
+     "user_id": "telegram-4242"
+    },
+    "telegram_on_composio": {
+     "enabled": true,
+     "state_path": "~/.config/eve-bridge/composio.json",
+     "timeout_secs": 60.0,
+     "toolkits": ["slack", "notion", "linear"],
+     "user_id": "telegram-4242"
+    }
+   },
+   "decide": {
+    "cases": {
+     "connections, link": {
+      "ask_line": "Run COMPOSIO_MANAGE_CONNECTIONS with toolkits: [\"gmail\"]?",
+      "default": ["run", [], ""],
+      "gmail_auto": ["run", [], ""],
+      "loose": ["run", [], ""],
+      "strict": ["run", [], ""]
+     },
+     "connections, reinitiate": {
+      "ask_line": "Run COMPOSIO_MANAGE_CONNECTIONS with toolkits: [\"gmail\"], reinitiate_all: true?",
+      "default": ["run", [], ""],
+      "gmail_auto": ["run", [], ""],
+      "loose": ["run", [], ""],
+      "strict": ["run", [], ""]
+     },
+     "connections, two apps": {
+      "ask_line": "Run COMPOSIO_MANAGE_CONNECTIONS with toolkits: [\"gmail\", \"slack\"], session_id: s?",
+      "default": ["run", [], ""],
+      "gmail_auto": ["run", [], ""],
+      "loose": ["run", [], ""],
+      "strict": ["run", [], ""]
+     },
+     "connections, wait": {
+      "ask_line": "Run COMPOSIO_WAIT_FOR_CONNECTIONS with toolkits: [\"gmail\"], mode: any?",
+      "default": ["run", [], ""],
+      "gmail_auto": ["run", [], ""],
+      "loose": ["run", [], ""],
+      "strict": ["run", [], ""]
+     },
+     "multi, blank slug": {
+      "ask_line": "Run a tool?",
+      "default": ["ask", ["COMPOSIO_MULTI_EXECUTE_TOOL"], ""],
+      "gmail_auto": ["ask", ["COMPOSIO_MULTI_EXECUTE_TOOL"], ""],
+      "loose": ["ask", ["COMPOSIO_MULTI_EXECUTE_TOOL"], ""],
+      "strict": ["ask", ["COMPOSIO_MULTI_EXECUTE_TOOL"], ""]
+     },
+     "multi, calendar edit": {
+      "ask_line": "Run GOOGLECALENDAR_UPDATE_EVENT on work with event_id: e1?",
+      "default": ["ask", ["GOOGLECALENDAR_UPDATE_EVENT"], ""],
+      "gmail_auto": ["ask", ["GOOGLECALENDAR_UPDATE_EVENT"], ""],
+      "loose": ["ask", ["GOOGLECALENDAR_UPDATE_EVENT"], ""],
+      "strict": ["ask", ["GOOGLECALENDAR_UPDATE_EVENT"], ""]
+     },
+     "multi, calendar invite": {
+      "ask_line": "Run GOOGLECALENDAR_CREATE_EVENT on work with summary: Sync, attendees: [\"reader@example.org\"]?",
+      "default": ["ask", ["GOOGLECALENDAR_CREATE_EVENT"], ""],
+      "gmail_auto": ["ask", ["GOOGLECALENDAR_CREATE_EVENT"], ""],
+      "loose": ["ask", ["GOOGLECALENDAR_CREATE_EVENT"], ""],
+      "strict": ["ask", ["GOOGLECALENDAR_CREATE_EVENT"], ""]
+     },
+     "multi, calendar private event": {
+      "ask_line": "Run GOOGLECALENDAR_CREATE_EVENT on work with summary: Focus?",
+      "default": ["run", [], "allowed to write: GOOGLECALENDAR_CREATE_EVENT"],
+      "gmail_auto": ["run", [], "allowed to write: GOOGLECALENDAR_CREATE_EVENT"],
+      "loose": ["run", [], "allowed to write: GOOGLECALENDAR_CREATE_EVENT"],
+      "strict": ["ask", ["GOOGLECALENDAR_CREATE_EVENT"], ""]
+     },
+     "multi, calendar quiet edit": {
+      "ask_line": "Run GOOGLECALENDAR_UPDATE_EVENT on work with event_id: e1, send_updates: none?",
+      "default": ["run", [], "allowed to write: GOOGLECALENDAR_UPDATE_EVENT"],
+      "gmail_auto": ["run", [], "allowed to write: GOOGLECALENDAR_UPDATE_EVENT"],
+      "loose": ["run", [], "allowed to write: GOOGLECALENDAR_UPDATE_EVENT"],
+      "strict": ["ask", ["GOOGLECALENDAR_UPDATE_EVENT"], ""]
+     },
+     "multi, calendar read": {
+      "ask_line": "Run GOOGLECALENDAR_EVENTS_LIST_ALL_CALENDARS on work?",
+      "default": ["run", [], ""],
+      "gmail_auto": ["run", [], ""],
+      "loose": ["run", [], ""],
+      "strict": ["run", [], ""]
+     },
+     "multi, docs new document": {
+      "ask_line": "Run GOOGLEDOCS_CREATE_DOCUMENT on work with title: Private draft?",
+      "default": ["run", [], "allowed to write: GOOGLEDOCS_CREATE_DOCUMENT"],
+      "gmail_auto": ["run", [], "allowed to write: GOOGLEDOCS_CREATE_DOCUMENT"],
+      "loose": ["run", [], "allowed to write: GOOGLEDOCS_CREATE_DOCUMENT"],
+      "strict": ["run", [], "allowed to write: GOOGLEDOCS_CREATE_DOCUMENT"]
+     },
+     "multi, drive into a folder": {
+      "ask_line": "Run GOOGLEDRIVE_UPLOAD_FILE on work with file_to_upload: notes.txt, folder_id: shared?",
+      "default": ["ask", ["GOOGLEDRIVE_UPLOAD_FILE"], ""],
+      "gmail_auto": ["ask", ["GOOGLEDRIVE_UPLOAD_FILE"], ""],
+      "loose": ["ask", ["GOOGLEDRIVE_UPLOAD_FILE"], ""],
+      "strict": ["refuse", ["GOOGLEDRIVE_UPLOAD_FILE"], "googledrive is read only here; GOOGLEDRIVE_UPLOAD_FILE will not run"]
+     },
+     "multi, drive new file": {
+      "ask_line": "Run GOOGLEDRIVE_UPLOAD_FILE on work with file_to_upload: notes.txt?",
+      "default": ["run", [], "allowed to write: GOOGLEDRIVE_UPLOAD_FILE"],
+      "gmail_auto": ["run", [], "allowed to write: GOOGLEDRIVE_UPLOAD_FILE"],
+      "loose": ["run", [], "allowed to write: GOOGLEDRIVE_UPLOAD_FILE"],
+      "strict": ["refuse", ["GOOGLEDRIVE_UPLOAD_FILE"], "googledrive is read only here; GOOGLEDRIVE_UPLOAD_FILE will not run"]
+     },
+     "multi, empty item": {
+      "ask_line": "Run a tool?",
+      "default": ["ask", ["COMPOSIO_MULTI_EXECUTE_TOOL"], ""],
+      "gmail_auto": ["ask", ["COMPOSIO_MULTI_EXECUTE_TOOL"], ""],
+      "loose": ["ask", ["COMPOSIO_MULTI_EXECUTE_TOOL"], ""],
+      "strict": ["ask", ["COMPOSIO_MULTI_EXECUTE_TOOL"], ""]
+     },
+     "multi, github private repo": {
+      "ask_line": "Run GITHUB_CREATE_REPOSITORY on work with name: notes, private: true?",
+      "default": ["run", [], "allowed to write: GITHUB_CREATE_REPOSITORY"],
+      "gmail_auto": ["run", [], "allowed to write: GITHUB_CREATE_REPOSITORY"],
+      "loose": ["run", [], "allowed to write: GITHUB_CREATE_REPOSITORY"],
+      "strict": ["run", [], "allowed to write: GITHUB_CREATE_REPOSITORY"]
+     },
+     "multi, gmail draft": {
+      "ask_line": "Run GMAIL_CREATE_EMAIL_DRAFT on work with to: reader@example.org, subject: Hello, body: Hi?",
+      "default": ["refuse", ["GMAIL_CREATE_EMAIL_DRAFT"], "gmail is read only here; GMAIL_CREATE_EMAIL_DRAFT will not run"],
+      "gmail_auto": ["run", [], "allowed to write: GMAIL_CREATE_EMAIL_DRAFT"],
+      "loose": ["ask", ["GMAIL_CREATE_EMAIL_DRAFT"], ""],
+      "strict": ["refuse", ["GMAIL_CREATE_EMAIL_DRAFT"], "gmail is read only here; GMAIL_CREATE_EMAIL_DRAFT will not run"]
+     },
+     "multi, gmail label": {
+      "ask_line": "Run GMAIL_GET_LABEL on work with label_id: INBOX?",
+      "default": ["run", [], ""],
+      "gmail_auto": ["run", [], ""],
+      "loose": ["run", [], ""],
+      "strict": ["run", [], ""]
+     },
+     "multi, gmail read and delete": {
+      "ask_line": "Run GMAIL_GET_AND_DELETE_MESSAGE on work with message_id: m1?",
+      "default": ["refuse", ["GMAIL_GET_AND_DELETE_MESSAGE"], "gmail is read only here; GMAIL_GET_AND_DELETE_MESSAGE will not run"],
+      "gmail_auto": ["ask", ["GMAIL_GET_AND_DELETE_MESSAGE"], ""],
+      "loose": ["ask", ["GMAIL_GET_AND_DELETE_MESSAGE"], ""],
+      "strict": ["refuse", ["GMAIL_GET_AND_DELETE_MESSAGE"], "gmail is read only here; GMAIL_GET_AND_DELETE_MESSAGE will not run"]
+     },
+     "multi, gmail read, no account": {
+      "ask_line": "Run GMAIL_FETCH_EMAILS; and SLACK_SEARCH_MESSAGES?",
+      "default": ["refuse", ["GMAIL_FETCH_EMAILS"], "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""],
+      "gmail_auto": ["refuse", ["GMAIL_FETCH_EMAILS"], "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""],
+      "loose": ["refuse", ["GMAIL_FETCH_EMAILS"], "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""],
+      "strict": ["refuse", ["GMAIL_FETCH_EMAILS"], "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""]
+     },
+     "multi, gmail read, personal": {
+      "ask_line": "Run GMAIL_FETCH_EMAILS on Personal?",
+      "default": ["refuse", ["GMAIL_FETCH_EMAILS"], "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""],
+      "gmail_auto": ["refuse", ["GMAIL_FETCH_EMAILS"], "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""],
+      "loose": ["refuse", ["GMAIL_FETCH_EMAILS"], "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""],
+      "strict": ["refuse", ["GMAIL_FETCH_EMAILS"], "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""]
+     },
+     "multi, gmail read, work": {
+      "ask_line": "Run GMAIL_FETCH_EMAILS on work with max_results: 5?",
+      "default": ["run", [], ""],
+      "gmail_auto": ["run", [], ""],
+      "loose": ["run", [], ""],
+      "strict": ["run", [], ""]
+     },
+     "multi, gmail send": {
+      "ask_line": "Run GMAIL_SEND_EMAIL on work with to: reader@example.org, subject: Hello, body: Hi?",
+      "default": ["refuse", ["GMAIL_SEND_EMAIL"], "gmail is read only here; GMAIL_SEND_EMAIL will not run"],
+      "gmail_auto": ["ask", ["GMAIL_SEND_EMAIL"], ""],
+      "loose": ["ask", ["GMAIL_SEND_EMAIL"], ""],
+      "strict": ["refuse", ["GMAIL_SEND_EMAIL"], "gmail is read only here; GMAIL_SEND_EMAIL will not run"]
+     },
+     "multi, linear issue": {
+      "ask_line": "Run LINEAR_CREATE_LINEAR_ISSUE on work with title: Login bug?",
+      "default": ["ask", ["LINEAR_CREATE_LINEAR_ISSUE"], ""],
+      "gmail_auto": ["ask", ["LINEAR_CREATE_LINEAR_ISSUE"], ""],
+      "loose": ["ask", ["LINEAR_CREATE_LINEAR_ISSUE"], ""],
+      "strict": ["ask", ["LINEAR_CREATE_LINEAR_ISSUE"], ""]
+     },
+     "multi, mixed": {
+      "ask_line": "Run GOOGLECALENDAR_CREATE_EVENT on work with summary: Focus; and SLACK_SEND_MESSAGE on work with channel: design, text: hi; and GMAIL_SEND_EMAIL on work with to: reader@example.org?",
+      "default": ["refuse", ["GMAIL_SEND_EMAIL"], "gmail is read only here; GMAIL_SEND_EMAIL will not run"],
+      "gmail_auto": ["ask", ["SLACK_SEND_MESSAGE", "GMAIL_SEND_EMAIL"], ""],
+      "loose": ["ask", ["SLACK_SEND_MESSAGE", "GMAIL_SEND_EMAIL"], ""],
+      "strict": ["refuse", ["GMAIL_SEND_EMAIL"], "gmail is read only here; GMAIL_SEND_EMAIL will not run"]
+     },
+     "multi, no arguments": {
+      "ask_line": "Run ?",
+      "default": ["ask", ["COMPOSIO_MULTI_EXECUTE_TOOL"], ""],
+      "gmail_auto": ["ask", ["COMPOSIO_MULTI_EXECUTE_TOOL"], ""],
+      "loose": ["ask", ["COMPOSIO_MULTI_EXECUTE_TOOL"], ""],
+      "strict": ["ask", ["COMPOSIO_MULTI_EXECUTE_TOOL"], ""]
+     },
+     "multi, notion read": {
+      "ask_line": "Run NOTION_FETCH_ROW on work with id: p1?",
+      "default": ["run", [], ""],
+      "gmail_auto": ["run", [], ""],
+      "loose": ["run", [], ""],
+      "strict": ["run", [], ""]
+     },
+     "multi, opaque tools": {
+      "ask_line": "Run ?",
+      "default": ["ask", ["COMPOSIO_MULTI_EXECUTE_TOOL"], ""],
+      "gmail_auto": ["ask", ["COMPOSIO_MULTI_EXECUTE_TOOL"], ""],
+      "loose": ["ask", ["COMPOSIO_MULTI_EXECUTE_TOOL"], ""],
+      "strict": ["ask", ["COMPOSIO_MULTI_EXECUTE_TOOL"], ""]
+     },
+     "multi, slack read": {
+      "ask_line": "Run SLACK_SEARCH_MESSAGES on work with query: design?",
+      "default": ["run", [], ""],
+      "gmail_auto": ["run", [], ""],
+      "loose": ["run", [], ""],
+      "strict": ["run", [], ""]
+     },
+     "multi, slack send": {
+      "ask_line": "Run SLACK_SEND_MESSAGE on work with channel: design, text: hi?",
+      "default": ["ask", ["SLACK_SEND_MESSAGE"], ""],
+      "gmail_auto": ["ask", ["SLACK_SEND_MESSAGE"], ""],
+      "loose": ["ask", ["SLACK_SEND_MESSAGE"], ""],
+      "strict": ["ask", ["SLACK_SEND_MESSAGE"], ""]
+     },
+     "not a composio tool": {
+      "ask_line": "Run gmail__send_message with to: reader@example.org?",
+      "default": ["run", [], ""],
+      "gmail_auto": ["run", [], ""],
+      "loose": ["run", [], ""],
+      "strict": ["run", [], ""]
+     },
+     "remote bash": {
+      "ask_line": "Run COMPOSIO_REMOTE_BASH_TOOL with command: ls?",
+      "default": ["ask", ["COMPOSIO_REMOTE_BASH_TOOL"], ""],
+      "gmail_auto": ["ask", ["COMPOSIO_REMOTE_BASH_TOOL"], ""],
+      "loose": ["ask", ["COMPOSIO_REMOTE_BASH_TOOL"], ""],
+      "strict": ["ask", ["COMPOSIO_REMOTE_BASH_TOOL"], ""]
+     },
+     "search tools": {
+      "ask_line": "Run COMPOSIO_SEARCH_TOOLS with queries: [{\"use_case\": \"post a formatted message to slack channel\",…?",
+      "default": ["run", [], ""],
+      "gmail_auto": ["run", [], ""],
+      "loose": ["run", [], ""],
+      "strict": ["run", [], ""]
+     },
+     "tool schemas": {
+      "ask_line": "Run COMPOSIO_GET_TOOL_SCHEMAS with tool_slugs: [\"SLACK_SEND_MESSAGE\"]?",
+      "default": ["run", [], ""],
+      "gmail_auto": ["run", [], ""],
+      "loose": ["run", [], ""],
+      "strict": ["run", [], ""]
+     },
+     "workbench, aliased helper": {
+      "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: f = run_composio_tool f('GMAIL_SEND_EMAIL', {}), thought: t, current_step: S, session_id: s?",
+      "default": ["ask", ["COMPOSIO_REMOTE_WORKBENCH"], ""],
+      "gmail_auto": ["ask", ["COMPOSIO_REMOTE_WORKBENCH"], ""],
+      "loose": ["ask", ["COMPOSIO_REMOTE_WORKBENCH"], ""],
+      "strict": ["ask", ["COMPOSIO_REMOTE_WORKBENCH"], ""]
+     },
+     "workbench, computes": {
+      "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: import json x = json.load(open('/mnt/files/mex/mine.json'))…, thought: t, current_step: S, session_id: s?",
+      "default": ["run", [], ""],
+      "gmail_auto": ["run", [], ""],
+      "loose": ["run", [], ""],
+      "strict": ["run", [], ""]
+     },
+     "workbench, drive upload": {
+      "ask_line": "Run GOOGLEDRIVE_UPLOAD_FILE from a workbench script?",
+      "default": ["ask", ["GOOGLEDRIVE_UPLOAD_FILE"], ""],
+      "gmail_auto": ["ask", ["GOOGLEDRIVE_UPLOAD_FILE"], ""],
+      "loose": ["ask", ["GOOGLEDRIVE_UPLOAD_FILE"], ""],
+      "strict": ["refuse", ["GOOGLEDRIVE_UPLOAD_FILE"], "googledrive is read only here; GOOGLEDRIVE_UPLOAD_FILE will not run"]
+     },
+     "workbench, gmail read": {
+      "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: r = run_composio_tool('GMAIL_FETCH_EMAILS', {}) print(len(r…, thought: t, current_step: S, session_id: s?",
+      "default": ["refuse", ["GMAIL_FETCH_EMAILS"], "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""],
+      "gmail_auto": ["refuse", ["GMAIL_FETCH_EMAILS"], "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""],
+      "loose": ["refuse", ["GMAIL_FETCH_EMAILS"], "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""],
+      "strict": ["refuse", ["GMAIL_FETCH_EMAILS"], "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""]
+     },
+     "workbench, gmail send": {
+      "ask_line": "Run GMAIL_SEND_EMAIL from a workbench script?",
+      "default": ["refuse", ["GMAIL_SEND_EMAIL"], "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""],
+      "gmail_auto": ["refuse", ["GMAIL_SEND_EMAIL"], "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""],
+      "loose": ["refuse", ["GMAIL_SEND_EMAIL"], "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""],
+      "strict": ["refuse", ["GMAIL_SEND_EMAIL"], "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""]
+     },
+     "workbench, network": {
+      "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: import requests requests.post('https://x.example', data='hi…, thought: t, current_step: S, session_id: s?",
+      "default": ["ask", ["COMPOSIO_REMOTE_WORKBENCH"], ""],
+      "gmail_auto": ["ask", ["COMPOSIO_REMOTE_WORKBENCH"], ""],
+      "loose": ["ask", ["COMPOSIO_REMOTE_WORKBENCH"], ""],
+      "strict": ["ask", ["COMPOSIO_REMOTE_WORKBENCH"], ""]
+     },
+     "workbench, no code": {
+      "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH?",
+      "default": ["ask", ["COMPOSIO_REMOTE_WORKBENCH"], ""],
+      "gmail_auto": ["ask", ["COMPOSIO_REMOTE_WORKBENCH"], ""],
+      "loose": ["ask", ["COMPOSIO_REMOTE_WORKBENCH"], ""],
+      "strict": ["ask", ["COMPOSIO_REMOTE_WORKBENCH"], ""]
+     },
+     "workbench, not python": {
+      "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: this is not python (, thought: t, current_step: S, session_id: s?",
+      "default": ["ask", ["COMPOSIO_REMOTE_WORKBENCH"], ""],
+      "gmail_auto": ["ask", ["COMPOSIO_REMOTE_WORKBENCH"], ""],
+      "loose": ["ask", ["COMPOSIO_REMOTE_WORKBENCH"], ""],
+      "strict": ["ask", ["COMPOSIO_REMOTE_WORKBENCH"], ""]
+     },
+     "workbench, notion read": {
+      "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: r = run_composio_tool('NOTION_SEARCH_NOTION_PAGE', {'query'…, thought: t, current_step: S, session_id: s?",
+      "default": ["run", [], ""],
+      "gmail_auto": ["run", [], ""],
+      "loose": ["run", [], ""],
+      "strict": ["run", [], ""]
+     },
+     "workbench, pandas": {
+      "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: import pandas as pd df = pd.DataFrame([{'a': 1}]) print(df.…, thought: t, current_step: S, session_id: s?",
+      "default": ["run", [], ""],
+      "gmail_auto": ["run", [], ""],
+      "loose": ["run", [], ""],
+      "strict": ["run", [], ""]
+     },
+     "workbench, slack send": {
+      "ask_line": "Run SLACK_SEND_MESSAGE from a workbench script?",
+      "default": ["ask", ["SLACK_SEND_MESSAGE"], ""],
+      "gmail_auto": ["ask", ["SLACK_SEND_MESSAGE"], ""],
+      "loose": ["ask", ["SLACK_SEND_MESSAGE"], ""],
+      "strict": ["ask", ["SLACK_SEND_MESSAGE"], ""]
+     },
+     "workbench, unknown arguments": {
+      "ask_line": "Run GOOGLEDRIVE_UPLOAD_FILE from a workbench script?",
+      "default": ["ask", ["GOOGLEDRIVE_UPLOAD_FILE"], ""],
+      "gmail_auto": ["ask", ["GOOGLEDRIVE_UPLOAD_FILE"], ""],
+      "loose": ["ask", ["GOOGLEDRIVE_UPLOAD_FILE"], ""],
+      "strict": ["refuse", ["GOOGLEDRIVE_UPLOAD_FILE"], "googledrive is read only here; GOOGLEDRIVE_UPLOAD_FILE will not run"]
+     }
+    },
+    "policies": {
+     "default": null,
+     "gmail_auto": {
+      "gmail": "auto",
+      "googlecalendar": "auto",
+      "googledrive": "auto"
+     },
+     "loose": {
+      "gmail": "ask",
+      "googlecalendar": "auto",
+      "googledrive": "auto",
+      "linear": "write",
+      "notion": "write",
+      "slack": "write"
+     },
+     "strict": {
+      "gmail": "read",
+      "googlecalendar": "ask",
+      "googledrive": "read",
+      "slack": "ask"
+     }
+    }
+   },
+   "policy": {
+    "app_only": {
+     "gmail": "read",
+     "googlecalendar": "auto",
+     "googledrive": "auto"
+    },
+    "app_only_composio": {
+     "gmail": "read",
+     "googlecalendar": "auto",
+     "googledrive": "auto"
+    },
+    "telegram_on": {
+     "gmail": "read",
+     "googlecalendar": "auto",
+     "googledrive": "auto"
+    },
+    "telegram_on_composio": {
+     "gmail": "read",
+     "googlecalendar": "auto",
+     "googledrive": "auto"
+    }
+   }
+  },
+  "hermetic": {
+   "processes": []
+  },
+  "plist": {
+   "daemon_plain": {
+    "sha256": "6c3f10e7ad51a37658da3f0f2212858238204b0a19a6e2ae5f22c794806fc45a",
+    "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n\t<key>EnvironmentVariables</key>\n\t<dict>\n\t\t<key>HOME</key>\n\t\t<string>/golden/home</string>\n\t\t<key>PATH</key>\n\t\t<string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>\n\t</dict>\n\t<key>KeepAlive</key>\n\t<true/>\n\t<key>Label</key>\n\t<string>com.github.eve-bridge.daemon</string>\n\t<key>ProcessType</key>\n\t<string>Interactive</string>\n\t<key>ProgramArguments</key>\n\t<array>\n\t\t<string>/golden/venv/bin/python3.12</string>\n\t\t<string>-m</string>\n\t\t<string>eve_bridge.cli</string>\n\t\t<string>daemon</string>\n\t</array>\n\t<key>RunAtLoad</key>\n\t<true/>\n\t<key>StandardErrorPath</key>\n\t<string>/golden/home/Library/Logs/eve-bridge.log</string>\n\t<key>StandardOutPath</key>\n\t<string>/golden/home/Library/Logs/eve-bridge.log</string>\n</dict>\n</plist>\n"
+   },
+   "daemon_serial": {
+    "sha256": "a37372e7427a53481d8032f736145e72c207b54ee70823bbcc7e3acbd6de9e21",
+    "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n\t<key>EnvironmentVariables</key>\n\t<dict>\n\t\t<key>EVE_SERIAL_PORT</key>\n\t\t<string>/dev/cu.usbmodem*</string>\n\t\t<key>HOME</key>\n\t\t<string>/golden/home</string>\n\t\t<key>PATH</key>\n\t\t<string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>\n\t</dict>\n\t<key>KeepAlive</key>\n\t<true/>\n\t<key>Label</key>\n\t<string>com.github.eve-bridge.daemon</string>\n\t<key>ProcessType</key>\n\t<string>Interactive</string>\n\t<key>ProgramArguments</key>\n\t<array>\n\t\t<string>/golden/venv/bin/python3.12</string>\n\t\t<string>-m</string>\n\t\t<string>eve_bridge.cli</string>\n\t\t<string>daemon</string>\n\t</array>\n\t<key>RunAtLoad</key>\n\t<true/>\n\t<key>StandardErrorPath</key>\n\t<string>/golden/home/Library/Logs/eve-bridge.log</string>\n\t<key>StandardOutPath</key>\n\t<string>/golden/home/Library/Logs/eve-bridge.log</string>\n</dict>\n</plist>\n"
+   },
+   "daemon_wrapper_home": {
+    "sha256": "e34c28c43641374a56de6cf1920324fd27807a0afff7bed2c3a3d748b0512152",
+    "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n\t<key>EnvironmentVariables</key>\n\t<dict>\n\t\t<key>EVE_CLAUDE_CONFIG_DIRS</key>\n\t\t<string>/golden/wrapper-claude-home:/golden/home/.claude</string>\n\t\t<key>EVE_SERIAL_PORT</key>\n\t\t<string>/dev/cu.usbmodem*</string>\n\t\t<key>HOME</key>\n\t\t<string>/golden/home</string>\n\t\t<key>PATH</key>\n\t\t<string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>\n\t</dict>\n\t<key>KeepAlive</key>\n\t<true/>\n\t<key>Label</key>\n\t<string>com.github.eve-bridge.daemon</string>\n\t<key>ProcessType</key>\n\t<string>Interactive</string>\n\t<key>ProgramArguments</key>\n\t<array>\n\t\t<string>/golden/venv/bin/python3.12</string>\n\t\t<string>-m</string>\n\t\t<string>eve_bridge.cli</string>\n\t\t<string>daemon</string>\n\t</array>\n\t<key>RunAtLoad</key>\n\t<true/>\n\t<key>StandardErrorPath</key>\n\t<string>/golden/home/Library/Logs/eve-bridge.log</string>\n\t<key>StandardOutPath</key>\n\t<string>/golden/home/Library/Logs/eve-bridge.log</string>\n</dict>\n</plist>\n"
+   },
+   "widget": {
+    "sha256": "4718bcf51c9c3bf9a9f92257d46b360db7651b772c17ecc46c4b22cfa49c38ae",
+    "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n\t<key>EnvironmentVariables</key>\n\t<dict>\n\t\t<key>HOME</key>\n\t\t<string>/golden/home</string>\n\t\t<key>PATH</key>\n\t\t<string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>\n\t</dict>\n\t<key>KeepAlive</key>\n\t<false/>\n\t<key>Label</key>\n\t<string>com.github.eve-bridge.notes-widget</string>\n\t<key>ProcessType</key>\n\t<string>Interactive</string>\n\t<key>ProgramArguments</key>\n\t<array>\n\t\t<string>/golden/venv/bin/python3.12</string>\n\t\t<string>-m</string>\n\t\t<string>eve_bridge.cli</string>\n\t\t<string>notes-widget</string>\n\t</array>\n\t<key>RunAtLoad</key>\n\t<true/>\n\t<key>StandardErrorPath</key>\n\t<string>/golden/home/Library/Logs/eve-bridge-notes-widget.log</string>\n\t<key>StandardOutPath</key>\n\t<string>/golden/home/Library/Logs/eve-bridge-notes-widget.log</string>\n</dict>\n</plist>\n"
+   }
+  },
+  "requests": {
+   "app_only": {
+    "app_turn": {
+     "body_sha256": "acf2de49ab3b3c61721488edd303b1d7712d01b7d644eb1df888f1c09560717e",
+     "graded_sha256": {
+      "instant": "c31a5d4e8c6a1b968d174dbbdb4b259169b50bfc0b6bbe4d27a9b96372626fe4",
+      "think": "22c6b265cb4168c626e609401cbf217440c087e5123b3f36db72d954f9fdebf8"
+     },
+     "instructions": {
+      "chars": 34261,
+      "sha256": "3c1e55353f1ff57902ceb2a91e83ddf6ddde708bae981625247e77bdf571ecc3"
+     },
+     "tools": ["start_task", "steer_task", "stop_task", "take_photo", "screenshot", "send_file", "list_files", "take_notes", "remember", "start_coding_session", "think_hard", "memory_search", "memory_read", "forget_preview", "forget_apply", "recent_messages", "web_search", "capture_note", "search_notes", "read_note", "edit_note", "undo_note", "list_inbox", "file_note", "list_todos", "second_brain_workflow", "spend_report", "daily_rundown", "claude_relay", "codex_relay", "set_stealth", "open_apps", "pair_eve_link", "read_file", "watch_add", "watch_list", "watch_remove", "watch_pause", "watch_resume", "watch_set_end", "science_search"]
+    },
+    "app_turn_composio_tools": {
+     "body_sha256": "01ec08d35e7f219ff7bd57108841061fa5746452a9a4ed0d03cdabdc80c703dc",
+     "graded_sha256": {
+      "instant": "a18b1d9d7304bb25a0c82a7c695afc17f00d21668397be6405c3fc8184055810",
+      "think": "eadb3297268e5447277122a3fc2220897e703f3d107d02a03d48a8bc2c2caaaa"
+     },
+     "instructions": {
+      "chars": 35348,
+      "sha256": "57b866a294b7409cc8e63ee53b8d1b4ddca6b2195433c5ae54040d6fc27e87e5"
+     },
+     "tools": ["start_task", "steer_task", "stop_task", "take_photo", "screenshot", "send_file", "list_files", "take_notes", "remember", "start_coding_session", "think_hard", "memory_search", "memory_read", "forget_preview", "forget_apply", "recent_messages", "web_search", "capture_note", "search_notes", "read_note", "edit_note", "undo_note", "list_inbox", "file_note", "list_todos", "second_brain_workflow", "spend_report", "daily_rundown", "claude_relay", "codex_relay", "set_stealth", "open_apps", "pair_eve_link", "read_file", "watch_add", "watch_list", "watch_remove", "watch_pause", "watch_resume", "watch_set_end", "science_search", "COMPOSIO_SEARCH_TOOLS", "COMPOSIO_GET_TOOL_SCHEMAS", "COMPOSIO_MULTI_EXECUTE_TOOL", "COMPOSIO_MANAGE_CONNECTIONS", "COMPOSIO_WAIT_FOR_CONNECTIONS", "COMPOSIO_REMOTE_WORKBENCH", "COMPOSIO_REMOTE_BASH_TOOL"]
+    },
+    "telegram_turn": {
+     "body_sha256": "13f89026935089c1219fda3b7d1778d2e5f67b032f6a7b152ead8cddad41ea37",
+     "instructions": {
+      "chars": 15220,
+      "sha256": "2da79e19f0d7a9ead6483b5d5e4c5960ab6b7e0cdb716581bdcd08c9379b1a0b"
+     },
+     "tools": ["start_task", "steer_task", "stop_task", "take_photo", "screenshot", "send_file", "list_files", "take_notes", "remember", "start_coding_session", "think_hard", "memory_search", "memory_read", "forget_preview", "forget_apply", "recent_messages", "web_search", "capture_note", "search_notes", "read_note", "edit_note", "undo_note", "list_inbox", "file_note", "list_todos", "second_brain_workflow", "spend_report", "daily_rundown", "claude_relay", "codex_relay", "set_stealth", "open_apps", "pair_eve_link", "read_file", "watch_add", "watch_list", "watch_remove", "watch_pause", "watch_resume", "watch_set_end", "science_search"]
+    },
+    "telegram_turn_composio_tools": {
+     "body_sha256": "a98c0ab991ec1111f5f5011da2ea0ded0a09e1d266e1faeb354f967c135e4a1f",
+     "instructions": {
+      "chars": 16307,
+      "sha256": "b956af2dcb4d4f966a8234fbf2f6217ddf2b22f5d3ce40feed54a8276286e2b5"
+     },
+     "tools": ["start_task", "steer_task", "stop_task", "take_photo", "screenshot", "send_file", "list_files", "take_notes", "remember", "start_coding_session", "think_hard", "memory_search", "memory_read", "forget_preview", "forget_apply", "recent_messages", "web_search", "capture_note", "search_notes", "read_note", "edit_note", "undo_note", "list_inbox", "file_note", "list_todos", "second_brain_workflow", "spend_report", "daily_rundown", "claude_relay", "codex_relay", "set_stealth", "open_apps", "pair_eve_link", "read_file", "watch_add", "watch_list", "watch_remove", "watch_pause", "watch_resume", "watch_set_end", "science_search", "COMPOSIO_SEARCH_TOOLS", "COMPOSIO_GET_TOOL_SCHEMAS", "COMPOSIO_MULTI_EXECUTE_TOOL", "COMPOSIO_MANAGE_CONNECTIONS", "COMPOSIO_WAIT_FOR_CONNECTIONS", "COMPOSIO_REMOTE_WORKBENCH", "COMPOSIO_REMOTE_BASH_TOOL"]
+    }
+   },
+   "app_only_composio": {
+    "app_turn": {
+     "body_sha256": "653d55c0e7d361306ff02791dbc2ab2e74702a1291bd5443552999f73f650cbf",
+     "graded_sha256": {
+      "instant": "4a2594f3d45e70a01f1208ef2bbde09792483ce92086b2b0a94af5516faaf632",
+      "think": "9496610a863b931a0dd7212d4396180a88186fa6f566dce957d219a800ee7fdb"
+     },
+     "instructions": {
+      "chars": 34304,
+      "sha256": "ec4a5931f6a995c96c46f242e60b68d8682e6e4c9d4fdf913da74007724ea868"
+     },
+     "tools": ["start_task", "steer_task", "stop_task", "take_photo", "screenshot", "send_file", "list_files", "take_notes", "remember", "start_coding_session", "think_hard", "memory_search", "memory_read", "forget_preview", "forget_apply", "recent_messages", "web_search", "capture_note", "search_notes", "read_note", "edit_note", "undo_note", "list_inbox", "file_note", "list_todos", "second_brain_workflow", "spend_report", "daily_rundown", "claude_relay", "codex_relay", "set_stealth", "open_apps", "pair_eve_link", "read_file", "watch_add", "watch_list", "watch_remove", "watch_pause", "watch_resume", "watch_set_end", "science_search"]
+    },
+    "app_turn_composio_tools": {
+     "body_sha256": "b903a76bed01b58ff6817e2b281c7f03adc39235d97936ae402b4fb05392abe2",
+     "graded_sha256": {
+      "instant": "beb5525c461b5f4590e7be11132d47183561198f9966dc56ef2e5a1fef7d72ce",
+      "think": "fe76867370602fa3ea6aafeee708304913f0254db304572f780e3c61a97eadfe"
+     },
+     "instructions": {
+      "chars": 35391,
+      "sha256": "0cb2893089c06f3d69e24ed6a233ac77a71b0159d23483b5249e6b99165441f4"
+     },
+     "tools": ["start_task", "steer_task", "stop_task", "take_photo", "screenshot", "send_file", "list_files", "take_notes", "remember", "start_coding_session", "think_hard", "memory_search", "memory_read", "forget_preview", "forget_apply", "recent_messages", "web_search", "capture_note", "search_notes", "read_note", "edit_note", "undo_note", "list_inbox", "file_note", "list_todos", "second_brain_workflow", "spend_report", "daily_rundown", "claude_relay", "codex_relay", "set_stealth", "open_apps", "pair_eve_link", "read_file", "watch_add", "watch_list", "watch_remove", "watch_pause", "watch_resume", "watch_set_end", "science_search", "COMPOSIO_SEARCH_TOOLS", "COMPOSIO_GET_TOOL_SCHEMAS", "COMPOSIO_MULTI_EXECUTE_TOOL", "COMPOSIO_MANAGE_CONNECTIONS", "COMPOSIO_WAIT_FOR_CONNECTIONS", "COMPOSIO_REMOTE_WORKBENCH", "COMPOSIO_REMOTE_BASH_TOOL"]
+    },
+    "telegram_turn": {
+     "body_sha256": "7aaa2df821c53fff9b1afc5a74ee98b988687abfdb002805c5e0d3bc9096ddb4",
+     "instructions": {
+      "chars": 15263,
+      "sha256": "795b9004a7403b81f16da8fb28fab52a420dd676ed5d68452e20eb28e699515c"
+     },
+     "tools": ["start_task", "steer_task", "stop_task", "take_photo", "screenshot", "send_file", "list_files", "take_notes", "remember", "start_coding_session", "think_hard", "memory_search", "memory_read", "forget_preview", "forget_apply", "recent_messages", "web_search", "capture_note", "search_notes", "read_note", "edit_note", "undo_note", "list_inbox", "file_note", "list_todos", "second_brain_workflow", "spend_report", "daily_rundown", "claude_relay", "codex_relay", "set_stealth", "open_apps", "pair_eve_link", "read_file", "watch_add", "watch_list", "watch_remove", "watch_pause", "watch_resume", "watch_set_end", "science_search"]
+    },
+    "telegram_turn_composio_tools": {
+     "body_sha256": "6c206f87e7212215b2a34746302ead1921d3c04148085f25601fc89bfe5a55ee",
+     "instructions": {
+      "chars": 16350,
+      "sha256": "3f5bd32b7b20d4356107d050788b6ab63e65a17c9008c88f6e3bfee306d3620f"
+     },
+     "tools": ["start_task", "steer_task", "stop_task", "take_photo", "screenshot", "send_file", "list_files", "take_notes", "remember", "start_coding_session", "think_hard", "memory_search", "memory_read", "forget_preview", "forget_apply", "recent_messages", "web_search", "capture_note", "search_notes", "read_note", "edit_note", "undo_note", "list_inbox", "file_note", "list_todos", "second_brain_workflow", "spend_report", "daily_rundown", "claude_relay", "codex_relay", "set_stealth", "open_apps", "pair_eve_link", "read_file", "watch_add", "watch_list", "watch_remove", "watch_pause", "watch_resume", "watch_set_end", "science_search", "COMPOSIO_SEARCH_TOOLS", "COMPOSIO_GET_TOOL_SCHEMAS", "COMPOSIO_MULTI_EXECUTE_TOOL", "COMPOSIO_MANAGE_CONNECTIONS", "COMPOSIO_WAIT_FOR_CONNECTIONS", "COMPOSIO_REMOTE_WORKBENCH", "COMPOSIO_REMOTE_BASH_TOOL"]
+    }
+   },
+   "telegram_on": {
+    "app_turn": {
+     "body_sha256": "acf2de49ab3b3c61721488edd303b1d7712d01b7d644eb1df888f1c09560717e",
+     "graded_sha256": {
+      "instant": "c31a5d4e8c6a1b968d174dbbdb4b259169b50bfc0b6bbe4d27a9b96372626fe4",
+      "think": "22c6b265cb4168c626e609401cbf217440c087e5123b3f36db72d954f9fdebf8"
+     },
+     "instructions": {
+      "chars": 34261,
+      "sha256": "3c1e55353f1ff57902ceb2a91e83ddf6ddde708bae981625247e77bdf571ecc3"
+     },
+     "tools": ["start_task", "steer_task", "stop_task", "take_photo", "screenshot", "send_file", "list_files", "take_notes", "remember", "start_coding_session", "think_hard", "memory_search", "memory_read", "forget_preview", "forget_apply", "recent_messages", "web_search", "capture_note", "search_notes", "read_note", "edit_note", "undo_note", "list_inbox", "file_note", "list_todos", "second_brain_workflow", "spend_report", "daily_rundown", "claude_relay", "codex_relay", "set_stealth", "open_apps", "pair_eve_link", "read_file", "watch_add", "watch_list", "watch_remove", "watch_pause", "watch_resume", "watch_set_end", "science_search"]
+    },
+    "app_turn_composio_tools": {
+     "body_sha256": "01ec08d35e7f219ff7bd57108841061fa5746452a9a4ed0d03cdabdc80c703dc",
+     "graded_sha256": {
+      "instant": "a18b1d9d7304bb25a0c82a7c695afc17f00d21668397be6405c3fc8184055810",
+      "think": "eadb3297268e5447277122a3fc2220897e703f3d107d02a03d48a8bc2c2caaaa"
+     },
+     "instructions": {
+      "chars": 35348,
+      "sha256": "57b866a294b7409cc8e63ee53b8d1b4ddca6b2195433c5ae54040d6fc27e87e5"
+     },
+     "tools": ["start_task", "steer_task", "stop_task", "take_photo", "screenshot", "send_file", "list_files", "take_notes", "remember", "start_coding_session", "think_hard", "memory_search", "memory_read", "forget_preview", "forget_apply", "recent_messages", "web_search", "capture_note", "search_notes", "read_note", "edit_note", "undo_note", "list_inbox", "file_note", "list_todos", "second_brain_workflow", "spend_report", "daily_rundown", "claude_relay", "codex_relay", "set_stealth", "open_apps", "pair_eve_link", "read_file", "watch_add", "watch_list", "watch_remove", "watch_pause", "watch_resume", "watch_set_end", "science_search", "COMPOSIO_SEARCH_TOOLS", "COMPOSIO_GET_TOOL_SCHEMAS", "COMPOSIO_MULTI_EXECUTE_TOOL", "COMPOSIO_MANAGE_CONNECTIONS", "COMPOSIO_WAIT_FOR_CONNECTIONS", "COMPOSIO_REMOTE_WORKBENCH", "COMPOSIO_REMOTE_BASH_TOOL"]
+    },
+    "telegram_turn": {
+     "body_sha256": "13f89026935089c1219fda3b7d1778d2e5f67b032f6a7b152ead8cddad41ea37",
+     "instructions": {
+      "chars": 15220,
+      "sha256": "2da79e19f0d7a9ead6483b5d5e4c5960ab6b7e0cdb716581bdcd08c9379b1a0b"
+     },
+     "tools": ["start_task", "steer_task", "stop_task", "take_photo", "screenshot", "send_file", "list_files", "take_notes", "remember", "start_coding_session", "think_hard", "memory_search", "memory_read", "forget_preview", "forget_apply", "recent_messages", "web_search", "capture_note", "search_notes", "read_note", "edit_note", "undo_note", "list_inbox", "file_note", "list_todos", "second_brain_workflow", "spend_report", "daily_rundown", "claude_relay", "codex_relay", "set_stealth", "open_apps", "pair_eve_link", "read_file", "watch_add", "watch_list", "watch_remove", "watch_pause", "watch_resume", "watch_set_end", "science_search"]
+    },
+    "telegram_turn_composio_tools": {
+     "body_sha256": "a98c0ab991ec1111f5f5011da2ea0ded0a09e1d266e1faeb354f967c135e4a1f",
+     "instructions": {
+      "chars": 16307,
+      "sha256": "b956af2dcb4d4f966a8234fbf2f6217ddf2b22f5d3ce40feed54a8276286e2b5"
+     },
+     "tools": ["start_task", "steer_task", "stop_task", "take_photo", "screenshot", "send_file", "list_files", "take_notes", "remember", "start_coding_session", "think_hard", "memory_search", "memory_read", "forget_preview", "forget_apply", "recent_messages", "web_search", "capture_note", "search_notes", "read_note", "edit_note", "undo_note", "list_inbox", "file_note", "list_todos", "second_brain_workflow", "spend_report", "daily_rundown", "claude_relay", "codex_relay", "set_stealth", "open_apps", "pair_eve_link", "read_file", "watch_add", "watch_list", "watch_remove", "watch_pause", "watch_resume", "watch_set_end", "science_search", "COMPOSIO_SEARCH_TOOLS", "COMPOSIO_GET_TOOL_SCHEMAS", "COMPOSIO_MULTI_EXECUTE_TOOL", "COMPOSIO_MANAGE_CONNECTIONS", "COMPOSIO_WAIT_FOR_CONNECTIONS", "COMPOSIO_REMOTE_WORKBENCH", "COMPOSIO_REMOTE_BASH_TOOL"]
+    }
+   },
+   "telegram_on_composio": {
+    "app_turn": {
+     "body_sha256": "653d55c0e7d361306ff02791dbc2ab2e74702a1291bd5443552999f73f650cbf",
+     "graded_sha256": {
+      "instant": "4a2594f3d45e70a01f1208ef2bbde09792483ce92086b2b0a94af5516faaf632",
+      "think": "9496610a863b931a0dd7212d4396180a88186fa6f566dce957d219a800ee7fdb"
+     },
+     "instructions": {
+      "chars": 34304,
+      "sha256": "ec4a5931f6a995c96c46f242e60b68d8682e6e4c9d4fdf913da74007724ea868"
+     },
+     "tools": ["start_task", "steer_task", "stop_task", "take_photo", "screenshot", "send_file", "list_files", "take_notes", "remember", "start_coding_session", "think_hard", "memory_search", "memory_read", "forget_preview", "forget_apply", "recent_messages", "web_search", "capture_note", "search_notes", "read_note", "edit_note", "undo_note", "list_inbox", "file_note", "list_todos", "second_brain_workflow", "spend_report", "daily_rundown", "claude_relay", "codex_relay", "set_stealth", "open_apps", "pair_eve_link", "read_file", "watch_add", "watch_list", "watch_remove", "watch_pause", "watch_resume", "watch_set_end", "science_search"]
+    },
+    "app_turn_composio_tools": {
+     "body_sha256": "b903a76bed01b58ff6817e2b281c7f03adc39235d97936ae402b4fb05392abe2",
+     "graded_sha256": {
+      "instant": "beb5525c461b5f4590e7be11132d47183561198f9966dc56ef2e5a1fef7d72ce",
+      "think": "fe76867370602fa3ea6aafeee708304913f0254db304572f780e3c61a97eadfe"
+     },
+     "instructions": {
+      "chars": 35391,
+      "sha256": "0cb2893089c06f3d69e24ed6a233ac77a71b0159d23483b5249e6b99165441f4"
+     },
+     "tools": ["start_task", "steer_task", "stop_task", "take_photo", "screenshot", "send_file", "list_files", "take_notes", "remember", "start_coding_session", "think_hard", "memory_search", "memory_read", "forget_preview", "forget_apply", "recent_messages", "web_search", "capture_note", "search_notes", "read_note", "edit_note", "undo_note", "list_inbox", "file_note", "list_todos", "second_brain_workflow", "spend_report", "daily_rundown", "claude_relay", "codex_relay", "set_stealth", "open_apps", "pair_eve_link", "read_file", "watch_add", "watch_list", "watch_remove", "watch_pause", "watch_resume", "watch_set_end", "science_search", "COMPOSIO_SEARCH_TOOLS", "COMPOSIO_GET_TOOL_SCHEMAS", "COMPOSIO_MULTI_EXECUTE_TOOL", "COMPOSIO_MANAGE_CONNECTIONS", "COMPOSIO_WAIT_FOR_CONNECTIONS", "COMPOSIO_REMOTE_WORKBENCH", "COMPOSIO_REMOTE_BASH_TOOL"]
+    },
+    "telegram_turn": {
+     "body_sha256": "7aaa2df821c53fff9b1afc5a74ee98b988687abfdb002805c5e0d3bc9096ddb4",
+     "instructions": {
+      "chars": 15263,
+      "sha256": "795b9004a7403b81f16da8fb28fab52a420dd676ed5d68452e20eb28e699515c"
+     },
+     "tools": ["start_task", "steer_task", "stop_task", "take_photo", "screenshot", "send_file", "list_files", "take_notes", "remember", "start_coding_session", "think_hard", "memory_search", "memory_read", "forget_preview", "forget_apply", "recent_messages", "web_search", "capture_note", "search_notes", "read_note", "edit_note", "undo_note", "list_inbox", "file_note", "list_todos", "second_brain_workflow", "spend_report", "daily_rundown", "claude_relay", "codex_relay", "set_stealth", "open_apps", "pair_eve_link", "read_file", "watch_add", "watch_list", "watch_remove", "watch_pause", "watch_resume", "watch_set_end", "science_search"]
+    },
+    "telegram_turn_composio_tools": {
+     "body_sha256": "6c206f87e7212215b2a34746302ead1921d3c04148085f25601fc89bfe5a55ee",
+     "instructions": {
+      "chars": 16350,
+      "sha256": "3f5bd32b7b20d4356107d050788b6ab63e65a17c9008c88f6e3bfee306d3620f"
+     },
+     "tools": ["start_task", "steer_task", "stop_task", "take_photo", "screenshot", "send_file", "list_files", "take_notes", "remember", "start_coding_session", "think_hard", "memory_search", "memory_read", "forget_preview", "forget_apply", "recent_messages", "web_search", "capture_note", "search_notes", "read_note", "edit_note", "undo_note", "list_inbox", "file_note", "list_todos", "second_brain_workflow", "spend_report", "daily_rundown", "claude_relay", "codex_relay", "set_stealth", "open_apps", "pair_eve_link", "read_file", "watch_add", "watch_list", "watch_remove", "watch_pause", "watch_resume", "watch_set_end", "science_search", "COMPOSIO_SEARCH_TOOLS", "COMPOSIO_GET_TOOL_SCHEMAS", "COMPOSIO_MULTI_EXECUTE_TOOL", "COMPOSIO_MANAGE_CONNECTIONS", "COMPOSIO_WAIT_FOR_CONNECTIONS", "COMPOSIO_REMOTE_WORKBENCH", "COMPOSIO_REMOTE_BASH_TOOL"]
+    }
+   }
+  },
+  "self_context": {
+   "app_only": {
+    "lines": ["Telegram brain (texts, calls, desk push-to-talk): gpt-6-luna, low effort.", "think_hard: gpt-6-astra, high effort.", "Mini App builder: claude-opus-5-5.", "Web search: Jev picks per query among Perplexity through OpenRouter, TinyFish and Firecrawl.", "Tasks on the Mac: Codex; web reads try the routed search first.", "Watcher ladder: plain read, TinyFish, Perplexity search.", "Lights: Govee, WiZ and HappyLighting.", "Memory: day transcripts, records and profile, mem0 index (OpenAI) and second brain vault.", "Doors on: Telegram, the Mini App and the Meet notetaker.", "File sharing: iMessage, on the owner's Allow.", "Chief of staff: on."],
+    "sha256": "ca5c1617c0b9de431bb411f4fc3908057881f34c236b067cd87c269d0e96ce6d"
+   },
+   "app_only_composio": {
+    "lines": ["Telegram brain (texts, calls, desk push-to-talk): gpt-6-luna, low effort.", "think_hard: gpt-6-astra, high effort.", "Mini App builder: claude-opus-5-5.", "Web search: Jev picks per query among Perplexity through OpenRouter, TinyFish and Firecrawl.", "Tasks on the Mac: Codex; web reads try the routed search first.", "Watcher ladder: plain read, TinyFish, Perplexity search.", "Lights: Govee, WiZ and HappyLighting.", "Memory: day transcripts, records and profile, mem0 index (OpenAI) and second brain vault.", "Doors on: Telegram, the Mini App and the Meet notetaker.", "Composio apps: Slack, Notion and Linear.", "File sharing: iMessage, on the owner's Allow.", "Chief of staff: on."],
+    "sha256": "5179ad0bfdb044c896f8292f219cbeefd9c72ea159e0fe1d024bc166b5f16da2"
+   },
+   "telegram_on": {
+    "lines": ["Telegram brain (texts, calls, desk push-to-talk): gpt-6-luna, low effort.", "think_hard: gpt-6-astra, high effort.", "Mini App builder: claude-opus-5-5.", "Web search: Jev picks per query among Perplexity through OpenRouter, TinyFish and Firecrawl.", "Tasks on the Mac: Codex; web reads try the routed search first.", "Watcher ladder: plain read, TinyFish, Perplexity search.", "Lights: Govee, WiZ and HappyLighting.", "Memory: day transcripts, records and profile, mem0 index (OpenAI) and second brain vault.", "Doors on: Telegram, the Mini App and the Meet notetaker.", "File sharing: iMessage, on the owner's Allow.", "Chief of staff: on."],
+    "sha256": "ca5c1617c0b9de431bb411f4fc3908057881f34c236b067cd87c269d0e96ce6d"
+   },
+   "telegram_on_composio": {
+    "lines": ["Telegram brain (texts, calls, desk push-to-talk): gpt-6-luna, low effort.", "think_hard: gpt-6-astra, high effort.", "Mini App builder: claude-opus-5-5.", "Web search: Jev picks per query among Perplexity through OpenRouter, TinyFish and Firecrawl.", "Tasks on the Mac: Codex; web reads try the routed search first.", "Watcher ladder: plain read, TinyFish, Perplexity search.", "Lights: Govee, WiZ and HappyLighting.", "Memory: day transcripts, records and profile, mem0 index (OpenAI) and second brain vault.", "Doors on: Telegram, the Mini App and the Meet notetaker.", "Composio apps: Slack, Notion and Linear.", "File sharing: iMessage, on the owner's Allow.", "Chief of staff: on."],
+    "sha256": "5179ad0bfdb044c896f8292f219cbeefd9c72ea159e0fe1d024bc166b5f16da2"
+   }
+  },
+  "telegram": {
+   "app_only": {
+    "about": {
+     "chars": 893,
+     "sha256": "fc19bb91b7bf0ebc293ed7863277c3c308d509a01abc2757a6bb8edb4df43e4a"
+    },
+    "app_only": true,
+    "app_think_effort": "medium",
+    "app_think_model": "gpt-6.1-sol",
+    "ask_permissions": false,
+    "ask_timeout_secs": 180.0,
+    "drafts": true,
+    "effort": "low",
+    "enabled": true,
+    "idle_close_secs": 600.0,
+    "model": "gpt-6-luna",
+    "owner_ids": [4242],
+    "search": {
+     "engine": "openrouter-perplexity",
+     "max_results": 5,
+     "max_uses": 2,
+     "model": "openai/gpt-6-luna",
+     "providers": ["perplexity", "tinyfish", "firecrawl"],
+     "routed_secs": 10.0,
+     "timeout_secs": 25.0
+    },
+    "stale_secs": 120.0,
+    "token": "<set>"
+   },
+   "app_only_composio": {
+    "about": {
+     "chars": 936,
+     "sha256": "1a324bc57cd3b55a21fbfc22f2cb92cd38be1e0ca8f19d504a6d6e8b7ad333bb"
+    },
+    "app_only": true,
+    "app_think_effort": "medium",
+    "app_think_model": "gpt-6.1-sol",
+    "ask_permissions": false,
+    "ask_timeout_secs": 180.0,
+    "drafts": true,
+    "effort": "low",
+    "enabled": true,
+    "idle_close_secs": 600.0,
+    "model": "gpt-6-luna",
+    "owner_ids": [4242],
+    "search": {
+     "engine": "openrouter-perplexity",
+     "max_results": 5,
+     "max_uses": 2,
+     "model": "openai/gpt-6-luna",
+     "providers": ["perplexity", "tinyfish", "firecrawl"],
+     "routed_secs": 10.0,
+     "timeout_secs": 25.0
+    },
+    "stale_secs": 120.0,
+    "token": "<set>"
+   },
+   "telegram_on": {
+    "about": {
+     "chars": 893,
+     "sha256": "fc19bb91b7bf0ebc293ed7863277c3c308d509a01abc2757a6bb8edb4df43e4a"
+    },
+    "app_only": false,
+    "app_think_effort": "medium",
+    "app_think_model": "gpt-6.1-sol",
+    "ask_permissions": false,
+    "ask_timeout_secs": 180.0,
+    "drafts": true,
+    "effort": "low",
+    "enabled": true,
+    "idle_close_secs": 600.0,
+    "model": "gpt-6-luna",
+    "owner_ids": [4242],
+    "search": {
+     "engine": "openrouter-perplexity",
+     "max_results": 5,
+     "max_uses": 2,
+     "model": "openai/gpt-6-luna",
+     "providers": ["perplexity", "tinyfish", "firecrawl"],
+     "routed_secs": 10.0,
+     "timeout_secs": 25.0
+    },
+    "stale_secs": 120.0,
+    "token": "<set>"
+   },
+   "telegram_on_composio": {
+    "about": {
+     "chars": 936,
+     "sha256": "1a324bc57cd3b55a21fbfc22f2cb92cd38be1e0ca8f19d504a6d6e8b7ad333bb"
+    },
+    "app_only": false,
+    "app_think_effort": "medium",
+    "app_think_model": "gpt-6.1-sol",
+    "ask_permissions": false,
+    "ask_timeout_secs": 180.0,
+    "drafts": true,
+    "effort": "low",
+    "enabled": true,
+    "idle_close_secs": 600.0,
+    "model": "gpt-6-luna",
+    "owner_ids": [4242],
+    "search": {
+     "engine": "openrouter-perplexity",
+     "max_results": 5,
+     "max_uses": 2,
+     "model": "openai/gpt-6-luna",
+     "providers": ["perplexity", "tinyfish", "firecrawl"],
+     "routed_secs": 10.0,
+     "timeout_secs": 25.0
+    },
+    "stale_secs": 120.0,
+    "token": "<set>"
+   }
+  },
+  "texts": {
+   "CALL_NOTE": {
+    "chars": 414,
+    "sha256": "0d9a5902d72d5086570184472a837c85bf4ee28d68c27f5d770749d3d34810cf"
+   },
+   "INSTRUCTIONS_ROBOT": {
+    "chars": 4792,
+    "sha256": "c361bf9f79e9a18773e332e5360f9e9598a873dd7da682e9170ac851cd4e9207"
+   }
+  },
+  "tool_gate": {
+   "": {
+    "acting": false,
+    "source": "a tool result",
+    "taints": true
+   },
+   "COMPOSIO_GET_TOOL_SCHEMAS": {
+    "acting": false,
+    "source": "Slack, Notion or Linear",
+    "taints": true
+   },
+   "COMPOSIO_MANAGE_CONNECTIONS": {
+    "acting": false,
+    "source": "Slack, Notion or Linear",
+    "taints": true
+   },
+   "COMPOSIO_MULTI_EXECUTE_TOOL": {
+    "acting": false,
+    "source": "Slack, Notion or Linear",
+    "taints": true
+   },
+   "COMPOSIO_REMOTE_BASH_TOOL": {
+    "acting": false,
+    "source": "Slack, Notion or Linear",
+    "taints": true
+   },
+   "COMPOSIO_REMOTE_WORKBENCH": {
+    "acting": false,
+    "source": "Slack, Notion or Linear",
+    "taints": true
+   },
+   "COMPOSIO_SEARCH_TOOLS": {
+    "acting": false,
+    "source": "Slack, Notion or Linear",
+    "taints": true
+   },
+   "COMPOSIO_SOMETHING_NEW": {
+    "acting": false,
+    "source": "Slack, Notion or Linear",
+    "taints": true
+   },
+   "COMPOSIO_WAIT_FOR_CONNECTIONS": {
+    "acting": false,
+    "source": "Slack, Notion or Linear",
+    "taints": true
+   },
+   "a_tool_nobody_offers": {
+    "acting": false,
+    "source": "a tool result",
+    "taints": true
+   },
+   "america_ask": {
+    "acting": false,
+    "source": "a government site",
+    "taints": true
+   },
+   "calendar__list_events": {
+    "acting": false,
+    "source": "Calendar",
+    "taints": true
+   },
+   "camera_control": {
+    "acting": true,
+    "source": "a tool result",
+    "taints": false
+   },
+   "capture_note": {
+    "acting": true,
+    "source": "a tool result",
+    "taints": false
+   },
+   "claude_relay": {
+    "acting": true,
+    "source": "a tool result",
+    "taints": false
+   },
+   "close_card": {
+    "acting": true,
+    "source": "a tool result",
+    "taints": false
+   },
+   "codex_relay": {
+    "acting": true,
+    "source": "a tool result",
+    "taints": false
+   },
+   "daily_rundown": {
+    "acting": false,
+    "source": "the rundown's sources",
+    "taints": true
+   },
+   "drive__search_files": {
+    "acting": false,
+    "source": "Drive",
+    "taints": true
+   },
+   "events_search": {
+    "acting": false,
+    "source": "Ticketmaster's listings",
+    "taints": true
+   },
+   "find": {
+    "acting": false,
+    "source": "the camera",
+    "taints": true
+   },
+   "firetv_control": {
+    "acting": true,
+    "source": "a tool result",
+    "taints": false
+   },
+   "forget_apply": {
+    "acting": true,
+    "source": "a tool result",
+    "taints": false
+   },
+   "forget_preview": {
+    "acting": false,
+    "source": "a tool result",
+    "taints": false
+   },
+   "github__create_issue": {
+    "acting": false,
+    "source": "Github",
+    "taints": true
+   },
+   "gmail__send_message": {
+    "acting": false,
+    "source": "Gmail",
+    "taints": true
+   },
+   "go_explore": {
+    "acting": true,
+    "source": "a tool result",
+    "taints": false
+   },
+   "jobs_list": {
+    "acting": false,
+    "source": "the job cards",
+    "taints": true
+   },
+   "lights_control": {
+    "acting": false,
+    "source": "a tool result",
+    "taints": true
+   },
+   "list_files": {
+    "acting": false,
+    "source": "the Mac's file list",
+    "taints": true
+   },
+   "look": {
+    "acting": false,
+    "source": "the camera",
+    "taints": true
+   },
+   "look_around": {
+    "acting": false,
+    "source": "the camera",
+    "taints": true
+   },
+   "meet_join": {
+    "acting": true,
+    "source": "a meeting invite",
+    "taints": true
+   },
+   "memory_read": {
+    "acting": false,
+    "source": "memory",
+    "taints": true
+   },
+   "memory_search": {
+    "acting": false,
+    "source": "memory",
+    "taints": true
+   },
+   "move_head": {
+    "acting": false,
+    "source": "a tool result",
+    "taints": false
+   },
+   "open_apps": {
+    "acting": false,
+    "source": "a tool result",
+    "taints": false
+   },
+   "opentable_search": {
+    "acting": true,
+    "source": "OpenTable",
+    "taints": false
+   },
+   "pair_eve_link": {
+    "acting": true,
+    "source": "a tool result",
+    "taints": false
+   },
+   "phone_location": {
+    "acting": false,
+    "source": "the phone's location",
+    "taints": true
+   },
+   "read_file": {
+    "acting": false,
+    "source": "a file on the Mac",
+    "taints": true
+   },
+   "recent_messages": {
+    "acting": false,
+    "source": "earlier chat messages",
+    "taints": true
+   },
+   "remember": {
+    "acting": true,
+    "source": "a tool result",
+    "taints": false
+   },
+   "science_search": {
+    "acting": false,
+    "source": "a search of research papers",
+    "taints": true
+   },
+   "screenshot": {
+    "acting": true,
+    "source": "the screen",
+    "taints": true
+   },
+   "send_file": {
+    "acting": true,
+    "source": "a tool result",
+    "taints": false
+   },
+   "set_sound": {
+    "acting": true,
+    "source": "a tool result",
+    "taints": false
+   },
+   "set_stealth": {
+    "acting": true,
+    "source": "a tool result",
+    "taints": false
+   },
+   "spend_report": {
+    "acting": false,
+    "source": "a tool result",
+    "taints": false
+   },
+   "spotify_control": {
+    "acting": true,
+    "source": "Spotify",
+    "taints": true
+   },
+   "start_coding_session": {
+    "acting": true,
+    "source": "a tool result",
+    "taints": false
+   },
+   "start_task": {
+    "acting": true,
+    "source": "a tool result",
+    "taints": false
+   },
+   "steer_task": {
+    "acting": true,
+    "source": "a tool result",
+    "taints": false
+   },
+   "stop_task": {
+    "acting": true,
+    "source": "a tool result",
+    "taints": false
+   },
+   "take_notes": {
+    "acting": true,
+    "source": "a tool result",
+    "taints": false
+   },
+   "take_on": {
+    "acting": true,
+    "source": "a tool result",
+    "taints": false
+   },
+   "take_photo": {
+    "acting": true,
+    "source": "a photo",
+    "taints": true
+   },
+   "think_hard": {
+    "acting": false,
+    "source": "a long think",
+    "taints": true
+   },
+   "watch_add": {
+    "acting": true,
+    "source": "the watched page",
+    "taints": true
+   },
+   "watch_list": {
+    "acting": false,
+    "source": "the watches",
+    "taints": true
+   },
+   "watch_pause": {
+    "acting": true,
+    "source": "a tool result",
+    "taints": false
+   },
+   "watch_remove": {
+    "acting": true,
+    "source": "a tool result",
+    "taints": false
+   },
+   "watch_resume": {
+    "acting": true,
+    "source": "a tool result",
+    "taints": false
+   },
+   "watch_set_end": {
+    "acting": true,
+    "source": "a tool result",
+    "taints": false
+   },
+   "web_search": {
+    "acting": false,
+    "source": "a web search",
+    "taints": true
+   }
+  },
+  "tools": {
+   "TOOL_NAMES": ["start_task", "steer_task", "stop_task", "take_photo", "screenshot", "send_file", "list_files", "look", "look_around", "find", "move_head", "go_explore", "take_notes", "set_sound", "remember", "start_coding_session", "think_hard", "web_search"],
+   "menu_tools": ["spend_report", "daily_rundown", "claude_relay", "codex_relay", "set_stealth", "open_apps", "pair_eve_link", "read_file"],
+   "menu_tools_off": [],
+   "own_tools": ["start_task", "steer_task", "stop_task", "take_photo", "screenshot", "send_file", "list_files", "take_notes", "remember", "start_coding_session", "think_hard"],
+   "own_tools_robot": ["start_task", "steer_task", "stop_task", "take_photo", "screenshot", "send_file", "list_files", "look", "look_around", "find", "move_head", "go_explore", "take_notes", "set_sound", "remember", "start_coding_session", "think_hard"]
+  }
+ }
+}

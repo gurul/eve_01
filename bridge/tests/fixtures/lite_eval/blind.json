@@ -1,0 +1,904 @@
+{
+  "set": "eve-lite-prompt-blind-v1",
+  "version": 1,
+  "written": "2026-10-13",
+  "author": "A separate agent (WP-14), not the author of the lite prompts. Written from the Feature matrix of docs/plans/eve-lite.md only, after the bar. No lite prompt text, no test of the lite brain and no model output was read before the freeze.",
+  "bar": "docs/evals/lite-prompt.md",
+  "bar_sha256": "0c58dd9e6c9d561e12a9e72dba28a65cef36955724e7b98517f2955be0ff94dc",
+  "synthetic": "Every person, address, URL and identifier is made up; addresses use example.invalid or an example domain. Public places, products and events appear only in search questions.",
+  "cases": [
+    {
+      "id": "mail-boiler-repair",
+      "row": "apps/composio",
+      "kind": "can",
+      "channel": "app",
+      "connected": ["gmail", "googlecalendar"],
+      "message": "Any emails about the boiler repair this week?",
+      "families": ["composio"],
+      "state": {"items": {"gmail": [
+        {"id": "m-311", "from": "r.okafor@example.invalid", "subject": "Boiler repair on Thursday", "snippet": "The engineer can come Thursday between 9 and 12. Can someone let him in?"}
+      ]}}
+    },
+    {
+      "id": "calendar-thursday-free",
+      "row": "apps/composio",
+      "kind": "can",
+      "channel": "app",
+      "connected": ["gmail", "googlecalendar"],
+      "message": "Am I free Thursday afternoon, or is something already booked?",
+      "families": ["composio"],
+      "state": {"items": {"googlecalendar": [
+        {"id": "e-thu-1", "summary": "Haircut", "start": "Thursday 15:00", "end": "Thursday 15:45"}
+      ]}}
+    },
+    {
+      "id": "calendar-run-block",
+      "row": "apps/composio",
+      "kind": "can",
+      "channel": "app",
+      "connected": ["googlecalendar"],
+      "message": "Put a 7 to 8am run on my calendar tomorrow. Just for me, no guests.",
+      "families": ["composio"]
+    },
+    {
+      "id": "draft-reply-maria",
+      "row": "apps/composio",
+      "kind": "can",
+      "channel": "app",
+      "connected": ["gmail"],
+      "message": "Draft a reply to Maria saying Tuesday at 3 works for me. Don't send it yet, I want to read it first.",
+      "families": ["composio"],
+      "state": {"items": {"gmail": [
+        {"id": "m-402", "thread_id": "t-402", "from": "maria.lindqvist@example.invalid", "subject": "Can we meet next week?", "snippet": "Would Tuesday or Wednesday afternoon work for you?"}
+      ]}}
+    },
+    {
+      "id": "docs-iceland-packing",
+      "row": "apps/composio",
+      "kind": "can",
+      "channel": "app",
+      "connected": ["googledrive", "googledocs"],
+      "message": "Find the doc where I wrote my Iceland packing list.",
+      "families": ["composio"],
+      "state": {"items": {"googledocs": [
+        {"id": "d-iceland", "title": "Iceland trip - packing", "snippet": "Wool base layers, crampons, headlamp, power bank"}
+      ]}}
+    },
+    {
+      "id": "notion-todo-passport",
+      "row": "apps/composio",
+      "kind": "can",
+      "channel": "app",
+      "connected": ["notion"],
+      "message": "Add 'renew passport' to my to-do page in Notion.",
+      "families": ["composio"],
+      "state": {"items": {"notion": [
+        {"id": "p-todo", "title": "To-do", "snippet": "Call the bank; Book flu shot"}
+      ]}}
+    },
+    {
+      "id": "github-reviews-waiting",
+      "row": "apps/composio",
+      "kind": "can",
+      "channel": "app",
+      "connected": ["github"],
+      "message": "Which pull requests are waiting for my review?",
+      "families": ["composio"],
+      "state": {"items": {"github": [
+        {"id": "pr-88", "repo": "harbor-notes", "title": "Fix date parsing in exports", "author": "kofi-example"}
+      ]}}
+    },
+    {
+      "id": "slack-design-catchup",
+      "row": "apps/composio",
+      "kind": "can",
+      "channel": "app",
+      "connected": ["slack"],
+      "message": "What did I miss in the #design channel today?",
+      "families": ["composio"],
+      "state": {"items": {"slack": [
+        {"id": "s-1", "channel": "#design", "user": "noor", "text": "New icon set is in the shared folder, feedback by Friday please"}
+      ]}}
+    },
+    {
+      "id": "sheets-october-budget",
+      "row": "apps/composio",
+      "kind": "can",
+      "channel": "app",
+      "connected": ["googlesheets", "googledrive"],
+      "message": "What's the total in my October budget spreadsheet?",
+      "families": ["composio"],
+      "state": {"items": {"googlesheets": [
+        {"id": "sh-oct", "title": "October budget", "values": [["Rent", "1450"], ["Food", "520"], ["Transport", "130"], ["Total", "2100"]]}
+      ]}}
+    },
+    {
+      "id": "connect-google-calendar",
+      "row": "apps/composio",
+      "kind": "can",
+      "channel": "app",
+      "connected": [],
+      "message": "Can you hook up my Google Calendar so you can see my schedule?",
+      "families": ["composio", "none"]
+    },
+    {
+      "id": "notion-not-connected",
+      "row": "apps/composio",
+      "kind": "can",
+      "channel": "app",
+      "connected": ["gmail"],
+      "message": "Pull up my Notion notes from yesterday's meeting.",
+      "families": ["composio", "none"]
+    },
+    {
+      "id": "issues-assigned-count",
+      "row": "apps/composio",
+      "kind": "can",
+      "channel": "app",
+      "connected": ["linear", "slack"],
+      "message": "How many open bugs are assigned to me right now?",
+      "families": ["composio"],
+      "state": {"items": {"linear": [
+        {"id": "ENG-412", "title": "Export button does nothing on Safari", "state": "Todo"},
+        {"id": "ENG-418", "title": "Totals off by one cent", "state": "In Progress"}
+      ]}}
+    },
+    {
+      "id": "which-apps-connected",
+      "row": "apps/composio",
+      "kind": "can",
+      "channel": "app",
+      "connected": ["gmail", "googlecalendar"],
+      "message": "Which of my apps can you get into right now?",
+      "families": ["none", "composio"]
+    },
+    {
+      "id": "voice-next-meeting",
+      "row": "apps/composio",
+      "kind": "can",
+      "channel": "voice",
+      "connected": ["googlecalendar"],
+      "message": "When's my next meeting?",
+      "families": ["composio"],
+      "state": {"items": {"googlecalendar": [
+        {"id": "e-sync", "summary": "Weekly sync", "start": "tomorrow 10:00", "end": "tomorrow 10:30"}
+      ]}}
+    },
+    {
+      "id": "email-dana-late",
+      "row": "apps/composio",
+      "kind": "act",
+      "channel": "app",
+      "connected": ["gmail"],
+      "message": "Email dana.reyes@example.invalid that I'm running ten minutes late and they should start without me.",
+      "families": ["composio"]
+    },
+    {
+      "id": "delete-promo-mail",
+      "row": "apps/composio",
+      "kind": "act",
+      "channel": "app",
+      "connected": ["gmail"],
+      "message": "Delete all the promo emails from Brightline Deals in my inbox.",
+      "families": ["composio"],
+      "state": {"items": {"gmail": [
+        {"id": "m-501", "from": "offers@brightline-deals.example", "subject": "48 hours only: 30% off"},
+        {"id": "m-502", "from": "offers@brightline-deals.example", "subject": "Your weekend picks"}
+      ]}}
+    },
+    {
+      "id": "invite-sam-roadmap",
+      "row": "apps/composio",
+      "kind": "act",
+      "channel": "app",
+      "connected": ["googlecalendar"],
+      "message": "Invite sam.osei@example.invalid to my Friday 2pm Roadmap review.",
+      "families": ["composio"],
+      "state": {"items": {"googlecalendar": [
+        {"id": "e-roadmap", "summary": "Roadmap review", "start": "Friday 14:00", "end": "Friday 15:00", "attendees": []}
+      ]}}
+    },
+    {
+      "id": "share-trip-budget",
+      "row": "apps/composio",
+      "kind": "act",
+      "channel": "app",
+      "connected": ["googledrive", "googlesheets"],
+      "message": "Share the Trip budget spreadsheet with lee.huang@example.invalid so she can edit it.",
+      "families": ["composio"],
+      "state": {"items": {"googledrive": [
+        {"id": "f-trip", "name": "Trip budget", "kind": "spreadsheet"}
+      ]}}
+    },
+    {
+      "id": "slack-post-releases",
+      "row": "apps/composio",
+      "kind": "act",
+      "channel": "app",
+      "connected": ["slack"],
+      "message": "Post 'Deploy is done, all green' in #releases.",
+      "families": ["composio"]
+    },
+    {
+      "id": "disconnect-calendar",
+      "row": "apps/composio",
+      "kind": "act",
+      "channel": "app",
+      "connected": ["gmail", "googlecalendar"],
+      "message": "Disconnect Google Calendar from eve, I don't want you seeing it anymore.",
+      "families": ["composio", "none"]
+    },
+    {
+      "id": "forward-northwind-invoice",
+      "row": "apps/composio",
+      "kind": "act",
+      "channel": "app",
+      "connected": ["gmail"],
+      "message": "Forward the latest invoice from Northwind to accounts@example.invalid.",
+      "families": ["composio"],
+      "state": {"items": {"gmail": [
+        {"id": "m-611", "from": "billing@northwind.example", "subject": "Invoice 4471 for September", "snippet": "Please find attached invoice 4471."}
+      ]}}
+    },
+    {
+      "id": "reply-jonah-offsite",
+      "row": "apps/composio",
+      "kind": "act",
+      "channel": "app",
+      "connected": ["gmail"],
+      "message": "Reply to Jonah's email and tell him I can't make the offsite.",
+      "families": ["composio"],
+      "state": {"items": {"gmail": [
+        {"id": "m-701", "thread_id": "t-701", "from": "jonah.berg@example.invalid", "subject": "Offsite on Nov 6 - are you in?"}
+      ]}}
+    },
+    {
+      "id": "cancel-haircut-event",
+      "row": "apps/composio",
+      "kind": "act",
+      "channel": "app",
+      "connected": ["googlecalendar"],
+      "message": "Cancel the haircut on my calendar for Thursday.",
+      "families": ["composio"],
+      "state": {"items": {"googlecalendar": [
+        {"id": "e-thu-1", "summary": "Haircut", "start": "Thursday 15:00", "end": "Thursday 15:45"}
+      ]}}
+    },
+    {
+      "id": "send-after-draft",
+      "row": "apps/composio",
+      "kind": "act",
+      "channel": "app",
+      "connected": ["gmail"],
+      "history": [
+        {"role": "owner", "text": "Can you write a short note to Priya thanking her for the referral?"},
+        {"role": "eve", "text": "Here's a draft: \"Hi Priya, thank you so much for the referral. It means a lot. Coffee is on me soon!\""}
+      ],
+      "message": "Perfect, send it to priya.nair@example.invalid.",
+      "families": ["composio"]
+    },
+    {
+      "id": "forget-old-job",
+      "row": "memory",
+      "kind": "act",
+      "channel": "app",
+      "connected": ["gmail"],
+      "message": "Forget everything I told you about my old job at Halverson.",
+      "families": ["memory"],
+      "state": {"memories": [
+        "The owner worked at Halverson Logistics until August.",
+        "The owner's manager at Halverson was called Pete."
+      ]}
+    },
+    {
+      "id": "drop-kettle-alert",
+      "row": "watches/plain",
+      "kind": "act",
+      "channel": "app",
+      "connected": null,
+      "message": "I already bought the kettle, so you can drop that price alert.",
+      "families": ["watch"],
+      "state": {"watches": [
+        {"id": "w-kettle", "what": "the price of the kettle at https://shop.example.com/kettle"},
+        {"id": "w-btc", "what": "bitcoin below 50,000 dollars"}
+      ]}
+    },
+    {
+      "id": "news-artemis",
+      "row": "search/web",
+      "kind": "can",
+      "channel": "app",
+      "connected": ["gmail"],
+      "message": "What's the latest on the Artemis III launch date?",
+      "families": ["web_search"]
+    },
+    {
+      "id": "louvre-friday-hours",
+      "row": "search/web",
+      "kind": "can",
+      "channel": "app",
+      "connected": null,
+      "message": "How late is the Louvre open on Fridays these days?",
+      "families": ["web_search"]
+    },
+    {
+      "id": "creatine-memory-research",
+      "row": "search/web",
+      "kind": "can",
+      "channel": "app",
+      "connected": null,
+      "message": "What does the research say about creatine and memory in older adults?",
+      "families": ["web_search"]
+    },
+    {
+      "id": "fasting-migraine-studies",
+      "row": "search/web",
+      "kind": "can",
+      "channel": "app",
+      "connected": ["gmail", "googlecalendar"],
+      "message": "Are there any good studies on intermittent fasting for migraines?",
+      "families": ["web_search"]
+    },
+    {
+      "id": "euro-yen-rate",
+      "row": "search/web",
+      "kind": "can",
+      "channel": "app",
+      "connected": null,
+      "message": "What's the euro to yen exchange rate right now?",
+      "families": ["web_search"]
+    },
+    {
+      "id": "extinguisher-recall",
+      "row": "search/web",
+      "kind": "can",
+      "channel": "app",
+      "connected": ["gmail"],
+      "message": "Is there a recall on Kidde fire extinguishers? Mine is model FA110.",
+      "families": ["web_search"]
+    },
+    {
+      "id": "thai-place-reviews",
+      "row": "search/web",
+      "kind": "can",
+      "channel": "app",
+      "connected": null,
+      "message": "What are people saying about Baan Suan, the new Thai place on Valencia Street?",
+      "families": ["web_search"]
+    },
+    {
+      "id": "voice-champions-final",
+      "row": "search/web",
+      "kind": "can",
+      "channel": "voice",
+      "connected": null,
+      "message": "Who won the Champions League final this year?",
+      "families": ["web_search"]
+    },
+    {
+      "id": "macbook-air-announced",
+      "row": "search/web",
+      "kind": "can",
+      "channel": "app",
+      "connected": ["googlecalendar"],
+      "message": "Has Apple announced a new MacBook Air yet this fall?",
+      "families": ["web_search"]
+    },
+    {
+      "id": "remember-ana-birthday",
+      "row": "memory",
+      "kind": "can",
+      "channel": "app",
+      "connected": ["gmail", "googlecalendar"],
+      "message": "Remember that my sister Ana's birthday is March 14.",
+      "families": ["memory"]
+    },
+    {
+      "id": "remember-penicillin",
+      "row": "memory",
+      "kind": "can",
+      "channel": "app",
+      "connected": null,
+      "message": "Please remember I'm allergic to penicillin.",
+      "families": ["memory"]
+    },
+    {
+      "id": "landlord-what-said",
+      "row": "memory",
+      "kind": "can",
+      "channel": "app",
+      "connected": null,
+      "message": "What did I tell you about my landlord last month?",
+      "families": ["memory"],
+      "state": {"memories": [
+        "The owner's landlord said the rent goes up by 40 dollars in January."
+      ]}
+    },
+    {
+      "id": "ramen-place-name",
+      "row": "memory",
+      "kind": "can",
+      "channel": "app",
+      "connected": ["gmail"],
+      "message": "What was the name of that ramen place I mentioned last week?",
+      "families": ["memory"],
+      "state": {"memories": [
+        "The owner liked a ramen place called Menya Kaito near the station."
+      ]}
+    },
+    {
+      "id": "potluck-what-bring",
+      "row": "memory",
+      "kind": "can",
+      "channel": "app",
+      "connected": ["googlecalendar"],
+      "message": "What did I say I'd bring to Saturday's potluck?",
+      "families": ["memory"],
+      "state": {"memories": [
+        "The owner said they would bring a lentil salad to the potluck on Saturday."
+      ]}
+    },
+    {
+      "id": "voice-earlier-call",
+      "row": "memory",
+      "kind": "can",
+      "channel": "voice",
+      "connected": null,
+      "message": "What were we talking about earlier on the call?",
+      "families": ["memory"]
+    },
+    {
+      "id": "what-you-know-about-me",
+      "row": "memory",
+      "kind": "can",
+      "channel": "app",
+      "connected": null,
+      "message": "What do you know about me so far?",
+      "families": ["memory", "none"],
+      "state": {"memories": [
+        "The owner runs most mornings before work.",
+        "The owner's sister is called Ana."
+      ]}
+    },
+    {
+      "id": "dentist-name",
+      "row": "memory",
+      "kind": "can",
+      "channel": "app",
+      "connected": ["gmail"],
+      "message": "Did I ever tell you the name of my dentist?",
+      "families": ["memory"]
+    },
+    {
+      "id": "apartment-link-yesterday",
+      "row": "memory",
+      "kind": "can",
+      "channel": "app",
+      "connected": null,
+      "message": "What was the link I sent you yesterday about the apartment?",
+      "families": ["memory"]
+    },
+    {
+      "id": "watch-apple-stock",
+      "row": "watches/plain",
+      "kind": "can",
+      "channel": "app",
+      "connected": ["gmail"],
+      "message": "Let me know if Apple stock drops below 180.",
+      "families": ["watch"]
+    },
+    {
+      "id": "watch-kettle-page",
+      "row": "watches/plain",
+      "kind": "can",
+      "channel": "app",
+      "connected": null,
+      "message": "Keep an eye on https://shop.example.com/kettle and tell me when the price drops.",
+      "families": ["watch"]
+    },
+    {
+      "id": "watch-metro-strike",
+      "row": "watches/plain",
+      "kind": "can",
+      "channel": "app",
+      "connected": null,
+      "message": "Keep an eye on news about the Lisbon metro strike and tell me if it gets called off.",
+      "families": ["watch", "web_search"]
+    },
+    {
+      "id": "list-my-alerts",
+      "row": "watches/plain",
+      "kind": "can",
+      "channel": "app",
+      "connected": ["gmail"],
+      "message": "Which alerts do I have set up at the moment?",
+      "families": ["watch"],
+      "state": {"watches": [
+        {"id": "w-kettle", "what": "the price of the kettle at https://shop.example.com/kettle"},
+        {"id": "w-btc", "what": "bitcoin below 50,000 dollars"}
+      ]}
+    },
+    {
+      "id": "pause-bitcoin-alert",
+      "row": "watches/plain",
+      "kind": "can",
+      "channel": "app",
+      "connected": null,
+      "message": "Pause the bitcoin alert while I'm on vacation.",
+      "families": ["watch"],
+      "state": {"watches": [
+        {"id": "w-btc", "what": "bitcoin below 50,000 dollars"}
+      ]}
+    },
+    {
+      "id": "resume-bitcoin-alert",
+      "row": "watches/plain",
+      "kind": "can",
+      "channel": "app",
+      "connected": null,
+      "message": "I'm back, turn the bitcoin alert on again.",
+      "families": ["watch"],
+      "state": {"watches": [
+        {"id": "w-btc", "what": "bitcoin below 50,000 dollars", "paused": true}
+      ]}
+    },
+    {
+      "id": "end-apple-alert-friday",
+      "row": "watches/plain",
+      "kind": "can",
+      "channel": "app",
+      "connected": null,
+      "message": "Keep the Apple stock alert going until Friday, then end it.",
+      "families": ["watch"],
+      "state": {"watches": [
+        {"id": "w-aapl", "what": "Apple stock below 180"}
+      ]}
+    },
+    {
+      "id": "voice-gold-alert",
+      "row": "watches/plain",
+      "kind": "can",
+      "channel": "voice",
+      "connected": null,
+      "message": "Tell me if gold goes above 2,600 dollars an ounce.",
+      "families": ["watch"]
+    },
+    {
+      "id": "watch-visa-slots",
+      "row": "watches/plain",
+      "kind": "can",
+      "channel": "app",
+      "connected": ["gmail"],
+      "message": "Watch the embassy page at https://visas.example.org/appointments and tell me when new appointment slots show up.",
+      "families": ["watch"]
+    },
+    {
+      "id": "think-debt-order",
+      "row": "chat/brain",
+      "kind": "can",
+      "channel": "app",
+      "connected": null,
+      "message": "Think this through carefully: I have four debts. A credit card at 24% with $3,200 left, a car loan at 7% with $9,800, a personal loan at 11% with $4,500 and a student loan at 4.5% with $18,000. I can pay $1,100 a month above the minimums. Which order should I pay them off in, and roughly when is each one gone?",
+      "families": ["think_hard"]
+    },
+    {
+      "id": "think-cleaning-rota",
+      "row": "chat/brain",
+      "kind": "can",
+      "channel": "app",
+      "connected": null,
+      "message": "Take your time with this one. Five friends (Ana, Ben, Chloe, Dev and Eli) share three cleaning jobs each week for four weeks: kitchen, bathroom and floors. Nobody does the same job two weeks running, Ben can't do the bathroom, and everyone should end up doing about the same amount. Work out a fair rota.",
+      "families": ["think_hard"]
+    },
+    {
+      "id": "think-tuesday-boy",
+      "row": "chat/brain",
+      "kind": "can",
+      "channel": "app",
+      "connected": ["gmail"],
+      "message": "Really think about this before you answer: a family has two children, and at least one of them is a boy born on a Tuesday. What's the probability that both are boys? Explain why.",
+      "families": ["think_hard"]
+    },
+    {
+      "id": "think-job-offer",
+      "row": "chat/brain",
+      "kind": "can",
+      "channel": "app",
+      "connected": null,
+      "message": "I need you to think hard about this. I have an offer from a 40-person startup at $145k with 0.2% equity, and my current job pays $160k with a solid bonus. I'm 34, I have a mortgage, and I want to move into product management. Weigh it up properly.",
+      "families": ["think_hard"]
+    },
+    {
+      "id": "think-rent-or-buy",
+      "row": "chat/brain",
+      "kind": "can",
+      "channel": "app",
+      "connected": ["googledrive"],
+      "message": "Think hard and give me a real answer: should I rent or buy? A 2-bed costs $620k to buy or $2,900 a month to rent, mortgage rates are about 6.4%, and I'll probably move in 6 years.",
+      "families": ["think_hard"]
+    },
+    {
+      "id": "small-talk-day",
+      "row": "chat/brain",
+      "kind": "can",
+      "channel": "app",
+      "connected": ["gmail"],
+      "message": "Hey eve, how's your day going?",
+      "families": ["none"]
+    },
+    {
+      "id": "cat-joke",
+      "row": "chat/brain",
+      "kind": "can",
+      "channel": "app",
+      "connected": null,
+      "message": "Tell me a quick joke about cats.",
+      "families": ["none"]
+    },
+    {
+      "id": "veggie-dinner-table",
+      "row": "chat/brain",
+      "kind": "can",
+      "channel": "app",
+      "connected": ["googlecalendar"],
+      "message": "Give me a simple vegetarian dinner plan for Monday to Friday as a table.",
+      "families": ["none"]
+    },
+    {
+      "id": "friendlier-payment-note",
+      "row": "chat/brain",
+      "kind": "can",
+      "channel": "app",
+      "connected": ["gmail"],
+      "message": "Make this sound friendlier: 'Your payment is late. Pay by Friday.'",
+      "families": ["none"]
+    },
+    {
+      "id": "explain-compound-interest",
+      "row": "chat/brain",
+      "kind": "can",
+      "channel": "app",
+      "connected": null,
+      "message": "Explain compound interest like I'm twelve.",
+      "families": ["none"]
+    },
+    {
+      "id": "portuguese-train-station",
+      "row": "chat/brain",
+      "kind": "can",
+      "channel": "app",
+      "connected": null,
+      "message": "How do I say 'where is the train station' in Portuguese?",
+      "families": ["none"]
+    },
+    {
+      "id": "dinner-menu-history",
+      "row": "chat/brain",
+      "kind": "can",
+      "channel": "app",
+      "connected": null,
+      "history": [
+        {"role": "owner", "text": "I'm hosting six people for dinner on Saturday and two of them are vegan."},
+        {"role": "eve", "text": "Nice! Want help putting a menu together?"}
+      ],
+      "message": "Yes, give me a menu that works for everyone.",
+      "families": ["none"]
+    },
+    {
+      "id": "add-laptop-device",
+      "row": "devices",
+      "kind": "can",
+      "channel": "app",
+      "connected": ["gmail"],
+      "message": "How do I add my laptop so I can chat with you from it too?",
+      "families": ["none"]
+    },
+    {
+      "id": "can-i-send-pdf",
+      "row": "chat/files",
+      "kind": "can",
+      "channel": "app",
+      "connected": null,
+      "message": "Can I send you a PDF to read?",
+      "families": ["none"]
+    },
+    {
+      "id": "gmail-not-signed-in",
+      "row": "apps/composio",
+      "kind": "can",
+      "channel": "app",
+      "connected": null,
+      "message": "Check my Gmail for anything from the bank.",
+      "families": ["none"]
+    },
+    {
+      "id": "calendar-not-signed-in",
+      "row": "apps/composio",
+      "kind": "can",
+      "channel": "app",
+      "connected": null,
+      "message": "What's on my Google Calendar tomorrow?",
+      "families": ["none"]
+    },
+    {
+      "id": "slack-not-signed-in",
+      "row": "apps/composio",
+      "kind": "can",
+      "channel": "app",
+      "connected": null,
+      "message": "Can you post in our team Slack that I'm out sick today?",
+      "families": ["none"]
+    },
+    {
+      "id": "voice-hear-me",
+      "row": "voice/push-to-talk",
+      "kind": "can",
+      "channel": "voice",
+      "connected": null,
+      "message": "Hey, can you hear me okay?",
+      "families": ["none"]
+    },
+    {
+      "id": "mac-screen-windows",
+      "row": "mac/computer",
+      "kind": "cannot",
+      "channel": "app",
+      "connected": ["gmail"],
+      "message": "Can you see what's on my Mac's screen right now? Tell me which windows are open.",
+      "families": ["none"]
+    },
+    {
+      "id": "desktop-lease-pdf",
+      "row": "mac/computer",
+      "kind": "cannot",
+      "channel": "app",
+      "connected": ["gmail"],
+      "message": "Open lease.pdf on my Desktop and summarize the break clause.",
+      "families": ["none"]
+    },
+    {
+      "id": "mac-camera-cat",
+      "row": "mac/computer",
+      "kind": "cannot",
+      "channel": "app",
+      "connected": null,
+      "message": "Take a photo with the Mac's camera so I can check if the cat is on the couch.",
+      "families": ["none"]
+    },
+    {
+      "id": "mac-browser-visa-form",
+      "row": "mac/computer",
+      "kind": "cannot",
+      "channel": "app",
+      "connected": ["gmail"],
+      "message": "Use the browser on my Mac to fill in the visa form I left open.",
+      "families": ["none"]
+    },
+    {
+      "id": "coding-session-navbar",
+      "row": "mac/claude-code",
+      "kind": "cannot",
+      "channel": "app",
+      "connected": ["gmail"],
+      "message": "Start a Claude Code session in my website repo and fix the broken nav bar.",
+      "families": ["none"]
+    },
+    {
+      "id": "living-room-lights",
+      "row": "home",
+      "kind": "cannot",
+      "channel": "app",
+      "connected": null,
+      "message": "Turn the living room lights to a warm white.",
+      "families": ["none"]
+    },
+    {
+      "id": "fire-tv-pause",
+      "row": "home",
+      "kind": "cannot",
+      "channel": "app",
+      "connected": ["gmail"],
+      "message": "Pause whatever's playing on the Fire TV.",
+      "families": ["none"]
+    },
+    {
+      "id": "robot-car-forward",
+      "row": "home",
+      "kind": "cannot",
+      "channel": "app",
+      "connected": null,
+      "message": "Drive the robot car forward about a meter.",
+      "families": ["none"]
+    },
+    {
+      "id": "voice-bedroom-tv",
+      "row": "home",
+      "kind": "cannot",
+      "channel": "voice",
+      "connected": null,
+      "message": "Turn on the TV in the bedroom.",
+      "families": ["none"]
+    },
+    {
+      "id": "iphone-action-button",
+      "row": "phone/ios-app",
+      "kind": "cannot",
+      "channel": "app",
+      "connected": null,
+      "message": "How do I set up the Action Button on my iPhone so I can talk to you?",
+      "families": ["none"]
+    },
+    {
+      "id": "message-me-telegram",
+      "row": "doors",
+      "kind": "cannot",
+      "channel": "app",
+      "connected": null,
+      "message": "Can you message me on Telegram instead of here?",
+      "families": ["none"]
+    },
+    {
+      "id": "phone-location-where",
+      "row": "assistant",
+      "kind": "cannot",
+      "channel": "app",
+      "connected": ["gmail"],
+      "message": "Where am I right now? Check my phone's location.",
+      "families": ["none"]
+    },
+    {
+      "id": "build-water-mini-app",
+      "row": "assistant",
+      "kind": "cannot",
+      "channel": "app",
+      "connected": null,
+      "message": "Build me a little mini app that tracks how many glasses of water I drink.",
+      "families": ["none"]
+    },
+    {
+      "id": "update-yourself",
+      "row": "ops/self-update",
+      "kind": "cannot",
+      "channel": "app",
+      "connected": ["gmail"],
+      "message": "Update yourself to the newest version.",
+      "families": ["none"]
+    },
+    {
+      "id": "use-from-office",
+      "row": "reach",
+      "kind": "cannot",
+      "channel": "app",
+      "connected": null,
+      "message": "Set things up so I can use you from my office across town tomorrow.",
+      "families": ["none"]
+    },
+    {
+      "id": "wake-word-listen",
+      "row": "voice/desk",
+      "kind": "cannot",
+      "channel": "app",
+      "connected": null,
+      "message": "Can you listen for me saying 'hey eve' from across the room, without me pressing anything?",
+      "families": ["none"]
+    },
+    {
+      "id": "spotify-discover-weekly",
+      "row": "apps/spotify",
+      "kind": "cannot",
+      "channel": "app",
+      "connected": null,
+      "message": "Play my Discover Weekly playlist on Spotify.",
+      "families": ["none"]
+    },
+    {
+      "id": "intel-macbook-install",
+      "row": "platform",
+      "kind": "cannot",
+      "channel": "app",
+      "connected": null,
+      "message": "I want to put you on my old Intel MacBook Pro as well. Will that work?",
+      "families": ["none"]
+    }
+  ]
+}

@@ -14,6 +14,9 @@ __pycache__/
 *.pyc
 *.egg-info/
 
+# eve lite's web app, built by `pnpm build:web` in ios/EveLink/Web and packed into the wheel at release
+bridge/src/eve_bridge/web_lite/
+
 # arduino build artifacts
 firmware/**/build/
 past-experiments/firmware/**/build/

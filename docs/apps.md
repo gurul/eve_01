@@ -21,6 +21,10 @@ eve reaches your everyday accounts **directly**, with no broker in the middle:
 **out** of the Composio session even if they are connected there
 (`composio_tools.DIRECT_TOOLKITS`), so each app has exactly one way in.
 
+**eve lite** has none of the direct apps: every app, the person's own Gmail and
+Calendar included, goes through Composio Connect, signed in once in the browser. See
+[eve lite: Composio Connect](#eve-lite-composio-connect).
+
 **Your second Google account** (owner, 2026-10-05: "keep composio for the second
 gmail"). Your **personal** Gmail and Calendar are the direct tools above. Your
 **work** Gmail and Calendar stay on Composio, connected there under the alias
@@ -347,6 +351,107 @@ against a bar of 24). So eve now knows your repositories themselves.
   list in the module), never do, so "remix" in a sentence opens nothing.
 - **Privacy.** The names and descriptions ride the brain's prompt, which goes to the model provider like the
   rest of the turn. Logs carry counts only.
+
+## eve lite: Composio Connect
+
+[eve lite](lite.md) has no direct apps: no Google Cloud client, no Google key, no GitHub
+token (the owner, 2026-10-13: "the google env key setup is unnecessary for this variant").
+Its one way to any app is **Composio Connect**, Composio's hosted MCP server for a person's
+own agent, signed in once in the browser. Spike S1 ([its notes](plans/eve-lite-s1.md),
+2026-10-13) checked that sign-in against Composio's live services; a full sign-in by a
+person is manual gate M5, still pending.
+
+**The sign-in** (`onboarding.ComposioConnectLogin`): OAuth with PKCE, as the MCP
+authorization spec describes it.
+
+- eve registers itself once as a public client (dynamic client registration, RFC 7591, with
+  no secret), named "eve lite on <this Mac>", with the two loopback forms of its callback on
+  the port the Mac's page has: `http://localhost:<port>/onboard/composio/callback` and the
+  same on `127.0.0.1`. It registers again only when the page moved to a port the stored
+  registration lacks, or when Composio no longer knows the client.
+- The browser goes to `https://connect.composio.dev/oauth/authorize` with S256, a
+  single-use `state`, the scope `openid profile email offline_access` and
+  `resource=https://connect.composio.dev/mcp`, so the token is good at the MCP server. The
+  person signs in or signs up, then clicks **Allow**.
+- The callback is checked by its `state` alone, and the code is traded at
+  `https://login.composio.dev/oauth2/token` with a form POST and no secret. The token
+  endpoint's host is not the issuer's, so every endpoint is fixed in the code, not worked out
+  from the issuer.
+- `~/.config/eve-bridge/composio-connect.json` (mode 600) gets the client id, the callbacks,
+  the tokens and when the access token lapses. It is written only once a token arrived, so
+  the file being there means "signed in", and the daemon restarts into it.
+
+**The bridge** (`composio_connect.ConnectBridge`, the same shape the brain reads full eve's
+Composio bridge in):
+
+- It lists Connect's seven meta tools over MCP and offers them under their own names, in
+  this fixed order: `COMPOSIO_SEARCH_TOOLS`, `COMPOSIO_GET_TOOL_SCHEMAS`,
+  `COMPOSIO_MULTI_EXECUTE_TOOL`, `COMPOSIO_MANAGE_CONNECTIONS`,
+  `COMPOSIO_WAIT_FOR_CONNECTIONS`, `COMPOSIO_REMOTE_WORKBENCH` and
+  `COMPOSIO_REMOTE_BASH_TOOL`. Any other tool the server lists is left out. Schemas are
+  slimmed. Composio's descriptions are kept whole, because they carry how the meta tools are
+  used, less the first line of `COMPOSIO_SEARCH_TOOLS`', which advertises toolkits eve never
+  runs.
+- The access token is refreshed about a minute before it lapses, and once after a 401, and
+  the call is then tried once more. A refresh token Composio refuses is never sent again: the
+  person signs in again from **Settings → Apps**. A call never raises; a failure is one plain
+  line for the model. A call that timed out is not tried again, since it may have run.
+- `start()` lists the tools on a thread of its own and tries again, further apart each time,
+  until Composio answers. Until then the brain offers no app tools.
+
+**Connect Links.** **Settings → Apps** lists Gmail, Google Calendar, Google Drive, Slack,
+Notion, Linear and GitHub, each with whether it is connected (read with
+`COMPOSIO_SEARCH_TOOLS`, which only looks) and a **Connect** button. **Connect** calls
+`COMPOSIO_MANAGE_CONNECTIONS` for that app and opens the sign-in link it returns; only an
+`https` link on `composio.dev` or a subdomain of it reaches the browser. In the chat, a
+request for an app that is not connected gets the same link from the brain, which checks the
+connection once the person says it is done. Any other toolkit with Composio's own sign-in
+connects the same way.
+
+**No personal-account split.** Full eve reaches the owner's own Gmail and Calendar directly,
+and refuses a Composio call that reaches them ([at the top](#connected-accounts-direct-and-composio-for-the-rest)).
+eve lite has no direct apps, so `composio_tools.decide_lite` judges each call with
+`decide(..., personal_direct=False)`: the person's own mail and calendar go through Composio.
+Every other rule is full eve's:
+
+- Reads run.
+- Gmail drafts and routine private calendar and Drive edits run (`EVE_COMPOSIO_POLICY` is
+  forced to `gmail=auto` in eve lite; Calendar and Drive are `auto` already).
+- Sending, replying to or forwarding an email asks, and the question shows the whole email,
+  with the room full eve gives a Gmail send (`composio_tools.sends_mail`). Deleting and every
+  other one-way act ask, showing the whole act. The remote bash tool always asks. A remote
+  workbench script asks (`composio_tools.workbench_reaches_out_lite`) when it reads the
+  person's own mail or calendar, or when it could carry data off the Mac — a web-search or
+  scraping tool called in it, or a pandas or numpy reader that fetches a URL; a script that
+  only computes on results already fetched runs.
+- **A connection change asks.** Full eve runs `COMPOSIO_MANAGE_CONNECTIONS` without asking.
+  eve lite asks unless `composio_tools.manage_needs_yes` proves the call only checks or links:
+  `toolkits`, a non-empty list of names; `reinitiate_all` absent or false (true replaces live
+  connections); a `session_id` string or none; and no other key. Any other shape asks, a
+  remove or a rename included.
+
+The Lean model `Eve/AppsPolicy.lean` proves both halves: with `personal_direct` true,
+`decide` is today's for every call; and in lite, every write that is not routine, every code
+tool and every connection change `manage_needs_yes` does not prove runs only after a whole
+question and a bare yes ([verification](verification.md#eve-lite-2026-10-13)).
+
+### If Composio Connect fails: the contingency
+
+The contingency is **not built**. S1 found that Connect takes eve's registration, so it is
+built only if manual gate M5, after a real sign-in, shows one of these: Connect refuses the
+loopback callback or never comes back to it; the token endpoint refuses the code or the
+refresh for a public client; `/mcp` refuses the token; or its tool list lacks the meta tools.
+A changed tool schema is not one of them: the fixtures are refreshed from Connect instead.
+
+It would be Composio's CLI-session login (WP-6b in [the spec](plans/eve-lite.md)). eve asks
+Composio's backend for a session, the browser opens Composio's dashboard to approve it, and
+eve polls the session by its UUID only, never its short code. It gets a project API key: an
+`ak_` key is used as it is, and a `uak_` user key is traded once for a project key. The key is
+saved as `COMPOSIO_API_KEY` in the env file, and the brain uses full eve's Composio bridge in
+a lite subclass with no personal-account split, as the user `eve-<uuid>`. Its costs: the
+composio SDK, which needs `pysher`, which has no wheel, so a release would ship one;
+`COMPOSIO_API_KEY` added to the one secret eve lite keeps; and httpx logging held at WARNING,
+so the session id never reaches a log.
 
 ## Privacy
 

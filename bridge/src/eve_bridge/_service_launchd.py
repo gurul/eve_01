@@ -3,18 +3,26 @@
 Writes a user-level LaunchAgent at ``~/Library/LaunchAgents/<LABEL>.plist``
 that runs ``eve-bridge daemon`` at login and keeps it alive across
 crashes. Logs stdout/stderr to ``~/Library/Logs/eve-bridge.log``.
+
+eve lite (EVE_PROFILE=lite, docs/plans/eve-lite.md M8) has a unit of its own,
+``com.github.eve-bridge.lite``, written by ``install_lite`` and logging to
+``~/Library/Logs/eve-lite.log``. Full eve's plists are built exactly as before.
 """
 
 from __future__ import annotations
 
+import contextlib
 import os
 import plistlib
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
+from typing import Any, Optional
 
 from .claude_home import MULTI_ENV, daemon_config_dirs
+from .profile import LITE, PROFILE_ENV
 
 NAME = "launchd"
 LABEL = "com.github.eve-bridge.daemon"
@@ -27,6 +35,17 @@ LOG_PATH = Path.home() / "Library" / "Logs" / "eve-bridge.log"
 WIDGET_LABEL = "com.github.eve-bridge.notes-widget"
 WIDGET_PLIST_PATH = Path.home() / "Library" / "LaunchAgents" / f"{WIDGET_LABEL}.plist"
 WIDGET_LOG_PATH = Path.home() / "Library" / "Logs" / "eve-bridge-notes-widget.log"
+
+# eve lite's unit (docs/plans/eve-lite.md M8). A label of its own, so installing it never replaces full eve's. Its
+# environment pins the profile: the env file only fills gaps (envfile.py), so this login item runs eve lite whatever
+# the env file says. launchd starts it again only after a failure exit, LITE_THROTTLE_SECS later: a sign-in that saved
+# a credential exits 75 and comes back into it, while a stop, or full eve installed for this user, exits 0 and stays
+# down (lite.py). Its paths are read from HOME when they are used, not fixed at import as full eve's above.
+LITE_LABEL = "com.github.eve-bridge.lite"
+LITE_LOG_NAME = "eve-lite.log"
+LITE_PATH = "/usr/bin:/bin:/usr/sbin:/sbin"     # launchd's own default: eve lite needs nothing from Homebrew
+LITE_THROTTLE_SECS = 5
+LITE_UMASK = 0o077                               # 63 in the plist: what the daemon creates is the user's alone
 
 
 def _base_plist(label: str, subcommand: str, keep_alive: bool, log_path: Path) -> dict:
@@ -178,3 +197,135 @@ def unit_path() -> Path:
 
 def log_path() -> Path:
     return LOG_PATH
+
+
+# ---- eve lite's unit ------------------------------------------------------------------------------------------------
+
+def agent_path(label: str) -> Path:
+    """Where this user's LaunchAgent ``label`` lives, read from HOME now."""
+    return Path.home() / "Library" / "LaunchAgents" / f"{label}.plist"
+
+
+def lite_plist_path() -> Path:
+    return agent_path(LITE_LABEL)
+
+
+def lite_log_path() -> Path:
+    return Path.home() / "Library" / "Logs" / LITE_LOG_NAME
+
+
+def _build_lite_plist() -> bytes:
+    """Render eve lite's plist (spec M8). Not :func:`_base_plist`: launchd restarts eve lite only after a failure exit
+    and only after LITE_THROTTLE_SECS, and starts it with the profile, owner-only files (Umask), launchd's own PATH and
+    no user site-packages (PYTHONNOUSERSITE: nothing outside eve lite's venv is imported). ``ProgramArguments`` is the
+    interpreter running this install, eve lite's venv's python when the installer runs it."""
+    log = str(lite_log_path())
+    return plistlib.dumps({
+        "Label": LITE_LABEL,
+        "ProgramArguments": [sys.executable, "-m", "eve_bridge.cli", "daemon"],
+        "RunAtLoad": True,
+        "KeepAlive": {"SuccessfulExit": False},
+        "ThrottleInterval": LITE_THROTTLE_SECS,
+        "ProcessType": "Interactive",
+        "Umask": LITE_UMASK,
+        "StandardOutPath": log,
+        "StandardErrorPath": log,
+        "EnvironmentVariables": {
+            "HOME": str(Path.home()),
+            "PATH": LITE_PATH,
+            PROFILE_ENV: LITE,
+            "PYTHONNOUSERSITE": "1",
+        },
+    })
+
+
+def _write_plist(path: Path, data: bytes) -> None:
+    """``data`` into ``path`` through a temporary file in the same folder and one rename, so launchd never reads half a
+    plist; 0644, as LaunchAgents are (it holds no secret)."""
+    fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+    try:
+        with os.fdopen(fd, "wb") as f:
+            f.write(data)
+        os.chmod(tmp, 0o644)
+        os.replace(tmp, path)
+    except BaseException:
+        with contextlib.suppress(OSError):
+            os.unlink(tmp)
+        raise
+
+
+def install_lite() -> int:
+    """`eve-bridge install --service` under EVE_PROFILE=lite: write eve lite's plist and (re)load it, so eve lite starts
+    now and at every login; run again, it picks up a new interpreter path (an update). Refused while full eve's agent
+    is installed for this user: full eve and eve lite keep their data in the same ~/.config/eve-bridge, so a Mac
+    account has one of them (install-lite.sh refuses it too, and eve lite's daemon stays down beside full eve)."""
+    if shutil.which("launchctl") is None:
+        print("eve-bridge: `launchctl` not found on PATH", file=sys.stderr)
+        return 2
+    full = agent_path(LABEL)
+    if full.exists():
+        print(f"eve-bridge: full eve's login service is installed for this user ({full}). Full eve and eve lite "
+              "share ~/.config/eve-bridge, so a Mac account has one of them. Nothing was changed.", file=sys.stderr)
+        return 2
+    path, log = lite_plist_path(), lite_log_path()
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        log.parent.mkdir(parents=True, exist_ok=True)
+        _write_plist(path, _build_lite_plist())
+    except OSError as e:
+        print(f"eve-bridge: eve lite's login service could not be written to {path.parent} ({type(e).__name__}).",
+              file=sys.stderr)
+        return 2
+
+    rc = _load(path)
+    if rc:
+        return rc
+
+    print(f"installed: {path}")
+    print(f"logs at:   {log}")
+    print("eve lite will start on your next login (and is starting now).")
+    return 0
+
+
+def uninstall_lite() -> int:
+    """Stop eve lite and remove its plist. It is stopped by its label (``launchctl bootout``, as install-lite.sh
+    --uninstall does), which works whether or not the file is still there; ``unload`` by the file when that fails."""
+    path = lite_plist_path()
+    loaded = lite_loaded()
+    if not loaded and not path.exists():
+        print("eve lite's login service is not installed; nothing to do")
+        return 0
+    if loaded:
+        done = subprocess.run(["launchctl", "bootout", f"gui/{os.getuid()}/{LITE_LABEL}"], capture_output=True)
+        if done.returncode != 0 and path.exists():
+            subprocess.run(["launchctl", "unload", str(path)], capture_output=True)
+        print("stopped eve lite")
+    if path.exists():
+        path.unlink()
+        print(f"removed: {path}")
+    return 0
+
+
+def lite_installed() -> bool:
+    return lite_plist_path().exists()
+
+
+def lite_loaded() -> bool:
+    """True iff launchctl lists eve lite's agent: running, or loaded and waiting to start again."""
+    if shutil.which("launchctl") is None:
+        return False
+    result = subprocess.run(["launchctl", "list"], capture_output=True, text=True)
+    if result.returncode != 0:
+        return False
+    # "PID\tStatus\tLabel" per line: the label is the last column, matched whole
+    return any(line.rsplit("\t", 1)[-1].strip() == LITE_LABEL for line in result.stdout.splitlines())
+
+
+def installed_lite_plist() -> Optional[dict[str, Any]]:
+    """eve lite's plist as installed, parsed; None when there is none, or it does not parse."""
+    try:
+        with open(lite_plist_path(), "rb") as f:
+            data = plistlib.load(f)
+    except Exception:  # noqa: BLE001 — missing, unreadable or not a plist: there is no usable one
+        return None
+    return data if isinstance(data, dict) else None

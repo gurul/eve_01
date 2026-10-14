@@ -1,0 +1,1107 @@
+{
+  "fetched_at": "2026-10-13T20:57:34+00:00",
+  "source": "GETs of the two authorize endpoints with the throwaway client from registration.json, redirects followed by hand inside Composio's hosts only, nothing submitted (spike S1). Each hop keeps its status, host, path and query KEYS; values are dropped except an OAuth error.",
+  "authorize_url": "https://connect.composio.dev/oauth/authorize?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}&scope=openid%20profile%20email%20offline_access&state={state}&code_challenge={code_challenge}&code_challenge_method=S256&resource=https%3A%2F%2Fconnect.composio.dev%2Fmcp",
+  "parameters": {
+    "response_type": "code",
+    "client_id": "{client_id}",
+    "redirect_uri": "{redirect_uri}",
+    "scope": "openid profile email offline_access",
+    "state": "{state}",
+    "code_challenge": "{BASE64URL(SHA256(code_verifier)), no padding}",
+    "code_challenge_method": "S256",
+    "resource": "https://connect.composio.dev/mcp"
+  },
+  "cases": [
+    {
+      "name": "connect: registered localhost redirect",
+      "params": {
+        "response_type": "code",
+        "client_id": "<the registered client_id>",
+        "redirect_uri": "http://localhost:48780/onboard/composio/callback",
+        "scope": "openid profile email offline_access",
+        "state": "<random>",
+        "code_challenge": "<random>",
+        "code_challenge_method": "S256",
+        "resource": "https://connect.composio.dev/mcp"
+      },
+      "hops": [
+        {
+          "request": {
+            "scheme": "https",
+            "host": "connect.composio.dev",
+            "port": null,
+            "path": "/oauth/authorize",
+            "query_keys": [
+              "client_id",
+              "code_challenge",
+              "code_challenge_method",
+              "redirect_uri",
+              "resource",
+              "response_type",
+              "scope",
+              "state"
+            ]
+          },
+          "status": 302,
+          "content_type": "",
+          "location": {
+            "scheme": "https",
+            "host": "connect.composio.dev",
+            "port": null,
+            "path": "/login",
+            "query_keys": [
+              "next"
+            ]
+          }
+        },
+        {
+          "request": {
+            "scheme": "https",
+            "host": "connect.composio.dev",
+            "port": null,
+            "path": "/login",
+            "query_keys": [
+              "next"
+            ]
+          },
+          "status": 307,
+          "content_type": "text/html",
+          "title": "Sign in — Composio",
+          "words": [
+            "sign in"
+          ],
+          "location": {
+            "scheme": "https",
+            "host": "connect.composio.dev",
+            "port": null,
+            "path": "/sign-in",
+            "query_keys": [
+              "next"
+            ]
+          }
+        },
+        {
+          "request": {
+            "scheme": "https",
+            "host": "connect.composio.dev",
+            "port": null,
+            "path": "/sign-in",
+            "query_keys": [
+              "next"
+            ]
+          },
+          "status": 307,
+          "content_type": "",
+          "location": {
+            "scheme": "https",
+            "host": "api.workos.com",
+            "port": null,
+            "path": "/user_management/authorize",
+            "query_keys": [
+              "client_id",
+              "code_challenge",
+              "code_challenge_method",
+              "provider",
+              "redirect_uri",
+              "response_type",
+              "screen_hint",
+              "state"
+            ]
+          }
+        },
+        {
+          "request": {
+            "scheme": "https",
+            "host": "api.workos.com",
+            "port": null,
+            "path": "/user_management/authorize",
+            "query_keys": [
+              "client_id",
+              "code_challenge",
+              "code_challenge_method",
+              "provider",
+              "redirect_uri",
+              "response_type",
+              "screen_hint",
+              "state"
+            ]
+          },
+          "status": 302,
+          "content_type": "text/html",
+          "title": "",
+          "words": [
+            "redirect",
+            "client"
+          ],
+          "location": {
+            "scheme": "https",
+            "host": "workos.composio.dev",
+            "port": null,
+            "path": "/user_management/authorize",
+            "query_keys": [
+              "client_id",
+              "code_challenge",
+              "code_challenge_method",
+              "provider",
+              "redirect_uri",
+              "response_type",
+              "screen_hint",
+              "state"
+            ]
+          }
+        },
+        {
+          "request": {
+            "scheme": "https",
+            "host": "workos.composio.dev",
+            "port": null,
+            "path": "/user_management/authorize",
+            "query_keys": [
+              "client_id",
+              "code_challenge",
+              "code_challenge_method",
+              "provider",
+              "redirect_uri",
+              "response_type",
+              "screen_hint",
+              "state"
+            ]
+          },
+          "status": 302,
+          "content_type": "text/html",
+          "title": "",
+          "words": [
+            "redirect",
+            "client"
+          ],
+          "location": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/bootstrap",
+            "query_keys": [
+              "authorization_session_id",
+              "client_id",
+              "redirect_uri",
+              "screen_hint",
+              "state"
+            ]
+          }
+        },
+        {
+          "request": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/bootstrap",
+            "query_keys": [
+              "authorization_session_id",
+              "client_id",
+              "redirect_uri",
+              "screen_hint",
+              "state"
+            ]
+          },
+          "status": 307,
+          "content_type": "",
+          "location": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/",
+            "query_keys": [
+              "authorization_session_id",
+              "client_id",
+              "redirect_uri",
+              "state"
+            ]
+          }
+        },
+        {
+          "request": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/",
+            "query_keys": [
+              "authorization_session_id",
+              "client_id",
+              "redirect_uri",
+              "state"
+            ]
+          },
+          "status": 200,
+          "content_type": "text/html",
+          "title": "Sign in",
+          "words": [
+            "sign in",
+            "continue",
+            "email"
+          ]
+        }
+      ],
+      "verdict": "sign-in first: Composio's sign-in page, reached before the client's parameters are checked (they ride along in next=)"
+    },
+    {
+      "name": "connect: unregistered https redirect (control)",
+      "params": {
+        "response_type": "code",
+        "client_id": "<the registered client_id>",
+        "redirect_uri": "https://example.invalid/onboard/composio/callback",
+        "scope": "openid profile email offline_access",
+        "state": "<random>",
+        "code_challenge": "<random>",
+        "code_challenge_method": "S256",
+        "resource": "https://connect.composio.dev/mcp"
+      },
+      "hops": [
+        {
+          "request": {
+            "scheme": "https",
+            "host": "connect.composio.dev",
+            "port": null,
+            "path": "/oauth/authorize",
+            "query_keys": [
+              "client_id",
+              "code_challenge",
+              "code_challenge_method",
+              "redirect_uri",
+              "resource",
+              "response_type",
+              "scope",
+              "state"
+            ]
+          },
+          "status": 302,
+          "content_type": "",
+          "location": {
+            "scheme": "https",
+            "host": "connect.composio.dev",
+            "port": null,
+            "path": "/login",
+            "query_keys": [
+              "next"
+            ]
+          }
+        },
+        {
+          "request": {
+            "scheme": "https",
+            "host": "connect.composio.dev",
+            "port": null,
+            "path": "/login",
+            "query_keys": [
+              "next"
+            ]
+          },
+          "status": 307,
+          "content_type": "text/html",
+          "title": "Sign in — Composio",
+          "words": [
+            "sign in"
+          ],
+          "location": {
+            "scheme": "https",
+            "host": "connect.composio.dev",
+            "port": null,
+            "path": "/sign-in",
+            "query_keys": [
+              "next"
+            ]
+          }
+        },
+        {
+          "request": {
+            "scheme": "https",
+            "host": "connect.composio.dev",
+            "port": null,
+            "path": "/sign-in",
+            "query_keys": [
+              "next"
+            ]
+          },
+          "status": 307,
+          "content_type": "",
+          "location": {
+            "scheme": "https",
+            "host": "api.workos.com",
+            "port": null,
+            "path": "/user_management/authorize",
+            "query_keys": [
+              "client_id",
+              "code_challenge",
+              "code_challenge_method",
+              "provider",
+              "redirect_uri",
+              "response_type",
+              "screen_hint",
+              "state"
+            ]
+          }
+        },
+        {
+          "request": {
+            "scheme": "https",
+            "host": "api.workos.com",
+            "port": null,
+            "path": "/user_management/authorize",
+            "query_keys": [
+              "client_id",
+              "code_challenge",
+              "code_challenge_method",
+              "provider",
+              "redirect_uri",
+              "response_type",
+              "screen_hint",
+              "state"
+            ]
+          },
+          "status": 302,
+          "content_type": "text/html",
+          "title": "",
+          "words": [
+            "redirect",
+            "client"
+          ],
+          "location": {
+            "scheme": "https",
+            "host": "workos.composio.dev",
+            "port": null,
+            "path": "/user_management/authorize",
+            "query_keys": [
+              "client_id",
+              "code_challenge",
+              "code_challenge_method",
+              "provider",
+              "redirect_uri",
+              "response_type",
+              "screen_hint",
+              "state"
+            ]
+          }
+        },
+        {
+          "request": {
+            "scheme": "https",
+            "host": "workos.composio.dev",
+            "port": null,
+            "path": "/user_management/authorize",
+            "query_keys": [
+              "client_id",
+              "code_challenge",
+              "code_challenge_method",
+              "provider",
+              "redirect_uri",
+              "response_type",
+              "screen_hint",
+              "state"
+            ]
+          },
+          "status": 302,
+          "content_type": "text/html",
+          "title": "",
+          "words": [
+            "redirect",
+            "client"
+          ],
+          "location": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/bootstrap",
+            "query_keys": [
+              "authorization_session_id",
+              "client_id",
+              "redirect_uri",
+              "screen_hint",
+              "state"
+            ]
+          }
+        },
+        {
+          "request": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/bootstrap",
+            "query_keys": [
+              "authorization_session_id",
+              "client_id",
+              "redirect_uri",
+              "screen_hint",
+              "state"
+            ]
+          },
+          "status": 307,
+          "content_type": "",
+          "location": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/",
+            "query_keys": [
+              "authorization_session_id",
+              "client_id",
+              "redirect_uri",
+              "state"
+            ]
+          }
+        },
+        {
+          "request": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/",
+            "query_keys": [
+              "authorization_session_id",
+              "client_id",
+              "redirect_uri",
+              "state"
+            ]
+          },
+          "status": 200,
+          "content_type": "text/html",
+          "title": "Sign in",
+          "words": [
+            "sign in",
+            "continue",
+            "email"
+          ]
+        }
+      ],
+      "verdict": "sign-in first: Composio's sign-in page, reached before the client's parameters are checked (they ride along in next=)"
+    },
+    {
+      "name": "login: registered localhost redirect",
+      "params": {
+        "response_type": "code",
+        "client_id": "<the registered client_id>",
+        "redirect_uri": "http://localhost:48780/onboard/composio/callback",
+        "scope": "openid profile email offline_access",
+        "state": "<random>",
+        "code_challenge": "<random>",
+        "code_challenge_method": "S256",
+        "resource": "https://connect.composio.dev/mcp"
+      },
+      "hops": [
+        {
+          "request": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/oauth2/authorize",
+            "query_keys": [
+              "client_id",
+              "code_challenge",
+              "code_challenge_method",
+              "redirect_uri",
+              "resource",
+              "response_type",
+              "scope",
+              "state"
+            ]
+          },
+          "status": 302,
+          "content_type": "text/html",
+          "title": "",
+          "words": [
+            "redirect"
+          ],
+          "location": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/",
+            "query_keys": [
+              "authorization_session_id",
+              "redirect_uri",
+              "state"
+            ]
+          }
+        },
+        {
+          "request": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/",
+            "query_keys": [
+              "authorization_session_id",
+              "redirect_uri",
+              "state"
+            ]
+          },
+          "status": 200,
+          "content_type": "text/html",
+          "title": "Sign in",
+          "words": [
+            "sign in",
+            "continue",
+            "email"
+          ]
+        }
+      ],
+      "verdict": "accepted: the sign-in page"
+    },
+    {
+      "name": "login: registered 127.0.0.1 redirect",
+      "params": {
+        "response_type": "code",
+        "client_id": "<the registered client_id>",
+        "redirect_uri": "http://127.0.0.1:48780/onboard/composio/callback",
+        "scope": "openid profile email offline_access",
+        "state": "<random>",
+        "code_challenge": "<random>",
+        "code_challenge_method": "S256",
+        "resource": "https://connect.composio.dev/mcp"
+      },
+      "hops": [
+        {
+          "request": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/oauth2/authorize",
+            "query_keys": [
+              "client_id",
+              "code_challenge",
+              "code_challenge_method",
+              "redirect_uri",
+              "resource",
+              "response_type",
+              "scope",
+              "state"
+            ]
+          },
+          "status": 302,
+          "content_type": "text/html",
+          "title": "",
+          "words": [
+            "redirect"
+          ],
+          "location": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/",
+            "query_keys": [
+              "authorization_session_id",
+              "redirect_uri",
+              "state"
+            ]
+          }
+        },
+        {
+          "request": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/",
+            "query_keys": [
+              "authorization_session_id",
+              "redirect_uri",
+              "state"
+            ]
+          },
+          "status": 200,
+          "content_type": "text/html",
+          "title": "Sign in",
+          "words": [
+            "sign in",
+            "continue",
+            "email"
+          ]
+        }
+      ],
+      "verdict": "accepted: the sign-in page"
+    },
+    {
+      "name": "login: unregistered https redirect (control)",
+      "params": {
+        "response_type": "code",
+        "client_id": "<the registered client_id>",
+        "redirect_uri": "https://example.invalid/onboard/composio/callback",
+        "scope": "openid profile email offline_access",
+        "state": "<random>",
+        "code_challenge": "<random>",
+        "code_challenge_method": "S256",
+        "resource": "https://connect.composio.dev/mcp"
+      },
+      "hops": [
+        {
+          "request": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/oauth2/authorize",
+            "query_keys": [
+              "client_id",
+              "code_challenge",
+              "code_challenge_method",
+              "redirect_uri",
+              "resource",
+              "response_type",
+              "scope",
+              "state"
+            ]
+          },
+          "status": 302,
+          "content_type": "text/html",
+          "title": "",
+          "words": [
+            "invalid",
+            "error",
+            "redirect"
+          ],
+          "location": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/oauth2/error",
+            "query_keys": [
+              "error"
+            ],
+            "shown": {
+              "error": "invalid_redirect_uri"
+            }
+          }
+        },
+        {
+          "request": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/oauth2/error",
+            "query_keys": [
+              "error"
+            ],
+            "shown": {
+              "error": "invalid_redirect_uri"
+            }
+          },
+          "status": 200,
+          "content_type": "text/html",
+          "title": "",
+          "words": [
+            "invalid",
+            "error",
+            "redirect"
+          ]
+        }
+      ],
+      "verdict": "rejected: invalid_redirect_uri (error page; nothing sent to the redirect_uri)"
+    },
+    {
+      "name": "login: unknown client_id (control)",
+      "params": {
+        "response_type": "code",
+        "client_id": "client_00000000000000000000000000",
+        "redirect_uri": "http://localhost:48780/onboard/composio/callback",
+        "scope": "openid profile email offline_access",
+        "state": "<random>",
+        "code_challenge": "<random>",
+        "code_challenge_method": "S256",
+        "resource": "https://connect.composio.dev/mcp"
+      },
+      "hops": [
+        {
+          "request": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/oauth2/authorize",
+            "query_keys": [
+              "client_id",
+              "code_challenge",
+              "code_challenge_method",
+              "redirect_uri",
+              "resource",
+              "response_type",
+              "scope",
+              "state"
+            ]
+          },
+          "status": 302,
+          "content_type": "text/html",
+          "title": "",
+          "words": [
+            "error",
+            "redirect"
+          ],
+          "location": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/oauth2/error",
+            "query_keys": [
+              "error"
+            ],
+            "shown": {
+              "error": "application_not_found"
+            }
+          }
+        },
+        {
+          "request": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/oauth2/error",
+            "query_keys": [
+              "error"
+            ],
+            "shown": {
+              "error": "application_not_found"
+            }
+          },
+          "status": 200,
+          "content_type": "text/html",
+          "title": "",
+          "words": [
+            "error"
+          ]
+        }
+      ],
+      "verdict": "rejected: application_not_found (error page; nothing sent to the redirect_uri)"
+    },
+    {
+      "name": "login: 127.0.0.1 on an unregistered port",
+      "params": {
+        "response_type": "code",
+        "client_id": "<the registered client_id>",
+        "redirect_uri": "http://127.0.0.1:48782/onboard/composio/callback",
+        "scope": "openid profile email offline_access",
+        "state": "<random>",
+        "code_challenge": "<random>",
+        "code_challenge_method": "S256",
+        "resource": "https://connect.composio.dev/mcp"
+      },
+      "hops": [
+        {
+          "request": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/oauth2/authorize",
+            "query_keys": [
+              "client_id",
+              "code_challenge",
+              "code_challenge_method",
+              "redirect_uri",
+              "resource",
+              "response_type",
+              "scope",
+              "state"
+            ]
+          },
+          "status": 302,
+          "content_type": "text/html",
+          "title": "",
+          "words": [
+            "redirect"
+          ],
+          "location": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/",
+            "query_keys": [
+              "authorization_session_id",
+              "redirect_uri",
+              "state"
+            ]
+          }
+        },
+        {
+          "request": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/",
+            "query_keys": [
+              "authorization_session_id",
+              "redirect_uri",
+              "state"
+            ]
+          },
+          "status": 200,
+          "content_type": "text/html",
+          "title": "Sign in",
+          "words": [
+            "sign in",
+            "continue",
+            "email"
+          ]
+        }
+      ],
+      "verdict": "accepted: the sign-in page"
+    },
+    {
+      "name": "login: localhost on an unregistered port",
+      "params": {
+        "response_type": "code",
+        "client_id": "<the registered client_id>",
+        "redirect_uri": "http://localhost:48782/onboard/composio/callback",
+        "scope": "openid profile email offline_access",
+        "state": "<random>",
+        "code_challenge": "<random>",
+        "code_challenge_method": "S256",
+        "resource": "https://connect.composio.dev/mcp"
+      },
+      "hops": [
+        {
+          "request": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/oauth2/authorize",
+            "query_keys": [
+              "client_id",
+              "code_challenge",
+              "code_challenge_method",
+              "redirect_uri",
+              "resource",
+              "response_type",
+              "scope",
+              "state"
+            ]
+          },
+          "status": 302,
+          "content_type": "text/html",
+          "title": "",
+          "words": [
+            "redirect"
+          ],
+          "location": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/",
+            "query_keys": [
+              "authorization_session_id",
+              "redirect_uri",
+              "state"
+            ]
+          }
+        },
+        {
+          "request": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/",
+            "query_keys": [
+              "authorization_session_id",
+              "redirect_uri",
+              "state"
+            ]
+          },
+          "status": 200,
+          "content_type": "text/html",
+          "title": "Sign in",
+          "words": [
+            "sign in",
+            "continue",
+            "email"
+          ]
+        }
+      ],
+      "verdict": "accepted: the sign-in page"
+    },
+    {
+      "name": "login: no PKCE",
+      "params": {
+        "response_type": "code",
+        "client_id": "<the registered client_id>",
+        "redirect_uri": "http://localhost:48780/onboard/composio/callback",
+        "scope": "openid profile email offline_access",
+        "state": "<random>",
+        "resource": "https://connect.composio.dev/mcp"
+      },
+      "hops": [
+        {
+          "request": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/oauth2/authorize",
+            "query_keys": [
+              "client_id",
+              "redirect_uri",
+              "resource",
+              "response_type",
+              "scope",
+              "state"
+            ]
+          },
+          "status": 302,
+          "content_type": "text/html",
+          "title": "",
+          "words": [
+            "redirect"
+          ],
+          "location": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/",
+            "query_keys": [
+              "authorization_session_id",
+              "redirect_uri",
+              "state"
+            ]
+          }
+        },
+        {
+          "request": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/",
+            "query_keys": [
+              "authorization_session_id",
+              "redirect_uri",
+              "state"
+            ]
+          },
+          "status": 200,
+          "content_type": "text/html",
+          "title": "Sign in",
+          "words": [
+            "sign in",
+            "continue",
+            "email"
+          ]
+        }
+      ],
+      "verdict": "accepted: the sign-in page"
+    },
+    {
+      "name": "login: PKCE plain",
+      "params": {
+        "response_type": "code",
+        "client_id": "<the registered client_id>",
+        "redirect_uri": "http://localhost:48780/onboard/composio/callback",
+        "scope": "openid profile email offline_access",
+        "state": "<random>",
+        "code_challenge": "<random>",
+        "code_challenge_method": "plain",
+        "resource": "https://connect.composio.dev/mcp"
+      },
+      "hops": [
+        {
+          "request": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/oauth2/authorize",
+            "query_keys": [
+              "client_id",
+              "code_challenge",
+              "code_challenge_method",
+              "redirect_uri",
+              "resource",
+              "response_type",
+              "scope",
+              "state"
+            ]
+          },
+          "status": 302,
+          "content_type": "text/html",
+          "title": "",
+          "words": [
+            "invalid",
+            "error",
+            "redirect"
+          ],
+          "location": {
+            "scheme": "http",
+            "host": "localhost",
+            "port": 48780,
+            "path": "/onboard/composio/callback",
+            "query_keys": [
+              "error",
+              "state"
+            ],
+            "shown": {
+              "error": "invalid_request"
+            }
+          }
+        }
+      ],
+      "verdict": "rejected: invalid_request (sent back to the client's redirect_uri)"
+    },
+    {
+      "name": "login: no resource",
+      "params": {
+        "response_type": "code",
+        "client_id": "<the registered client_id>",
+        "redirect_uri": "http://localhost:48780/onboard/composio/callback",
+        "scope": "openid profile email offline_access",
+        "state": "<random>",
+        "code_challenge": "<random>",
+        "code_challenge_method": "S256"
+      },
+      "hops": [
+        {
+          "request": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/oauth2/authorize",
+            "query_keys": [
+              "client_id",
+              "code_challenge",
+              "code_challenge_method",
+              "redirect_uri",
+              "response_type",
+              "scope",
+              "state"
+            ]
+          },
+          "status": 302,
+          "content_type": "text/html",
+          "title": "",
+          "words": [
+            "redirect"
+          ],
+          "location": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/",
+            "query_keys": [
+              "authorization_session_id",
+              "redirect_uri",
+              "state"
+            ]
+          }
+        },
+        {
+          "request": {
+            "scheme": "https",
+            "host": "login.composio.dev",
+            "port": null,
+            "path": "/",
+            "query_keys": [
+              "authorization_session_id",
+              "redirect_uri",
+              "state"
+            ]
+          },
+          "status": 200,
+          "content_type": "text/html",
+          "title": "Sign in",
+          "words": [
+            "sign in",
+            "continue",
+            "email"
+          ]
+        }
+      ],
+      "verdict": "accepted: the sign-in page"
+    }
+  ]
+}

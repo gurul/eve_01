@@ -1,7 +1,8 @@
 # Formal verification (Lean 4)
 
-Thirty models of eve's state machines are in Lean 4 under `verification/`, with 490
-kernel-checked theorems: six from the first pass, eight for the watcher (2026-09-25), four for
+Thirty-one models of eve's state machines are in Lean 4 under `verification/`, with 539
+kernel-checked theorems. eve lite (2026-10-13, below) added one model and 49 theorems; before it there were
+six from the first pass, eight for the watcher (2026-09-25), four for
 the Voice PE controller (2026-09-26), one for the OpenAI seam (2026-09-28), one for the
 chief of staff (2026-09-29), five for calls, Eve Link and the Fire TV (2026-10-04), and four
 for the apps' policy, the routed turn, Share and the calendar (2026-10-05), and one for a
@@ -295,6 +296,25 @@ three places where a model had fallen short of the code. Each is a model update,
 - **ShareGate**: `_send_gmail` is a third sink of the staged copy (`stage_exact`, then `staged.read_bytes()`),
   so P4 holds for a Gmail attachment as it does for Messages and Drive; the docstring names it. The channel bit
   (`Pending.attach`, frozen at the question) is carried by field, not modelled; `test_share.py` pins it.
+
+## eve lite (2026-10-13)
+
+Three models for [eve lite](lite.md), the one-click variant ([its spec](plans/eve-lite.md)), written beside its code
+on branch `feat/one-click-variant`. The code was not committed while it was modelled, so the line numbers in the docstrings
+are those of that working tree. WebPairing is new and has the third shape, `code_invariant`; the other two gain a
+section each.
+
+| Model | Code | Property | What it found |
+|---|---|---|---|
+| `Eve/WebPairing.lean` (24, new) | `web_auth.py` `PairingWindow`, `MacLogin`, `Devices`; the composition the spec fixes for `lite_web.py` (a device is added only after a successful pair or Mac login, and revoke closes the device's live peer through `RtcHub.close_device`) | (P1) a pairing window pairs one device, and a login code logs in once; (P2) a window pairs only within 5 minutes, a login code only within 2, and a cookie checks only while its device was seen within 400 days; (P3) at most 5 tries ever reach one window, the one that pairs included; (P4) a revoked device is out of the store and has no live peer; (P5) a cookie checks only as an unrevoked device that a success minted, by its token's hash | Right from the start. `naive_violates` takes each mechanism out alone and breaks its property. Stated, not a bug: a device that `_kept` forgets on a write (unseen for 400 days, or past 64 devices) stops checking, but its live peer stays until it hangs up, because only revoke closes peers (`forget_is_not_revoke`). A revoke whose write fails is the same case: its rows leave memory and it raises before any peer is closed. Device ids are random, so a new device can draw an id that was revoked; the model tells devices apart by the mint that made them. |
+| `Eve/AppsPolicy.lean` (+20) | `composio_tools.py` `decide(..., personal_direct=True)`, `decide_lite`, `manage_needs_yes`; `telegram.py` `_app_tool` | `personal_direct=True` is today's `decide` for every call. `False` changes only a call that reaches the personal account, and only towards run. P4 and P1 hold for both values. In lite, every write that is not routine, every code tool, every call `decide` cannot read and every connection change that `manage_needs_yes` does not prove runs only after a whole question and a bare yes (P2) | No bug. P3 is given up on purpose in lite, where the owner's own Gmail is the only Gmail (`lite_controls`). |
+| `Eve/RoutedTurn.lean` (+5) | `telegram.py` in lite: `request`, `own_tools`, `tools_for` (through `profile.filter_tools`), `apps_block_lite`, `graded` | (P5) every tool name a lite turn's instructions write is offered by that turn, with no assumption on what Composio lists (`lite_invariant`) | P5 does not hold for an app turn of grade "instant", in full eve or in lite: `graded` drops think_hard from the tools, while the instructions and `config.about` still name it (`instant_prompt_gap`, `lite_instant_gap`). A probe of the Python confirmed both. Not fixed here, because full eve does not change in this work. |
+
+Deviations, as each model's docstring states them: WebPairing has one clock that only moves on (the code reads the
+monotonic clock for windows and codes, the wall clock for devices); `forget` may drop any devices, where `_kept` drops
+the ones seen longest ago; the routing that only the Mac's own page can open a window is `lite_web.py`'s, tested
+there. In AppsPolicy, the workbench judge is the fixed one (`fixJudge`'s contract). In RoutedTurn, the text that rides
+every lite turn names only lite tools (`hbase`); `test_lite_brain.py` holds the Python to that.
 
 ## Running it
 

@@ -1,0 +1,176 @@
+{
+  "fetched_at": "2026-10-13T20:55:17+00:00",
+  "source": "Live GETs of Composio's public discovery documents (spike S1, docs/plans/eve-lite-s1.md). Nothing redacted: these documents are public.",
+  "documents": {
+    "https://connect.composio.dev/.well-known/oauth-protected-resource": {
+      "status": 200,
+      "content_type": "application/json",
+      "body": {
+        "resource": "https://connect.composio.dev/mcp",
+        "authorization_servers": [
+          "https://connect.composio.dev"
+        ],
+        "bearer_methods_supported": [
+          "header"
+        ]
+      }
+    },
+    "https://connect.composio.dev/.well-known/oauth-protected-resource/mcp": {
+      "status": 200,
+      "content_type": "application/json",
+      "body": {
+        "resource": "https://connect.composio.dev/mcp",
+        "authorization_servers": [
+          "https://connect.composio.dev"
+        ],
+        "bearer_methods_supported": [
+          "header"
+        ]
+      }
+    },
+    "https://connect.composio.dev/.well-known/oauth-authorization-server": {
+      "status": 200,
+      "content_type": "application/json",
+      "body": {
+        "issuer": "https://connect.composio.dev",
+        "authorization_endpoint": "https://connect.composio.dev/oauth/authorize",
+        "token_endpoint": "https://login.composio.dev/oauth2/token",
+        "registration_endpoint": "https://login.composio.dev/oauth2/register",
+        "jwks_uri": "https://login.composio.dev/oauth2/jwks",
+        "response_types_supported": [
+          "code"
+        ],
+        "grant_types_supported": [
+          "authorization_code",
+          "refresh_token"
+        ],
+        "code_challenge_methods_supported": [
+          "S256"
+        ],
+        "token_endpoint_auth_methods_supported": [
+          "none"
+        ],
+        "scopes_supported": [
+          "openid",
+          "profile",
+          "email",
+          "offline_access"
+        ]
+      }
+    },
+    "https://connect.composio.dev/.well-known/oauth-authorization-server/mcp": {
+      "status": 200,
+      "content_type": "application/json",
+      "body": {
+        "issuer": "https://connect.composio.dev",
+        "authorization_endpoint": "https://connect.composio.dev/oauth/authorize",
+        "token_endpoint": "https://login.composio.dev/oauth2/token",
+        "registration_endpoint": "https://login.composio.dev/oauth2/register",
+        "jwks_uri": "https://login.composio.dev/oauth2/jwks",
+        "response_types_supported": [
+          "code"
+        ],
+        "grant_types_supported": [
+          "authorization_code",
+          "refresh_token"
+        ],
+        "code_challenge_methods_supported": [
+          "S256"
+        ],
+        "token_endpoint_auth_methods_supported": [
+          "none"
+        ],
+        "scopes_supported": [
+          "openid",
+          "profile",
+          "email",
+          "offline_access"
+        ]
+      }
+    },
+    "https://connect.composio.dev/.well-known/openid-configuration": {
+      "status": 307,
+      "content_type": "text/html",
+      "location": "/login?next=%2F.well-known%2Fopenid-configuration",
+      "body": null
+    },
+    "https://login.composio.dev/.well-known/oauth-authorization-server": {
+      "status": 200,
+      "content_type": "application/json",
+      "body": {
+        "authorization_endpoint": "https://login.composio.dev/oauth2/authorize",
+        "client_id_metadata_document_supported": true,
+        "code_challenge_methods_supported": [
+          "S256"
+        ],
+        "device_authorization_endpoint": "https://login.composio.dev/oauth2/device_authorization",
+        "grant_types_supported": [
+          "authorization_code",
+          "refresh_token",
+          "urn:ietf:params:oauth:grant-type:device_code"
+        ],
+        "introspection_endpoint": "https://login.composio.dev/oauth2/introspection",
+        "issuer": "https://login.composio.dev",
+        "jwks_uri": "https://login.composio.dev/oauth2/jwks",
+        "registration_endpoint": "https://login.composio.dev/oauth2/register",
+        "scopes_supported": [
+          "email",
+          "offline_access",
+          "openid",
+          "profile"
+        ],
+        "response_modes_supported": [
+          "query"
+        ],
+        "response_types_supported": [
+          "code"
+        ],
+        "token_endpoint": "https://login.composio.dev/oauth2/token",
+        "token_endpoint_auth_methods_supported": [
+          "none",
+          "client_secret_post",
+          "client_secret_basic"
+        ]
+      }
+    },
+    "https://login.composio.dev/.well-known/openid-configuration": {
+      "status": 200,
+      "content_type": "application/json",
+      "body": {
+        "issuer": "https://login.composio.dev",
+        "authorization_endpoint": "https://login.composio.dev/oauth2/authorize",
+        "device_authorization_endpoint": "https://login.composio.dev/oauth2/device_authorization",
+        "grant_types_supported": [
+          "authorization_code",
+          "client_credentials",
+          "refresh_token",
+          "urn:ietf:params:oauth:grant-type:device_code"
+        ],
+        "id_token_signing_alg_values_supported": [
+          "RS256"
+        ],
+        "introspection_endpoint": "https://login.composio.dev/oauth2/introspection",
+        "jwks_uri": "https://login.composio.dev/oauth2/jwks",
+        "response_types_supported": [
+          "code"
+        ],
+        "scopes_supported": [
+          "email",
+          "offline_access",
+          "openid",
+          "profile"
+        ],
+        "subject_types_supported": [
+          "public"
+        ],
+        "token_endpoint": "https://login.composio.dev/oauth2/token",
+        "token_endpoint_auth_methods_supported": [
+          "none",
+          "client_secret_basic",
+          "client_secret_post"
+        ],
+        "userinfo_endpoint": "https://login.composio.dev/oauth2/userinfo"
+      }
+    }
+  }
+}

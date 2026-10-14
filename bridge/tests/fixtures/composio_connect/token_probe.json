@@ -1,0 +1,79 @@
+{
+  "fetched_at": "2026-10-13T20:58:13+00:00",
+  "source": "Form-encoded POSTs to the token endpoint with made-up codes and refresh tokens (spike S1). Only the status and the OAuth error are kept.",
+  "endpoint": "https://login.composio.dev/oauth2/token",
+  "content_type_sent": "application/x-www-form-urlencoded",
+  "made_up_values": "the code sent was S1-NOT-A-CODE-7f3c and the refresh value S1-NOT-A-REFRESH-7f3c; neither can be real",
+  "cases": [
+    {
+      "name": "bogus code, registered public client",
+      "request_keys": [
+        "client_id",
+        "code",
+        "code_verifier",
+        "grant_type",
+        "redirect_uri",
+        "resource"
+      ],
+      "status": 400,
+      "content_type": "application/json",
+      "www_authenticate": "",
+      "answer": {
+        "error": "invalid_grant"
+      },
+      "verdict": "client accepted; the grant was refused"
+    },
+    {
+      "name": "bogus refresh token, registered public client",
+      "request_keys": [
+        "client_id",
+        "grant_type",
+        "refresh_token",
+        "resource"
+      ],
+      "status": 400,
+      "content_type": "application/json",
+      "www_authenticate": "",
+      "answer": {
+        "error": "invalid_grant"
+      },
+      "verdict": "client accepted; the grant was refused"
+    },
+    {
+      "name": "bogus code, unknown client (control)",
+      "request_keys": [
+        "client_id",
+        "code",
+        "code_verifier",
+        "grant_type",
+        "redirect_uri",
+        "resource"
+      ],
+      "status": 401,
+      "content_type": "application/json",
+      "www_authenticate": "Basic realm=\"AuthKit\"",
+      "answer": {
+        "error": "invalid_client",
+        "error_description": "Application not found."
+      },
+      "verdict": "client refused"
+    },
+    {
+      "name": "bogus refresh token, unknown client (control)",
+      "request_keys": [
+        "client_id",
+        "grant_type",
+        "refresh_token",
+        "resource"
+      ],
+      "status": 401,
+      "content_type": "application/json",
+      "www_authenticate": "Basic realm=\"AuthKit\"",
+      "answer": {
+        "error": "invalid_client",
+        "error_description": "Application not found."
+      },
+      "verdict": "client refused"
+    }
+  ]
+}

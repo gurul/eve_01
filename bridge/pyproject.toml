@@ -114,6 +114,11 @@ miniapp = ["anthropic>=1.8,<2", "playwright>=1.63,<2"]   # playwright: app_check
 # pulls torch 2.14.1 and transformers 5.19.0 (~0.8 GB of venv). The model (~1.27 GB) is fetched once by hand
 # (docs/stackchan/memory.md). Imported lazily; `pip install -e ".[mem0,gemma]"`.
 gemma = ["sentence-transformers>=6.1,<7"]
+# eve lite, the one-click install (EVE_PROFILE=lite, docs/lite.md): the core dependencies plus this extra. mem0ai keeps
+# memory by meaning on OpenRouter's embedder; segno draws the pairing QR codes as SVG on the Mac, so the web page needs
+# no npm dependency for them. segno 1.6.6 current per PyPI, 2026-10-13, BSD, pure Python, no dependencies on 3.10+.
+# The release installs exactly this closure from uv.lock, hash-pinned and wheels only (tools/release_lite.sh).
+lite = ["mem0ai>=2.2,<3", "segno>=1.6,<2"]
 
 [project.scripts]
 eve-bridge = "eve_bridge.cli:main"
@@ -149,4 +154,6 @@ ignore = [
 eve_bridge = ["learning/web/*.html", "learning/web/*.css", "learning/web/*.js", "learning/web/fonts/*.woff2", "learning/web/fonts/OFL.txt",
                    "learning/web/canvas/*", "learning/web/canvas/assets/**/*", "skills/*/SKILL.md",
                    "miniapp_page.html", "miniapp_iro.min.js", "miniapp_iro.LICENSE.txt", "meet_page.js",
-                   "openui_prompt.txt", "native/*.c", "app_template/*.tmpl"]
+                   "openui_prompt.txt", "native/*.c", "app_template/*.tmpl",
+                   # eve lite's web page, built by `pnpm build:web` (ios/EveLink/Web) and git-ignored
+                   "web_lite/*", "web_lite/**/*"]

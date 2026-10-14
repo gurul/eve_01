@@ -1038,6 +1038,19 @@ class PhoneCalls:
         finally:
             await ws.close()
 
+    async def serve_socket(self, ws: Any, token_check: Optional[Callable[[str], bool]] = None) -> None:
+        """One call on a socket that is already open: ``serve`` without the WebSocket handshake. eve lite's WebRTC
+        call (lite_rtc.RtcCallSocket: a data channel for the messages, the peer's audio track for the sound) is
+        one. ``ws`` is anything with the WebSocket's ``recv``, ``send_json``, ``send_bytes``, ``close`` and
+        ``closed``; its first message is the hello. The hello's check, one call at a time and the end are
+        ``serve``'s own (``_serve``)."""
+        try:
+            await self._serve(ws, token_check)
+        except Closed:
+            pass
+        finally:
+            await ws.close()
+
     async def _serve(self, ws: WebSocket, token_check: Optional[Callable[[str], bool]] = None) -> None:
         try:
             op, data = await asyncio.wait_for(ws.recv(), AUTH_SECS)

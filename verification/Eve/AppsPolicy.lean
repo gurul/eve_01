@@ -5,8 +5,10 @@
   cite a35b043, the tree they were found in.
 
   Historical code modelled below (through fixed_invariant); the current args-aware policy is
-  modelled in the final section and code_invariant. Historical write-policy bypasses are not
-  claims about the current implementation.
+  modelled in the "Current routine-action policy" section and code_invariant. Historical write-policy bypasses are
+  not claims about the current implementation. The last section (eve lite, 2026-10-13) models
+  `composio_tools.decide` whole at d419b37 with the `personal_direct` keyword eve lite passes as False, and the lite
+  question before COMPOSIO_MANAGE_CONNECTIONS (`lite_invariant`).
 
   Code modelled:
   - apps_mcp.py:179-189 READ_VERBS, WRITE_VERBS, NOUN_TOO (copied below as lists);
@@ -1030,5 +1032,325 @@ theorem code_invariant :
     (∀ guestsNow, calendarDelivery (prepareNotification none true true) guestsNow = false) :=
   ⟨current_read_only, current_explicit_ask, current_routine_runs, current_danger_asks,
    current_ask_requires_whole_allow, prepare_private_edit_no_delivery_after_guest_change⟩
+
+/-! ## eve lite: `personal_direct` (2026-10-13)
+
+`composio_tools.decide(name, args, policy=None, *, personal_direct=True)` (docs/plans/eve-lite.md M2, "Composio
+gate"). eve lite has no direct Gmail or Calendar (EVE_APPS=0), so the owner's own accounts are reached only through
+Composio Connect, and lite does not refuse them: `_personal_account_slugs` is consulted only while `personal_direct`.
+The default keeps today's `decide`.
+
+`decide` is modelled whole, at d419b37 (composio_tools.py:333-372): a multi-execute whose items it cannot read asks
+first (338-341); the personal-account refusal (342-345); a call with no consequential slug runs (346-348); each
+consequential slug's rule (353-364: a code tool asks, `read` refuses, `auto` and `write` run what `routine_write`
+passes and ask the rest, `ask` asks), which is `decideCurrent` above; the strictest wins (365-372). On branch
+feat/one-click-variant (WP-3, not yet committed, so its code is cited by name) the keyword is the one change to it:
+`personal = _personal_account_slugs(name, args) if personal_direct else []`. `decide_lite` is lite's verdict:
+`decide(..., personal_direct=False)`, then a COMPOSIO_MANAGE_CONNECTIONS call it would run asks while
+`manage_needs_yes(args)` is true, which is everything but a mapping of `toolkits` (a non-empty list of non-empty
+strings), `reinitiate_all` absent or False and `session_id` absent or a string, the check-or-link shape of the S1
+schema. Today that call runs unasked (`consequential_slugs` gives it no slug). `_app_tool` (telegram.py) refuses a web toolkit before either, takes
+`decide_lite` in lite, asks a whole question that must fit (`_write_question`: SHOW_CHARS, or Gmail's whole-ask room
+for a send in lite, `sends_mail`) and runs on a bare allow alone (`executeCurrent`, `askable`).
+
+Proved: `personal_direct=True` is today's `decide` for every call (`personal_direct_default`); `False` changes the
+verdict only of a call that reaches the personal account, and only ever towards run (`lite_same_off_personal`,
+`lite_only_relaxes`); P4 for both values (`p4_personal_direct`); P1, a read policy refuses a write, for both values
+and through `decide_lite` (`p1_personal_direct`, `p1_lite`); P2, every non-routine write, code tool, unreadable call
+and unproven connection change runs in lite only after a whole question and a bare allow (`p2_lite`). P3 is given up
+on purpose under `False`: there the owner's own Gmail is the only Gmail (`lite_controls`). In lite every toolkit's
+policy is `auto` (`litePolicy`).
+
+The workbench judge is the fixed one (`fixJudge`'s contract: a script that hides a call is not judged, so it asks).
+Composio Connect's session is Composio's own (`ConnectBridge`, composio_connect.py): no account split, so the session
+half of P3 (`fixSession`) is not lite's.
+-/
+
+/-- One multi-execute item as `decide` reads it now: its toolkit, whether its slug only reads (`is_read_only`),
+whether it is a code tool (RUNS_CODE), whether `routine_write(toolkit, words, arguments)` passes (d419b37:360), and
+its "account". -/
+structure ItemNow where
+  kit : Kit
+  reads : Bool
+  code : Bool
+  routine : Bool
+  account : List Char
+  deriving DecidableEq, Repr
+
+/-- A Composio call as `decide` sees it now. `malformed`: a multi-execute whose `tools` is not a list of mappings,
+each with a non-empty string `tool_slug` (338-341). A workbench script is judged by the fixed `workbench_slugs`
+(`some` slugs, or `none` when it must ask); each of its slugs is judged with no arguments (351-352), which
+`routine_write` never takes for routine. `manage`: COMPOSIO_MANAGE_CONNECTIONS with `manage_needs_yes(args)`.
+`metaTool`: search, schemas, wait. -/
+inductive CallNow where
+  | multi (items : List ItemNow)
+  | malformed
+  | workbench (script : Option (List Slug))
+  | bash
+  | manage (needsYes : Bool)
+  | metaTool
+  deriving Repr
+
+/-- `_personal_account_slugs` (316-330). -/
+def personalNow : CallNow → List Kit
+  | .multi items => (items.filter (fun i => other i.kit && personalName i.account)).map (·.kit)
+  | .workbench s => ((s.getD []).filter (fun x => other x.kit)).map (·.kit)
+  | _ => []
+
+/-- A consequential part (353-364): a code tool, or a writing slug of a toolkit with `routine_write`'s answer. -/
+inductive PartNow where
+  | code
+  | slug (k : Kit) (routine : Bool)
+  deriving DecidableEq, Repr
+
+/-- `consequential_slugs` (290-306), each with what `decide` judges it by. -/
+def consequentialNow : CallNow → List PartNow
+  | .multi items => (items.filter (fun i => i.code || !i.reads)).map
+      (fun i => if i.code then .code else .slug i.kit i.routine)
+  | .workbench none => [.code]
+  | .workbench (some l) => (l.filter (fun x => !x.reads)).map (fun x => .slug x.kit false)
+  | .bash => [.code]
+  | _ => []
+
+/-- One part's verdict (357-363): a code tool's rule is "ask"; a writing slug follows its toolkit's policy and its
+arguments, which is `decideCurrent` for a present tool that does not read. -/
+def partNow (pol : Kit → CurrentPol) : PartNow → Verdict
+  | .code => decideCurrent true false .ask false
+  | .slug k r => decideCurrent true false (pol k) r
+
+/-- The verdict of the parts' verdicts, as `decide` writes it (365-372): refuse beats ask beats run. -/
+def verdictOf (vs : List Verdict) : Verdict :=
+  if vs.contains .refuse then .refuse else if vs.contains .ask then .ask else .run
+
+/-- `decide` at d419b37 (333-372). -/
+def decideToday (pol : Kit → CurrentPol) : CallNow → Verdict
+  | .malformed => .ask
+  | c => if personalNow c ≠ [] then .refuse else verdictOf ((consequentialNow c).map (partNow pol))
+
+/-- `decide(name, args, policy, personal_direct=pd)`: the personal refusal only while `pd`. -/
+def decideP (pd : Bool) (pol : Kit → CurrentPol) : CallNow → Verdict
+  | .malformed => .ask
+  | c => if pd = true ∧ personalNow c ≠ [] then .refuse else verdictOf ((consequentialNow c).map (partNow pol))
+
+/-- Lite's question before COMPOSIO_MANAGE_CONNECTIONS, alone. -/
+def manageLite : CallNow → Verdict
+  | .manage true => .ask
+  | _ => .run
+
+/-- `decide_lite`: `decide(..., personal_direct=False)`; a COMPOSIO_MANAGE_CONNECTIONS call it would run asks
+instead while `manage_needs_yes` is true. -/
+def liteVerdict (pol : Kit → CurrentPol) : CallNow → Verdict
+  | .manage true => if decideP false pol (.manage true) = .run then .ask else decideP false pol (.manage true)
+  | c => decideP false pol c
+
+/-- `web_toolkit_slugs` non-empty (84-93): `_app_tool` refuses before `decide`. -/
+def webNow : CallNow → Bool
+  | .multi items => items.any (fun i => isWeb i.kit)
+  | _ => false
+
+/-- `_app_tool`: whether `execute` runs the call. `askable`: `_write_question` returned a question (the whole call
+fits SHOW_CHARS, or Gmail's whole-ask room for a send in lite). -/
+def execApp (v : Verdict) (c : CallNow) (askable : Bool) (ans : List String) : Bool :=
+  !webNow c && executeCurrent v askable ans
+
+/-- The lite policy: `toolkit_policy` with LITE_FORCED's `EVE_COMPOSIO_POLICY=gmail=auto` over
+DEFAULT_TOOLKIT_POLICY (gmail, googlecalendar and googledrive `auto`), and `pol.get(toolkit, "auto")` (357) for every
+other toolkit. -/
+def litePolicy : Kit → CurrentPol := fun _ => .auto
+
+/-- Each part's verdict, as P4 reads `decide`: an unreadable call is one "ask"; a personal-account item or slug is
+one "refuse" while `pd`; then the consequential parts. -/
+def partsNow (pd : Bool) (pol : Kit → CurrentPol) : CallNow → List Verdict
+  | .malformed => [.ask]
+  | c => (if pd then (personalNow c).map (fun _ => .refuse) else []) ++ (consequentialNow c).map (partNow pol)
+
+theorem decideP_readable (pd : Bool) (pol : Kit → CurrentPol) (c : CallNow) (hc : c ≠ .malformed) :
+    decideP pd pol c =
+      if pd = true ∧ personalNow c ≠ [] then .refuse else verdictOf ((consequentialNow c).map (partNow pol)) := by
+  cases c <;> first | exact absurd rfl hc | rfl
+
+theorem partsNow_readable (pd : Bool) (pol : Kit → CurrentPol) (c : CallNow) (hc : c ≠ .malformed) :
+    partsNow pd pol c =
+      (if pd then (personalNow c).map (fun _ => .refuse) else []) ++ (consequentialNow c).map (partNow pol) := by
+  cases c <;> first | exact absurd rfl hc | rfl
+
+theorem personal_direct_default (pol : Kit → CurrentPol) (c : CallNow) : decideP true pol c = decideToday pol c := by
+  cases c <;> simp [decideP, decideToday]
+
+theorem lite_same_off_personal (pol : Kit → CurrentPol) (c : CallNow) (h : personalNow c = []) :
+    decideP false pol c = decideP true pol c := by
+  cases c <;> simp_all [decideP]
+
+theorem lite_only_relaxes (pol : Kit → CurrentPol) (c : CallNow) :
+    rank (decideP false pol c) ≤ rank (decideP true pol c) := by
+  by_cases h : personalNow c = []
+  · rw [lite_same_off_personal pol c h]; exact Nat.le_refl _
+  · have ht : decideP true pol c = .refuse := by
+      cases c with
+      | malformed => simp [personalNow] at h
+      | _ => simp [decideP, h]
+    rw [ht]; cases decideP false pol c <;> simp [rank]
+
+/-- P4, for either value of the keyword: the verdict is the strictest of the parts' verdicts. -/
+theorem p4_personal_direct (pd : Bool) (pol : Kit → CurrentPol) (c : CallNow) :
+    decideP pd pol c = strictest (partsNow pd pol c) := by
+  rw [strictest_eq]
+  by_cases hc : c = .malformed
+  · subst hc; simp [decideP, partsNow]
+  · rw [decideP_readable pd pol c hc, partsNow_readable pd pol c hc]
+    by_cases hp : pd = true ∧ personalNow c ≠ []
+    · obtain ⟨hpd, hne⟩ := hp
+      have hr : ((if pd = true then (personalNow c).map (fun _ => Verdict.refuse) else []) ++
+          (consequentialNow c).map (partNow pol)).contains .refuse = true := by
+        obtain ⟨k, hk⟩ := List.exists_mem_of_ne_nil _ hne
+        apply List.elem_eq_true_of_mem
+        rw [ite_eq_left hpd]
+        exact List.mem_append_left _ (List.mem_map.mpr ⟨k, hk, rfl⟩)
+      rw [ite_eq_left ⟨hpd, hne⟩, ite_eq_left hr]
+    · have hz : (if pd = true then (personalNow c).map (fun _ => Verdict.refuse) else []) = [] := by
+        by_cases hpd : pd = true
+        · have : personalNow c = [] := by
+            by_cases hne : personalNow c = []
+            · exact hne
+            · exact absurd ⟨hpd, hne⟩ hp
+          simp [hpd, this]
+        · simp [hpd]
+      rw [ite_eq_right hp, hz, List.nil_append]
+      rfl
+
+theorem partNow_read (pol : Kit → CurrentPol) (k : Kit) (r : Bool) (h : pol k = .read) :
+    partNow pol (.slug k r) = .refuse := by
+  simp [partNow, decideCurrent, h]
+
+theorem mem_partsNow (pd : Bool) (pol : Kit → CurrentPol) (c : CallNow) (p : PartNow)
+    (hp : p ∈ consequentialNow c) : partNow pol p ∈ partsNow pd pol c := by
+  by_cases hc : c = .malformed
+  · subst hc; simp [consequentialNow] at hp
+  · rw [partsNow_readable pd pol c hc]
+    exact List.mem_append_right _ (List.mem_map.mpr ⟨p, hp, rfl⟩)
+
+/-- P1, for either value of the keyword: a call with a writing slug of a toolkit under a read policy is refused. -/
+theorem p1_personal_direct (pd : Bool) (pol : Kit → CurrentPol) (c : CallNow) (k : Kit) (r : Bool)
+    (hm : PartNow.slug k r ∈ consequentialNow c) (hk : pol k = .read) : decideP pd pol c = .refuse := by
+  have hmem := mem_partsNow pd pol c _ hm
+  rw [partNow_read pol k r hk] at hmem
+  rw [p4_personal_direct, strictest_eq, ite_eq_left (List.elem_eq_true_of_mem hmem)]
+
+theorem vmax_refuse (a b : Verdict) (h : a = .refuse ∨ b = .refuse) : vmax a b = .refuse := by
+  cases a <;> cases b <;> simp_all [vmax, rank]
+
+theorem rank_vmax (a b : Verdict) : rank a ≤ rank (vmax a b) ∧ rank b ≤ rank (vmax a b) := by
+  cases a <;> cases b <;> simp [vmax, rank]
+
+theorem rank_pos (v : Verdict) : v ≠ .run ↔ 1 ≤ rank v := by
+  cases v <;> simp [rank]
+
+theorem vmax_run (v : Verdict) : vmax v .run = v := by
+  cases v <;> rfl
+
+/-- `decide_lite` is the stricter of `decide`'s verdict and the manage question. -/
+theorem liteVerdict_vmax (pol : Kit → CurrentPol) (c : CallNow) :
+    liteVerdict pol c = vmax (decideP false pol c) (manageLite c) := by
+  cases c with
+  | manage b =>
+      cases b
+      · simp only [liteVerdict, manageLite]; exact (vmax_run _).symm
+      · have : decideP false pol (.manage true) = .run := by
+          simp [decideP, verdictOf, consequentialNow, personalNow]
+        simp [liteVerdict, manageLite, this, vmax, rank]
+  | _ => simp only [liteVerdict, manageLite]; exact (vmax_run _).symm
+
+/-- Lite's P1: a read policy still refuses (whatever the manage question), so the call executes on no answer. -/
+theorem p1_lite (pol : Kit → CurrentPol) (c : CallNow) (k : Kit) (r : Bool)
+    (hm : PartNow.slug k r ∈ consequentialNow c) (hk : pol k = .read) (askable : Bool) (ans : List String) :
+    liteVerdict pol c = .refuse ∧ execApp (liteVerdict pol c) c askable ans = false := by
+  have h : liteVerdict pol c = .refuse := by
+    rw [liteVerdict_vmax]; exact vmax_refuse _ _ (Or.inl (p1_personal_direct false pol c k r hm hk))
+  refine ⟨h, ?_⟩
+  simp [execApp, h, executeCurrent]
+
+theorem exec_not_run (v : Verdict) (c : CallNow) (askable : Bool) (ans : List String) (hv : v ≠ .run)
+    (h : execApp v c askable ans = true) : askable = true ∧ bareDecision ans = .allow := by
+  unfold execApp at h
+  simp only [Bool.and_eq_true] at h
+  cases v with
+  | run => exact absurd rfl hv
+  | refuse => simp [executeCurrent] at h
+  | ask => exact current_ask_requires_whole_allow askable ans h.2
+
+/-- Lite's P2: a call that executes either runs by its verdict, or was asked as a whole question that fit and got a
+bare allow; and a call with a part that does not run by itself (a write the policy does not run, a code tool), an
+unreadable call, or a connection change `manage_needs_yes` does not prove, executes only after that answer. -/
+theorem p2_lite (pol : Kit → CurrentPol) (c : CallNow) (askable : Bool) (ans : List String)
+    (h : execApp (liteVerdict pol c) c askable ans = true) :
+    (liteVerdict pol c = .run ∨ (askable = true ∧ bareDecision ans = .allow)) ∧
+    ((∃ p ∈ consequentialNow c, partNow pol p ≠ .run) ∨ c = .malformed ∨ c = .manage true →
+      askable = true ∧ bareDecision ans = .allow) := by
+  refine ⟨?_, ?_⟩
+  · by_cases hv : liteVerdict pol c = .run
+    · exact Or.inl hv
+    · exact Or.inr (exec_not_run _ c askable ans hv h)
+  · intro hc
+    apply exec_not_run _ c askable ans _ h
+    rw [rank_pos, liteVerdict_vmax]
+    obtain ⟨hv1, hv2⟩ := rank_vmax (decideP false pol c) (manageLite c)
+    rcases hc with ⟨p, hp, hpv⟩ | rfl | rfl
+    · have hge := strictest_ge _ _ (mem_partsNow false pol c p hp)
+      rw [← p4_personal_direct] at hge
+      have := (rank_pos _).mp hpv
+      omega
+    · have : rank (decideP false pol .malformed) = 1 := rfl
+      omega
+    · have : rank (manageLite (.manage true)) = 1 := rfl
+      omega
+
+/-- In lite every write is judged by `auto`: a routine write (a draft, a private calendar entry) runs, any other
+asks, and a read runs (`litePolicy`). -/
+theorem lite_policy_parts (k : Kit) (r : Bool) :
+    partNow litePolicy (.slug k r) = (if r then .run else .ask) ∧ partNow litePolicy .code = .ask := by
+  cases r <;> simp [partNow, litePolicy, decideCurrent]
+
+def gmailFetch : CallNow := .multi [⟨.gmail, true, false, false, []⟩]                 -- GMAIL_FETCH_EMAILS
+def gmailSend : CallNow := .multi [⟨.gmail, false, false, false, []⟩]                 -- GMAIL_SEND_EMAIL
+def gmailDraft : CallNow := .multi [⟨.gmail, false, false, true, []⟩]                 -- GMAIL_CREATE_EMAIL_DRAFT
+def scriptSend : CallNow := .workbench (some [⟨.gmail, false⟩])                       -- run_composio_tool(GMAIL_SEND…)
+def scriptRead : CallNow := .workbench (some [⟨.gmail, true⟩])                        -- run_composio_tool(GMAIL_FETCH…)
+
+/-- The controls. Today (`True`) the owner's own Gmail through Composio is refused, read or write; in lite (`False`)
+a Gmail read naming no account runs, a draft runs (routine), a send asks and runs on a bare yes to a question that
+fits, and on nothing else, and a send under a read policy is still refused. A workbench script that reads Gmail
+runs, one that sends asks. COMPOSIO_MANAGE_CONNECTIONS runs today and asks in lite unless its shape is proven.
+bridge/tests/test_composio_lite_decide.py (WP-3) runs the same calls through the real `decide` and `decide_lite`. -/
+theorem lite_controls :
+    decideP true litePolicy gmailFetch = .refuse ∧ decideP false litePolicy gmailFetch = .run ∧
+    decideP true litePolicy gmailDraft = .refuse ∧ liteVerdict litePolicy gmailDraft = .run ∧
+    liteVerdict litePolicy gmailSend = .ask ∧
+    execApp (liteVerdict litePolicy gmailSend) gmailSend true ["yes"] = true ∧
+    execApp (liteVerdict litePolicy gmailSend) gmailSend true ["ok", "but"] = false ∧
+    execApp (liteVerdict litePolicy gmailSend) gmailSend false ["yes"] = false ∧
+    liteVerdict (fun k => if k = .gmail then .read else .auto) gmailSend = .refuse ∧
+    decideP true litePolicy scriptSend = .refuse ∧ liteVerdict litePolicy scriptSend = .ask ∧
+    decideP true litePolicy scriptRead = .refuse ∧ liteVerdict litePolicy scriptRead = .run ∧
+    decideToday litePolicy (.manage true) = .run ∧ liteVerdict litePolicy (.manage true) = .ask ∧
+    liteVerdict litePolicy (.manage false) = .run := by
+  decide
+
+/-- eve lite's Composio gate, for every call, policy and answer: `personal_direct=True` is today's `decide`;
+`False` differs only on a call that reaches the personal account, and only towards run; P4 for both; P1 (a read
+policy refuses, so nothing executes); P2 (what does not run by itself executes only after a whole question that
+fit and a bare allow). -/
+theorem lite_invariant :
+    (∀ pol c, decideP true pol c = decideToday pol c) ∧
+    (∀ pol c, personalNow c = [] → decideP false pol c = decideP true pol c) ∧
+    (∀ pol c, rank (decideP false pol c) ≤ rank (decideP true pol c)) ∧
+    (∀ pd pol c, decideP pd pol c = strictest (partsNow pd pol c)) ∧
+    (∀ pol c k r askable ans, PartNow.slug k r ∈ consequentialNow c → pol k = .read →
+      execApp (liteVerdict pol c) c askable ans = false) ∧
+    (∀ pol c askable ans, execApp (liteVerdict pol c) c askable ans = true →
+      ((∃ p ∈ consequentialNow c, partNow pol p ≠ .run) ∨ c = .malformed ∨ c = .manage true) →
+      askable = true ∧ bareDecision ans = .allow) :=
+  ⟨personal_direct_default, lite_same_off_personal, lite_only_relaxes, p4_personal_direct,
+   fun pol c k r askable ans hm hk => (p1_lite pol c k r hm hk askable ans).2,
+   fun pol c askable ans h => (p2_lite pol c askable ans h).2⟩
 
 end Eve.AppsPolicy

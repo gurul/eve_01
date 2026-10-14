@@ -87,10 +87,19 @@
   add `.contacts` is the model's domain being today's, not a finding at a35b043. rundown.DIRECT_APPS (rundown.py:18)
   is still (gmail, calendar): `rundownApp .contacts = false`.
 
+  2026-10-13 (eve lite): the last two sections. An app turn's grade is modelled (`Grade`, `gradeKeeps`), and P5 is
+  extended to eve lite's turn (`lite_prompt_offers`, `lite_invariant`): INSTRUCTIONS_LITE over the filtered tool set,
+  with `apps_block_lite` written from the names Composio lists, so lite's P5 needs no assumption on that listing.
+
   Where the Python goes beyond the model (stated):
   - P5 is not proved for a rundown, and does not hold there in either version (`rundown_prompt_gap`): a rundown's
     payload tools are `rundown.tools(app_tools)` alone, yet INSTRUCTIONS names eve's own tools and APPS_BLOCK
     names COMPOSIO_MANAGE_CONNECTIONS and web_search. A call to one is refused by `rundown.allows`, never failed.
+    eve lite has no rundown.
+  - P5 does not hold for an app turn of grade "instant", in full eve or in eve lite (`instant_prompt_gap`,
+    `lite_instant_gap`; seen in the Python on 2026-10-13): `graded` drops think_hard from the tools while the
+    instructions and `config.about` still name it. The call still runs if made: parse_response takes any of eve's
+    own names, and think_hard is one of eve lite's.
   - Eve's own tools are outside P2: TOOL_NAMES accepts the robot body's tools even when they are not offered
     (EVE_ROBOT off), and `_tool_take_photo` / `_robot_tool` then run when `_on_photo`, `_head` or `_scene`
     is wired (daemon.py:1381-1383 wires them). The handlers refuse when the hardware is absent.
@@ -758,5 +767,176 @@ theorem fixed_invariant :
     exact ⟨hn, hr, hf, hw⟩
   · intro c s s' daily kw a
     exact (start_forgets Fix c s s' daily kw a).1
+
+/-! ## An app turn's grade (2026-10-08): `graded` drops think_hard for "instant"
+
+`graded(payload, config, "instant")` (telegram.py:1225-1235, d419b37) offers every tool but think_hard, and leaves the
+instructions as `request` built them; `_think` applies it to every round of an app turn (5050). INSTRUCTIONS ("Hand
+a question to think_hard only when …") and `config.about` (self_context `_models`: "think_hard: <model>") name
+think_hard on every turn, so P5 does not hold for an "instant" app turn (`instant_prompt_gap`). The Eve Link app's
+speed dial sends "instant" (ChatTransport.swift `ChatGrade`); the call still runs if the model makes it, since
+parse_response takes any of eve's own names. "auto" and "think" offer think_hard. -/
+
+inductive Grade where
+  | auto | instant | think
+  deriving DecidableEq, Repr
+
+/-- `graded`'s tools: an "instant" turn offers no think_hard (`think`); every other name, and every other grade,
+offers what the request offered. -/
+def gradeKeeps (think : Nat → Bool) : Grade → Name → Bool
+  | .instant, .own t => !think t
+  | _, _ => true
+
+/-- An "instant" app turn of the fixed code writes think_hard (own 1 of `cfg`, one of INSTRUCTIONS' names) and does
+not offer it; an "auto" or "think" one offers it. -/
+theorem instant_prompt_gap :
+    named Fix cfg .off {} (.own 1) = true ∧
+    (offers cfg .off {} (.own 1) && gradeKeeps (· == 1) .instant (.own 1)) = false ∧
+    (offers cfg .off {} (.own 1) && gradeKeeps (· == 1) .auto (.own 1)) = true ∧
+    (offers cfg .off {} (.own 1) && gradeKeeps (· == 1) .think (.own 1)) = true := by
+  decide
+
+/-! ## eve lite (2026-10-13): P5 for INSTRUCTIONS_LITE, the filtered tool set and `apps_block_lite`
+
+The brain of eve lite is this inlet with EVE_PROFILE=lite (docs/plans/eve-lite.md M2; telegram.py as WP-3 wrote it:
+`request`, `own_tools`, `tools_for`, `apps_block_lite`, `_handle`, `_turn`, `_tool`):
+- every lite turn is unrouted and none is a rundown: LITE_FORCED sets EVE_TOOLSET_ROUTER=off, `_handle` and `_turn`
+  take a rundown's words as an ordinary turn in lite, and the only other way in, `daily_rundown`'s hand-off, is a menu
+  tool lite's `_tool` refuses. So `namedL` and `offersL` are those of mode `.off`;
+- `request` builds the tools first, through profile.filter_tools (`tools_for` and `own_tools`: a name in
+  LITE_TOOL_NAMES, or one starting COMPOSIO_), then the instructions from them: `offersL` is `offers` filtered
+  (`Lite.keeps`), then graded;
+- the instructions are INSTRUCTIONS_LITE (APP_STYLE_LITE for an app turn, `lite_app_block` for the app block), whose
+  only tool names are remember and think_hard; then `config.about` (self_context's lite lines: think_hard's model),
+  recall, the memory headers and the watcher's block, as in full eve. `Lite.base` is every own name those write.
+  No second-brain block rides: LITE_FORCED sets EVE_SECOND_BRAIN=0 and the lite inlet has no vault, and the
+  watch block's other parts (the menu's lines, Meet, the hubs, Canvas, OpenTable, Share, the chief, the direct
+  apps) belong to features lite does not build;
+- the apps block rides while a COMPOSIO_ tool is in app_tools, and is `apps_block_lite(app_tools' names,
+  web=web_search in the request's tools)`: COMPOSIO_SEARCH_TOOLS and COMPOSIO_MULTI_EXECUTE_TOOL only when both are
+  listed, COMPOSIO_MANAGE_CONNECTIONS only when it is, web_search only when the turn offers it, and no app by name.
+  Composio Connect's `accounts_note` is "" and no direct app, Share or robot is up, so nothing else is written.
+
+`lite_prompt_offers` is P5 for every lite turn but an "instant" one, with no assumption on Composio's listing:
+full eve's P5 needs `hmeta` (APPS_BLOCK names fixed meta tools), lite's apps block names only what the bridge lists.
+Its one assumption, `hbase`, is that the always-riding text names only lite tools that are neither the robot body's
+nor web_search; WP-3's name check over every built lite instruction holds the Python to it
+(bridge/tests/test_lite_brain.py, with `start_task` injected as its positive control). The controls show why each
+lite part is needed (`lite_needs_each_part`), and an "instant" lite turn has full eve's gap (`lite_instant_gap`).
+-/
+
+/-- What eve lite fixes, as names of `Name`. -/
+structure Lite where
+  allowed : Nat → Bool       -- an own name in profile.LITE_TOOL_NAMES
+  composio : Nat → Bool      -- a workspace name that starts with COMPOSIO_ (profile.LITE_TOOL_PREFIXES)
+  base : Nat → Bool          -- an own name INSTRUCTIONS_LITE, config.about, recall, the memory headers or the
+                             -- watcher's block writes
+  think : Nat → Bool         -- think_hard, which `graded` drops for "instant"
+  search : Nat               -- COMPOSIO_SEARCH_TOOLS
+  multi : Nat                -- COMPOSIO_MULTI_EXECUTE_TOOL
+  manage : Nat               -- COMPOSIO_MANAGE_CONNECTIONS
+
+/-- profile.filter_tools: what a lite request keeps of what it would offer. A direct app's, Share's and open_app's
+names are neither lite tool names nor COMPOSIO_ ones. -/
+def Lite.keeps (L : Lite) : Name → Bool
+  | .own t => L.allowed t
+  | .tool .workspace t => L.composio t
+  | _ => false
+
+/-- The tools a lite request offers: the unrouted turn's, filtered, then graded. -/
+def offersL (c : Cfg) (L : Lite) (g : Grade) (o : Open) (n : Name) : Bool :=
+  offers c .off o n && L.keeps n && gradeKeeps L.think g n
+
+/-- The names a lite request's instructions write: `Lite.base`; web_search from `apps_block_lite` while the apps
+block rides and the filtered tools hold it; the meta tools `apps_block_lite` writes from the listed names. -/
+def namedL (c : Cfg) (L : Lite) (o : Open) : Name → Bool
+  | .own t => L.base t || (c.web t && appsBlock c .off o && offers c .off o (.own t) && L.allowed t)
+  | .tool .workspace t => appsBlock c .off o &&
+      ((decide (t = L.search ∨ t = L.multi) && c.has .workspace L.search && c.has .workspace L.multi) ||
+       (decide (t = L.manage) && c.has .workspace L.manage))
+  | _ => false
+
+/-- eve lite's P5: every name a lite request's instructions write is offered by that request, filtered and graded,
+for "auto" and "think". `hcomp` only says the three meta names start with COMPOSIO_; nothing is assumed of what
+Composio lists. -/
+theorem lite_prompt_offers (c : Cfg) (L : Lite) (g : Grade) (o : Open) (n : Name) (hg : g ≠ .instant)
+    (hbase : ∀ t, L.base t = true → L.allowed t = true ∧ c.body t = false ∧ c.web t = false)
+    (hcomp : L.composio L.search = true ∧ L.composio L.multi = true ∧ L.composio L.manage = true) :
+    namedL c L o n = true → offersL c L g o n = true := by
+  intro h
+  have hgk : ∀ m, gradeKeeps L.think g m = true := by
+    intro m; cases g <;> cases m <;> simp_all [gradeKeeps]
+  obtain ⟨hs, hm, hmg⟩ := hcomp
+  cases n with
+  | own t =>
+      simp only [offersL, hgk, Bool.and_true]
+      simp only [namedL, Bool.or_eq_true, Bool.and_eq_true] at h
+      rcases h with hb | ⟨⟨⟨_, _⟩, ho⟩, ha⟩
+      · obtain ⟨ha, hb', hw⟩ := hbase t hb
+        simp [offers, Lite.keeps, ha, hb', hw]
+      · simp [ho, Lite.keeps, ha]
+  | tool k t =>
+      cases k with
+      | workspace =>
+          simp only [offersL, hgk, Bool.and_true]
+          simp only [namedL, appsBlock, Bool.and_eq_true, Bool.or_eq_true, decide_eq_true_eq] at h
+          obtain ⟨⟨hon, _⟩, h⟩ := h
+          rcases h with ⟨⟨ht, hhs⟩, hhm⟩ | ⟨ht, hhg⟩
+          · rcases ht with rfl | rfl
+            · simp [offers, Kit.direct, Lite.keeps, hon, hhs, hs]
+            · simp [offers, Kit.direct, Lite.keeps, hon, hhm, hm]
+          · subst ht; simp [offers, Kit.direct, Lite.keeps, hon, hhg, hmg]
+      | _ => simp [namedL] at h
+  | openApp => simp [namedL] at h
+  | other t => simp [namedL] at h
+  | blank => simp [namedL] at h
+
+/-- A lite Mac: Composio Connect up and listing the three meta tools 0, 1, 2 (search, multi-execute, connections),
+no other toolset, the router off, a web search on. Own names: 1 think_hard, 2 web_search, 3 remember (INSTRUCTIONS_LITE
+writes 1 and 3), 4 start_task (INSTRUCTIONS writes it; not a lite tool). -/
+def liteCfg : Cfg :=
+  { routerOn := false, on := fun k => decide (k = .workspace), has := fun k n => decide (k = .workspace) && n ≤ 2,
+    reads := fun _ _ => true, dailyWs := fun _ => false, metas := fun n => n ≤ 2, body := fun _ => false,
+    robot := false, inBase := fun n => n == 1 || n == 3 || n == 4, web := fun n => n == 2, searchOn := true,
+    noted := false }
+
+def liteL : Lite :=
+  { allowed := fun n => n == 1 || n == 2 || n == 3, composio := fun n => n ≤ 2, base := fun n => n == 1 || n == 3,
+    think := fun n => n == 1, search := 0, multi := 1, manage := 2 }
+
+/-- The same Mac with a Composio Connect listing that has no COMPOSIO_MANAGE_CONNECTIONS. -/
+def liteNoManage : Cfg := { liteCfg with has := fun k n => decide (k = .workspace) && n ≤ 1 }
+
+/-- Why each lite part is needed. (1) The filter without INSTRUCTIONS_LITE: INSTRUCTIONS names start_task, which a
+lite request does not offer. (2) apps_block_lite, not APPS_BLOCK: with no connection manager listed, APPS_BLOCK still
+names it; apps_block_lite does not. (3) apps_block_lite writes the find sentence only with both of its tools listed.
+And the parts hold up: think_hard, remember, web_search and the meta tools are written and offered. -/
+theorem lite_needs_each_part :
+    named Fix liteCfg .off {} (.own 4) = true ∧ offersL liteCfg liteL .auto {} (.own 4) = false ∧
+    named Fix liteNoManage .off {} (.tool .workspace 2) = true ∧
+      offersL liteNoManage liteL .auto {} (.tool .workspace 2) = false ∧
+      namedL liteNoManage liteL {} (.tool .workspace 2) = false ∧
+    namedL { liteCfg with has := fun k n => decide (k = .workspace) && n == 0 } liteL {} (.tool .workspace 0) = false ∧
+    namedL liteCfg liteL {} (.own 1) = true ∧ offersL liteCfg liteL .think {} (.own 1) = true ∧
+    namedL liteCfg liteL {} (.own 3) = true ∧ offersL liteCfg liteL .auto {} (.own 3) = true ∧
+    namedL liteCfg liteL {} (.own 2) = true ∧ offersL liteCfg liteL .auto {} (.own 2) = true ∧
+    namedL liteCfg liteL {} (.tool .workspace 2) = true ∧ offersL liteCfg liteL .auto {} (.tool .workspace 2) = true ∧
+    namedL liteCfg liteL {} (.own 4) = false := by
+  decide
+
+/-- An "instant" lite turn has full eve's gap: INSTRUCTIONS_LITE and the lite `about` name think_hard, which the
+graded request does not offer. -/
+theorem lite_instant_gap :
+    namedL liteCfg liteL {} (.own 1) = true ∧ offersL liteCfg liteL .instant {} (.own 1) = false := by
+  decide
+
+/-- eve lite's P5, for every Mac, open set and name: every name a lite request's instructions write is offered by
+that request, filtered and graded, for every grade but "instant", with no assumption on Composio's listing. -/
+theorem lite_invariant :
+    ∀ (c : Cfg) (L : Lite) (g : Grade) (o : Open) (n : Name), g ≠ .instant →
+      (∀ t, L.base t = true → L.allowed t = true ∧ c.body t = false ∧ c.web t = false) →
+      (L.composio L.search = true ∧ L.composio L.multi = true ∧ L.composio L.manage = true) →
+      namedL c L o n = true → offersL c L g o n = true :=
+  lite_prompt_offers
 
 end Eve.RoutedTurn

@@ -6,6 +6,10 @@ DIRECT_TOOLKITS are kept out of its session even when connected, so each app has
 Calendar are the exception that proves it (owner, 2026-10-05: "keep composio for the second gmail"): the owner's
 own account is direct, and Composio holds only their OTHER accounts (OTHER_ACCOUNT_TOOLKITS), each call naming one. What follows is the original design, unchanged for those apps.
 
+eve lite (EVE_PROFILE=lite, docs/plans/eve-lite.md M2): Composio Connect is its only way to any app, the owner's own
+Gmail and Calendar included, so its verdicts are ``decide_lite``'s: ``decide`` with ``personal_direct=False``, and a
+question before COMPOSIO_MANAGE_CONNECTIONS unless the call only checks or links (``manage_needs_yes``).
+
 Owner's decision, 2026-09-21: Gmail, Calendar, GitHub, Notion, Slack and the rest are reachable by API in
 seconds through Composio, where driving the Mac's screen for the same job takes minutes. So the Telegram
 brain gets Composio's session tools beside its own, and a question like "any mail from Sam today?" is one
@@ -93,6 +97,13 @@ def web_toolkit_slugs(name: str, args: Mapping[str, Any]) -> list[str]:
             out.append(slug)
     return out
 RUNS_CODE = frozenset({"COMPOSIO_REMOTE_BASH_TOOL", "COMPOSIO_REMOTE_WORKBENCH"})
+# Composio's own connection manager: for each toolkit named, a sign-in link when it is not connected, its details when
+# it is. Full eve runs it unasked (it changes nothing in the owner's apps); eve lite asks before any call whose shape
+# is not that check-or-link one (manage_needs_yes).
+MANAGE_CONNECTIONS = "COMPOSIO_MANAGE_CONNECTIONS"
+# Its input as Composio serves it (S1, 2026-10-13: tests/fixtures/composio_connect/COMPOSIO_MANAGE_CONNECTIONS.json):
+# {toolkits: string[], reinitiate_all?: boolean (default false), session_id?: string}, no other key.
+MANAGE_KEYS = frozenset({"toolkits", "reinitiate_all", "session_id"})
 
 # A slug is TOOLKIT_WORDS. A call only looks when one of its words is a reading verb and none is a writing
 # verb: GMAIL_FETCH_EMAILS reads, GOOGLECALENDAR_EVENTS_LIST_ALL_CALENDARS reads (the verb is not always the
@@ -330,16 +341,21 @@ def _personal_account_slugs(name: str, args: Mapping[str, Any]) -> list[str]:
     return out
 
 
-def decide(name: str, args: Mapping[str, Any], policy: Optional[Mapping[str, str]] = None) -> Decision:
+def decide(name: str, args: Mapping[str, Any], policy: Optional[Mapping[str, str]] = None, *,
+           personal_direct: bool = True) -> Decision:
     """Reads run; known routine writes follow policy and their arguments. A mixed call takes the
-    strictest verdict: refuse beats ask beats run. Opaque remote code and unclassified writes ask."""
+    strictest verdict: refuse beats ask beats run. Opaque remote code and unclassified writes ask.
+
+    ``personal_direct``: the owner's own Gmail and Google Calendar have their own tools (apps_mcp), so a call that
+    reaches them through Composio is refused (OTHER_ACCOUNT_TOOLKITS). eve lite passes False: it has no direct apps,
+    and Composio is the only way to the owner's own mail and calendar. Every other rule is the same either way."""
     from .apps_mcp import routine_write
 
     if name == MULTI_EXECUTE and (not isinstance(args, Mapping) or not isinstance(args.get("tools"), list)
             or any(not isinstance(t, Mapping) or not isinstance(t.get("tool_slug"), str)
                    or not t["tool_slug"].strip() for t in args["tools"])):
         return Decision("ask", [name])  # the backend must never receive items the local gate could not inspect
-    personal = _personal_account_slugs(name, args)
+    personal = _personal_account_slugs(name, args) if personal_direct else []
     if personal:
         return Decision("refuse", personal, "that is the owner's own account, reached with its own tools; through "
                         "COMPOSIO only their other account runs, named in \"account\"")
@@ -370,6 +386,97 @@ def decide(name: str, args: Mapping[str, Any], policy: Optional[Mapping[str, str
     if asked:
         return Decision("ask", asked)
     return Decision("run", [], "allowed to write: " + ", ".join(slugs))
+
+
+def manage_needs_yes(args: Any) -> bool:
+    """Whether a COMPOSIO_MANAGE_CONNECTIONS call needs the owner's yes in eve lite. False for exactly the shape that
+    only checks or links (S1, 2026-10-13: the tool's own description): a mapping with no key but MANAGE_KEYS,
+    ``toolkits`` a non-empty list of non-empty strings, ``reinitiate_all`` absent or False, ``session_id`` absent or
+    a string. For a toolkit not connected it answers a sign-in link, for one connected its details. Anything else
+    is True: ``reinitiate_all`` replaces live connections, and a shape this code does not know (a remove or rename
+    that Connect's live schema may have, a value of the wrong type) is asked, never guessed."""
+    if not isinstance(args, Mapping) or not set(args) <= MANAGE_KEYS:
+        return True
+    toolkits = args.get("toolkits")
+    if not isinstance(toolkits, list) or not toolkits or any(not isinstance(t, str) or not t.strip() for t in toolkits):
+        return True
+    if "reinitiate_all" in args and args["reinitiate_all"] is not False:
+        return True
+    return "session_id" in args and not isinstance(args["session_id"], str)
+
+
+# Gmail's sending verbs, in a slug's words: a send, a reply, a forward (GMAIL_SEND_EMAIL, GMAIL_REPLY_TO_THREAD,
+# GMAIL_FORWARD_MESSAGE, GMAIL_SEND_DRAFT).
+MAIL_SEND_WORDS = frozenset({"SEND", "REPLY", "FORWARD"})
+
+
+def sends_mail(name: str, args: Mapping[str, Any]) -> bool:
+    """Whether a call sends email from Gmail: a multi-execute item of Gmail's whose slug sends, replies or forwards.
+    eve lite's mail goes only through Composio, so its question shows such a call whole with the room full eve gives
+    the owner's own Gmail (apps_mcp.WHOLE_ASK_CHARS, telegram._app_tool), never a clipped one."""
+    if name != MULTI_EXECUTE:
+        return False
+    for tool in _multi_execute_tools(args):
+        toolkit, words = slug_words(str(tool.get("tool_slug") or ""))
+        if toolkit == "gmail" and MAIL_SEND_WORDS & set(words):
+            return True
+    return False
+
+
+# eve lite only: pandas and numpy are allowed inside a workbench script (WORKBENCH_IMPORTS), and their readers that
+# take a URL are a way the owner's data could leave the Mac in a query string. Full eve refuses any workbench script
+# that reaches the owner's own Gmail or Calendar (a script cannot name an account, OTHER_ACCOUNT_TOOLKITS), which
+# covered this; lite reaches those apps on purpose, so it asks before a script that could carry data off instead.
+# These names are blocked in lite only, so full eve's workbench verdicts (the owner golden) do not change.
+WORKBENCH_LITE_FETCH: frozenset[str] = frozenset({
+    "read_csv", "read_table", "read_fwf", "read_json", "read_html", "read_xml", "read_excel", "read_parquet",
+    "read_orc", "read_feather", "read_stata", "read_sas", "read_spss", "read_gbq",
+    "genfromtxt", "loadtxt", "DataSource"})
+
+
+def workbench_reaches_out_lite(code: Any) -> bool:
+    """For eve lite: whether a workbench script the shared gate would run can still send the owner's data off the
+    Mac, or reads the owner's own mail or calendar. True when it calls a Gmail or Google Calendar slug (full eve
+    refuses those in a script; lite asks before a script computes on them), a web-search or scraping toolkit slug
+    (data can leave in the URL), or a pandas or numpy reader that fetches a URL. Scripts that import requests, os or
+    sockets, alias the helper, or hide a slug already ask (``workbench_slugs`` is None, so ``decide`` did not run)."""
+    inner = workbench_slugs(code)
+    if inner is None:
+        return True
+    for slug in inner:
+        if slug_words(slug)[0] in OTHER_ACCOUNT_TOOLKITS:
+            return True
+        up = slug.strip().upper()
+        if any(up.startswith(t.upper() + "_") for t in WEB_TOOLKITS):
+            return True
+    try:
+        tree = ast.parse(code if isinstance(code, str) else "")
+    except (SyntaxError, ValueError):
+        return True
+    for node in ast.walk(tree):
+        name = (node.attr if isinstance(node, ast.Attribute) else node.id if isinstance(node, ast.Name)
+                else node.name if isinstance(node, ast.alias) else None)
+        if isinstance(name, str) and name in WORKBENCH_LITE_FETCH:
+            return True
+    return False
+
+
+def decide_lite(name: str, args: Mapping[str, Any], policy: Optional[Mapping[str, str]] = None) -> Decision:
+    """eve lite's verdict on one Composio call (EVE_PROFILE=lite; telegram._app_tool): ``decide`` with the owner's
+    own accounts allowed (``personal_direct=False``: Composio Connect is the only way to them), and the owner's yes
+    before a COMPOSIO_MANAGE_CONNECTIONS call unless ``manage_needs_yes`` proves it only checks or links. Reads still
+    run, sends and deletes still ask, and an explicit read-only policy still refuses. A workbench script that could
+    carry the owner's data off the Mac, or that reads their own mail or calendar, asks too
+    (``workbench_reaches_out_lite``): the whole-act question is None for a script, so that ask is a refusal."""
+    decision = decide(name, args, policy, personal_direct=False)
+    if decision.action != "run":
+        return decision
+    if name == MANAGE_CONNECTIONS and manage_needs_yes(args):
+        return Decision("ask", [name])
+    if name == WORKBENCH and workbench_reaches_out_lite(
+            args.get("code_to_execute") if isinstance(args, Mapping) else None):
+        return Decision("ask", [name])
+    return decision
 
 
 def _clip(text: str, limit: int) -> str:

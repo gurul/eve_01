@@ -1,0 +1,1105 @@
+/* eve lite's web shell (src/web): the iOS app's chrome, drawn by the page. The colors are the iOS app's
+   (ios/EveLink/App/Style.swift): pure black in dark mode, the system background in light, dark gray controls with
+   a 1 px edge. Loaded after native.css, whose rules for the message list stay as they are. */
+
+:root {
+  --eve-bg: #ffffff;
+  --eve-fill: #f2f2f7;
+  --eve-selected: #ffffff;
+  --eve-edge: rgba(0, 0, 0, 0.07);
+  --eve-text: #000000;
+  --eve-text-2: rgba(60, 60, 67, 0.6);
+  --eve-blue: #007aff;
+  --eve-red: #ff3b30;
+  --eve-green: #34c759;
+  --eve-card: #ffffff;
+  --eve-sheet: #f2f2f7;
+  --eve-scrim: rgba(0, 0, 0, 0.32);
+  /* set by viewport.ts: the part of the window above a phone's keyboard */
+  --eve-vv-top: 0px;
+  --eve-vv-height: 100vh;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --eve-bg: #000000;
+    --eve-fill: #1c1c1c;
+    --eve-selected: #3d3d3d;
+    --eve-edge: rgba(255, 255, 255, 0.09);
+    --eve-text: #ffffff;
+    --eve-text-2: rgba(235, 235, 245, 0.6);
+    --eve-blue: #0a84ff;
+    --eve-red: #ff453a;
+    --eve-green: #30d158;
+    --eve-card: #1c1c1e;
+    --eve-sheet: #000000;
+    --eve-scrim: rgba(0, 0, 0, 0.55);
+  }
+}
+
+/* native.css leaves the background to the iOS app's own view; in a browser the page paints it. */
+html,
+body {
+  background: var(--eve-bg) !important;
+  color: var(--eve-text);
+}
+
+/* Controls take the page's font; :where() keeps this at no specificity, so each control's own size and weight win. */
+:where(.eve-shell, .eve-gate, .eve-settings, .eve-voice, .eve-lightbox) :where(button, input, textarea) {
+  font: inherit;
+}
+
+.eve-selectable,
+.eve-selectable * {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
+@media (hover: hover) {
+  :where(.eve-shell, .eve-gate, .eve-settings, .eve-voice, .eve-lightbox) :focus-visible {
+    outline: 2px solid var(--eve-blue);
+    outline-offset: 2px;
+  }
+
+  /* The composer's card is the field: the caret is its focus, as in the iOS app. */
+  .eve-composer__field:focus-visible {
+    outline: none;
+  }
+}
+
+.eve-icon {
+  width: 22px;
+  height: 22px;
+  flex: none;
+}
+
+/* ---- the shell ----------------------------------------------------------------------------------------------- */
+
+.eve-shell {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: var(--eve-vv-top);
+  height: var(--eve-vv-height);
+  overflow: hidden;
+  background: var(--eve-bg);
+  color: var(--eve-text);
+}
+
+.eve-chat {
+  position: absolute;
+  inset: 0;
+}
+
+/* A wide window keeps the conversation at reading width; the list still scrolls edge to edge. */
+.eve-chat .openui-agent-thread-messages {
+  max-width: 760px;
+  width: 100%;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  box-sizing: border-box;
+}
+
+/* eve replying to a turn started elsewhere (App.tsx): just above the composer, keyboard or not. */
+body .eve-typing {
+  bottom: auto;
+  top: calc(var(--eve-vv-top) + var(--eve-vv-height) - var(--eve-inset-bottom) - 6px);
+  transform: translateY(-100%);
+  z-index: 3;
+}
+
+.eve-topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: calc(env(safe-area-inset-top) + 6px) calc(env(safe-area-inset-right) + 16px) 8px
+    calc(env(safe-area-inset-left) + 16px);
+  background: var(--eve-bg);
+}
+
+/* Messages scrolling up fade out under the bar instead of meeting its edge (the iOS app's TopFade). */
+.eve-topbar::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 20px;
+  background: linear-gradient(var(--eve-bg), transparent);
+  pointer-events: none;
+}
+
+.eve-topbar__title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.2;
+}
+
+.eve-topbar__name {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.eve-topbar__status {
+  display: flex;
+  justify-content: center;
+  max-width: 100%;
+}
+
+.eve-topbar__route {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  margin: 0;
+  color: var(--eve-text-2);
+  font-size: 12px;
+  cursor: pointer;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eve-round {
+  appearance: none;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--eve-fill);
+  border: 1px solid var(--eve-edge);
+  color: var(--eve-text);
+  cursor: pointer;
+}
+
+.eve-round:active:not(:disabled) {
+  opacity: 0.6;
+}
+
+.eve-round:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.eve-round--plain {
+  width: 36px;
+  height: 36px;
+  background: none;
+  border-color: transparent;
+}
+
+.eve-round--dark {
+  background: #1c1c1c;
+  border-color: rgba(255, 255, 255, 0.09);
+  color: #ffffff;
+}
+
+/* ---- the composer -------------------------------------------------------------------------------------------- */
+
+.eve-composer-wrap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  padding: 4px calc(env(safe-area-inset-right) + 12px) calc(env(safe-area-inset-bottom) + 8px)
+    calc(env(safe-area-inset-left) + 12px);
+  /* clear at the card's top, the page's color 18 px down (the iOS app's ComposerFloor) */
+  background: linear-gradient(transparent, var(--eve-bg) 18px);
+}
+
+:root[data-keyboard] .eve-composer-wrap {
+  padding-bottom: 8px;
+}
+
+.eve-composer {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.eve-composer__note {
+  margin: 0 8px 6px;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--eve-red);
+}
+
+.eve-composer__card {
+  background: var(--eve-fill);
+  border: 1px solid var(--eve-edge);
+  border-radius: 24px;
+  padding: 12px 10px 8px 14px;
+  cursor: text;
+}
+
+.eve-composer__field {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 2px 4px;
+  border: 0;
+  outline: none;
+  resize: none;
+  background: transparent;
+  color: var(--eve-text);
+  /* 16 px or more, or iOS zooms the page into the field */
+  font-size: 17px;
+  line-height: 22px;
+  max-height: 168px;
+}
+
+.eve-composer__field::placeholder {
+  color: var(--eve-text-2);
+}
+
+.eve-composer__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.eve-composer__spacer {
+  flex: 1;
+}
+
+.eve-composer__strip {
+  list-style: none;
+  display: flex;
+  gap: 10px;
+  margin: 0 0 8px;
+  padding: 8px 8px 2px 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.eve-composer__item {
+  position: relative;
+  flex: none;
+}
+
+.eve-composer__thumb {
+  display: block;
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.eve-composer__file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 56px;
+  max-width: 160px;
+  padding: 0 10px;
+  border-radius: 12px;
+  background: var(--eve-selected);
+  font-size: 13px;
+  color: var(--eve-text-2);
+}
+
+.eve-composer__filename {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--eve-text);
+}
+
+.eve-composer__item--busy {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: var(--eve-selected);
+  animation: eve-pulse 1.2s ease-in-out infinite;
+}
+
+.eve-composer__remove {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--eve-text);
+  color: var(--eve-bg);
+  cursor: pointer;
+}
+
+.eve-composer__remove .eve-icon {
+  width: 12px;
+  height: 12px;
+}
+
+.eve-chip {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--eve-edge);
+  background: transparent;
+  color: var(--eve-text);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.eve-chip .eve-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.eve-chip--on {
+  color: var(--eve-blue);
+  border-color: color-mix(in srgb, var(--eve-blue) 45%, transparent);
+  background: color-mix(in srgb, var(--eve-blue) 12%, transparent);
+}
+
+.eve-send {
+  appearance: none;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--eve-text);
+  color: var(--eve-bg);
+  cursor: pointer;
+}
+
+.eve-send .eve-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.eve-send:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.eve-send--busy {
+  background: none;
+  color: var(--eve-text-2);
+}
+
+/* ---- the empty conversation ---------------------------------------------------------------------------------- */
+
+.eve-empty {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 38%;
+  transform: translateY(-50%);
+  z-index: 1;
+  padding: 0 24px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.eve-empty__title {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.eve-empty__text {
+  max-width: 420px;
+  margin: 8px auto 18px;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--eve-text-2);
+}
+
+.eve-empty__ideas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  max-width: 540px;
+  margin: 0 auto;
+  pointer-events: auto;
+}
+
+/* ---- buttons ------------------------------------------------------------------------------------------------- */
+
+.eve-button {
+  appearance: none;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--eve-blue);
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.eve-button:active:not(:disabled) {
+  opacity: 0.7;
+}
+
+.eve-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.eve-button--plain {
+  background: var(--eve-fill);
+  color: var(--eve-blue);
+}
+
+.eve-settings__card .eve-button--plain {
+  background: var(--eve-sheet);
+}
+
+.eve-button--small {
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.eve-button--light {
+  background: #ffffff;
+  color: #000000;
+}
+
+.eve-button--danger {
+  align-self: stretch;
+  width: 100%;
+  margin-top: 8px;
+  color: var(--eve-red);
+  background: var(--eve-card);
+}
+
+.eve-spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  animation: eve-spin 0.8s linear infinite;
+}
+
+.eve-spinner--large {
+  width: 28px;
+  height: 28px;
+  color: var(--eve-text-2);
+}
+
+.eve-progress {
+  width: 100%;
+  max-width: 280px;
+  height: 4px;
+  border-radius: 2px;
+  overflow: hidden;
+  background: var(--eve-fill);
+}
+
+.eve-progress span {
+  display: block;
+  width: 40%;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--eve-blue);
+  animation: eve-slide 1.1s ease-in-out infinite;
+}
+
+@keyframes eve-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes eve-slide {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+@keyframes eve-pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* ---- the screens before the chat ----------------------------------------------------------------------------- */
+
+.eve-gate {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  /* the card's auto margins center it, and let a tall one scroll from its top */
+  align-items: flex-start;
+  overflow-y: auto;
+  padding: calc(env(safe-area-inset-top) + 24px) 20px calc(env(safe-area-inset-bottom) + 24px);
+  box-sizing: border-box;
+  background: var(--eve-bg);
+  color: var(--eve-text);
+}
+
+.eve-gate__card {
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: auto 0;
+}
+
+.eve-gate__card--quiet {
+  align-items: center;
+  text-align: center;
+}
+
+.eve-gate__title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.eve-gate__text {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--eve-text-2);
+}
+
+/* a line to paste into Terminal, with its Copy button */
+.eve-command {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 6px 6px 14px;
+  border-radius: 14px;
+  background: var(--eve-fill);
+}
+
+.eve-command code {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--eve-text);
+}
+
+.eve-command .eve-button--plain {
+  flex: none;
+  align-self: center;
+  background: var(--eve-bg);
+}
+
+.eve-gate__foot {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--eve-text-2);
+}
+
+.eve-gate__foot a {
+  color: var(--eve-blue);
+}
+
+.eve-code {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--eve-edge);
+  background: var(--eve-fill);
+  color: var(--eve-text);
+  font-size: 32px;
+  letter-spacing: 0.3em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.eve-steps {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  margin: 8px 0 4px;
+  padding: 0;
+}
+
+.eve-step {
+  display: flex;
+  gap: 14px;
+}
+
+.eve-step__n {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--eve-fill);
+  border: 1px solid var(--eve-edge);
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.eve-step__n .eve-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.eve-step--done .eve-step__n {
+  background: var(--eve-green);
+  border-color: transparent;
+  color: #ffffff;
+}
+
+.eve-step__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.eve-step__title {
+  margin: 4px 0 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.eve-step__text {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--eve-text-2);
+}
+
+/* ---- settings ------------------------------------------------------------------------------------------------ */
+
+.eve-settings {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: var(--eve-vv-top);
+  height: var(--eve-vv-height);
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  background: var(--eve-scrim);
+  color: var(--eve-text);
+}
+
+.eve-settings__panel {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  background: var(--eve-sheet);
+}
+
+@media (min-width: 720px) {
+  .eve-settings {
+    align-items: center;
+  }
+
+  .eve-settings__panel {
+    max-height: min(88vh, 900px);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
+  }
+}
+
+.eve-settings__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(env(safe-area-inset-top) + 12px) 16px 6px 20px;
+}
+
+.eve-settings__header h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.eve-settings__body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 16px calc(env(safe-area-inset-bottom) + 24px);
+}
+
+.eve-settings__section {
+  margin: 18px 0;
+}
+
+.eve-settings__heading {
+  margin: 0 6px 6px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--eve-text-2);
+}
+
+.eve-settings__card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--eve-card);
+}
+
+.eve-settings__text {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.eve-settings__text--muted {
+  font-size: 14px;
+  color: var(--eve-text-2);
+}
+
+.eve-settings__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.eve-settings__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--eve-edge);
+}
+
+.eve-settings__row:last-child {
+  border-bottom: 0;
+}
+
+.eve-settings__row--top {
+  border-top: 1px solid var(--eve-edge);
+  border-bottom: 0;
+  padding-top: 12px;
+}
+
+.eve-settings__label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: 15px;
+}
+
+.eve-settings__sub {
+  font-size: 13px;
+  color: var(--eve-text-2);
+  overflow-wrap: anywhere;
+}
+
+.eve-settings__ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  font-size: 14px;
+  color: var(--eve-green);
+}
+
+.eve-settings__ok .eve-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.eve-settings__problem {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--eve-red);
+}
+
+.eve-settings__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.eve-pair {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.eve-pair__codes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 18px;
+}
+
+.eve-pair__qr {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 200px;
+  text-align: center;
+}
+
+.eve-pair__qr img {
+  width: 168px;
+  height: 168px;
+  padding: 8px;
+  border-radius: 12px;
+  background: #ffffff;
+  image-rendering: pixelated;
+}
+
+.eve-pair__qr figcaption {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+}
+
+.eve-pair__url {
+  font-size: 12px;
+  color: var(--eve-text-2);
+  overflow-wrap: anywhere;
+}
+
+.eve-pair__code {
+  margin: 4px 0;
+  text-align: center;
+  font-size: 36px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- voice --------------------------------------------------------------------------------------------------- */
+
+.eve-voice {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: var(--eve-vv-top);
+  height: var(--eve-vv-height);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: calc(env(safe-area-inset-top) + 8px) calc(env(safe-area-inset-right) + 16px)
+    calc(env(safe-area-inset-bottom) + 28px) calc(env(safe-area-inset-left) + 16px);
+  background: #000000;
+  color: #ffffff;
+}
+
+.eve-voice audio {
+  display: none;
+}
+
+.eve-voice__top {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.eve-voice__captions {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.eve-voice__said {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.3;
+  font-weight: 500;
+}
+
+.eve-voice__heard {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.eve-voice__bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.eve-voice__status {
+  min-height: 1.4em;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.eve-voice__fix {
+  max-width: 420px;
+  font-size: 14px;
+  line-height: 1.45;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.eve-voice__fix p {
+  margin: 0 0 8px;
+}
+
+.eve-hold {
+  appearance: none;
+  width: 112px;
+  height: 112px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #ffffff;
+  color: #000000;
+  cursor: pointer;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.eve-hold .eve-icon {
+  width: 40px;
+  height: 40px;
+}
+
+.eve-hold--down {
+  transform: scale(0.94);
+  box-shadow:
+    0 0 0 10px rgba(255, 255, 255, 0.18),
+    0 0 0 22px rgba(255, 255, 255, 0.08);
+}
+
+.eve-hold:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* ---- a photo, full size -------------------------------------------------------------------------------------- */
+
+.eve-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: calc(env(safe-area-inset-top) + 68px) 12px calc(env(safe-area-inset-bottom) + 16px);
+  background: rgba(0, 0, 0, 0.92);
+}
+
+.eve-lightbox__bar {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 10px);
+  left: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #ffffff;
+}
+
+.eve-lightbox__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+}
+
+.eve-lightbox__img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 6px;
+  -webkit-touch-callout: default;
+}
+
+.eve-lightbox__note {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 15px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eve-spinner,
+  .eve-progress span,
+  .eve-composer__item--busy {
+    animation-duration: 0s;
+    animation-iteration-count: 1;
+  }
+
+  .eve-hold {
+    transition: none;
+  }
+}

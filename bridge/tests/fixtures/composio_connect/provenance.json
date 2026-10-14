@@ -1,0 +1,48 @@
+{
+  "fetched_at": "2026-10-13T20:59:40+00:00",
+  "source": "MCP tools/list on the hosted MCP endpoint of a Composio tool-router session (Platform API, host backend.composio.dev), made with the owner's project key for a random throwaway user id with no connected accounts, and deleted right after. Nothing was executed.",
+  "why_not_connect": "connect.composio.dev/mcp answers 401 without a user's OAuth token (mcp_401.json), and minting one needs a person to sign in. Composio serves the same 7 meta tools from both; Connect's own list is to be diffed against these files at manual gate M5.",
+  "session_config": {
+    "manage_connections": {
+      "enable": true,
+      "wait_for_connections": true
+    },
+    "toolkits": "not set (all)",
+    "sandbox": "default (on)",
+    "connection_removal": "default"
+  },
+  "initialize": {
+    "protocolVersion": "2025-06-18",
+    "serverInfo": {
+      "name": "mcp-typescript server on vercel",
+      "version": "0.1.0"
+    },
+    "capabilities": {
+      "tools": {
+        "listChanged": true
+      }
+    }
+  },
+  "instructions_chars": 0,
+  "docs_cross_check": {
+    "pages": "docs.composio.dev/toolkits/meta-tools/<tool>.md, fetched 2026-10-13; top-level input parameters and required ones compared with each inputSchema",
+    "result": {
+      "COMPOSIO_SEARCH_TOOLS": "same parameters and required set",
+      "COMPOSIO_GET_TOOL_SCHEMAS": "same parameters and required set",
+      "COMPOSIO_MULTI_EXECUTE_TOOL": "same parameters and required set",
+      "COMPOSIO_MANAGE_CONNECTIONS": "same parameters and required set",
+      "COMPOSIO_WAIT_FOR_CONNECTIONS": "no docs page",
+      "COMPOSIO_REMOTE_WORKBENCH": "same parameters and required set",
+      "COMPOSIO_REMOTE_BASH_TOOL": "same parameters and required set"
+    }
+  },
+  "files": {
+    "COMPOSIO_SEARCH_TOOLS.json": "f735ff3808d62c6c0ae2e102c2e1f59c1264245e80350f201f322c3b0b65b7b3",
+    "COMPOSIO_GET_TOOL_SCHEMAS.json": "e7ae865513a4880e2f9c754c9ab64135c48c22c2bbf561e603059bb5266ca12b",
+    "COMPOSIO_MULTI_EXECUTE_TOOL.json": "7a2c355584e4811a08cacc45a724def2e0380495602b48d784c3e276c874d07a",
+    "COMPOSIO_MANAGE_CONNECTIONS.json": "c700cda8aa9bf3e7d069ff1b0b082f241ae2bd3427feaf6ae4b8488c1dc1bfa8",
+    "COMPOSIO_WAIT_FOR_CONNECTIONS.json": "bbea5b4ba5309dcafb03536250f0369b58cdd67262cd771b26e468ed3b5ff559",
+    "COMPOSIO_REMOTE_WORKBENCH.json": "cabf1d6f98746d1d58b5908b8a92d11e877cca1f529904ec39f37ee1652e5523",
+    "COMPOSIO_REMOTE_BASH_TOOL.json": "41cf8427d55f6473fef0ae0d20546ccbe36966ed63d51422fa28ca501e66c118"
+  }
+}
