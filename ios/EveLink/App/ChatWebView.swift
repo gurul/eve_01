@@ -20,8 +20,6 @@ final class ChatModel: NSObject, ObservableObject {
     }
 
     let relay: Relay
-    /// A quick sideways swipe on the chat (true: finger moved left): the screen moves one pane (PaneSwipe).
-    var onPaneSwipe: ((Bool) -> Void)?
     private(set) lazy var webView: WKWebView = makeWebView()
     private lazy var transport: ChatTransport = {
         let t = ChatTransport(
@@ -71,6 +69,12 @@ final class ChatModel: NSObject, ObservableObject {
     /// The native Stop button: this app's streams end now and the page treats the reply as finished.
     func stop() {
         transport.cancelTurns(as: .done)
+    }
+
+    /// The composer's history button (Horizontal History, docs/app-chat.md): the page opens or closes its card row.
+    func toggleHistory() {
+        Self.play(.light)
+        js("toggleHistory")
     }
 
     func scrollToBottom() {
@@ -175,20 +179,35 @@ final class ChatModel: NSObject, ObservableObject {
                            })
         case .cancel(let id):
             transport.cancel(id: id, as: .silent)
-        case let .messages(id, after, wait):
+        case let .messages(id, after, wait, before):
             let lit = ChatJS.literal(id)
-            transport.messages(id: id, after: after, wait: wait) { [weak self] result in
+            transport.messages(id: id, after: after, wait: wait, before: before) { [weak self] result in
                 switch result {
                 case .success(let json): self?.js("onMessages", [lit, ChatJS.literal(json)])
                 case .failure(let f): self?.js("onError", [lit, ChatJS.literal(f.message)])
                 }
             }
+        case .topics(let id):
+            linkJSON(id) { ChatRequests.topics($0) }
+        case let .bookmark(id, topic, on):
+            linkJSON(id) { ChatRequests.bookmark($0, topic: topic, on: on) }
         case .haptic(let style):
             Self.play(style)
         case .openURL(let url):
             open(url)
         case let .openAttachment(id, name, kind):
             openAttachment(id: id, name: name, kind: kind)
+        }
+    }
+
+    /// Horizontal History's requests: the daemon's JSON goes back to the page as text (onLink), a failure as onError.
+    private func linkJSON(_ id: String, _ build: @escaping (ChatEndpoint) -> URLRequest) {
+        let lit = ChatJS.literal(id)
+        transport.json(id: id, build) { [weak self] result in
+            switch result {
+            case .success(let json): self?.js("onLink", [lit, ChatJS.literal(json)])
+            case .failure(let f): self?.js("onError", [lit, ChatJS.literal(f.message)])
+            }
         }
     }
 
@@ -296,12 +315,6 @@ final class ChatModel: NSObject, ObservableObject {
         scroll.maximumZoomScale = 1
         scroll.pinchGestureRecognizer?.isEnabled = false
         scroll.keyboardDismissMode = .interactive
-        for direction in [UISwipeGestureRecognizer.Direction.left, .right] {
-            let swipe = UISwipeGestureRecognizer(target: self, action: #selector(paneSwiped(_:)))
-            swipe.direction = direction
-            swipe.delegate = self                       // alongside the page's own scrolling, never instead of it
-            web.addGestureRecognizer(swipe)
-        }
         #if DEBUG
         web.isInspectable = true
         #endif
@@ -456,11 +469,3 @@ struct ChatWebView: UIViewRepresentable {
     func updateUIView(_ view: WKWebView, context: Context) {}
 }
 
-extension ChatModel: UIGestureRecognizerDelegate {
-    @objc fileprivate func paneSwiped(_ g: UISwipeGestureRecognizer) {
-        onPaneSwipe?(g.direction == .left)
-    }
-
-    func gestureRecognizer(_ g: UIGestureRecognizer,
-                           shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool { true }
-}

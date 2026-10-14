@@ -14,7 +14,9 @@ export type OutboundMessage =
   | { type: "ready" }
   | { type: "turn"; id: string; text: string; client_id: string; attachments?: string[] }
   | { type: "cancel"; id: string }
-  | { type: "messages"; id: string; after?: string; wait: number }
+  | { type: "messages"; id: string; after?: string; wait: number; before?: string }
+  | { type: "topics"; id: string }
+  | { type: "bookmark"; id: string; topic: string; on: boolean }
   | { type: "haptic"; style: HapticStyle }
   | { type: "openURL"; url: string }
   /** Open one attachment full size: native fetches GET /api/link/file/<id> and shows Quick Look. */
@@ -48,6 +50,8 @@ export interface MessagesPayload {
   busy: boolean;
   /** Every reaction the daemon keeps, by rid (reactions.ts sanitizes it). */
   reactions?: unknown;
+  /** An older page (requestOlder): whether still older messages exist. */
+  more?: boolean;
 }
 
 /** What native calls, installed as window.eveNative. */
@@ -56,10 +60,14 @@ export interface EveNative {
   onDone(id: string): void;
   onError(id: string, message: string): void;
   onMessages(id: string, json: string): void;
+  /** A Horizontal History request's JSON (topics, bookmark). */
+  onLink(id: string, json: string): void;
   /** The composer's words, and (as JSON) what native uploaded with them. */
   send(text: string, attachments?: string): void;
   setBusy(busy: boolean): void;
   scrollToBottom(): void;
+  /** The composer's history button: open or close Horizontal History. */
+  toggleHistory(): void;
   /** Where the native top bar and composer cover the page, in CSS px (insets.ts). */
   setInsets(insets: Insets): void;
 }
@@ -102,7 +110,8 @@ interface TurnEntry {
 }
 
 interface RequestEntry {
-  resolve: (payload: MessagesPayload) => void;
+  // A messages payload, or a Horizontal History answer (requestLink).
+  resolve: (payload: MessagesPayload & unknown) => void;
   reject: (error: Error) => void;
   timer: ReturnType<typeof setTimeout>;
 }
@@ -113,12 +122,18 @@ export interface Bridge {
   post: Post;
   /** Start a turn; the Response body is fed by onChunk/onDone/onError. */
   openTurn(params: OpenTurnParams): Response;
+  /** Horizontal History through native: GET /api/link/topics, or POST /api/link/topics/bookmark. */
+  requestLink(message: { type: "topics" } | { type: "bookmark"; topic: string; on: boolean }, timeoutMs?: number): Promise<unknown>;
+  /** Infinite scroll: the page just before message `before` (GET /api/link/messages?before=…). */
+  requestOlder(before: string, timeoutMs?: number): Promise<MessagesPayload>;
   /** GET /api/link/messages through native. */
   requestMessages(after: string | undefined, wait: number, timeoutMs?: number): Promise<MessagesPayload>;
   /** Who handles native's send(text). Calls made before this is set are queued. */
   setSendHandler(handler: SendHandler | null): void;
   onBusy(listener: (busy: boolean) => void): () => void;
   setScrollHandler(handler: (() => void) | null): void;
+  /** Hears the composer's history button. */
+  onToggleHistory(listener: () => void): () => void;
   /** Native's insets: the listener hears the last ones at once (if any), then every change. */
   onInsets(listener: (insets: Insets) => void): () => void;
 }
@@ -131,6 +146,7 @@ function parsePayload(json: string): MessagesPayload {
     cursor: typeof raw.cursor === "string" ? raw.cursor : "",
     busy: raw.busy === true,
     ...(raw.reactions !== undefined ? { reactions: raw.reactions } : {}),
+    ...(typeof raw.more === "boolean" ? { more: raw.more } : {}),
   };
 }
 
@@ -143,6 +159,7 @@ export function createBridge(post: Post): Bridge {
   let sendHandler: SendHandler | null = null;
   let scrollHandler: (() => void) | null = null;
   const insetListeners = new Set<(insets: Insets) => void>();
+  const historyListeners = new Set<() => void>();
   let lastInsets: Insets | null = null;
 
   const endTurn = (id: string): TurnEntry | undefined => {
@@ -207,6 +224,17 @@ export function createBridge(post: Post): Bridge {
         req.reject(e instanceof Error ? e : new Error(String(e)));
       }
     },
+    onLink(id, json) {
+      const req = requests.get(id);
+      if (!req) return;
+      requests.delete(id);
+      clearTimeout(req.timer);
+      try {
+        req.resolve(JSON.parse(json));
+      } catch (e) {
+        req.reject(e instanceof Error ? e : new Error(String(e)));
+      }
+    },
     send(text, json) {
       const attachments = parseNativeAttachments(json);
       if (typeof text !== "string" || (!text.trim() && attachments.length === 0)) return;
@@ -218,6 +246,9 @@ export function createBridge(post: Post): Bridge {
     },
     scrollToBottom() {
       scrollHandler?.();
+    },
+    toggleHistory() {
+      for (const listener of historyListeners) listener();
     },
     setInsets(raw) {
       const insets = sanitizeInsets(raw);
@@ -286,6 +317,32 @@ export function createBridge(post: Post): Bridge {
       });
     },
 
+    requestOlder(before, timeoutMs = 20000) {
+      const id = uuid();
+      return new Promise<MessagesPayload>((resolve, reject) => {
+        const timer = setTimeout(() => {
+          if (!requests.delete(id)) return;
+          post({ type: "cancel", id });
+          reject(new Error("older messages timed out"));
+        }, timeoutMs);
+        requests.set(id, { resolve, reject, timer });
+        post({ type: "messages", id, before, wait: 0 });
+      });
+    },
+
+    requestLink(message, timeoutMs = 15000) {
+      const id = uuid();
+      return new Promise<unknown>((resolve, reject) => {
+        const timer = setTimeout(() => {
+          if (!requests.delete(id)) return;
+          post({ type: "cancel", id });
+          reject(new Error("request timed out"));
+        }, timeoutMs);
+        requests.set(id, { resolve, reject, timer });
+        post({ ...message, id });
+      });
+    },
+
     setSendHandler(handler) {
       sendHandler = handler;
       if (handler) {
@@ -300,6 +357,11 @@ export function createBridge(post: Post): Bridge {
 
     setScrollHandler(handler) {
       scrollHandler = handler;
+    },
+
+    onToggleHistory(listener) {
+      historyListeners.add(listener);
+      return () => historyListeners.delete(listener);
     },
 
     onInsets(listener) {

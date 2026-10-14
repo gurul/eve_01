@@ -991,6 +991,10 @@ def make_meeter(config: Optional[MeetConfig], notes_root: Path, *, answer: Optio
     except ImportError:
         log.warning("meet: Playwright is not installed; off")
         return None
+    if lane_cfg.steel:
+        # Steel's Chrome is headless with its sound muted: a meeting needs real audio, so Meet joins from
+        # eve's own Chrome (EVE'S OWN CHROME in browser_lane.py) whatever drives the other web tasks.
+        lane_cfg = dataclasses.replace(lane_cfg, steel=False, own=True)
     lane_cfg = dataclasses.replace(lane_cfg, chrome_profile=cfg.profile or lane_cfg.chrome_profile)
 
     def make_page() -> MeetPage:

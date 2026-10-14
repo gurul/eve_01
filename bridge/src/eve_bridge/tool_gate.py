@@ -69,6 +69,7 @@ _SOURCES: dict[str, str] = {
     "web_search": "a web search", "events_search": "Ticketmaster's listings", "opentable_search": "OpenTable",
     # a read, never acting, so it never asks; not CLEAN: its titles and abstracts are other people's words
     "science_search": "a search of research papers",
+    "find_image": "Wikipedia",
     "recent_messages": "earlier chat messages", "memory_search": "memory", "memory_read": "memory",
     "read_note": "a note", "search_notes": "your notes", "list_inbox": "your notes", "list_todos": "your todos",
     "daily_rundown": "the rundown's sources", "america_ask": "a government site", "think_hard": "a long think",

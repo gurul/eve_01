@@ -9,12 +9,17 @@ enum ChatBridgeMessage: Equatable, Sendable {
     /// `attachments`: upload ids (POST /api/link/upload) the turn carries; the text may be empty with one.
     case turn(id: String, text: String, clientID: String, attachments: [String] = [])
     case cancel(id: String)
-    case messages(id: String, after: String?, wait: Int)
+    /// `before`: infinite scroll's older page (GET /api/link/messages?before=<message id>), never with `after`.
+    case messages(id: String, after: String?, wait: Int, before: String? = nil)
     case haptic(ChatHaptic)
     case openURL(URL)
     /// Open one attachment full size (a photo or file of the owner's or eve's): native fetches
     /// GET /api/link/file/<id> with the link token and shows Quick Look. `name` is for showing only.
     case openAttachment(id: String, name: String, kind: String)
+    /// Horizontal History (docs/app-chat.md): GET /api/link/topics, answered through onLink.
+    case topics(id: String)
+    /// Save or unsave the topic that starts at message `topic` (POST /api/link/topics/bookmark), answered through onLink.
+    case bookmark(id: String, topic: String, on: Bool)
 
     static let maxText = 4000
     static let maxID = 128
@@ -55,7 +60,10 @@ enum ChatBridgeMessage: Equatable, Sendable {
             let after = (msg["after"] as? String).flatMap { $0.isEmpty ? nil : $0 }
             // JS numbers arrive as NSNumber; a missing or odd wait is no wait.
             let wait = (msg["wait"] as? NSNumber)?.doubleValue ?? 0
-            self = .messages(id: id, after: after, wait: wait.isFinite ? min(max(Int(wait), 0), Self.maxWait) : 0)
+            let before = (msg["before"] as? String).flatMap { ChatTopics.isID($0) ? $0 : nil }
+            self = .messages(id: id, after: before == nil ? after : nil,
+                             wait: before == nil && wait.isFinite ? min(max(Int(wait), 0), Self.maxWait) : 0,
+                             before: before)
         case "haptic":
             guard let style = (msg["style"] as? String).flatMap(ChatHaptic.init(rawValue:)) else { return nil }
             self = .haptic(style)
@@ -68,9 +76,23 @@ enum ChatBridgeMessage: Equatable, Sendable {
                   let kind = msg["kind"] as? String, ChatFiles.kinds.contains(kind) else { return nil }
             let name = String(((msg["name"] as? String) ?? "").prefix(ChatFiles.maxName))
             self = .openAttachment(id: id, name: name, kind: kind)
+        case "topics":
+            guard let id = id() else { return nil }
+            self = .topics(id: id)
+        case "bookmark":
+            guard let id = id(), let topic = msg["topic"] as? String, ChatTopics.isID(topic),
+                  let on = msg["on"] as? Bool else { return nil }
+            self = .bookmark(id: id, topic: topic, on: on)
         default:
             return nil
         }
+    }
+}
+
+/// A Horizontal History topic's id is its first message's: `<day>:<line index>`, as the daemon checks it too.
+enum ChatTopics {
+    static func isID(_ s: String) -> Bool {
+        s.range(of: #"^\d{4}-\d{2}-\d{2}:\d{1,7}$"#, options: .regularExpression) != nil
     }
 }
 

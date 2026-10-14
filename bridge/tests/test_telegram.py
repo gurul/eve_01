@@ -935,6 +935,8 @@ def test_codex_browser_picture_uses_task_bytes_not_desktop_and_cleans_up():
         agent.run = run
         rig.inlet._agent = agent
         await rig.inlet._run_agent('open example.com', OWNER)
+        assert captured == []                                       # a browser task alone sends no picture
+        await rig.inlet._run_agent('open example.com and show me the screen', OWNER)
         assert captured[0][:2] == (OWNER, image.getvalue())
         assert 'tab 7' in captured[0][2] and not captured[0][3].exists()
         assert (await rig.inlet._send_screen(OWNER, ''))['source'] == 'task_browser'
@@ -942,7 +944,7 @@ def test_codex_browser_picture_uses_task_bytes_not_desktop_and_cleans_up():
         agent.browser_screenshot = None
         result = await rig.inlet._send_screen(OWNER, '')
         assert not result['ok'] and len(captured) == 2
-        await rig.inlet._run_agent('open example.com', OWNER)
+        await rig.inlet._run_agent('open example.com and show me the screen', OWNER)
         assert "couldn't send the task picture" in rig.api.sent[-1][1]
         assert len(captured) == 2
 

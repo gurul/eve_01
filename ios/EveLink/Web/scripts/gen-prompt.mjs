@@ -72,6 +72,7 @@ const RULES = [
   "Keep it phone-sized: one Card, a few children, short labels, and at most about eight rows, items or bars.",
   "BarChart compares a few categories, LineChart shows a trend over time, PieChart shows parts of one whole; put the unit in the axis label or the series name.",
   "For a few choices the owner can answer with a tap, use Buttons with one Button per choice (each sends its label back to you), or a FollowUpBlock for likely next questions.",
+  "Show a picture whenever one is available and the subject has a look: a concert or show, a place, venue, city, artist, team, dish, product or thing. An event from the event search carries its own image; for anything else, look one up with the picture tool by its proper name before writing the card. One subject: lead the Card with an ImageBlock. Several: a ListBlock with variant \"image\" and each item's image.",
   "ImageBlock needs a real image URL from a tool result, the conversation or the owner; with no such URL, leave images out.",
   "Callout is for something the owner must not miss (a warning, a deadline), never to explain what you did.",
 ];

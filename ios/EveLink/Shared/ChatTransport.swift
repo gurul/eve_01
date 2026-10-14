@@ -86,10 +86,30 @@ enum ChatRequests {
         return r
     }
 
-    static func messages(_ ep: ChatEndpoint, after: String?, wait: Int) -> URLRequest {
+    /// Horizontal History's cards (GET /api/link/topics).
+    static func topics(_ ep: ChatEndpoint) -> URLRequest {
+        var r = URLRequest(url: ep.base.appendingPathComponent("api/link/topics"))
+        r.setValue("Bearer \(ep.token)", forHTTPHeaderField: "Authorization")
+        r.setValue("application/json", forHTTPHeaderField: "Accept")
+        return r
+    }
+
+    /// Save or unsave a topic (POST /api/link/topics/bookmark {"id", "on"}).
+    static func bookmark(_ ep: ChatEndpoint, topic: String, on: Bool) -> URLRequest {
+        var r = URLRequest(url: ep.base.appendingPathComponent("api/link/topics/bookmark"))
+        r.httpMethod = "POST"
+        r.setValue("Bearer \(ep.token)", forHTTPHeaderField: "Authorization")
+        r.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        r.setValue("application/json", forHTTPHeaderField: "Accept")
+        r.httpBody = try? JSONSerialization.data(withJSONObject: ["id": topic, "on": on])
+        return r
+    }
+
+    static func messages(_ ep: ChatEndpoint, after: String?, wait: Int, before: String? = nil) -> URLRequest {
         var c = URLComponents(url: ep.base.appendingPathComponent("api/link/messages"), resolvingAgainstBaseURL: false)!
         var items: [URLQueryItem] = []
         if let after { items.append(URLQueryItem(name: "after", value: after)) }
+        if let before { items.append(URLQueryItem(name: "before", value: before)) }
         if wait > 0 { items.append(URLQueryItem(name: "wait", value: String(wait))) }
         c.queryItems = items.isEmpty ? nil : items
         var r = URLRequest(url: c.url!)
@@ -309,7 +329,8 @@ final class ChatTransport {
     }
 
     /// GET the messages and hand back the response body as text.
-    func messages(id: String, after: String?, wait: Int, onEnd: @escaping @MainActor (Result<String, ChatFailure>) -> Void) {
+    func messages(id: String, after: String?, wait: Int, before: String? = nil,
+                  onEnd: @escaping @MainActor (Result<String, ChatFailure>) -> Void) {
         cancel(id: id, as: .silent)
         let session = session
         tasks[id] = Task { [weak self] in
@@ -317,7 +338,35 @@ final class ChatTransport {
                                                                            addressMayHaveMoved: false))
             var retried = false
             while let ep = self?.endpoint() {
-                result = await Self.fetch(ChatRequests.messages(ep, after: after, wait: wait), session: session)
+                result = await Self.fetch(ChatRequests.messages(ep, after: after, wait: wait, before: before),
+                                          session: session)
+                if case .failure(let f) = result, f.addressMayHaveMoved, !retried, !Task.isCancelled,
+                   let self, await self.refresh() {
+                    retried = true
+                    continue
+                }
+                break
+            }
+            guard let self else { return }
+            let cancelled = Task.isCancelled
+            self.cancelledAs[id] = nil
+            self.tasks[id] = nil
+            if !cancelled { onEnd(result) }
+        }
+    }
+
+    /// One small JSON request for the page (Horizontal History), with one retry at eve's new address like
+    /// ``messages``; the body comes back as text for onLink.
+    func json(id: String, _ build: @escaping (ChatEndpoint) -> URLRequest,
+              onEnd: @escaping @MainActor (Result<String, ChatFailure>) -> Void) {
+        cancel(id: id, as: .silent)
+        let session = session
+        tasks[id] = Task { [weak self] in
+            var result: Result<String, ChatFailure> = .failure(ChatFailure(message: "Eve Link isn't paired.",
+                                                                           addressMayHaveMoved: false))
+            var retried = false
+            while let ep = self?.endpoint() {
+                result = await Self.fetch(build(ep), session: session)
                 if case .failure(let f) = result, f.addressMayHaveMoved, !retried, !Task.isCancelled,
                    let self, await self.refresh() {
                     retried = true

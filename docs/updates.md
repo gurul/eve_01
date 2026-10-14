@@ -175,7 +175,7 @@ The prompt asks; code decides (`clean_cards`, then the app's own clamps):
   composer's path. If the chat page is not ready yet (a cold start into
   Updates), the text waits and is sent when it is. If eve is still answering,
   nothing is sent, and the pane says to tap the card again when eve is done.
-- **Dismiss.** A long press (the context menu), or the VoiceOver action. A sideways swipe changes the pane, so cards have no swipe action. The card
+- **Dismiss.** A long press (the context menu), or the VoiceOver action. Cards have no swipe action. The card
   goes at once and comes back in its place if the Mac refuses. A dismiss hides
   every source the card cites for 30 days, so a later card from the same email
   or note stays away too. The pane reads the list again after every dismiss,

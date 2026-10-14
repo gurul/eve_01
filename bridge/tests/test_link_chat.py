@@ -345,11 +345,12 @@ def test_history_is_oldest_first_and_the_cursor_crosses_the_four_oclock_day(tmp_
     assert [r["text"] for r in newer] == ["and again"] and cur2 == "2026-10-08:1"
 
 
-def test_history_is_the_last_three_days_and_the_last_hundred_lines(tmp_path: Path) -> None:
+def test_history_is_the_newest_hundred_lines_however_far_back(tmp_path: Path) -> None:
     store = store_at(tmp_path)
     for n, day in enumerate(("2026-10-01", "2026-10-02", "2026-10-03", "2026-10-04")):
         store.append("telegram", "t", "owner", "say", f"day {n}", now=at(day, "12:00"))
-    assert [r["text"] for r in read_messages(store)[0]] == ["day 1", "day 2", "day 3"]
+    # every day, not only the last three (owner, 2026-10-13: "keep all chat history, i want infinite scroll")
+    assert [r["text"] for r in read_messages(store)[0]] == ["day 0", "day 1", "day 2", "day 3"]
     for i in range(250):
         store.append("telegram", "t", "eve", "say", f"line {i}", now=at("2026-10-04", "13:00"))
     rows, cursor = read_messages(store)
