@@ -248,6 +248,30 @@ def _payload(result: Any) -> Optional[dict[str, Any]]:
     return data if isinstance(data, dict) else None
 
 
+def _answer_object(result: Any) -> Optional[dict[str, Any]]:
+    """Composio's own object, for Settings' bookkeeping (which apps are connected, a Connect Link): ``_payload``, or
+    else the one text part that is a JSON object. Composio puts notes in parts of their own after its answer (seen
+    2026-10-14: a custom-MCP hint and agent guidance after COMPOSIO_SEARCH_TOOLS's JSON), and those must not hide it.
+    None when no part, or more than one, is an object. The model's reading stays ``_payload``'s: every part."""
+    payload = _payload(result)
+    if payload is not None or not isinstance(result, Mapping) or not isinstance(result.get("content"), list):
+        return payload
+    found: list[dict[str, Any]] = []
+    for part in result["content"]:
+        if not (isinstance(part, Mapping) and part.get("type") == "text" and isinstance(part.get("text"), str)):
+            continue
+        text = part["text"].strip()
+        if not text.startswith("{"):
+            continue
+        try:
+            data = json.loads(text)
+        except (ValueError, RecursionError):
+            continue
+        if isinstance(data, dict):
+            found.append(data)
+    return found[0] if len(found) == 1 else None
+
+
 def result_for_model(result: Any, payload: Optional[dict[str, Any]]) -> dict[str, Any]:
     """A tools/call result as the brain reads it, given its ``_payload``. When it carries Composio's own object
     (``data``, ``error``, ``successful``), that object with ``ok`` added: the shape composio_tools.ComposioBridge
@@ -764,9 +788,10 @@ class ConnectBridge:
         except Exception as e:  # noqa: BLE001 — the type only
             log.warning("composio connect: %s ran; its answer was not read (%s)", name, type(e).__name__)
             return {"ok": False, "reason": UNREADABLE}
-        if payload is not None:
+        seen = _answer_object(result)
+        if seen is not None:
             try:
-                self._observe(name, payload)
+                self._observe(name, seen)
             except Exception as e:  # noqa: BLE001 — Settings' bookkeeping never costs the model its answer
                 log.info("composio connect: %s's answer was not read for Settings (%s)", name, type(e).__name__)
         return out
@@ -783,7 +808,7 @@ class ConnectBridge:
         try:
             result = self._authorized(self._linker, lambda client: client.call_tool(MANAGE_CONNECTIONS,
                                                                                     {"toolkits": [slug]}))
-            link, active = connect_answer(_payload(result), slug)
+            link, active = connect_answer(_answer_object(result), slug)
         except _SignedOut:
             log.warning("composio connect: no Connect Link for %s: no sign-in Composio takes", slug)
             return None
@@ -837,7 +862,7 @@ class ConnectBridge:
         try:
             result = self._authorized(self._looker, lambda client: client.call_tool(
                 SEARCH_TOOLS, {"queries": queries, "session": {"generate_id": True}}))
-            seen = search_statuses(_payload(result))
+            seen = search_statuses(_answer_object(result))
         except Exception as e:  # noqa: BLE001 — the type only
             with self._lock:
                 self._look_retry_at = self._clock() + LOOK_RETRY_SECS

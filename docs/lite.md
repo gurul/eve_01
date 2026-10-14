@@ -22,8 +22,10 @@ installer writes. With `EVE_PROFILE` unset, eve is the owner's full eve, unchang
 
 Written 2026-10-13, on branch `feat/one-click-variant`.
 
-- **lite-v0.1.2 is published** (2026-10-14), so the install line works. The install line downloads `install-lite.sh`
-  from the newest published release of github.com/gurul/eve_01 ([making a release](#making-a-release)).
+- **lite-v0.1.3 is published** (2026-10-14; lite-v0.1.2 the same day), so the install line works. The install line downloads `install-lite.sh`
+  from the newest published release of github.com/gurul/eve_01 ([making a release](#making-a-release)). A copy of
+  `install-lite.sh` taken from the repository instead of a release refuses to install: it has no release to fetch. The
+  release script stamps the repository's copy too; leave that uncommitted, as the tests expect it unstamped.
 - **Installed and set up on the owner's Mac (2026-10-14).** The owner installed it from the release's tarball, signed
   in and reported that it works. The other checks that need a phone or a fresh VM are listed under
   [Verified on](#verified-on), still pending.
@@ -37,7 +39,7 @@ Written 2026-10-13, on branch `feat/one-click-variant`.
 curl -fsSL https://github.com/gurul/eve_01/releases/latest/download/install-lite.sh | bash
 ```
 
-This line installs the newest published release, lite-v0.1.2 at the time of writing ([Status](#status)).
+This line installs the newest published release, lite-v0.1.3 at the time of writing ([Status](#status)).
 
 You need a Mac with Apple silicon (M1 or later) on macOS 14 or later, and to run it as yourself, not with `sudo`.
 Intel Macs and macOS 13 are not supported: cryptography's macOS wheels are for arm64 only, and av's arm64 wheel needs
@@ -178,6 +180,9 @@ Mac. It lasts 5 years; the certificate the LAN door serves lasts 397 days.
 
 - After the Composio sign-in, **Settings → Apps** lists Gmail, Google Calendar, Google Drive, Slack, Notion, Linear and
   GitHub, each with **Connect**. Connect opens Composio's Connect Link, then the provider's own consent page.
+  Back on eve's page, a connected app shows **✓ Connected** in place of the button. The list is read from Composio's
+  search answer, the one part of it that is a JSON object (Composio adds notes as parts of their own since 2026-10-14;
+  before 0.1.3 those notes made every app read as not connected).
 - Or ask: "what's on my calendar today?" When the app is not connected, eve sends its sign-in link in the chat. Any
   other app that Composio signs you in to with its own sign-in (managed auth) connects the same way, by asking.
 - Reads run. Gmail drafts and private calendar edits run. Sending, deleting and other one-way acts ask first, showing
