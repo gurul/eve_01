@@ -463,3 +463,198 @@ textarea,
   flex-wrap: wrap;
   gap: 16px;
 }
+
+/* Horizontal History (HorizontalHistory.tsx): topic cards that slide up above the composer, swiped sideways. */
+.eve-mid {
+  display: contents;
+}
+
+.eve-history {
+  --eve-band: #ffffff;
+  --eve-card-bg: #f2f2f7;
+  --eve-card-fg: #1c1c1e;
+  --eve-card-dim: #6e6e73;
+  --eve-card-line: rgba(60, 60, 67, 0.12);
+  --eve-star: #ff9f0a;
+  position: fixed;
+  bottom: var(--eve-inset-bottom);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  padding-top: 4px;
+  background: var(--eve-band);
+  transition: transform 220ms ease, opacity 220ms ease;
+}
+
+/* A short fade above the row, so the chat runs into it softly. */
+.eve-history::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 14px;
+  background: linear-gradient(transparent, var(--eve-band));
+  pointer-events: none;
+}
+
+.eve-history--away {
+  transform: translateY(24px);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.eve-history__row {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 16px;
+  padding: 8px 16px 10px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+.eve-history__row::-webkit-scrollbar {
+  display: none;
+}
+
+.eve-topic {
+  position: relative;
+  flex: none;
+  width: min(72vw, 300px);
+  scroll-snap-align: start;
+  border-radius: 18px;
+  background: var(--eve-card-bg);
+  color: var(--eve-card-fg);
+  box-shadow: 0 0 0 0.5px var(--eve-card-line);
+}
+
+.eve-topic__open {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  min-height: 92px;
+  padding: 12px 44px 11px 14px;
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.eve-topic__title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.eve-topic__preview {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--eve-card-dim);
+}
+
+.eve-topic__meta {
+  margin-top: auto;
+  font-size: 11px;
+  color: var(--eve-card-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.eve-topic__star {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+}
+
+.eve-topic__star svg {
+  fill: none;
+  stroke: var(--eve-card-dim);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  transition: transform 160ms ease;
+}
+
+.eve-topic__star[aria-pressed="true"] svg {
+  fill: var(--eve-star);
+  stroke: var(--eve-star);
+}
+
+.eve-topic__star:active svg {
+  transform: scale(0.85);
+}
+
+.eve-topic__open:active {
+  background: var(--eve-card-line);
+}
+
+.eve-topic__open:focus-visible,
+.eve-topic__star:focus-visible {
+  outline: 2px solid #0a84ff;
+  outline-offset: -2px;
+}
+
+.eve-history__note {
+  margin: 6px 16px;
+  font-size: 12px;
+  color: var(--eve-card-dim);
+}
+
+/* The message a card jumped to glows for a moment. */
+.eve-topic-flash {
+  border-radius: 18px;
+  animation: eve-topic-flash 1.6s ease-out;
+}
+
+@keyframes eve-topic-flash {
+  from {
+    box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.45);
+  }
+  to {
+    box-shadow: 0 0 0 3px rgba(10, 132, 255, 0);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .eve-history {
+    --eve-band: #000000;
+    --eve-card-bg: #1c1c1e;
+    --eve-card-fg: #f2f2f7;
+    --eve-card-dim: #98989f;
+    --eve-card-line: rgba(84, 84, 88, 0.45);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eve-history,
+  .eve-topic__star svg {
+    transition: none;
+  }
+  .eve-topic-flash {
+    animation: none;
+    box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.45);
+  }
+}

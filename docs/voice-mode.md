@@ -404,3 +404,14 @@ speaks, the 0.25 s playback margin before the microphone reopens), the
 background hang-up, recovery after an interruption, and the earpiece switch. The
 face was checked in the simulator (iPhone 17 Pro Max, 2026-10-09); its captions
 need a real call.
+
+## Eyes on the owner's turn (2026-10-13)
+
+- While the owner holds the button the face listens with still eyes; it reacts once their words come back from
+  speech-to-text (owner: "eyes should start reacting when the stt happens not before"). The Mac already offered the
+  owner's words to the expression picker only after transcription; the phone's eyes had been bobbing with the mic level.
+- Expressions stay on Jev. An open on-device decision model (tev1 through Ollama) was measured on the 84 legacy eye
+  cases (`tools/jev_eyes_eval.py --legacy`): Jev over the network 62.5% / 69.4% at ~250 ms p50; tev1 0.8B on this Mac
+  52.1% / 50.0% at ~15 ms; tev1 4B 58.3% / 63.9% at ~470 ms. Neither met the bar (57.5 / 67.2); the owner chose to keep
+  Jev, and the route was removed.
+

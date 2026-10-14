@@ -97,6 +97,7 @@ from . import (
     composio_tools,
     consent,
     events,
+    find_image,
     grade_router,
     link_reactions,
     meet,
@@ -5274,6 +5275,10 @@ class TelegramInlet:
         app_tools = self._app_tools(opened, lent, routed)
         loc_tools = phone_location.tools()          # once a turn: the phone's location, while it has shared one
         sci_tools = science_search.tools()          # papers' titles and abstracts, while EVE_SCIENCE_SEARCH is on
+        # a real picture for a card (Wikipedia), while EVE_FIND_IMAGE is on: app turns only, the one place a card is
+        # drawn; a call is spoken, so it never pays for the tool or the lookup (owner, 2026-10-13: voice "should be
+        # faster")
+        pic_tools = find_image.tools() if _FROM_APP.get() is not None else []
         live = self._live_apps()                    # eve's apps with a hub here, in tool order (app_registry)
         allowed = {t["name"] for t in app_tools} | {t["name"] for t in mem_tools} | (
             set(second_brain.SECOND_BRAIN_TOOL_NAMES) if self._vault is not None else set()) | (
@@ -5282,6 +5287,7 @@ class TelegramInlet:
             n for app, _ in live for n in app.mod().TOOL_NAMES} | (
             {str(t["name"]) for t in loc_tools}) | (
             {str(t["name"]) for t in sci_tools}) | (
+            {str(t["name"]) for t in pic_tools}) | (
             set(canvas.TOOL_NAMES) if self._canvas is not None else set()) | (
             set(agentcard_mod.TOOL_NAMES) if self._agentcard is not None else set()) | (
             set(america.TOOL_NAMES) if self._america is not None else set()) | (
@@ -5297,6 +5303,7 @@ class TelegramInlet:
             t for _, hub in live for t in hub.tools()] + (
             loc_tools) + (
             sci_tools) + (
+            pic_tools) + (
             self._canvas.tools() if self._canvas is not None else []) + (
             self._agentcard.tools() if self._agentcard is not None else []) + (
             self._america.tools() if self._america is not None else []) + (
@@ -5526,6 +5533,9 @@ class TelegramInlet:
             if name in phone_location.TOOL_NAMES:
                 # the phone's latest fix (phone_location.py): a file read, no device, nothing sent anywhere
                 return await phone_location.handle(name, args)
+            if name in find_image.TOOL_NAMES:
+                # a picture's URL and its Wikipedia page title (find_image.py): outside words, like web_search's
+                return await find_image.handle(name, args)
             if name in science_search.TOOL_NAMES:
                 # papers' titles and abstracts (science_search.py): outside words, so the result taints the turn
                 # as web_search's does (tool_gate); off, the reason and no request
@@ -6787,7 +6797,9 @@ class TelegramInlet:
                 sent = await self._send_file(chat_id, str(path), "From the task: " + path.name)
                 if not sent.get("ok"):
                     await self._say(chat_id, f"I couldn't send {path.name}: {sent.get('reason')}")
-            if getattr(self._agent, 'browser_used', False) or WANTS_SCREEN.search(goal):
+            # A picture only when the owner asked to see one (owner, 2026-10-13: "I don't need this browser shit for
+            # computer use"): a task that merely used a browser used to send its tab's last view, often a blank card.
+            if WANTS_SCREEN.search(goal):
                 result = await self._send_screen(chat_id, "the screen when the task ended")
                 if not result.get('ok'):
                     await self._say(chat_id, "I couldn't send the task picture: " + str(result.get('reason')))

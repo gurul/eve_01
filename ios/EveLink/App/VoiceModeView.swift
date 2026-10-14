@@ -205,7 +205,9 @@ private struct LiveFace: View {
         let mood = Self.mood(muted: muted, speaker: levels.speaker, status: levels.status)
         VStack(spacing: 22) {
             // eve's expression shows only while he rests, thinks or speaks (FaceExpressionState.allowed).
-            StackChanFace(mood: mood, level: levels.level,
+            // While the owner talks the eyes hold still; they react once their words are transcribed (owner,
+            // 2026-10-13: "eyes should start reacting when the stt happens not before"). eve's own voice still moves them.
+            StackChanFace(mood: mood, level: levels.speaker == .owner ? 0 : levels.level,
                           expression: FaceExpressionState.gate(levels.expression, mood: mood))
             VoiceCaptionView(caption: levels.caption)
                 .padding(.horizontal, 28)

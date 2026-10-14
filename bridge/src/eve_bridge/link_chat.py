@@ -14,7 +14,8 @@ view and does all its networking natively (ios/EveLink); this module is the daem
   ``DEDUPE_SECS`` (the phone retried after a drop) is never heard twice: it streams the first turn's reply.
 * ``GET /api/link/messages?after=<cursor>&wait=<0..25>``: the conversation as the transcript has it
   (transcripts.py), so the app shows what was said in Telegram, on a call or by a task that answered later.
-  Without ``after``: the last ``HISTORY_LIMIT`` lines of the last ``HISTORY_DAYS`` transcript days. With it: newer
+  Without ``after``: the newest ``HISTORY_LIMIT`` lines, however far back. ``?before=<message id>``: the page just
+  before that message and whether older ones exist (infinite scroll; nothing is ever pruned). With ``after``: newer
   lines only, and with ``wait`` a long poll woken by the transcript's own append (``Transcripts.listeners``),
   with a re-read every ``POLL_SECS`` for writes from another process (the forget CLI).
 
@@ -109,6 +110,9 @@ view and does all its networking natively (ios/EveLink); this module is the daem
   and what is going (the chief's open cards and the watches), the calendar's events left today and what plays now
   (Spotify, the TV), each source within its own short limit; one that is off or fails is left out and named in
   ``sources``, never failing the answer.
+* ``GET /api/link/topics?limit=<1..60>`` and ``POST /api/link/topics/bookmark`` ``{"id", "on"}`` (link_topics.py,
+  docs/app-chat.md "Horizontal History"): the chat cut into topics at pauses longer than 45 minutes, newest first, and
+  the saved ones; a bookmark is kept by the topic's first message id. 404 for a topic the last 30 days do not have.
 * ``GET /api/link/updates``, ``POST /api/link/updates/dismiss`` ``{"id"}`` and ``POST /api/link/updates/refresh``
   (updates.py, docs/updates.md; owner, 2026-10-12: "find actionable steps from our emails notes everything we have and
   suggest things"): the Updates pane's cards, each one sentence (a verb and the rest), made in the background from
@@ -189,6 +193,8 @@ TODAY_PATH = "/api/link/today"           # link_today.py: the home-screen widget
 UPDATES_PATH = "/api/link/updates"       # updates.py: the Updates pane's cards
 UPDATES_DISMISS_PATH = "/api/link/updates/dismiss"
 UPDATES_REFRESH_PATH = "/api/link/updates/refresh"
+TOPICS_PATH = "/api/link/topics"         # link_topics.py: Horizontal History's cards
+TOPICS_BOOKMARK_PATH = "/api/link/topics/bookmark"
 LOCATION_PATH = "/api/link/location"     # phone_location.py: the phone's latest fix
 SESSIONS_PATH = "/api/link/sessions"     # work_sessions.py: the Work tab's Claude Code sessions
 SESSION_START_PATH = "/api/link/sessions/start"
@@ -197,8 +203,10 @@ SESSION_RE = re.compile(r"^/api/link/sessions/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{
 # one kept upload's bytes, full size; anything after the prefix that is not 32 hex is a 404 (never a path)
 FILE_RE = re.compile(r"^/api/link/file/([^/]{0,64})$")
 PATHS = (TURN_PATH, MESSAGES_PATH, JOBS_PATH, APPS_PATH, UPLOAD_PATH, CONTROLS_PATH, TODAY_PATH, *STREAM_PATHS,
-         UPDATES_PATH, UPDATES_DISMISS_PATH, UPDATES_REFRESH_PATH, LOCATION_PATH, SESSIONS_PATH, SESSION_START_PATH)
-POST_PATHS = (TURN_PATH, UPLOAD_PATH, UPDATES_DISMISS_PATH, UPDATES_REFRESH_PATH, LOCATION_PATH, SESSION_START_PATH)
+         UPDATES_PATH, UPDATES_DISMISS_PATH, UPDATES_REFRESH_PATH, LOCATION_PATH, SESSIONS_PATH, SESSION_START_PATH,
+         TOPICS_PATH, TOPICS_BOOKMARK_PATH)
+POST_PATHS = (TURN_PATH, UPLOAD_PATH, UPDATES_DISMISS_PATH, UPDATES_REFRESH_PATH, LOCATION_PATH, SESSION_START_PATH,
+              TOPICS_BOOKMARK_PATH)
 MAX_CARD_ID_CHARS = 64                # a dismissed Updates card's id (updates.card_id: 12 hex)
 GRADES = ("auto", "instant", "think")    # telegram.GRADES: the speed dial
 JOB_ACTIONS = ("go", "done", "drop", "raise", "happened", "didnt", "hide")
@@ -228,7 +236,6 @@ SETTLE_SECS = 0.2                     # how often a stream checks whether the ow
 DEDUPE_SECS = 600.0                   # the same client_id within this is the same turn
 MAX_KEPT_TURNS = 256                  # remembered turns, for dedupe; the oldest finished ones go first
 HISTORY_LIMIT = 100                   # lines returned without a cursor
-HISTORY_DAYS = 3                      # transcript days read without a cursor
 PAGE_LIMIT = 200                      # lines returned after a cursor; the next poll takes the rest
 WAIT_MAX_SECS = 25.0                  # the longest long poll (the tunnel and URLSession both outlast it)
 CLOSE_SETTLE_SECS = 0.5               # on close, how long open streams get to write their end
@@ -486,14 +493,16 @@ def read_messages(store: Any, after: Optional[str] = None) -> tuple[list[dict[st
     Blocking (file reads, cached by transcripts.py): call it in a thread."""
     days = store.days()
     if after is None:
-        rows: list[dict[str, Any]] = []
+        # The newest HISTORY_LIMIT shown lines, however many days back they go (owner, 2026-10-13: "keep all chat
+        # history, i want infinite scroll"); older pages come from read_before.
         cursor = f"{store.day_of(store.now())}:-1"
-        for day in days[-HISTORY_DAYS:]:
+        for day in reversed(days):
             lines = store.lines(day)
-            rows.extend(r for r in (_row(day, i, ln) for i, ln in enumerate(lines)) if r is not None)
             if lines:
                 cursor = f"{day}:{len(lines) - 1}"
-        return rows[-HISTORY_LIMIT:], cursor
+                break
+        rows, _ = read_before(store, None)
+        return rows, cursor
     m = CURSOR_RE.match(after)
     if m is None:
         raise ValueError("bad cursor")
@@ -509,6 +518,32 @@ def read_messages(store: Any, after: Optional[str] = None) -> tuple[list[dict[st
                 if len(rows) >= PAGE_LIMIT:
                     return rows, cursor
     return rows, cursor
+
+
+def read_before(store: Any, before: Optional[str], limit: int = HISTORY_LIMIT) -> tuple[list[dict[str, Any]], bool]:
+    """(up to ``limit`` shown lines just before message ``before``, oldest first; whether older ones exist). None:
+    the newest. Infinite scroll's older pages (``?before=<id>``). Nothing is ever pruned (transcripts.py), so this
+    reaches the first day. Blocking: call it in a thread."""
+    if before is not None:
+        m = CURSOR_RE.match(before)
+        if m is None or m.group(2) == "-1":
+            raise ValueError("bad message id")
+        stop_day, stop_i = m.group(1), int(m.group(2))
+    else:
+        stop_day, stop_i = None, None
+    found: list[dict[str, Any]] = []
+    for day in reversed(store.days()):
+        if stop_day is not None and day > stop_day:
+            continue
+        lines = store.lines(day)
+        end = stop_i if day == stop_day else len(lines)
+        for i in range(min(end, len(lines)) - 1, -1, -1):
+            row = _row(day, i, lines[i])
+            if row is not None:
+                found.append(row)
+                if len(found) > limit:
+                    return list(reversed(found[:limit])), True
+    return list(reversed(found)), False
 
 
 def split_cursor(after: Optional[str]) -> tuple[Optional[str], Optional[int]]:
@@ -700,14 +735,18 @@ class LinkChat:
                  turn_secs: float = TURN_SECS, ping_secs: float = PING_SECS, settle_secs: float = SETTLE_SECS,
                  poll_secs: float = POLL_SECS, uploads: Any = None, today: Any = None,
                  job_secs: float = JOB_SECS, hidden: Optional[HiddenJobs] = None, updates: Any = None,
-                 work: Optional[Callable[[], Any]] = None) -> None:
+                 work: Optional[Callable[[], Any]] = None, bookmarks: Any = None,
+                 titler: Any = None) -> None:
         from .link_today import Today
+        from .link_topics import Bookmarks, Titler
         from .link_uploads import UploadStore
         from .updates import Updates
 
         self.today = today if today is not None else Today()   # link_today.Today: the widget's feed
         # updates.Updates: the Updates pane's cards; the daemon runs its refresh loop (daemon.Daemon.run)
         self.updates = updates if updates is not None else Updates(inlet)
+        self.bookmarks = bookmarks if bookmarks is not None else Bookmarks()   # Horizontal History's saved topics
+        self.titler = titler if titler is not None else Titler()          # and their titles, from a cheap model
         self._inlet = inlet
         self._work = work                  # work_sessions.WorkSessions, read per request; None: the routes are a 503
         self.uploads = uploads if uploads is not None else UploadStore()   # link_uploads.UploadStore
@@ -875,6 +914,9 @@ class LinkChat:
             await self._json(writer, 503, {"ok": False, "error": NO_CHAT})
             return
         self._attach(inlet)
+        if path in (TOPICS_PATH, TOPICS_BOOKMARK_PATH):
+            await self._topics(inlet, path, query, headers, reader, writer)
+            return
         if path == TURN_PATH:
             await self._turn(inlet, headers, reader, writer)
         else:
@@ -1019,8 +1061,45 @@ class LinkChat:
             if reading:
                 turn.readers -= 1
 
+    async def _topics(self, inlet: Any, path: str, query: str, headers: dict[str, str],
+                      reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        """``GET /api/link/topics``: Horizontal History's cards (link_topics.view). ``POST .../bookmark``
+        ``{"id", "on"}``: save or unsave the topic that starts at that message."""
+        from . import link_topics
+
+        store = getattr(inlet, "transcripts", None)
+        if store is None or not getattr(store, "enabled", False):
+            await self._json(writer, 503, {"ok": False, "error": NO_MEMORY})
+            return
+        if path == TOPICS_PATH:
+            q = dict(parse_qsl(query, keep_blank_values=True))
+            try:
+                limit = min(max(int(q.get("limit") or link_topics.DEFAULT_LIMIT), 1), link_topics.MAX_LIMIT)
+            except ValueError:
+                await self._json(writer, 400, {"ok": False, "error": "limit must be a whole number"})
+                return
+            view = await asyncio.to_thread(link_topics.view, store, self.bookmarks, limit, self.titler)
+            log.info("link chat: topics for the app: %d (%d saved)", len(view["topics"]), len(view["bookmarked"]))
+            await self._json(writer, 200, view)
+            return
+        body = await self._optional_body(headers, reader, writer)
+        if body is None:
+            return
+        tid, on = body.get("id"), body.get("on")
+        if not isinstance(tid, str) or not link_topics.ID_RE.match(tid) or not isinstance(on, bool):
+            await self._json(writer, 400, {"ok": False, "error": "the body must be {\"id\": a topic's id, \"on\": true or false}"})
+            return
+        if on and not await asyncio.to_thread(link_topics.known, store, tid):
+            await self._json(writer, 404, {"ok": False, "error": "no such topic"})
+            return
+        await asyncio.to_thread(self.bookmarks.set, tid, on)
+        await self._json(writer, 200, {"ok": True, "bookmarked": on})
+
     async def _messages(self, inlet: Any, query: str, writer: asyncio.StreamWriter) -> None:
         q = dict(parse_qsl(query, keep_blank_values=True))
+        if q.get("before"):
+            await self._older(inlet, q["before"], writer)
+            return
         after = q.get("after") or None
         try:
             wait = min(max(float(q.get("wait") or 0), 0.0), WAIT_MAX_SECS)
@@ -1065,6 +1144,27 @@ class LinkChat:
             payload["cursor"] = f"{cursor}~{version}"
             payload["reactions"] = kept
         await self._json(writer, 200, payload)
+
+    async def _older(self, inlet: Any, before: str, writer: asyncio.StreamWriter) -> None:
+        """``GET /api/link/messages?before=<message id>``: the page of history just before that message, for infinite
+        scroll: ``{"messages", "more", "busy"}``. Never waits and never moves the live poll's cursor."""
+        store = getattr(inlet, "transcripts", None)
+        if store is None or not getattr(store, "enabled", False):
+            await self._json(writer, 503, {"ok": False, "error": NO_MEMORY})
+            return
+        try:
+            rows, more = await asyncio.to_thread(read_before, store, before)
+        except ValueError:
+            await self._json(writer, 400, {"ok": False, "error": "before must be a message id"})
+            return
+        await asyncio.to_thread(self._thumbs, rows)
+        reactions = getattr(inlet, "app_reactions", None)
+        if reactions is not None:
+            kept = reactions.snapshot()
+            for row in rows:
+                if row.get("rid") in kept:
+                    row["reaction"] = kept[row["rid"]]
+        await self._json(writer, 200, {"messages": rows, "more": more, "cursor": "", "busy": self._busy(inlet)})
 
     def _thumbs(self, rows: list[dict[str, Any]]) -> None:
         """Each attachment on the page of rows gets its ``thumb`` (images) and ``gone`` (expired) now. Blocking."""

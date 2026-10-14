@@ -232,3 +232,4 @@ def test_dev_set_is_well_formed_and_covers_each_new_label():
     rows = ev.load_blind(path)
     counts = {label: sum(r["label"] == label for r in rows) for label in ADDED}
     assert all(n >= 2 for n in counts.values()), counts
+

@@ -43,8 +43,21 @@ Source map:
 | `src/AssistantMessage.tsx` | Renders those parts (MarkDownRenderer / react-lang Renderer), and eve's own pictures and files above them |
 | `src/attachments.ts` | Attachments: sanitizing, the owner's binary parts, eve's media kept by message id |
 | `src/AttachmentList.tsx` | Thumbnails and chips for a message's attachments; a tap asks native to open one full size |
+| `src/history.ts`, `src/HorizontalHistory.tsx` | Horizontal History: topic cards over the chat, the star, the jump back (docs/app-chat.md) |
 | `src/App.tsx` | AgentInterface with only the message list; native send/scroll/busy glue |
 | `src/theme.ts`, `src/native.css` | iOS system colors and font, no zoom/callouts/tap highlight |
 
 `pnpm-workspace.yaml` denies `@openuidev/lang-core`'s postinstall (it only
 sends install telemetry).
+
+## Staying on the newest OpenUI
+
+`sh tools/openui_update.sh` (from the repository root) checks npm for newer `@openuidev/react-lang`, `react-ui` and
+`react-headless`. When there is one, it bumps the pins in a worktree of its own (`../eve-openui-update`, never the
+live checkout), runs `pnpm install`, the tests, the type check, `gen-prompt` + `check-prompt`, the app's logic tests,
+the bridge's chat tests and an app build; all green and the iPhone reachable, it installs the app, fast-forwards the
+live checkout and restarts the daemon, so the card rules (Mac) and the renderer (phone) change together. Anything
+failing changes nothing live and eve says what failed. `--dry-run` only reports; `--schedule` runs it every night at
+04:50 (LaunchAgent `com.github.eve-bridge.openui-update`, log `~/Library/Logs/eve-openui-update.log`);
+`--unschedule` stops it. It never pushes.
+

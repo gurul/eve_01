@@ -13,7 +13,17 @@ import { attachmentsOf, textOf } from "./attachments";
 import { ReactionBadge } from "./Reaction";
 import { useReaction } from "./reactions";
 
+// Each bubble carries its message id (data-mid) for Horizontal History's jump back (HorizontalHistory.tsx). The
+// marker takes no box of its own, so the bubble lays out exactly as before.
 export const EveUserMessage = memo(function EveUserMessage({ message }: { message: UserMessage }) {
+  return (
+    <div className="eve-mid" data-mid={message.id}>
+      <OwnerBubble message={message} />
+    </div>
+  );
+});
+
+const OwnerBubble = memo(function OwnerBubble({ message }: { message: UserMessage }) {
   const reaction = useReaction(message.id);
   const attachments = attachmentsOf(message.content);
   if (attachments.length === 0 && !reaction) return <GenUIUserMessage message={message} />;

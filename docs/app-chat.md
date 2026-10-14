@@ -66,11 +66,9 @@ screen but the controls below until there are messages.
   new price starts Oct 23"). A tap switches to Chat and sends exactly that
   sentence, with a second line naming where it came from; long-press to
   dismiss; pull down or tap the refresh button to refresh. See [Updates](updates.md).
-- **Swiping between panes** (owner, 2026-10-12): a sideways swipe moves one
-  pane left or right through Updates | Chat | Apps | Work (`Shared/PaneSwipe.swift`:
-  at least 70 points and twice as sideways as vertical; on the chat, a quick
-  flick on the web view). Rows in these lists have no swipe actions for that
-  reason: a finished job's Delete is a long press, as an Updates card's Dismiss.
+- **Changing panes** is the tab pill only (owner, 2026-10-13: "remove swiping between panes"; it was added
+  2026-10-12 and fought the history cards' sideways swipe). A finished job's Delete is a long press, as an Updates
+  card's Dismiss.
 - **Apps** and **Work** (`App/WorkView.swift`, one plain list each). **Apps**
   is Notes and the Mac's apps (the owner's are Music, Lights, Remote, Pika and
   Camera; any app added to the registry shows up too); **Work** is the chief's jobs.
@@ -552,6 +550,50 @@ never markup.
 Not yet: ChatGPT's "mark relevant or not" and "delete a referenced chat" on a
 source. Forget by words, in the chat or the Memory card, is the way to remove one.
 
+## The whole history, infinite scroll
+
+Owner, 2026-10-13: "keep all chat history, i want infinite scroll". Nothing is pruned on the Mac (transcripts.py
+keeps every day). The page opens with the newest 100 lines however far back they go, and when the owner scrolls near
+the top it asks for the 100 before its first message (`GET /api/link/messages?before=<message id>` →
+`{"messages", "more"}`, through native's `messages` request with `before`), puts them above and keeps the message
+being read in place. `more: false` (the first day) ends it. An older page never moves the live poll's cursor.
+
+## Horizontal History
+
+Owner, 2026-10-13: past topics as "swipeable horizontal cards", with bookmarks and a quick way back in; "remember
+occams razor"; then "a button next to intensity", "important topics", "i dont need to see hi".
+
+eve has one continuous conversation, so a topic is a run of messages with no pause longer than 45 minutes
+(`link_topics.py`, `GAP_SECS`). Its title is the owner's first message that is not small talk (hi, thanks, ok and
+the like), plain and cut at a word; the card's preview is eve's last reply in it. A card is shown only for an
+important topic: the owner said at least 6 words beyond small talk, or the run went back and forth at least 4
+messages. Saved topics always show. The daemon reads the last 30 transcript days.
+
+**Model titles** (owner: "use a model for the titles"). After a list is served, a background pass asks the cheap
+background model (`deepseek/deepseek-v4.1-flash`, reasoning off; `EVE_TOPIC_TITLE_MODEL` moves it) to name up to 8
+untitled topics in 2 to 6 words and to say whether each was only small talk; a small-talk topic gets no card. The
+model reads the start of the topic (at most 3000 characters) through OpenRouter, like any chat turn. Answers are
+cached in `~/.config/eve-bridge/chat/topic-titles.json` (0600) by topic id and message count, so a topic is titled
+once and again only when it grows; the spend shows under "memory". `EVE_TOPIC_TITLES=0`, no OpenRouter key, or a
+failed call: the first-message title and the rules above.
+
+- **The button** (clock, next to the speed dial in the composer) opens and closes a row of cards that slides up just
+  above the composer (`HorizontalHistory.tsx`, `history.ts`): saved topics first (filled star), then recent ones, each
+  once, swiped sideways with snap. Opening asks the Mac for fresh topics.
+- **A tap** closes the row and jumps to the first loaded message of that topic, which glows for a moment. When none
+  of it is loaded yet (older pages load as the owner scrolls up), it sends `Let's pick up "<title>" again.` as the
+  owner, through the composer's own path, and eve's memory does the rest.
+- **The star** saves or unsaves the topic at once and reverts with one line in the row if the Mac refuses. Saved
+  topics are kept in `~/.config/eve-bridge/chat/bookmarks.json` (0600) by the topic's first message id, so a saved
+  topic stays saved while it grows. One whose first message was forgotten drops out.
+- **Routes** (link token, any Origin refused, like every `/api/link` route): `GET /api/link/topics?limit=<1..60>` →
+  `{"topics": [newest first], "bookmarked": [newest bookmark first]}`, each `{id, first_id, last_id, started_at,
+  ended_at, count, title, preview, bookmarked}`; `POST /api/link/topics/bookmark` `{"id", "on"}` → `{"ok", "bookmarked"}`
+  (400 for a malformed body, 404 for a topic the last 30 days do not have). Each list is logged as a count.
+- **Bridge**: the page posts `{type: "topics", id}` and `{type: "bookmark", id, topic, on}`; native calls those routes
+  (`ChatTransport.json`) and answers with `eveNative.onLink(id, json)` or `onError`. The button calls
+  `eveNative.toggleHistory()`. Each bubble carries its message id as `data-mid` for the jump.
+
 ## Why it does not feel like a web page
 
 - The page is in the app. There is no load from the network and no loading
@@ -804,6 +846,23 @@ and the local-input/reset pattern in
 Eve continues to use its installed OpenUI runtime. Model instructions and the
 component reference are unchanged, so this change requires no new prompt eval.
 The reply-selection eval below remains the record for the current prompt.
+
+### Pictures in cards
+
+Owner, 2026-10-13: "use images when u can, especially for like concerts, places and things like that and a
+highquality one is available". A card shows a picture whenever a tool returned a real one and the subject has a look
+(a concert or show, a place, venue, city, artist, team, dish, product or thing): one subject leads the Card with an
+ImageBlock, several make a ListBlock with variant "image". The card reference (`gen-prompt.mjs` RULES) still allows
+only an image URL from a tool result, the conversation or the owner, never an invented one.
+
+- **Concerts and shows**: `events_search` returns each event's widest 16:9 Ticketmaster picture (`image`, at least
+  640 px wide, https only).
+- **Everything else**: `find_image(subject)` (`find_image.py`) makes one keyless call to Wikipedia's API and returns
+  the page's original lead picture only when it is a JPEG, PNG or WebP of at least 800 x 400 (no logos or drawings),
+  else `ok: false` and the card goes without. Its page title is outside words, so it taints the turn like a web search.
+  `EVE_FIND_IMAGE=0` turns it off. The app loads the picture itself (`img-src https:` in the page's CSP).
+- **Voice is spoken, not drawn**: a call, voice mode or the Action Button is not an app turn, so it gets neither the
+  card rules (`app_block`) nor `find_image`, and the app-only speed grading does not run; its prompt stays short.
 
 ## When a reply uses OpenUI
 

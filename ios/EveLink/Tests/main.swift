@@ -237,6 +237,17 @@ check(callJS.contains("n.onChunk(\"t1\",\"x\")") && callJS.contains("typeof n.on
 
 // Message dispatch: each JS -> native message, and what is refused.
 check(ChatBridgeMessage(body: ["type": "ready"]) == .ready, "ready")
+check(ChatBridgeMessage(body: ["type": "topics", "id": "q1"]) == .topics(id: "q1"), "topics")
+check(ChatBridgeMessage(body: ["type": "messages", "id": "m1", "before": "2026-10-01:7", "wait": 25])
+      == .messages(id: "m1", after: nil, wait: 0, before: "2026-10-01:7"), "older page: before, never a wait")
+check(ChatBridgeMessage(body: ["type": "messages", "id": "m1", "before": "../x"]) == .messages(id: "m1", after: nil, wait: 0),
+      "older page: a malformed before is dropped")
+check(ChatBridgeMessage(body: ["type": "bookmark", "id": "q2", "topic": "2026-10-13:12", "on": true])
+      == .bookmark(id: "q2", topic: "2026-10-13:12", on: true), "bookmark")
+check(ChatBridgeMessage(body: ["type": "bookmark", "id": "q2", "topic": "../x", "on": true]) == nil,
+      "bookmark: a topic id that is not <day>:<line> is refused")
+check(ChatBridgeMessage(body: ["type": "bookmark", "id": "q2", "topic": "2026-10-13:12", "on": "yes"]) == nil,
+      "bookmark: on must be a bool")
 check(ChatBridgeMessage(body: ["type": "turn", "id": "t1", "text": "  hi there \n", "client_id": "c1"])
       == .turn(id: "t1", text: "hi there", clientID: "c1"), "turn, text trimmed")
 check(ChatBridgeMessage(body: ["type": "turn", "id": "t1", "text": "   ", "client_id": "c1"]) == nil, "blank turn refused")
@@ -1254,10 +1265,6 @@ check(UpdatesAge.label("2026-10-12T08:59:40-07:00", now: ageNow) == "Updated jus
       && UpdatesAge.label("2026-10-08T16:00:00Z", now: ageNow) == "Updated 4 days ago"
       && UpdatesAge.label(nil, now: ageNow) == nil && UpdatesAge.label("soon", now: ageNow) == nil,
       "updated-ago label")
-check(PaneSwipe.target(index: 1, count: 4, dx: -120, dy: 10) == 2 && PaneSwipe.target(index: 1, count: 4, dx: 120, dy: 10) == 0
-      && PaneSwipe.target(index: 0, count: 4, dx: 120, dy: 0) == nil && PaneSwipe.target(index: 3, count: 4, dx: -120, dy: 0) == nil
-      && PaneSwipe.target(index: 1, count: 4, dx: -40, dy: 0) == nil && PaneSwipe.target(index: 1, count: 4, dx: -120, dy: 80) == nil,
-      "pane swipe: sideways and far enough, within the panes")
 print("UPDATES_OK")
 
 // The phone's location (Shared/PhoneLocation.swift). Fictional points only: the null island at 0,0 and offsets from it.
