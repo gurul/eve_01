@@ -39,6 +39,8 @@ function setup(where: "mac" | "lan" = "lan") {
     setBusy: vi.fn(),
     scrollToBottom: vi.fn(),
     setInsets: vi.fn(),
+    onLink: vi.fn(),
+    toggleHistory: vi.fn(),
   };
   const openWindow = vi.fn();
   const openScheme = vi.fn();

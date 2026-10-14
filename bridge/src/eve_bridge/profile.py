@@ -103,7 +103,7 @@ LITE_FORCED: dict[str, str] = {
     # the Mac: no microphone, keyboard, camera, screen, Codex, lanes, Chrome, coding sessions or learning server
     "EVE_VOICE": "0", "EVE_CALL_LIVE_STT": "0", "EVE_LISTEN_KEY": "off", "EVE_MAC_CAMERA": "off", "EVE_SCENE": "0",
     "EVE_EXPLORE": "0", "EVE_ROBOT": "0", "EVE_COMPUTER_CONTROL": "0", "EVE_CODEX_PREWARM": "0", "EVE_DESK_LANE": "0",
-    "EVE_BROWSER_ATTACH": "0", "EVE_BROWSER_OWN": "0", "EVE_WORK_SESSIONS": "0", "EVE_LEARNING": "0",
+    "EVE_BROWSER_ATTACH": "0", "EVE_BROWSER_OWN": "0", "EVE_BROWSER_STEEL": "0", "EVE_WORK_SESSIONS": "0", "EVE_LEARNING": "0",
     # devices: the owner's apps (app_registry; any app added later is forced off below) and the phone's faces
     "EVE_LIGHTS": "0", "EVE_SPOTIFY": "0", "EVE_FIRETV": "0", "EVE_PIKA": "0", "EVE_OBSBOT": "0",
     "EVE_PHONE_EXPRESSIONS": "0",
@@ -214,6 +214,11 @@ LITE_CLASSIFIED: dict[str, str] = {
            "EVE_THINK_TIMEOUT_SECS"),
     **_why("kept: small talk, on in lite", "EVE_SMALL_TALK", "EVE_SMALL_TALK_MODEL"),
     **_why("kept: science search, on in lite (no key)", "EVE_SCIENCE_SEARCH"),
+    **_why("kept: card pictures from Wikipedia (find_image), on in lite (no key)", "EVE_FIND_IMAGE"),
+    **_why("kept: Horizontal History's topic titles, through OpenRouter", "EVE_TOPIC_TITLES",
+           "EVE_TOPIC_TITLE_MODEL"),
+    **_why("inert while EVE_BROWSER_STEEL is forced off: a setting of the local Steel browser lane (steel_local.py)",
+           "EVE_STEEL_DIR", "EVE_STEEL_PROFILE", "EVE_STEEL_URL"),
     **_why("kept: web search through OpenRouter (Perplexity), on in lite", "EVE_WEB_SEARCH", "EVE_WEB_SEARCH_MODEL",
            "EVE_WEB_SEARCH_RESULTS", "EVE_WEB_SEARCH_MAX_USES"),
     **_why("kept: watches, on in lite, with the plain reader and OpenRouter", "EVE_WATCH", "EVE_WATCH_FILE",

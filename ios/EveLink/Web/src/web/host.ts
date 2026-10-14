@@ -306,6 +306,7 @@ export function createWebHost(opts: HostOptions): WebHost {
     const id = msg.id;
     const query = new URLSearchParams();
     if (typeof msg.after === "string" && msg.after) query.set("after", msg.after);
+    if (typeof msg.before === "string" && msg.before) query.set("before", msg.before);   // infinite scroll
     const wait = Number.isFinite(msg.wait) ? Math.min(25, Math.max(0, Math.floor(msg.wait))) : 0;
     if (wait > 0) query.set("wait", String(wait));
     const entry: Entry = { kind: "messages", handle: null, started: Date.now() };
@@ -405,6 +406,10 @@ export function createWebHost(opts: HostOptions): WebHost {
         return haptic(msg.style);
       case "openURL":
         return openURL(msg.url);
+      case "topics":
+      case "bookmark":
+        native.onError(msg.id, "History is not in eve lite yet");   // Horizontal History needs the app's composer
+        return;
       case "openAttachment":
         if (UPLOAD_ID.test(msg.id)) opts.openAttachment({ id: msg.id, name: msg.name, kind: msg.kind });
         return;

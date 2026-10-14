@@ -25,7 +25,7 @@ Run from the repository root. `H` is a throwaway HOME so no test touches the own
 
 ## Gates
 
-- [x] L1: Owner golden: full eve's composition, prompts, tool sets, Composio verdicts and plist are byte-identical to `d419b37`, and a mutated environment is caught (positive control).
+- [x] L1: Owner golden: full eve's composition, prompts, tool sets, Composio verdicts and plist are byte-identical to main (recorded at `d419b37`, re-recorded at `ed9aea3` when main was merged in), and a mutated environment is caught (positive control).
   CHECK: cd bridge && HOME=$EVE_SCRATCH/home .venv/bin/python tools/owner_golden.py --check && HOME=$EVE_SCRATCH/home .venv/bin/python -m pytest -q -p no:cacheprovider tests/test_owner_golden.py && echo L1_OK
   EXPECT: L1_OK
   EVIDENCE: exit=0; shell=/bin/sh; cwd=eve-oneclick; path=8ae25fade4c8/16 entries; output=10 passed in 0.45s | L1_OK
@@ -36,7 +36,7 @@ Run from the repository root. `H` is a throwaway HOME so no test touches the own
   EVIDENCE: exit=0; shell=/bin/sh; cwd=eve-oneclick; path=8ae25fade4c8/16 entries; output=181 passed in 11.55s | L2_OK
 
 - [x] L3: The lite brain (WP-3): offers exactly the lite tool set, refuses the Mac tools with no side effect, the Composio gate asks before sends and removals, and `test_telegram_app_only.py` passes unmodified.
-  CHECK: cd bridge && HOME=$EVE_SCRATCH/home .venv/bin/python -m pytest -q -p no:cacheprovider tests/test_telegram_lite.py tests/test_lite_brain.py tests/test_composio_lite_decide.py tests/test_self_context_lite.py tests/test_telegram_app_only.py tests/test_composio_tools.py tests/test_self_context.py && git diff --quiet d419b37 -- tests/test_telegram_app_only.py && echo L3_OK
+  CHECK: cd bridge && HOME=$EVE_SCRATCH/home .venv/bin/python -m pytest -q -p no:cacheprovider tests/test_telegram_lite.py tests/test_lite_brain.py tests/test_composio_lite_decide.py tests/test_self_context_lite.py tests/test_telegram_app_only.py tests/test_composio_tools.py tests/test_self_context.py && git diff --quiet ed9aea3 -- tests/test_telegram_app_only.py && echo L3_OK
   EXPECT: L3_OK
   EVIDENCE: exit=0; shell=/bin/sh; cwd=eve-oneclick; path=8ae25fade4c8/16 entries; output=209 passed in 1.34s | L3_OK
 
@@ -76,7 +76,7 @@ Run from the repository root. `H` is a throwaway HOME so no test touches the own
   EVIDENCE: exit=0; shell=/bin/sh; cwd=eve-oneclick; path=8ae25fade4c8/16 entries; output=127 passed in 1.94s | L10_OK
 
 - [x] L11: Web client (WP-11): vitest, typecheck and `build:web` pass, the bundle lands in `web_lite/`, and the iOS app's files are untouched.
-  CHECK: cd ios/EveLink/Web && pnpm install --frozen-lockfile >/dev/null && pnpm test && pnpm exec tsc --noEmit && pnpm build:web && test -f ../../../bridge/src/eve_bridge/web_lite/index.html && git diff --quiet d419b37 -- ../App vite.config.ts src/App.tsx src/nativeBridge.ts && echo L11_OK
+  CHECK: cd ios/EveLink/Web && pnpm install --frozen-lockfile >/dev/null && pnpm test && pnpm exec tsc --noEmit && pnpm build:web && test -f ../../../bridge/src/eve_bridge/web_lite/index.html && git diff --quiet ed9aea3 -- ../App vite.config.ts src/App.tsx src/nativeBridge.ts && echo L11_OK
   EXPECT: L11_OK
   EVIDENCE: exit=0; shell=/bin/sh; cwd=eve-oneclick; path=8ae25fade4c8/16 entries; output=$ vitest run | $ vite build --config vite.web.config.ts
 
@@ -105,7 +105,7 @@ Run from the repository root. `H` is a throwaway HOME so no test touches the own
   EXPECT: L16_OK
   EVIDENCE: exit=0; shell=/bin/sh; cwd=eve-oneclick; path=8ae25fade4c8/16 entries; output=11 passed in 39.88s | L16_OK
 
-- [x] L17: No regression: the full suite on this branch fails only tests that already fail on `d419b37` in the same environment (61 listed, Playwright browsers, laya and temp-HOME).
+- [x] L17: No regression: the full suite on this branch fails only tests that already fail on main (`d419b37`, then `ed9aea3`) in the same environment (61 listed, Playwright browsers, laya and temp-HOME).
   CHECK: cd bridge && HOME=$EVE_SCRATCH/home .venv/bin/python -m pytest -q -p no:cacheprovider -n 8 -rfE > $EVE_SCRATCH/branch-suite.txt 2>&1; tail -1 $EVE_SCRATCH/branch-suite.txt | grep -qE '[0-9]+ passed' && grep -E '^(FAILED|ERROR) ' $EVE_SCRATCH/branch-suite.txt | sed -E 's/ - .*//' | sort > $EVE_SCRATCH/branch-failures.txt; tail -1 $EVE_SCRATCH/branch-suite.txt | grep -qE '[0-9]+ passed' && test "$(comm -13 $EVE_SCRATCH/baseline-failures.txt $EVE_SCRATCH/branch-failures.txt | tee $EVE_SCRATCH/new-failures.txt | wc -l | tr -d ' ')" = 0 && echo L17_OK
   EXPECT: L17_OK
   EVIDENCE: exit=0; shell=/bin/sh; cwd=eve-oneclick (run directly after the CHECK was rewritten to fail when the suite does not run); output=59 failed, 8056 passed, 82 skipped, 2 errors in 98.99s | 61 failures, 0 not in the d419b37 baseline | L17_OK

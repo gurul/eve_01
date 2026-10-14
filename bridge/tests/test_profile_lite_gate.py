@@ -175,7 +175,9 @@ CHECKS: dict[str, tuple[Callable[[Mapping[str, str]], Any], Any, dict[str, str]]
     "EVE_CODEX_PREWARM": (lambda e: codex_warm.configured(e)[0], False, {}),
     "EVE_DESK_LANE": (desk_lane.enabled, False, {}),
     "EVE_BROWSER_ATTACH": (lambda e: browser_lane.configured(e).attach, False, {"EVE_BROWSER_ATTACH": "1"}),
-    "EVE_BROWSER_OWN": (lambda e: browser_lane.configured(e).own, False, {"EVE_BROWSER_OWN": "1"}),
+    "EVE_BROWSER_OWN": (lambda e: browser_lane.configured({**e, "EVE_BROWSER_STEEL": "0"}).own, False,  # Steel wins
+                        {"EVE_BROWSER_OWN": "1"}),
+    "EVE_BROWSER_STEEL": (lambda e: browser_lane.configured(e).steel, False, {"EVE_BROWSER_STEEL": "1"}),
     "EVE_WORK_SESSIONS": (work_sessions.enabled, False, {}),
     "EVE_LEARNING": (inline("daemon", "EVE_LEARNING"), False, {}),
     # devices
