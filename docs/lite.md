@@ -22,12 +22,13 @@ installer writes. With `EVE_PROFILE` unset, eve is the owner's full eve, unchang
 
 Written 2026-10-13, on branch `feat/one-click-variant`.
 
-- **No release is published yet.** The install line downloads `install-lite.sh` from the newest published release of
-  github.com/gurul/eve_01, and no eve lite release has been published: until the owner runs `tools/release_lite.sh`
-  and publishes the draft it makes ([making a release](#making-a-release)), the line gets a 404. A copy of
-  `install-lite.sh` taken from the repository instead of a release refuses to install: it has no release to fetch.
-- **Not tried yet on a real phone, a fresh Mac or a real sign-in.** The checks that need the owner, a phone or a fresh
-  VM are listed under [Verified on](#verified-on), all pending.
+- **lite-v0.1.3 is published** (2026-10-14; lite-v0.1.2 the same day), so the install line works. The install line downloads `install-lite.sh`
+  from the newest published release of github.com/gurul/eve_01 ([making a release](#making-a-release)). A copy of
+  `install-lite.sh` taken from the repository instead of a release refuses to install: it has no release to fetch. The
+  release script stamps the repository's copy too; leave that uncommitted, as the tests expect it unstamped.
+- **Installed and set up on the owner's Mac (2026-10-14).** The owner installed it from the release's tarball, signed
+  in and reported that it works. The other checks that need a phone or a fresh VM are listed under
+  [Verified on](#verified-on), still pending.
 - **The lite prompts have not passed their blind eval.** The bar and the blind set are written
   ([the eval](evals/lite-prompt.md)); the scored run costs money and waits for the owner (AGENTS rule 6).
 - **Thirteen decisions were taken without the owner.** They are at the end, as [open questions](#the-owners-open-questions).
@@ -38,7 +39,7 @@ Written 2026-10-13, on branch `feat/one-click-variant`.
 curl -fsSL https://github.com/gurul/eve_01/releases/latest/download/install-lite.sh | bash
 ```
 
-No release is published yet, so this line does not work yet ([Status](#status)).
+This line installs the newest published release, lite-v0.1.3 at the time of writing ([Status](#status)).
 
 You need a Mac with Apple silicon (M1 or later) on macOS 14 or later, and to run it as yourself, not with `sudo`.
 Intel Macs and macOS 13 are not supported: cryptography's macOS wheels are for arm64 only, and av's arm64 wheel needs
@@ -179,6 +180,9 @@ Mac. It lasts 5 years; the certificate the LAN door serves lasts 397 days.
 
 - After the Composio sign-in, **Settings → Apps** lists Gmail, Google Calendar, Google Drive, Slack, Notion, Linear and
   GitHub, each with **Connect**. Connect opens Composio's Connect Link, then the provider's own consent page.
+  Back on eve's page, a connected app shows **✓ Connected** in place of the button. The list is read from Composio's
+  search answer, the one part of it that is a JSON object (Composio adds notes as parts of their own since 2026-10-14;
+  before 0.1.3 those notes made every app read as not connected).
 - Or ask: "what's on my calendar today?" When the app is not connected, eve sends its sign-in link in the chat. Any
   other app that Composio signs you in to with its own sign-in (managed auth) connects the same way, by asking.
 - Reads run. Gmail drafts and private calendar edits run. Sending, deleting and other one-way acts ask first, showing
@@ -413,6 +417,9 @@ sh tools/release_lite.sh --dry-run   # checks everything and prints the plan; wr
 sh tools/release_lite.sh             # builds lite-v<version>, then asks before drafting the GitHub release
 ```
 
+On a Mac where uv has never fetched a Python, the dry run stops at "uv export failed: uv.lock has no lite extra, or it
+is out of date": the export runs `--offline` and finds no interpreter. Run `uv python install` once, then again.
+
 It builds from the commit alone (it refuses while anything it builds from is not committed), in a scratch copy:
 1. the web page (`pnpm build:web`);
 2. the requirements from `uv.lock`: the core dependencies and the `lite` extra, hash-pinned, without the pyautogui
@@ -437,12 +444,12 @@ models for eve lite are in [verification.md](verification.md#eve-lite-2026-10-13
 
 ## Verified on
 
-Nothing below has been run yet, except spike S1. Each row is filled in, with its date and evidence, when it runs.
+Nothing below has been run yet, except spike S1 and part of M2. Each row is filled in, with its date and evidence, when it runs.
 
 | Check | What it needs | Status |
 |---|---|---|
 | M1 | A fresh macOS VM with no developer tools and no Homebrew: the install line raises no "install developer tools" dialog and no Bluetooth, Microphone, Accessibility or Screen Recording prompt; record the Background Items text, the install time and the disk used | pending |
-| M2 | iPhone Safari: scan, click through the certificate, pair, chat, a hold-to-talk round trip; then the CA install ends the warning | pending |
+| M2 | iPhone Safari: scan, click through the certificate, pair, chat, a hold-to-talk round trip; then the CA install ends the warning | partial, 2026-10-14: an iPhone on the owner's Wi-Fi scanned the iPhone code, clicked through the warning and paired (`web devices`: "iPhone · Safari", `gurucharans-macbook-pro-2.local`, about 35 s after Add a phone); the owner: "paired, chat works". Hold-to-talk and the CA install still pending |
 | M3 | Android Chrome: the same | pending |
 | M4 | A real OpenRouter sign-in through the setup page, with an account that has no credit and with a funded one | pending |
 | M5 | A real Composio Connect sign-in; connect Gmail; a read runs and a send asks | pending |

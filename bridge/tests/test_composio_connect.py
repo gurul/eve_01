@@ -830,15 +830,27 @@ def test_a_malformed_answer_never_raises(tmp_path: Path, fake: Composio, bridges
 
 def test_a_result_with_two_text_parts_is_read_as_its_text(tmp_path: Path, fake: Composio,
                                                           bridges: list[ConnectBridge]) -> None:
-    """Composio's object is read out of the text only when the text is one part: of two, neither is dropped."""
+    """The model reads every part: of two, neither is dropped. Settings reads the one part that is Composio's object,
+    so a note after it (as Composio sends since 2026-10-14) does not make a connected app read as not connected."""
     bridge = connect(tmp_path, fake, bridges)
     first = json.dumps({"data": {"toolkit_connection_statuses": [{"toolkit": "gmail", "has_active_connection": True}]},
                         "successful": True})
     fake.answers[SEARCH_TOOLS] = lambda args: {"content": [{"type": "text", "text": first},
                                                            {"type": "text", "text": "and a note"}]}
     assert bridge.execute(SEARCH_TOOLS, {}) == {"ok": True, "result": first + "\nand a note"}
-    assert bridge.connections(["gmail"]) == {"gmail": False}   # nor taken for Settings, which asks the search itself
+    assert bridge.connections(["gmail"]) == {"gmail": True}    # seen in the brain's search: no call of its own
+    assert len(fake.calls("tools/call")) == 1
+    assert bridge.connections(["gmail"], max_age=0) == {"gmail": True}  # Settings' own read, the same answer
     assert len(fake.calls("tools/call")) == 2
+
+
+def test_two_json_objects_in_one_result_are_read_as_neither(tmp_path: Path, fake: Composio,
+                                                            bridges: list[ConnectBridge]) -> None:
+    bridge = connect(tmp_path, fake, bridges)
+    one = json.dumps({"data": {"toolkit_connection_statuses": [{"toolkit": "gmail", "has_active_connection": True}]}})
+    fake.answers[SEARCH_TOOLS] = lambda args: {"content": [{"type": "text", "text": one},
+                                                           {"type": "text", "text": one}]}
+    assert bridge.connections(["gmail"], max_age=0) == {"gmail": False}
 
 
 def test_an_answer_that_cannot_be_read_after_the_call_ran_says_it_may_have_run(

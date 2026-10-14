@@ -81,8 +81,8 @@ only thing that tells you where you are. The whole path takes about an hour.
 
 For someone without Xcode or Homebrew, or who wants no iPhone app, set up **eve lite**
 instead: one install line on an Apple-silicon Mac, two sign-ins in the browser, and eve as
-a web page on the Mac and on phones on the same Wi-Fi ([eve lite](docs/lite.md); no
-release is published yet, so its line does not work yet). Everything below is full eve.
+a web page on the Mac and on phones on the same Wi-Fi ([eve lite](docs/lite.md); the
+latest release, lite-v0.1.3, is published). Everything below is full eve.
 
 - A Mac on macOS 14 or later, with Python 3.12 (`python3.12 --version`), Homebrew,
   Node 22.12 or later with pnpm (the phone app's chat page, eve lite's web page and the
