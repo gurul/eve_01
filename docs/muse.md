@@ -76,6 +76,16 @@ app on your phone.
 
    Restart the daemon. Then open Eve Link: the switch appears left of History.
 
+6. **Keep the Pi on.** Copy `pi/keepalive/` to the Pi and run `bash install.sh`
+   there. It turns Wi-Fi power saving off (a sleeping radio made the Pi
+   unreachable from the Mac until the Pi itself sent something), pings the
+   router every minute and reconnects Wi-Fi after three misses in a row, and
+   turns on the hardware watchdog, so a frozen Pi reboots itself. The Muse
+   service already starts at boot and restarts if it stops.
+
+   Give the Pi a fixed address in your router (a DHCP reservation), because
+   `EVE_MUSE_PI` names it by address.
+
 ## How it works
 
 1. The Pi's `musegadget` service stays connected to your Muse (a Noise session
@@ -100,6 +110,8 @@ app on your phone.
 | `~/.config/eve-bridge/muse-session` | Mac | The id of eve's Muse side chat. Delete it to start a fresh chat. |
 | `/var/lib/musegadget/` | Pi | Meta's SDK state: the SDK token, the device identity and the pairing (root only). |
 | `/opt/eve-muse/` | Pi | eve's relay and `ask.py`. |
+| `eve-wifi-keepalive.timer` | Pi | The Wi-Fi keepalive, every minute (`journalctl -u eve-wifi-keepalive` shows reconnects). |
+| `/etc/systemd/system.conf.d/eve-watchdog.conf` | Pi | The hardware watchdog: 15 s. |
 | `/etc/systemd/system/musegadget.service.d/eve-relay.conf` | Pi | Starts the service through eve's relay. Delete it and restart the service to undo. |
 
 ## Data

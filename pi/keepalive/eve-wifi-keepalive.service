@@ -1,0 +1,7 @@
+[Unit]
+Description=eve: keep the Pi on the network (Wi-Fi keepalive)
+After=NetworkManager.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/eve-wifi-keepalive.sh
