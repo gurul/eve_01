@@ -181,6 +181,20 @@ _COLLECT_JS = """() => {
           text_hash: (document.body ? document.body.innerText : '').length + ':' + document.body?.innerText?.slice(0, 4000)}; }
 """ % MAX_CANDIDATES
 
+# WebMCP (developer.chrome.com/docs/ai/webmcp): a page can register its own tools on document.modelContext,
+# which an agent could call instead of clicking. Measurement only: how many pages eve visits offer any.
+# The lane never calls them. getTools() is raced against 300 ms so a page that never answers cannot hold a step.
+_WEBMCP_JS = """async () => {
+  const mc = document.modelContext;
+  if (!mc) return {api: false};
+  if (typeof mc.getTools !== 'function') return {api: true, names: null};
+  try {
+    const tools = await Promise.race([mc.getTools(), new Promise(r => setTimeout(() => r(null), 300))]);
+    if (!Array.isArray(tools)) return {api: true, names: null};
+    return {api: true, names: tools.slice(0, 50).map(t => String((t && t.name) || ''))};
+  } catch (e) { return {api: true, names: null}; }
+}"""
+
 # A cookie or consent notice covering the page. Sites put it in a dialog, which the lane (rightly) never
 # operates, so every click stopped at dialog_open and no plan dismissed it first (browser_model_eval
 # cookie_banner, 2026-09-24: 0 of 15 runs across five models). Code dismisses it before a click or a type:
@@ -697,7 +711,8 @@ class _Page:
     """Senses and effectors over one Playwright page, on the lane's thread. The methods and their return
     strings are the contract desktop_helpers' adapter keeps, because run_plan and run_delegate read them."""
 
-    def __init__(self, page: Any, clock: Callable[[], float] = time.perf_counter, vault: Any = None) -> None:
+    def __init__(self, page: Any, clock: Callable[[], float] = time.perf_counter, vault: Any = None,
+                 webmcp_probe: bool = False) -> None:
         self.page = page
         self.clock = clock
         self.vault = vault                        # vault.Vault, or None: the fill effector refuses
@@ -707,6 +722,8 @@ class _Page:
         self._observed_url = ""
         self._hash_before = ""
         self._hash0 = ""
+        self.webmcp_probe = webmcp_probe
+        self._webmcp_seen = ""
 
     # -- senses --
     def _read_dom(self, read: Callable[[], Any]) -> Any:
@@ -748,7 +765,32 @@ class _Page:
         controls = [(e.get("role"), e.get("name"), e.get("value")) for e in raw.get("elements") or []]
         digest = hashlib.sha1(json.dumps([raw.get("url"), raw.get("title"), raw.get("text_hash"), controls]).encode())
         self._hash_before, self._hash0 = self._hash0, digest.hexdigest()
+        if self.webmcp_probe:
+            self._probe_webmcp(self._observed_url)
         return snap
+
+    def _probe_webmcp(self, url: str) -> None:
+        """Log, once per page, whether it offers WebMCP tools. Only the host and the tool names are logged,
+        never the path or query. A failed probe is silent: it must never cost a step."""
+        parts = urlsplit(url)
+        if parts.scheme not in ("http", "https") or not parts.hostname:
+            return
+        page_key = f"{parts.scheme}://{parts.netloc}{parts.path}"
+        if page_key == self._webmcp_seen:
+            return
+        self._webmcp_seen = page_key
+        try:
+            found = self.page.evaluate(_WEBMCP_JS)
+        except Exception:  # noqa: BLE001 — measurement only
+            return
+        if not isinstance(found, dict):
+            return
+        names = found.get("names")
+        if isinstance(names, list):
+            names = [re.sub(r"[^A-Za-z0-9_.-]", "", str(n))[:64] for n in names]
+        log.info("browser lane: webmcp probe host=%s api=%s tools=%s names=%s", parts.hostname,
+                 bool(found.get("api")), len(names) if isinstance(names, list) else "-",
+                 ",".join(names) if names else "-")
 
     def current_url(self) -> str:
         """Full URL from the last successful snapshot; never perform another read."""
@@ -994,7 +1036,7 @@ class BrowserLane:
             self._context = self._pick_profile(self.config.chrome_profile)   # the owner's profile: their logins
             page = self._context.new_page()                   # eve's own tab; the owner's tabs are never touched
             page.bring_to_front()
-            self._page = _Page(page, vault=self.vault)
+            self._page = _Page(page, vault=self.vault, webmcp_probe=True)
             return self._page
         if self._context is None:
             if self._launcher is not None:
@@ -1016,7 +1058,7 @@ class BrowserLane:
             pages = list(self._context.pages)
             page = pages[0] if pages else self._context.new_page()
         page.bring_to_front()
-        self._page = _Page(page, vault=self.vault)
+        self._page = _Page(page, vault=self.vault, webmcp_probe=True)
         return self._page
 
     def _profiles(self) -> dict[str, Any]:
@@ -1092,7 +1134,7 @@ class BrowserLane:
             self._context = target
             page = target.new_page()
             page.bring_to_front()
-            self._page = _Page(page, vault=self.vault)
+            self._page = _Page(page, vault=self.vault, webmcp_probe=True)
         return email
 
     def _alive(self) -> bool:

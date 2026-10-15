@@ -571,7 +571,8 @@ mode (`EVE_BROWSER_ATTACH=1`), or eve's own Chrome with no Allow prompt
 (`EVE_BROWSER_OWN=1`). The browser planner now defaults to `gpt-6-luna`;
 `EVE_BROWSER_MODEL` overrides it, and explicit agent-model choices are retained.
 Observed link URLs support exact destination verification; truncated control lists
-stop before a click. See [swarm improvements and before/after graphs](docs/computer-swarm-improvements.md)
+stop before a click. Each new page is checked for WebMCP tools and logged, for
+measurement only ([WebMCP probe](docs/webmcp.md)). See [swarm improvements and before/after graphs](docs/computer-swarm-improvements.md)
 for the 54-task rerun (42 → 53 autonomous completions), guarded admission and
 the remaining desktop capture limits.
 
