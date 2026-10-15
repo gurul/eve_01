@@ -78,11 +78,23 @@ app on your phone.
    Restart the daemon. Then open Eve Link: the switch appears left of History.
 
 6. **Keep the Pi on.** Copy `pi/keepalive/` to the Pi and run `bash install.sh`
-   there. It turns Wi-Fi power saving off (a sleeping radio made the Pi
-   unreachable from the Mac until the Pi itself sent something), pings the
-   router every minute and reconnects Wi-Fi after three misses in a row, and
-   turns on the hardware watchdog, so a frozen Pi reboots itself. The Muse
-   service already starts at boot and restarts if it stops.
+   there. Every minute it:
+
+   - pings the router, and reconnects Wi-Fi after three misses in a row;
+   - checks that the Pi still hears broadcast traffic, and reconnects Wi-Fi when
+     the Pi's multicast receive counter stands still for three minutes;
+   - pings each machine that SSHed into the Pi in the last two weeks (the Mac),
+     so their address tables keep the Pi.
+
+   It also turns Wi-Fi power saving off and turns on the hardware watchdog, so a
+   frozen Pi reboots itself. The Muse service already starts at boot and
+   restarts if it stops.
+
+   Why the broadcast check: on 2026-10-15 the Pi's Wi-Fi stopped receiving
+   broadcast and multicast frames (0 in 30 s on a busy network) while unicast
+   kept working. The Pi still reached the router and Muse, but the Mac could
+   not find it, because finding a device by address (ARP) is a broadcast. A Wi-Fi
+   reconnect brought broadcasts back (38 frames in the next 30 s).
 
    Give the Pi a fixed address in your router (a DHCP reservation), because
    `EVE_MUSE_PI` names it by address.
@@ -111,7 +123,8 @@ app on your phone.
 | `~/.config/eve-bridge/muse-session` | Mac | The id of eve's Muse side chat. Delete it to start a fresh chat. |
 | `/var/lib/musegadget/` | Pi | Meta's SDK state: the SDK token, the device identity and the pairing (root only). |
 | `/opt/eve-muse/` | Pi | eve's relay and `ask.py`. |
-| `eve-wifi-keepalive.timer` | Pi | The Wi-Fi keepalive, every minute (`journalctl -u eve-wifi-keepalive` shows reconnects). |
+| `eve-wifi-keepalive.timer` | Pi | The Wi-Fi keepalive, every minute (`journalctl -u eve-wifi-keepalive` shows reconnects and why). |
+| `/run/eve-wifi-keepalive/` | Pi | The keepalive's counters: router misses, and the multicast count with the minutes it has stood still. |
 | `/etc/systemd/system.conf.d/eve-watchdog.conf` | Pi | The hardware watchdog: 15 s. |
 | `/etc/systemd/system/musegadget.service.d/eve-relay.conf` | Pi | Starts the service through eve's relay. Delete it and restart the service to undo. |
 
@@ -123,8 +136,12 @@ in eve's own model history. eve logs only lengths and outcomes, never your words
 
 ## Checks
 
-- `bash pi/muse/check_roundtrip.sh` asks Muse two questions through the Pi and
-  checks the answers and that the second sees the first. It needs `EVE_MUSE_PI`
-  set and posts two test messages to a fresh Muse side chat.
+- `bash pi/muse/check_roundtrip.sh` gives Muse a made-up locker code through
+  the Pi and asks for it back, which checks that answers return and that Muse
+  keeps the conversation. It needs `EVE_MUSE_PI` set and posts two messages to a
+  fresh Muse side chat. It asks as an ordinary request: Muse declines a message
+  that tells it to echo a word for a check.
+- `bash pi/keepalive/test_keepalive.sh` runs the keepalive against stand-ins:
+  healthy minutes, a broadcast stall, a lost router, and a Pi with no counter.
 - `bridge/tests/test_muse_pi.py` covers the client, the switch words, one relay
   at a time and the app's `/api/link/muse`.
