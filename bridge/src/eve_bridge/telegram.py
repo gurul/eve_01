@@ -109,6 +109,7 @@ from . import (
     link_reactions,
     meet,
     memory_sources,
+    muse_pi,
     menu_tools,
     opentable,
     phone_location,
@@ -288,6 +289,13 @@ CLAUDE_ON_LINE = ("This chat is the terminal now. What you text is typed into Cl
                   "comes back here, and its tool calls go through without asking, as in bypass mode.\n\n"
                   "\"eve: ...\" talks to me instead. \"claude off\" ends it.")
 CLAUDE_OFF_LINE = "Claude relay off."
+# Muse on the owner's Raspberry Pi (muse_pi.py, docs/muse.md): while on, the owner's words go to Muse, not to eve.
+MUSE_ON = ("muse on", "/muse on", "/muse_on", "switch to muse", "talk to muse", "turn on muse")
+MUSE_OFF = ("muse off", "/muse off", "/muse_off", "back to eve", "switch to eve", "turn off muse", "stop talking to muse")
+MUSE_TITLE = "Muse"
+MUSE_ON_LINE = "You're talking to Muse now. \"eve: ...\" talks to me instead; \"muse off\" comes back."
+MUSE_OFF_LINE = "Back with eve."
+MUSE_UNAVAILABLE_LINE = "Muse isn't set up on this Mac (EVE_MUSE_PI)."
 CLAUDE_NOT_ON_LINE = "The Claude relay is off. Say \"claude on\" first."
 CLAUDE_PICK_LINE = "Which Claude session? Tap one, or start a new one."
 CLAUDE_NONE_LINE = "No Claude session is running. Let's start one; the chat joins it once it opens."
@@ -2748,6 +2756,7 @@ class TelegramInlet:
         self._permission_timeout = permission_timeout_secs
         self.stealth = False
         self.claude = False                               # the terminal relay
+        self.muse = False                                 # the owner's words go to Muse on the Pi (muse_pi)
         self._chat_id: Optional[int] = next(iter(sorted(config.owner_ids)), None)   # a private chat's id is the user's
         self._relay_cwd: str = ""                          # the session Claude last spoke from
         self._relay_pin: str = ""                          # the session picked at "claude on"; "" follows the last
@@ -3315,6 +3324,10 @@ class TelegramInlet:
             self._route_stop(inbound.chat_id)
             return
         self._chat_id = inbound.chat_id
+        if word in MUSE_ON or word in MUSE_OFF:
+            self._note("user", inbound.text, "command")
+            self.set_muse(word in MUSE_ON, chat_id=inbound.chat_id)
+            return
         claude_on_target = re.fullmatch(r"/?claude[ _]on\s+(.+)", word)
         if word in CLAUDE_ON or word in CLAUDE_OFF or claude_on_target:
             self._claude_switch(inbound, word not in CLAUDE_OFF,
@@ -3362,6 +3375,16 @@ class TelegramInlet:
                 or word in WATCH_WORDS or SCREEN_NOW.match(inbound.text)
                 or self._chief_word(inbound.text) is not None):
             pass                                          # eve's own code words, relay or not
+        elif self.muse and not watch_ask and not self._answers_pending(inbound.text):
+            # Muse on: the owner's words are for Muse, "eve: ..." for eve. eve's own code words stay eve's (above).
+            for_eve = EVE_PREFIX.match(inbound.text)
+            if for_eve is None:
+                self._record("user", "relay", inbound.text)
+                self._spawn(self._muse_send(inbound.chat_id, inbound.text), "telegram-muse")
+                return
+            inbound = dataclasses.replace(inbound, text=for_eve.group(2).strip())
+            word = inbound.text.lower().rstrip(".! ")
+            addressed_eve = True
         elif self.claude and not watch_ask and not self._answers_pending(inbound.text):
             # Relay on: the chat IS the terminal. A yes/no while Claude is asking answers Claude (below);
             # "eve: ..." is for eve; everything else is typed into the session. With Allow/Deny on the
@@ -3484,6 +3507,7 @@ class TelegramInlet:
             self._codex_epoch += 1
             self._codex_chat = None if action == "off" else chat_id
             if action != "off":
+                self.muse = False                      # one relay at a time
                 self._claude_epoch += 1                # a "new claude" still opening does not join (_launch_step)
                 self._defer_permission()
                 self.claude, self._relay_pin, self._join_after_launch = False, "", False
@@ -3524,8 +3548,38 @@ class TelegramInlet:
             log.info("telegram: claude relay off")
             self._spawn(self._say(chat_id, CLAUDE_OFF_LINE), "telegram-say")
             return True
+        self.muse = False                                  # one relay at a time
         self._claude_on(inbound, target, ask_to_start=ask_to_start)
         return True
+
+    def set_muse(self, on: bool, *, chat_id: Optional[int] = None, tell: bool = True) -> bool:
+        """"muse on" / "muse off", typed or from the app's switch (link_chat ``/api/link/muse``) → whether Muse is
+        on now. On turns the Claude and Codex relays off: one relay at a time. Off when Muse is not set up here."""
+        chat = chat_id if chat_id is not None else self._chat_id
+        if on and not muse_pi.available():
+            if tell and chat is not None:
+                self._spawn(self._say(chat, MUSE_UNAVAILABLE_LINE), "telegram-say")
+            self.muse = False
+            return False
+        if on and chat is not None:
+            if self.claude:
+                self._claude_switch(Inbound(chat_id=chat, user_id=chat, text="claude off"), False, tell=False)
+            if self._codex_chat == chat:
+                self._codex_switch(chat, "off", None)
+        changed = self.muse != on
+        self.muse = on
+        log.info("telegram: muse %s", "on" if on else "off")
+        if tell and changed and chat is not None:
+            self._spawn(self._say(chat, MUSE_ON_LINE if on else MUSE_OFF_LINE), "telegram-say")
+        return self.muse
+
+    async def _muse_send(self, chat_id: int, text: str) -> None:
+        """One message to Muse; its answer comes back titled Muse. The words and the answer are in the
+        transcript as relay lines, never in eve's model history."""
+        answer = await muse_pi.ask(text)
+        if answer.ok:
+            self._record("eve", "relay", "Muse: " + answer.text)
+        await self._say(chat_id, answer.text, title=MUSE_TITLE)
 
     def _set_stealth(self, chat_id: int, on: bool) -> None:
         """Stealth on ("act asleep at the desk") or off ("wake up"), and the line that says so."""

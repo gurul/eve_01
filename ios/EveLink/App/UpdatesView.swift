@@ -180,17 +180,20 @@ struct UpdatesView: View {
     @ViewBuilder private var rows: some View {
         if let cards = model.cards, !cards.isEmpty {
             ForEach(cards) { card in
-                Button { askWaits = !ask(card) } label: { UpdateCardView(card: card) }
-                    .buttonStyle(CardPress())
+                // A tap reads; sending is a choice in the hold menu (owner, 2026-10-15: a tap sent cards by accident).
+                UpdateCardView(card: card)
+                    .contentShape(Rectangle())
                     .listRowBackground(Color.eveBackground)
                     .listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets(top: 5, leading: 16, bottom: 5, trailing: 16))
                     .contextMenu {
+                        Button("Send to chat", systemImage: "arrow.up.message") { askWaits = !ask(card) }
                         Button("Dismiss", systemImage: "xmark") { model.dismiss(card) }
                     } preview: {
                         UpdateCardView(card: card).frame(width: 340)
                     }
-                    .accessibilityHint("Sends this sentence to eve in Chat")
+                    .accessibilityHint("Touch and hold to send it to eve in Chat or dismiss it")
+                    .accessibilityAction(named: "Send to chat") { askWaits = !ask(card) }
                     .accessibilityAction(named: "Dismiss") { model.dismiss(card) }
             }
         } else if let problem = model.problem {
@@ -315,11 +318,3 @@ private struct ChipRenderer: TextRenderer {
     }
 }
 
-/// A card dims while pressed, as the round buttons do.
-private struct CardPress: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .opacity(configuration.isPressed ? 0.6 : 1)
-            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
-    }
-}

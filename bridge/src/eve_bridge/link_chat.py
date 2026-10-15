@@ -168,7 +168,7 @@ from pathlib import Path
 from typing import Any, Callable, Collection, Optional
 from urllib.parse import parse_qsl
 
-from . import app_registry, memory_sources
+from . import app_registry, memory_sources, muse_pi
 
 log = logging.getLogger(__name__)
 
@@ -198,13 +198,14 @@ TOPICS_BOOKMARK_PATH = "/api/link/topics/bookmark"
 LOCATION_PATH = "/api/link/location"     # phone_location.py: the phone's latest fix
 SESSIONS_PATH = "/api/link/sessions"     # work_sessions.py: the Work tab's Claude Code sessions
 SESSION_START_PATH = "/api/link/sessions/start"
+MUSE_PATH = "/api/link/muse"            # the composer's eve/Muse switch: GET {"available", "on"}; POST {"on"}
 SESSION_RE = re.compile(r"^/api/link/sessions/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})"
                         r"(?:/(reply|stop))?$")
 # one kept upload's bytes, full size; anything after the prefix that is not 32 hex is a 404 (never a path)
 FILE_RE = re.compile(r"^/api/link/file/([^/]{0,64})$")
 PATHS = (TURN_PATH, MESSAGES_PATH, JOBS_PATH, APPS_PATH, UPLOAD_PATH, CONTROLS_PATH, TODAY_PATH, *STREAM_PATHS,
          UPDATES_PATH, UPDATES_DISMISS_PATH, UPDATES_REFRESH_PATH, LOCATION_PATH, SESSIONS_PATH, SESSION_START_PATH,
-         TOPICS_PATH, TOPICS_BOOKMARK_PATH)
+         TOPICS_PATH, TOPICS_BOOKMARK_PATH, MUSE_PATH)
 POST_PATHS = (TURN_PATH, UPLOAD_PATH, UPDATES_DISMISS_PATH, UPDATES_REFRESH_PATH, LOCATION_PATH, SESSION_START_PATH,
               TOPICS_BOOKMARK_PATH)
 MAX_CARD_ID_CHARS = 64                # a dismissed Updates card's id (updates.card_id: 12 hex)
@@ -868,8 +869,8 @@ class LinkChat:
                 and (control is None or control.group(1) not in CONTROLS)):
             await self._json(writer, 404, {"ok": False, "error": "not found"})
             return
-        if path == JOBS_PATH and method in ("GET", "POST"):
-            pass                                            # GET lists the cards; POST starts one (New job)
+        if path in (JOBS_PATH, MUSE_PATH) and method in ("GET", "POST"):
+            pass                                            # GET lists or reads; POST starts a job or flips Muse
         elif method != ("POST" if path in POST_PATHS or action or app_open or control
                         or (session is not None and session.group(2)) else "GET"):
             await self._json(writer, 405, {"ok": False, "error": "wrong method"})
@@ -914,6 +915,9 @@ class LinkChat:
             await self._json(writer, 503, {"ok": False, "error": NO_CHAT})
             return
         self._attach(inlet)
+        if path == MUSE_PATH:
+            await self._muse(inlet, method, headers, reader, writer)
+            return
         if path in (TOPICS_PATH, TOPICS_BOOKMARK_PATH):
             await self._topics(inlet, path, query, headers, reader, writer)
             return
@@ -1555,6 +1559,20 @@ class LinkChat:
             log.info("link chat: %s %s from the app: %s", name, str(body.get("action") or "status")[:24],
                      "ok" if result.get("ok", True) else "refused")
         await self._json(writer, 200, result)
+
+    async def _muse(self, inlet: Any, method: str, headers: dict[str, str], reader: asyncio.StreamReader,
+                    writer: asyncio.StreamWriter) -> None:
+        """``/api/link/muse``: the composer's eve/Muse switch (telegram.set_muse, muse_pi.py). GET reads it; POST
+        ``{"on": bool}`` flips it, quietly (the switch itself shows the change, so no line is posted to the chat)."""
+        if method == "POST":
+            body = await self._optional_body(headers, reader, writer)
+            if body is None:
+                return
+            if not isinstance(body.get("on"), bool):
+                await self._json(writer, 400, {"ok": False, "error": 'expected {"on": true|false}'})
+                return
+            inlet.set_muse(body["on"], tell=False)
+        await self._json(writer, 200, {"ok": True, "available": muse_pi.available(), "on": bool(inlet.muse)})
 
     @staticmethod
     def _busy(inlet: Any) -> bool:

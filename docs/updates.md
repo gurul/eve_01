@@ -13,8 +13,9 @@ the rest of the sentence.
 
 > **[Review]** your storage plan before the new $0.10/GB price starts Oct 23
 
-A tap on a card sends that sentence to eve in Chat. eve then works on it as it
-would on words you typed.
+Touch and hold a card, then pick **Send to chat**, to send that sentence to eve
+in Chat. eve then works on it as it would on words you typed. A plain tap does
+nothing, so a card is never sent by accident.
 
 ## How it works
 
@@ -120,7 +121,7 @@ assistant to forward mail, send or move money, share a code or a password,
 sign in, or open a link "to verify" is not a task. At most it becomes a card
 that suggests you review that message as possibly suspicious.
 
-**A tap sends what you see, and only that.** The app sends exactly this to
+**Send to chat sends what you see, and only that.** The app sends exactly this to
 the chat:
 
 ```
@@ -169,19 +170,21 @@ The prompt asks; code decides (`clean_cards`, then the app's own clamps):
   it. A symbol shows the source kind (envelope, calendar, note, brain, folder;
   sparkles for a kind the app does not know). A due label shows "Today",
   "Tomorrow", "Oct 23" or "Overdue"; today and overdue are in the warning
-  color. VoiceOver reads each card as one button, with a hint that it sends the
-  sentence to eve.
-- **Tap.** The screen switches to Chat and the card's text is sent through the
-  composer's path. If the chat page is not ready yet (a cold start into
-  Updates), the text waits and is sent when it is. If eve is still answering,
-  nothing is sent, and the pane says to tap the card again when eve is done.
-- **Dismiss.** A long press (the context menu), or the VoiceOver action. Cards have no swipe action. The card
+  color. VoiceOver reads each card as one item, with actions to send it to eve or
+  dismiss it.
+- **Send to chat.** Touch and hold the card, then pick **Send to chat** in the
+  menu (or use the VoiceOver action). A plain tap does nothing. The screen
+  switches to Chat and the card's text is sent through the composer's path. If
+  the chat page is not ready yet (a cold start into Updates), the text waits and
+  is sent when it is. If eve is still answering, nothing is sent, and the pane
+  says to send the card again when eve is done.
+- **Dismiss.** The same hold menu, or the VoiceOver action. Cards have no swipe action. The card
   goes at once and comes back in its place if the Mac refuses. A dismiss hides
   every source the card cites for 30 days, so a later card from the same email
   or note stays away too. The pane reads the list again after every dismiss,
   so another card citing the same source goes at the same time.
 - **The source line** under the sentence wraps and is never cut short: the
-  tap sends it whole, so all of it is on the card.
+  card is sent whole, so all of it is on the card.
 - **Refresh.** Pull down, or tap the refresh button by the title (under it, "Updated 5 min ago" from the Mac's last build; a spinner while it rebuilds). The app asks for a rebuild, then reads every 2
   seconds until the Mac says it is done, for at most 60 seconds. When the pane
   opens while the Mac is already rebuilding, it reads in the background the
@@ -190,7 +193,7 @@ The prompt asks; code decides (`clean_cards`, then the app's own clamps):
   Updates yet and to update it on the Mac. Other failures show one line and
   **Try again**. Old cards stay on screen with the line under them.
 
-The app side is `ios/EveLink/Shared/Updates.swift` (the models, the tap text,
+The app side is `ios/EveLink/Shared/Updates.swift` (the models, the sent text,
 the due label and the list's bookkeeping, all pure so `Tests/main.swift` checks
 them on the Mac) and `ios/EveLink/App/UpdatesView.swift` (the pane and its
 view model). The simulator's design hook opens it with `-eveScreen updates`
@@ -281,7 +284,7 @@ minutes count, and the check prints which way it passed.
 | `bridge/tests/fixtures/updates/` | `dev.json` and `blind.json` (fictional data only) |
 | `bridge/tools/updates_eval.py` | The eval (G6) |
 | `bridge/tools/updates_live_check.py` | The live check (G7) |
-| `ios/EveLink/Shared/Updates.swift` | The app's models, tap text, due label and list bookkeeping |
+| `ios/EveLink/Shared/Updates.swift` | The app's models, sent text, due label and list bookkeeping |
 | `ios/EveLink/App/UpdatesView.swift` | The pane and its view model |
-| `ios/EveLink/App/ChatScreen.swift` | The Updates tab and the tap into Chat |
+| `ios/EveLink/App/ChatScreen.swift` | The Updates tab and Send to chat into Chat |
 | `ios/EveLink/App/EveLinkApp.swift` | Opens on Chat; `evelink://updates` |

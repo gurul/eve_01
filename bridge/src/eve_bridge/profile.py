@@ -214,6 +214,8 @@ LITE_CLASSIFIED: dict[str, str] = {
            "EVE_THINK_TIMEOUT_SECS"),
     **_why("kept: small talk, on in lite", "EVE_SMALL_TALK", "EVE_SMALL_TALK_MODEL"),
     **_why("kept: science search, on in lite (no key)", "EVE_SCIENCE_SEARCH"),
+    **_why("kept: Muse on the owner's Raspberry Pi (muse_pi.py); off until set, in lite and full eve alike",
+           "EVE_MUSE_PI"),
     **_why("kept: card pictures from Wikipedia (find_image), on in lite (no key)", "EVE_FIND_IMAGE"),
     **_why("kept: Horizontal History's topic titles, through OpenRouter", "EVE_TOPIC_TITLES",
            "EVE_TOPIC_TITLE_MODEL"),

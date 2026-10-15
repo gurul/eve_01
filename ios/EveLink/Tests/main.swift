@@ -242,6 +242,21 @@ check(ChatBridgeMessage(body: ["type": "messages", "id": "m1", "before": "2026-1
       == .messages(id: "m1", after: nil, wait: 0, before: "2026-10-01:7"), "older page: before, never a wait")
 check(ChatBridgeMessage(body: ["type": "messages", "id": "m1", "before": "../x"]) == .messages(id: "m1", after: nil, wait: 0),
       "older page: a malformed before is dropped")
+// The composer's eve/Muse switch (docs/muse.md)
+do {
+    let ep = ChatEndpoint(base: URL(string: "https://eve.example")!, token: "t0k")
+    let read = ChatRequests.muse(ep, on: nil)
+    check(read.httpMethod == "GET" && read.url?.path == "/api/link/muse"
+          && read.value(forHTTPHeaderField: "Authorization") == "Bearer t0k", "muse: GET reads the switch")
+    let flip = ChatRequests.muse(ep, on: true)
+    let sent = flip.httpBody.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Bool] }
+    check(flip.httpMethod == "POST" && sent == ["on": true], "muse: POST sends {on}")
+    check(MuseSwitch.decode(#"{"ok": true, "available": true, "on": true}"#) == MuseSwitch(available: true, on: true),
+          "muse: decode on")
+    check(MuseSwitch.decode(#"{"ok": true, "available": false, "on": true}"#) == MuseSwitch(available: false, on: false),
+          "muse: never on without a Pi")
+    check(MuseSwitch.decode(#"{"ok": true}"#) == nil && MuseSwitch.decode("nope") == nil, "muse: junk refused")
+}
 check(ChatBridgeMessage(body: ["type": "bookmark", "id": "q2", "topic": "2026-10-13:12", "on": true])
       == .bookmark(id: "q2", topic: "2026-10-13:12", on: true), "bookmark")
 check(ChatBridgeMessage(body: ["type": "bookmark", "id": "q2", "topic": "../x", "on": true]) == nil,

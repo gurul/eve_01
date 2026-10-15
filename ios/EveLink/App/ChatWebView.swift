@@ -19,6 +19,9 @@ final class ChatModel: NSObject, ObservableObject {
         didSet { UserDefaults.standard.set(grade.rawValue, forKey: ChatGrade.defaultsKey) }
     }
 
+    /// The composer's eve/Muse switch (left of History); hidden unless this Mac has Muse set up.
+    @Published private(set) var muse = MuseSwitch()
+
     let relay: Relay
     private(set) lazy var webView: WKWebView = makeWebView()
     private lazy var transport: ChatTransport = {
@@ -77,6 +80,29 @@ final class ChatModel: NSObject, ObservableObject {
         js("toggleHistory")
     }
 
+    /// Read the eve/Muse switch from the daemon (when the chat becomes ready and when the app comes back).
+    func refreshMuse() { museCall(nil) }
+
+    /// The composer's switch: the next words go to Muse, or back to eve. Shown flipped at once; the daemon's answer wins.
+    func toggleMuse() {
+        Self.play(.light)
+        let next = !muse.on
+        muse.on = next
+        museCall(next)
+    }
+
+    private func museCall(_ on: Bool?) {
+        transport.json(id: "muse", { ChatRequests.muse($0, on: on) }) { [weak self] result in
+            guard let self else { return }
+            switch result {
+            case .success(let json):
+                if let state = MuseSwitch.decode(json) { self.muse = state }
+            case .failure:
+                if on != nil { self.muse.on = !(on ?? false) }      // the flip did not reach eve: show it as it was
+            }
+        }
+    }
+
     func scrollToBottom() {
         guard ready else { return }
         js("scrollToBottom")
@@ -120,6 +146,7 @@ final class ChatModel: NSObject, ObservableObject {
             backgroundCancel?.cancel()
             backgroundCancel = nil
             endBackgroundTask()
+            if ready { refreshMuse() }                     // Muse may have been switched from another door
         default:
             break
         }
@@ -162,6 +189,7 @@ final class ChatModel: NSObject, ObservableObject {
         switch msg {
         case .ready:
             ready = true
+            refreshMuse()
             sendInsets()
             reveal()
             if busy { js("setBusy", [ChatJS.literal(true)]) }

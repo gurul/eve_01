@@ -105,6 +105,20 @@ enum ChatRequests {
         return r
     }
 
+    /// The composer's eve/Muse switch: GET /api/link/muse reads it, POST {"on"} flips it.
+    static func muse(_ ep: ChatEndpoint, on: Bool?) -> URLRequest {
+        var r = URLRequest(url: ep.base.appendingPathComponent("api/link/muse"))
+        r.setValue("Bearer \(ep.token)", forHTTPHeaderField: "Authorization")
+        r.setValue("application/json", forHTTPHeaderField: "Accept")
+        if let on {
+            r.httpMethod = "POST"
+            r.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            r.httpBody = try? JSONSerialization.data(withJSONObject: ["on": on])
+        }
+        r.cachePolicy = .reloadIgnoringLocalCacheData
+        return r
+    }
+
     static func messages(_ ep: ChatEndpoint, after: String?, wait: Int, before: String? = nil) -> URLRequest {
         var c = URLComponents(url: ep.base.appendingPathComponent("api/link/messages"), resolvingAgainstBaseURL: false)!
         var items: [URLQueryItem] = []
@@ -118,6 +132,21 @@ enum ChatRequests {
         r.timeoutInterval = TimeInterval(wait) + 15
         r.cachePolicy = .reloadIgnoringLocalCacheData
         return r
+    }
+}
+
+/// Who the composer talks to (docs/muse.md): `available` when this Mac has Muse on a Pi set up; `on` while the
+/// owner's words go to Muse instead of eve.
+struct MuseSwitch: Equatable, Sendable {
+    var available = false
+    var on = false
+
+    /// GET or POST /api/link/muse's answer, {"ok", "available", "on"}; nil for anything else.
+    static func decode(_ json: String) -> MuseSwitch? {
+        guard let data = json.data(using: .utf8),
+              let o = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let available = o["available"] as? Bool, let on = o["on"] as? Bool else { return nil }
+        return MuseSwitch(available: available, on: available && on)
     }
 }
 

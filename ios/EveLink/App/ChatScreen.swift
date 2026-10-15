@@ -353,17 +353,21 @@ struct ChatComposer: View {
                     }
                     .disabled(uploading)
                 }
-                TextField("Ask eve", text: $draft, axis: .vertical)
+                TextField(chat.muse.on ? "Ask Muse" : "Ask eve", text: $draft, axis: .vertical)
                     .font(.body)
                     .lineLimit(1...6)
                     .focused($focused)
                     .disabled(!chat.ready)
                     .padding(.horizontal, 4)
-                    .accessibilityLabel("Message eve")
+                    .accessibilityLabel(chat.muse.on ? "Message Muse" : "Message eve")
                 HStack(spacing: 18) {
                     AttachButton(full: roomLeft <= 0 || uploading, ready: chat.ready,
                                  photos: { showPhotos = true }, files: { showFiles = true })
                     Spacer()
+                    if chat.muse.available {
+                        MuseToggle(on: chat.muse.on) { chat.toggleMuse() }
+                            .disabled(!chat.ready)
+                    }
                     Button { chat.toggleHistory() } label: {
                         Image(systemName: "clock.arrow.circlepath")
                             .font(.system(size: 20, weight: .regular))
@@ -574,5 +578,30 @@ private struct SpeedDial: View {
         .accessibilityValue(grade.title)
         .accessibilityHint("Auto, Instant or Think")
         .sensoryFeedback(.selection, trigger: grade)
+    }
+}
+
+/// The composer's eve/Muse switch, left of History (docs/muse.md): names who the next message goes to, and a tap
+/// hands the chat to the other one. Muse runs on the owner's Raspberry Pi; eve hides this when it has none.
+private struct MuseToggle: View {
+    let on: Bool
+    let toggle: () -> Void
+
+    var body: some View {
+        Button(action: toggle) {
+            Text(on ? "Muse" : "eve")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(on ? Color.white : Color.primary)
+                .padding(.horizontal, 10)
+                .frame(minWidth: 44, minHeight: 28)
+                .background(Capsule().fill(on ? Color.accentColor : Color.clear))
+                .overlay(Capsule().strokeBorder(on ? Color.clear : Color.eveEdge, lineWidth: 1))
+                .frame(minHeight: 36)
+                .contentShape(Rectangle())
+                .animation(.snappy(duration: 0.2), value: on)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(on ? "Talking to Muse" : "Talking to eve")
+        .accessibilityHint(on ? "Switches back to eve" : "Switches to Muse")
     }
 }
