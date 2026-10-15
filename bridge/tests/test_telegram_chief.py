@@ -457,7 +457,7 @@ def test_an_app_turns_backbrief_reaches_the_app_with_change_and_drop_that_work(t
             await settle()
             [(turn, text, kind)] = shown
             assert turn == "app-turn-1" and kind == "say"
-            assert text.startswith(f"**{CHIEF_TITLE}**\nOn it: Standing desk.") and text.endswith(CHANGE_DROP)
+            assert text.startswith(f"**{CHIEF_TITLE}**\n\nOn it: Standing desk.") and text.endswith(CHANGE_DROP)
             assert rig.inlet.app_filed("app-turn-1") == "c1" and rig.inlet.app_filed("app-turn-2") is None
             rig.inlet._handle(telegram.Inbound(OWNER, OWNER, "change c1", message_id=2))   # typed in the app
             await settle()

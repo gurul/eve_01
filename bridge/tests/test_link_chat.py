@@ -1413,7 +1413,7 @@ def test_a_new_job_through_the_real_chat_is_the_brains_take_on(tmp_path: Path,
         # app with its Change and Drop as the words that answer them; nothing went to Telegram (gap 1)
         assert rig.api.sent == [] and rig.api.buttons == []
         [said] = got["said"]
-        assert said.startswith(f"**{telegram.CHIEF_TITLE}**\nOn it: Standing desk.")
+        assert said.startswith(f"**{telegram.CHIEF_TITLE}**\n\nOn it: Standing desk.")
         assert said.endswith('Reply "change c1" or "drop c1".')
         await server.close()
 

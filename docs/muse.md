@@ -14,8 +14,9 @@ answers. eve on the Mac reaches the Pi over SSH.
 
 ## Switching
 
-- **In Eve Link**, the **eve / Muse** switch sits in the composer, left of the
-  History button. It names who your next message goes to; tap it to switch.
+- **In Eve Link**, the eve / Muse switch sits in the composer, left of the
+  History button: an **e** in a circle while you talk to eve, a filled **m** in
+  the accent color while you talk to Muse. Tap it to switch.
   The composer then says "Ask Muse". The switch shows only when this Mac has
   Muse set up.
 - **By words**, in any chat: `muse on` (or "switch to Muse", "talk to Muse")

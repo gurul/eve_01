@@ -581,24 +581,20 @@ private struct SpeedDial: View {
     }
 }
 
-/// The composer's eve/Muse switch, left of History (docs/muse.md): names who the next message goes to, and a tap
-/// hands the chat to the other one. Muse runs on the owner's Raspberry Pi; eve hides this when it has none.
+/// The composer's eve/Muse switch, left of History (docs/muse.md): an icon like its neighbours, e for eve and a filled
+/// m for Muse, naming who the next message goes to; a tap hands the chat to the other one. Muse runs on the owner's Raspberry Pi; eve hides this when it has none.
 private struct MuseToggle: View {
     let on: Bool
     let toggle: () -> Void
 
     var body: some View {
         Button(action: toggle) {
-            Text(on ? "Muse" : "eve")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(on ? Color.white : Color.primary)
-                .padding(.horizontal, 10)
-                .frame(minWidth: 44, minHeight: 28)
-                .background(Capsule().fill(on ? Color.accentColor : Color.clear))
-                .overlay(Capsule().strokeBorder(on ? Color.clear : Color.eveEdge, lineWidth: 1))
-                .frame(minHeight: 36)
+            Image(systemName: on ? "m.circle.fill" : "e.circle")
+                .font(.system(size: 20, weight: .regular))
+                .foregroundStyle(on ? Color.accentColor : Color.primary)
+                .contentTransition(.symbolEffect(.replace))
+                .frame(minWidth: 36, minHeight: 36)
                 .contentShape(Rectangle())
-                .animation(.snappy(duration: 0.2), value: on)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(on ? "Talking to Muse" : "Talking to eve")

@@ -3716,7 +3716,7 @@ class TelegramInlet:
         Work an Eve Link app turn began goes to the app instead (``_to_app``), and is not posted here; a free
         question (``force_reply``) goes as an "ask", which ends the app's stream for this turn so the owner's next
         text from the app can answer it. When the app is not reading, it comes here as before."""
-        if self._to_app(chat_id, f"**{title}**\n{text}" if title else text,
+        if self._to_app(chat_id, f"**{title}**\n\n{text}" if title else text,
                         "ask" if force_reply is not None else "say"):
             return
         if _FROM_APP.get() is not None:
@@ -3799,7 +3799,7 @@ class TelegramInlet:
         if chat_id is None:
             return False
         if board.kind in (ANSWER, SAY) and board.choices:
-            line = (f"**{title}**\n" if title else "") + f"{text}\n\n{reply_words(board.choices)}"
+            line = (f"**{title}**\n\n" if title else "") + f"{text}\n\n{reply_words(board.choices)}"
             if self._to_app(chat_id, line, "ask" if board.kind == ANSWER else "say"):
                 return True
         if self._call_reader() is not None and chat_id == self._chat_id and board.choices:
@@ -6622,7 +6622,7 @@ class TelegramInlet:
         noted = about or text
         shown = f"{noted}\n\n{reply_words(choices)}" if on_app else None     # the transcript's words
         if on_app and (not about or about == text):
-            line = (f"**{title}**\n" if title else "") + f"{text}\n\n{reply_words(choices)}"
+            line = (f"**{title}**\n\n" if title else "") + f"{text}\n\n{reply_words(choices)}"
             if self._to_app(self._chat_id, line, "say"):
                 self._note("eve", noted, said=shown)
                 return True
