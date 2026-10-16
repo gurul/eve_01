@@ -209,6 +209,7 @@ _VOLATILE_NUMBER = re.compile(r"\d[\d,.]*(?:\s*[kmb](?![a-z]))?", re.I)
 _VOLATILE_TIME = re.compile(r"\b(?:just now|now|ago|today|yesterday|seconds?|secs?|minutes?|mins?|hours?|hrs?|"
                             r"days?|weeks?|wks?|months?|mos?|years?|yrs?|[smhdwy])\b", re.I)
 _VOLATILE_RUN = re.compile(r"(?:#\s*)+")
+_MONEY = re.compile(r"[$€£¥₹]|\b(?:usd|eur|gbp|price|total|pay|buy|order|donate|tip|checkout)\b", re.I)
 
 
 def _volatile_free(name: str) -> str:
@@ -241,9 +242,12 @@ def click_recheck(recorded: Mapping[str, Any], now: Any) -> list[str]:
         if not same(key):
             changed.append(word)
     if not same("name"):
+        before, after = str(recorded.get("name") or ""), str(now.get("name") or "")
         anchored = same("role") and ((same("href") and str(now.get("href") or ""))
                                      or (same("dom_id") and str(now.get("dom_id") or "")))
-        if not (anchored and _volatile_free(str(recorded.get("name") or "")) == _volatile_free(str(now.get("name") or ""))):
+        # On a control the owner is asked about, or one that names money, the number is what was approved.
+        foldable = not any(is_sensitive(n) or _MONEY.search(n) for n in (before, after))
+        if not (anchored and foldable and _volatile_free(before) == _volatile_free(after)):
             changed.append("name")
     if not same("href"):
         changed.append("href")

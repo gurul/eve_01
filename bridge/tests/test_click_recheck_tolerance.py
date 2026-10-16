@@ -246,3 +246,22 @@ def test_real_scripts_still_refuse_a_changed_control(tmp_path: Path, label: str,
     said, page = node_click(tmp_path, label, mutate)
     assert said.startswith(bl.STALE_PREFIX) and what in said, said
     assert page.clicks == []
+
+
+# A number in a payment or other asks-first label is the thing approved: it never folds away.
+@pytest.mark.parametrize("before, after", [
+    ("Pay $5", "Pay $5000"),
+    ("Buy for 5", "Buy for 500"),
+    ("Donate €10", "Donate €100"),
+    ("Delete 3 files", "Delete 30 files"),
+    ("Place order (2 items)", "Place order (20 items)"),
+])
+def test_a_changed_amount_on_an_asks_first_control_is_always_stale(before, after):
+    recorded = {"url": "https://shop.example/cart", "doc": "1", "role": "button", "name": before, "href": "", "dom_id": "pay"}
+    now = dict(recorded, found=True, name=after)
+    assert "name" in bl.click_recheck(recorded, now)
+
+
+def test_a_count_on_an_ordinary_control_still_folds():
+    recorded = {"url": "https://news.example/", "doc": "1", "role": "link", "name": "142 comments", "href": "/item?id=1", "dom_id": ""}
+    assert bl.click_recheck(recorded, dict(recorded, found=True, name="150 comments")) == []

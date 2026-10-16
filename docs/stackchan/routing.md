@@ -866,7 +866,9 @@ clicked and the step returns `refused: stale: '<label>' changed since the decisi
 unreadable recheck refuses too. Other text changing on a live page does not refuse. Two changes are tolerated
 (`test_click_recheck_tolerance.py`): the URL's `#fragment`, and a label whose only change is a count or a
 relative time ("142 points" to "143 points", "1 hour ago" to "1 day ago") while the role and a non-empty href, or
-the role and the DOM id, are the same. A test runs the real page scripts under node, so the tolerance is not only
+the role and the DOM id, are the same. The count tolerance never applies to a control eve asks about first or one
+that names money (a price, pay, buy, order, donate): there the number is what the owner approved, so "Pay $5" turning
+into "Pay $5000" refuses. A test runs the real page scripts under node, so the tolerance is not only
 the Python fake's. The recheck is a separate
 read just before Playwright's own click, so the click stays a real pointer event with Playwright's visible,
 stable and uncovered checks.
