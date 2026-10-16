@@ -35,7 +35,7 @@ class FakeLane:
             raise RuntimeError("the browser died")
         return {"app": "browser", "lines": ["link: Top stories", "button: Search"], "title": "Google News", "url": ""}
 
-    async def run_plan(self, plan: dict, request: str, start: int = 0, approved=None) -> dict:
+    async def run_plan(self, plan: dict, request: str, start: int = 0, approved=None, success_rejected=False) -> dict:
         self.runs.append({"plan": plan, "start": start, "approved": dict(approved or {})})
         return self.results.pop(0)
 

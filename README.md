@@ -521,6 +521,12 @@ permission choices.
   browser API on 127.0.0.1, with no API key and no prompt; eve starts it when needed.
   Meet stays on eve's own Chrome. Sign it in with `eve-bridge steel-profile`. See
   [Steel](docs/steel.md).
+- **Browser guards:** a bot check stops the task with one line to you, a click is refused
+  when its control changed since the decision, upvote/like/follow-style links ask first,
+  and a plan is "done" only when its success check reads true. A search's check comes from
+  what the request asks for, decided on this Mac by a local Laya model
+  (`EVE_BROWSER_INTENT`, on by default). See [browser intent](docs/browser-intent.md) and
+  [the guards](docs/stackchan/routing.md#guards-ported-from-layabrowse-2026-10-16).
 - **Stopping:** `stop_task` interrupts Codex, even while a permission is pending.
 - **Codex billing:** `EVE_CODEX_AUTH=plan` is the default and uses your existing
   Codex sign-in. To bill Eve's Codex to an OpenAI API key instead (optional; nothing
@@ -564,7 +570,8 @@ See [integration evidence and limits](docs/codex-computer-use/README.md).
 Tiers 1–2 are on by default in that worker. Tier 3 and the planner-delegated fast lane
 (`fast_lane.py`, keyword-decided; its `model` mode asks `decider.py` over hosted Jev) are
 **off by default**. The fast lane's local Laya decider was removed on 2026-09-24; Laya
-now drives only the eye expressions (the `[laya]` extra). **Hosted Jev** can also
+now drives the eye expressions and, in the browser, the choice of what a request asks for
+(the `[laya]` extra). **Hosted Jev** can also
 drive narrowly scoped launch routing and spoken head moves. Clicks use accurate OCR
 directly, and a finished screen wait is reused for the reply screenshot. The
 **browser lane** (`browser_lane.py`) drives your own Chrome with Playwright in attach

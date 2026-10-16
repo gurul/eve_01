@@ -506,7 +506,8 @@ def test_outline_and_run_plan_run_through_the_real_helpers(monkeypatch) -> None:
     assert any(line.startswith("Delete Event") and "asks the human first" in line for line in shown["lines"])
     assert not any("September 2026" in line for line in shown["lines"])            # never the window title
     ran = out[1]["run_plan"]
-    assert ran["status"] == "complete" and ran["sentence"] == "Week it is." and h.gui.clicks == [(270, 115)], ran
+    # No success check in the plan: it ran, and is partial rather than complete (test_plan_success_guard).
+    assert ran["status"] == "partial" and ran["reason"] == "no_success_check" and h.gui.clicks == [(270, 115)], ran
     assert ran["ledger"][0]["effect"] == "confirmed" and ran["ledger"][0]["how"] == "keyword" and "ax" in out[1]["timing"]
     assert out[2]["run_plan"]["status"] == "unavailable"
     assert out[3]["run_plan"]["status"] == "unavailable" and "bad plan" in out[3]["run_plan"]["reason"]

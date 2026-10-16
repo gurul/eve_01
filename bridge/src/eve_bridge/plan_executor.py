@@ -34,7 +34,15 @@ Who gets control when a plan stops:
   partial / none  the planner, with the ledger of what was applied. `none` guarantees zero input overall.
 
 Nothing here decides a task is DONE on a model's word: `complete` means every step applied input that was
-not a suspected no-op, every `expect` that was given held, and the plan's `success` did not read false.
+not a suspected no-op, every `expect` that was given held, and the plan's `success` was READ TRUE at the end —
+a check that was also read false before step 1. So a plan ends `partial` with every step applied
+(next_index == len(steps)) when:
+  no_success_check       it has no success check: nothing observable could say it is done
+  success_already_held   its check already held before step 1 (read once, without waiting), so it proves
+                         nothing. A resumed plan (start > 0) cannot look again: the caller hands back the
+                         first call's `success_rejected`.
+  success_unreadable     the check could not be read at the end
+A browser plan's check is code's, derived from the request (plan_contract.request_check), when there is one.
 """
 
 from __future__ import annotations
@@ -46,7 +54,7 @@ from typing import Any, Callable, Mapping, Optional, Sequence
 
 from .decider import render_option
 from .fast_lane import editable_pool, is_search_field, jev_context, run_delegate
-from .plan_contract import Expect, Plan, PlanStep, url_matches
+from .plan_contract import Expect, Plan, PlanStep, url_matches, url_query_matches
 from .typed_ask import JEV_STEP_GATES, StepAnswer, StepGates
 
 STATUSES = ("complete", "partial", "none", "needs_human", "checkpoint", "unavailable")
@@ -81,6 +89,7 @@ class PlanResult:
     ledger: list[Entry] = field(default_factory=list)
     log_lines: list[str] = field(default_factory=list)
     ms: float = 0.0
+    success_rejected: bool = False # the plan's success check already held before step 1 (pass it back on resume)
 
     @property
     def applied(self) -> list[Entry]:
@@ -89,7 +98,7 @@ class PlanResult:
     def to_dict(self) -> dict[str, Any]:
         return {"status": self.status, "next_index": self.next_index, "reason": self.reason,
                 "confirm": self.confirm, "sentence": self.sentence, "ms": round(self.ms, 1),
-                "ledger": [e.to_dict() for e in self.ledger]}
+                "success_rejected": self.success_rejected, "ledger": [e.to_dict() for e in self.ledger]}
 
 
 def _holds(expect: Optional[Expect], senses: Any, effectors: Any, frontmost_app: Callable[[], str],
@@ -106,14 +115,15 @@ def _holds(expect: Optional[Expect], senses: Any, effectors: Any, frontmost_app:
                 seen = needle in (frontmost_app() or "").casefold()
             else:
                 snap = senses.snapshot()
-                if expect.kind == "url_is":
+                if expect.kind in ("url_is", "url_query"):
                     getter = getattr(senses, "current_url", None)
-                    seen = bool(getter and url_matches(getter(), expect.value))
+                    match = url_matches if expect.kind == "url_is" else lambda url, _: url_query_matches(url, expect)
+                    seen = bool(getter and match(getter(), expect.value))
                 else:
                     seen = (needle in (snap.title or "").casefold() if expect.kind == "title_contains"
                             else bool(senses.text_visible(expect.value)))
         except Exception:  # noqa: BLE001 — an oracle that cannot read is unknown, never a no
-            return False if expect.kind == "url_is" else None
+            return False if expect.kind in ("url_is", "url_query") else None
         if seen:
             return True
         if clock() - t0 >= wait:
@@ -156,7 +166,7 @@ def _say(plan: Plan, ledger: Sequence[Entry]) -> str:
 def run_plan(plan: Plan, *, senses: Any, effectors: Any, asker: Optional[Callable[..., StepAnswer]],
              open_app: Callable[[str], str], open_url: Callable[[str], str], frontmost_app: Callable[[], str],
              start: int = 0, approved: Optional[Mapping[int, str]] = None, decide: str = "jev",
-             dry_run: bool = False, planned_for: str = "",
+             dry_run: bool = False, planned_for: str = "", success_rejected: bool = False,
              step_gates: StepGates = JEV_STEP_GATES, clock: Callable[[], float] = time.perf_counter) -> PlanResult:
     """Walk `plan.steps[start:]`. `approved` maps a 0-based step index the human has said yes to onto what
     they were asked about (PlanResult.confirm): for a sensitive control that is its label, which the lane
@@ -164,9 +174,12 @@ def run_plan(plan: Plan, *, senses: Any, effectors: Any, asker: Optional[Callabl
 
     `planned_for` is the app whose window the planner was shown. Planning takes seconds and the human keeps
     using the Mac meanwhile (live, 2026-09-21: Finder was in front by the time the plan arrived), so when a
-    plan opens no app of its own, that app is brought back to the front before the first step."""
+    plan opens no app of its own, that app is brought back to the front before the first step.
+
+    `success_rejected` is the first call's PlanResult.success_rejected, handed back on a resume: only the call
+    that starts at step 1 can read the success check before anything was done (module docstring)."""
     t_start = clock()
-    out = PlanResult("none", next_index=start)
+    out = PlanResult("none", next_index=start, success_rejected=bool(success_rejected))
     ok = {int(i): str(label) for i, label in (approved or {}).items()}
     if decide == "jev" and asker is None:
         decide = "keyword"                                   # no hosted model configured: the gate alone decides
@@ -180,6 +193,12 @@ def run_plan(plan: Plan, *, senses: Any, effectors: Any, asker: Optional[Callabl
             out.log_lines.append(f"plan: {planned_for} is no longer in front — " + str(open_app(planned_for)))
         except Exception as e:  # noqa: BLE001 — the step's own gates decide what happens next
             out.log_lines.append(f"plan: could not bring {planned_for} back ({type(e).__name__})")
+    if start == 0 and not dry_run and plan.success is not None and plan.steps:
+        # Read once, no polling: a check that is true before any input says nothing about what the plan does.
+        if _holds(plan.success, senses, effectors, frontmost_app, clock, wait=0.0) is True:
+            out.success_rejected = True
+            out.log_lines.append(f'plan: the success check {plan.success.kind} "{plan.success.value}" already '
+                                 "holds before step 1; it cannot confirm the plan")
 
     def stop(status: str, index: int, reason: str = "", confirm: str = "") -> PlanResult:
         if status == "partial" and not out.applied:
@@ -331,12 +350,19 @@ def run_plan(plan: Plan, *, senses: Any, effectors: Any, asker: Optional[Callabl
 
     if dry_run:
         return stop("complete", len(plan.steps), "dry_run")
+    if out.success_rejected:
+        return stop("partial", len(plan.steps), "success_already_held")
+    if plan.success is None:
+        return stop("partial", len(plan.steps), "no_success_check")
     final = _holds(plan.success, senses, effectors, frontmost_app, clock)
     if final is False:
-        return stop("partial", len(plan.steps), f'the plan ran but "{plan.success.value}" is not on screen')
-    if final is True:
-        for e in out.ledger[-1:]:
-            e.effect = "confirmed"
+        what = (f'the search for "{plan.success.value}"' if plan.success.kind == "url_query"
+                else f'"{plan.success.value}"')
+        return stop("partial", len(plan.steps), f"the plan ran but {what} is not on screen")
+    if final is None:
+        return stop("partial", len(plan.steps), "success_unreadable")
+    for e in out.ledger[-1:]:
+        e.effect = "confirmed"
     out.sentence = _say(plan, out.ledger)
     return stop("complete", len(plan.steps))
 

@@ -36,7 +36,7 @@ class PlanWorker(FakeWorker):
     async def outline(self) -> dict:
         return {"app": "Finder", "lines": ["Year (radio button)", "Week (radio button)"]}
 
-    async def run_plan(self, plan: dict, request: str, start: int = 0, approved=None) -> dict:
+    async def run_plan(self, plan: dict, request: str, start: int = 0, approved=None, success_rejected=False) -> dict:
         self.runs.append({"plan": plan, "start": start, "approved": dict(approved or {})})
         return self.results.pop(0)
 

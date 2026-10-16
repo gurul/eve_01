@@ -463,11 +463,11 @@ class WorkerClient:
 
     async def run_plan(self, plan: dict[str, Any], request: str, start: int = 0,
                        approved: Optional[dict[str, str]] = None,
-                       timeout: float = RUN_PLAN_TIMEOUT_SECS) -> dict[str, Any]:
+                       timeout: float = RUN_PLAN_TIMEOUT_SECS, success_rejected: bool = False) -> dict[str, Any]:
         """Walk a plan in the worker (desktop_worker.run_plan): PlanResult.to_dict(). A timeout or a dead
         pipe reads as `partial` with an unknown ledger — the turn-by-turn loop then looks for itself."""
         body = {"operation": "run_plan", "plan": plan, "request": request, "start": int(start),
-                "approved": dict(approved or {})}
+                "approved": dict(approved or {}), "success_rejected": bool(success_rejected)}
         return await self._soft(body, "run_plan", timeout, {"status": "partial", "next_index": int(start),
                                                            "ledger": [], "reason": "worker"})
 
@@ -1225,6 +1225,8 @@ class ComputerAgent:
         done: list[str] = []                        # every step applied, across plans, in order
         if browser and not outline.get("lines"):
             outline = await self._open_named_page(goal, worker, outline, done)
+        if browser and outline.get("blocked"):
+            return str(outline["blocked"]), ""          # a bot check (browser_lane.browser_blocker): say so, no hand-off
         # In the browser a question is navigation plus a read of the page's text (browser_lane.page_text), not
         # "needs eyes": plan only the way to the page, then answer from what it says.
         reads = browser and (lane_router.is_question(goal) or bool(task_router.TELL_ME.search(goal)))
@@ -1236,6 +1238,8 @@ class ComputerAgent:
         for attempt in range(1 + (MAX_BROWSER_REPLANS if browser else 0)):
             if attempt:
                 outline = await self._interruptible(worker.outline())
+                if browser and outline.get("blocked"):
+                    return str(outline["blocked"]), ""
             req = pc.plan_request(self.config.model, goal, app=str(outline.get("app") or ""),
                                   outline=[str(x) for x in outline.get("lines") or []],
                                   apps=[] if browser else task_router.installed_apps(),
@@ -1274,8 +1278,11 @@ class ComputerAgent:
             approved = {}
             start = 0
             ran: list[dict[str, Any]] = []                # this plan's ledger, across the human's yeses
+            rejected = False                              # its success check held before step 1 (plan_executor)
             for _ in range(MAX_PLAN_CONFIRMS + 1):
-                result = await self._interruptible(worker.run_plan(plan_dict, goal, start=start, approved=approved))
+                result = await self._interruptible(worker.run_plan(plan_dict, goal, start=start, approved=approved,
+                                                                   success_rejected=rejected))
+                rejected = rejected or bool(result.get("success_rejected"))
                 self._log({"turn": 0, "ledger": result})
                 ran += list(result.get("ledger") or [])
                 for entry in result.get("ledger") or []:
@@ -1298,6 +1305,8 @@ class ComputerAgent:
                     return f"Okay, I stopped before that: {what}.", ""
                 approved[str(start)] = what
             status = str(result.get("status") or "")
+            if status == "blocked":                  # a step landed on a bot check: never clicked, never handed off
+                return str(result.get("sentence") or ""), ""
             ran_all = int(result.get("next_index") or 0) >= len(plan.steps)
             # The planner leaves final_say empty exactly when the answer must be read off the page (READ
             # instructions); a plan with its own sentence ("Here is the top headline.") keeps it. A plan whose
@@ -1365,6 +1374,9 @@ class ComputerAgent:
 
         try:
             page = await self._interruptible(worker.page_text())
+            if page.get("blocked"):
+                self._log({"turn": 0, "read": {"url": page.get("url"), "blocked": True}})
+                return str(page["blocked"])
             if page.get("signed_out"):
                 host = urlsplit(str(page.get("url") or "")).hostname or "that site"
                 said = f"You're not signed in to {host.removeprefix('www.')} in Chrome, so I couldn't check."

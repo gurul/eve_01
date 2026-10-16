@@ -86,7 +86,7 @@ from .ax_candidates import (
     Candidate,
     Snapshot,
     describe,
-    is_sensitive,
+    needs_confirmation,
     objective_tokens,
     pressable,
     rank_candidates,
@@ -283,7 +283,7 @@ def gate(choice: Choice, item: Optional[MenuItem], *, thresholds: Thresholds, ap
         assert item.candidate is not None
         label = item.candidate.label
         approved = approve is not None and not approve_used and label.casefold() == approve.casefold()
-        if is_sensitive(label) and not approved:
+        if needs_confirmation(item.candidate) and not approved:   # sensitive, or an account change on a page
             return "confirm", "sensitive"
         return "act", ""
     key = item.payload.casefold()
@@ -557,7 +557,7 @@ def _build_menu(run: _Run, snapshot: Snapshot, *, allow_page_links: bool) -> tup
             continue
         approved = (run.approve is not None and not run.approve_used
                     and c.label.casefold() == run.approve.casefold())
-        if is_sensitive(c.label) and not approved:
+        if needs_confirmation(c) and not approved:
             blocked.append(c)
             continue
         if settings and c.role not in SYSTEM_SETTINGS_NAV_ROLES and c.label.casefold() != "back" and not (

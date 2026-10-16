@@ -19,6 +19,13 @@ filter", "Export as PDF") is sensitive wherever the word sits, and the lane
 answers `confirm` for it so the planner can ask the human. "Postcode",
 "Composer", "Dispatcher", "Downloads" are not: the verb must be a whole word.
 
+`needs_confirmation(c, href)` is that rule plus one for page controls only (eve's
+own browser, or web content in a Mac browser): a short label that starts with an
+account verb ("upvote", "Like 12", "Follow @jane", "Save post") or a link whose
+endpoint is one (/vote, /follow, /star, /like, /flag, /hide) changes the signed-in
+account, so it asks too. "Saved articles", "Follow-up", "Hide sidebar" and the
+Mac lane's own "Save" do not: only dangerous acts ask.
+
 Raw walk shape (the injectable backend, what fixtures store)
 -------------------------------------------------------------
 `walk(pid, *, max_nodes, budget_secs)` returns one JSON-serialisable dict:
@@ -73,6 +80,7 @@ import sys
 import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Optional
+from urllib.parse import parse_qsl, urlsplit
 
 DEFAULT_MAX_NODES = 4000
 DEFAULT_BUDGET_SECS = 0.5
@@ -152,6 +160,68 @@ def is_sensitive(label: Any) -> bool:
     try:
         return SENSITIVE_LABEL.search(text) is not None
     except Exception:  # noqa: BLE001 — a regex failure must never let a click through
+        return True
+
+
+# Account-changing page controls: plain-looking links that vote, follow, star, hide or save as the signed-in
+# user. The verb set and the short-label / endpoint split are adapted from LayaBrowse (src/laya_voice_browser/
+# safety.py, MIT, Copyright (c) 2026 Aryan Bhujade). The first-word anchor, the chrome nouns and the last-segment
+# endpoint match are eve's, so "Follow-up", "Hide sidebar", "Stories you might like" and /wiki/Star stay plain.
+_ACCOUNT_VERBS = frozenset((
+    "upvote", "downvote", "vote", "unvote", "like", "unlike", "follow", "unfollow", "star", "unstar", "hide",
+    "unhide", "flag", "unflag", "report", "save", "unsave", "subscribe", "unsubscribe", "bookmark",
+))
+# After the verb, a word that names a piece of the page itself makes it a view toggle, not an account change:
+# "Hide sidebar", "Hide 12 replies", "Save as PDF", "Follow up".
+_CHROME_NOUNS = frozenset((
+    "sidebar", "toolbar", "panel", "pane", "menu", "details", "preview", "navigation", "nav", "controls",
+    "options", "filters", "keyboard", "banner", "header", "footer", "password", "replies", "comments", "thread",
+    "images", "image", "map", "as", "up", "all", "more", "less",
+))
+# Endpoints match the LAST path segment, lowercase as the action URLs are ("/vote", "/owner/repo/star"); a page
+# title like /wiki/Star is capitalised and /stargazers, /followers, /follow-us are other words. "report" is left
+# out: /report is as often a dashboard. The label rule still catches a "Report" link.
+_ACCOUNT_ENDPOINTS = _ACCOUNT_VERBS - {"report"}
+_ACTION_KEYS = frozenset(("action", "do", "op", "act", "cmd", "method"))
+_ENDPOINT_EXT = re.compile(r"\.(?:php|json|html?|aspx?|cgi|jsp)$")
+_LEAD_SYMBOLS = re.compile(r"^[^\w@#]+")
+_TRAIL_PUNCT = ".,:;!?…"
+
+
+def is_account_change(label: Any, href: Any = "") -> bool:
+    """True when a page control changes the signed-in account: a label of at most three words whose
+    first word is an account verb (leading ▲ ♥ ☆ ignored) with no chrome noun after it, or a link
+    whose endpoint is one. A label that is not a string fails closed; a missing href is no href."""
+    if not isinstance(label, str):
+        return True
+    try:
+        words = _LEAD_SYMBOLS.sub("", label.strip()).split()
+        if words and len(words) <= 3 and words[0].casefold().rstrip(_TRAIL_PUNCT) in _ACCOUNT_VERBS \
+                and not any(w.casefold().rstrip(_TRAIL_PUNCT) in _CHROME_NOUNS for w in words[1:]):
+            return True
+        if not isinstance(href, str) or not href.strip():
+            return False
+        parts = urlsplit(href.strip())
+        last = _ENDPOINT_EXT.sub("", parts.path.rstrip("/").rsplit("/", 1)[-1])
+        if last in _ACCOUNT_ENDPOINTS:
+            return True
+        return any(k.casefold() in _ACTION_KEYS and v.casefold() in _ACCOUNT_ENDPOINTS
+                   for k, v in parse_qsl(parts.query, keep_blank_values=True))
+    except Exception:  # noqa: BLE001 — same as is_sensitive: a parse failure never lets a click through
+        return True
+
+
+def needs_confirmation(c: Any, href: Any = "") -> bool:
+    """The lane asks the human before pressing ``c``: a sensitive label anywhere, and on a page (eve's own
+    browser, app "browser", or web content in a Mac app) also an account change by label or by ``href``.
+    The Mac lane's own "Save", "Hide" and "Flag" stay unasked. Anything not a Candidate fails closed."""
+    try:
+        if is_sensitive(c.label):
+            return True
+        if not (c.app == "browser" or c.in_content):
+            return False
+        return is_account_change(c.label, href)
+    except Exception:  # noqa: BLE001
         return True
 
 
@@ -473,7 +543,7 @@ def score_candidate(c: Candidate, tokens: list[str]) -> int:
 def rank_candidates(snapshot: Snapshot, objective: str, *, max_out: int, kinds: str = "pressable",
                     allow_page_links: bool = False, allow_sensitive: bool = False) -> tuple[list[Candidate], int]:
     """(kept, dropped_by_cap). Drops before scoring: disabled, empty label, in_dialog, secure,
-    in_content links and images unless allow_page_links, is_sensitive(label) unless
+    in_content links and images unless allow_page_links, needs_confirmation(c) unless
     allow_sensitive. `kinds` is "pressable" or "editable". Stable by score, then reading order."""
     if kinds not in ("pressable", "editable"):
         raise ValueError("kinds must be 'pressable' or 'editable'")
@@ -488,7 +558,7 @@ def rank_candidates(snapshot: Snapshot, objective: str, *, max_out: int, kinds: 
             continue
         if c.in_content and not allow_page_links and c.role in ("link", "image", "static text"):
             continue
-        if not allow_sensitive and is_sensitive(c.label):
+        if not allow_sensitive and needs_confirmation(c):
             continue
         pool.append(c)
     pool.sort(key=lambda c: -score_candidate(c, tokens))       # stable: reading order breaks ties

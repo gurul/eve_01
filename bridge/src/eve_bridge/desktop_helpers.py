@@ -966,7 +966,8 @@ class Helpers:
                 "truncated": bool(snap.truncated)}
 
     def run_plan(self, plan: dict[str, Any], request: str, start: int = 0,
-                 approved: Optional[dict[str, str]] = None, dry_run: bool = False) -> dict[str, Any]:
+                 approved: Optional[dict[str, str]] = None, dry_run: bool = False,
+                 success_rejected: bool = False) -> dict[str, Any]:
         """Walk a plan_contract plan over this desktop (plan_executor.run_plan). Never raises."""
         from .plan_contract import PlanError, parse_plan
         from .plan_executor import PlanResult
@@ -983,7 +984,8 @@ class Helpers:
                           frontmost_app=lambda: str(self._front().get("app") or ""), start=max(0, int(start)),
                           approved={int(k): str(v) for k, v in (approved or {}).items()},
                           decide="jev" if self.step_asker is not None else "keyword",
-                          dry_run=bool(dry_run), planned_for=str(plan.get("app") or "")[:80], clock=self._clock)
+                          dry_run=bool(dry_run), planned_for=str(plan.get("app") or "")[:80], clock=self._clock,
+                          success_rejected=bool(success_rejected))
         except Exception as e:  # noqa: BLE001 — an executor that fails is "the planner does it", never a dead task
             result = PlanResult("partial", next_index=max(0, int(start)), reason=f"error:{type(e).__name__}: {e}"[:200])
         for line in result.log_lines:

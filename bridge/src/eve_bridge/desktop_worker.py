@@ -342,7 +342,8 @@ def run_plan(req: dict[str, Any], helpers: Any) -> dict[str, Any]:
     try:
         result = dict(helpers.run_plan(plan, str(req.get("request") or ""), start=int(req.get("start") or 0),
                                        approved=req.get("approved") if isinstance(req.get("approved"), dict) else None,
-                                       dry_run=bool(req.get("dry_run"))))
+                                       dry_run=bool(req.get("dry_run")),
+                                       success_rejected=bool(req.get("success_rejected"))))
     except Exception as e:  # noqa: BLE001
         result = {"status": "partial", "next_index": int(req.get("start") or 0), "ledger": [],
                   "reason": f"error:{type(e).__name__}: {e}"[:200]}

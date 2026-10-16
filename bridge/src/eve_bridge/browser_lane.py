@@ -72,7 +72,7 @@ from pathlib import Path
 from typing import Any, Awaitable, Callable, Iterable, Mapping, Optional
 from urllib.parse import urlsplit, urlunsplit
 
-from .ax_candidates import Candidate, Snapshot, is_sensitive
+from .ax_candidates import Candidate, Snapshot, is_sensitive, needs_confirmation
 
 log = logging.getLogger(__name__)
 
@@ -118,10 +118,9 @@ WEB_WORDS = re.compile(
 # on the next step. Password fields are also `secure`, so the lane never types into them; card and code
 # fields stay typeable. A field the vault filled (data-eve-filled, _FILL_FIELDS_JS) is secret too, whatever its
 # attributes say: a card number in a field with no autocomplete hint, the username of a login.
-_COLLECT_JS = """() => {
-  const sel = 'a[href],button,input,textarea,select,summary,[role=button],[role=link],[role=tab],[role=menuitem],' +
-              '[role=checkbox],[role=radio],[role=textbox],[role=combobox],[role=option],[role=switch],' +
-              '[role=searchbox],[role=menuitemcheckbox],[role=menuitemradio],[contenteditable=true]';
+# roleOf and nameOf are shared with _RECHECK_JS, so the click-time recheck reads a control exactly as it was
+# collected.
+_IDENTITY_JS = """
   const roleOf = (e) => {
     const r = e.getAttribute('role'); if (r) return r;
     const t = e.tagName.toLowerCase();
@@ -147,6 +146,12 @@ _COLLECT_JS = """() => {
     if (own) return own;
     const img = e.querySelector('img[alt],svg[aria-label],[aria-label]');
     return img ? (img.getAttribute('alt') || img.getAttribute('aria-label') || '').trim() : ''; };
+  const hrefOf = (e) => e.tagName.toLowerCase() === 'a' && e.hasAttribute('href') ? e.href : '';
+"""
+_COLLECT_JS = """() => {
+  const sel = 'a[href],button,input,textarea,select,summary,[role=button],[role=link],[role=tab],[role=menuitem],' +
+              '[role=checkbox],[role=radio],[role=textbox],[role=combobox],[role=option],[role=switch],' +
+              '[role=searchbox],[role=menuitemcheckbox],[role=menuitemradio],[contenteditable=true]';""" + _IDENTITY_JS + """
   for (const e of document.querySelectorAll('[data-eve-id]')) e.removeAttribute('data-eve-id');
   const out = []; const H = window.innerHeight, W = window.innerWidth; let i = 0;
   const onscreen = [], offscreen = [];
@@ -169,7 +174,7 @@ _COLLECT_JS = """() => {
               h: Math.round(r.height), enabled: !(e.disabled || e.getAttribute('aria-disabled') === 'true'),
               secure: role === 'password' || passwordLike(e), editable, dialog: !!e.closest('dialog,[role=dialog],[role=alertdialog]'),
               focused: document.activeElement === e, offscreen: r.bottom < 0 || r.top > H,
-              href: e.tagName.toLowerCase() === 'a' && e.hasAttribute('href') ? e.href : ''});
+              href: hrefOf(e)});
     if (out.length >= %d) break; }
   const dlg = Array.from(document.querySelectorAll('dialog[open],[role=dialog],[role=alertdialog]')).find(d => {
     const r = d.getBoundingClientRect(); const cs = getComputedStyle(d);
@@ -178,8 +183,74 @@ _COLLECT_JS = """() => {
   return {elements: out, title: document.title, url: location.href,
           dialog: dlg ? (dlg.innerText || '').trim().slice(0, 80) : '',
           focused_id: focused && focused.getAttribute ? focused.getAttribute('data-eve-id') : null,
+          document_id: String(performance.timeOrigin), head: (document.body ? document.body.innerText : '').slice(0, 600),
           text_hash: (document.body ? document.body.innerText : '').length + ':' + document.body?.innerText?.slice(0, 4000)}; }
 """ % MAX_CANDIDATES
+
+# The click-time recheck (click_candidate): the control under the id the decision named, read as _COLLECT_JS
+# read it, and the document it is in. A re-render can put another control under that id, and a navigation or
+# a reload can replace the whole document, in the seconds between the snapshot and the click.
+_RECHECK_JS = """(want) => {""" + _IDENTITY_JS + """
+  const e = document.querySelector('[data-eve-id="' + want.id + '"]');
+  const now = {url: location.href, doc: String(performance.timeOrigin), found: !!e};
+  if (!e) return now;
+  return Object.assign(now, {role: roleOf(e), name: nameOf(e).replace(/\\s+/g, ' ').slice(0, 120), href: hrefOf(e)}); }
+"""
+STALE_PREFIX = "refused: stale:"     # click_candidate: the page moved under the decision; nothing was clicked
+BLOCKED_PREFIX = "refused: blocked:"  # every effector on a bot-check page (browser_blocker)
+
+
+def click_recheck(recorded: Mapping[str, Any], now: Any) -> list[str]:
+    """What differs between the control as the decision saw it and as the page has it now, in words; [] when
+    it is the same control in the same document. Anything unreadable is "control": fail closed.
+    After LayaBrowse's decision_still_valid (MIT, Copyright (c) 2026 Aryan Bhujade)."""
+    if not isinstance(now, Mapping) or not now.get("found"):
+        return ["control"]
+    changed: list[str] = []
+    for key, word in (("url", "page address"), ("doc", "document"), ("role", "role"), ("name", "name"),
+                      ("href", "href")):
+        if str(recorded.get(key) or "") != str(now.get(key) or ""):
+            changed.append(word)
+    return changed
+
+
+# Bot checks: pages that stand between eve and the site until a human proves they are one. They are not the
+# task's page and this lane must never try to solve one (no "I'm not a robot" clicks), so the lane stops with
+# a line for the owner instead of handing the page on to a planner that would.
+# Ported from LayaBrowse goals.browser_blocker (MIT, Copyright (c) 2026 Aryan Bhujade), with Cloudflare's
+# interstitial added. Google's /sorry/ counts only on a Google host: "/sorry/" alone is an ordinary path.
+CHALLENGE_TITLES = frozenset({"pardon our interruption", "access denied", "robot check", "just a moment",
+                              "attention required! | cloudflare"})
+CHALLENGE_TEXT = ("checking your browser before you access", "checking your browser before accessing",
+                  "needs to review the security of your connection before proceeding")
+CHALLENGE_HEAD_CHARS = 500            # the phrases count only at the top of the page, where the check says them
+
+
+def browser_blocker(url: str, title: str, text: str) -> str:
+    """ "browser_challenge" when the page is a known bot check, else "". Pure: the URL, the title, the text."""
+    try:
+        parts = urlsplit(str(url or ""))
+        host, path = (parts.hostname or "").lower(), parts.path
+    except ValueError:
+        host, path = "", ""
+    if path.startswith("/splashui/challenge"):
+        return "browser_challenge"
+    if path.startswith("/sorry/") and (host == "google.com" or host.endswith(".google.com")):
+        return "browser_challenge"
+    if str(title or "").casefold().strip().rstrip(".…").strip() in CHALLENGE_TITLES:
+        return "browser_challenge"
+    head = " ".join(str(text or "")[:CHALLENGE_HEAD_CHARS].split()).casefold()
+    if any(phrase in head for phrase in CHALLENGE_TEXT):
+        return "browser_challenge"
+    return ""
+
+
+def blocked_line(url: str) -> str:
+    """What eve tells the owner when a bot check stops the lane: the site (never the path or query) and what to do."""
+    host = observed_site(url).removeprefix("www.") or "that site"
+    return (f"{host} is showing a bot check, so I stopped: I can't get past it myself. "
+            f"Open {host} in Chrome, finish the check, then ask me again.")
+
 
 # WebMCP (developer.chrome.com/docs/ai/webmcp): a page can register its own tools on document.modelContext,
 # which an agent could call instead of clicking. Measurement only: how many pages eve visits offer any.
@@ -722,6 +793,8 @@ class _Page:
         self._observed_url = ""
         self._hash_before = ""
         self._hash0 = ""
+        self._recorded: dict[str, Any] = {}       # the last snapshot's document and controls (click_recheck)
+        self.blocked = ""                         # the owner line while the last snapshot is a bot check, else ""
         self.webmcp_probe = webmcp_probe
         self._webmcp_seen = ""
 
@@ -755,11 +828,22 @@ class _Page:
         self._seq += 1
         self._snapshot = None  # a failed read must not leave focused() using the previous document
         self._observed_url = ""
+        self._recorded = {}
         t0 = self.clock()
         raw = self._collect()
         snap = snapshot_from_page(raw, self._seq, self.clock() - t0)
         self._snapshot = snap
         self._observed_url = raw.get("url") if isinstance(raw.get("url"), str) else ""
+        # What a decision made on this snapshot is made on: each control as collected, in this document.
+        self._recorded = {"url": self._observed_url, "doc": str(raw.get("document_id") or ""),
+                          "controls": {str(e.get("id")): (str(e.get("role") or ""), str(e.get("name") or ""),
+                                                          str(e.get("href") or ""))
+                                       for e in raw.get("elements") or [] if isinstance(e, Mapping)}}
+        head = raw.get("head")
+        if not isinstance(head, str):
+            head = str(raw.get("text_hash") or "").partition(":")[2]
+        self.blocked = (blocked_line(self._observed_url)
+                        if browser_blocker(self._observed_url, str(raw.get("title") or ""), head) else "")
         # What "changed" means here: the URL, the title, the page text, or any control's state or label.
         # A toggled checkbox changes no text, so the controls are in the hash too.
         controls = [(e.get("role"), e.get("name"), e.get("value")) for e in raw.get("elements") or []]
@@ -829,15 +913,47 @@ class _Page:
     def _locator(self, c: Candidate) -> Any:
         return self.page.locator(f'[data-eve-id="{c.id}"]').first
 
+    def _blocked(self) -> str:
+        """The effectors' refusal on a bot-check page (browser_blocker), "" otherwise."""
+        return f"{BLOCKED_PREFIX} {self.blocked}" if self.blocked else ""
+
+    def _recheck(self, c: Candidate) -> str:
+        """"" when the control under ``c.id`` is still the one the last snapshot recorded, in the same document
+        (click_recheck); else the STALE_PREFIX refusal, saying what changed."""
+        before = self._recorded.get("controls", {}).get(c.id)
+        if before is None:
+            return f"{STALE_PREFIX} {c.label!r} was not in the last look at the page; look again"
+        recorded = {"url": self._recorded.get("url", ""), "doc": self._recorded.get("doc", ""),
+                    "role": before[0], "name": before[1], "href": before[2]}
+        try:
+            now = self.page.evaluate(_RECHECK_JS, {"id": c.id})
+        except Exception as e:  # noqa: BLE001 — a document being replaced cannot vouch for the control
+            return f"{STALE_PREFIX} could not re-read {c.label!r} ({type(e).__name__}); look again"
+        changed = click_recheck(recorded, now)
+        if changed:
+            return f"{STALE_PREFIX} {c.label!r} changed since the decision ({', '.join(changed)}); look again"
+        return ""
+
     def click_candidate(self, c: Candidate) -> str:
+        if self.blocked:
+            return self._blocked()
         norm = " ".join(c.label.split()).casefold()
-        if is_sensitive(c.label) and (self.approve or "").casefold() != norm:
+        # The raw href (query and all: HN's vote?id=…) from the last look; an upvote or follow link asks too.
+        href = (self._recorded.get("controls", {}).get(c.id) or ("", "", ""))[2]
+        if needs_confirmation(c, href) and not (self.approve and self.approve.casefold() == norm):  # "" is no yes
             return f"refused: {c.label!r} is a sensitive control without approval"
         loc = self._locator(c)
         try:
             if loc.count() == 0:
                 return f"refused: {c.label!r} is no longer on the page"
             loc.scroll_into_view_if_needed(timeout=SNAPSHOT_TIMEOUT_MS)
+            # Read again what the decision was made on, after the scroll (which can lazy-load and re-render)
+            # and as the last thing before the press. A separate evaluate, not a click inside it: Playwright's
+            # click is a real pointer event and waits for the control to be visible, stable and uncovered.
+            stale = self._recheck(c)
+            if stale:
+                log.info("browser lane: %s", stale)
+                return stale
             loc.click(timeout=SNAPSHOT_TIMEOUT_MS)
         except Exception as e:  # noqa: BLE001 — covered, detached, navigated away: nothing was clicked
             return f"refused: could not click {c.label!r} ({type(e).__name__})"
@@ -845,6 +961,8 @@ class _Page:
         return f"clicked {c.role} {c.label!r} at ({x + w // 2},{y + h // 2})"
 
     def focus_and_type(self, c: Candidate, text: str) -> str:
+        if self.blocked:
+            return self._blocked()
         if c.secure:
             return f"refused: {c.label!r} is a secure field"
         loc = self._locator(c)
@@ -866,6 +984,8 @@ class _Page:
         the values; the result names the parts filled, never a value. A login or 2FA item fills only on its own
         site (vault.Vault.fill_values). "refused: ..." means nothing was typed."""
         from .vault import VaultError
+        if self.blocked:
+            return self._blocked()
         if self.vault is None:
             return "refused: there is no vault"
         try:
@@ -941,6 +1061,8 @@ class _Page:
         name = KEYS.get(str(key).lower())
         if name is None:
             raise ValueError(f"not a key: {key!r}")
+        if self.blocked:
+            return self._blocked()
         before = self.page.url
         self.page.keyboard.press(name)
         if name == "Enter":
@@ -1214,14 +1336,18 @@ class BrowserLane:
         if cleared:
             log.info("browser lane: %s", cleared)
         snap = p.snapshot()
+        if p.blocked:
+            log.info("browser lane: a bot check is up at %s", observed_site(p.current_url()) or "-")
         return {"app": "browser", "lines": outline_lines(snap), "title": snap.title,
                 "url": navigation_destination(p.current_url()), "site": observed_site(p.current_url()),
-                "vault": self.vault.lines() if self.vault is not None else []}
+                "vault": self.vault.lines() if self.vault is not None else [],
+                "blocked": p.blocked}              # a bot check: the owner line; the caller says it and stops
 
     async def outline(self) -> dict[str, Any]:
         return await self._run(self._outline)
 
-    def _run_plan(self, plan_dict: dict[str, Any], goal: str, start: int, approved: Mapping[str, str]) -> dict[str, Any]:
+    def _run_plan(self, plan_dict: dict[str, Any], goal: str, start: int, approved: Mapping[str, str],
+                  success_rejected: bool = False) -> dict[str, Any]:
         from . import plan_contract as pc
         from .plan_executor import run_plan
 
@@ -1235,15 +1361,33 @@ class BrowserLane:
                 return f"opened {name}"                    # the browser is already the whole world here
             raise ValueError(f"{name} is not the browser: this plan belongs on the Mac lane")
 
+        first = plan.steps[start] if start < len(plan.steps) else None
+        if first is not None and first.kind != "open_url":
+            p.snapshot()                          # the page the plan starts on: a bot check stops it before step 1
+            if p.blocked:
+                return self._blocked_result(p, start)
         result = run_plan(plan, senses=p, effectors=p, asker=self._step_asker, open_app=open_app,
                           open_url=lambda url: p.open_url(self._plain_http.get(url, url)), frontmost_app=lambda: "browser", start=start, approved=ok,
-                          decide="jev" if self._step_asker is not None else "keyword", planned_for="browser")
+                          decide="jev" if self._step_asker is not None else "keyword", planned_for="browser",
+                          success_rejected=success_rejected)
+        if p.blocked and result.status != "complete":
+            # A step landed on a bot check (the effectors refused everything after it): not a step that failed,
+            # a page nobody here may pass. Blocked, with the owner's line, never handed on to be solved.
+            return {**self._blocked_result(p, result.next_index), "ms": round(result.ms, 1),
+                    "ledger": [e.to_dict() for e in result.ledger]}
         return result.to_dict()
 
+    @staticmethod
+    def _blocked_result(p: _Page, index: int) -> dict[str, Any]:
+        """A plan result for a bot-check page: status "blocked", and the sentence is what eve tells the owner."""
+        log.info("browser lane: plan blocked by a bot check at %s", observed_site(p.current_url()) or "-")
+        return {"status": "blocked", "next_index": index, "reason": "browser_challenge", "confirm": "",
+                "sentence": p.blocked, "ms": 0.0, "ledger": []}
+
     async def run_plan(self, plan_dict: dict[str, Any], goal: str, start: int = 0,
-                       approved: Optional[Mapping[str, str]] = None) -> dict[str, Any]:
+                       approved: Optional[Mapping[str, str]] = None, success_rejected: bool = False) -> dict[str, Any]:
         self.plans_started += 1
-        return await self._run(self._run_plan, plan_dict, goal, start, dict(approved or {}))
+        return await self._run(self._run_plan, plan_dict, goal, start, dict(approved or {}), bool(success_rejected))
 
     def _page_text(self, limit: int = 12000) -> dict[str, Any]:
         """Read once the text stops growing: a web app (Gmail) says "Loading…" for seconds after the load event
@@ -1256,7 +1400,15 @@ class BrowserLane:
             except Exception:  # noqa: BLE001 — a page with no body text reads as empty, never as a crash
                 return ""
 
+        def challenge(text: str) -> str:
+            url = str(p.page.url or "")
+            return blocked_line(url) if browser_blocker(url, str(p.page.title() or ""), text) else ""
+
         text, deadline = body(), time.perf_counter() + READ_WAIT_SECS
+        blocked = challenge(text)
+        if blocked:                                         # a bot check never grows into the answer: no wait
+            return {"title": p.page.title(), "url": p.page.url, "text": text[:limit], "signed_out": False,
+                    "blocked": blocked}
         while time.perf_counter() < deadline:
             time.sleep(READ_POLL_SECS)
             again = body()
@@ -1264,7 +1416,7 @@ class BrowserLane:
                 break                                       # stopped growing, and there is something to read
             text = again if len(again) >= len(text) else text
         return {"title": p.page.title(), "url": p.page.url, "text": text[:limit],
-                "signed_out": bool(SIGN_IN.search(p.page.url))}
+                "signed_out": bool(SIGN_IN.search(p.page.url)), "blocked": challenge(text)}
 
     async def page_text(self, limit: int = 12000) -> dict[str, Any]:
         """The page's title, URL and visible text (whitespace-collapsed, capped): what a question is answered from."""

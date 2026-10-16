@@ -52,6 +52,33 @@ cold), and leaves it running between tasks, like eve's own Chrome. Its log is
 - **Codex** computer tasks keep using your own Chrome, where its browser
   extension lives.
 
+## Bot checks (challenge pages)
+
+Steel's Chrome is still an automated Chrome, so some sites answer with a bot check
+instead of the page. The browser lane recognises one on every look at the page
+(`browser_lane.browser_blocker`, ported from LayaBrowse, MIT):
+
+- the path starts with `/splashui/challenge`;
+- Google's `/sorry/` page, on a Google host only (`/sorry/` alone is an ordinary path);
+- the title is "Just a moment", "Access denied", "Robot check", "Pardon our
+  interruption" or "Attention Required! | Cloudflare";
+- Cloudflare's "checking your browser" or "needs to review the security of your
+  connection" in the first 500 characters of the page.
+
+On a bot check the lane stops and touches nothing. Every click, type, key press and
+vault fill is refused (`refused: blocked:`), a plan ends with status `blocked` (reason
+`browser_challenge`) before step 1 or as soon as a step lands on one, and the page
+text is not waited for. The task is **not** handed on to Codex or the screenshot
+planner, because they would try to solve the check. eve says one line that names the
+site only, never the path or query:
+
+> google.com is showing a bot check, so I stopped: I can't get past it myself. Open
+> google.com in Chrome, finish the check, then ask me again.
+
+An ordinary page whose title or text only mentions these words (an AWS page about
+"Access Denied" errors, a search for "sorry") is not a bot check. Tests:
+`bridge/tests/test_browser_challenge.py`.
+
 ## Known limits
 
 - Steel runs one session at a time. A `steel` CLI session started by hand replaces
@@ -62,8 +89,9 @@ cold), and leaves it running between tasks, like eve's own Chrome. Its log is
 - Upstream ignores a session's `userDataDir`; eve sets `CHROME_USER_DATA_DIR` when it
   starts the server instead, so a server started by hand uses its own temp profile.
 - The server stops on SIGINT; SIGTERM alone did not stop it (2026-10-13).
-- Sites that block automated Chrome may still block Steel's, stealth or not. Google
-  sign-in through Steel is untested.
+- Sites that block automated Chrome may still block Steel's, stealth or not; eve then
+  stops and tells you ([bot checks](#bot-checks-challenge-pages)). Google sign-in
+  through Steel is untested.
 
 ## Staying on the newest Steel
 

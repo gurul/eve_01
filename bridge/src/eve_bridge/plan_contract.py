@@ -19,18 +19,26 @@ The shape is jev-use's PlanStep (savka777/jev-use, MIT, Planner.swift: a closed 
 `delegate(steps=[…])` exact-label hint beside it and a per-step `expect` for the code oracle. A seventh,
 `fill` (2026-10-12, vault.py), names a vault item by its handle: the browser page fills the form from it, so a
 password, card number or 2FA code is never in a plan, a prompt or a ledger.
+
+What a plan cannot do either: say what DONE looks like for a browser search. A browser plan (its dict carries
+`"app": "browser"`) gets its `success` from code: browser_intent.expected_outcome reads the ORIGINAL REQUEST, and
+a search outcome becomes a `url_query` check (the open page's host is the site the request named, or a search
+engine when it named none, and its query parameter is the query the request said). It replaces the planner's own
+check, so "search duck duck go for cats" is not done by a Google search the planner chose. `url_query` is code's
+only: a plan that carries one is not a plan. When the request gives no such outcome, the planner's check stands.
 """
 
 from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any, Optional
-from urllib.parse import urlsplit
+from typing import Any, Callable, Optional
+from urllib.parse import parse_qsl, urlsplit
 
 KINDS = ("open_app", "open_url", "click", "type", "press_key", "checkpoint", "fill")
 VAULT_HANDLE = re.compile(r"^v_[a-z0-9]{8}$")   # vault.HANDLE, without importing the vault here
-EXPECT_KINDS = ("text_visible", "title_contains", "app_frontmost", "url_is")
+EXPECT_KINDS = ("text_visible", "title_contains", "app_frontmost", "url_is")   # what the planner may give
+CODE_EXPECT_KINDS = ("url_query",)                                           # what only code derives
 KEYS = ("return", "escape", "tab", "space", "up", "down", "left", "right", "delete")
 MAX_STEPS = 8
 MAX_TEXT_CHARS = 400
@@ -44,8 +52,9 @@ class PlanError(ValueError):
 
 @dataclass(frozen=True)
 class Expect:
-    kind: str                      # EXPECT_KINDS
-    value: str
+    kind: str                      # EXPECT_KINDS, or CODE_EXPECT_KINDS when code derived it
+    value: str                     # url_query: the query, case- and space-normalised
+    host: str = ""                 # url_query: the site's host; "" for any search engine
 
 
 @dataclass(frozen=True)
@@ -73,10 +82,11 @@ class PlanStep:
 class Plan:
     steps: tuple[PlanStep, ...]
     final_say: str = ""            # spoken only when every step was seen to take effect
-    success: Optional[Expect] = None
+    success: Optional[Expect] = None       # what the executor checks at the end: the request's check, else the planner's
     source: str = "astra"          # astra | code
     needs_eyes: bool = False       # the planner declined: the request needs someone to look (classic loop)
     reasons: tuple[str, ...] = field(default_factory=tuple)
+    planned_success: Optional[Expect] = None  # the planner's own check, as it gave it (plan_to_dict sends this one)
 
 
 def _text(value: Any, limit: int) -> str:
@@ -107,6 +117,78 @@ def url_matches(actual: Any, expected: Any) -> bool:
     return want is not None and canonical_url(actual) == want
 
 
+def _norm_query(value: Any) -> str:
+    return " ".join(str(value or "").split()).casefold()
+
+
+_HOSTNAME = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$")
+
+
+def _search_addresses(host: str) -> tuple[tuple[str, str], ...]:
+    """(host, query key) pairs a url_query for `host` accepts: the site's own host and its search template's
+    (Hacker News searches on hn.algolia.com). For "" the general search engines, never a site's own search."""
+    from . import browser_intent as bi
+
+    sites = [s for s in bi.SITES if s.query_key and (s.host == host if host else s.host in SEARCH_ENGINES)]
+    out: list[tuple[str, str]] = []
+    for s in sites:
+        out.append((s.host, s.query_key))
+        searched = (urlsplit(s.search_template).hostname or "").removeprefix("www.")
+        if searched and searched != s.host:
+            out.append((searched, s.query_key))
+    return tuple(out)
+
+
+# A search with no site named is done on any of these (browser_intent.SITES has their query keys).
+SEARCH_ENGINES = frozenset({"google.com", "duckduckgo.com"})
+
+
+def url_query_expect(host: Optional[str], query: Any) -> Expect:
+    """The code-only `url_query` check, validated: a known site's bare host (or None/"" for any search engine)
+    and a non-empty query. PlanError otherwise."""
+    host = str(host or "").strip().casefold()
+    q = _norm_query(query)
+    if not q:
+        raise PlanError("url_query: the query is empty")
+    if len(q) > MAX_TEXT_CHARS:
+        raise PlanError(f"url_query: the query is longer than {MAX_TEXT_CHARS} characters")
+    if host and (not _HOSTNAME.match(host) or not _search_addresses(host)):
+        raise PlanError(f"url_query: {host!r} is not a site with a known search address")
+    return Expect("url_query", q, host)
+
+
+def url_query_matches(actual: Any, expect: Expect) -> bool:
+    """The open page is the search the check names: an http(s) URL whose host is one of the site's search hosts
+    (itself or a subdomain: www., en.) and whose query parameter equals the query, case and spaces normalised.
+    Equal, never contains: a search for "cats and dogs" is not a search for "cats"."""
+    if expect.kind != "url_query":
+        return False
+    url = canonical_url(actual)
+    if url is None:
+        return False
+    hostname = url[1].rstrip(".")
+    for host, key in _search_addresses(expect.host):
+        if hostname == host or hostname.endswith("." + host):
+            if any(k == key and _norm_query(v) == expect.value for k, v in parse_qsl(url[4], keep_blank_values=True)):
+                return True
+    return False
+
+
+def request_check(request: str, intent: Optional[Callable[[str], Any]] = None) -> Optional[Expect]:
+    """The success check code derives from the request for a browser plan, or None to leave the planner's.
+    Today only a search outcome has one (url_query). `intent` is browser_intent.expected_outcome by default; any
+    failure in it, or an outcome that does not validate, is no check — the planner's stands."""
+    if intent is None:
+        from .browser_intent import expected_outcome as intent
+    try:
+        outcome = intent(request)
+        if outcome is None or outcome.kind != "search" or not outcome.query:
+            return None
+        return url_query_expect(outcome.site_host, outcome.query)
+    except Exception:  # noqa: BLE001 — an intent that cannot answer is an abstention, never a bad plan
+        return None
+
+
 def _expect(raw: Any, where: str) -> Optional[Expect]:
     if raw is None:
         return None
@@ -116,6 +198,8 @@ def _expect(raw: Any, where: str) -> Optional[Expect]:
     value = raw.get("value") if kind == "url_is" else _text(raw.get("value"), MAX_TARGET_CHARS)
     if kind in (None, "", "none"):
         return None
+    if kind in CODE_EXPECT_KINDS:
+        raise PlanError(f"{where}: {kind} is derived by code from the request, never given by a plan")
     if kind not in EXPECT_KINDS:
         raise PlanError(f"{where}: expect.kind must be one of {EXPECT_KINDS}, not {kind!r}")
     if kind == "url_is" and canonical_url(value) is None:
@@ -156,8 +240,11 @@ def parse_step(raw: Any, index: int, request: str) -> PlanStep:
                     expect=_expect(raw.get("expect"), where), consequential=bool(raw.get("consequential")))
 
 
-def parse_plan(raw: Any, request: str, source: str = "astra") -> Plan:
-    """A validated Plan, or PlanError. Strict on purpose: a plan the code cannot fully read is not run."""
+def parse_plan(raw: Any, request: str, source: str = "astra", *, browser: Optional[bool] = None,
+               intent: Optional[Callable[[str], Any]] = None) -> Plan:
+    """A validated Plan, or PlanError. Strict on purpose: a plan the code cannot fully read is not run.
+    A browser plan (`browser`, else the dict's `"app": "browser"`) gets its success from the request
+    (request_check, module docstring); `intent` replaces browser_intent.expected_outcome in tests."""
     if not isinstance(raw, dict):
         raise PlanError("the plan is not an object")
     if raw.get("needs_eyes") is True:
@@ -168,8 +255,12 @@ def parse_plan(raw: Any, request: str, source: str = "astra") -> Plan:
     if len(steps) > MAX_STEPS:
         raise PlanError(f"the plan has {len(steps)} steps; at most {MAX_STEPS}")
     parsed = tuple(parse_step(s, i, request) for i, s in enumerate(steps, start=1))
+    planned = _expect(raw.get("success"), "success")
+    if browser is None:
+        browser = raw.get("app") == "browser"
+    derived = request_check(request, intent) if browser else None
     return Plan(parsed, final_say=_text(raw.get("final_say"), MAX_SAY_CHARS),
-                success=_expect(raw.get("success"), "success"), source=source)
+                success=derived or planned, source=source, planned_success=planned)
 
 
 def step_to_dict(s: PlanStep) -> dict[str, Any]:
@@ -179,9 +270,11 @@ def step_to_dict(s: PlanStep) -> dict[str, Any]:
 
 
 def plan_to_dict(p: Plan) -> dict[str, Any]:
+    # The planner's check, never a code-derived one: the lane derives that again from the request.
+    sent = p.planned_success if p.success is not None and p.success.kind in CODE_EXPECT_KINDS else p.success
     return {"steps": [step_to_dict(s) for s in p.steps], "final_say": p.final_say, "source": p.source,
             "needs_eyes": p.needs_eyes,
-            "success": {"kind": p.success.kind, "value": p.success.value} if p.success else None}
+            "success": {"kind": sent.kind, "value": sent.value} if sent else None}
 
 
 # ---- what the planner is asked for ------------------------------------------------------------------------

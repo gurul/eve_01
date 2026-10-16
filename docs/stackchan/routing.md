@@ -700,9 +700,10 @@ executor            plan_executor.py walks the steps. A click is fast_lane.run_d
                     FRESH snapshot: the exact label first when the planner read one in the outline, then
                     its description. open_app/open_url are the helpers' own calls; type goes into the one
                     editable field, or Jev's pick among several; press_key is one key.
-no closing turn     done is code: every step applied, none a suspected no-op, every `expect` held.
-                    The sentence is the plan's `final_say`, or a local one that says what could not be
-                    confirmed.
+no closing turn     done is code: every step applied, none a suspected no-op, every `expect` held,
+                    and the plan's `success` check read true at the end after it read false before
+                    step 1 (see "Plan success needs evidence" below). The sentence is the plan's
+                    `final_say`, or a local one that says what could not be confirmed.
 the floor           no plan, a bad plan, a checkpoint or a step that finds no control → today's
                     turn-by-turn loop, with a [note] of what was already applied
 ```
@@ -808,6 +809,51 @@ control (`Place Order`) stopped for the human and a yes let exactly that
 through.
 
 Install: `pip install -e ".[browser]"` then `python -m playwright install chromium`.
+
+### Guards ported from LayaBrowse (2026-10-16)
+
+Four checks from LayaBrowse (github.com/cklxx/LayaBrowse, MIT) sit between a decision and the page. Each has
+its own test file in `bridge/tests/`.
+
+**Plan success needs evidence** (`plan_executor.py`, `test_plan_success_guard.py`). A plan, on the Mac or in
+the browser, ends `complete` only when its `success` check reads true at the end. Otherwise every step runs and
+the plan ends `partial`, with one of three reasons:
+
+| Reason | When |
+|---|---|
+| `no_success_check` | the plan has no success check, so nothing observable can say it is done |
+| `success_already_held` | the check was already true before step 1 (read once, with no wait), so it proves nothing |
+| `success_unreadable` | the check could not be read at the end |
+
+No sentence is spoken for these. A question is still answered from the page; any other task goes to the
+step-by-step loop with a note of what was already done, so such tasks now take longer instead of ending on
+"Done". A plan that resumes after your yes is handed back the first call's rejection, because only the call
+that starts at step 1 can read the check before anything was done. In the browser, a search request gets its
+check from code, not from the planner: `url_query`, the named site's search URL with that query
+([browser intent](../browser-intent.md)). A plan cannot supply `url_query` itself. Wikipedia often jumps
+straight to the article for an exact title, so "search wikipedia for alan turing" ends `partial` and hands over.
+
+**Account changes ask first** (`ax_candidates.needs_confirmation`, `test_side_effect_links.py`). On a page, a
+short control that changes your signed-in account asks for your yes, the same way a sensitive label does. This
+covers the label (upvote, downvote, like, follow, star, hide, flag, report, save, subscribe, with at most three
+words: "Like 12", "Follow @jane", "▲ upvote") and the link: a last path segment such as `/vote`, `/star`,
+`/follow` or `like.php`, or a query key such as `action=vote`. The browser's click reads the raw href from the
+last look at the page, query included, so a Hacker News `vote?id=…` link with no label asks too. Links that
+only read do not ask: "Saved articles", "Follow-up", "Hide sidebar", "Stories you might like", `/stargazers`,
+`/followers`. On the Mac lane only sensitive labels ask, so Save, Hide and Flag in a native app stay a plain
+click (confirm only dangerous acts).
+
+**A click rechecks its control** (`browser_lane.click_recheck`, `test_click_recheck.py`). Each look at the page
+records, per control, its role, name and href, plus the page URL and the document (`performance.timeOrigin`).
+After the scroll and right before the press, the control is read again. If anything differs, nothing is
+clicked and the step returns `refused: stale: '<label>' changed since the decision (<what>); look again`. An
+unreadable recheck refuses too. Other text changing on a live page does not refuse. The recheck is a separate
+read just before Playwright's own click, so the click stays a real pointer event with Playwright's visible,
+stable and uncovered checks.
+
+**Bot checks stop the lane** (`browser_lane.browser_blocker`, `test_browser_challenge.py`). A Cloudflare, Google
+`/sorry/` or "access denied" page ends the task as `blocked`, with one line to you, and is never handed to
+Codex or the screenshot planner. See [Steel: bot checks](../steel.md#bot-checks-challenge-pages).
 
 ### Choosing the browser planner model
 
