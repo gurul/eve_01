@@ -91,6 +91,7 @@ from typing import TYPE_CHECKING, Any, Awaitable, Callable, Optional
 from . import (
     app_registry,
     consent,
+    nyt,
     obsbot_panel,
     phone_location,
     science_search,
@@ -151,7 +152,7 @@ THINK_TODAY_CHARS = 6000       # today's talk handed to think_hard with the prof
 # The results eve answers from. Their text is kept as a "tool" line, so "what did the search say" and
 # "the second one" still resolve later. Head moves, sound, lessons and forget are actions, not answers;
 # recent_conversation returns lines the transcript already holds.
-ANSWER_TOOLS = frozenset({websearch.TOOL_NAME, science_search.TOOL_NAME, "think_hard", "look", "look_around", "find",
+ANSWER_TOOLS = frozenset({websearch.TOOL_NAME, science_search.TOOL_NAME, *nyt.TOOL_NAMES, "think_hard", "look", "look_around", "find",
                           "take_photo", "memory_search", "memory_read"})
 TRANSCRIPT_WHO = {"user": "owner", "assistant": "eve"}
 
@@ -580,6 +581,8 @@ def session_config(config: VoiceConfig, brief: str = "",
     loc_tools = [] if listening else phone_location.tools()
     # papers' titles and abstracts (science_search.py), while EVE_SCIENCE_SEARCH is on: never in a lesson
     sci_tools = [] if listening else science_search.tools()
+    # The New York Times (nyt.py), while EVE_NYT is on: never in a lesson
+    sci_tools = sci_tools + ([] if listening else nyt.tools())
     return {
         "model": config.model,
         "instructions": INSTRUCTIONS + config.about + profile_block(profile) + today_block(today) + context
@@ -1654,7 +1657,8 @@ class VoiceSession:
         elif (name in ("look", "look_around", "find", "think_hard", "lesson", "take_photo", websearch.TOOL_NAME)
               or name in self._memory_tool_names or name in MEET_TOOL_NAMES
               or app_registry.owner(name, voice=True) is not None
-              or name in phone_location.TOOL_NAMES or name in science_search.TOOL_NAMES):
+              or name in phone_location.TOOL_NAMES or name in science_search.TOOL_NAMES
+              or name in nyt.TOOL_NAMES):
             # Seconds (or a minute, for think_hard) of camera, head, model or disk work:
             # answered from a background task, so Live events (the owner talking,
             # captions) keep flowing meanwhile.
@@ -1816,6 +1820,10 @@ class VoiceSession:
                     # papers' titles and abstracts (science_search.py): a second of network; outside words, so the
                     # taint gate marks the conversation after it, as after a web search
                     result = await science_search.handle(name, args)
+                elif name in nyt.TOOL_NAMES:
+                    # The New York Times (nyt.py): seconds of network (an archive month, longer, once); outside
+                    # words, so the taint gate marks the conversation after it, as after a web search
+                    result = await nyt.handle(name, args)
                 else:
                     result = await self._find(str(args.get("target", "")))
             except asyncio.CancelledError:

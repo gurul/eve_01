@@ -62,6 +62,11 @@ rest of the web.
 `EVE_SCIENCE_SEARCH`, is on. Jev's questions and the fitted gates are unchanged. Its tool-choice line rides only
 while both it and `web_search` are offered.
 
+The New York Times tools (`nyt_search`, `nyt_archive`, `nyt_bestsellers`, `nyt_popular`, `nyt_headlines`,
+[docs/nyt.md](nyt.md), 2026-10-16) are not routed either and are not in `ALWAYS`. They ride every turn while
+`EVE_NYT` is on: headlines always, the other four with `NYT_API_KEY`. The router is unchanged, and no accuracy has
+been measured for them. Their tool-choice lines ride only while every tool they name is offered.
+
 With the switch on, a short block of tool-choice lines rides the same slot (`telegram.intent_block`). Each line says
 when a tool is the one, as a positive set in the owner's words, and is written only when every tool it names is
 offered on that turn. No line names a wrong tool, even as a warning.

@@ -1,0 +1,225 @@
+swagger: "2.0"
+basePath: /services/xml/rss/nyt
+host: api.nytimes.com
+info:
+  version: 2.0.0
+  title: RSS
+  description: |
+    The RSS feeds return articles ranked on the section fronts (Arts, HomePage, World, ...).
+
+    ```
+    /{section}.xml
+    ```
+
+    No API key is required to call the RSS feeds.
+    You can call the RSS feeds on rss.nytimes.com.
+
+    ## Example Calls
+    ```
+    https://rss.nytimes.com/services/xml/rss/nyt/Arts.xml
+    https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml
+    ```
+    ## Sections
+    * [Africa](https://rss.nytimes.com/services/xml/rss/nyt/Africa.xml)
+    * [Americas](https://rss.nytimes.com/services/xml/rss/nyt/Americas.xml)
+    * [ArtandDesign](https://rss.nytimes.com/services/xml/rss/nyt/ArtandDesign.xml)
+    * [Arts](https://rss.nytimes.com/services/xml/rss/nyt/Arts.xml)
+    * [AsiaPacific](https://rss.nytimes.com/services/xml/rss/nyt/AsiaPacific.xml)
+    * [Automobiles](https://rss.nytimes.com/services/xml/rss/nyt/Automobiles.xml)
+    * [Baseball](https://rss.nytimes.com/services/xml/rss/nyt/Baseball.xml)
+    * [Books/Review](https://rss.nytimes.com/services/xml/rss/nyt/Books/Review.xml)
+    * [Business](https://rss.nytimes.com/services/xml/rss/nyt/Business.xml)
+    * [Climate](https://rss.nytimes.com/services/xml/rss/nyt/Climate.xml)
+    * [CollegeBasketball](https://rss.nytimes.com/services/xml/rss/nyt/CollegeBasketball.xml)
+    * [CollegeFootball](https://rss.nytimes.com/services/xml/rss/nyt/CollegeFootball.xml)
+    * [Dance](https://rss.nytimes.com/services/xml/rss/nyt/Dance.xml)
+    * [Dealbook](https://rss.nytimes.com/services/xml/rss/nyt/Dealbook.xml)
+    * [DiningandWine](https://rss.nytimes.com/services/xml/rss/nyt/DiningandWine.xml)
+    * [Economy](https://rss.nytimes.com/services/xml/rss/nyt/Economy.xml)
+    * [Education](https://rss.nytimes.com/services/xml/rss/nyt/Education.xml)
+    * [EnergyEnvironment](https://rss.nytimes.com/services/xml/rss/nyt/EnergyEnvironment.xml)
+    * [Europe](https://rss.nytimes.com/services/xml/rss/nyt/Europe.xml)
+    * [FashionandStyle](https://rss.nytimes.com/services/xml/rss/nyt/FashionandStyle.xml)
+    * [Golf](https://rss.nytimes.com/services/xml/rss/nyt/Golf.xml)
+    * [Health](https://rss.nytimes.com/services/xml/rss/nyt/Health.xml)
+    * [Hockey](https://rss.nytimes.com/services/xml/rss/nyt/Hockey.xml)
+    * [HomePage](https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml)
+    * [Jobs](https://rss.nytimes.com/services/xml/rss/nyt/Jobs.xml)
+    * [Lens](https://rss.nytimes.com/services/xml/rss/nyt/Lens.xml)
+    * [MediaandAdvertising](https://rss.nytimes.com/services/xml/rss/nyt/MediaandAdvertising.xml)
+    * [MiddleEast](https://rss.nytimes.com/services/xml/rss/nyt/MiddleEast.xml)
+    * [MostEmailed](https://rss.nytimes.com/services/xml/rss/nyt/MostEmailed.xml)
+    * [MostShared](https://rss.nytimes.com/services/xml/rss/nyt/MostShared.xml)
+    * [MostViewed](https://rss.nytimes.com/services/xml/rss/nyt/MostViewed.xml)
+    * [Movies](https://rss.nytimes.com/services/xml/rss/nyt/Movies.xml)
+    * [Music](https://rss.nytimes.com/services/xml/rss/nyt/Music.xml)
+    * [NYRegion](https://rss.nytimes.com/services/xml/rss/nyt/NYRegion.xml)
+    * [Obituaries](https://rss.nytimes.com/services/xml/rss/nyt/Obituaries.xml)
+    * [PersonalTech](https://rss.nytimes.com/services/xml/rss/nyt/PersonalTech.xml)
+    * [Politics](https://rss.nytimes.com/services/xml/rss/nyt/Politics.xml)
+    * [ProBasketball](https://rss.nytimes.com/services/xml/rss/nyt/ProBasketball.xml)
+    * [ProFootball](https://rss.nytimes.com/services/xml/rss/nyt/ProFootball.xml)
+    * [RealEstate](https://rss.nytimes.com/services/xml/rss/nyt/RealEstate.xml)
+    * [Science](https://rss.nytimes.com/services/xml/rss/nyt/Science.xml)
+    * [SmallBusiness](https://rss.nytimes.com/services/xml/rss/nyt/SmallBusiness.xml)
+    * [Soccer](https://rss.nytimes.com/services/xml/rss/nyt/Soccer.xml)
+    * [Space](https://rss.nytimes.com/services/xml/rss/nyt/Space.xml)
+    * [Sports](https://rss.nytimes.com/services/xml/rss/nyt/Sports.xml)
+    * [SundayBookReview](https://rss.nytimes.com/services/xml/rss/nyt/SundayBookReview.xml)
+    * [Sunday-Review](https://rss.nytimes.com/services/xml/rss/nyt/Sunday-Review.xml)
+    * [Technology](https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml)
+    * [Television](https://rss.nytimes.com/services/xml/rss/nyt/Television.xml)
+    * [Tennis](https://rss.nytimes.com/services/xml/rss/nyt/Tennis.xml)
+    * [Theater](https://rss.nytimes.com/services/xml/rss/nyt/Theater.xml)
+    * [TMagazine](https://rss.nytimes.com/services/xml/rss/nyt/TMagazine.xml)
+    * [Travel](https://rss.nytimes.com/services/xml/rss/nyt/Travel.xml)
+    * [Upshot](https://rss.nytimes.com/services/xml/rss/nyt/Upshot.xml)
+    * [US](https://rss.nytimes.com/services/xml/rss/nyt/US.xml)
+    * [Weddings](https://rss.nytimes.com/services/xml/rss/nyt/Weddings.xml)
+    * [Well](https://rss.nytimes.com/services/xml/rss/nyt/Well.xml)
+    * [World](https://rss.nytimes.com/services/xml/rss/nyt/World.xml)
+    * [YourMoney](https://rss.nytimes.com/services/xml/rss/nyt/YourMoney.xml)
+
+schemes:
+  - https
+produces:
+  - application/xml
+paths:
+  "/{section}.xml":
+    get:
+      summary: Returns a list of articles for a given section.
+      description: |
+        Given section name, return lists of articles ranked on the section front.
+      parameters:
+        - name: section
+          in: path
+          description: "Section name (Arts, Africa, Americas, ...)."
+          required: true
+          type: string
+          enum:
+            - Africa
+            - Americas
+            - ArtandDesign
+            - Arts
+            - AsiaPacific
+            - Automobiles
+            - Baseball
+            - Books/Review
+            - Business
+            - Climate
+            - CollegeBasketball
+            - CollegeFootball
+            - Dance
+            - Dealbook
+            - DiningandWine
+            - Economy
+            - Education
+            - EnergyEnvironment
+            - Europe
+            - FashionandStyle
+            - Golf
+            - Health
+            - Hockey
+            - HomePage
+            - Jobs
+            - Lens
+            - MediaandAdvertising
+            - MiddleEast
+            - MostEmailed
+            - MostShared
+            - MostViewed
+            - Movies
+            - Music
+            - NYRegion
+            - Obituaries
+            - PersonalTech
+            - Politics
+            - ProBasketball
+            - ProFootball
+            - RealEstate
+            - Science
+            - SmallBusiness
+            - Soccer
+            - Space
+            - Sports
+            - SundayBookReview
+            - Sunday-Review
+            - Technology
+            - Television
+            - Tennis
+            - Theater
+            - TMagazine
+            - Travel
+            - Upshot
+            - US
+            - Weddings
+            - Well
+            - World
+            - YourMoney
+          default: HomePage
+      tags:
+        - RSS
+      responses:
+        "200":
+          description: A list of articles.
+          schema:
+            type: object
+            properties:
+              channel:
+                type: object
+                properties:
+                  atom:link:
+                    type: string
+                  copyright:
+                    type: string
+                  description:
+                    type: string
+                  image:
+                    $ref: "#/definitions/Image"
+                  item:
+                    type: array
+                    items:
+                      $ref: "#/definitions/Item"
+                  language:
+                    type: string
+                  lastBuildDate:
+                    type: string
+                  link:
+                    type: string
+                  title:
+                    type: string
+definitions:
+  Image:
+    type: object
+    properties:
+      link:
+        type: string
+      title:
+        type: string
+      url:
+        type: string
+  Item:
+    type: object
+    properties:
+      atom:link:
+        type: string
+      category:
+        type: string
+      description:
+        type: string
+      dc:creator:
+        type: string
+      guid:
+        type: string
+      link:
+        type: string
+      media:content:
+        type: string
+      media:credit:
+        type: string
+      media:description:
+        type: string
+      pubDate:
+        type: string
+      title:
+        type: string

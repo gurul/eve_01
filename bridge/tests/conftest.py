@@ -166,6 +166,18 @@ def _science_search_pinned_off(monkeypatch: pytest.MonkeyPatch):
 
 
 @pytest.fixture(autouse=True)
+def _nyt_pinned_off(monkeypatch: pytest.MonkeyPatch):
+    """The New York Times tools ship on (nyt.py, 2026-10-16), headlines even without a key; like Ask science, a
+    plain test runs with them off and with no NYT_API_KEY, so the request-body checks keep their bytes and nothing
+    reaches NYT. Its own tests (test_nyt.py) switch it on, with a mocked transport and a temporary cache."""
+    monkeypatch.setenv("EVE_NYT", "0")
+    # set, then removed: monkeypatch restores the name as it found it, so a key that a test's env-file load (cli.main
+    # reads ~/.config/eve-bridge/env) adds never outlives the test
+    monkeypatch.setenv("NYT_API_KEY", "")
+    monkeypatch.delenv("NYT_API_KEY")
+
+
+@pytest.fixture(autouse=True)
 def _find_image_pinned_off(monkeypatch: pytest.MonkeyPatch):
     """Pictures for cards ship on (find_image.py, 2026-10-13); like Ask science, a plain test runs with the tool off
     so the request-body checks keep their bytes. Its own tests (test_find_image.py) pass their own environ."""

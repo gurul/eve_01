@@ -111,6 +111,8 @@ LITE_FORCED: dict[str, str] = {
     # gate on Claude Code's hooks, and the release check (lite updates by re-running its install line)
     "EVE_MEET": "0", "EVE_AMERICA": "0", "EVE_OPENTABLE": "0", "EVE_AGENTCARD": "0", "EVE_CANVAS": "0",
     "EVE_CHIEF": "off", "EVE_UPDATES": "0", "EVE_PHONE_LOCATION": "0", "EVE_COMMAND_RISK": "off",
+    # The New York Times (nyt.py): its key is secret-shaped and removed anyway; off, its keyless headlines go too
+    "EVE_NYT": "0",
     "EVE_BRIDGE_NO_UPDATE_CHECK": "1",
 }
 # An app added with `eve-bridge app new` brings its own switch (app_registry.APPS): forced off too, so a new app never
