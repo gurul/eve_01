@@ -294,10 +294,16 @@ final class ChatModel: NSObject, ObservableObject {
     private func open(_ url: URL) {
         switch ChatLinks.external(url) {
         case .safari:
-            guard let top = Self.topController(webView.window?.rootViewController) else { return }
-            let safari = SFSafariViewController(url: url)
-            safari.dismissButtonStyle = .done
-            top.present(safari, animated: true)
+            // Owner, 2026-10-16: "it goes to website and then i have to click open app". A web link opens straight in
+            // its own app when the site claims it (a universal link: the NYT, Slack, Notion...); only a page no
+            // installed app claims opens in Safari inside Eve Link.
+            UIApplication.shared.open(url, options: [.universalLinksOnly: true]) { [weak self] opened in
+                guard !opened, let self,
+                      let top = Self.topController(self.webView.window?.rootViewController) else { return }
+                let safari = SFSafariViewController(url: url)
+                safari.dismissButtonStyle = .done
+                top.present(safari, animated: true)
+            }
         case .system:
             UIApplication.shared.open(url)
         case nil:
