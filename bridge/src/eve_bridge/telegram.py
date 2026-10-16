@@ -111,6 +111,7 @@ from . import (
     memory_sources,
     muse_pi,
     menu_tools,
+    nyt,
     opentable,
     phone_location,
     quick_answers,
@@ -186,7 +187,7 @@ PROMPT_CACHE_KEY = "eve-telegram"  # every turn shares one prefix: route them to
 # The tool results worth keeping in the transcript: what eve found out or did for the owner. The memory
 # tools are not here (their results are memory already), nor the owner's apps (third-party mail and files
 # are not the owner's conversation), nor calls whose result is only "ok" (owner, 2026-09-23).
-TRANSCRIBED_TOOLS = ("web_search", "science_search", "think_hard", "look", "look_around", "find", "take_photo",
+TRANSCRIBED_TOOLS = ("web_search", "science_search", *nyt.TOOL_NAMES, "think_hard", "look", "look_around", "find", "take_photo",
                      "remember", "capture_note", "watch_add", "watch_remove", "watch_pause", "watch_resume", "watch_set_end",
                      "meet_join", "meet_leave")
 # Model calls in one turn that may use tools, at most; then one more that may not (OUT_OF_ROUNDS_NOTE). It was 6
@@ -1003,6 +1004,12 @@ INTENT_LINES: tuple[tuple[tuple[str, ...], str], ...] = (
     (("science_search", "web_search"),
      "What research, studies or the science say about something, papers or evidence on a question, a review of a "
      "topic, or a specific study or DOI is science_search; everyday facts, news and how-to stay with web_search."),
+    (("nyt_headlines",), "The New York Times' headlines or top stories right now, its home page or one section "
+                         "front (\"what's on the Times\", \"NYT tech headlines\"), is nyt_headlines."),
+    (("nyt_search", "nyt_archive", "nyt_bestsellers", "nyt_popular"),
+     "The New York Times by name: what it wrote about a topic, person or event, its reviews, or an article the "
+     "owner remembers is nyt_search; everything it printed in one month long ago is nyt_archive; its best-seller "
+     "lists are nyt_bestsellers; its most read, emailed or shared articles are nyt_popular."),
     (("america_ask",), "Official U.S. government and legal sources (tax rules, visas, benefits, a law, an agency's "
                        "own page) are america_ask."),
     (("opentable_search", "start_task"),
@@ -5630,6 +5637,8 @@ class TelegramInlet:
         app_tools = self._app_tools(opened, lent, routed)
         loc_tools = phone_location.tools()          # once a turn: the phone's location, while it has shared one
         sci_tools = science_search.tools()          # papers' titles and abstracts, while EVE_SCIENCE_SEARCH is on
+        # The New York Times (nyt.py), while EVE_NYT is on: headlines always, the four key tools with NYT_API_KEY
+        sci_tools = sci_tools + nyt.tools()
         # a real picture for a card (Wikipedia), while EVE_FIND_IMAGE is on: app turns only, the one place a card is
         # drawn; a call is spoken, so it never pays for the tool or the lookup (owner, 2026-10-13: voice "should be
         # faster")
@@ -5903,6 +5912,10 @@ class TelegramInlet:
                 # papers' titles and abstracts (science_search.py): outside words, so the result taints the turn
                 # as web_search's does (tool_gate); off, the reason and no request
                 return await science_search.handle(name, args)
+            if name in nyt.TOOL_NAMES:
+                # The New York Times (nyt.py): outside words, so the result taints the turn as web_search's does;
+                # off, or a key tool without NYT_API_KEY, the reason and no request
+                return await nyt.handle(name, args)
             if name in canvas.TOOL_NAMES:
                 if self._canvas is None:
                     return {"ok": False, "reason": canvas.OFF_REASON}

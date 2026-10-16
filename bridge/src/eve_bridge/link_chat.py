@@ -287,7 +287,7 @@ APP_RULE = (
     "Before you write, decide the form of the reply:\n"
     "- Write an openui-lang block when the answer has a shape the owner will scan: a comparison of two or more "
     "things, options to pick from, steps to follow, a plan or schedule by time or day, numbers that make a chart, "
-    "or a question the owner can answer with a tap.\n"
+    "articles, books or headlines from a tool, or a question the owner can answer with a tap.\n"
     "- Write plain text, one to three short sentences, for everything else: chat, a greeting, thanks, feelings, a "
     "single fact or number, a yes or no, a confirmation that you started something, or a question back to the "
     "owner.\n"
@@ -301,8 +301,8 @@ APP_RULE = (
     "a list.\n\n"
     "A complete reply with a block:\n" + APP_EXAMPLE)
 APP_LINE = ("This turn is from the Eve Link app: use one openui-lang block when a comparison, options, steps, a "
-            "schedule, a chart or tap choices make the answer easier to scan, and one to three short plain sentences "
-            "otherwise.")
+            "schedule, a chart, articles or books from a tool, or tap choices make the answer easier to scan, and "
+            "one to three short plain sentences otherwise.")
 
 
 # ---- the generative UI prompt ----------------------------------------------------------------------------

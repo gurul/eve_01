@@ -49,6 +49,7 @@ from eve_bridge import (
     miniapp,
     monid,
     notify,
+    nyt,
     obsbot_panel,
     obsbot_usb,
     opentable,
@@ -198,6 +199,7 @@ CHECKS: dict[str, tuple[Callable[[Mapping[str, str]], Any], Any, dict[str, str]]
     "EVE_CHIEF": (chief.enabled, False, {"EVE_CHIEF": "on"}),
     "EVE_UPDATES": (updates.enabled, False, {}),
     "EVE_PHONE_LOCATION": (phone_location.enabled, False, {}),
+    "EVE_NYT": (nyt.enabled, False, {}),
     "EVE_COMMAND_RISK": (command_risk, "off", {"EVE_COMMAND_RISK": "shadow", "TYPESAFE_API_KEY": CANARY}),
     "EVE_BRIDGE_NO_UPDATE_CHECK": (process_env(version_check._disabled), True, {}),
 }

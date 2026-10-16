@@ -91,7 +91,7 @@ LABELS = (
     "restaurant_booking", "events", "jobs_and_reminders", "app_builder", "calendar_read", "calendar_write",
     "email_read", "email_send", "contacts_read", "maps_directions", "github", "slack", "notion", "linear",
     "claude_relay", "codex", "spend_report", "stealth", "stop_task", "phone_pairing", "phone_location",
-    "science_search", "ask", "none",
+    "science_search", "nyt", "ask", "none",
 )
 
 # The production switches (owner's Mac, 2026-10-08), set when the shell has not set them.
@@ -111,6 +111,7 @@ TOOL_LABELS: dict[str, str] = {
     "spend_report": "spend_report", "set_stealth": "stealth", "stop_task": "stop_task",
     "pair_eve_link": "phone_pairing", "read_file": "mac_files_read", "phone_location": "phone_location",
     "science_search": "science_search",
+    **dict.fromkeys(("nyt_search", "nyt_archive", "nyt_bestsellers", "nyt_popular", "nyt_headlines"), "nyt"),
 }
 _PREFIXES = (("watch_", "price_watch"), ("meet_", "meet")) + app_registry.prefixes()
 _NOTES = ("capture_note", "search_notes", "read_note", "edit_note", "undo_note", "list_inbox", "file_note",

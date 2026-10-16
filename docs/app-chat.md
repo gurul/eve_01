@@ -865,6 +865,18 @@ only an image URL from a tool result, the conversation or the owner, never an in
   the page's original lead picture only when it is a JPEG, PNG or WebP of at least 800 x 400 (no logos or drawings),
   else `ok: false` and the card goes without. Its page title is outside words, so it taints the turn like a web search.
   `EVE_FIND_IMAGE=0` turns it off. The app loads the picture itself (`img-src https:` in the page's CSP).
+- **News and books** (2026-10-16): owner, "on my phone app allow it to generate nice links (openui / images) so i
+  can click onto news and browse". When a turn shows New York Times articles or best sellers (`nyt.py`, see
+  [nyt.md](nyt.md)), the card rule in `gen-prompt.mjs` RULES asks for a ListBlock with variant "image": one ListItem
+  per article or book, 5 to 8 of them, with the headline or title, a short subtitle ("Section · date"; a
+  book: "author · weeks on the list"), the row's own `image` when it has one, and `@OpenUrl(url)` as the action. A tap
+  opens the article in the app's in-app browser (`cardActions.ts` and `links.ts` hand the URL to the native
+  `openURL`). One big story may lead with an ImageBlock instead. Every news or book list ends with a FollowUpBlock of
+  two or three ways to keep browsing (more on the topic, another section, the most read). `APP_RULE` and `APP_LINE`
+  name articles and books from a tool among the shapes that get a block. The reference's news example uses
+  `example.com` links and picture and no person's name, so it offers no real-looking value to copy. Measured on
+  2026-10-16 (gpt-6-luna, low): a new blind set of 20 messages turned 24 of 28 news replies into such a card, 15 of
+  28 passing every check; see [nyt.md, Measured](nyt.md#measured-2026-10-16).
 - **Voice is spoken, not drawn**: a call, voice mode or the Action Button is not an app turn, so it gets neither the
   card rules (`app_block`) nor `find_image`, and the app-only speed grading does not run; its prompt stays short.
 
@@ -894,7 +906,8 @@ use". In the week before, 1 of 24 app replies used OpenUI.
    parts in this order:
    - `APP_RULE`: a two-way decision. Use one openui-lang block when the answer
      has a shape the owner will scan: a comparison, options to pick from,
-     steps, a plan or schedule, numbers for a chart, or a tap choice. Use one
+     steps, a plan or schedule, numbers for a chart, articles, books or
+     headlines from a tool, or a tap choice. Use one
      to three short plain sentences for chat, greetings, thanks, feelings, a
      single fact, a yes or no, or a question back. For a how-to or a plan,
      give the usual answer first and ask about a detail in one sentence after
@@ -922,11 +935,13 @@ only the components that suit a phone chat (`CHAT_COMPONENTS`):
 - Library notes and rules that name a left-out component are dropped. So are a
   few that do not fit eve: "generate realistic data", "always chart
   numbers", and a templated image host.
-- Six rules are added: use only facts you have, keep it phone-sized, which
-  chart for what, Buttons for tap choices, real URLs only for ImageBlock, and
-  Callout only for a warning.
-- The library's examples are replaced by four small ones: steps, options with
-  buttons, a chart from numbers the owner gave, and a comparison table.
+- Eight rules are added: use only facts you have, keep it phone-sized, which
+  chart for what, Buttons for tap choices, pictures when a subject has a look,
+  real URLs only for ImageBlock, news and books as an image list that opens
+  each link, and Callout only for a warning.
+- The library's examples are replaced by five small ones: steps, options with
+  buttons, a chart from numbers the owner gave, a news list whose items open
+  their articles, and a comparison table.
 - The two syntax rules that show a placeholder component name now show real
   components.
 - The app is on OpenUI Lang 1.0 (react-lang 1.0.0, react-ui 0.18.0). One
@@ -961,7 +976,11 @@ only the components that suit a phone chat (`CHAT_COMPONENTS`):
 The last figure is 23,927, measured in the dev eval, plus the 164 characters
 the action-step and history fixes added to the block. An app turn's prompt is
 now about 35,300 characters shorter, so it costs less
-and is cached sooner. A Telegram turn did not change.
+and is cached sooner. A Telegram turn did not change. Since then the picture
+rule and the news-and-books rule with its example (2026-10-16) have grown the
+reference to 18,601 characters and the whole app block to 20,708. An app turn's
+instructions in the dev eval are now 28,758 characters (29,056 with the NYT key's
+tools offered).
 
 **Checking a program.** `node ios/EveLink/Web/scripts/validate.mjs`
 (`pnpm validate`) parses an openui-lang program with the app's parser and
@@ -1013,11 +1032,18 @@ low effort, 2026-10-08:
 |---|---|---|---|---|
 | Before (25d2728) | 5 | 17 of 30 | 15 of 17 | 20 of 20 |
 | After | 4 | 22 of 24 | 22 of 22 | 16 of 16 |
+| With the news-and-books rule (2026-10-16) | 4 | 22 of 24 | 22 of 22 | 16 of 16 |
 
 - Before, the two blocks that failed to parse both used a BarChart variant
   that only LineChart takes.
 - After, the two misses were both "how do I reset my wifi router". eve asked
   first whether it meant a restart or a factory reset, which erases settings.
+- With the news-and-books rule, one miss was that same case, and one was a
+  dinner list whose fence closed with a typo. A first wording that also added
+  "a tool's articles" to the "In the app, a table... goes in the block"
+  sentence made the router case worse: 4 of 16 runs drew a block, against 9 of
+  16 without it and 5 of 8 with only the shape list changed. That sentence was
+  left as it was.
 - This dev set is small and its wording is easy. A blind set, kept apart, gives
   the verdict.
 

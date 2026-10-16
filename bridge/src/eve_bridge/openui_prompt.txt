@@ -154,6 +154,19 @@ km = Series("Distance", [5, 0, 7.5, 3, 10])
 totals = EntityList([{ left: "Total", right: "25.5 km", rightVariant: "number" }, { left: "Longest", right: "Fri, 10 km", rightVariant: "text" }])
 ```
 
+News from a tool, each item opening its article:
+
+```openui-lang
+root = Card([header, news, next])
+header = CardHeader("Mars rover news", "The New York Times")
+news = ListBlock([a1, a2], "image")
+a1 = ListItem("Rover Finds Signs of an Ancient Lake", "Science · Oct 14", {src: "https://example.com/images/rover-lake.jpg", alt: "The rover on a ridge"}, "Read", @OpenUrl("https://example.com/2026/10/14/rover-lake.html"))
+a2 = ListItem("What the Next Rover Will Carry", "Science · Oct 9", null, "Read", @OpenUrl("https://example.com/2026/10/09/next-rover.html"))
+next = FollowUpBlock([f1, f2])
+f1 = FollowUpItem("More on Mars")
+f2 = FollowUpItem("Most read this week")
+```
+
 A comparison with follow-ups:
 
 ```openui-lang
@@ -197,4 +210,5 @@ Before finishing, walk your output and verify:
 - For a few choices the owner can answer with a tap, use Buttons with one Button per choice (each sends its label back to you), or a FollowUpBlock for likely next questions.
 - Show a picture whenever one is available and the subject has a look: a concert or show, a place, venue, city, artist, team, dish, product or thing. An event from the event search carries its own image; for anything else, look one up with the picture tool by its proper name before writing the card. One subject: lead the Card with an ImageBlock. Several: a ListBlock with variant "image" and each item's image.
 - ImageBlock needs a real image URL from a tool result, the conversation or the owner; with no such URL, leave images out.
+- News articles and books from a tool get a ListBlock with variant "image": one ListItem per article or book, 5 to 8 of them, with the headline or title, a short subtitle (an article: "Section · date"; a book: "author · weeks on the list"), the row's own image as {src, alt} when it has one (null when it has none), and @OpenUrl with the row's link so a tap opens it. For one big story, lead with an ImageBlock instead. Every news or book list ends with a FollowUpBlock of two or three short ways to keep browsing, such as more on the topic, another section or the most read.
 - Callout is for something the owner must not miss (a warning, a deadline), never to explain what you did.

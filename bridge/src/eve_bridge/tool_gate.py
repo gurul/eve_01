@@ -69,6 +69,9 @@ _SOURCES: dict[str, str] = {
     "web_search": "a web search", "events_search": "Ticketmaster's listings", "opentable_search": "OpenTable",
     # a read, never acting, so it never asks; not CLEAN: its titles and abstracts are other people's words
     "science_search": "a search of research papers",
+    # reads, never acting, so they never ask; not CLEAN: headlines and abstracts are the paper's words (nyt.py)
+    **dict.fromkeys(("nyt_search", "nyt_archive", "nyt_bestsellers", "nyt_popular", "nyt_headlines"),
+                    "the New York Times"),
     "find_image": "Wikipedia",
     "recent_messages": "earlier chat messages", "memory_search": "memory", "memory_read": "memory",
     "read_note": "a note", "search_notes": "your notes", "list_inbox": "your notes", "list_todos": "your todos",
