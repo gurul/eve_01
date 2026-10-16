@@ -1,10 +1,10 @@
 {
  "about": "Recorded by bridge/tools/owner_golden.py --write from main's code at `base`, with EVE_PROFILE unset. Recorded again only for a deliberate change to full eve on main; never to make a lite change pass.",
- "base": "ed9aea3",
+ "base": "25332a8",
  "snapshot": {
   "app_block": {
-   "chars": 19387,
-   "sha256": "b45b251fee3eb7cda34ff0465c6966d2ac35594898fac98318688c2cad60a9a3"
+   "chars": 20708,
+   "sha256": "bb98c361cce6c3c6be5f9ac6d6fbe0cf5474cc2fa251060a378a9a3a9785329f"
   },
   "cli": {
    "daemon": {
@@ -439,26 +439,26 @@
   "requests": {
    "app_only": {
     "app_turn": {
-     "body_sha256": "c192318cda358b3b5185e70fdd2a0cd9809026f8197753fc6f4beba1019b653b",
+     "body_sha256": "eadb85f31c37ed057d77f53eb612c3467c8a3d9e34d8486a0d5a14ca499a9267",
      "graded_sha256": {
-      "instant": "0cbb2a94da78c1217f1f447eb22a61bf2f0d341b9e977a8cfea7ca38a55878f4",
-      "think": "6188c8353f72a38d15e38e52efa8a1640ea20cb212017daee9be8960a363f23d"
+      "instant": "8b60ade9e20e55d679e5ff9ed9ed5f6a974491884e9da1ecf51eee9b6c8317ba",
+      "think": "c426a7596f1f0844cf50a3f20986dd841c298da969b4de91c47f0d8c770a07d0"
      },
      "instructions": {
-      "chars": 34674,
-      "sha256": "e6427b8170d634e32e9d62f11121e736e931ea3e70ac994c8ed3029697c01fed"
+      "chars": 35995,
+      "sha256": "80320f7a2ec14142e18216f43622111f90bf8b279bbae41e519b2d9ddaef3574"
      },
      "tools": ["start_task", "steer_task", "stop_task", "take_photo", "screenshot", "send_file", "list_files", "take_notes", "remember", "start_coding_session", "think_hard", "memory_search", "memory_read", "forget_preview", "forget_apply", "recent_messages", "web_search", "capture_note", "search_notes", "read_note", "edit_note", "undo_note", "list_inbox", "file_note", "list_todos", "second_brain_workflow", "spend_report", "daily_rundown", "claude_relay", "codex_relay", "set_stealth", "open_apps", "pair_eve_link", "read_file", "watch_add", "watch_list", "watch_remove", "watch_pause", "watch_resume", "watch_set_end", "science_search"]
     },
     "app_turn_composio_tools": {
-     "body_sha256": "3bb48b10caa047e98b29532ed8487f1a4b2268d449eea71c4618d31c1bed1054",
+     "body_sha256": "8c89e4eb051fd705426378970a090ef686315f4297b781ba553b55d36fee4445",
      "graded_sha256": {
-      "instant": "2aa4b6dd518164f3c68f828bd653a3800a7ad15dc1eafe0149b606a7621b77b3",
-      "think": "6038f15d4384c5656e90e9edb1718d8c36d1d4ffbb1e8c5961a40ac026b20b86"
+      "instant": "1dee65d642fe98380380d109b17f853dbb27cee7b35ff820f4065395ef19b8cc",
+      "think": "14368db55473de51989ea42e2bb272e8a21972a67f3fea8a67bad074f24dd8d9"
      },
      "instructions": {
-      "chars": 35761,
-      "sha256": "10b2daaea736dbd491a51e4b7c66007c9a531ef3b42f61e1534d0aaa1d5a733f"
+      "chars": 37082,
+      "sha256": "c7f9ddca947d2e19bf5adbb465a9875c9e55f6aa4f9853ee95c8b0bb44bf1cac"
      },
      "tools": ["start_task", "steer_task", "stop_task", "take_photo", "screenshot", "send_file", "list_files", "take_notes", "remember", "start_coding_session", "think_hard", "memory_search", "memory_read", "forget_preview", "forget_apply", "recent_messages", "web_search", "capture_note", "search_notes", "read_note", "edit_note", "undo_note", "list_inbox", "file_note", "list_todos", "second_brain_workflow", "spend_report", "daily_rundown", "claude_relay", "codex_relay", "set_stealth", "open_apps", "pair_eve_link", "read_file", "watch_add", "watch_list", "watch_remove", "watch_pause", "watch_resume", "watch_set_end", "science_search", "COMPOSIO_SEARCH_TOOLS", "COMPOSIO_GET_TOOL_SCHEMAS", "COMPOSIO_MULTI_EXECUTE_TOOL", "COMPOSIO_MANAGE_CONNECTIONS", "COMPOSIO_WAIT_FOR_CONNECTIONS", "COMPOSIO_REMOTE_WORKBENCH", "COMPOSIO_REMOTE_BASH_TOOL"]
     },
@@ -481,26 +481,26 @@
    },
    "app_only_composio": {
     "app_turn": {
-     "body_sha256": "a46deca1c679ae7463afc49c457a907285f07003c14a5f6035ab52c4578a5939",
+     "body_sha256": "de53c3665e1098d0ab9a34615ec8022e1acef0ce5fabe81d8614189a6781a959",
      "graded_sha256": {
-      "instant": "3183172671296800a0ac0ee362990298df71273eca12f14687b605821cf1f172",
-      "think": "c2068a843230957b9feec341202ab0f07d11535b44de5cfd822d47e4021c64b2"
+      "instant": "dad07651c3067f97e462c8fb17f5951afc0392c66e02046c5920de8cc9e686f4",
+      "think": "8c21a5abcbcceb04c827777b59d9ca6d9d4cc2c2ef2a65e82c6b98c932370835"
      },
      "instructions": {
-      "chars": 34717,
-      "sha256": "cc72227ff8e6f8da8cef01111a5410cb489f25a48b5caf1befc500890f4cf0a3"
+      "chars": 36038,
+      "sha256": "cbbcf1cab8cf7fcaf46409629f4a03e75e635b752ae1b42b9235cff225d839fe"
      },
      "tools": ["start_task", "steer_task", "stop_task", "take_photo", "screenshot", "send_file", "list_files", "take_notes", "remember", "start_coding_session", "think_hard", "memory_search", "memory_read", "forget_preview", "forget_apply", "recent_messages", "web_search", "capture_note", "search_notes", "read_note", "edit_note", "undo_note", "list_inbox", "file_note", "list_todos", "second_brain_workflow", "spend_report", "daily_rundown", "claude_relay", "codex_relay", "set_stealth", "open_apps", "pair_eve_link", "read_file", "watch_add", "watch_list", "watch_remove", "watch_pause", "watch_resume", "watch_set_end", "science_search"]
     },
     "app_turn_composio_tools": {
-     "body_sha256": "8a72cdd02ca594af503be4cbb5a19926c78009620e1811a21409c6c6314aed52",
+     "body_sha256": "cd6fb9bcc4fba84d3dbcd9b4706414f44062d5e30882ed8e37e989b4b49482fa",
      "graded_sha256": {
-      "instant": "a8701272d3c22f3042706db30f3a96c63a067e3fef2846fbf8760afca36b1b48",
-      "think": "a71ccd96f63219a8dbfa6a179fc8b199c1c28ace2e4d8248e159feb3126f1dff"
+      "instant": "40026a2524c9d77f7ee9d6ac5cf3134a393ab31a04098b2fb9d16cde0a91e0ac",
+      "think": "79fa0fed546cbf70b874720812f113e566f0fd81b6f0bc8cc5e852f9a10df912"
      },
      "instructions": {
-      "chars": 35804,
-      "sha256": "a11472ddb44c41ba4f2c6b2c9ea92ff1ad5046a38f0d94524945c69a1df21bad"
+      "chars": 37125,
+      "sha256": "672e37be0eeb8b5ef82eaf481a4279552bea7d08ded573b049d910c5bf9b36e7"
      },
      "tools": ["start_task", "steer_task", "stop_task", "take_photo", "screenshot", "send_file", "list_files", "take_notes", "remember", "start_coding_session", "think_hard", "memory_search", "memory_read", "forget_preview", "forget_apply", "recent_messages", "web_search", "capture_note", "search_notes", "read_note", "edit_note", "undo_note", "list_inbox", "file_note", "list_todos", "second_brain_workflow", "spend_report", "daily_rundown", "claude_relay", "codex_relay", "set_stealth", "open_apps", "pair_eve_link", "read_file", "watch_add", "watch_list", "watch_remove", "watch_pause", "watch_resume", "watch_set_end", "science_search", "COMPOSIO_SEARCH_TOOLS", "COMPOSIO_GET_TOOL_SCHEMAS", "COMPOSIO_MULTI_EXECUTE_TOOL", "COMPOSIO_MANAGE_CONNECTIONS", "COMPOSIO_WAIT_FOR_CONNECTIONS", "COMPOSIO_REMOTE_WORKBENCH", "COMPOSIO_REMOTE_BASH_TOOL"]
     },
@@ -523,26 +523,26 @@
    },
    "telegram_on": {
     "app_turn": {
-     "body_sha256": "c192318cda358b3b5185e70fdd2a0cd9809026f8197753fc6f4beba1019b653b",
+     "body_sha256": "eadb85f31c37ed057d77f53eb612c3467c8a3d9e34d8486a0d5a14ca499a9267",
      "graded_sha256": {
-      "instant": "0cbb2a94da78c1217f1f447eb22a61bf2f0d341b9e977a8cfea7ca38a55878f4",
-      "think": "6188c8353f72a38d15e38e52efa8a1640ea20cb212017daee9be8960a363f23d"
+      "instant": "8b60ade9e20e55d679e5ff9ed9ed5f6a974491884e9da1ecf51eee9b6c8317ba",
+      "think": "c426a7596f1f0844cf50a3f20986dd841c298da969b4de91c47f0d8c770a07d0"
      },
      "instructions": {
-      "chars": 34674,
-      "sha256": "e6427b8170d634e32e9d62f11121e736e931ea3e70ac994c8ed3029697c01fed"
+      "chars": 35995,
+      "sha256": "80320f7a2ec14142e18216f43622111f90bf8b279bbae41e519b2d9ddaef3574"
      },
      "tools": ["start_task", "steer_task", "stop_task", "take_photo", "screenshot", "send_file", "list_files", "take_notes", "remember", "start_coding_session", "think_hard", "memory_search", "memory_read", "forget_preview", "forget_apply", "recent_messages", "web_search", "capture_note", "search_notes", "read_note", "edit_note", "undo_note", "list_inbox", "file_note", "list_todos", "second_brain_workflow", "spend_report", "daily_rundown", "claude_relay", "codex_relay", "set_stealth", "open_apps", "pair_eve_link", "read_file", "watch_add", "watch_list", "watch_remove", "watch_pause", "watch_resume", "watch_set_end", "science_search"]
     },
     "app_turn_composio_tools": {
-     "body_sha256": "3bb48b10caa047e98b29532ed8487f1a4b2268d449eea71c4618d31c1bed1054",
+     "body_sha256": "8c89e4eb051fd705426378970a090ef686315f4297b781ba553b55d36fee4445",
      "graded_sha256": {
-      "instant": "2aa4b6dd518164f3c68f828bd653a3800a7ad15dc1eafe0149b606a7621b77b3",
-      "think": "6038f15d4384c5656e90e9edb1718d8c36d1d4ffbb1e8c5961a40ac026b20b86"
+      "instant": "1dee65d642fe98380380d109b17f853dbb27cee7b35ff820f4065395ef19b8cc",
+      "think": "14368db55473de51989ea42e2bb272e8a21972a67f3fea8a67bad074f24dd8d9"
      },
      "instructions": {
-      "chars": 35761,
-      "sha256": "10b2daaea736dbd491a51e4b7c66007c9a531ef3b42f61e1534d0aaa1d5a733f"
+      "chars": 37082,
+      "sha256": "c7f9ddca947d2e19bf5adbb465a9875c9e55f6aa4f9853ee95c8b0bb44bf1cac"
      },
      "tools": ["start_task", "steer_task", "stop_task", "take_photo", "screenshot", "send_file", "list_files", "take_notes", "remember", "start_coding_session", "think_hard", "memory_search", "memory_read", "forget_preview", "forget_apply", "recent_messages", "web_search", "capture_note", "search_notes", "read_note", "edit_note", "undo_note", "list_inbox", "file_note", "list_todos", "second_brain_workflow", "spend_report", "daily_rundown", "claude_relay", "codex_relay", "set_stealth", "open_apps", "pair_eve_link", "read_file", "watch_add", "watch_list", "watch_remove", "watch_pause", "watch_resume", "watch_set_end", "science_search", "COMPOSIO_SEARCH_TOOLS", "COMPOSIO_GET_TOOL_SCHEMAS", "COMPOSIO_MULTI_EXECUTE_TOOL", "COMPOSIO_MANAGE_CONNECTIONS", "COMPOSIO_WAIT_FOR_CONNECTIONS", "COMPOSIO_REMOTE_WORKBENCH", "COMPOSIO_REMOTE_BASH_TOOL"]
     },
@@ -565,26 +565,26 @@
    },
    "telegram_on_composio": {
     "app_turn": {
-     "body_sha256": "a46deca1c679ae7463afc49c457a907285f07003c14a5f6035ab52c4578a5939",
+     "body_sha256": "de53c3665e1098d0ab9a34615ec8022e1acef0ce5fabe81d8614189a6781a959",
      "graded_sha256": {
-      "instant": "3183172671296800a0ac0ee362990298df71273eca12f14687b605821cf1f172",
-      "think": "c2068a843230957b9feec341202ab0f07d11535b44de5cfd822d47e4021c64b2"
+      "instant": "dad07651c3067f97e462c8fb17f5951afc0392c66e02046c5920de8cc9e686f4",
+      "think": "8c21a5abcbcceb04c827777b59d9ca6d9d4cc2c2ef2a65e82c6b98c932370835"
      },
      "instructions": {
-      "chars": 34717,
-      "sha256": "cc72227ff8e6f8da8cef01111a5410cb489f25a48b5caf1befc500890f4cf0a3"
+      "chars": 36038,
+      "sha256": "cbbcf1cab8cf7fcaf46409629f4a03e75e635b752ae1b42b9235cff225d839fe"
      },
      "tools": ["start_task", "steer_task", "stop_task", "take_photo", "screenshot", "send_file", "list_files", "take_notes", "remember", "start_coding_session", "think_hard", "memory_search", "memory_read", "forget_preview", "forget_apply", "recent_messages", "web_search", "capture_note", "search_notes", "read_note", "edit_note", "undo_note", "list_inbox", "file_note", "list_todos", "second_brain_workflow", "spend_report", "daily_rundown", "claude_relay", "codex_relay", "set_stealth", "open_apps", "pair_eve_link", "read_file", "watch_add", "watch_list", "watch_remove", "watch_pause", "watch_resume", "watch_set_end", "science_search"]
     },
     "app_turn_composio_tools": {
-     "body_sha256": "8a72cdd02ca594af503be4cbb5a19926c78009620e1811a21409c6c6314aed52",
+     "body_sha256": "cd6fb9bcc4fba84d3dbcd9b4706414f44062d5e30882ed8e37e989b4b49482fa",
      "graded_sha256": {
-      "instant": "a8701272d3c22f3042706db30f3a96c63a067e3fef2846fbf8760afca36b1b48",
-      "think": "a71ccd96f63219a8dbfa6a179fc8b199c1c28ace2e4d8248e159feb3126f1dff"
+      "instant": "40026a2524c9d77f7ee9d6ac5cf3134a393ab31a04098b2fb9d16cde0a91e0ac",
+      "think": "79fa0fed546cbf70b874720812f113e566f0fd81b6f0bc8cc5e852f9a10df912"
      },
      "instructions": {
-      "chars": 35804,
-      "sha256": "a11472ddb44c41ba4f2c6b2c9ea92ff1ad5046a38f0d94524945c69a1df21bad"
+      "chars": 37125,
+      "sha256": "672e37be0eeb8b5ef82eaf481a4279552bea7d08ded573b049d910c5bf9b36e7"
      },
      "tools": ["start_task", "steer_task", "stop_task", "take_photo", "screenshot", "send_file", "list_files", "take_notes", "remember", "start_coding_session", "think_hard", "memory_search", "memory_read", "forget_preview", "forget_apply", "recent_messages", "web_search", "capture_note", "search_notes", "read_note", "edit_note", "undo_note", "list_inbox", "file_note", "list_todos", "second_brain_workflow", "spend_report", "daily_rundown", "claude_relay", "codex_relay", "set_stealth", "open_apps", "pair_eve_link", "read_file", "watch_add", "watch_list", "watch_remove", "watch_pause", "watch_resume", "watch_set_end", "science_search", "COMPOSIO_SEARCH_TOOLS", "COMPOSIO_GET_TOOL_SCHEMAS", "COMPOSIO_MULTI_EXECUTE_TOOL", "COMPOSIO_MANAGE_CONNECTIONS", "COMPOSIO_WAIT_FOR_CONNECTIONS", "COMPOSIO_REMOTE_WORKBENCH", "COMPOSIO_REMOTE_BASH_TOOL"]
     },
