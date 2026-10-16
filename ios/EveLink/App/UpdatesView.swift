@@ -1,7 +1,9 @@
 // The Updates pane (docs/updates.md), left of the Chat: things to act on that eve found in the owner's mail, calendar,
-// notes, memory and projects. Owner, 2026-10-12: "just actionable things", no weather, "when I open, chat should still
-// be main pane". Each card reads as one sentence, a verb chip then the rest; a tap sends exactly that sentence (and
-// where it came from) to the chat, so nothing the owner cannot see goes to eve. Dismiss (a long press) takes a card away for 30 days; a sideways swipe changes the pane.
+// notes, memory and projects, and the apps connected through Composio (Slack, Notion, Linear, work mail and calendar).
+// Owner, 2026-10-12: "just actionable things", no weather, "when I open, chat should still be main pane". Each card
+// reads as one sentence, a verb chip then the rest. The hold menu's Send to chat sends exactly that sentence (and where
+// it came from) to the chat, so nothing the owner cannot see goes to eve; Open in <App> opens the source's own page
+// when the card has one; Dismiss takes a card away for 30 days. A plain tap does nothing; a sideways swipe changes the pane.
 import SwiftUI
 
 @MainActor
@@ -117,6 +119,8 @@ struct UpdatesView: View {
     let ask: (UpdateCard) -> Bool
     /// The last tap found eve still answering.
     @State private var askWaits = false
+    /// A https link opens its app when the app claims it (Slack, Notion), Safari otherwise.
+    @Environment(\.openURL) private var openURL
 
     var body: some View {
         VStack(spacing: 0) {
@@ -188,12 +192,22 @@ struct UpdatesView: View {
                     .listRowInsets(EdgeInsets(top: 5, leading: 16, bottom: 5, trailing: 16))
                     .contextMenu {
                         Button("Send to chat", systemImage: "arrow.up.message") { askWaits = !ask(card) }
+                        if let app = UpdateLink.app(card.link) {
+                            Button("Open in \(app.name)", systemImage: "arrow.up.forward.app") { openURL(app.url) }
+                        }
                         Button("Dismiss", systemImage: "xmark") { model.dismiss(card) }
                     } preview: {
                         UpdateCardView(card: card).frame(width: 340)
                     }
-                    .accessibilityHint("Touch and hold to send it to eve in Chat or dismiss it")
+                    .accessibilityHint(UpdateLink.app(card.link) == nil
+                                       ? "Touch and hold to send it to eve in Chat or dismiss it"
+                                       : "Touch and hold to send it to eve in Chat, open it, or dismiss it")
                     .accessibilityAction(named: "Send to chat") { askWaits = !ask(card) }
+                    .accessibilityActions {
+                        if let app = UpdateLink.app(card.link) {
+                            Button("Open in \(app.name)") { openURL(app.url) }
+                        }
+                    }
                     .accessibilityAction(named: "Dismiss") { model.dismiss(card) }
             }
         } else if let problem = model.problem {
@@ -243,7 +257,6 @@ struct UpdateCardView: View {
     private var due: String? { UpdateDue.label(card.due) }
     private var pressing: Bool { UpdateDue.isPressing(card.due) }
     private var symbol: String { card.knownKind?.symbol ?? "sparkles" }
-    private var kindWord: String { card.knownKind?.label ?? "" }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -292,7 +305,7 @@ struct UpdateCardView: View {
 
     private var accessibilityText: String {
         var parts = ["\(card.verb) \(card.text)"]
-        if !card.source.isEmpty { parts.append(kindWord.isEmpty ? "From \(card.source)" : "From \(kindWord): \(card.source)") }
+        if !card.source.isEmpty { parts.append("From " + (card.knownKind.map { $0.from(card.source) } ?? card.source)) }
         if let due { parts.append(due == "Overdue" ? "Overdue" : "Due \(due)") }
         return parts.joined(separator: ". ")
     }

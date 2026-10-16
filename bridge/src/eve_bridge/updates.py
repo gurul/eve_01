@@ -762,14 +762,21 @@ def suggest(snapshot: Mapping[str, Any], client: Any) -> list[dict[str, Any]]:
     Raises SuggestError on a reply that is not the cards' JSON, and the client's own errors."""
     if not snapshot.get("items"):
         return []
-    text = client.complete(SYSTEM, prompt_input(snapshot))
+    return clean_cards(reply(snapshot, client), snapshot)
+
+
+def reply(snapshot: Mapping[str, Any], client: Any, system: Optional[str] = None) -> dict[str, Any]:
+    """Blocking. The model's reply over the snapshot as JSON, before any check (``suggest`` checks it; the eval
+    also counts what the checks dropped). ``system`` replaces ``SYSTEM`` for the eval's prompt comparisons only.
+    Raises SuggestError on a reply that is not the cards' JSON."""
+    text = client.complete(SYSTEM if system is None else system, prompt_input(snapshot))
     try:
         raw = json.loads(text)
     except (TypeError, ValueError) as e:
         raise SuggestError("the reply is not JSON") from e
     if not isinstance(raw, dict) or not isinstance(raw.get("cards"), list):
         raise SuggestError("the reply has no cards list")
-    return clean_cards(raw, snapshot)
+    return raw
 
 
 class Client:

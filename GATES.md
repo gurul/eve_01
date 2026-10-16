@@ -34,6 +34,11 @@ Scope: the owner, 2026-10-12, from a screenshot of Hark's Home tab: "build this 
   EXPECT: UPDATES_BAR_OK
   EVIDENCE: exit=0; feat/updates 314f528 (blind set frozen in 36a4e02 before any scored run; leak scoring rewritten from review findings before the first blind run); output=recall 100.0% (40/40); noise 0.0% (0/60); leaks 0; provider errors 0; cost $0.0048 | UPDATES_BAR_OK
 
+- [x] G6b: The Composio prompt change (feat/updates-composio), with the real model, on a second BLIND set (tests/fixtures/updates/blind_composio.json, 15 cases mixing every kind, written by a separate agent from a brief, without the code or the prompt), against the old prompt (SYSTEM at e4e0b15): same bar as G6, plus 0 invented refs and 0 payload cards in the raw reply.
+  CHECK: cd bridge && env $(grep -E '^(OPENROUTER_API_KEY)=' ~/.config/eve-bridge/env | xargs) .venv/bin/python tools/updates_eval.py tests/fixtures/updates/blind_composio.json --recall 80 --noise 10
+  EXPECT: UPDATES_BAR_OK
+  EVIDENCE: exit=0, two runs; output=recall 100.0% (45/45); noise 1.4% (1/74); leaks 0; provider errors 0 | precision 97.9% (46/47); new-kind cards 29; invented refs 0; payload cards 0 | UPDATES_BAR_OK. Old prompt, two runs: recall 93.3% / 97.8%, noise 4.1% / 1.4%, precision 89.6% / 95.8%, 0 leaks, 0 invented, 0 payload. blind.json new: recall 97.5% (39/40), noise 0%, precision 100% (both runs). Table in docs/updates.md.
+
 - [x] G7: The live daemon, on this branch, builds Updates from the owner's real sources and serves them at /api/link/updates with the link token. The check prints counts and source kinds only, never card text.
   CHECK: bridge/.venv/bin/python bridge/tools/updates_live_check.py
   EXPECT: UPDATES_LIVE_OK

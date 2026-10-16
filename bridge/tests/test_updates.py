@@ -716,6 +716,47 @@ def test_eval_totals_recall_noise_and_errors() -> None:
     assert (t["recall"], t["noise"], t["leaks"]) == (100.0, 100.0, 0) and not ev.passes(t, 80, 10)
 
 
+def test_eval_counts_precision_new_kinds_and_what_the_checks_dropped() -> None:
+    ev = eval_module()
+    case = {"id": "k", "snapshot": {"items": [{"id": "slack:C1/1.2"}, {"id": "gmail:news"}, {"id": "note:x.md"}]},
+            "must": [{"ref": "slack:C1/1.2"}], "must_not": [{"ref": "gmail:news"}]}
+    good = {"verb": "Reply", "text": "to Ana on Slack", "refs": ["slack:C1/1.2"]}
+    mixed = {"verb": "Review", "text": "both", "refs": ["slack:C1/1.2", "gmail:news"]}
+    unjudged = {"verb": "Finish", "text": "the note", "refs": ["note:x.md"]}
+    invented = {"verb": "Reply", "text": "to Bo", "refs": ["slack:C9/9.9"]}
+    payload = {"verb": "Visit", "text": "pay-verify.example.net now", "refs": ["gmail:news"]}
+    got = {**got_cards(good, mixed, unjudged), "raw": [good, mixed, unjudged, invented, payload]}
+    s = ev.score(case, got)
+    assert (s["judged"], s["precise"], s["new_kind"], s["invented"], s["payload"]) == (2, 1, 2, 1, 1)
+    t = ev.tally([case], [got])
+    assert t["precision"] == 50.0 and t["cards"] == 3 and not ev.passes(t, 80, 100)
+    clean = {**got_cards(good), "raw": [good]}
+    assert ev.passes(ev.tally([case], [clean]), 80, 10)
+
+
+def test_eval_runs_the_production_path_with_another_prompt(monkeypatch) -> None:
+    ev = eval_module()
+    seen: list[str] = []
+
+    class Fake:
+        last_cost = 0.0
+
+        def __init__(self, *a: Any, **k: Any) -> None:
+            pass
+
+        def complete(self, instructions: str, body: str) -> str:
+            seen.append(instructions)
+            return json.dumps({"cards": [{"verb": "Reply", "text": "to Ana", "entity": None, "refs": ["slack:C1/1.2"],
+                                          "due": None}, {"verb": "Reply", "text": "x", "refs": ["gmail:nope"]}]})
+
+    monkeypatch.setattr(ev.updates, "Client", Fake)
+    case = {"id": "k", "snapshot": {"items": [{"id": "slack:C1/1.2", "kind": "slack", "title": "Slack: dm"}]}}
+    got = ev.run_case(case, "m", "OLD PROMPT")
+    assert seen == ["OLD PROMPT"] and len(got["raw"]) == 2 and [c["refs"] for c in got["cards"]] == [["slack:C1/1.2"]]
+    ev.run_case(case, "m")
+    assert seen[-1] == ev.updates.SYSTEM
+
+
 def _store_fix(place: Optional[str], age_min: float = 5.0) -> None:
     from eve_bridge import phone_location
     at = datetime.now(timezone.utc) - timedelta(minutes=age_min)

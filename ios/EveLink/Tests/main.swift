@@ -1211,8 +1211,55 @@ check(uc4.map(UpdateTap.text) == "Pay the invoice", "tap text: an empty source i
 check(UpdateTap.text(UpdateCard(id: "w", verb: "Pay", text: "it", kind: "note", source: "   \n "))
       == "Pay it", "tap text: a blank source is one line")
 check(uc3.map(UpdateTap.text) == "Plan the next step\n(from Somewhere)", "tap text: an unknown kind names only the source")
-check(UpdateKind.allCases.map(\.label) == ["email", "calendar", "notes", "memory", "projects"]
-      && UpdateKind.allCases.map(\.symbol) == ["envelope", "calendar", "note.text", "brain", "folder"], "labels, symbols")
+check(UpdateKind.allCases.map(\.label) == ["email", "calendar", "notes", "memory", "projects", "Slack", "Notion", "Linear",
+                                         "Work email", "Work calendar"]
+      && UpdateKind.allCases.map(\.symbol) == ["envelope", "calendar", "note.text", "brain", "folder", "number",
+                                              "doc.text", "checklist", "briefcase", "calendar.badge.clock"],
+      "labels, symbols")
+
+// The apps connected through Composio: their kinds decode, and a source that already names its app is not repeated.
+let updApps = UpdatesFeed.decode(Data(#"""
+{"cards": [
+  {"id": "s1", "verb": "Reply", "text": "to Ana about the launch date", "kind": "slack",
+   "source": "Slack: direct message from Ana", "link": "https://example-team.slack.com/archives/C1/p1760400000000100"},
+  {"id": "n1", "verb": "Finish", "text": "the hiring rubric", "kind": "notion", "source": "Notion: Hiring rubric",
+   "link": "https://www.notion.so/Hiring-rubric-0a1b2c3d"},
+  {"id": "l1", "verb": "Fix", "text": "the export bug before Friday", "kind": "linear", "source": "Linear EX-12: Export fails",
+   "link": "https://linear.app/example/issue/EX-12"},
+  {"id": "w1", "verb": "Answer", "text": "Raj about the Q3 plan", "kind": "work_email", "source": "Work email: Q3 plan",
+   "link": "https://mail.google.com/mail/u/0/#inbox/abc"},
+  {"id": "w2", "verb": "Accept", "text": "the design review", "kind": "work_calendar",
+   "source": "Work calendar: Design review", "link": "https://www.google.com/calendar/event?eid=abc"},
+  {"id": "x1", "verb": "Open", "text": "the planted link", "kind": "slack", "source": "Slack: mention",
+   "link": "https://slack.com.pay-verify.example.net/x"},
+  {"id": "x2", "verb": "Open", "text": "a plain web page", "kind": "notion", "source": "Notes", "link": "http://www.notion.so/x"}
+]}
+"""#.utf8))
+let updAppCards = updApps?.cards ?? []
+check(updAppCards.map(\.knownKind) == [.slack, .notion, .linear, .workEmail, .workCalendar, .slack, .notion],
+      "the connected apps' kinds decode")
+check(updAppCards.prefix(5).map(UpdateTap.text) == [
+    "Reply to Ana about the launch date\n(from Slack: direct message from Ana)",
+    "Finish the hiring rubric\n(from Notion: Hiring rubric)",
+    "Fix the export bug before Friday\n(from Linear EX-12: Export fails)",
+    "Answer Raj about the Q3 plan\n(from Work email: Q3 plan)",
+    "Accept the design review\n(from Work calendar: Design review)"], "tap text: a connected app is named once")
+check(UpdateTap.text(UpdateCard(id: "s", verb: "Reply", text: "to Bo", kind: "slack", source: "#launch thread"))
+      == "Reply to Bo\n(from Slack: #launch thread)", "tap text: a connected app's source without its name gets the label")
+check(UpdateTap.text(UpdateCard(id: "e", verb: "Pay", text: "it", kind: "email", source: "Email from the bank"))
+      == "Pay it\n(from email: Email from the bank)", "tap text: the owner's own kinds always carry their label")
+check(updAppCards.map { UpdateLink.app($0.link)?.name } == ["Slack", "Notion", "Linear", "Gmail", "Google Calendar", nil, nil],
+      "Open in <App>: named by the link's host; a look-alike host and plain http have no menu item")
+check(updAppCards.allSatisfy { !UpdateTap.text($0).contains("https") && !UpdateTap.text($0).contains("slack.com") },
+      "the link is never in the text sent to chat")
+check(updAppCards[5].link == nil && updAppCards[6].link == nil && uc1?.link == nil, "a link the app does not accept is dropped")
+check(UpdateLink.app("https://user@slack.com/x") == nil && UpdateLink.app("https://slack.com:8443/x") == nil
+      && UpdateLink.app("https://slack.com/a b") == nil && UpdateLink.app("javascript:alert(1)") == nil
+      && UpdateLink.app("https://notslack.com/x") == nil && UpdateLink.app("https://accounts.google.com/x") == nil
+      && UpdateLink.app("https://calendar.google.com/calendar/r")?.name == "Google Calendar"
+      && UpdateLink.app(String(repeating: "a", count: 10) + "https://linear.app") == nil
+      && UpdateLink.app("https://linear.app/" + String(repeating: "x", count: 2100)) == nil
+      && UpdateLink.app(nil) == nil, "Open in <App>: only https on the app's own host, no user, no odd port")
 
 // The due label, in a fixed zone and locale.
 var updCal = Calendar(identifier: .gregorian)

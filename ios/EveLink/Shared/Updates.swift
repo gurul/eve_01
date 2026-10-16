@@ -4,16 +4,22 @@
 // on the card everything that gets sent. Foundation only, so Tests/main.swift checks the decoding, the requests, the
 // tap text and the list's dismiss bookkeeping on the Mac.
 //
-//   GET  /api/link/updates            {"cards": [{"id", "verb", "text", "entity", "kind", "source", "due"}],
+//   GET  /api/link/updates            {"cards": [{"id", "verb", "text", "entity", "kind", "source", "due", "link"?}],
 //                                      "generated_at": ISO | null, "refreshing": bool}
+//                                     link: the source's own page in its app (Slack, Notion, Linear, the work Gmail
+//                                     and Calendar), https on that app's host; the hold menu's "Open in <App>"
 //   POST /api/link/updates/dismiss    {"id"} -> {"ok": true}: the card's sources stay out for 30 days;
 //                                     404 {"ok": false} for an id the daemon does not know (the card comes back)
 //   POST /api/link/updates/refresh    {} -> {"ok": true, "started": bool}: a rebuild in the background, never waited on
 import Foundation
 
 /// Where a card came from: the first source it cites.
+/// The owner's own sources first, then the apps connected through Composio (their raw values are the daemon's kinds).
 enum UpdateKind: String, CaseIterable, Sendable {
     case email, calendar, note, memory, chief
+    case slack, notion, linear
+    case workEmail = "work_email"
+    case workCalendar = "work_calendar"
 
     /// The word the tap text uses: "(from <label>: <source>)".
     var label: String {
@@ -23,6 +29,11 @@ enum UpdateKind: String, CaseIterable, Sendable {
         case .note: "notes"
         case .memory: "memory"
         case .chief: "projects"
+        case .slack: "Slack"
+        case .notion: "Notion"
+        case .linear: "Linear"
+        case .workEmail: "Work email"
+        case .workCalendar: "Work calendar"
         }
     }
 
@@ -34,7 +45,46 @@ enum UpdateKind: String, CaseIterable, Sendable {
         case .note: "note.text"
         case .memory: "brain"
         case .chief: "folder"
+        case .slack: "number"
+        case .notion: "doc.text"
+        case .linear: "checklist"
+        case .workEmail: "briefcase"
+        case .workCalendar: "calendar.badge.clock"
         }
+    }
+
+    /// An app connected through Composio: its source line already starts with the app ("Slack: direct message from
+    /// Ana", "Linear EX-12: …", "Work email: Q3 plan").
+    var isConnectedApp: Bool { ![.email, .calendar, .note, .memory, .chief].contains(self) }
+
+    /// "<label>: <source>", except for a connected app's source that already starts with the label: saying it twice
+    /// reads as a stutter. The owner's own kinds always carry their label.
+    func from(_ source: String) -> String {
+        isConnectedApp && source.lowercased().hasPrefix(label.lowercased()) ? source : "\(label): \(source)"
+    }
+}
+
+/// A card's "Open in <App>": the app a served link belongs to, by its host. Only https on these hosts (the daemon's
+/// own rule, checked again here); anything else has no menu item. The link opens through openURL, so a Slack or Notion
+/// universal link opens that app when it is installed and Safari otherwise.
+enum UpdateLink {
+    static let maxLength = 2048
+
+    static func app(_ link: String?) -> (name: String, url: URL)? {
+        guard let link, link.count <= maxLength, link.allSatisfy({ $0.isASCII && !$0.isWhitespace }),
+              let parts = URLComponents(string: link), parts.scheme == "https", parts.user == nil,
+              parts.password == nil, parts.port == nil || parts.port == 443,
+              let host = parts.host?.lowercased(), !host.isEmpty, let url = parts.url else { return nil }
+        func on(_ domain: String) -> Bool { host == domain || host.hasSuffix("." + domain) }
+        let name: String
+        if on("slack.com") { name = "Slack" }
+        else if on("notion.so") || on("notion.com") || on("notion.site") { name = "Notion" }
+        else if on("linear.app") { name = "Linear" }
+        else if host == "mail.google.com" { name = "Gmail" }
+        else if host == "calendar.google.com" || (on("google.com") && parts.path.hasPrefix("/calendar")) {
+            name = "Google Calendar"
+        } else { return nil }
+        return (name, url)
     }
 }
 
@@ -49,6 +99,8 @@ struct UpdateCard: Codable, Equatable, Sendable, Identifiable {
     var source: String
     /// "YYYY-MM-DD", or nil.
     var due: String?
+    /// The source's own page (UpdateLink decides whether the menu offers it). Never sent to the chat.
+    var link: String?
 
     /// The longest of each field the app shows and sends. The daemon clamps tighter; these keep a wrong answer from
     /// filling the screen, and what is shown is exactly what is sent.
@@ -60,7 +112,7 @@ struct UpdateCard: Codable, Equatable, Sendable, Identifiable {
     var knownKind: UpdateKind? { UpdateKind(rawValue: kind) }
 
     init(id: String, verb: String, text: String, entity: String? = nil, kind: String, source: String = "",
-         due: String? = nil) {
+         due: String? = nil, link: String? = nil) {
         self.id = id
         self.verb = Self.clean(verb, Self.maxVerb)
         self.text = Self.clean(text, Self.maxText)
@@ -68,9 +120,10 @@ struct UpdateCard: Codable, Equatable, Sendable, Identifiable {
         self.kind = Self.clean(kind, 20).lowercased()
         self.source = Self.clean(source, Self.maxSource)
         self.due = due.flatMap { UpdateDue.parse($0) == nil ? nil : $0 }
+        self.link = link.flatMap { UpdateLink.app($0) == nil ? nil : $0 }
     }
 
-    private enum CodingKeys: String, CodingKey { case id, verb, text, entity, kind, source, due }
+    private enum CodingKeys: String, CodingKey { case id, verb, text, entity, kind, source, due, link }
 
     /// A card without an id, a verb or a text does not decode (the list skips it); everything else is tolerated.
     init(from decoder: Decoder) throws {
@@ -82,7 +135,8 @@ struct UpdateCard: Codable, Equatable, Sendable, Identifiable {
                   entity: try? c.decodeIfPresent(String.self, forKey: .entity),
                   kind: (try? c.decodeIfPresent(String.self, forKey: .kind)) ?? "",
                   source: (try? c.decodeIfPresent(String.self, forKey: .source)) ?? "",
-                  due: try? c.decodeIfPresent(String.self, forKey: .due))
+                  due: try? c.decodeIfPresent(String.self, forKey: .due),
+                  link: try? c.decodeIfPresent(String.self, forKey: .link))
         guard !self.id.isEmpty, !self.verb.isEmpty, !self.text.isEmpty else {
             throw DecodingError.dataCorruptedError(forKey: .id, in: c, debugDescription: "a card needs an id, a verb and a text")
         }
@@ -155,7 +209,7 @@ enum UpdateTap {
     static func text(_ card: UpdateCard) -> String {
         let sentence = "\(card.verb) \(card.text)"
         guard !card.source.isEmpty else { return sentence }
-        let from = card.knownKind.map { "\($0.label): \(card.source)" } ?? card.source
+        let from = card.knownKind.map { $0.from(card.source) } ?? card.source
         return sentence + "\n(from \(from))"
     }
 }
