@@ -1,0 +1,664 @@
+{
+  "n": 60,
+  "accuracy": 0.5667,
+  "precision": 0.6071,
+  "coverage": 0.9333,
+  "wrong": 22,
+  "wrong_share": 0.3667,
+  "kind_accuracy": 0.6,
+  "abstain": 4,
+  "wrong_by_source": {
+    "laya": 12,
+    "code": 10
+  },
+  "p50_ms": 6.36,
+  "p95_ms": 7.92,
+  "laya_calls": 35,
+  "laya_p50_ms": 6.68,
+  "laya_p95_ms": 7.94,
+  "load_ms": 369.0,
+  "warm_ms": 394.6,
+  "rss_mb": {
+    "before_warm": 24.9,
+    "after_warm": 1101.3,
+    "after_run": 1101.8,
+    "delta_warm": 1076.4
+  },
+  "mlx": {
+    "active_mb": 614.0,
+    "peak_mb": 684.5
+  },
+  "per_kind": {
+    "search": {
+      "n": 25,
+      "answered": 22,
+      "kind_correct": 10,
+      "full_correct": 8,
+      "abstain": 3,
+      "wrong": 14
+    },
+    "open_site": {
+      "n": 10,
+      "answered": 10,
+      "kind_correct": 6,
+      "full_correct": 6,
+      "abstain": 0,
+      "wrong": 4
+    },
+    "open_result": {
+      "n": 10,
+      "answered": 9,
+      "kind_correct": 5,
+      "full_correct": 5,
+      "abstain": 1,
+      "wrong": 4
+    },
+    "none": {
+      "n": 15,
+      "answered": 15,
+      "kind_correct": 15,
+      "full_correct": 15,
+      "abstain": 0,
+      "wrong": 0
+    }
+  },
+  "bar": {
+    "precision_min": 0.8,
+    "wrong_share_max": 0.05,
+    "clears": false
+  },
+  "model": "cklxx/laya-browser@8a7e625/v10s",
+  "holdout": "bridge/tests/fixtures/browser_intent/holdout.jsonl",
+  "measured_at": "2026-10-16T14:58:04-0700",
+  "misses": [
+    {
+      "id": "h02",
+      "request": "look up lo fi beats on you tube",
+      "expected": {
+        "kind": "search",
+        "site_host": "youtube.com",
+        "query": "lo fi beats",
+        "n": null
+      },
+      "got": null,
+      "abstain": true,
+      "wrong": false,
+      "fields_wrong": []
+    },
+    {
+      "id": "h04",
+      "request": "find me sourdough starter recipes on reddit",
+      "expected": {
+        "kind": "search",
+        "site_host": "reddit.com",
+        "query": "sourdough starter recipes",
+        "n": null
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 0.8049,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "site_host",
+        "query"
+      ]
+    },
+    {
+      "id": "h05",
+      "request": "search wikipedia for the byzantine empire",
+      "expected": {
+        "kind": "search",
+        "site_host": "wikipedia.org",
+        "query": "byzantine empire",
+        "n": null
+      },
+      "got": {
+        "kind": "search",
+        "site_host": "wikipedia.org",
+        "query": "the byzantine empire",
+        "n": null,
+        "confidence": 0.9796,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "query"
+      ]
+    },
+    {
+      "id": "h06",
+      "request": "uh on stack overflow look for python list comprehension nested",
+      "expected": {
+        "kind": "search",
+        "site_host": "stackoverflow.com",
+        "query": "python list comprehension nested",
+        "n": null
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 0.8065,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "site_host",
+        "query"
+      ]
+    },
+    {
+      "id": "h08",
+      "request": "look up trail running shoes on rei",
+      "expected": {
+        "kind": "search",
+        "site_host": "rei.com",
+        "query": "trail running shoes",
+        "n": null
+      },
+      "got": null,
+      "abstain": true,
+      "wrong": false,
+      "fields_wrong": []
+    },
+    {
+      "id": "h10",
+      "request": "go to imdb and search for blade runner",
+      "expected": {
+        "kind": "search",
+        "site_host": "imdb.com",
+        "query": "blade runner",
+        "n": null
+      },
+      "got": {
+        "kind": "search",
+        "site_host": null,
+        "query": "blade runner",
+        "n": null,
+        "confidence": 0.9785,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "site_host"
+      ]
+    },
+    {
+      "id": "h11",
+      "request": "search npm for left pad",
+      "expected": {
+        "kind": "search",
+        "site_host": "npmjs.com",
+        "query": "left pad",
+        "n": null
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 1.0,
+        "source": "code"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "site_host",
+        "query"
+      ]
+    },
+    {
+      "id": "h13",
+      "request": "search spotify for jazz piano",
+      "expected": {
+        "kind": "search",
+        "site_host": "spotify.com",
+        "query": "jazz piano",
+        "n": null
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 1.0,
+        "source": "code"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "site_host",
+        "query"
+      ]
+    },
+    {
+      "id": "h14",
+      "request": "find standing desk on ikea",
+      "expected": {
+        "kind": "search",
+        "site_host": "ikea.com",
+        "query": "standing desk",
+        "n": null
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 1.0,
+        "source": "code"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "site_host",
+        "query"
+      ]
+    },
+    {
+      "id": "h16",
+      "request": "google best pizza dough hydration",
+      "expected": {
+        "kind": "search",
+        "site_host": null,
+        "query": "best pizza dough hydration",
+        "n": null
+      },
+      "got": {
+        "kind": "open_site",
+        "site_host": "google.com",
+        "query": null,
+        "n": null,
+        "confidence": 0.5751,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "site_host",
+        "query"
+      ]
+    },
+    {
+      "id": "h17",
+      "request": "search the web for how tall is mount rainier",
+      "expected": {
+        "kind": "search",
+        "site_host": null,
+        "query": "how tall is mount rainier",
+        "n": null
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 1.0,
+        "source": "code"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "query"
+      ]
+    },
+    {
+      "id": "h18",
+      "request": "duck duck go cheap flights to lisbon",
+      "expected": {
+        "kind": "search",
+        "site_host": null,
+        "query": "cheap flights to lisbon",
+        "n": null
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 0.7079,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "query"
+      ]
+    },
+    {
+      "id": "h19",
+      "request": "um look up symptoms of dehydration",
+      "expected": {
+        "kind": "search",
+        "site_host": null,
+        "query": "symptoms of dehydration",
+        "n": null
+      },
+      "got": null,
+      "abstain": true,
+      "wrong": false,
+      "fields_wrong": []
+    },
+    {
+      "id": "h21",
+      "request": "google when does daylight saving end",
+      "expected": {
+        "kind": "search",
+        "site_host": null,
+        "query": "when does daylight saving end",
+        "n": null
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 0.8559,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "query"
+      ]
+    },
+    {
+      "id": "h23",
+      "request": "look online for houseplants safe for cats",
+      "expected": {
+        "kind": "search",
+        "site_host": null,
+        "query": "houseplants safe for cats",
+        "n": null
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 1.0,
+        "source": "code"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "query"
+      ]
+    },
+    {
+      "id": "h24",
+      "request": "web search python dataclass default factory",
+      "expected": {
+        "kind": "search",
+        "site_host": null,
+        "query": "python dataclass default factory",
+        "n": null
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 1.0,
+        "source": "code"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "query"
+      ]
+    },
+    {
+      "id": "h25",
+      "request": "search bing for marathon training plans",
+      "expected": {
+        "kind": "search",
+        "site_host": "bing.com",
+        "query": "marathon training plans",
+        "n": null
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 1.0,
+        "source": "code"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "site_host",
+        "query"
+      ]
+    },
+    {
+      "id": "h27",
+      "request": "go to you tube",
+      "expected": {
+        "kind": "open_site",
+        "site_host": "youtube.com",
+        "query": null,
+        "n": null
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 0.5738,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "site_host"
+      ]
+    },
+    {
+      "id": "h28",
+      "request": "pull up netflix",
+      "expected": {
+        "kind": "open_site",
+        "site_host": "netflix.com",
+        "query": null,
+        "n": null
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 0.7716,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "site_host"
+      ]
+    },
+    {
+      "id": "h31",
+      "request": "uh navigate to hacker news",
+      "expected": {
+        "kind": "open_site",
+        "site_host": "news.ycombinator.com",
+        "query": null,
+        "n": null
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 0.595,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "site_host"
+      ]
+    },
+    {
+      "id": "h34",
+      "request": "launch the bbc news site",
+      "expected": {
+        "kind": "open_site",
+        "site_host": "bbc.com",
+        "query": null,
+        "n": null
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 1.0,
+        "source": "code"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "site_host"
+      ]
+    },
+    {
+      "id": "h38",
+      "request": "um go into the third one",
+      "expected": {
+        "kind": "open_result",
+        "site_host": null,
+        "query": null,
+        "n": 3
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 0.6785,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "n"
+      ]
+    },
+    {
+      "id": "h41",
+      "request": "click on the fourth link",
+      "expected": {
+        "kind": "open_result",
+        "site_host": null,
+        "query": null,
+        "n": 4
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 0.7578,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "n"
+      ]
+    },
+    {
+      "id": "h43",
+      "request": "yeah the third result",
+      "expected": {
+        "kind": "open_result",
+        "site_host": null,
+        "query": null,
+        "n": 3
+      },
+      "got": null,
+      "abstain": true,
+      "wrong": false,
+      "fields_wrong": []
+    },
+    {
+      "id": "h44",
+      "request": "open number two",
+      "expected": {
+        "kind": "open_result",
+        "site_host": null,
+        "query": null,
+        "n": 2
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 1.0,
+        "source": "code"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "n"
+      ]
+    },
+    {
+      "id": "h45",
+      "request": "pick the last one i mean the sixth",
+      "expected": {
+        "kind": "open_result",
+        "site_host": null,
+        "query": null,
+        "n": 6
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 1.0,
+        "source": "code"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "n"
+      ]
+    }
+  ]
+}

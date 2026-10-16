@@ -1,0 +1,60 @@
+{"id": "h01", "request": "um search git hub for rust async runtime", "kind": "search", "site_host": "github.com", "query": "rust async runtime", "n": null}
+{"id": "h02", "request": "look up lo fi beats on you tube", "kind": "search", "site_host": "youtube.com", "query": "lo fi beats", "n": null}
+{"id": "h03", "request": "search amazon for usb c hub", "kind": "search", "site_host": "amazon.com", "query": "usb c hub", "n": null}
+{"id": "h04", "request": "find me sourdough starter recipes on reddit", "kind": "search", "site_host": "reddit.com", "query": "sourdough starter recipes", "n": null}
+{"id": "h05", "request": "search wikipedia for the byzantine empire", "kind": "search", "site_host": "wikipedia.org", "query": "byzantine empire", "n": null}
+{"id": "h06", "request": "uh on stack overflow look for python list comprehension nested", "kind": "search", "site_host": "stackoverflow.com", "query": "python list comprehension nested", "n": null}
+{"id": "h07", "request": "hey search ebay for vintage film camera", "kind": "search", "site_host": "ebay.com", "query": "vintage film camera", "n": null}
+{"id": "h08", "request": "look up trail running shoes on rei", "kind": "search", "site_host": "rei.com", "query": "trail running shoes", "n": null}
+{"id": "h09", "request": "search you tube for how to tie a bowline", "kind": "search", "site_host": "youtube.com", "query": "how to tie a bowline", "n": null}
+{"id": "h10", "request": "go to imdb and search for blade runner", "kind": "search", "site_host": "imdb.com", "query": "blade runner", "n": null}
+{"id": "h11", "request": "search npm for left pad", "kind": "search", "site_host": "npmjs.com", "query": "left pad", "n": null}
+{"id": "h12", "request": "like search hacker news for sqlite performance", "kind": "search", "site_host": "news.ycombinator.com", "query": "sqlite performance", "n": null}
+{"id": "h13", "request": "search spotify for jazz piano", "kind": "search", "site_host": "spotify.com", "query": "jazz piano", "n": null}
+{"id": "h14", "request": "find standing desk on ikea", "kind": "search", "site_host": "ikea.com", "query": "standing desk", "n": null}
+{"id": "h15", "request": "please search git hub for dotfiles zsh", "kind": "search", "site_host": "github.com", "query": "dotfiles zsh", "n": null}
+{"id": "h16", "request": "google best pizza dough hydration", "kind": "search", "site_host": null, "query": "best pizza dough hydration", "n": null}
+{"id": "h17", "request": "search the web for how tall is mount rainier", "kind": "search", "site_host": null, "query": "how tall is mount rainier", "n": null}
+{"id": "h18", "request": "duck duck go cheap flights to lisbon", "kind": "search", "site_host": null, "query": "cheap flights to lisbon", "n": null}
+{"id": "h19", "request": "um look up symptoms of dehydration", "kind": "search", "site_host": null, "query": "symptoms of dehydration", "n": null}
+{"id": "h20", "request": "search for weather radar maps", "kind": "search", "site_host": null, "query": "weather radar maps", "n": null}
+{"id": "h21", "request": "google when does daylight saving end", "kind": "search", "site_host": null, "query": "when does daylight saving end", "n": null}
+{"id": "h22", "request": "can you search up best budget mechanical keyboard", "kind": "search", "site_host": null, "query": "best budget mechanical keyboard", "n": null}
+{"id": "h23", "request": "look online for houseplants safe for cats", "kind": "search", "site_host": null, "query": "houseplants safe for cats", "n": null}
+{"id": "h24", "request": "web search python dataclass default factory", "kind": "search", "site_host": null, "query": "python dataclass default factory", "n": null}
+{"id": "h25", "request": "search bing for marathon training plans", "kind": "search", "site_host": "bing.com", "query": "marathon training plans", "n": null}
+{"id": "h26", "request": "open git hub", "kind": "open_site", "site_host": "github.com", "query": null, "n": null}
+{"id": "h27", "request": "go to you tube", "kind": "open_site", "site_host": "youtube.com", "query": null, "n": null}
+{"id": "h28", "request": "pull up netflix", "kind": "open_site", "site_host": "netflix.com", "query": null, "n": null}
+{"id": "h29", "request": "take me to wikipedia", "kind": "open_site", "site_host": "wikipedia.org", "query": null, "n": null}
+{"id": "h30", "request": "open reddit please", "kind": "open_site", "site_host": "reddit.com", "query": null, "n": null}
+{"id": "h31", "request": "uh navigate to hacker news", "kind": "open_site", "site_host": "news.ycombinator.com", "query": null, "n": null}
+{"id": "h32", "request": "open duck duck go", "kind": "open_site", "site_host": "duckduckgo.com", "query": null, "n": null}
+{"id": "h33", "request": "go to amazon dot com", "kind": "open_site", "site_host": "amazon.com", "query": null, "n": null}
+{"id": "h34", "request": "launch the bbc news site", "kind": "open_site", "site_host": "bbc.com", "query": null, "n": null}
+{"id": "h35", "request": "open stack overflow", "kind": "open_site", "site_host": "stackoverflow.com", "query": null, "n": null}
+{"id": "h36", "request": "open the second one", "kind": "open_result", "site_host": null, "query": null, "n": 2}
+{"id": "h37", "request": "click the first result", "kind": "open_result", "site_host": null, "query": null, "n": 1}
+{"id": "h38", "request": "um go into the third one", "kind": "open_result", "site_host": null, "query": null, "n": 3}
+{"id": "h39", "request": "open result number five", "kind": "open_result", "site_host": null, "query": null, "n": 5}
+{"id": "h40", "request": "the first one open it", "kind": "open_result", "site_host": null, "query": null, "n": 1}
+{"id": "h41", "request": "click on the fourth link", "kind": "open_result", "site_host": null, "query": null, "n": 4}
+{"id": "h42", "request": "open the second result", "kind": "open_result", "site_host": null, "query": null, "n": 2}
+{"id": "h43", "request": "yeah the third result", "kind": "open_result", "site_host": null, "query": null, "n": 3}
+{"id": "h44", "request": "open number two", "kind": "open_result", "site_host": null, "query": null, "n": 2}
+{"id": "h45", "request": "pick the last one i mean the sixth", "kind": "open_result", "site_host": null, "query": null, "n": 6}
+{"id": "h46", "request": "what is the capital of australia", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h47", "request": "send an email to my landlord saying the sink is fixed", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h48", "request": "remind me to call the dentist tomorrow at nine", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h49", "request": "turn off the living room lights", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h50", "request": "hey how are you doing today", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h51", "request": "buy this", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h52", "request": "log in", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h53", "request": "set the thermostat to seventy one", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h54", "request": "thanks that was helpful", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h55", "request": "what time is my next meeting", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h56", "request": "add milk and eggs to my shopping list", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h57", "request": "tell me a joke", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h58", "request": "add it to the cart and check out", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h59", "request": "scroll down a bit", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h60", "request": "draft a reply to the last email saying sounds good", "kind": "none", "site_host": null, "query": null, "n": null}

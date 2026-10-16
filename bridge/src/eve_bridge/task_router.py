@@ -49,6 +49,7 @@ from dataclasses import dataclass, field
 from typing import Iterable, Optional
 from urllib.parse import quote_plus
 
+from .browser_intent import join_site_names
 from .lane_router import is_question, normalise
 
 # The shipped default for EVE_REFLEXES. tools/route_eval.py decides it on the labelled
@@ -396,7 +397,7 @@ def classify(goal: str, *, frontmost_app: str = "", apps: Iterable[str] = (), mo
     installed = tuple(apps)
     raw = " ".join(str(goal or "").split())
     polite = POLITE.match(raw) is not None
-    text = normalise(POLITE.sub("", raw))
+    text = join_site_names(normalise(POLITE.sub("", raw)))   # "git hub" → "GitHub", as speech splits it
     for ing, base in GERUND.items():                   # "would you mind opening Preview" → "open Preview"
         if text.casefold().startswith(ing + " "):
             text = base + text[len(ing):]
