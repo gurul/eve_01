@@ -2,7 +2,8 @@
 
 Owner, 2026-10-16, after the eval below: "i think laya i good keep it". So the delegate
 ships **on** (`EVE_BROWSER_INTENT=laya`, the default), even though it does not clear
-eve's usual bar. Read the numbers before you rely on it.
+eve's usual bar. Asked again after the blind v2 score (77.6% precision, 21% wrong), the owner
+confirmed on 2026-10-16: "keep laya on". Read the numbers before you rely on it.
 
 `bridge/src/eve_bridge/browser_intent.py` answers one question about a web request:
 what outcome would show it is done? The set is exactly four kinds:
