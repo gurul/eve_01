@@ -7,6 +7,16 @@ cd "$(dirname "$0")"
 # Fail before xcodegen if dependencies or the web build fail.
 (cd Web && pnpm install --frozen-lockfile && pnpm build)
 xcodegen generate --quiet
+# A free team's profile lasts 7 days and Xcode reuses it until it lapses, so an install on day 6 stopped opening the
+# next morning (2026-10-16). Before an install, set the cached Eve Link profiles aside so Xcode signs a fresh week.
+if [ "${1:-}" = "--install" ]; then
+  for f in "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"/*.mobileprovision; do
+    [ -f "$f" ] || continue
+    if security cms -D -i "$f" 2>/dev/null | grep -q 'Team Provisioning Profile: com.github.eve-bridge.EveLink'; then
+      rm -f "$f"
+    fi
+  done
+fi
 DERIVED="${DERIVED:-$PWD/build}"
 xcodebuild -project EveLink.xcodeproj -scheme EveLink -destination 'generic/platform=iOS' \
   -derivedDataPath "$DERIVED" -allowProvisioningUpdates -quiet build

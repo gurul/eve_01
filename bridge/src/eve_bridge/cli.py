@@ -425,6 +425,18 @@ def main(argv: list[str] | None = None) -> int:
     notify_sub.add_parser("topic", help="Print the ntfy topic and how to subscribe")
     notify_sub.add_parser("test", help="Post one test notification")
 
+    p_refresh = sub.add_parser(
+        "refresh",
+        help="The weekly refresh reminder: when Eve Link's signing and the Google sign-in lapse",
+        description="status: print both dates and the steps. remind: post them on the phone and the Mac. "
+                    "schedule / unschedule: run remind every Friday at 09:00. See docs/refresh.md.")
+    refresh_sub = p_refresh.add_subparsers(dest="refresh_cmd")
+    for name, text in (("status", "Print when each lapses and what to run"),
+                       ("remind", "Post the reminder on the phone (ntfy) and the Mac"),
+                       ("schedule", "Run remind every Friday at 09:00 (a LaunchAgent)"),
+                       ("unschedule", "Stop the weekly reminder")):
+        refresh_sub.add_parser(name, help=text)
+
     sub.add_parser(
         "telegram-check",
         help="Text door: check EVE_TELEGRAM_TOKEN and print the numeric id of whoever messaged the bot",
@@ -485,6 +497,11 @@ def main(argv: list[str] | None = None) -> int:
             p_notify.print_help()
             return 1
         return _run_notify(args)
+    if args.cmd == "refresh":
+        if args.refresh_cmd is None:
+            p_refresh.print_help()
+            return 1
+        return _run_refresh(args)
     if args.cmd == "daemon":
         return _run_daemon(args)
     if args.cmd == "install":
@@ -1417,6 +1434,21 @@ def _run_notify(args: argparse.Namespace) -> int:
         return 0
     print("Could not post the test notification (see the log line above).")
     return 1
+
+
+def _run_refresh(args: argparse.Namespace) -> int:
+    """``refresh status|remind|schedule|unschedule`` (refresh.py)."""
+    from . import apps_mcp, refresh
+
+    if args.refresh_cmd == "schedule":
+        return refresh.schedule()
+    if args.refresh_cmd == "unschedule":
+        return refresh.unschedule()
+    text = refresh.current(apps_mcp.configured().google_token_path)
+    print(text)
+    if args.refresh_cmd == "remind" and not refresh.remind(text):
+        print("Shown on the Mac; the phone notification did not go out (notifications off or not paired).")
+    return 0
 
 
 def _run_apps(args: argparse.Namespace) -> int:

@@ -1039,7 +1039,8 @@ def google_login(config: AppsConfig, open_url: Callable[[str], Any], *, port: in
         raise RuntimeError(f"Google gave no refresh token ({body.get('error') or r.status_code})")
     write_private_json(config.google_token_path, {
         "refresh_token": body["refresh_token"], "access_token": body.get("access_token", ""),
-        "expires_at": time.time() + float(body.get("expires_in") or 3600), "scope": body.get("scope", "")})
+        "expires_at": time.time() + float(body.get("expires_in") or 3600), "scope": body.get("scope", ""),
+        "signed_in_at": time.time()})    # the 7-day "Testing" clock starts here (refresh.py reminds before it ends)
     # The owner may untick a permission on Google's page; what was not granted is said, not discovered later.
     missing = sorted(set(scopes) - set(str(body.get("scope", "")).split()))
     if missing:

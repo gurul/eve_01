@@ -402,7 +402,8 @@ After any change to the env file:
 
 Eve Link needs Xcode 26 and `brew install xcodegen`. The project is signed with
 the owner's team (`DEVELOPMENT_TEAM` in `ios/EveLink/project.yml`); set your own
-team id there for both targets. A free Apple ID works, with a reinstall every 7 days.
+team id there for both targets. A free Apple ID works, with a reinstall every 7 days;
+`eve-bridge refresh schedule` reminds you every Friday ([the weekly refresh](docs/refresh.md)).
 
 ```bash
 sh ios/EveLink/build.sh --install            # Node 22.12+, pnpm; phone unlocked, same network or a cable

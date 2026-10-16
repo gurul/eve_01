@@ -93,7 +93,8 @@ All the files live in `~/.config/eve-bridge/`, owner-only (0600).
       gmail as a **test user**. Then press **Publish app**. An app left in
       "Testing" has its sign-in expire after 7 days (Google's rule). Publishing
       your own unverified app needs no review; you only see an "unverified app"
-      warning when you sign in.
+      warning when you sign in. While it stays in "Testing",
+      `eve-bridge refresh schedule` reminds you weekly ([the weekly refresh](refresh.md)).
    4. Under **Credentials → Create OAuth client**, pick **Desktop app**. Download
       the JSON as `google-oauth-client.json`.
    5. Run `eve-bridge apps login google`. The browser opens. On the
