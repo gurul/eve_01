@@ -91,6 +91,42 @@ def _no_jev_from_a_telegram_turn(monkeypatch: pytest.MonkeyPatch):
 
 
 @pytest.fixture(autouse=True)
+def _never_the_owners_env_file(monkeypatch: pytest.MonkeyPatch):
+    """A plain `pytest` never loads the owner's own ~/.config/eve-bridge/env (2026-10-16). cli.main loads it into
+    os.environ, for good, and a test that runs cli.main with the real HOME (test_link_pair_cli) left every key in
+    its worker: a later test that builds the chat with EVE_COMPOSIO from that environment then made a real Composio
+    session and wrote it over the owner's ~/.config/eve-bridge/composio.json. A test with its own HOME or its own
+    file still loads that one."""
+    if os.environ.get("EVE_LIVE", "").strip().lower() in ("1", "true", "yes", "on"):
+        return
+    from pathlib import Path
+
+    from eve_bridge import cli, envfile
+
+    owners = Path("~/.config/eve-bridge/env").expanduser()
+    real = envfile.load_env_file
+
+    def guarded(path=None, environ=os.environ):
+        p = (path if path is not None else Path(environ.get("EVE_ENV_FILE") or envfile.DEFAULT_PATH)).expanduser()
+        if p == owners:
+            return []
+        return real(path, environ)
+
+    monkeypatch.setattr(envfile, "load_env_file", guarded)
+    monkeypatch.setattr(cli, "load_env_file", guarded)
+
+
+@pytest.fixture(autouse=True)
+def _no_composio_from_the_shell(_test_dir, monkeypatch: pytest.MonkeyPatch):
+    """A plain `pytest` never reaches the owner's Composio: no key from the shell, and the session file is this
+    test's own, never ~/.config/eve-bridge/composio.json. A test that wants a key sets one itself."""
+    if os.environ.get("EVE_LIVE", "").strip().lower() in ("1", "true", "yes", "on"):
+        return
+    monkeypatch.delenv("COMPOSIO_API_KEY", raising=False)
+    monkeypatch.setenv("EVE_COMPOSIO_STATE", str(_test_dir / "composio.json"))
+
+
+@pytest.fixture(autouse=True)
 def _no_ticketmaster_key(monkeypatch: pytest.MonkeyPatch):
     """A plain `pytest` never lends events_search from the owner's own key (events.py, 2026-10-08): a TelegramInlet
     lends it, and writes its line into the prompt, whenever TICKETMASTER_API_KEY is set, so a key in the shell would

@@ -727,6 +727,56 @@ class ComposioBridge:
     def names(self) -> frozenset[str]:
         return frozenset(str(t["name"]) for t in self._tools)
 
+    # -- reads for Updates (updates_composio.py): one app tool on one connected account, never a write --
+    @property
+    def can_read(self) -> bool:
+        """The SDK client is up (``start`` got as far as making it), so ``connected_accounts`` and ``read_tool`` can
+        run. Composio not installed, or the feature off: False."""
+        return self._client is not None
+
+    def connected_accounts(self) -> list[dict[str, str]]:
+        """Blocking. The owner's connected accounts as Composio lists them now: ``{"toolkit", "id", "alias",
+        "status"}`` each, the toolkit lowercased, DIRECT_TOOLKITS left out. Raises when the listing fails (the caller
+        counts that as a failed read). Ids and aliases are never logged."""
+        if self._client is None:
+            raise RuntimeError("composio is not started")
+        listing = self._client.connected_accounts.list(user_ids=[self.config.user_id])
+        out: list[dict[str, str]] = []
+        for item in getattr(listing, "items", None) or []:
+            data = item if isinstance(item, Mapping) else _as_dict(item)
+            kit = data.get("toolkit")
+            slug = kit.get("slug") if isinstance(kit, Mapping) else getattr(kit, "slug", kit)
+            if not isinstance(slug, str) or not slug or slug.lower() in DIRECT_TOOLKITS or not data.get("id"):
+                continue
+            out.append({"toolkit": slug.lower(), "id": str(data["id"]), "alias": str(data.get("alias") or ""),
+                        "status": str(data.get("status") or "")})
+        return out
+
+    def read_tool(self, slug: str, arguments: Mapping[str, Any], account_id: str) -> dict[str, Any]:
+        """Blocking. Run ONE app tool that only reads on the connected account ``account_id`` (an id from
+        ``connected_accounts``), outside the chat's session, so the whole answer comes back (the session's
+        multi-execute answers with a preview) and the account is the one named, never a default. Never raises:
+        ``{"ok": False, "reason"}`` on a failure. A slug that writes (``is_read_only``, ``consequential_slugs``) is
+        refused before anything is sent, as is a direct app's slug and an other-account app's call with no account."""
+        slug = str(slug or "").strip()
+        toolkit = slug_words(slug)[0]
+        if not is_read_only(slug) or consequential_slugs(MULTI_EXECUTE, {"tools": [{"tool_slug": slug}]}):
+            return {"ok": False, "reason": f"{slug} is not a read"}
+        if toolkit in DIRECT_TOOLKITS or not str(account_id or "").strip():
+            return {"ok": False, "reason": f"{slug} needs one of the owner's Composio accounts"}
+        if self._client is None:
+            return {"ok": False, "reason": "composio is not started"}
+        try:
+            result = self._client.tools.execute(slug, arguments=dict(arguments or {}), user_id=self.config.user_id,
+                                                connected_account_id=str(account_id),
+                                                dangerously_skip_version_check=True)
+            out = _as_dict(result)
+        except Exception as e:  # noqa: BLE001 — the type only: answers may hold mail text
+            log.warning("composio: %s read failed: %s", slug, type(e).__name__)
+            return {"ok": False, "reason": f"{type(e).__name__}: {_clip(str(e), 200)}"}
+        out["ok"] = out.get("successful") is not False and not out.get("error")
+        return out
+
     def execute(self, name: str, args: Mapping[str, Any]) -> dict[str, Any]:
         """Blocking. Never raises: a failure is a dict the model can read and tell the owner about."""
         if self._session is None:
