@@ -1,0 +1,1467 @@
+{
+ "_about": "Response shapes of the read-only Composio slugs Updates runs (updates_composio.READ_SLUGS), as Composio answered on 2026-10-16. Every value is fictional: names, addresses, ids, channels, workspaces and text are placeholders. Only the keys and their nesting are Composio's.",
+ "connected_accounts": [
+  {
+   "toolkit": "slack",
+   "id": "ca_slack0001",
+   "alias": "",
+   "status": "ACTIVE"
+  },
+  {
+   "toolkit": "notion",
+   "id": "ca_notion001",
+   "alias": "",
+   "status": "ACTIVE"
+  },
+  {
+   "toolkit": "linear",
+   "id": "ca_linear001",
+   "alias": "",
+   "status": "ACTIVE"
+  },
+  {
+   "toolkit": "gmail",
+   "id": "ca_gmailwork",
+   "alias": "work",
+   "status": "ACTIVE"
+  },
+  {
+   "toolkit": "gmail",
+   "id": "ca_gmailpers",
+   "alias": "personal",
+   "status": "ACTIVE"
+  },
+  {
+   "toolkit": "gmail",
+   "id": "ca_gmailold1",
+   "alias": "",
+   "status": "EXPIRED"
+  },
+  {
+   "toolkit": "googlecalendar",
+   "id": "ca_calwork01",
+   "alias": "work",
+   "status": "ACTIVE"
+  },
+  {
+   "toolkit": "googlecalendar",
+   "id": "ca_calpers01",
+   "alias": "personal",
+   "status": "ACTIVE"
+  }
+ ],
+ "SLACK_SEARCH_MESSAGES": {
+  "from:me": {
+   "data": {
+    "messages": {
+     "matches": [
+      {
+       "channel": {
+        "id": "D0000DM02",
+        "is_archived": false,
+        "is_channel": false,
+        "is_ext_shared": false,
+        "is_group": false,
+        "is_im": true,
+        "is_mpim": false,
+        "is_org_shared": false,
+        "is_private": true,
+        "is_shared": false,
+        "name": "UPEER0002",
+        "user": "UPEER0001"
+       },
+       "db_message": {},
+       "iid": "iid-placeholder",
+       "no_reactions": true,
+       "permalink": "https://example-team.slack.com/archives/D0000DM02/p1791745200000000",
+       "score": 0,
+       "team": "T00000000",
+       "text": "sounds good, thanks",
+       "ts": "1791745200.000000",
+       "type": "message",
+       "user": "UOWNER001",
+       "username": "owner"
+      },
+      {
+       "channel": {
+        "id": "C0000GEN1",
+        "is_archived": false,
+        "is_channel": true,
+        "is_ext_shared": false,
+        "is_group": false,
+        "is_im": false,
+        "is_mpim": false,
+        "is_org_shared": false,
+        "is_private": false,
+        "is_shared": false,
+        "name": "project-alpha",
+        "pending_shared": []
+       },
+       "db_message": {},
+       "iid": "iid-placeholder",
+       "no_reactions": true,
+       "permalink": "https://example-team.slack.com/archives/C0000GEN1/p1791475200000000",
+       "score": 0,
+       "team": "T00000000",
+       "text": "posted the draft",
+       "ts": "1791475200.000000",
+       "type": "message",
+       "user": "UOWNER001",
+       "username": "owner"
+      }
+     ],
+     "paging": {
+      "count": 2,
+      "page": 1,
+      "pages": 1,
+      "total": 2
+     },
+     "total": 2
+    },
+    "ok": true,
+    "query": "from:me"
+   },
+   "error": null,
+   "log_id": "log_placeholder",
+   "result_type": "inline"
+  },
+  "is:dm": {
+   "data": {
+    "messages": {
+     "matches": [
+      {
+       "channel": {
+        "id": "D0000DM01",
+        "is_archived": false,
+        "is_channel": false,
+        "is_ext_shared": false,
+        "is_group": false,
+        "is_im": true,
+        "is_mpim": false,
+        "is_org_shared": false,
+        "is_private": true,
+        "is_shared": false,
+        "name": "UPEER0001",
+        "user": "UPEER0001"
+       },
+       "db_message": {},
+       "iid": "iid-placeholder",
+       "no_reactions": true,
+       "permalink": "https://example-team.slack.com/archives/D0000DM01/p1791735300000000",
+       "score": 0,
+       "team": "T00000000",
+       "text": "Can you review the budget sheet by Thursday? <https://docs.example.test/x|budget sheet>",
+       "ts": "1791735300.000000",
+       "type": "message",
+       "user": "UPEER0001",
+       "username": "sam.rivera"
+      },
+      {
+       "channel": {
+        "id": "D0000DM01",
+        "is_archived": false,
+        "is_channel": false,
+        "is_ext_shared": false,
+        "is_group": false,
+        "is_im": true,
+        "is_mpim": false,
+        "is_org_shared": false,
+        "is_private": true,
+        "is_shared": false,
+        "name": "UPEER0001",
+        "user": "UPEER0001"
+       },
+       "db_message": {},
+       "iid": "iid-placeholder",
+       "no_reactions": true,
+       "permalink": "https://example-team.slack.com/archives/D0000DM01/p1791735000000000",
+       "score": 0,
+       "team": "T00000000",
+       "text": "Hey <@UOWNER001>, quick one",
+       "ts": "1791735000.000000",
+       "type": "message",
+       "user": "UPEER0001",
+       "username": "sam.rivera"
+      },
+      {
+       "channel": {
+        "id": "D0000DM01",
+        "is_archived": false,
+        "is_channel": false,
+        "is_ext_shared": false,
+        "is_group": false,
+        "is_im": true,
+        "is_mpim": false,
+        "is_org_shared": false,
+        "is_private": true,
+        "is_shared": false,
+        "name": "UPEER0001",
+        "user": "UPEER0001"
+       },
+       "db_message": {},
+       "iid": "iid-placeholder",
+       "no_reactions": true,
+       "permalink": "https://example-team.slack.com/archives/D0000DM01/p1791730800000000",
+       "score": 0,
+       "team": "T00000000",
+       "text": "morning",
+       "ts": "1791730800.000000",
+       "type": "message",
+       "user": "UOWNER001",
+       "username": "owner"
+      },
+      {
+       "channel": {
+        "id": "D0000DM02",
+        "is_archived": false,
+        "is_channel": false,
+        "is_ext_shared": false,
+        "is_group": false,
+        "is_im": true,
+        "is_mpim": false,
+        "is_org_shared": false,
+        "is_private": true,
+        "is_shared": false,
+        "name": "UPEER0002",
+        "user": "UPEER0001"
+       },
+       "db_message": {},
+       "iid": "iid-placeholder",
+       "no_reactions": true,
+       "permalink": "https://example-team.slack.com/archives/D0000DM02/p1791673200000000",
+       "score": 0,
+       "team": "T00000000",
+       "text": "did you get my note?",
+       "ts": "1791673200.000000",
+       "type": "message",
+       "user": "UPEER0002",
+       "username": "jo.kim"
+      },
+      {
+       "channel": {
+        "id": "D0000DM01",
+        "is_archived": false,
+        "is_channel": false,
+        "is_ext_shared": false,
+        "is_group": false,
+        "is_im": true,
+        "is_mpim": false,
+        "is_org_shared": false,
+        "is_private": true,
+        "is_shared": false,
+        "name": "UPEER0001",
+        "user": "UPEER0001"
+       },
+       "db_message": {},
+       "iid": "iid-placeholder",
+       "no_reactions": true,
+       "permalink": "https://example-team.slack.com/archives/D0000DM01/p1790870400000000",
+       "score": 0,
+       "team": "T00000000",
+       "text": "too old to count",
+       "ts": "1790870400.000000",
+       "type": "message",
+       "user": "UPEER0001",
+       "username": "sam.rivera"
+      }
+     ],
+     "paging": {
+      "count": 5,
+      "page": 1,
+      "pages": 1,
+      "total": 5
+     },
+     "total": 5
+    },
+    "ok": true,
+    "query": "is:dm after:2026-10-08"
+   },
+   "error": null,
+   "log_id": "log_placeholder",
+   "result_type": "inline"
+  },
+  "mention": {
+   "data": {
+    "messages": {
+     "matches": [
+      {
+       "channel": {
+        "id": "C0000GEN1",
+        "is_archived": false,
+        "is_channel": true,
+        "is_ext_shared": false,
+        "is_group": false,
+        "is_im": false,
+        "is_mpim": false,
+        "is_org_shared": false,
+        "is_private": false,
+        "is_shared": false,
+        "name": "project-alpha",
+        "pending_shared": []
+       },
+       "db_message": {},
+       "iid": "iid-placeholder",
+       "no_reactions": true,
+       "permalink": "https://example-team.slack.com/archives/C0000GEN1/p1791819900000000",
+       "score": 0,
+       "team": "T00000000",
+       "text": "<@UOWNER001> can you sign off on the launch checklist in <#C0000GEN1|project-alpha>?",
+       "ts": "1791819900.000000",
+       "type": "message",
+       "user": "UPEER0003",
+       "username": "alex.chen"
+      }
+     ],
+     "paging": {
+      "count": 1,
+      "page": 1,
+      "pages": 1,
+      "total": 1
+     },
+     "total": 1
+    },
+    "ok": true,
+    "query": "<@UOWNER001> after:2026-10-08"
+   },
+   "error": null,
+   "log_id": "log_placeholder",
+   "result_type": "inline"
+  }
+ },
+ "NOTION": {
+  "about_me": {
+   "data": {
+    "avatar_url": null,
+    "bot": {
+     "owner": {
+      "type": "user",
+      "user": {
+       "avatar_url": null,
+       "id": "11111111-1111-4111-8111-111111111111",
+       "name": "Owner",
+       "object": "user",
+       "person": {
+        "email": "owner@example.com",
+        "email_verified": true
+       },
+       "type": "person"
+      }
+     },
+     "workspace_id": "workspace-placeholder",
+     "workspace_limits": {
+      "max_file_upload_size_in_bytes": 5368709120
+     },
+     "workspace_name": "Example Workspace"
+    },
+    "id": "bot-placeholder",
+    "name": "Composio",
+    "object": "user",
+    "request_id": "req-placeholder",
+    "type": "bot"
+   },
+   "error": null,
+   "successful": true
+  },
+  "search": {
+   "data": {
+    "has_more": false,
+    "next_cursor": null,
+    "object": "list",
+    "page_or_database": {},
+    "request_id": "req-placeholder",
+    "type": "page_or_database",
+    "results": [
+     {
+      "archived": false,
+      "cover": null,
+      "created_by": {
+       "id": "user-placeholder",
+       "object": "user"
+      },
+      "created_time": "2026-09-01T10:00:00.000Z",
+      "icon": null,
+      "id": "aaaaaaaa-0000-4000-8000-000000000001",
+      "in_trash": false,
+      "is_archived": false,
+      "is_locked": false,
+      "last_edited_by": {
+       "id": "user-placeholder",
+       "object": "user"
+      },
+      "last_edited_time": "2026-10-11T18:00:00.000Z",
+      "object": "page",
+      "parent": {
+       "block_id": "parent-placeholder",
+       "type": "block_id"
+      },
+      "properties": {
+       "Name": {
+        "id": "title",
+        "title": [
+         {
+          "annotations": {
+           "bold": false,
+           "code": false,
+           "color": "default",
+           "italic": false,
+           "strikethrough": false,
+           "underline": false
+          },
+          "href": null,
+          "plain_text": "Trip planning",
+          "text": {
+           "content": "Trip planning",
+           "link": null
+          },
+          "type": "text"
+         }
+        ],
+        "type": "title"
+       }
+      },
+      "public_url": null,
+      "url": "https://www.notion.so/aaaaaaaa000040008000000000000001"
+     },
+     {
+      "archived": false,
+      "cover": null,
+      "created_by": {
+       "id": "user-placeholder",
+       "object": "user"
+      },
+      "created_time": "2026-09-01T10:00:00.000Z",
+      "icon": null,
+      "id": "aaaaaaaa-0000-4000-8000-000000000002",
+      "in_trash": false,
+      "is_archived": false,
+      "is_locked": false,
+      "last_edited_by": {
+       "id": "user-placeholder",
+       "object": "user"
+      },
+      "last_edited_time": "2026-10-10T18:00:00.000Z",
+      "object": "page",
+      "parent": {
+       "database_id": "parent-placeholder",
+       "type": "database_id"
+      },
+      "properties": {
+       "Task": {
+        "id": "title",
+        "title": [
+         {
+          "annotations": {
+           "bold": false,
+           "code": false,
+           "color": "default",
+           "italic": false,
+           "strikethrough": false,
+           "underline": false
+          },
+          "href": null,
+          "plain_text": "Quarterly report",
+          "text": {
+           "content": "Quarterly report",
+           "link": null
+          },
+          "type": "text"
+         }
+        ],
+        "type": "title"
+       },
+       "Owner": {
+        "id": "own",
+        "people": [
+         {
+          "avatar_url": null,
+          "id": "11111111-1111-4111-8111-111111111111",
+          "name": "Owner",
+          "object": "user",
+          "person": {
+           "email": "owner@example.com",
+           "email_verified": true
+          },
+          "type": "person"
+         }
+        ],
+        "type": "people"
+       },
+       "Status": {
+        "id": "st",
+        "select": {
+         "color": "blue",
+         "id": "opt",
+         "name": "In progress"
+        },
+        "type": "select"
+       },
+       "Due date": {
+        "date": {
+         "end": null,
+         "start": "2026-10-15",
+         "time_zone": null
+        },
+        "id": "dd",
+        "type": "date"
+       },
+       "Score": {
+        "id": "sc",
+        "number": null,
+        "type": "number"
+       }
+      },
+      "public_url": null,
+      "url": "https://www.notion.so/aaaaaaaa000040008000000000000002"
+     },
+     {
+      "archived": false,
+      "cover": null,
+      "created_by": {
+       "id": "user-placeholder",
+       "object": "user"
+      },
+      "created_time": "2026-09-01T10:00:00.000Z",
+      "icon": null,
+      "id": "aaaaaaaa-0000-4000-8000-000000000003",
+      "in_trash": false,
+      "is_archived": false,
+      "is_locked": false,
+      "last_edited_by": {
+       "id": "user-placeholder",
+       "object": "user"
+      },
+      "last_edited_time": "2026-10-09T18:00:00.000Z",
+      "object": "page",
+      "parent": {
+       "database_id": "parent-placeholder",
+       "type": "database_id"
+      },
+      "properties": {
+       "Task": {
+        "id": "title",
+        "title": [
+         {
+          "annotations": {
+           "bold": false,
+           "code": false,
+           "color": "default",
+           "italic": false,
+           "strikethrough": false,
+           "underline": false
+          },
+          "href": null,
+          "plain_text": "Shipped thing",
+          "text": {
+           "content": "Shipped thing",
+           "link": null
+          },
+          "type": "text"
+         }
+        ],
+        "type": "title"
+       },
+       "Owner": {
+        "id": "own",
+        "people": [
+         {
+          "avatar_url": null,
+          "id": "11111111-1111-4111-8111-111111111111",
+          "name": "Owner",
+          "object": "user",
+          "person": {
+           "email": "owner@example.com",
+           "email_verified": true
+          },
+          "type": "person"
+         }
+        ],
+        "type": "people"
+       },
+       "Status": {
+        "id": "st",
+        "select": {
+         "color": "blue",
+         "id": "opt",
+         "name": "Done"
+        },
+        "type": "select"
+       },
+       "Due date": {
+        "date": {
+         "end": null,
+         "start": "2026-10-15",
+         "time_zone": null
+        },
+        "id": "dd",
+        "type": "date"
+       },
+       "Score": {
+        "id": "sc",
+        "number": null,
+        "type": "number"
+       }
+      },
+      "public_url": null,
+      "url": "https://www.notion.so/aaaaaaaa000040008000000000000003"
+     },
+     {
+      "archived": false,
+      "cover": null,
+      "created_by": {
+       "id": "user-placeholder",
+       "object": "user"
+      },
+      "created_time": "2026-09-01T10:00:00.000Z",
+      "icon": null,
+      "id": "aaaaaaaa-0000-4000-8000-000000000004",
+      "in_trash": false,
+      "is_archived": false,
+      "is_locked": false,
+      "last_edited_by": {
+       "id": "user-placeholder",
+       "object": "user"
+      },
+      "last_edited_time": "2026-10-08T18:00:00.000Z",
+      "object": "page",
+      "parent": {
+       "block_id": "parent-placeholder",
+       "type": "block_id"
+      },
+      "properties": {
+       "Name": {
+        "id": "title",
+        "title": [
+         {
+          "annotations": {
+           "bold": false,
+           "code": false,
+           "color": "default",
+           "italic": false,
+           "strikethrough": false,
+           "underline": false
+          },
+          "href": null,
+          "plain_text": "Reading list",
+          "text": {
+           "content": "Reading list",
+           "link": null
+          },
+          "type": "text"
+         }
+        ],
+        "type": "title"
+       }
+      },
+      "public_url": null,
+      "url": "https://www.notion.so/aaaaaaaa000040008000000000000004"
+     },
+     {
+      "archived": false,
+      "cover": null,
+      "created_by": {
+       "id": "user-placeholder",
+       "object": "user"
+      },
+      "created_time": "2026-09-01T10:00:00.000Z",
+      "icon": null,
+      "id": "aaaaaaaa-0000-4000-8000-000000000005",
+      "in_trash": false,
+      "is_archived": false,
+      "is_locked": false,
+      "last_edited_by": {
+       "id": "user-placeholder",
+       "object": "user"
+      },
+      "last_edited_time": "2026-09-01T18:00:00.000Z",
+      "object": "page",
+      "parent": {
+       "block_id": "parent-placeholder",
+       "type": "block_id"
+      },
+      "properties": {
+       "Name": {
+        "id": "title",
+        "title": [
+         {
+          "annotations": {
+           "bold": false,
+           "code": false,
+           "color": "default",
+           "italic": false,
+           "strikethrough": false,
+           "underline": false
+          },
+          "href": null,
+          "plain_text": "Old plan",
+          "text": {
+           "content": "Old plan",
+           "link": null
+          },
+          "type": "text"
+         }
+        ],
+        "type": "title"
+       }
+      },
+      "public_url": null,
+      "url": "https://www.notion.so/aaaaaaaa000040008000000000000005"
+     }
+    ]
+   },
+   "error": null,
+   "successful": true
+  },
+  "blocks": {
+   "aaaaaaaa-0000-4000-8000-000000000001": {
+    "data": {
+     "block": {},
+     "has_more": false,
+     "next_cursor": null,
+     "object": "list",
+     "request_id": "req-placeholder",
+     "type": "block",
+     "results": [
+      {
+       "archived": false,
+       "heading_3": {
+        "color": "default",
+        "is_toggleable": false,
+        "rich_text": [
+         {
+          "annotations": {
+           "bold": false,
+           "code": false,
+           "color": "default",
+           "italic": false,
+           "strikethrough": false,
+           "underline": false
+          },
+          "href": null,
+          "plain_text": "Before we go",
+          "text": {
+           "content": "Before we go",
+           "link": null
+          },
+          "type": "text"
+         }
+        ]
+       },
+       "created_by": {
+        "id": "user-placeholder",
+        "object": "user"
+       },
+       "created_time": "2026-10-10T10:00:00.000Z",
+       "has_children": false,
+       "id": "b1",
+       "in_trash": false,
+       "last_edited_by": {
+        "id": "user-placeholder",
+        "object": "user"
+       },
+       "last_edited_time": "2026-10-11T10:00:00.000Z",
+       "object": "block",
+       "parent": {
+        "page_id": "page-placeholder",
+        "type": "page_id"
+       },
+       "type": "heading_3"
+      },
+      {
+       "archived": false,
+       "to_do": {
+        "checked": false,
+        "color": "default",
+        "rich_text": [
+         {
+          "annotations": {
+           "bold": false,
+           "code": false,
+           "color": "default",
+           "italic": false,
+           "strikethrough": false,
+           "underline": false
+          },
+          "href": null,
+          "plain_text": "Book the ferry for Oct 18",
+          "text": {
+           "content": "Book the ferry for Oct 18",
+           "link": null
+          },
+          "type": "text"
+         }
+        ]
+       },
+       "created_by": {
+        "id": "user-placeholder",
+        "object": "user"
+       },
+       "created_time": "2026-10-10T10:00:00.000Z",
+       "has_children": false,
+       "id": "b2",
+       "in_trash": false,
+       "last_edited_by": {
+        "id": "user-placeholder",
+        "object": "user"
+       },
+       "last_edited_time": "2026-10-11T10:00:00.000Z",
+       "object": "block",
+       "parent": {
+        "page_id": "page-placeholder",
+        "type": "page_id"
+       },
+       "type": "to_do"
+      },
+      {
+       "archived": false,
+       "to_do": {
+        "checked": true,
+        "color": "default",
+        "rich_text": [
+         {
+          "annotations": {
+           "bold": false,
+           "code": false,
+           "color": "default",
+           "italic": false,
+           "strikethrough": false,
+           "underline": false
+          },
+          "href": null,
+          "plain_text": "Renew passport",
+          "text": {
+           "content": "Renew passport",
+           "link": null
+          },
+          "type": "text"
+         }
+        ]
+       },
+       "created_by": {
+        "id": "user-placeholder",
+        "object": "user"
+       },
+       "created_time": "2026-10-10T10:00:00.000Z",
+       "has_children": false,
+       "id": "b3",
+       "in_trash": false,
+       "last_edited_by": {
+        "id": "user-placeholder",
+        "object": "user"
+       },
+       "last_edited_time": "2026-10-11T10:00:00.000Z",
+       "object": "block",
+       "parent": {
+        "page_id": "page-placeholder",
+        "type": "page_id"
+       },
+       "type": "to_do"
+      },
+      {
+       "archived": false,
+       "paragraph": {
+        "color": "default",
+        "rich_text": [
+         {
+          "annotations": {
+           "bold": false,
+           "code": false,
+           "color": "default",
+           "italic": false,
+           "strikethrough": false,
+           "underline": false
+          },
+          "href": null,
+          "mention": {
+           "type": "user",
+           "user": {
+            "id": "11111111-1111-4111-8111-111111111111",
+            "object": "user"
+           }
+          },
+          "plain_text": "@Owner",
+          "type": "mention"
+         },
+         {
+          "annotations": {
+           "bold": false,
+           "code": false,
+           "color": "default",
+           "italic": false,
+           "strikethrough": false,
+           "underline": false
+          },
+          "href": null,
+          "plain_text": " please confirm the dates",
+          "text": {
+           "content": " please confirm the dates",
+           "link": null
+          },
+          "type": "text"
+         }
+        ]
+       },
+       "created_by": {
+        "id": "user-placeholder",
+        "object": "user"
+       },
+       "created_time": "2026-10-10T10:00:00.000Z",
+       "has_children": false,
+       "id": "b4",
+       "in_trash": false,
+       "last_edited_by": {
+        "id": "user-placeholder",
+        "object": "user"
+       },
+       "last_edited_time": "2026-10-11T10:00:00.000Z",
+       "object": "block",
+       "parent": {
+        "page_id": "page-placeholder",
+        "type": "page_id"
+       },
+       "type": "paragraph"
+      },
+      {
+       "archived": false,
+       "divider": {},
+       "created_by": {
+        "id": "user-placeholder",
+        "object": "user"
+       },
+       "created_time": "2026-10-10T10:00:00.000Z",
+       "has_children": false,
+       "id": "b5",
+       "in_trash": false,
+       "last_edited_by": {
+        "id": "user-placeholder",
+        "object": "user"
+       },
+       "last_edited_time": "2026-10-11T10:00:00.000Z",
+       "object": "block",
+       "parent": {
+        "page_id": "page-placeholder",
+        "type": "page_id"
+       },
+       "type": "divider"
+      }
+     ]
+    },
+    "error": null,
+    "successful": true
+   },
+   "aaaaaaaa-0000-4000-8000-000000000002": {
+    "data": {
+     "block": {},
+     "has_more": false,
+     "next_cursor": null,
+     "object": "list",
+     "request_id": "req-placeholder",
+     "type": "block",
+     "results": []
+    },
+    "error": null,
+    "successful": true
+   },
+   "aaaaaaaa-0000-4000-8000-000000000004": {
+    "data": {
+     "block": {},
+     "has_more": false,
+     "next_cursor": null,
+     "object": "list",
+     "request_id": "req-placeholder",
+     "type": "block",
+     "results": [
+      {
+       "archived": false,
+       "paragraph": {
+        "color": "default",
+        "rich_text": [
+         {
+          "annotations": {
+           "bold": false,
+           "code": false,
+           "color": "default",
+           "italic": false,
+           "strikethrough": false,
+           "underline": false
+          },
+          "href": null,
+          "plain_text": "Nothing to do here",
+          "text": {
+           "content": "Nothing to do here",
+           "link": null
+          },
+          "type": "text"
+         }
+        ]
+       },
+       "created_by": {
+        "id": "user-placeholder",
+        "object": "user"
+       },
+       "created_time": "2026-10-10T10:00:00.000Z",
+       "has_children": false,
+       "id": "b9",
+       "in_trash": false,
+       "last_edited_by": {
+        "id": "user-placeholder",
+        "object": "user"
+       },
+       "last_edited_time": "2026-10-11T10:00:00.000Z",
+       "object": "block",
+       "parent": {
+        "page_id": "page-placeholder",
+        "type": "page_id"
+       },
+       "type": "paragraph"
+      }
+     ]
+    },
+    "error": null,
+    "successful": true
+   }
+  }
+ },
+ "LINEAR_LIST_LINEAR_ISSUES": {
+  "data": {
+   "composio_execution_message": "Listed issues.",
+   "issues": [
+    {
+     "assignee": {
+      "email": "owner@example.com",
+      "id": "user-placeholder",
+      "name": "Owner"
+     },
+     "createdAt": "2026-09-20T17:00:00.000Z",
+     "description": "Description of EX-101.",
+     "dueDate": null,
+     "id": "bbbbbbbb-0000-4000-8000-000000000001",
+     "identifier": "EX-101",
+     "labels": {
+      "nodes": []
+     },
+     "priority": 1,
+     "project": {
+      "id": "project-placeholder",
+      "name": "Example Project"
+     },
+     "state": {
+      "name": "In Progress"
+     },
+     "team": {
+      "id": "team-placeholder",
+      "name": "Example Team"
+     },
+     "title": "Fix the login timeout",
+     "updatedAt": "2026-10-11T17:00:00.000Z",
+     "url": "https://linear.app/example/issue/ex-101/x"
+    },
+    {
+     "assignee": {
+      "email": "owner@example.com",
+      "id": "user-placeholder",
+      "name": "Owner"
+     },
+     "createdAt": "2026-09-20T17:00:00.000Z",
+     "description": "Description of EX-102.",
+     "dueDate": "2026-10-14",
+     "id": "bbbbbbbb-0000-4000-8000-000000000002",
+     "identifier": "EX-102",
+     "labels": {
+      "nodes": []
+     },
+     "priority": 3,
+     "project": {
+      "id": "project-placeholder",
+      "name": "Example Project"
+     },
+     "state": {
+      "name": "Todo"
+     },
+     "team": {
+      "id": "team-placeholder",
+      "name": "Example Team"
+     },
+     "title": "Write the migration guide",
+     "updatedAt": "2026-09-01T17:00:00.000Z",
+     "url": "https://linear.app/example/issue/ex-102/x"
+    },
+    {
+     "assignee": {
+      "email": "owner@example.com",
+      "id": "user-placeholder",
+      "name": "Owner"
+     },
+     "createdAt": "2026-09-20T17:00:00.000Z",
+     "description": "Description of EX-103.",
+     "dueDate": null,
+     "id": "bbbbbbbb-0000-4000-8000-000000000003",
+     "identifier": "EX-103",
+     "labels": {
+      "nodes": []
+     },
+     "priority": 2,
+     "project": {
+      "id": "project-placeholder",
+      "name": "Example Project"
+     },
+     "state": {
+      "name": "Backlog"
+     },
+     "team": {
+      "id": "team-placeholder",
+      "name": "Example Team"
+     },
+     "title": "Old cleanup",
+     "updatedAt": "2026-08-01T17:00:00.000Z",
+     "url": "https://linear.app/example/issue/ex-103/x"
+    },
+    {
+     "assignee": {
+      "email": "owner@example.com",
+      "id": "user-placeholder",
+      "name": "Owner"
+     },
+     "createdAt": "2026-09-20T17:00:00.000Z",
+     "description": "Description of EX-104.",
+     "dueDate": null,
+     "id": "bbbbbbbb-0000-4000-8000-000000000004",
+     "identifier": "EX-104",
+     "labels": {
+      "nodes": []
+     },
+     "priority": 2,
+     "project": {
+      "id": "project-placeholder",
+      "name": "Example Project"
+     },
+     "state": {
+      "name": "Done"
+     },
+     "team": {
+      "id": "team-placeholder",
+      "name": "Example Team"
+     },
+     "title": "Shipped feature",
+     "updatedAt": "2026-10-11T17:00:00.000Z",
+     "url": "https://linear.app/example/issue/ex-104/x"
+    }
+   ],
+   "page_info": {
+    "endCursor": "cursor-placeholder",
+    "hasNextPage": false
+   }
+  },
+  "error": null,
+  "successful": true
+ },
+ "GMAIL_FETCH_EMAILS": {
+  "inbox": {
+   "data": {
+    "messages": [
+     {
+      "attachmentList": [],
+      "display_url": "https://mail.google.com/mail/u/0/#all/m1",
+      "labelIds": [
+       "UNREAD",
+       "IMPORTANT",
+       "INBOX"
+      ],
+      "messageId": "m1",
+      "messageText": "Please sign the renewal by Oct 20.",
+      "messageTimestamp": "2026-10-11T16:00:00Z",
+      "preview": {
+       "body": "Please sign the renewal by Oct 20.",
+       "subject": "Contract renewal"
+      },
+      "sender": "Pat Lee <pat@vendor.example.com>",
+      "subject": "Contract renewal",
+      "threadId": "th1",
+      "to": "owner@work.example.com"
+     },
+     {
+      "attachmentList": [],
+      "display_url": "https://mail.google.com/mail/u/0/#all/m0",
+      "labelIds": [
+       "INBOX"
+      ],
+      "messageId": "m0",
+      "messageText": "First note about the renewal.",
+      "messageTimestamp": "2026-10-09T16:00:00Z",
+      "preview": {
+       "body": "First note about the renewal.",
+       "subject": "Contract renewal"
+      },
+      "sender": "Pat Lee <pat@vendor.example.com>",
+      "subject": "Contract renewal",
+      "threadId": "th1",
+      "to": "owner@work.example.com"
+     },
+     {
+      "attachmentList": [],
+      "display_url": "https://mail.google.com/mail/u/0/#all/m2",
+      "labelIds": [
+       "CATEGORY_UPDATES",
+       "INBOX"
+      ],
+      "messageId": "m2",
+      "messageText": "Here is the agenda, comments welcome.",
+      "messageTimestamp": "2026-10-10T16:00:00Z",
+      "preview": {
+       "body": "Here is the agenda, comments welcome.",
+       "subject": "Offsite agenda"
+      },
+      "sender": "Robin Day <robin@work.example.com>",
+      "subject": "Offsite agenda",
+      "threadId": "th2",
+      "to": "owner@work.example.com"
+     }
+    ],
+    "nextPageToken": null,
+    "resultSizeEstimate": 3
+   },
+   "error": null,
+   "successful": true
+  },
+  "sent": {
+   "data": {
+    "messages": [
+     {
+      "attachmentList": [],
+      "display_url": "https://mail.google.com/mail/u/0/#all/s1",
+      "labelIds": [
+       "SENT"
+      ],
+      "messageId": "s1",
+      "messageText": "",
+      "messageTimestamp": "2026-10-11T09:00:00Z",
+      "preview": {
+       "body": "",
+       "subject": "Re: Offsite agenda"
+      },
+      "sender": "Owner <owner@work.example.com>",
+      "subject": "Re: Offsite agenda",
+      "threadId": "th2",
+      "to": "owner@work.example.com"
+     }
+    ],
+    "nextPageToken": null,
+    "resultSizeEstimate": 1
+   },
+   "error": null,
+   "successful": true
+  }
+ },
+ "GOOGLECALENDAR_EVENTS_LIST": {
+  "data": {
+   "accessRole": "owner",
+   "defaultReminders": [
+    {
+     "method": "popup",
+     "minutes": 10
+    }
+   ],
+   "description": "",
+   "etag": "\"etag\"",
+   "items": [
+    {
+     "attendees": [
+      {
+       "displayName": "Owner",
+       "email": "owner@work.example.com",
+       "responseStatus": "needsAction",
+       "self": true
+      },
+      {
+       "displayName": "Guest 0",
+       "email": "guest0@work.example.com",
+       "responseStatus": "accepted"
+      },
+      {
+       "displayName": "Guest 1",
+       "email": "guest1@work.example.com",
+       "responseStatus": "accepted"
+      },
+      {
+       "displayName": "Guest 2",
+       "email": "guest2@work.example.com",
+       "responseStatus": "accepted"
+      }
+     ],
+     "created": "2026-09-01T10:00:00.000Z",
+     "creator": {
+      "email": "organizer@work.example.com"
+     },
+     "display_url": "https://www.google.com/calendar/event?eid=placeholder",
+     "end": {
+      "dateTime": "2026-10-13T17:00:00Z",
+      "timeZone": "UTC"
+     },
+     "etag": "\"etag\"",
+     "eventType": "default",
+     "htmlLink": "https://www.google.com/calendar/event?eid=w1",
+     "iCalUID": "w1@google.com",
+     "id": "w1",
+     "kind": "calendar#event",
+     "organizer": {
+      "displayName": "Organizer",
+      "email": "organizer@work.example.com"
+     },
+     "reminders": {
+      "useDefault": true
+     },
+     "sequence": 0,
+     "start": {
+      "dateTime": "2026-10-13T17:00:00Z",
+      "timeZone": "UTC"
+     },
+     "status": "confirmed",
+     "summary": "Design review",
+     "updated": "2026-10-01T10:00:00.000Z"
+    },
+    {
+     "attendees": [
+      {
+       "displayName": "Owner",
+       "email": "owner@work.example.com",
+       "responseStatus": "declined",
+       "self": true
+      },
+      {
+       "displayName": "Guest 0",
+       "email": "guest0@work.example.com",
+       "responseStatus": "accepted"
+      }
+     ],
+     "created": "2026-09-01T10:00:00.000Z",
+     "creator": {
+      "email": "organizer@work.example.com"
+     },
+     "display_url": "https://www.google.com/calendar/event?eid=placeholder",
+     "end": {
+      "dateTime": "2026-10-13T18:00:00Z",
+      "timeZone": "UTC"
+     },
+     "etag": "\"etag\"",
+     "eventType": "default",
+     "htmlLink": "https://www.google.com/calendar/event?eid=w2",
+     "iCalUID": "w2@google.com",
+     "id": "w2",
+     "kind": "calendar#event",
+     "organizer": {
+      "displayName": "Organizer",
+      "email": "organizer@work.example.com"
+     },
+     "reminders": {
+      "useDefault": true
+     },
+     "sequence": 0,
+     "start": {
+      "dateTime": "2026-10-13T18:00:00Z",
+      "timeZone": "UTC"
+     },
+     "status": "confirmed",
+     "summary": "Declined sync",
+     "updated": "2026-10-01T10:00:00.000Z"
+    },
+    {
+     "attendees": [
+      {
+       "displayName": "Owner",
+       "email": "owner@work.example.com",
+       "responseStatus": "accepted",
+       "self": true
+      },
+      {
+       "displayName": "Guest 0",
+       "email": "guest0@work.example.com",
+       "responseStatus": "accepted"
+      }
+     ],
+     "created": "2026-09-01T10:00:00.000Z",
+     "creator": {
+      "email": "organizer@work.example.com"
+     },
+     "display_url": "https://www.google.com/calendar/event?eid=placeholder",
+     "end": {
+      "dateTime": "2026-10-14T19:00:00Z",
+      "timeZone": "UTC"
+     },
+     "etag": "\"etag\"",
+     "eventType": "default",
+     "htmlLink": "https://www.google.com/calendar/event?eid=w3",
+     "iCalUID": "w3@google.com",
+     "id": "w3",
+     "kind": "calendar#event",
+     "organizer": {
+      "displayName": "Organizer",
+      "email": "organizer@work.example.com"
+     },
+     "reminders": {
+      "useDefault": true
+     },
+     "sequence": 0,
+     "start": {
+      "dateTime": "2026-10-14T19:00:00Z",
+      "timeZone": "UTC"
+     },
+     "status": "confirmed",
+     "summary": "Team lunch",
+     "updated": "2026-10-01T10:00:00.000Z"
+    },
+    {
+     "attendees": [
+      {
+       "displayName": "Owner",
+       "email": "owner@work.example.com",
+       "responseStatus": "accepted",
+       "self": true
+      },
+      {
+       "displayName": "Guest 0",
+       "email": "guest0@work.example.com",
+       "responseStatus": "accepted"
+      }
+     ],
+     "created": "2026-09-01T10:00:00.000Z",
+     "creator": {
+      "email": "organizer@work.example.com"
+     },
+     "display_url": "https://www.google.com/calendar/event?eid=placeholder",
+     "end": {
+      "dateTime": "2026-10-14T20:00:00Z",
+      "timeZone": "UTC"
+     },
+     "etag": "\"etag\"",
+     "eventType": "default",
+     "htmlLink": "https://www.google.com/calendar/event?eid=w4",
+     "iCalUID": "w4@google.com",
+     "id": "w4",
+     "kind": "calendar#event",
+     "organizer": {
+      "displayName": "Organizer",
+      "email": "organizer@work.example.com"
+     },
+     "reminders": {
+      "useDefault": true
+     },
+     "sequence": 0,
+     "start": {
+      "dateTime": "2026-10-14T20:00:00Z",
+      "timeZone": "UTC"
+     },
+     "status": "cancelled",
+     "summary": "Cancelled call",
+     "updated": "2026-10-01T10:00:00.000Z"
+    }
+   ],
+   "kind": "calendar#events",
+   "nextPageToken": null,
+   "summary": "Owner",
+   "timeZone": "UTC",
+   "updated": "2026-10-11T10:00:00.000Z"
+  },
+  "error": null,
+  "log_id": "log_placeholder",
+  "result_type": "inline"
+ }
+}

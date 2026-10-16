@@ -136,7 +136,8 @@ def run_gather(src: Sources, **kw: Any) -> tuple[dict[str, Any], dict[str, str]]
 
 def test_every_source_lands_as_contract_items(tmp_path: Path) -> None:
     snapshot, status = run_gather(sources_for(tmp_path, FakeApps()))
-    assert status == {"email": "ok", "calendar": "ok", "note": "ok", "memory": "ok", "chief": "off"}
+    assert status == {"email": "ok", "calendar": "ok", "note": "ok", "memory": "ok", "chief": "off", "slack": "off",
+                      "notion": "off", "linear": "off", "work_email": "off", "work_calendar": "off"}
     assert snapshot["now"] == NOW.isoformat() and snapshot["tz"] == "America/Los_Angeles"
     ids = [i["id"] for i in snapshot["items"]]
     assert {"gmail:t0", "gmail:t1", "gmail:t2", "cal:e1", "note:01-projects/move.md", "memory:2026-10-11#1",

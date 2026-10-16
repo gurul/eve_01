@@ -292,7 +292,8 @@ LITE_CLASSIFIED: dict[str, str] = {
            "EVE_CHIEF_ASSESS_MODEL", "EVE_CHIEF_DIR", "EVE_CHIEF_PUSH", "EVE_CHIEF_REPLAN"),
     **_why("inert while EVE_MEET is forced off: the Meet notetaker", "EVE_MEET_GUEST_NAME", "EVE_MEET_LOBBY_MINUTES",
            "EVE_MEET_MAX_HOURS", "EVE_MEET_PROFILE", "EVE_MEET_QUIET", "EVE_MEET_SUMMARY_MODEL"),
-    **_why("inert while EVE_UPDATES is forced off: the Updates pane", "EVE_UPDATES_EVERY_MIN", "EVE_UPDATES_MODEL"),
+    **_why("inert while EVE_UPDATES is forced off: the Updates pane", "EVE_UPDATES_EVERY_MIN", "EVE_UPDATES_MODEL",
+           "EVE_UPDATES_COMPOSIO"),
     # read only by code lite imports and never runs
     **_why("not run in lite: Claude Code's sessions, launches and permission questions; lite's brain lends none "
            "(no sessions, a launcher that refuses) and offers no coding tool", "EVE_CLAUDE_CONFIG_DIRS",

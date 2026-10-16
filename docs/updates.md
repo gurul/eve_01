@@ -72,11 +72,50 @@ its cards with it: the next build counts as full.
 | `note` | Notes in the second-brain vault with open to-dos, when the note changed in the last 14 days or a to-do is dated within 14 days (overdue too). At most 15 notes, the most recently changed first. The vault is walked note by note with rundown's rules (open `- [ ]` lines outside code fences, no `09-archive`, no dot folders or symlinks, files up to 1 MB, at most 5,000 files), and each note is filtered before any cap, so a busy vault never hides a note changed today. | The second brain is off |
 | `memory` | The "Still open" lines of the dream journal for the last 3 days, one item each, at most 20. | Memory is off |
 | `chief` | The chief's open jobs (status, whether they wait on you, the deadline), at most 15. | The chief is off |
+| `slack` | Direct messages and mentions of you from the last 3 days that you have not answered (no message of yours in that conversation after it), one item per conversation with its last 5 messages, at most 15. Slack's markup reads as words: your mention as "@you", a link as its label. | Slack is not connected in Composio |
+| `notion` | Pages edited in the last 14 days (the 50 most recent) that hold an open to-do, mention you, or are assigned to you (a people property holding you) and not done (a Status or State that reads as done, or a ticked Done box). The blocks of at most 10 pages are read. At most 15 items. | Notion is not connected in Composio |
+| `linear` | Open issues assigned to you (the first 100), due within 14 days or overdue, or updated in the last 7 days: state, priority, due date, project, team and the description. The nearest due date first, at most 15. | Linear is not connected in Composio |
+| `work_email` | Your other Gmail accounts in Composio (the work one, aliased `work`): the inbox of the last 7 days without promotions and social, up to 30 messages, one item per thread with its newest message. A thread you wrote in afterwards (that account's sent mail of the same 7 days) says you already replied. | No Gmail account in Composio has an alias other than `personal` |
+| `work_calendar` | The same accounts' calendars: the next 7 days, read like your own (declined and cancelled events left out, an unanswered invitation marked). | No Google Calendar account in Composio has an alias other than `personal` |
 
 Each item in the snapshot has a stable id: `gmail:<thread>`, `cal:<event>`,
-`note:<path>`, `memory:<day>#<n>` or `chief:<card>`. A card cites the ids it
-comes from (its "refs"). Every title and body is clipped (a body to about
-1,200 characters) before the model reads it.
+`note:<path>`, `memory:<day>#<n>`, `chief:<card>`, `slack:<channel>/<ts>`,
+`notion:<page>`, `linear:<issue>`, `wgmail:<account>/<thread>` or
+`wcal:<account>/<event>` (`<account>` is the Composio alias, `work`). A card
+cites the ids it comes from (its "refs"). Every title and body is clipped (a
+body to about 1,200 characters) before the model reads it. A Composio item's
+title starts with its app ("Slack: direct message from …", "Linear EX-12: …",
+"Work email: …"), so the card's source line names the app.
+
+### The Composio sources
+
+They read through the owner's Composio connection (`EVE_COMPOSIO=1`,
+[apps](apps.md)), in `bridge/src/eve_bridge/updates_composio.py`:
+
+- **Read only, in code.** Each source runs only slugs on an allow-list of
+  exact read slugs (`READ_SLUGS`: `SLACK_SEARCH_MESSAGES`,
+  `NOTION_GET_ABOUT_ME`, `NOTION_SEARCH_NOTION_PAGE`,
+  `NOTION_FETCH_BLOCK_CONTENTS`, `LINEAR_LIST_LINEAR_ISSUES`,
+  `GMAIL_FETCH_EMAILS`, `GOOGLECALENDAR_EVENTS_LIST`). Each call is checked
+  again with `composio_tools.consequential_slugs` and `is_read_only`, and
+  `ComposioBridge.read_tool` refuses a writing slug a third time. Tests prove a
+  sending slug never reaches Composio.
+- **One account each.** A call names one connected account. The work kinds
+  read only accounts whose alias is not `personal` (your own Gmail and
+  Calendar are read directly, as `email` and `calendar`).
+- **The whole answer.** The calls go to the account itself
+  (`ComposioBridge.read_tool`, the SDK's tool execution), not through the
+  chat's session, whose multi-execute answers with a preview.
+- **Off, failed, lost.** The connected accounts are listed once per rebuild. A
+  source is off when its app has no connected account. It failed when Composio
+  could not be read or the call failed, and also when its only connection has
+  expired: an expired connection is a lost source, not an empty one, so its old
+  cards stay and the rebuild is tried again (as for the other sources).
+- **Links.** When the app gives one (a Slack permalink, the Notion page, the
+  Linear issue, the Gmail or Calendar page), the item keeps it as `link`: https
+  on that app's own host only. The model never reads it; a card carries the
+  link of the first ref that has one, and `GET /api/link/updates` serves it as
+  `link`. The app does not show or send it yet.
 
 ## What is suggested, and what never is
 
@@ -109,13 +148,20 @@ card that cites them all.
 
 ## Safety
 
-**Email and note text is untrusted.** Anyone can send you an email, so every
+**Email and note text is untrusted.** So are Slack messages, Notion pages, Linear issues and the work
+mail. Anyone can send you an email, so every
 title, sender and body reaches the model as data, inside one `<snapshot>`
 block. The snapshot is JSON with every `<` escaped, so no text in an email can
 close the block. The prompt says that no instruction inside the snapshot is
 followed, whoever it claims to be from.
 
-**The suggester only proposes.** Nothing in `updates.py` acts: it reads,
+**What leaves the Mac.** The snapshot's text (titles, senders, bodies, dates) goes to the suggest
+model through OpenRouter, `store=False`, for every source: the Composio items' Slack messages,
+Notion to-dos, Linear issues and work mail too, as Gmail's do. Their links do not. To read them,
+the Mac asks Composio, which holds the app connections, for each app's items; nothing else is
+sent there.
+
+**The suggester only proposes.** Nothing in `updates.py` or `updates_composio.py` acts: it reads,
 calls the model once and writes its own file. A message that asks you or an
 assistant to forward mail, send or move money, share a code or a password,
 sign in, or open a link "to verify" is not a task. At most it becomes a card
@@ -130,7 +176,9 @@ the chat:
 ```
 
 The second line is there only when the card has a source. `<kind>` is
-`email`, `calendar`, `notes`, `memory` or `projects` (the chief's jobs). There
+`email`, `calendar`, `notes`, `memory` or `projects` (the chief's jobs). For a
+kind the app does not know yet (the Composio kinds), the line is
+`(from <source>)`, and the source names the app. There
 is no hidden prompt behind a card. You see on the card everything that gets
 sent. The text then goes through the chat like typed words, so every tool rule
 applies as usual: a one-way act (sending, paying, deleting) still waits for
@@ -206,6 +254,7 @@ view model). The simulator's design hook opens it with `-eveScreen updates`
 | `EVE_UPDATES` | on | `EVE_UPDATES=0` turns the feature off: the routes answer an empty list, the loop does not start and nothing is read. |
 | `EVE_UPDATES_EVERY_MIN` | `120` | Minutes between background rebuilds, in day time (07:00 to 22:00). At least 5. |
 | `EVE_UPDATES_MODEL` | `gpt-6-luna` | The suggester's model, through OpenRouter. A change of model is a prompt change: run the eval first. |
+| `EVE_UPDATES_COMPOSIO` | on | `EVE_UPDATES_COMPOSIO=0` leaves every Composio source out (they read as off). They are off anyway without `EVE_COMPOSIO=1`, the `composio` extra or a connected app. |
 
 The loop runs only while the app's door is up (`EVE_MINIAPP=1`), and a
 rebuild needs `OPENROUTER_API_KEY`. Without the key, refresh answers
@@ -219,7 +268,7 @@ path.
 
 | Call | Answer |
 |---|---|
-| `GET /api/link/updates` | `{"cards": [{"id", "verb", "text", "entity", "kind", "source", "due"}], "generated_at": ISO or null, "refreshing": bool}`. `kind` and `source` are the kind and title (at most 60 characters) of the card's first ref. Cards whose refs were dismissed are not served. |
+| `GET /api/link/updates` | `{"cards": [{"id", "verb", "text", "entity", "kind", "source", "due"}], "generated_at": ISO or null, "refreshing": bool}`. `kind` and `source` are the kind and title (at most 60 characters) of the card's first ref. A card from a Composio source may also have `link`, its app's own https page. Cards whose refs were dismissed are not served. |
 | `POST /api/link/updates/dismiss` | Body `{"id"}`. Dismisses every ref of that card for 30 days, kept in the store. `{"ok": true}`. The id may also be one a rebuild replaced in the last 2 days (the model worded the same email with another verb while the phone still showed the old card): its refs are kept for that. 400 for a missing, empty, non-string or over-64-character id. 404 `{"ok": false}` for an id the store does not know: nothing was dismissed, and the app puts the card back and reads the list again. |
 | `POST /api/link/updates/refresh` | Body `{}`. Starts one rebuild in the background and answers at once: `{"ok": true, "started": bool}`. `started` is false while a rebuild already runs, when the feature is off, or without a model key. |
 
@@ -277,11 +326,14 @@ minutes count, and the check prints which way it passed.
 | File | What it is |
 |---|---|
 | `bridge/src/eve_bridge/updates.py` | Gathering, the prompt, the checks, the store, the refresh and the loop |
+| `bridge/src/eve_bridge/updates_composio.py` | The Composio sources: the allow-list, the account choice and each app's reader |
+| `bridge/src/eve_bridge/composio_tools.py` | `ComposioBridge.connected_accounts` and `read_tool`, the reads the Composio sources make |
 | `bridge/src/eve_bridge/link_chat.py` | The three routes (`LinkChat._updates`) |
 | `bridge/src/eve_bridge/daemon.py` | Starts the loop in `run()` when the app's door is up |
 | `bridge/tests/test_updates.py` | The producer, checks, store and loop |
 | `bridge/tests/test_link_chat.py` | The routes: token, Origin, method, bad ids |
-| `bridge/tests/fixtures/updates/` | `dev.json` and `blind.json` (fictional data only) |
+| `bridge/tests/test_updates_composio.py` | The Composio sources: parsing, off and failed, the allow-list, refs and links |
+| `bridge/tests/fixtures/updates/` | `dev.json` and `blind.json` (fictional data only); `composio/responses.json`, Composio's answer shapes with every value made up |
 | `bridge/tools/updates_eval.py` | The eval (G6) |
 | `bridge/tools/updates_live_check.py` | The live check (G7) |
 | `ios/EveLink/Shared/Updates.swift` | The app's models, sent text, due label and list bookkeeping |
