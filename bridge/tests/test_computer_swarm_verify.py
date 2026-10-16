@@ -9,6 +9,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 import computer_swarm_verify as swarm  # noqa: E402
 
 
+@pytest.fixture(autouse=True)
+def _repo_root(monkeypatch):
+    """swarm.BASE (docs/computer-protocol-eval) is relative to the repo root; the suite starts in bridge/, where a
+    missing folder loads as no rows and every gate fails for the wrong reason."""
+    monkeypatch.chdir(Path(__file__).resolve().parents[2])
+
+
 def copy_rows(folder):
     rows = swarm.be.load_rows(swarm.BASE / 'browser')
     folder.mkdir()

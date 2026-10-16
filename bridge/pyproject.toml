@@ -77,7 +77,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "pytest-xdist>=3.8,<4", "ruff>=0.6", "jsonschema>=4.26,<5"]   # xdist 3.8.0, 2026-10-09
+dev = ["pytest>=8.0", "pytest-xdist>=3.8,<4", "ruff>=0.6", "jsonschema>=4.26,<5", "segno>=1.6,<2"]   # xdist 3.8.0, 2026-10-09
+# segno is lite's QR drawer (the lite extra, below); the suite checks the pairing page's QR codes (test_lite_web_local,
+# test_lite_e2e), so the full install's dev tools carry it too. 2026-10-16.
 # The browser lane (browser_lane.py): Playwright drives the owner's Chrome (attach mode) for web goals.
 # 1.63.0 current per PyPI, 2026-09-21, Python >=3.10. Imported lazily; the daemon runs without it. Install with
 # `pip install -e ".[browser]"` then `python -m playwright install chromium` (~95 MB).

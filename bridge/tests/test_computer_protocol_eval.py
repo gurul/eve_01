@@ -18,6 +18,15 @@ import computer_visual_eval as visual  # noqa: E402
 
 from eve_bridge import decisions, typed_ask  # noqa: E402
 
+REPO = Path(__file__).resolve().parents[2]
+
+
+@pytest.fixture(autouse=True)
+def _repo_root(monkeypatch):
+    """The recorded reports name their files from the repo root (docs/computer-protocol-eval/...), so run there:
+    the suite is started from bridge/, where those relative paths do not exist."""
+    monkeypatch.chdir(REPO)
+
 
 def fixture(snapshot=None, cases=None):
     return ev.fe.Fixture(Path("test.json"), "select", "calendar", snapshot or calendar(),
