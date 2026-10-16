@@ -270,7 +270,7 @@ The page and the app talk only through these calls
 | `{type:"cancel", id}` | Stops that turn or poll. The page hears nothing more about it. |
 | `{type:"messages", id, after, wait}` | `GET /api/link/messages`, gives the JSON to `onMessages` as a string. |
 | `{type:"haptic", style}` | Plays a light, soft or success haptic. |
-| `{type:"openURL", url}` | Opens http(s) in Safari inside the app; mail, phone, messages, Maps and FaceTime links in their apps. |
+| `{type:"openURL", url}` | Opens http(s) in the site's own app when one is installed and claims the link (a universal link: the NYT, Slack, Notion...), otherwise in Safari inside the app; mail, phone, messages, Maps and FaceTime links in their apps. |
 | `{type:"openAttachment", id, name, kind}` | `GET /api/link/file/<id>`, then Quick Look with share. `id` must be 32 lowercase hex and `kind` one of image, pdf, text, doc, file, or the message is dropped. See "Attachments". |
 
 The app calls `window.eveNative.onChunk(id, text)`, `onDone(id)`,
@@ -611,7 +611,7 @@ failed call: the first-message title and the rules above.
   the top bar and the composer, and the page pads its list by what covers it
   (below).
 - The web view goes nowhere. Every navigation except the bundled page is
-  cancelled. A tapped link opens in Safari inside the app.
+  cancelled. A tapped link opens in its own app when one claims it, otherwise in Safari inside the app.
 - The page cannot fetch anything itself: its Content-Security-Policy has
   `connect-src 'none'`.
 - Haptics come from native code. The send haptic is the composer's; the page
@@ -870,7 +870,7 @@ only an image URL from a tool result, the conversation or the owner, never an in
   [nyt.md](nyt.md)), the card rule in `gen-prompt.mjs` RULES asks for a ListBlock with variant "image": one ListItem
   per article or book, 5 to 8 of them, with the headline or title, a short subtitle ("Section · date"; a
   book: "author · weeks on the list"), the row's own `image` when it has one, and `@OpenUrl(url)` as the action. A tap
-  opens the article in the app's in-app browser (`cardActions.ts` and `links.ts` hand the URL to the native
+  opens the article in the NYT app when it is installed, otherwise in the in-app browser (`cardActions.ts` and `links.ts` hand the URL to the native
   `openURL`). One big story may lead with an ImageBlock instead. Every news or book list ends with a FollowUpBlock of
   two or three ways to keep browsing (more on the topic, another section, the most read). `APP_RULE` and `APP_LINE`
   name articles and books from a tool among the shapes that get a block. The reference's news example uses
