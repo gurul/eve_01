@@ -14,7 +14,8 @@
 - ``nyt_popular(by, period, share_type)``: Most Popular v2, the most viewed, emailed or shared articles; the
   enums are the spec's.
 - ``nyt_headlines(section, limit)``: what is on a section front now. With a key it asks Top Stories v2; without
-  one, or when Top Stories answers 401, 429 or 5xx (or times out), it reads the section's RSS feed, which needs no
+  one, or when Top Stories answers 401, 429 or 5xx (or times out), or sends no readable stories (a malformed or
+  empty answer: live, its sports section answers "results": null), it reads the section's RSS feed, which needs no
   key. ``TOP_TO_RSS`` maps the two specs' section names onto each other; the result says ``source``.
 
 Every article or book row carries ``url`` (an https link) and, when NYT gives one at least ``MIN_IMAGE_WIDTH`` wide
@@ -61,6 +62,7 @@ from datetime import date as Date
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable, Mapping, Optional
+from urllib.parse import urlsplit
 
 log = logging.getLogger(__name__)
 
@@ -127,6 +129,7 @@ MAX_QUERY_CHARS = 300
 MAX_FACETS = 6
 MIN_IMAGE_WIDTH = 400
 TOP_MIN_IMAGE_WIDTH = 600
+MIN_COVER_WIDTH, MIN_COVER_HEIGHT = 200, 300     # book covers are portrait (live: 312 x 400)
 ARCHIVE_DEFAULT_LIMIT, ARCHIVE_MAX_LIMIT = 20, 50
 HEADLINES_DEFAULT_LIMIT, HEADLINES_MAX_LIMIT = 10, 30
 OVERVIEW_TOP = 5
@@ -220,13 +223,17 @@ SEARCH_TOOL = _function(SEARCH, (
     "page. Answer from the results only and give each article's headline, date and link. " + _OUTSIDE), {
     "query": {"type": "string", "description": "The words to find, e.g. \"climate change\" (quotes: exact words). "
                                                "May be empty when a filter or date is given."},
-    "begin_date": _nullable("string", "Earliest publication date, YYYY-MM-DD, or null."),
+    "begin_date": _nullable("string", "Earliest publication date, YYYY-MM-DD, or null. For recent news (\"today\", "
+                                      "\"latest\", \"anything new\") use about 7 days back with end_date null, "
+                                      "so the newest articles are in the range; a single day is for an owner who "
+                                      "asks for one exact date."),
     "end_date": _nullable("string", "Latest publication date, YYYY-MM-DD, or null."),
     "section": _nullable("string", "A section name such as World, U.S., Business, Books, Movies, Opinion, "
                                    "Science, Sports or Arts, or null."),
     "material": _nullable("string", "A type of material such as News, Review, Op-Ed, Editorial, Obituary, "
                                     "Interview or Letter, or null."),
-    "sort": _nullable("string", "newest, oldest, relevance or best (the default), or null.",
+    "sort": _nullable("string", "relevance, best (the default), newest or oldest, or null. For a topic search use "
+                                "relevance or null; use newest only when the owner asks for the latest.",
                       enum=[*SORTS, None]),
     "page": _nullable("integer", f"The page, 0 (the first 10) to {MAX_PAGE}; null for 0.")})
 ARCHIVE_TOOL = _function(ARCHIVE, (
@@ -393,13 +400,15 @@ def parse_date(raw: Any, what: str) -> Optional[Date]:
 # ---- images ---------------------------------------------------------------------------------------------------
 
 def _image(src: Any, width: Any, height: Any, caption: Any = None, credit: Any = None,
-           min_width: int = MIN_IMAGE_WIDTH) -> Optional[dict[str, Any]]:
+           min_width: int = MIN_IMAGE_WIDTH, min_height: int = 0) -> Optional[dict[str, Any]]:
     url = str(src or "").strip()
     if url and not re.match(r"^[a-z][a-z0-9+.-]*:", url, re.IGNORECASE) and not url.startswith("//"):
         url = STATIC + url.lstrip("/")             # NYT's relative paths (images/2024/...) live on static01
     url = https_url(url)
     w, h = _int(width), _int(height)
     if url is None or w is None or w < min_width:
+        return None
+    if min_height and (h is None or h < min_height):
         return None
     out: dict[str, Any] = {"src": url, "width": w, "height": h if h is not None and h > 0 else None}
     cap, cred = clean_text(caption, TEXT_CHARS), clean_text(credit, NAME_CHARS)
@@ -465,8 +474,10 @@ def popular_image(media: Any) -> Optional[dict[str, Any]]:
 
 
 def book_image(book: Mapping[str, Any]) -> Optional[dict[str, Any]]:
-    """Books: book_image with book_image_width and book_image_height."""
-    return _image(book.get("book_image"), book.get("book_image_width"), book.get("book_image_height"))
+    """Books: book_image with book_image_width and book_image_height. A cover is portrait, so it is kept when it
+    is at least MIN_COVER_WIDTH wide and MIN_COVER_HEIGHT tall."""
+    return _image(book.get("book_image"), book.get("book_image_width"), book.get("book_image_height"),
+                  min_width=MIN_COVER_WIDTH, min_height=MIN_COVER_HEIGHT)
 
 
 # ---- the cache ------------------------------------------------------------------------------------------------
@@ -901,6 +912,11 @@ def _buy_link(book: Mapping[str, Any], name: str) -> Optional[str]:
     return None
 
 
+def _on_nytimes(url: Optional[str]) -> bool:
+    host = (urlsplit(url).hostname or "").lower() if url else ""
+    return host == "nytimes.com" or host.endswith(".nytimes.com")
+
+
 def book(raw: Mapping[str, Any]) -> dict[str, Any]:
     amazon = https_url(raw.get("amazon_product_url")) or _buy_link(raw, "amazon")
     bookshop = _buy_link(raw, "bookshop")
@@ -912,7 +928,8 @@ def book(raw: Mapping[str, Any]) -> dict[str, Any]:
         "publisher": clean_text(raw.get("publisher"), NAME_CHARS) or None,
         "weeks_on_list": _int(raw.get("weeks_on_list")),
         "description": clean_text(raw.get("description"), TEXT_CHARS) or None,
-        "url": bookshop or amazon or review,
+        # the Times' own review when it has one, so a tap opens nytimes.com; else a store
+        "url": (review if _on_nytimes(review) else None) or bookshop or amazon or review,
     }
     if amazon:
         out["amazon"] = amazon
@@ -1201,8 +1218,11 @@ async def _top_stories(section: str, key: str, now: Optional[datetime], **kw: An
         return got
     body = _json(got)
     if not isinstance(body, dict) or not isinstance(body.get("results"), list):
-        return _unreadable()
+        # live, 2026-10-16: sports answers 200 with "results": null (num_results 0, last updated 2025-04-30)
+        return Got(False, status=200, failure=_unreadable())
     rows = [r for r in (top_row(x) for x in body["results"] if isinstance(x, Mapping)) if r]
+    if not rows:                                   # an empty section is not cached: the feed may have it
+        return Got(False, status=200, failure={"ok": False, "reason": "The New York Times had no stories there."})
     cache_put(path, rows, now)
     return rows
 
@@ -1246,10 +1266,12 @@ async def nyt_headlines(args: Mapping[str, Any], key: str, now: Optional[datetim
                     "results": rows[:limit], "note": NOTES[HEADLINES]}
         failure = rows.failure if isinstance(rows, Got) else rows
         status = rows.status if isinstance(rows, Got) else 0
-        transient = isinstance(rows, Got) and (status in FALLBACK_STATUSES or status >= 500 or status == 0)
+        # a 200 here is an answer with no readable stories (malformed, too big, or empty): the feed may have them
+        transient = isinstance(rows, Got) and (status in FALLBACK_STATUSES or status >= 500 or status in (0, 200))
         if not transient or rss is None:
             return failure
-        fell_back = f"Top Stories did not answer (HTTP {status})" if status else "Top Stories did not answer"
+        fell_back = ("Top Stories sent no readable stories" if status == 200 else
+                     f"Top Stories did not answer (HTTP {status})" if status else "Top Stories did not answer")
     if rss is None:
         valid = ", ".join(RSS_SECTIONS)
         return {"ok": False, "reason": f"Without NYT_API_KEY only the RSS feeds answer, and none is that section "
@@ -1257,6 +1279,10 @@ async def nyt_headlines(args: Mapping[str, Any], key: str, now: Optional[datetim
     rows = await _rss(rss, now, **kw)
     if not isinstance(rows, list):
         return rows
+    if not rows and key:
+        # live, 2026-10-16: sports was empty in Top Stories and in its feed; the search still has its articles
+        return {"ok": False, "section": rss, "reason": f"The New York Times' {rss} front has no stories right now. "
+                f"{SEARCH} with section \"{rss}\" and the last few days finds its newest articles."}
     out: dict[str, Any] = {"ok": True, "source": "rss", "section": rss, "count": min(limit, len(rows)),
                            "results": rows[:limit], "note": NOTES[HEADLINES]}
     if fell_back:

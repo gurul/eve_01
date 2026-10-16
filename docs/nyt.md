@@ -20,19 +20,24 @@ license. The copies here carry no license note of their own.
 Each tool is strict. Every argument is required, and every argument but the search words and the archive's year and
 month can be null. Each tool answers `{"ok": true, ...}`, or `{"ok": false, "reason": ...}` in words the model can
 repeat. Each article or book row has a `url` (always https). It also has an `image` `{src, width, height, caption?,
-credit?}` when NYT gives one over https that is at least 400 px wide. eve never makes an image up. The Eve Link app
-can show these rows as an image list.
+credit?}` when NYT gives one over https that is at least 400 px wide. A book cover is portrait (live: 312 x 400),
+so it is kept when it is at least 200 wide and 300 tall. eve never makes an image up. The Eve Link app shows these
+rows as an image list (see [On the phone](#on-the-phone)).
 
 ### `nyt_search(query, begin_date, end_date, section, material, sort, page)`
 
 - `query`: the words. Quotes match exact words. The query can be empty when a filter or a date is given.
 - `begin_date`, `end_date`: `YYYY-MM-DD`, from 1851-01-01 to today. eve puts them in order and sends them as
-  `YYYYMMDD`.
+  `YYYYMMDD`. For recent news ("today", "latest", "anything new") the tool tells the model to start about 7 days
+  back with no end date, and to use a single day only when the owner asks for one exact date: in the first eval,
+  "anything about nvidia today" searched today alone, sorted newest, and got one article.
 - `section`, `material`: become one Lucene `fq`. eve uses the field names NYT has used since 2025-04-08:
   `section.name:("Books") AND typeOfMaterials:("Review")`. A value that matches one in the spec's lists, ignoring
   case and punctuation, is sent the way the spec spells it. Any other value is sent as written, because the spec's
   section list is partial. Every value is quoted, with `\` and `"` escaped, so a value cannot add a clause.
-- `sort`: `best` (the default), `newest`, `oldest` or `relevance`. `page`: 0 to 99.
+- `sort`: `best` (the default), `newest`, `oldest` or `relevance`. `page`: 0 to 99. The tool tells the model to use
+  `relevance` (or no sort) for a topic search and `newest` only when the owner asks for the latest: live, "mars
+  rover" sorted newest put an off-topic article first.
 - Each row has the headline, date, section, type, byline, abstract (clipped) and link. The image is the `default`
   crop, or the `thumbnail` crop when it is wide enough. eve makes relative paths absolute on
   `https://static01.nyt.com/`.
@@ -54,8 +59,9 @@ service on 2025-05-15. The best-seller tool's description says so.
 
 - No list: the overview. Every list of the week, each with its top 5 books.
 - A list: the whole list. Each book has its rank, title, author, publisher, weeks on the list, description, link
-  (Bookshop, else Amazon, else NYT's review) and, when NYT gives them, `amazon`, `bookshop`, `review` and the cover
-  (`book_image` with its width and height).
+  (the Times' review on nytimes.com when NYT gives one, else Bookshop, else Amazon) and, when NYT gives them,
+  `amazon`, `bookshop`, `review` and the cover (`book_image` with its width and height). Live on 2026-10-16, 5 of 15
+  nonfiction and 4 of 15 fiction books had a review link.
 - Friendly names ("fiction", "nonfiction", "paperback", "young adult", "audio", "kids") are matched against the list
   names in the overview itself. An exact list name or slug wins. Otherwise eve picks among the lists whose slug
   holds every word. It prefers hardcover, then fiction over nonfiction unless nonfiction was asked for, then the
@@ -79,10 +85,14 @@ One tool with two sources, because both answer the same question.
 - **With `NYT_API_KEY`:** Top Stories, `GET /svc/topstories/v2/{section}.json`. Each row has the title, abstract,
   section, subsection, byline, date, the topic and place facets, the link, and the widest image that is at least
   600 px wide (superJumbo or threeByTwoSmallAt2X).
-- **Without a key, or when Top Stories answers 401, 403, 429 or 5xx, or does not answer:** the section's RSS feed,
-  `https://rss.nytimes.com/services/xml/rss/nyt/{section}.xml`, which needs no key. Each row has the title,
-  description, date, creator, category tags, link and the widest `media:content` image. A result that fell back
-  says why in `fell_back`.
+- **Without a key, or when Top Stories answers 401, 403, 429 or 5xx, does not answer, or sends no readable
+  stories:** the section's RSS feed, `https://rss.nytimes.com/services/xml/rss/nyt/{section}.xml`, which needs no
+  key. Each row has the title, description, date, creator, category tags, link and the widest `media:content` image.
+  A result that fell back says why in `fell_back`. "No readable stories" is a 200 that is not JSON, has no `results`
+  list, or has no row eve can use; such an answer is not cached. Live on 2026-10-16, Top Stories' `sports` answered
+  200 with `"results": null` (`num_results` 0, last updated 2025-04-30), so it now goes to the Sports feed.
+- **A front empty in both sources** (with a key) answers `ok: false` and points the model at `nyt_search` with that
+  section and the last few days. Live on 2026-10-16 the Sports feed was empty too.
 - The result's `source` is `top_stories` or `rss`.
 - `section`: null is the home page. eve maps friendly names onto both specs' enums, ignoring case and punctuation:
   "world", "tech" (technology), "books" (books/review), "U.S.", "new york" (nyregion), "front page" (home). Both are
@@ -168,6 +178,48 @@ model never to follow instructions written in the results.
   A routing accuracy for them needs a new blind set, like `intent_science_blind.json`.
 - **eve lite** forces `EVE_NYT=0`. Lite also removes `NYT_API_KEY`, because the name is secret-shaped.
 
+## On the phone
+
+Owner, 2026-10-16: "if i want to search for specific news it can pull it; on my phone app allow it to generate nice
+links (openui / images) so i can click onto news and browse."
+
+In the Eve Link app the reply is a card (see [app-chat.md, Pictures in cards](app-chat.md#pictures-in-cards)): an
+image list with one row per article or book, 5 to 8 of them. Each row shows the headline or title, a short line
+("Science · Oct 14"; a book: "author · weeks on the list") and the row's `image` when the tool gave one. A row
+without an image shows none; eve never finds or makes one up for it. A tap opens the row's `url` in the app's in-app
+browser (`@OpenUrl`, routed to the native `openURL`): an article on nytimes.com, a book on its Times review when NYT
+gives one, else on Bookshop or Amazon. One big story may lead with a single large picture instead. Every news or
+book list ends with two or three follow-ups that keep browsing, such as more on the topic, another section or the
+most read. `link_chat.APP_RULE` lists "articles, books or headlines from a tool" among the shapes that get a block.
+The rule and an example live in `ios/EveLink/Web/scripts/gen-prompt.mjs`; regenerate `openui_prompt.txt` with
+`pnpm gen-prompt` after changing them. The example's links and picture are `example.com` placeholders and its rows
+name no person, so the model has no real-looking value to copy.
+
+### Measured (2026-10-16)
+
+gpt-6-luna at low effort, the app turn of `bridge/tools/openui_eval.py` with `NYT_API_KEY` kept and the NYT tools
+live (every other tool refused), scored by code: a news card is a block that parses, whose ListItems each open an
+https link (nytimes.com for an article; nytimes.com, bookshop.org or amazon.com for a book); "all checks" adds
+links and pictures that are exact strings from that turn's tool results, 5 to 8 items and a FollowUpBlock.
+
+| set | runs | news replies as a card | news, all checks | cards with follow-ups | plain as plain | other cards right | blocks valid |
+|---|---|---|---|---|---|---|---|
+| First set, before this round (rescored with the book rule) | 1 | 10 of 18 | 5 of 18 | 5 of 10 | 6 of 6 | 5 of 6 | 15 of 15 |
+| First set, second look (contaminated: the fixes were made against it) | 3 | 42 of 54 | 22 of 54 | 32 of 42 | 18 of 18 | 14 of 18 | 56 of 56 |
+| New blind set (20 messages written by an agent that read no code) | 2 | 24 of 28 | 15 of 28 | 18 of 24 | 6 of 6 | 6 of 6 | 30 of 30 |
+
+- The commonest misses: too few rows (a topic search where only 2 or 3 results fit), no follow-ups, the sports
+  front, and a topic that the model asked about first ("which election?").
+- The sports front was empty in both Top Stories and its feed on the day; with the pointer to `nyt_search`, one of
+  five sports replies searched and drew a card.
+- Links and pictures not from a tool result: 1 reply of 90 in the second look and 3 of 40 in the blind set. Each
+  was the model shortening or garbling a real tool URL (a slug cut short, a month dropped from an image path, a
+  section page), not a made-up story. The app opens such a link to a missing page; the image does not load.
+- The blind set had 14 news, 3 plain and 3 other-card messages. Three of its messages are close to first-set ones
+  (the moon landing, the Fed decision, iPhone vs Pixel).
+- NYT requests that left the Mac: 28 for the second look and 21 for the blind set (others came from the cache), all
+  HTTP 200, none refused for pacing.
+
 ## Turning it off
 
 `EVE_NYT=0` (or `false`, `no`, `off`) in the env file. No tool is offered, and a call answers that the tools are off.
@@ -182,7 +234,8 @@ pins `EVE_NYT=0` and no key (`conftest._nyt_pinned_off`).
 - each tool's rows, and the image pick for each source with several sizes;
 - the archive, books, popular and headlines caches;
 - the friendly list names;
-- the key path, the no-key path, and the Top Stories to RSS fallback on 401, 429 and 5xx;
+- the key path, the no-key path, and the Top Stories to RSS fallback on 401, 429, 5xx and an unreadable or empty
+  answer (the live sports answer among them), and a front empty in both;
 - the section table and its gaps;
 - hostile and oversized feeds;
 - 429s and retries, and the pace on an injected clock;

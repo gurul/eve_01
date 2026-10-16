@@ -383,7 +383,8 @@ def test_a_list_by_name_full_with_links_names_cached_for_a_week() -> None:
     assert first["rank"] == 1 and second == {
         "rank": 2, "title": "GREAT BIG BEAUTIFUL LIFE", "author": "Emily Henry", "publisher": "Berkley",
         "weeks_on_list": 3, "description": "A writer competes.", "url": "https://bookshop.org/a/1/9780593441299",
-        "amazon": BOOK["amazon_product_url"], "bookshop": "https://bookshop.org/a/1/9780593441299"}
+        "amazon": BOOK["amazon_product_url"], "bookshop": "https://bookshop.org/a/1/9780593441299",
+        "image": {"src": BOOK["book_image"], "width": 331, "height": 500}}
     # another list a day later: the names come from disk, so one request
     server2 = Server((200, dict(LIST_BODY, results=dict(LIST_BODY["results"], list_name_encoded="audio-fiction"))))
     out = call(nyt.BESTSELLERS, a(BOOK_ARGS, list="audio", date="2025-05-04"), server2, now=NOW + timedelta(days=1))
@@ -394,9 +395,29 @@ def test_a_list_by_name_full_with_links_names_cached_for_a_week() -> None:
     assert unknown["ok"] is False and "Hardcover Fiction" in unknown["reason"]
 
 
-def test_book_image_is_book_image_with_its_size_and_never_under_400() -> None:
+def test_a_book_links_to_the_times_review_when_it_has_one_else_a_store() -> None:
+    review = "https://www.nytimes.com/2025/04/20/books/review/great-big-beautiful-life.html"
+    with_review = nyt.book(dict(BOOK, book_review_link=review))
+    assert with_review["url"] == review and with_review["review"] == review
+    assert with_review["bookshop"] == "https://bookshop.org/a/1/9780593441299"      # the stores are still there
+    sunday = nyt.book(dict(BOOK, book_review_link="", sunday_review_link=review))
+    assert sunday["url"] == review
+    assert nyt.book(BOOK)["url"] == "https://bookshop.org/a/1/9780593441299"       # no review: Bookshop
+    no_store = dict(BOOK, buy_links=[], amazon_product_url="")
+    assert nyt.book(dict(no_store, book_review_link="https://example.com/r"))["url"] == "https://example.com/r"
+    elsewhere = nyt.book(dict(BOOK, book_review_link="https://example.com/r"))      # a review off nytimes.com
+    assert elsewhere["url"] == "https://bookshop.org/a/1/9780593441299"
+    assert nyt.book(dict(BOOK, book_review_link="http://www.nytimes.com/x.html"))["url"].startswith("https://book")
+
+
+def test_book_image_keeps_portrait_covers_at_least_200_by_300() -> None:
     assert nyt.book_image(BIG_COVER) == {"src": BIG_COVER["book_image"], "width": 500, "height": 760}
-    assert nyt.book_image(BOOK) is None                                   # 331 wide
+    assert nyt.book_image(BOOK) == {"src": BOOK["book_image"], "width": 331, "height": 500}
+    live = dict(BOOK, book_image_width=312, book_image_height=400)          # the live cover size
+    assert nyt.book_image(live) == {"src": BOOK["book_image"], "width": 312, "height": 400}
+    assert nyt.book_image(dict(BOOK, book_image_width=199, book_image_height=400)) is None
+    assert nyt.book_image(dict(BOOK, book_image_width=312, book_image_height=299)) is None
+    assert nyt.book_image(dict(BOOK, book_image_height=None)) is None        # no height: never guessed
     assert nyt.book_image({"book_image": BIG_COVER["book_image"]}) is None   # no width: never guessed
     assert nyt.book_image(dict(BIG_COVER, book_image="http://x.example/a.jpg")) is None
 
@@ -558,6 +579,50 @@ def test_top_stories_failing_falls_back_to_rss(status: int) -> None:
     assert out["count"] == 1 and server.paths()[-1] == "rss.nytimes.com/services/xml/rss/nyt/Technology.xml"
     tops = [p for p in server.paths() if "topstories" in p]
     assert len(tops) == (2 if status >= 500 else 1)                   # a 5xx is retried once, a 429 never
+
+
+# live, 2026-10-16: Top Stories' sports section answered 200 with "results": null and num_results 0
+SPORTS_DEAD = {"status": "OK", "section": "Sports", "last_updated": "2025-04-30T17:45:23-04:00", "num_results": 0,
+               "results": None}
+
+
+@pytest.mark.parametrize("body", [
+    SPORTS_DEAD,                                          # the live answer
+    dict(SPORTS_DEAD, results=[]),                        # an empty section
+    dict(SPORTS_DEAD, results=[{"title": "no url"}]),     # rows that are all unreadable
+    b"<html>not json</html>",                             # not JSON at all
+    ["a", "list"],                                        # JSON, but not an object
+])
+def test_an_unreadable_or_empty_top_stories_answer_falls_back_to_rss(body: Any) -> None:
+    server = Server((200, body), (200, RSS_FEED))
+    out = call(nyt.HEADLINES, a(HEAD_ARGS, section="sports", limit=1), server)
+    assert out["ok"] is True and out["source"] == "rss" and out["section"] == "Sports"
+    assert out["fell_back"] == "Top Stories sent no readable stories" and out["count"] == 1
+    assert server.paths() == ["api.nytimes.com/svc/topstories/v2/sports.json",
+                              "rss.nytimes.com/services/xml/rss/nyt/Sports.xml"]   # no retry of a 200
+    assert not (nyt.cache_root() / "headlines" / "top_stories-sports.json").exists()   # never cached empty
+
+
+EMPTY_FEED = b"<?xml version='1.0' encoding='UTF-8'?><rss version='2.0'><channel><title>NYT &gt; Sports</title></channel></rss>"
+
+
+def test_a_front_empty_in_both_sources_points_at_the_search() -> None:
+    server = Server((200, SPORTS_DEAD), (200, EMPTY_FEED))
+    out = call(nyt.HEADLINES, a(HEAD_ARGS, section="sports"), server)
+    assert out["ok"] is False and out["section"] == "Sports"
+    assert "no stories right now" in out["reason"] and 'nyt_search with section "Sports"' in out["reason"]
+    assert len(server.requests) == 2
+
+
+def test_without_a_key_an_empty_feed_is_an_empty_list(no_key: None) -> None:
+    out = call(nyt.HEADLINES, a(HEAD_ARGS, section="sports"), Server((200, EMPTY_FEED)))
+    assert out["ok"] is True and out["count"] == 0 and out["results"] == []    # nyt_search is not offered
+
+
+def test_an_unreadable_top_stories_answer_with_no_feed_says_so() -> None:
+    server = Server((200, SPORTS_DEAD))
+    out = call(nyt.HEADLINES, a(HEAD_ARGS, section="opinion"), server)      # opinion has no RSS feed
+    assert out["ok"] is False and "could not read" in out["reason"] and len(server.requests) == 1
 
 
 def test_headlines_are_cached_ten_minutes_per_source_and_section(no_key: None) -> None:
