@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.14'",
@@ -776,6 +776,7 @@ dev = [
     { name = "pytest" },
     { name = "pytest-xdist" },
     { name = "ruff" },
+    { name = "segno" },
 ]
 gemma = [
     { name = "sentence-transformers" },
@@ -829,6 +830,7 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
     { name = "pytest-xdist", marker = "extra == 'dev'", specifier = ">=3.8,<4" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6" },
+    { name = "segno", marker = "extra == 'dev'", specifier = ">=1.6,<2" },
     { name = "segno", marker = "extra == 'lite'", specifier = ">=1.6,<2" },
     { name = "sentence-transformers", marker = "extra == 'gemma'", specifier = ">=6.1,<7" },
     { name = "sentencepiece", specifier = ">=0.2" },

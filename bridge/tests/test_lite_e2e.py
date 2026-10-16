@@ -267,19 +267,20 @@ def png(width: int = 64, height: int = 48, rgb: tuple[int, int, int] = (200, 40,
 # ---- fixtures ------------------------------------------------------------------------------------------------------
 
 def _browsers_path() -> Optional[str]:
-    """Where `python -m playwright install chromium` put the browsers for this account, when HOME is not that
-    account's own: the suite may run under a throwaway HOME (docs/lite-gates.md), and Playwright looks under $HOME.
-    None when PLAYWRIGHT_BROWSERS_PATH is set already or the browsers are where HOME says."""
+    """Where `python -m playwright install chromium` put the browsers for this account. The `home` fixture moves
+    HOME to a temporary folder right after asking, and Playwright looks under $HOME, so the folder found here is
+    always handed on, even when it is under the HOME of the moment (docs/lite-gates.md).
+    None when PLAYWRIGHT_BROWSERS_PATH is set already or no browsers are installed."""
     if os.environ.get("PLAYWRIGHT_BROWSERS_PATH"):
         return None
     sub = Path("Library/Caches/ms-playwright") if sys.platform == "darwin" else Path(".cache/ms-playwright")
     homes = [Path.home()]
     with contextlib.suppress(KeyError, OSError):
         homes.append(Path(pwd.getpwuid(os.getuid()).pw_dir))
-    for i, home in enumerate(homes):
+    for home in homes:
         folder = home / sub
         if any(folder.glob("chromium*")):
-            return None if i == 0 else str(folder)
+            return str(folder)
     return None
 
 
