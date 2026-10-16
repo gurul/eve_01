@@ -1,0 +1,80 @@
+{"id": "h2-001", "request": "search nytimes for the ukraine ceasefire talks", "kind": "search", "site_host": "nytimes.com", "query": "ukraine ceasefire talks", "n": null}
+{"id": "h2-002", "request": "um can you look up mechanical keyboards on amazon", "kind": "search", "site_host": "amazon.com", "query": "mechanical keyboards", "n": null}
+{"id": "h2-003", "request": "search red dit for best budget espresso machine", "kind": "search", "site_host": "reddit.com", "query": "best budget espresso machine", "n": null}
+{"id": "h2-004", "request": "find sourdough starter recipes on you tube", "kind": "search", "site_host": "youtube.com", "query": "sourdough starter recipes", "n": null}
+{"id": "h2-005", "request": "hacker news search rust async runtime", "kind": "search", "site_host": "news.ycombinator.com", "query": "rust async runtime", "n": null}
+{"id": "h2-006", "request": "search github for fastapi websocket examples", "kind": "search", "site_host": "github.com", "query": "fastapi websocket examples", "n": null}
+{"id": "h2-007", "request": "look for lofi beats on spotify", "kind": "search", "site_host": "spotify.com", "query": "lofi beats", "n": null}
+{"id": "h2-008", "request": "search wikipedia for the Treaty of Westphalia", "kind": "search", "site_host": "wikipedia.org", "query": "Treaty of Westphalia", "n": null}
+{"id": "h2-009", "request": "can you search stack overflow for python list comprehension nested loops", "kind": "search", "site_host": "stackoverflow.com", "query": "python list comprehension nested loops", "n": null}
+{"id": "h2-010", "request": "on ebay look for vintage film cameras", "kind": "search", "site_host": "ebay.com", "query": "vintage film cameras", "n": null}
+{"id": "h2-011", "request": "search bbc news for climate summit coverage", "kind": "search", "site_host": "bbc.com", "query": "climate summit coverage", "n": null}
+{"id": "h2-012", "request": "please search airbnb for cabins near lake tahoe", "kind": "search", "site_host": "airbnb.com", "query": "cabins near lake tahoe", "n": null}
+{"id": "h2-013", "request": "search kayak for flights to lisbon in march", "kind": "search", "site_host": "kayak.com", "query": "flights to lisbon in march", "n": null}
+{"id": "h2-014", "request": "etsy search handmade ceramic mugs", "kind": "search", "site_host": "etsy.com", "query": "handmade ceramic mugs", "n": null}
+{"id": "h2-015", "request": "search imdb for christopher nolan movies", "kind": "search", "site_host": "imdb.com", "query": "christopher nolan movies", "n": null}
+{"id": "h2-016", "request": "hey look up noise cancelling headphones on best buy", "kind": "search", "site_host": "bestbuy.com", "query": "noise cancelling headphones", "n": null}
+{"id": "h2-017", "request": "search npm for date fns", "kind": "search", "site_host": "npmjs.com", "query": "date fns", "n": null}
+{"id": "h2-018", "request": "search the guardian for housing market", "kind": "search", "site_host": "theguardian.com", "query": "housing market", "n": null}
+{"id": "h2-019", "request": "uh search twitch for speedrun marathon", "kind": "search", "site_host": "twitch.tv", "query": "speedrun marathon", "n": null}
+{"id": "h2-020", "request": "search soundcloud for ambient piano", "kind": "search", "site_host": "soundcloud.com", "query": "ambient piano", "n": null}
+{"id": "h2-021", "request": "search the web for how to descale a kettle", "kind": "search", "site_host": null, "query": "how to descale a kettle", "n": null}
+{"id": "h2-022", "request": "google best hiking trails in colorado", "kind": "search", "site_host": null, "query": "best hiking trails in colorado", "n": null}
+{"id": "h2-023", "request": "um look up what causes the northern lights", "kind": "search", "site_host": null, "query": "what causes the northern lights", "n": null}
+{"id": "h2-024", "request": "can you search for cheap flights to tokyo", "kind": "search", "site_host": null, "query": "cheap flights to tokyo", "n": null}
+{"id": "h2-025", "request": "find me reviews of the new pixel phone", "kind": "search", "site_host": null, "query": "reviews of the new pixel phone", "n": null}
+{"id": "h2-026", "request": "web search python dataclass vs pydantic", "kind": "search", "site_host": null, "query": "python dataclass vs pydantic", "n": null}
+{"id": "h2-027", "request": "look up the capital of australia online", "kind": "search", "site_host": null, "query": "capital of australia", "n": null}
+{"id": "h2-028", "request": "search for vegan lasagna recipe", "kind": "search", "site_host": null, "query": "vegan lasagna recipe", "n": null}
+{"id": "h2-029", "request": "what's the weather like in oslo this weekend, search it up", "kind": "search", "site_host": null, "query": "weather in oslo this weekend", "n": null}
+{"id": "h2-030", "request": "google how tall is mount kilimanjaro", "kind": "search", "site_host": null, "query": "how tall is mount kilimanjaro", "n": null}
+{"id": "h2-031", "request": "search online for the best pdf editor", "kind": "search", "site_host": null, "query": "best pdf editor", "n": null}
+{"id": "h2-032", "request": "look up symptoms of dehydration", "kind": "search", "site_host": null, "query": "symptoms of dehydration", "n": null}
+{"id": "h2-033", "request": "search the internet for local farmers markets open sunday", "kind": "search", "site_host": null, "query": "local farmers markets open sunday", "n": null}
+{"id": "h2-034", "request": "find articles about quantum error correction", "kind": "search", "site_host": null, "query": "articles about quantum error correction", "n": null}
+{"id": "h2-035", "request": "can you google when the next solar eclipse is", "kind": "search", "site_host": null, "query": "when the next solar eclipse is", "n": null}
+{"id": "h2-036", "request": "open youtube", "kind": "open_site", "site_host": "youtube.com", "query": null, "n": null}
+{"id": "h2-037", "request": "go to nytimes dot com", "kind": "open_site", "site_host": "nytimes.com", "query": null, "n": null}
+{"id": "h2-038", "request": "pull up red dit", "kind": "open_site", "site_host": "reddit.com", "query": null, "n": null}
+{"id": "h2-039", "request": "take me to hacker news", "kind": "open_site", "site_host": "news.ycombinator.com", "query": null, "n": null}
+{"id": "h2-040", "request": "open github please", "kind": "open_site", "site_host": "github.com", "query": null, "n": null}
+{"id": "h2-041", "request": "um can you open amazon", "kind": "open_site", "site_host": "amazon.com", "query": null, "n": null}
+{"id": "h2-042", "request": "launch wikipedia", "kind": "open_site", "site_host": "wikipedia.org", "query": null, "n": null}
+{"id": "h2-043", "request": "go to netflix", "kind": "open_site", "site_host": "netflix.com", "query": null, "n": null}
+{"id": "h2-044", "request": "open the bbc website", "kind": "open_site", "site_host": "bbc.com", "query": null, "n": null}
+{"id": "h2-045", "request": "bring up stack overflow", "kind": "open_site", "site_host": "stackoverflow.com", "query": null, "n": null}
+{"id": "h2-046", "request": "navigate to booking dot com", "kind": "open_site", "site_host": "booking.com", "query": null, "n": null}
+{"id": "h2-047", "request": "open spotify in the browser", "kind": "open_site", "site_host": "spotify.com", "query": null, "n": null}
+{"id": "h2-048", "request": "visit espn", "kind": "open_site", "site_host": "espn.com", "query": null, "n": null}
+{"id": "h2-049", "request": "open you tube music", "kind": "open_site", "site_host": "music.youtube.com", "query": null, "n": null}
+{"id": "h2-050", "request": "go to the verge", "kind": "open_site", "site_host": "theverge.com", "query": null, "n": null}
+{"id": "h2-051", "request": "open the first result", "kind": "open_result", "site_host": null, "query": null, "n": 1}
+{"id": "h2-052", "request": "click the second link", "kind": "open_result", "site_host": null, "query": null, "n": 2}
+{"id": "h2-053", "request": "open result number 3", "kind": "open_result", "site_host": null, "query": null, "n": 3}
+{"id": "h2-054", "request": "go into the 4th one", "kind": "open_result", "site_host": null, "query": null, "n": 4}
+{"id": "h2-055", "request": "can you open the fifth result", "kind": "open_result", "site_host": null, "query": null, "n": 5}
+{"id": "h2-056", "request": "open number one", "kind": "open_result", "site_host": null, "query": null, "n": 1}
+{"id": "h2-057", "request": "click result 2 on the github results", "kind": "open_result", "site_host": "github.com", "query": null, "n": 2}
+{"id": "h2-058", "request": "open the third one from youtube", "kind": "open_result", "site_host": "youtube.com", "query": null, "n": 3}
+{"id": "h2-059", "request": "um open the top result", "kind": "open_result", "site_host": null, "query": null, "n": 1}
+{"id": "h2-060", "request": "pick the sixth link", "kind": "open_result", "site_host": null, "query": null, "n": 6}
+{"id": "h2-061", "request": "open the 7th result", "kind": "open_result", "site_host": null, "query": null, "n": 7}
+{"id": "h2-062", "request": "what about the second one, open it", "kind": "open_result", "site_host": null, "query": null, "n": 2}
+{"id": "h2-063", "request": "what time is it in london", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h2-064", "request": "remind me to call the dentist at 4pm", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h2-065", "request": "turn off the living room lights", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h2-066", "request": "text mom that I'm running late", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h2-067", "request": "set the thermostat to 70", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h2-068", "request": "how are you doing today", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h2-069", "request": "buy two tickets for saturday's show", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h2-070", "request": "log me into my bank account", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h2-071", "request": "tell me a joke", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h2-072", "request": "send an email to my team saying the meeting moved to noon", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h2-073", "request": "play some jazz on the speakers", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h2-074", "request": "what's 15 percent of 240", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h2-075", "request": "order a large pepperoni pizza", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h2-076", "request": "sign in to my work email and archive everything older than a week", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h2-077", "request": "book a table for four tomorrow night and add it to my calendar", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h2-078", "request": "lock the front door", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h2-079", "request": "thanks, that's all for now", "kind": "none", "site_host": null, "query": null, "n": null}
+{"id": "h2-080", "request": "summarize my unread messages and reply to the urgent ones", "kind": "none", "site_host": null, "query": null, "n": null}

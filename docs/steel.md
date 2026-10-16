@@ -65,7 +65,15 @@ instead of the page. The browser lane recognises one on every look at the page
 - Cloudflare's "checking your browser" or "needs to review the security of your
   connection" in the first 500 characters of the page.
 
-On a bot check the lane stops and touches nothing. Every click, type, key press and
+Two kinds behave differently. Cloudflare's "Just a moment" title and its "checking your
+browser" / "review the security of your connection" text are a JavaScript check that
+usually clears itself in about five seconds, so the lane looks again every second
+(`CHALLENGE_POLL_SECS`) for at most eight (`CHALLENGE_SETTLE_SECS`) before it blocks,
+and it does not wait twice on the same URL. Every other check (the challenge path,
+Google's `/sorry/`, "Access denied", "Attention Required! | Cloudflare") blocks at
+once. Tests: `bridge/tests/test_challenge_settle.py`.
+
+On a bot check that stays up, the lane stops and touches nothing. Every click, type, key press and
 vault fill is refused (`refused: blocked:`), a plan ends with status `blocked` (reason
 `browser_challenge`) before step 1 or as soon as a step lands on one, and the page
 text is not waited for. The task is **not** handed on to Codex or the screenshot

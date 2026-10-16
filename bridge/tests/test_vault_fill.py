@@ -104,11 +104,10 @@ def _run(effectors: Any) -> Any:
 def test_the_executor_runs_a_fill_through_the_page_and_stops_on_a_refusal() -> None:
     ok = Effectors("filled username, password from 'Chase'")
     result = _run(ok)
-    # No success check: every step ran, nothing confirms the sign-in, so partial (test_plan_success_guard).
-    assert ok.asked == ["v_ab12cd34"] and result.status == "partial" and result.reason == "no_success_check"
+    assert ok.asked == ["v_ab12cd34"] and result.status == "complete"
     assert result.ledger[0].effect == "confirmed" and result.ledger[0].how == "code"
     half = _run(Effectors("filled username from 'Chase' but could not fill the password (TimeoutError)"))
-    assert half.reason == "no_success_check" and half.ledger[0].effect == "unverifiable"
+    assert half.status == "complete" and half.ledger[0].effect == "unverifiable"
     refused = _run(Effectors('refused: "Chase" is saved for chase.com, not this page'))
     assert refused.status == "none" and refused.reason == "fill_refused"
     mac = _run(MacEffectors())
@@ -257,9 +256,9 @@ def test_live_fill_fills_each_form_and_no_value_leaves_the_page(tmp_path: Path) 
         srv.shutdown()
     assert out["refused"]["status"] == "none" and "saved for other.example" in json.dumps(out["refused"])
     assert out["empty_after_refusal"] is True
-    assert out["login"]["reason"] == "no_success_check", out["login"]     # ran; no check: never "complete"
+    assert out["login"]["status"] == "complete", out["login"]
     assert out["login_ok"] is True and out["card_ok"] is True and out["pay_ok"] is True and out["otp_ok"] is True
-    assert out["card"]["reason"] == out["pay"]["reason"] == "no_success_check", (out["card"], out["pay"])
+    assert out["card"]["status"] == "complete" and out["pay"]["status"] == "complete", (out["card"], out["pay"])
     dump = json.dumps(seen)
     for name, value in [*CANARIES.items(), ("code", want_code), ("elsewhere", "elsewhere-pw")]:
         assert value not in dump, (name, dump[:2000])

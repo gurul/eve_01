@@ -20,11 +20,14 @@ answers `confirm` for it so the planner can ask the human. "Postcode",
 "Composer", "Dispatcher", "Downloads" are not: the verb must be a whole word.
 
 `needs_confirmation(c, href)` is that rule plus one for page controls only (eve's
-own browser, or web content in a Mac browser): a short label that starts with an
-account verb ("upvote", "Like 12", "Follow @jane", "Save post") or a link whose
+own browser, or web content in a Mac browser — not an Electron app's own chrome):
+a verb-shaped label (the bare account verb, the verb and a count, what it acts on
+or a @handle: "upvote", "Like 12", "Save post", "Follow @jane") or a link whose
 endpoint is one (/vote, /follow, /star, /like, /flag, /hide) changes the signed-in
-account, so it asks too. "Saved articles", "Follow-up", "Hide sidebar" and the
-Mac lane's own "Save" do not: only dangerous acts ask.
+account, so it asks too. Titles and shop labels ("Star Wars", "Like New", "Save
+20%", "Save changes"), a link to a page named after its label (/wiki/Like),
+"Saved articles", "Hide sidebar" and the Mac lane's own "Save" do not: only
+dangerous acts ask. `Snapshot.href(id)` carries each page control's href to it.
 
 Raw walk shape (the injectable backend, what fixtures store)
 -------------------------------------------------------------
@@ -80,7 +83,7 @@ import sys
 import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Optional
-from urllib.parse import parse_qsl, urlsplit
+from urllib.parse import parse_qsl, unquote, urlsplit
 
 DEFAULT_MAX_NODES = 4000
 DEFAULT_BUDGET_SECS = 0.5
@@ -186,43 +189,104 @@ _ACTION_KEYS = frozenset(("action", "do", "op", "act", "cmd", "method"))
 _ENDPOINT_EXT = re.compile(r"\.(?:php|json|html?|aspx?|cgi|jsp)$")
 _LEAD_SYMBOLS = re.compile(r"^[^\w@#]+")
 _TRAIL_PUNCT = ".,:;!?…"
+# The shapes an account control's label takes after its verb. Anything else after the verb makes it a title or a
+# shop or form label ("Star Wars", "Like New", "Save 20%", "Save changes", "Report a problem"), which is a plain
+# click. A count is digits with an optional k/m ("12", "1.2k", "3,401"), never a price or a percentage.
+_COUNT = re.compile(r"^\d[\d,.]*[km]?$", re.IGNORECASE)
+_HANDLE = re.compile(r"^@\w[\w.\-]*$")
+_ACTED_ON = frozenset(("this", "post", "comment", "story", "reply", "answer", "question", "video", "tweet", "repo",
+                       "repository", "photo", "track", "song", "playlist", "channel", "page", "link", "item"))
+# Verbs whose object is a person or channel: "Follow Jane Doe" is a follow button's aria-label. As a link the same
+# shape is a title ("Follow the Money"), so this form counts on a button only.
+_PERSON_VERBS = frozenset(("follow", "unfollow", "subscribe", "unsubscribe"))
+_SLUG_WORDS = re.compile(r"[a-z0-9]+")
+# Mac apps whose web content (an AXWebArea) is a web page. Electron apps (Slack, Spotify, Discord, Notion) draw their
+# own chrome in an AXWebArea too; that is the app, so their "Follow" and "Save for later" stay unasked.
+BROWSER_APPS = frozenset((
+    "Safari", "Safari Technology Preview", "Google Chrome", "Google Chrome Canary", "Google Chrome Beta",
+    "Chromium", "Arc", "Firefox", "Firefox Developer Edition", "Firefox Nightly", "Microsoft Edge", "Brave Browser",
+    "Opera", "Vivaldi", "Orion", "DuckDuckGo", "Zen", "Zen Browser", "Dia", "Comet", "SigmaOS", "Waterfox", "LibreWolf",
+))
 
 
-def is_account_change(label: Any, href: Any = "") -> bool:
-    """True when a page control changes the signed-in account: a label of at most three words whose
-    first word is an account verb (leading ▲ ♥ ☆ ignored) with no chrome noun after it, or a link
-    whose endpoint is one. A label that is not a string fails closed; a missing href is no href."""
+def _verb_shaped(words: list[str], role: str) -> bool:
+    """``words`` (lead symbols gone) is an account verb and nothing, a count, what it acts on, or a @handle;
+    or, on a button, a follow-type verb and a capitalised name of at most two words."""
+    if not words or len(words) > 3:
+        return False
+    norm = [w.casefold().rstrip(_TRAIL_PUNCT) for w in words]
+    verb, rest = norm[0], norm[1:]
+    if verb not in _ACCOUNT_VERBS or any(w in _CHROME_NOUNS for w in rest):
+        return False
+    if not rest:
+        return True
+    if len(rest) == 1 and _COUNT.match(rest[0]):
+        return True
+    if all(w in _ACTED_ON or _HANDLE.match(w) for w in rest) and len(rest) <= 2:
+        return True
+    return (role == "button" and verb in _PERSON_VERBS
+            and all(w[:1].isupper() and w.rstrip(_TRAIL_PUNCT).isalpha() for w in words[1:]))
+
+
+def _titles_its_destination(words: list[str], parts: Any) -> bool:
+    """The link goes to a page named after its own label: /wiki/Like for "Like", ?q=hide for "Hide". That is a
+    title in a result list, not an action, however verb-like the label."""
+    label = _SLUG_WORDS.findall(" ".join(words).casefold())
+    if not label:
+        return False
+    names = [unquote(parts.path.rstrip("/").rsplit("/", 1)[-1])] + [v for _, v in parse_qsl(parts.query)]
+    for name in names:
+        slug = _SLUG_WORDS.findall(name.casefold())
+        if slug[:len(label)] == label:
+            return True
+    return False
+
+
+def is_account_change(label: Any, href: Any = "", *, role: str = "") -> bool:
+    """True when a page control changes the signed-in account: a link whose endpoint is an account verb, or a
+    verb-shaped label (_verb_shaped: the bare verb, the verb and a count, what it acts on, or a @handle; leading
+    ▲ ♥ ☆ ignored) that is not a link to a page named after it. A label that is not a string fails closed; a
+    missing href is no href."""
     if not isinstance(label, str):
         return True
     try:
         words = _LEAD_SYMBOLS.sub("", label.strip()).split()
-        if words and len(words) <= 3 and words[0].casefold().rstrip(_TRAIL_PUNCT) in _ACCOUNT_VERBS \
-                and not any(w.casefold().rstrip(_TRAIL_PUNCT) in _CHROME_NOUNS for w in words[1:]):
-            return True
-        if not isinstance(href, str) or not href.strip():
-            return False
-        parts = urlsplit(href.strip())
-        last = _ENDPOINT_EXT.sub("", parts.path.rstrip("/").rsplit("/", 1)[-1])
-        if last in _ACCOUNT_ENDPOINTS:
-            return True
-        return any(k.casefold() in _ACTION_KEYS and v.casefold() in _ACCOUNT_ENDPOINTS
-                   for k, v in parse_qsl(parts.query, keep_blank_values=True))
+        parts = urlsplit(href.strip()) if isinstance(href, str) and href.strip() else None
+        if parts is not None:
+            last = _ENDPOINT_EXT.sub("", parts.path.rstrip("/").rsplit("/", 1)[-1])
+            if last in _ACCOUNT_ENDPOINTS:
+                return True
+            if any(k.casefold() in _ACTION_KEYS and v.casefold() in _ACCOUNT_ENDPOINTS
+                   for k, v in parse_qsl(parts.query, keep_blank_values=True)):
+                return True
+            if _titles_its_destination(words, parts):
+                return False
+        return _verb_shaped(words, role)
     except Exception:  # noqa: BLE001 — same as is_sensitive: a parse failure never lets a click through
         return True
 
 
+def is_web_page(c: Any) -> bool:
+    """``c`` is on a web page: eve's own browser, or web content in a Mac browser (BROWSER_APPS). Raises for a
+    non-Candidate; needs_confirmation fails closed on that."""
+    return c.app == "browser" or (bool(c.in_content) and c.app in BROWSER_APPS)
+
+
 def needs_confirmation(c: Any, href: Any = "") -> bool:
-    """The lane asks the human before pressing ``c``: a sensitive label anywhere, and on a page (eve's own
-    browser, app "browser", or web content in a Mac app) also an account change by label or by ``href``.
-    The Mac lane's own "Save", "Hide" and "Flag" stay unasked. Anything not a Candidate fails closed."""
+    """The lane asks the human before pressing ``c``: a sensitive label anywhere, and on a web page (is_web_page)
+    also an account change by label or by ``href``. The Mac lane's own "Save", "Hide" and "Flag", and an
+    Electron app's own chrome, stay unasked. Anything not a Candidate fails closed."""
     try:
         if is_sensitive(c.label):
             return True
-        if not (c.app == "browser" or c.in_content):
+        if not is_web_page(c):
             return False
-        return is_account_change(c.label, href)
+        return is_account_change(c.label, href, role=c.role)
     except Exception:  # noqa: BLE001
         return True
+
+
+_DESTINATION_PREFIX = "link destination: "   # browser_lane.snapshot_from_page's context line
 
 
 # ---- data ------------------------------------------------------------------------------
@@ -284,9 +348,28 @@ class Snapshot:
     # Decisions compares these explicitly when admitting a click. Exclude transport-only
     # readings from Snapshot's archived-schema equality, just as with live element refs.
     _readouts: tuple[tuple[str, str], ...] = field(default=(), compare=False, repr=False)
+    # Each control's raw href (query and all: HN's vote?id=…) as the page collector read it, for the account-change
+    # rule (needs_confirmation). Transport-only like _refs: eve's browser fills it, the Mac walk and fixtures do not.
+    _hrefs: dict[str, str] = field(default_factory=dict, compare=False, repr=False)
 
     def ref(self, cid: str) -> Any:
         return self._refs.get(str(cid))
+
+    def href(self, cid: str) -> str:
+        """The control's href: the collector's raw one, else an observed `link destination:` context line, else ""."""
+        cid = str(cid)
+        raw = self._hrefs.get(cid)
+        if isinstance(raw, str) and raw:
+            return raw
+        for line in self.context_lines:
+            if line.startswith(_DESTINATION_PREFIX):
+                try:
+                    d = json.loads(line[len(_DESTINATION_PREFIX):])
+                except ValueError:
+                    continue
+                if isinstance(d, dict) and str(d.get("id")) == cid and isinstance(d.get("url"), str):
+                    return d["url"]
+        return ""
 
     def get(self, cid: str) -> Optional[Candidate]:
         if not self._by_id and self.elements:
@@ -543,7 +626,7 @@ def score_candidate(c: Candidate, tokens: list[str]) -> int:
 def rank_candidates(snapshot: Snapshot, objective: str, *, max_out: int, kinds: str = "pressable",
                     allow_page_links: bool = False, allow_sensitive: bool = False) -> tuple[list[Candidate], int]:
     """(kept, dropped_by_cap). Drops before scoring: disabled, empty label, in_dialog, secure,
-    in_content links and images unless allow_page_links, needs_confirmation(c) unless
+    in_content links and images unless allow_page_links, needs_confirmation(c, its href) unless
     allow_sensitive. `kinds` is "pressable" or "editable". Stable by score, then reading order."""
     if kinds not in ("pressable", "editable"):
         raise ValueError("kinds must be 'pressable' or 'editable'")
@@ -558,7 +641,7 @@ def rank_candidates(snapshot: Snapshot, objective: str, *, max_out: int, kinds: 
             continue
         if c.in_content and not allow_page_links and c.role in ("link", "image", "static text"):
             continue
-        if not allow_sensitive and needs_confirmation(c):
+        if not allow_sensitive and needs_confirmation(c, snapshot.href(c.id)):
             continue
         pool.append(c)
     pool.sort(key=lambda c: -score_candidate(c, tokens))       # stable: reading order breaks ties

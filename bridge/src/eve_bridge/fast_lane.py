@@ -205,6 +205,7 @@ class MenuItem:
     text: str                      # the option text the model sees
     candidate: Optional[Candidate] = None
     payload: str = ""              # the text to type, or the key to press
+    href: str = ""                 # the control's href on a page (Snapshot.href): an account link asks by it
 
 
 # ---- formatting ------------------------------------------------------------------------
@@ -283,7 +284,7 @@ def gate(choice: Choice, item: Optional[MenuItem], *, thresholds: Thresholds, ap
         assert item.candidate is not None
         label = item.candidate.label
         approved = approve is not None and not approve_used and label.casefold() == approve.casefold()
-        if needs_confirmation(item.candidate) and not approved:   # sensitive, or an account change on a page
+        if needs_confirmation(item.candidate, item.href) and not approved:   # sensitive, or an account change
             return "confirm", "sensitive"
         return "act", ""
     key = item.payload.casefold()
@@ -557,7 +558,7 @@ def _build_menu(run: _Run, snapshot: Snapshot, *, allow_page_links: bool) -> tup
             continue
         approved = (run.approve is not None and not run.approve_used
                     and c.label.casefold() == run.approve.casefold())
-        if needs_confirmation(c) and not approved:
+        if needs_confirmation(c, snapshot.href(c.id)) and not approved:
             blocked.append(c)
             continue
         if settings and c.role not in SYSTEM_SETTINGS_NAV_ROLES and c.label.casefold() != "back" and not (
@@ -568,10 +569,10 @@ def _build_menu(run: _Run, snapshot: Snapshot, *, allow_page_links: bool) -> tup
     dropped_cap = max(0, len(offered) - cap)
     items: list[MenuItem] = []
     for c in offered[:cap]:
-        items.append(MenuItem("", "click", render_option(c), c))
+        items.append(MenuItem("", "click", render_option(c), c, href=snapshot.href(c.id)))
     items.extend(type_items)
     items.extend(press_items)
-    items = [MenuItem(str(i + 1), it.kind, it.text, it.candidate, it.payload) for i, it in enumerate(items)]
+    items = [MenuItem(str(i + 1), it.kind, it.text, it.candidate, it.payload, it.href) for i, it in enumerate(items)]
     run.top = tuple(it.candidate for it in items if it.kind == "click" and it.candidate is not None)[:MAX_TOP]
     token_set = set(tokens)
     blocked_matching = sorted((c for c in blocked if _overlap(c, token_set) > 0),

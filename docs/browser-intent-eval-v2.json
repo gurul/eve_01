@@ -1,0 +1,538 @@
+{
+  "n": 80,
+  "accuracy": 0.7375,
+  "precision": 0.7763,
+  "coverage": 0.95,
+  "wrong": 17,
+  "wrong_share": 0.2125,
+  "kind_accuracy": 0.85,
+  "abstain": 4,
+  "wrong_by_source": {
+    "laya": 12,
+    "code": 5
+  },
+  "p50_ms": 6.59,
+  "p95_ms": 8.5,
+  "laya_calls": 57,
+  "laya_p50_ms": 7.35,
+  "laya_p95_ms": 8.54,
+  "load_ms": 376.8,
+  "warm_ms": 402.3,
+  "rss_mb": {
+    "before_warm": 24.6,
+    "after_warm": 1101.2,
+    "after_run": 1101.6,
+    "delta_warm": 1076.6
+  },
+  "mlx": {
+    "active_mb": 614.0,
+    "peak_mb": 686.7
+  },
+  "per_kind": {
+    "search": {
+      "n": 35,
+      "answered": 31,
+      "kind_correct": 25,
+      "full_correct": 18,
+      "abstain": 4,
+      "wrong": 13
+    },
+    "open_site": {
+      "n": 15,
+      "answered": 15,
+      "kind_correct": 13,
+      "full_correct": 11,
+      "abstain": 0,
+      "wrong": 4
+    },
+    "open_result": {
+      "n": 12,
+      "answered": 12,
+      "kind_correct": 12,
+      "full_correct": 12,
+      "abstain": 0,
+      "wrong": 0
+    },
+    "none": {
+      "n": 18,
+      "answered": 18,
+      "kind_correct": 18,
+      "full_correct": 18,
+      "abstain": 0,
+      "wrong": 0
+    }
+  },
+  "bar": {
+    "precision_min": 0.8,
+    "wrong_share_max": 0.05,
+    "clears": false
+  },
+  "model": "cklxx/laya-browser@8a7e625/v10s",
+  "holdout": "v2",
+  "holdout_path": "bridge/tests/fixtures/browser_intent/v2/holdout.jsonl",
+  "note": "Blind second holdout (80 cases, new author, labels by hand, never seen by the builders). Scored once with the real Laya checkpoint; no iteration.",
+  "measured_at": "2026-10-16T15:32:51-0700",
+  "misses": [
+    {
+      "id": "h2-002",
+      "request": "um can you look up mechanical keyboards on amazon",
+      "expected": {
+        "kind": "search",
+        "site_host": "amazon.com",
+        "query": "mechanical keyboards",
+        "n": null
+      },
+      "got": null,
+      "abstain": true,
+      "wrong": false,
+      "fields_wrong": []
+    },
+    {
+      "id": "h2-004",
+      "request": "find sourdough starter recipes on you tube",
+      "expected": {
+        "kind": "search",
+        "site_host": "youtube.com",
+        "query": "sourdough starter recipes",
+        "n": null
+      },
+      "got": null,
+      "abstain": true,
+      "wrong": false,
+      "fields_wrong": []
+    },
+    {
+      "id": "h2-005",
+      "request": "hacker news search rust async runtime",
+      "expected": {
+        "kind": "search",
+        "site_host": "news.ycombinator.com",
+        "query": "rust async runtime",
+        "n": null
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 0.7926,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "site_host",
+        "query"
+      ]
+    },
+    {
+      "id": "h2-010",
+      "request": "on ebay look for vintage film cameras",
+      "expected": {
+        "kind": "search",
+        "site_host": "ebay.com",
+        "query": "vintage film cameras",
+        "n": null
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 0.7429,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "site_host",
+        "query"
+      ]
+    },
+    {
+      "id": "h2-011",
+      "request": "search bbc news for climate summit coverage",
+      "expected": {
+        "kind": "search",
+        "site_host": "bbc.com",
+        "query": "climate summit coverage",
+        "n": null
+      },
+      "got": {
+        "kind": "search",
+        "site_host": "bbc.co.uk",
+        "query": "news for climate summit coverage",
+        "n": null,
+        "confidence": 0.9814,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "site_host",
+        "query"
+      ]
+    },
+    {
+      "id": "h2-013",
+      "request": "search kayak for flights to lisbon in march",
+      "expected": {
+        "kind": "search",
+        "site_host": "kayak.com",
+        "query": "flights to lisbon in march",
+        "n": null
+      },
+      "got": {
+        "kind": "search",
+        "site_host": null,
+        "query": "kayak for flights to lisbon in march",
+        "n": null,
+        "confidence": 0.9764,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "site_host",
+        "query"
+      ]
+    },
+    {
+      "id": "h2-014",
+      "request": "etsy search handmade ceramic mugs",
+      "expected": {
+        "kind": "search",
+        "site_host": "etsy.com",
+        "query": "handmade ceramic mugs",
+        "n": null
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 0.6724,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "site_host",
+        "query"
+      ]
+    },
+    {
+      "id": "h2-016",
+      "request": "hey look up noise cancelling headphones on best buy",
+      "expected": {
+        "kind": "search",
+        "site_host": "bestbuy.com",
+        "query": "noise cancelling headphones",
+        "n": null
+      },
+      "got": null,
+      "abstain": true,
+      "wrong": false,
+      "fields_wrong": []
+    },
+    {
+      "id": "h2-018",
+      "request": "search the guardian for housing market",
+      "expected": {
+        "kind": "search",
+        "site_host": "theguardian.com",
+        "query": "housing market",
+        "n": null
+      },
+      "got": {
+        "kind": "search",
+        "site_host": null,
+        "query": "guardian for housing market",
+        "n": null,
+        "confidence": 0.9767,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "site_host",
+        "query"
+      ]
+    },
+    {
+      "id": "h2-022",
+      "request": "google best hiking trails in colorado",
+      "expected": {
+        "kind": "search",
+        "site_host": null,
+        "query": "best hiking trails in colorado",
+        "n": null
+      },
+      "got": {
+        "kind": "search",
+        "site_host": "google.com",
+        "query": "best hiking trails in colorado",
+        "n": null,
+        "confidence": 0.9636,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "site_host"
+      ]
+    },
+    {
+      "id": "h2-025",
+      "request": "find me reviews of the new pixel phone",
+      "expected": {
+        "kind": "search",
+        "site_host": null,
+        "query": "reviews of the new pixel phone",
+        "n": null
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 1.0,
+        "source": "code"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "query"
+      ]
+    },
+    {
+      "id": "h2-027",
+      "request": "look up the capital of australia online",
+      "expected": {
+        "kind": "search",
+        "site_host": null,
+        "query": "capital of australia",
+        "n": null
+      },
+      "got": {
+        "kind": "search",
+        "site_host": null,
+        "query": "capital of australia online",
+        "n": null,
+        "confidence": 0.9548,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "query"
+      ]
+    },
+    {
+      "id": "h2-029",
+      "request": "what's the weather like in oslo this weekend, search it up",
+      "expected": {
+        "kind": "search",
+        "site_host": null,
+        "query": "weather in oslo this weekend",
+        "n": null
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 1.0,
+        "source": "code"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "query"
+      ]
+    },
+    {
+      "id": "h2-030",
+      "request": "google how tall is mount kilimanjaro",
+      "expected": {
+        "kind": "search",
+        "site_host": null,
+        "query": "how tall is mount kilimanjaro",
+        "n": null
+      },
+      "got": {
+        "kind": "search",
+        "site_host": "google.com",
+        "query": "how tall is mount kilimanjaro",
+        "n": null,
+        "confidence": 0.6309,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "site_host"
+      ]
+    },
+    {
+      "id": "h2-032",
+      "request": "look up symptoms of dehydration",
+      "expected": {
+        "kind": "search",
+        "site_host": null,
+        "query": "symptoms of dehydration",
+        "n": null
+      },
+      "got": null,
+      "abstain": true,
+      "wrong": false,
+      "fields_wrong": []
+    },
+    {
+      "id": "h2-034",
+      "request": "find articles about quantum error correction",
+      "expected": {
+        "kind": "search",
+        "site_host": null,
+        "query": "articles about quantum error correction",
+        "n": null
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 1.0,
+        "source": "code"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "query"
+      ]
+    },
+    {
+      "id": "h2-035",
+      "request": "can you google when the next solar eclipse is",
+      "expected": {
+        "kind": "search",
+        "site_host": null,
+        "query": "when the next solar eclipse is",
+        "n": null
+      },
+      "got": {
+        "kind": "search",
+        "site_host": "google.com",
+        "query": "when the next solar eclipse is",
+        "n": null,
+        "confidence": 0.9646,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "site_host"
+      ]
+    },
+    {
+      "id": "h2-044",
+      "request": "open the bbc website",
+      "expected": {
+        "kind": "open_site",
+        "site_host": "bbc.com",
+        "query": null,
+        "n": null
+      },
+      "got": {
+        "kind": "open_site",
+        "site_host": "bbc.co.uk",
+        "query": null,
+        "n": null,
+        "confidence": 0.9927,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "site_host"
+      ]
+    },
+    {
+      "id": "h2-045",
+      "request": "bring up stack overflow",
+      "expected": {
+        "kind": "open_site",
+        "site_host": "stackoverflow.com",
+        "query": null,
+        "n": null
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 1.0,
+        "source": "code"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "site_host"
+      ]
+    },
+    {
+      "id": "h2-049",
+      "request": "open you tube music",
+      "expected": {
+        "kind": "open_site",
+        "site_host": "music.youtube.com",
+        "query": null,
+        "n": null
+      },
+      "got": {
+        "kind": "open_site",
+        "site_host": "youtube.com",
+        "query": null,
+        "n": null,
+        "confidence": 0.9835,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "site_host"
+      ]
+    },
+    {
+      "id": "h2-050",
+      "request": "go to the verge",
+      "expected": {
+        "kind": "open_site",
+        "site_host": "theverge.com",
+        "query": null,
+        "n": null
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 1.0,
+        "source": "code"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "site_host"
+      ]
+    }
+  ]
+}

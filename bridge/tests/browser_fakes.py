@@ -1,4 +1,5 @@
-"""A fake Playwright page for the browser guard tests (test_browser_challenge.py, test_click_recheck.py).
+"""A fake Playwright page for the browser guard tests (test_browser_challenge.py, test_click_recheck.py,
+test_challenge_settle.py, test_click_recheck_tolerance.py).
 
 It answers the lane's own scripts by identity (``bl._COLLECT_JS``, ``bl._RECHECK_JS`` …), the way
 test_browser_navigation_freshness.py does, so no browser runs. Not a test module (no test_ prefix): a shared helper, like initdata.py.
@@ -74,11 +75,13 @@ class FakePage:
                     "dialog": "", "focused_id": None, "document_id": str(self.doc),
                     "head": self.body[:600], "text_hash": f"{len(self.body)}:{self.body[:4000]}"}
         if script == getattr(bl, "_RECHECK_JS", None):
+            # The script's read, answered from Python; test_click_recheck_tolerance.py runs the real one in node.
             self.rechecks += 1
             e = self.element(arg["id"])
             now = {"url": self.url, "doc": str(self.doc), "found": e is not None}
             if e is not None:
-                now.update(role=e.get("role", ""), name=e.get("name", ""), href=e.get("href", ""))
+                now.update(role=e.get("role", ""), name=e.get("name", ""), href=e.get("href", ""),
+                           dom_id=e.get("dom_id", ""))
             return now
         if script == bl._CONSENT_JS:
             return None

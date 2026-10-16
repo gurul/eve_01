@@ -521,11 +521,13 @@ permission choices.
   browser API on 127.0.0.1, with no API key and no prompt; eve starts it when needed.
   Meet stays on eve's own Chrome. Sign it in with `eve-bridge steel-profile`. See
   [Steel](docs/steel.md).
-- **Browser guards:** a bot check stops the task with one line to you, a click is refused
+- **Browser guards:** a bot check stops the task with one line to you (Cloudflare's
+  self-clearing "Just a moment" check gets up to 8 s first), a click is refused
   when its control changed since the decision, upvote/like/follow-style links ask first,
-  and a plan is "done" only when its success check reads true. A search's check comes from
+  and a browser search is "done" only when the page is that search. Its check comes from
   what the request asks for, decided on this Mac by a local Laya model
-  (`EVE_BROWSER_INTENT`, on by default). See [browser intent](docs/browser-intent.md) and
+  (`EVE_BROWSER_INTENT`, on by default; unloaded after 10 idle minutes,
+  `EVE_BROWSER_INTENT_IDLE_S`). See [browser intent](docs/browser-intent.md) and
   [the guards](docs/stackchan/routing.md#guards-ported-from-layabrowse-2026-10-16).
 - **Stopping:** `stop_task` interrupts Codex, even while a permission is pending.
 - **Codex billing:** `EVE_CODEX_AUTH=plan` is the default and uses your existing

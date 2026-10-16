@@ -1,0 +1,314 @@
+{
+  "n": 60,
+  "accuracy": 0.8,
+  "precision": 0.8727,
+  "coverage": 0.9167,
+  "wrong": 7,
+  "wrong_share": 0.1167,
+  "kind_accuracy": 0.85,
+  "abstain": 5,
+  "wrong_by_source": {
+    "laya": 6,
+    "code": 1
+  },
+  "p50_ms": 6.53,
+  "p95_ms": 7.82,
+  "laya_calls": 44,
+  "laya_p50_ms": 7.33,
+  "laya_p95_ms": 7.91,
+  "load_ms": 397.8,
+  "warm_ms": 423.4,
+  "rss_mb": {
+    "before_warm": 24.7,
+    "after_warm": 1101.5,
+    "after_run": 1102.0,
+    "delta_warm": 1076.8
+  },
+  "mlx": {
+    "active_mb": 614.0,
+    "peak_mb": 686.6
+  },
+  "per_kind": {
+    "search": {
+      "n": 25,
+      "answered": 21,
+      "kind_correct": 18,
+      "full_correct": 16,
+      "abstain": 4,
+      "wrong": 5
+    },
+    "open_site": {
+      "n": 10,
+      "answered": 10,
+      "kind_correct": 10,
+      "full_correct": 9,
+      "abstain": 0,
+      "wrong": 1
+    },
+    "open_result": {
+      "n": 10,
+      "answered": 9,
+      "kind_correct": 8,
+      "full_correct": 8,
+      "abstain": 1,
+      "wrong": 1
+    },
+    "none": {
+      "n": 15,
+      "answered": 15,
+      "kind_correct": 15,
+      "full_correct": 15,
+      "abstain": 0,
+      "wrong": 0
+    }
+  },
+  "bar": {
+    "precision_min": 0.8,
+    "wrong_share_max": 0.05,
+    "clears": false
+  },
+  "model": "cklxx/laya-browser@8a7e625/v10s",
+  "holdout": "v1 (second look, contaminated)",
+  "holdout_path": "bridge/tests/fixtures/browser_intent/holdout.jsonl",
+  "note": "Second look at the v1 holdout after the delegate was changed against its misses. Contaminated: not a blind result; for comparison with v2 only.",
+  "measured_at": "2026-10-16T15:32:57-0700",
+  "misses": [
+    {
+      "id": "h02",
+      "request": "look up lo fi beats on you tube",
+      "expected": {
+        "kind": "search",
+        "site_host": "youtube.com",
+        "query": "lo fi beats",
+        "n": null
+      },
+      "got": null,
+      "abstain": true,
+      "wrong": false,
+      "fields_wrong": []
+    },
+    {
+      "id": "h04",
+      "request": "find me sourdough starter recipes on reddit",
+      "expected": {
+        "kind": "search",
+        "site_host": "reddit.com",
+        "query": "sourdough starter recipes",
+        "n": null
+      },
+      "got": {
+        "kind": "search",
+        "site_host": "reddit.com",
+        "query": "me sourdough starter recipes",
+        "n": null,
+        "confidence": 0.5514,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "query"
+      ]
+    },
+    {
+      "id": "h06",
+      "request": "uh on stack overflow look for python list comprehension nested",
+      "expected": {
+        "kind": "search",
+        "site_host": "stackoverflow.com",
+        "query": "python list comprehension nested",
+        "n": null
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 0.791,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "site_host",
+        "query"
+      ]
+    },
+    {
+      "id": "h08",
+      "request": "look up trail running shoes on rei",
+      "expected": {
+        "kind": "search",
+        "site_host": "rei.com",
+        "query": "trail running shoes",
+        "n": null
+      },
+      "got": null,
+      "abstain": true,
+      "wrong": false,
+      "fields_wrong": []
+    },
+    {
+      "id": "h14",
+      "request": "find standing desk on ikea",
+      "expected": {
+        "kind": "search",
+        "site_host": "ikea.com",
+        "query": "standing desk",
+        "n": null
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 0.5553,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "site_host",
+        "query"
+      ]
+    },
+    {
+      "id": "h16",
+      "request": "google best pizza dough hydration",
+      "expected": {
+        "kind": "search",
+        "site_host": null,
+        "query": "best pizza dough hydration",
+        "n": null
+      },
+      "got": {
+        "kind": "search",
+        "site_host": "google.com",
+        "query": "best pizza dough hydration",
+        "n": null,
+        "confidence": 0.9731,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "site_host"
+      ]
+    },
+    {
+      "id": "h18",
+      "request": "duck duck go cheap flights to lisbon",
+      "expected": {
+        "kind": "search",
+        "site_host": null,
+        "query": "cheap flights to lisbon",
+        "n": null
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 0.7079,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "query"
+      ]
+    },
+    {
+      "id": "h19",
+      "request": "um look up symptoms of dehydration",
+      "expected": {
+        "kind": "search",
+        "site_host": null,
+        "query": "symptoms of dehydration",
+        "n": null
+      },
+      "got": null,
+      "abstain": true,
+      "wrong": false,
+      "fields_wrong": []
+    },
+    {
+      "id": "h21",
+      "request": "google when does daylight saving end",
+      "expected": {
+        "kind": "search",
+        "site_host": null,
+        "query": "when does daylight saving end",
+        "n": null
+      },
+      "got": null,
+      "abstain": true,
+      "wrong": false,
+      "fields_wrong": []
+    },
+    {
+      "id": "h34",
+      "request": "launch the bbc news site",
+      "expected": {
+        "kind": "open_site",
+        "site_host": "bbc.com",
+        "query": null,
+        "n": null
+      },
+      "got": {
+        "kind": "open_site",
+        "site_host": "bbc.co.uk",
+        "query": null,
+        "n": null,
+        "confidence": 0.994,
+        "source": "laya"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "site_host"
+      ]
+    },
+    {
+      "id": "h43",
+      "request": "yeah the third result",
+      "expected": {
+        "kind": "open_result",
+        "site_host": null,
+        "query": null,
+        "n": 3
+      },
+      "got": null,
+      "abstain": true,
+      "wrong": false,
+      "fields_wrong": []
+    },
+    {
+      "id": "h45",
+      "request": "pick the last one i mean the sixth",
+      "expected": {
+        "kind": "open_result",
+        "site_host": null,
+        "query": null,
+        "n": 6
+      },
+      "got": {
+        "kind": "none",
+        "site_host": null,
+        "query": null,
+        "n": null,
+        "confidence": 1.0,
+        "source": "code"
+      },
+      "abstain": false,
+      "wrong": true,
+      "fields_wrong": [
+        "kind",
+        "n"
+      ]
+    }
+  ]
+}

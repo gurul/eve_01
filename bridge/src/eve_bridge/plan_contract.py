@@ -26,6 +26,9 @@ a search outcome becomes a `url_query` check (the open page's host is the site t
 engine when it named none, and its query parameter is the query the request said). It replaces the planner's own
 check, so "search duck duck go for cats" is not done by a Google search the planner chose. `url_query` is code's
 only: a plan that carries one is not a plan. When the request gives no such outcome, the planner's check stands.
+The comparison is of words, not characters (url_query_matches): filler around the query is trimmed from both
+sides, a search on the site already open counts when no site was named, Wikipedia's exact-title article counts,
+and so does a site outside the table that the query names last ("blue mugs on etsy").
 """
 
 from __future__ import annotations
@@ -33,7 +36,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from typing import Any, Callable, Optional
-from urllib.parse import parse_qsl, urlsplit
+from urllib.parse import parse_qsl, unquote, urlsplit
 
 KINDS = ("open_app", "open_url", "click", "type", "press_key", "checkpoint", "fill")
 VAULT_HANDLE = re.compile(r"^v_[a-z0-9]{8}$")   # vault.HANDLE, without importing the vault here
@@ -55,6 +58,7 @@ class Expect:
     kind: str                      # EXPECT_KINDS, or CODE_EXPECT_KINDS when code derived it
     value: str                     # url_query: the query, case- and space-normalised
     host: str = ""                 # url_query: the site's host; "" for any search engine
+    here: str = ""                 # url_query: the host of the page the plan began on (a search there counts)
 
 
 @dataclass(frozen=True)
@@ -123,29 +127,132 @@ def _norm_query(value: Any) -> str:
 
 _HOSTNAME = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$")
 
+# A search with no site named is done on any of these (browser_intent.SITES has their query keys).
+SEARCH_ENGINES = frozenset({"google.com", "duckduckgo.com", "bing.com", "yahoo.com"})
+# The keys a site outside the table searches with: the page open when the plan began, or a site the query names
+# last ("blue mugs on etsy").
+COMMON_QUERY_KEYS = ("q", "query", "search_query", "search", "searchterm", "search_term", "k", "_nkw", "keywords",
+                     "keyword", "term", "text", "p", "s", "field-keywords")
+# The key a site's search page rewrites its own to once it loads: hn.algolia.com turns ?q= into ?query=.
+REWRITTEN_KEYS = {"hn.algolia.com": ("query",)}
+# A site whose search for an exact title lands on the article: Wikipedia sends "alan turing" to /wiki/Alan_Turing.
+ARTICLE_PATHS = {"wikipedia.org": "/wiki/"}
 
-def _search_addresses(host: str) -> tuple[tuple[str, str], ...]:
-    """(host, query key) pairs a url_query for `host` accepts: the site's own host and its search template's
-    (Hacker News searches on hn.algolia.com). For "" the general search engines, never a site's own search."""
+
+def bare_host(value: Any) -> str:
+    """A hostname without "www.", from a host or an http(s) URL; "" for anything that is not one."""
+    text = str(value or "").strip()
+    if "://" in text:
+        try:
+            text = urlsplit(text).hostname or ""
+        except ValueError:
+            return ""
+    host = text.casefold().rstrip(".").removeprefix("www.")
+    return host if _HOSTNAME.match(host) else ""
+
+
+def _on_host(hostname: str, host: str) -> bool:
+    return hostname == host or hostname.endswith("." + host)
+
+
+def _search_addresses(host: str, here: str = "") -> tuple[tuple[str, tuple[str, ...]], ...]:
+    """(host, query keys) pairs a url_query accepts. For a named site: its own host and its search template's
+    (Hacker News searches on hn.algolia.com), each with the keys it rewrites to. For "" (no site named): the
+    general search engines, never a site's own search, and the site of the page open when the plan began
+    (`here`) — a table site by its keys, any other by COMMON_QUERY_KEYS."""
     from . import browser_intent as bi
 
     sites = [s for s in bi.SITES if s.query_key and (s.host == host if host else s.host in SEARCH_ENGINES)]
-    out: list[tuple[str, str]] = []
+    known = [s for s in bi.SITES if s.query_key and _on_host(here, s.host)] if here and not host else []
+    sites += [s for s in known if s not in sites]
+    out: list[tuple[str, tuple[str, ...]]] = []
     for s in sites:
-        out.append((s.host, s.query_key))
+        out.append((s.host, (s.query_key,) + REWRITTEN_KEYS.get(s.host, ())))
         searched = (urlsplit(s.search_template).hostname or "").removeprefix("www.")
         if searched and searched != s.host:
-            out.append((searched, s.query_key))
+            out.append((searched, (s.query_key,) + REWRITTEN_KEYS.get(searched, ())))
+    if here and not host and not known:
+        out.append((here, COMMON_QUERY_KEYS))
     return tuple(out)
 
 
-# A search with no site named is done on any of these (browser_intent.SITES has their query keys).
-SEARCH_ENGINES = frozenset({"google.com", "duckduckgo.com"})
+# What is said around a query and is not part of it. Trimmed from BOTH sides before they are compared, so the
+# planner may keep it or drop it: "please", "um", a leading "the", "for me", "and tell me what you find".
+_WORD = re.compile(r"[^\W_]+(?:['’][^\W_]+)*")
+_LEAD_WORDS = frozenset({"please", "um", "uh", "er", "erm", "ok", "okay", "so", "just", "hey", "the", "a", "an",
+                         "some"})
+_LEAD_PHRASES = (("tell", "me", "about"), ("show", "me"), ("tell", "me"))
+_TRAIL_WORDS = frozenset({"please", "thanks", "now"})
+_TRAIL_PHRASES = (("for", "me"), ("thank", "you"))
+_CLAUSE = re.compile(r"(?:\s*,\s*(?:(?:and|then|so)\s+)?|\s+(?:and|then|so)\s+)(?:then\s+)?"
+                     r"(?:(?:tell|show|give|read)\s+(?:me|us)|let\s+me\s+know|see\s+(?:what|if|whether|which|how)"
+                     r"|find\s+out)\b.*$", re.IGNORECASE)
+_AT_SITE = frozenset({"on", "at", "in", "from", "using", "via"})
+_TLDS = frozenset({"com", "org", "net", "co", "io", "uk"})
 
 
-def url_query_expect(host: Optional[str], query: Any) -> Expect:
+def _query_words(value: Any) -> tuple[str, ...]:
+    """The query's words, casefolded, with the filler around it trimmed (never to nothing). Words, not
+    characters: punctuation and spacing are not the query."""
+    text = _CLAUSE.sub("", " ".join(str(value or "").split()))
+    words = [w.replace("’", "'") for w in _WORD.findall(text.casefold())]
+    out = list(words)
+    trimmed = True
+    while trimmed and len(out) > 1:
+        trimmed = False
+        for phrase in _LEAD_PHRASES:
+            if len(out) > len(phrase) and tuple(out[:len(phrase)]) == phrase:
+                del out[:len(phrase)]
+                trimmed = True
+                break
+        else:
+            if out[0] in _LEAD_WORDS:
+                del out[0]
+                trimmed = True
+            elif out[-1] in _TRAIL_WORDS:
+                del out[-1]
+                trimmed = True
+            else:
+                for phrase in _TRAIL_PHRASES:
+                    if len(out) > len(phrase) and tuple(out[-len(phrase):]) == phrase:
+                        del out[-len(phrase):]
+                        trimmed = True
+                        break
+    return tuple(out) or tuple(words)
+
+
+def _site_named_last(words: tuple[str, ...]) -> tuple[tuple[str, ...], str]:
+    """("blue", "mugs"), "etsy" for "blue mugs on etsy" (or "… on etsy.com"); (), "" when no site ends it."""
+    if len(words) >= 4 and words[-1] in _TLDS and words[-3] in _AT_SITE:
+        return words[:-3], words[-2]
+    if len(words) >= 3 and words[-2] in _AT_SITE:
+        return words[:-2], words[-1]
+    return (), ""
+
+
+def _site_label(hostname: str) -> str:
+    """The name part of a host: "etsy" for www.etsy.com, "argos" for www.argos.co.uk."""
+    labels = hostname.split(".")
+    if len(labels) >= 3 and labels[-2] in ("co", "com", "org", "net", "ac", "gov") and len(labels[-1]) == 2:
+        return labels[-3]
+    return labels[-2] if len(labels) >= 2 else ""
+
+
+def _article_title(path: str, prefix: str) -> Optional[tuple[str, ...]]:
+    """The words of an article page's title ("/wiki/Alan_Turing"); None for any other page or a namespaced one
+    (Special:Search, Talk:…)."""
+    if not path.startswith(prefix):
+        return None
+    title = unquote(path[len(prefix):]).replace("_", " ")
+    if not title.strip() or "/" in title or ":" in title:
+        return None
+    return _query_words(title)
+
+
+def url_query_expect(host: Optional[str], query: Any, here: Any = "") -> Expect:
     """The code-only `url_query` check, validated: a known site's bare host (or None/"" for any search engine)
-    and a non-empty query. PlanError otherwise."""
+    and a non-empty query. PlanError otherwise. `here` is the page open when the plan began (an observation, so
+    a value that is not a hostname is dropped, never an error): with no site named, a search on it counts."""
     host = str(host or "").strip().casefold()
     q = _norm_query(query)
     if not q:
@@ -154,37 +261,52 @@ def url_query_expect(host: Optional[str], query: Any) -> Expect:
         raise PlanError(f"url_query: the query is longer than {MAX_TEXT_CHARS} characters")
     if host and (not _HOSTNAME.match(host) or not _search_addresses(host)):
         raise PlanError(f"url_query: {host!r} is not a site with a known search address")
-    return Expect("url_query", q, host)
+    return Expect("url_query", q, host, bare_host(here))
 
 
 def url_query_matches(actual: Any, expect: Expect) -> bool:
-    """The open page is the search the check names: an http(s) URL whose host is one of the site's search hosts
-    (itself or a subdomain: www., en.) and whose query parameter equals the query, case and spaces normalised.
-    Equal, never contains: a search for "cats and dogs" is not a search for "cats"."""
+    """The open page is the search the check names: an http(s) URL on one of its search hosts (itself or a
+    subdomain: www., en.) whose query parameter has the query's words (_query_words: case, spacing, punctuation
+    and the filler around them aside). Equal words, never contains: a search for "cats and dogs" is not a search
+    for "cats". Also accepted: an article page whose title is the query (ARTICLE_PATHS), and, with no site
+    named, a search on a site the query names last ("blue mugs on etsy" searched as "blue mugs" on etsy.com)."""
     if expect.kind != "url_query":
         return False
     url = canonical_url(actual)
     if url is None:
         return False
     hostname = url[1].rstrip(".")
-    for host, key in _search_addresses(expect.host):
-        if hostname == host or hostname.endswith("." + host):
-            if any(k == key and _norm_query(v) == expect.value for k, v in parse_qsl(url[4], keep_blank_values=True)):
+    want = _query_words(expect.value)
+    params = parse_qsl(url[4], keep_blank_values=True)
+
+    def searched(keys: tuple[str, ...], words: tuple[str, ...]) -> bool:
+        return any(k.casefold() in keys and _query_words(v) == words for k, v in params)
+
+    for host, keys in _search_addresses(expect.host, expect.here):
+        if _on_host(hostname, host):
+            if searched(keys, want):
                 return True
+            if host in ARTICLE_PATHS and _article_title(url[3], ARTICLE_PATHS[host]) == want:
+                return True
+    if not expect.host:
+        rest, name = _site_named_last(want)
+        if name and _site_label(hostname) == name and searched(COMMON_QUERY_KEYS, rest):
+            return True
     return False
 
 
-def request_check(request: str, intent: Optional[Callable[[str], Any]] = None) -> Optional[Expect]:
+def request_check(request: str, intent: Optional[Callable[[str], Any]] = None, here: Any = "") -> Optional[Expect]:
     """The success check code derives from the request for a browser plan, or None to leave the planner's.
     Today only a search outcome has one (url_query). `intent` is browser_intent.expected_outcome by default; any
-    failure in it, or an outcome that does not validate, is no check — the planner's stands."""
+    failure in it, or an outcome that does not validate, is no check — the planner's stands. `here` is the page
+    the plan was made on (url_query_expect)."""
     if intent is None:
         from .browser_intent import expected_outcome as intent
     try:
         outcome = intent(request)
         if outcome is None or outcome.kind != "search" or not outcome.query:
             return None
-        return url_query_expect(outcome.site_host, outcome.query)
+        return url_query_expect(outcome.site_host, outcome.query, here=here)
     except Exception:  # noqa: BLE001 — an intent that cannot answer is an abstention, never a bad plan
         return None
 
@@ -244,7 +366,8 @@ def parse_plan(raw: Any, request: str, source: str = "astra", *, browser: Option
                intent: Optional[Callable[[str], Any]] = None) -> Plan:
     """A validated Plan, or PlanError. Strict on purpose: a plan the code cannot fully read is not run.
     A browser plan (`browser`, else the dict's `"app": "browser"`) gets its success from the request
-    (request_check, module docstring); `intent` replaces browser_intent.expected_outcome in tests."""
+    (request_check, module docstring); the dict's `"here"` is the host of the page it was planned on;
+    `intent` replaces browser_intent.expected_outcome in tests."""
     if not isinstance(raw, dict):
         raise PlanError("the plan is not an object")
     if raw.get("needs_eyes") is True:
@@ -258,7 +381,7 @@ def parse_plan(raw: Any, request: str, source: str = "astra", *, browser: Option
     planned = _expect(raw.get("success"), "success")
     if browser is None:
         browser = raw.get("app") == "browser"
-    derived = request_check(request, intent) if browser else None
+    derived = request_check(request, intent, here=raw.get("here") or "") if browser else None
     return Plan(parsed, final_say=_text(raw.get("final_say"), MAX_SAY_CHARS),
                 success=derived or planned, source=source, planned_success=planned)
 

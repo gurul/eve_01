@@ -8,7 +8,13 @@ from __future__ import annotations
 
 import pytest
 
-from eve_bridge.ax_candidates import Candidate, Snapshot, is_account_change, needs_confirmation, rank_candidates
+from eve_bridge.ax_candidates import (
+    Candidate,
+    Snapshot,
+    is_account_change,
+    needs_confirmation,
+    rank_candidates,
+)
 from eve_bridge.browser_lane import snapshot_from_page
 
 
@@ -27,8 +33,10 @@ def desktop(label: str, *, app: str = "TextEdit", in_content: bool = False) -> C
 ACCOUNT_LABELS = [
     "upvote", "downvote", "Like", "Unlike", "Follow", "Unfollow", "Star", "Unstar", "hide", "flag", "Report",
     "Save", "Subscribe", "▲ upvote", "Like 12", "Follow @jane", "Star 1.2k", "Save post", "flag comment",
-    "Follow Jane Doe", "  UPVOTE  ", "♥ Like",
+    "  UPVOTE  ", "♥ Like",
 ]
+# "Follow Jane Doe" left this list (review F3): by label alone it is the shape of a title ("Follow the Money"), so
+# it asks on a button only — tests/test_side_effect_precision.py pins that.
 PLAIN_LABELS = [
     "Saved articles", "Follow-up", "Follow-up questions", "Follow up", "Hide sidebar", "Hide toolbar",
     "Hide details", "Show more", "Stories you might like", "People to follow this week", "Starred repositories",

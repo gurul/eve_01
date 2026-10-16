@@ -43,12 +43,6 @@ class Desk:
         return self.front
 
 
-def ran_unchecked(r: Any) -> bool:
-    """Every step ran and nothing could confirm the request: a plan with no success check is never complete
-    (test_plan_success_guard)."""
-    return r.status == "partial" and r.reason == "no_success_check"
-
-
 def go(p: pc.Plan, senses: Senses, eff: Effectors, desk: Desk | None = None, asker: Any = None, **kw: Any):
     desk = desk or Desk()
     return run_plan(p, senses=senses, effectors=eff, asker=asker, open_app=desk.open_app, open_url=desk.open_url,
@@ -98,7 +92,7 @@ def test_a_two_step_plan_runs_with_no_model_when_the_labels_are_exact() -> None:
     senses = Senses([month, calendar(True), calendar(True), calendar(True)], changed=[True, True])
     p = plan({"kind": "open_app", "target": "Calendar"}, {"kind": "click", "target": "the week view", "label_hint": "Week"})
     r = go(p, senses, eff, Desk(front="Finder"), decide="keyword")
-    assert ran_unchecked(r) and r.next_index == 2 and r.sentence == "", r.to_dict()
+    assert r.status == "complete" and r.sentence == "All set.", r.to_dict()
     assert eff.clicks == ["Week"] and [e.effect for e in r.ledger] == ["confirmed", "confirmed"]
     assert [e.how for e in r.ledger] == ["helper", "keyword"]
 
@@ -108,7 +102,7 @@ def test_the_description_is_tried_when_the_hint_finds_nothing() -> None:
     asker = asker_saying("Week")
     p = plan({"kind": "click", "target": "the seven day view", "label_hint": "Weekly"})
     r = go(p, Senses([calendar(), calendar(), calendar(True)], changed=[True]), eff, asker=asker)
-    assert ran_unchecked(r) and eff.clicks == ["Week"] and r.ledger[0].how == "jev", r.to_dict()
+    assert r.status == "complete" and eff.clicks == ["Week"] and r.ledger[0].how == "jev", r.to_dict()
 
 
 def test_a_step_no_control_answers_hands_back_with_zero_input() -> None:
@@ -148,7 +142,8 @@ def test_an_unconfirmed_step_is_never_reported_as_plain_success() -> None:
     same = snap(cand("1", "button", "Refresh"), cand("2", "button", "Today"))
     p = plan({"kind": "click", "target": "refresh", "label_hint": "Refresh"})
     r = go(p, Senses([same, same], changed=[None]), eff, decide="keyword")
-    assert ran_unchecked(r) and r.ledger[0].effect == "unverifiable" and r.sentence == ""
+    assert r.status == "complete" and r.ledger[0].effect == "unverifiable"
+    assert "couldn't confirm" in r.sentence and r.sentence != "All set."
 
 
 def test_an_expectation_that_does_not_hold_stops_the_plan() -> None:
@@ -167,7 +162,7 @@ def test_the_plans_own_flag_stops_before_any_input_and_resumes_on_a_yes() -> Non
     r = go(p, Senses([calendar()]), eff, decide="keyword")
     assert r.status == "needs_human" and r.next_index == 0 and eff.clicks == [] and "week" in r.confirm
     r2 = go(p, Senses([calendar(), calendar(True)], changed=[True]), eff, decide="keyword", start=0, approved={0: r.confirm})
-    assert ran_unchecked(r2) and eff.clicks == ["Week"]
+    assert r2.status == "complete" and eff.clicks == ["Week"]
 
 
 def test_a_sensitive_control_needs_the_human_whatever_the_plan_says() -> None:
@@ -177,7 +172,7 @@ def test_a_sensitive_control_needs_the_human_whatever_the_plan_says() -> None:
     assert r.status == "needs_human" and r.confirm == "Delete Event" and eff.clicks == []
     # the human's yes lets exactly that label through, once
     r2 = go(p, Senses([calendar(), calendar()], changed=[True]), eff, decide="keyword", approved={0: r.confirm})
-    assert ran_unchecked(r2) and eff.clicks == ["Delete Event"]
+    assert r2.status == "complete" and eff.clicks == ["Delete Event"]
 
 
 def test_jevs_risky_answer_stops_a_step_the_code_table_does_not_know() -> None:
@@ -187,7 +182,7 @@ def test_jevs_risky_answer_stops_a_step_the_code_table_does_not_know() -> None:
     assert r.status == "needs_human" and r.confirm == "Week" and eff.clicks == []
     r2 = go(p, Senses([calendar(), calendar(True)], changed=[True]), eff, asker=asker_saying("Week", risky=0.9),
             approved={0: "Week"})
-    assert ran_unchecked(r2) and eff.clicks == ["Week"]
+    assert r2.status == "complete" and eff.clicks == ["Week"]
 
 
 def test_a_dictated_search_may_be_submitted() -> None:
@@ -195,7 +190,7 @@ def test_a_dictated_search_may_be_submitted() -> None:
     p = plan({"kind": "type", "target": "the search field", "text": "blue adapter"}, {"kind": "press_key", "key": "return"},
              request="search my notes for blue adapter")
     r = go(p, Senses([notes_search()]), eff, Desk(front="Notes"))
-    assert ran_unchecked(r) and eff.typed == [("Search", "blue adapter")] and eff.presses == ["return"]
+    assert r.status == "complete" and eff.typed == [("Search", "blue adapter")] and eff.presses == ["return"]
 
 
 def test_composed_text_is_typed_but_never_submitted_without_a_yes() -> None:
@@ -229,7 +224,7 @@ def test_among_several_fields_jev_picks_or_nothing_is_typed() -> None:
                 bundle="com.apple.Safari", title="Form")
     p = plan({"kind": "type", "target": "the city field", "text": "Lisbon"}, request="put Lisbon as the city")
     eff = Effectors()
-    assert go(p, Senses([form]), eff, Desk(front="Safari"), asker=asker_saying("City")).reason == "no_success_check"
+    assert go(p, Senses([form]), eff, Desk(front="Safari"), asker=asker_saying("City")).status == "complete"
     assert eff.typed == [("City", "Lisbon")]
     unsure = Effectors()                                   # a step that names no field: Jev's pick alone, under the cut-offs
     vague = plan({"kind": "type", "target": "the place field", "text": "Lisbon"}, request="put Lisbon as the city")
@@ -263,7 +258,7 @@ def test_the_app_the_plan_was_written_for_is_brought_back_before_the_first_step(
     eff, desk = Effectors(), Desk(front="Finder")          # the human clicked elsewhere while the planner thought
     p = plan({"kind": "click", "target": "week", "label_hint": "Week"})
     r = go(p, Senses([calendar(), calendar(True)], changed=[True]), eff, desk, decide="keyword", planned_for="Calendar")
-    assert desk.opened == ["Calendar"] and ran_unchecked(r) and eff.clicks == ["Week"]
+    assert desk.opened == ["Calendar"] and r.status == "complete" and eff.clicks == ["Week"]
     still = Desk(front="Calendar")
     go(p, Senses([calendar(), calendar(True)], changed=[True]), Effectors(), still, decide="keyword", planned_for="Calendar")
     assert still.opened == []                              # already in front: nothing is opened
@@ -286,7 +281,7 @@ def test_the_field_the_step_names_is_typed_into_when_jev_agrees_even_below_its_c
              request="fill in the email ada@example.com")
     eff = Effectors()
     r = go(p, Senses([_contact_form()]), eff, Desk(front="browser"), asker=asker_saying("Email address", p=0.4))
-    assert ran_unchecked(r) and eff.typed == [("Email address", "ada@example.com")], r.to_dict()
+    assert r.status == "complete" and eff.typed == [("Email address", "ada@example.com")], r.to_dict()
     assert r.ledger[0].how == "code+jev"
 
 
@@ -308,7 +303,7 @@ def test_right_after_clicking_a_field_the_focused_field_is_the_proposal() -> Non
     eff = Effectors()
     senses = Senses([_contact_form(), _contact_form("Your message"), _contact_form("Your message")], changed=[True])
     r = go(p, senses, eff, Desk(front="browser"), asker=asker_saying("Your message", p=0.4))
-    assert ran_unchecked(r) and eff.clicks == ["Your message"], r.to_dict()
+    assert r.status == "complete" and eff.clicks == ["Your message"], r.to_dict()
     assert eff.typed == [("Your message", "Please call me back")]
 
 
@@ -338,7 +333,7 @@ def test_a_cookie_notice_is_dismissed_before_a_click_and_is_in_the_ledger() -> N
     eff = ConsentEffectors()
     p = plan({"kind": "click", "target": "week", "label_hint": "Week"})
     r = go(p, Senses([calendar(), calendar(True)], changed=[True]), eff, decide="keyword")
-    assert ran_unchecked(r) and eff.cleared == 1 and eff.clicks == ["Week"], r.to_dict()
+    assert r.status == "complete" and eff.cleared == 1 and eff.clicks == ["Week"], r.to_dict()
     assert [(e.step, e.effect, e.how) for e in r.ledger][0] == ("dismiss the cookie notice", "confirmed", "code")
     quiet = ConsentEffectors(said="")                       # nothing to dismiss: nothing in the ledger
     r = go(p, Senses([calendar(), calendar(True)], changed=[True]), quiet, decide="keyword")
@@ -369,5 +364,5 @@ def test_the_humans_yes_to_a_flagged_step_reaches_the_effectors_own_gate_for_tha
     assert first.status == "needs_human" and eff.clicks == []
     r = go(p, Senses([form, form, form, form]), eff, Desk(front="browser"), asker=asker_saying("Send message"),
            approved={0: first.confirm})
-    assert eff.clicks == ["Send message"] and ran_unchecked(r), r.to_dict()    # ran, not refused at the gate
+    assert eff.clicks == ["Send message"] and r.status != "partial", r.to_dict()
     assert eff.approve == ""                                   # nothing carries over to a later step

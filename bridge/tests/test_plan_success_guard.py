@@ -1,11 +1,14 @@
 """A plan is DONE only when something observable says so (plan_contract.py, plan_executor.py).
 
-Three guards, each a way a plan used to report `complete` without having shown anything:
+Guards for a browser search, each a way a plan used to report `complete` without having shown anything:
 
-* a plan with no `success` check ends partial (unverifiable), never complete;
-* the `success` check is read once before step 1, and one that already holds is rejected: it proves nothing;
 * a browser plan's success is derived by code from the ORIGINAL REQUEST (browser_intent.expected_outcome), never
-  from the planner's choice: "search duck duck go for cats" is not done by a Google search.
+  from the planner's choice: "search duck duck go for cats" is not done by a Google search;
+* that derived check is read once before step 1, and one that already holds is rejected: it proves nothing;
+* it must be read true at the end.
+
+Only plans with the derived check are held to this (review F1, 2026-10-16): a Mac/app plan with no check, or with
+a check that already holds, ends as it always did (test_plan_scope).
 
 Fakes only: test_fast_lane's senses/effectors, and a page whose URL is whatever the plan last opened.
 """
@@ -93,15 +96,7 @@ def browser_plan(request: str, url: str, *, success: Optional[dict[str, str]] = 
                          intent=intent)
 
 
-# ---- (a) no success check: never complete -------------------------------------------------------------------
-
-
-def test_a_plan_without_a_success_check_ends_partial_not_complete() -> None:
-    p = pc.parse_plan(raw({"kind": "open_app", "target": "Calendar"}), "open calendar")
-    r = go(p, Senses([calendar()]), Effectors(), Desk(front="Finder"))
-    assert r.status == "partial" and r.reason == "no_success_check", r.to_dict()
-    assert r.next_index == len(p.steps) and r.sentence == ""          # every step ran; nothing is spoken as done
-    assert [e.effect for e in r.ledger] == ["confirmed"]              # the ledger still says what was applied
+# ---- (a) a check that holds only after the steps ----------------------------------------------------------
 
 
 def test_a_success_check_that_holds_only_after_the_steps_is_complete() -> None:
@@ -115,31 +110,39 @@ def test_a_success_check_that_holds_only_after_the_steps_is_complete() -> None:
 # ---- (b) a check that already holds before step 1 proves nothing --------------------------------------------
 
 
+# The Mac-plan versions of these two tests expected a text_visible check to be rejected; that was the F1 bug,
+# and they now live in test_plan_scope with the opposite expectation. These are the browser-search versions.
+
+
 def test_a_success_check_already_true_before_step_1_is_rejected() -> None:
-    p = pc.parse_plan(raw({"kind": "open_app", "target": "Calendar"},
-                          success={"kind": "text_visible", "value": "Week"}), "open calendar")
-    senses = Senses([calendar()], visible=[{"Week"}])                 # on screen before anything was done
-    r = go(p, senses, Effectors(), Desk(front="Finder"))
+    p = browser_plan("search duck duck go for cats", "https://duckduckgo.com/?q=cats",
+                     intent=lambda r: outcome("search", "duckduckgo.com", "cats"))
+    page = Page(url="https://duckduckgo.com/?q=Cats")                  # the results were open before anything was done
+    r = go(p, page, Effectors(), page.desk, planned_for="browser")
     assert r.status == "partial" and r.reason == "success_already_held", r.to_dict()
     assert r.success_rejected and r.to_dict()["success_rejected"] is True
     assert any("already holds before step 1" in line for line in r.log_lines)
 
 
 def test_a_resumed_plan_keeps_the_rejection_it_was_handed() -> None:
-    p = pc.parse_plan(raw({"kind": "open_app", "target": "Calendar"}, {"kind": "open_app", "target": "Notes"},
-                          success={"kind": "text_visible", "value": "Week"}), "open calendar then notes")
-    senses = Senses([calendar()], visible=[{"Week"}])
-    r = go(p, senses, Effectors(), Desk(front="Finder"), start=1, success_rejected=True)
+    p = pc.parse_plan(raw({"kind": "open_url", "target": "https://example.com/"},
+                          {"kind": "open_url", "target": "https://duckduckgo.com/?q=cats"}, app="browser"),
+                      "search duck duck go for cats", intent=lambda r: outcome("search", "duckduckgo.com", "cats"))
+    page = Page()
+    r = go(p, page, Effectors(), page.desk, planned_for="browser", start=1, success_rejected=True)
     assert r.status == "partial" and r.reason == "success_already_held", r.to_dict()
 
 
 def test_the_pre_check_does_not_wait_for_a_check_that_is_false() -> None:
-    p = pc.parse_plan(raw({"kind": "open_app", "target": "Calendar"},
-                          success={"kind": "text_visible", "value": "Week"}), "open calendar")
-    eff = Effectors()
-    senses = Senses([calendar(), calendar()], visible=[set(), {"Week"}])
-    go(p, senses, eff, Desk(front="Finder"))
-    assert eff.settles.count(0.4) == 0                                # no polling before step 1
+    p = pc.parse_plan(raw({"kind": "open_url", "target": "https://example.com/"},
+                          {"kind": "open_url", "target": "https://www.google.com/search?q=dogs"}, app="browser"),
+                      "search duck duck go for cats", intent=lambda r: outcome("search", "duckduckgo.com", "cats"))
+    fresh, resumed = Effectors(), Effectors()
+    page = Page()
+    go(p, page, fresh, page.desk, planned_for="browser")              # start 0: reads the check before step 1
+    page = Page(url="https://example.com/")
+    go(p, page, resumed, page.desk, planned_for="browser", start=1)  # start 1: no pre-check
+    assert fresh.settles.count(0.4) == resumed.settles.count(0.4)     # the pre-check added no polling
 
 
 # ---- (c) a browser search is checked from the request -------------------------------------------------------
@@ -226,7 +229,8 @@ def test_no_outcome_falls_back_to_the_planners_check() -> None:
         assert go(p, page, Effectors(), page.desk, planned_for="browser").status == "complete"
     p = browser_plan("show me example's pricing", url, intent=lambda r: None)
     page = Page()
-    assert go(p, page, Effectors(), page.desk, planned_for="browser").reason == "no_success_check"
+    # No derived check and none from the planner: as before F1's rule, it completes (test_plan_scope).
+    assert go(p, page, Effectors(), page.desk, planned_for="browser").status == "complete"
 
 
 def test_only_a_browser_plan_asks_for_the_request_outcome() -> None:

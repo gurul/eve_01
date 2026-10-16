@@ -1271,6 +1271,8 @@ class ComputerAgent:
                     return closing, ""
                 return "", self._handoff_note(done, "the planner saw nothing left to do")
             plan_dict = {**pc.plan_to_dict(plan), "app": str(outline.get("app") or "")}
+            if browser:                                   # the page it was planned on: a search there counts
+                plan_dict["here"] = pc.bare_host(outline.get("url"))     # (plan_contract.url_query_matches)
             self._log({"turn": 0, "plan": {**plan_dict, "secs": round(self._clock() - t0, 2), "attempt": attempt,
                                            "outline_lines": len(outline.get("lines") or [])}})
             if plan.needs_eyes:

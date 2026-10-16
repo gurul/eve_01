@@ -815,45 +815,67 @@ Install: `pip install -e ".[browser]"` then `python -m playwright install chromi
 Four checks from LayaBrowse (github.com/cklxx/LayaBrowse, MIT) sit between a decision and the page. Each has
 its own test file in `bridge/tests/`.
 
-**Plan success needs evidence** (`plan_executor.py`, `test_plan_success_guard.py`). A plan, on the Mac or in
-the browser, ends `complete` only when its `success` check reads true at the end. Otherwise every step runs and
-the plan ends `partial`, with one of three reasons:
+**A browser search needs evidence** (`plan_executor.py`, `test_plan_success_guard.py`, `test_plan_scope.py`).
+In the browser, a search request gets its success check from code, not from the planner: `url_query`, the
+named site's search URL with that query ([browser intent](../browser-intent.md)). A plan cannot supply
+`url_query` itself. A plan with that check ends `complete` only when it reads true at the end. Otherwise every
+step runs and the plan ends `partial`:
 
 | Reason | When |
 |---|---|
-| `no_success_check` | the plan has no success check, so nothing observable can say it is done |
 | `success_already_held` | the check was already true before step 1 (read once, with no wait), so it proves nothing |
-| `success_unreadable` | the check could not be read at the end |
+| `the plan ran but the search for "…" is not on screen` | the check read false at the end |
 
-No sentence is spoken for these. A question is still answered from the page; any other task goes to the
-step-by-step loop with a note of what was already done, so such tasks now take longer instead of ending on
-"Done". A plan that resumes after your yes is handed back the first call's rejection, because only the call
-that starts at step 1 can read the check before anything was done. In the browser, a search request gets its
-check from code, not from the planner: `url_query`, the named site's search URL with that query
-([browser intent](../browser-intent.md)). A plan cannot supply `url_query` itself. Wikipedia often jumps
-straight to the article for an exact title, so "search wikipedia for alan turing" ends `partial` and hands over.
+No sentence is spoken for these; the task goes to the step-by-step loop with a note of what was already done. A
+plan that resumes after your yes is handed back the first call's rejection, because only the call that starts
+at step 1 can read the check before anything was done.
 
-**Account changes ask first** (`ax_candidates.needs_confirmation`, `test_side_effect_links.py`). On a page, a
-short control that changes your signed-in account asks for your yes, the same way a sensitive label does. This
-covers the label (upvote, downvote, like, follow, star, hide, flag, report, save, subscribe, with at most three
-words: "Like 12", "Follow @jane", "▲ upvote") and the link: a last path segment such as `/vote`, `/star`,
-`/follow` or `like.php`, or a query key such as `action=vote`. The browser's click reads the raw href from the
-last look at the page, query included, so a Hacker News `vote?id=…` link with no label asks too. Links that
-only read do not ask: "Saved articles", "Follow-up", "Hide sidebar", "Stories you might like", `/stargazers`,
-`/followers`. On the Mac lane only sensitive labels ask, so Save, Hide and Flag in a native app stay a plain
-click (confirm only dangerous acts).
+The comparison is of words, not characters (`plan_contract.url_query_matches`): case, punctuation and filler
+around the query ("please", "um", a leading "the", "for me", "and tell me what you find") do not count, but a
+dropped or added word does ("cats and dogs" is not "cats"). With no site named, a search counts on a general
+search engine (Google, DuckDuckGo, Bing, Yahoo) or on the site that was open when the plan was made (typing into YouTube's own box while on
+YouTube). A site the table does not know counts when the query names it last ("blue mugs on etsy" searched as
+"blue mugs" on etsy.com). Wikipedia's jump to the article for an exact title counts, and so does Hacker News'
+rewrite of `?q=` to `?query=`.
+
+Every other plan, on the Mac or in the browser without a derived check, keeps the planner's own check: it ends
+`complete` when every step applied and that check (if any) did not read false. The planner is told to leave the
+check out when unsure, and an app check is often already true once the planned-for app is back in front, so
+holding those plans to the strict rule sent routine tasks to the slow loop.
+
+**Account changes ask first** (`ax_candidates.needs_confirmation`, `test_side_effect_links.py`,
+`test_side_effect_precision.py`). On a page, a control that changes your signed-in account asks for your yes,
+the same way a sensitive label does. This covers a verb-shaped label (upvote, downvote, like, follow, star,
+hide, flag, report, save, subscribe, alone or with a count, what it acts on, or a @handle: "Like 12", "Save
+post", "Follow @jane", "▲ upvote"; on a button also a follow and a name, "Follow Jane Doe") and the link: a
+last path segment such as `/vote`, `/star`, `/follow` or `like.php`, or a query key such as `action=vote`. The
+snapshot carries each control's raw href, query included, to the lane's gate and to the browser's click, so a
+Hacker News `vote?id=…` link with no label reaches the confirmation question too. Your yes is matched to the
+control's label, so a link with no label is asked about but cannot yet be approved; it stays unclicked. Titles, shop and form labels
+do not ask: "Star Wars", "Like New", "Save 20%", "Save changes", "Hide and Seek", "Flag of France", a link to a
+page named after its own label (`/wiki/Like`), "Saved articles", "Follow-up", "Hide sidebar", `/stargazers`,
+`/followers`. Web content counts as a page only in a browser (Safari, Chrome, Arc, Firefox, Edge, Brave and the
+like): an Electron app such as Slack or Spotify draws its own chrome as web content, and its "Follow" or "Save
+for later" stays a plain click. On the Mac lane only sensitive labels ask, so Save, Hide and Flag in a native
+app stay a plain click (confirm only dangerous acts).
 
 **A click rechecks its control** (`browser_lane.click_recheck`, `test_click_recheck.py`). Each look at the page
 records, per control, its role, name and href, plus the page URL and the document (`performance.timeOrigin`).
 After the scroll and right before the press, the control is read again. If anything differs, nothing is
 clicked and the step returns `refused: stale: '<label>' changed since the decision (<what>); look again`. An
-unreadable recheck refuses too. Other text changing on a live page does not refuse. The recheck is a separate
+unreadable recheck refuses too. Other text changing on a live page does not refuse. Two changes are tolerated
+(`test_click_recheck_tolerance.py`): the URL's `#fragment`, and a label whose only change is a count or a
+relative time ("142 points" to "143 points", "1 hour ago" to "1 day ago") while the role and a non-empty href, or
+the role and the DOM id, are the same. A test runs the real page scripts under node, so the tolerance is not only
+the Python fake's. The recheck is a separate
 read just before Playwright's own click, so the click stays a real pointer event with Playwright's visible,
 stable and uncovered checks.
 
 **Bot checks stop the lane** (`browser_lane.browser_blocker`, `test_browser_challenge.py`). A Cloudflare, Google
 `/sorry/` or "access denied" page ends the task as `blocked`, with one line to you, and is never handed to
-Codex or the screenshot planner. See [Steel: bot checks](../steel.md#bot-checks-challenge-pages).
+Codex or the screenshot planner. Cloudflare's "Just a moment…" check usually clears itself in about five
+seconds, so the lane looks again every second for up to eight before it blocks (`test_challenge_settle.py`);
+the other checks block at once. See [Steel: bot checks](../steel.md#bot-checks-challenge-pages).
 
 ### Choosing the browser planner model
 

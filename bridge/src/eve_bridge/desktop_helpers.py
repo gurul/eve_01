@@ -953,13 +953,14 @@ class Helpers:
     def outline(self, max_lines: int = 80) -> dict[str, Any]:
         """The front window as the planner is shown it: `label (role, value)` per pressable or editable
         control, in the lane's own ranking order — never the window title, never a field's contents."""
-        from .ax_candidates import ax_snapshot, is_sensitive, rank_candidates
+        from .ax_candidates import ax_snapshot, needs_confirmation, rank_candidates
         from .decider import render_option
 
         snap = ax_snapshot(None, screen=self._size())
         pressable, _ = rank_candidates(snap, "", max_out=max_lines, kinds="pressable", allow_sensitive=True)
         fields, _ = rank_candidates(snap, "", max_out=10, kinds="editable")
-        lines = [render_option(c) + (" [asks the human first]" if is_sensitive(c.label) else "") for c in pressable]
+        lines = [render_option(c) + (" [asks the human first]" if needs_confirmation(c, snap.href(c.id)) else "")
+                 for c in pressable]
         lines += [f"{' '.join(c.label.split())[:40] or 'unlabelled'} ({c.role}, a text field)" for c in fields
                   if not c.secure]
         return {"app": snap.app, "lines": lines[:max_lines], "dialog": bool(snap.dialog_text),

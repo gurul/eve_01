@@ -34,27 +34,38 @@ Who gets control when a plan stops:
   partial / none  the planner, with the ledger of what was applied. `none` guarantees zero input overall.
 
 Nothing here decides a task is DONE on a model's word: `complete` means every step applied input that was
-not a suspected no-op, every `expect` that was given held, and the plan's `success` was READ TRUE at the end —
-a check that was also read false before step 1. So a plan ends `partial` with every step applied
-(next_index == len(steps)) when:
-  no_success_check       it has no success check: nothing observable could say it is done
-  success_already_held   its check already held before step 1 (read once, without waiting), so it proves
+not a suspected no-op, every `expect` that was given held, and the plan's `success` did not read false.
+
+A browser search is stricter. Its check is code's, derived from the request (plan_contract.request_check, the
+`url_query` kind), and it must be READ TRUE at the end — and have been read false before step 1. So such a plan
+ends `partial` with every step applied (next_index == len(steps)) when:
+  success_already_held   the check already held before step 1 (read once, without waiting), so it proves
                          nothing. A resumed plan (start > 0) cannot look again: the caller hands back the
                          first call's `success_rejected`.
-  success_unreadable     the check could not be read at the end
-A browser plan's check is code's, derived from the request (plan_contract.request_check), when there is one.
+  the plan ran but …     it did not hold at the end.
+Every other plan — on the Mac, or a browser plan with no derived check — keeps the planner's check as given:
+none at all is not a failure (the planner is told to leave it out when unsure), and an app_frontmost or
+text_visible check that is already true is ordinary once `planned_for` has brought the app back.
 """
 
 from __future__ import annotations
 
 import re
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Callable, Mapping, Optional, Sequence
 
 from .decider import render_option
 from .fast_lane import editable_pool, is_search_field, jev_context, run_delegate
-from .plan_contract import Expect, Plan, PlanStep, url_matches, url_query_matches
+from .plan_contract import (
+    CODE_EXPECT_KINDS,
+    Expect,
+    Plan,
+    PlanStep,
+    bare_host,
+    url_matches,
+    url_query_matches,
+)
 from .typed_ask import JEV_STEP_GATES, StepAnswer, StepGates
 
 STATUSES = ("complete", "partial", "none", "needs_human", "checkpoint", "unavailable")
@@ -177,9 +188,12 @@ def run_plan(plan: Plan, *, senses: Any, effectors: Any, asker: Optional[Callabl
     plan opens no app of its own, that app is brought back to the front before the first step.
 
     `success_rejected` is the first call's PlanResult.success_rejected, handed back on a resume: only the call
-    that starts at step 1 can read the success check before anything was done (module docstring)."""
+    that starts at step 1 can read the success check before anything was done (module docstring). It counts
+    only for a plan whose check is code's (url_query)."""
     t_start = clock()
-    out = PlanResult("none", next_index=start, success_rejected=bool(success_rejected))
+    success = plan.success
+    strict = success is not None and success.kind in CODE_EXPECT_KINDS
+    out = PlanResult("none", next_index=start, success_rejected=bool(success_rejected) and strict)
     ok = {int(i): str(label) for i, label in (approved or {}).items()}
     if decide == "jev" and asker is None:
         decide = "keyword"                                   # no hosted model configured: the gate alone decides
@@ -193,11 +207,20 @@ def run_plan(plan: Plan, *, senses: Any, effectors: Any, asker: Optional[Callabl
             out.log_lines.append(f"plan: {planned_for} is no longer in front — " + str(open_app(planned_for)))
         except Exception as e:  # noqa: BLE001 — the step's own gates decide what happens next
             out.log_lines.append(f"plan: could not bring {planned_for} back ({type(e).__name__})")
-    if start == 0 and not dry_run and plan.success is not None and plan.steps:
+    if strict and start == 0 and not dry_run and plan.steps:
+        if not success.here:
+            # The page open before step 1: with no site named, a search on it counts (url_query_matches).
+            try:
+                getter = getattr(senses, "current_url", None)
+                here = bare_host(getter()) if getter else ""
+            except Exception:  # noqa: BLE001 — an unreadable page adds nothing
+                here = ""
+            if here:
+                success = replace(success, here=here)
         # Read once, no polling: a check that is true before any input says nothing about what the plan does.
-        if _holds(plan.success, senses, effectors, frontmost_app, clock, wait=0.0) is True:
+        if _holds(success, senses, effectors, frontmost_app, clock, wait=0.0) is True:
             out.success_rejected = True
-            out.log_lines.append(f'plan: the success check {plan.success.kind} "{plan.success.value}" already '
+            out.log_lines.append(f'plan: the success check {success.kind} "{success.value}" already '
                                  "holds before step 1; it cannot confirm the plan")
 
     def stop(status: str, index: int, reason: str = "", confirm: str = "") -> PlanResult:
@@ -352,17 +375,13 @@ def run_plan(plan: Plan, *, senses: Any, effectors: Any, asker: Optional[Callabl
         return stop("complete", len(plan.steps), "dry_run")
     if out.success_rejected:
         return stop("partial", len(plan.steps), "success_already_held")
-    if plan.success is None:
-        return stop("partial", len(plan.steps), "no_success_check")
-    final = _holds(plan.success, senses, effectors, frontmost_app, clock)
+    final = _holds(success, senses, effectors, frontmost_app, clock)
     if final is False:
-        what = (f'the search for "{plan.success.value}"' if plan.success.kind == "url_query"
-                else f'"{plan.success.value}"')
+        what = f'the search for "{success.value}"' if strict else f'"{success.value}"'
         return stop("partial", len(plan.steps), f"the plan ran but {what} is not on screen")
-    if final is None:
-        return stop("partial", len(plan.steps), "success_unreadable")
-    for e in out.ledger[-1:]:
-        e.effect = "confirmed"
+    if final is True:
+        for e in out.ledger[-1:]:
+            e.effect = "confirmed"
     out.sentence = _say(plan, out.ledger)
     return stop("complete", len(plan.steps))
 

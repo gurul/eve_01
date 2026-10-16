@@ -147,6 +147,7 @@ _IDENTITY_JS = """
     const img = e.querySelector('img[alt],svg[aria-label],[aria-label]');
     return img ? (img.getAttribute('alt') || img.getAttribute('aria-label') || '').trim() : ''; };
   const hrefOf = (e) => e.tagName.toLowerCase() === 'a' && e.hasAttribute('href') ? e.href : '';
+  const domIdOf = (e) => String(e.id || '').slice(0, 120);
 """
 _COLLECT_JS = """() => {
   const sel = 'a[href],button,input,textarea,select,summary,[role=button],[role=link],[role=tab],[role=menuitem],' +
@@ -174,7 +175,7 @@ _COLLECT_JS = """() => {
               h: Math.round(r.height), enabled: !(e.disabled || e.getAttribute('aria-disabled') === 'true'),
               secure: role === 'password' || passwordLike(e), editable, dialog: !!e.closest('dialog,[role=dialog],[role=alertdialog]'),
               focused: document.activeElement === e, offscreen: r.bottom < 0 || r.top > H,
-              href: hrefOf(e)});
+              href: hrefOf(e), dom_id: domIdOf(e)});
     if (out.length >= %d) break; }
   const dlg = Array.from(document.querySelectorAll('dialog[open],[role=dialog],[role=alertdialog]')).find(d => {
     const r = d.getBoundingClientRect(); const cs = getComputedStyle(d);
@@ -194,23 +195,58 @@ _RECHECK_JS = """(want) => {""" + _IDENTITY_JS + """
   const e = document.querySelector('[data-eve-id="' + want.id + '"]');
   const now = {url: location.href, doc: String(performance.timeOrigin), found: !!e};
   if (!e) return now;
-  return Object.assign(now, {role: roleOf(e), name: nameOf(e).replace(/\\s+/g, ' ').slice(0, 120), href: hrefOf(e)}); }
+  return Object.assign(now, {role: roleOf(e), name: nameOf(e).replace(/\\s+/g, ' ').slice(0, 120), href: hrefOf(e),
+                             dom_id: domIdOf(e)}); }
 """
 STALE_PREFIX = "refused: stale:"     # click_candidate: the page moved under the decision; nothing was clicked
 BLOCKED_PREFIX = "refused: blocked:"  # every effector on a bot-check page (browser_blocker)
 
 
+# What a live page changes in a label on its own: counts ("142 points", "1.2K views") and relative times
+# ("3 minutes ago", "4h", "just now"). Both are folded to one "#" before the names are compared, and only for
+# a control whose role and href (or role and DOM id) are unchanged, so it is provably the same control.
+_VOLATILE_NUMBER = re.compile(r"\d[\d,.]*(?:\s*[kmb](?![a-z]))?", re.I)
+_VOLATILE_TIME = re.compile(r"\b(?:just now|now|ago|today|yesterday|seconds?|secs?|minutes?|mins?|hours?|hrs?|"
+                            r"days?|weeks?|wks?|months?|mos?|years?|yrs?|[smhdwy])\b", re.I)
+_VOLATILE_RUN = re.compile(r"(?:#\s*)+")
+
+
+def _volatile_free(name: str) -> str:
+    """``name`` with every count and relative-time word folded to "#": "3 minutes ago" and "1 day ago" match."""
+    folded = _VOLATILE_TIME.sub("#", _VOLATILE_NUMBER.sub("#", " ".join(str(name).split()).casefold()))
+    return _VOLATILE_RUN.sub("# ", folded).strip()
+
+
+def _without_fragment(url: str) -> str:
+    """The URL with its #fragment dropped: an in-page jump or a hash router is the same document's page."""
+    return str(url or "").partition("#")[0]
+
+
 def click_recheck(recorded: Mapping[str, Any], now: Any) -> list[str]:
     """What differs between the control as the decision saw it and as the page has it now, in words; [] when
     it is the same control in the same document. Anything unreadable is "control": fail closed.
+    The #fragment of the page address is ignored. A name may differ in counts and relative times only when the
+    role and a non-empty href or DOM id are unchanged (_volatile_free); any other change to it counts.
     After LayaBrowse's decision_still_valid (MIT, Copyright (c) 2026 Aryan Bhujade)."""
     if not isinstance(now, Mapping) or not now.get("found"):
         return ["control"]
+
+    def same(key: str) -> bool:
+        return str(recorded.get(key) or "") == str(now.get(key) or "")
+
     changed: list[str] = []
-    for key, word in (("url", "page address"), ("doc", "document"), ("role", "role"), ("name", "name"),
-                      ("href", "href")):
-        if str(recorded.get(key) or "") != str(now.get(key) or ""):
+    if _without_fragment(recorded.get("url")) != _without_fragment(now.get("url")):
+        changed.append("page address")
+    for key, word in (("doc", "document"), ("role", "role")):
+        if not same(key):
             changed.append(word)
+    if not same("name"):
+        anchored = same("role") and ((same("href") and str(now.get("href") or ""))
+                                     or (same("dom_id") and str(now.get("dom_id") or "")))
+        if not (anchored and _volatile_free(str(recorded.get("name") or "")) == _volatile_free(str(now.get("name") or ""))):
+            changed.append("name")
+    if not same("href"):
+        changed.append("href")
     return changed
 
 
@@ -224,25 +260,39 @@ CHALLENGE_TITLES = frozenset({"pardon our interruption", "access denied", "robot
 CHALLENGE_TEXT = ("checking your browser before you access", "checking your browser before accessing",
                   "needs to review the security of your connection before proceeding")
 CHALLENGE_HEAD_CHARS = 500            # the phrases count only at the top of the page, where the check says them
+# Cloudflare's JavaScript check ("Just a moment…", "Checking your browser…", "…review the security of your
+# connection…") usually passes on its own in about five seconds and then loads the real page, so the lane
+# looks again for up to CHALLENGE_SETTLE_SECS before it blocks. Every other check is hard: it never clears by
+# waiting, and the lane stops at once.
+SOFT_CHALLENGE_TITLES = frozenset({"just a moment"})
+CHALLENGE_SETTLE_SECS = 8.0
+CHALLENGE_POLL_SECS = 1.0
 
 
-def browser_blocker(url: str, title: str, text: str) -> str:
-    """ "browser_challenge" when the page is a known bot check, else "". Pure: the URL, the title, the text."""
+def challenge_kind(url: str, title: str, text: str) -> str:
+    """ "hard" for a bot check that waiting never clears, "soft" for Cloudflare's self-clearing JavaScript check,
+    "" for an ordinary page. Pure: the URL, the title, the text."""
     try:
         parts = urlsplit(str(url or ""))
         host, path = (parts.hostname or "").lower(), parts.path
     except ValueError:
         host, path = "", ""
     if path.startswith("/splashui/challenge"):
-        return "browser_challenge"
+        return "hard"
     if path.startswith("/sorry/") and (host == "google.com" or host.endswith(".google.com")):
-        return "browser_challenge"
-    if str(title or "").casefold().strip().rstrip(".…").strip() in CHALLENGE_TITLES:
-        return "browser_challenge"
+        return "hard"
+    name = str(title or "").casefold().strip().rstrip(".…").strip()
+    if name in CHALLENGE_TITLES:
+        return "soft" if name in SOFT_CHALLENGE_TITLES else "hard"
     head = " ".join(str(text or "")[:CHALLENGE_HEAD_CHARS].split()).casefold()
     if any(phrase in head for phrase in CHALLENGE_TEXT):
-        return "browser_challenge"
+        return "soft"
     return ""
+
+
+def browser_blocker(url: str, title: str, text: str) -> str:
+    """ "browser_challenge" when the page is a known bot check (challenge_kind, soft or hard), else ""."""
+    return "browser_challenge" if challenge_kind(url, title, text) else ""
 
 
 def blocked_line(url: str) -> str:
@@ -751,7 +801,10 @@ def snapshot_from_page(raw: Mapping[str, Any], seq: int, secs: float = 0.0) -> S
                                *destinations) if x)
     return Snapshot(seq=seq, app="browser", bundle="eve.browser", title=title, pid=1, elements=tuple(elements),
                     context_lines=context, focused=focused, dialog_text=str(raw.get("dialog") or ""),
-                    node_count=len(elements), truncated=len(elements) >= MAX_CANDIDATES, secs=secs)
+                    node_count=len(elements), truncated=len(elements) >= MAX_CANDIDATES, secs=secs,
+                    # The raw hrefs (query and all: HN's vote?id=…) so the account-change gate sees them.
+                    _hrefs={str(e["id"]): str(e.get("href")) for e in raw.get("elements") or []
+                            if isinstance(e, Mapping) and e.get("href")})
 
 
 def outline_lines(snap: Snapshot, limit: int = 80) -> list[str]:
@@ -783,9 +836,12 @@ class _Page:
     strings are the contract desktop_helpers' adapter keeps, because run_plan and run_delegate read them."""
 
     def __init__(self, page: Any, clock: Callable[[], float] = time.perf_counter, vault: Any = None,
-                 webmcp_probe: bool = False) -> None:
+                 webmcp_probe: bool = False, sleep: Optional[Callable[[float], None]] = None) -> None:
         self.page = page
         self.clock = clock
+        # How the lane waits (seconds). Playwright's own wait by default, which keeps its event loop turning.
+        self.sleep = sleep if sleep is not None else (lambda secs: page.wait_for_timeout(int(secs * 1000)))
+        self._stuck_check = ""                   # the URL of a soft check already waited out once, and still up
         self.vault = vault                        # vault.Vault, or None: the fill effector refuses
         self.approve: Optional[str] = None
         self._seq = 0
@@ -824,26 +880,58 @@ class _Page:
         raw = self._read_dom(lambda: self.page.evaluate(_COLLECT_JS))
         return raw if isinstance(raw, dict) else {"elements": []}
 
+    def settle_check(self, read: Callable[[], Any], look: Callable[[Any], tuple[str, str, str]]) -> Any:
+        """``read()`` again while what it read is a soft bot check (challenge_kind "soft"), every
+        CHALLENGE_POLL_SECS for at most CHALLENGE_SETTLE_SECS, and return the last read. ``look`` turns a read
+        into (url, title, text). A hard check or an ordinary page returns at once. A soft check that was
+        already waited out on this URL is not waited on again: the plan is stopping on it."""
+        value = read()
+        url, title, text = look(value)
+        if challenge_kind(url, title, text) != "soft":
+            self._stuck_check = ""
+            return value
+        if url and url == self._stuck_check:
+            return value
+        t0 = self.clock()
+        for _ in range(int(CHALLENGE_SETTLE_SECS / max(CHALLENGE_POLL_SECS, 0.05))):   # bounded if the clock stands still
+            if self.clock() - t0 + CHALLENGE_POLL_SECS > CHALLENGE_SETTLE_SECS:
+                break
+            self.sleep(CHALLENGE_POLL_SECS)
+            value = read()
+            url, title, text = look(value)
+            if challenge_kind(url, title, text) != "soft":
+                log.info("browser lane: a bot check cleared by itself after %.1f s", self.clock() - t0)
+                self._stuck_check = ""
+                return value
+        log.info("browser lane: a bot check was still up after %.1f s", self.clock() - t0)
+        self._stuck_check = url
+        return value
+
+    @staticmethod
+    def _raw_look(raw: Mapping[str, Any]) -> tuple[str, str, str]:
+        """(url, title, top-of-page text) from one _COLLECT_JS read: what challenge_kind is asked."""
+        head = raw.get("head")
+        if not isinstance(head, str):
+            head = str(raw.get("text_hash") or "").partition(":")[2]
+        url = raw.get("url")
+        return (url if isinstance(url, str) else "", str(raw.get("title") or ""), head)
+
     def snapshot(self) -> Snapshot:
         self._seq += 1
         self._snapshot = None  # a failed read must not leave focused() using the previous document
         self._observed_url = ""
         self._recorded = {}
         t0 = self.clock()
-        raw = self._collect()
+        raw = self.settle_check(self._collect, self._raw_look)    # a Cloudflare check that clears is waited out
         snap = snapshot_from_page(raw, self._seq, self.clock() - t0)
         self._snapshot = snap
         self._observed_url = raw.get("url") if isinstance(raw.get("url"), str) else ""
         # What a decision made on this snapshot is made on: each control as collected, in this document.
         self._recorded = {"url": self._observed_url, "doc": str(raw.get("document_id") or ""),
                           "controls": {str(e.get("id")): (str(e.get("role") or ""), str(e.get("name") or ""),
-                                                          str(e.get("href") or ""))
+                                                          str(e.get("href") or ""), str(e.get("dom_id") or ""))
                                        for e in raw.get("elements") or [] if isinstance(e, Mapping)}}
-        head = raw.get("head")
-        if not isinstance(head, str):
-            head = str(raw.get("text_hash") or "").partition(":")[2]
-        self.blocked = (blocked_line(self._observed_url)
-                        if browser_blocker(self._observed_url, str(raw.get("title") or ""), head) else "")
+        self.blocked = (blocked_line(self._observed_url) if browser_blocker(*self._raw_look(raw)) else "")
         # What "changed" means here: the URL, the title, the page text, or any control's state or label.
         # A toggled checkbox changes no text, so the controls are in the hash too.
         controls = [(e.get("role"), e.get("name"), e.get("value")) for e in raw.get("elements") or []]
@@ -924,7 +1012,7 @@ class _Page:
         if before is None:
             return f"{STALE_PREFIX} {c.label!r} was not in the last look at the page; look again"
         recorded = {"url": self._recorded.get("url", ""), "doc": self._recorded.get("doc", ""),
-                    "role": before[0], "name": before[1], "href": before[2]}
+                    "role": before[0], "name": before[1], "href": before[2], "dom_id": before[3]}
         try:
             now = self.page.evaluate(_RECHECK_JS, {"id": c.id})
         except Exception as e:  # noqa: BLE001 — a document being replaced cannot vouch for the control
@@ -939,7 +1027,7 @@ class _Page:
             return self._blocked()
         norm = " ".join(c.label.split()).casefold()
         # The raw href (query and all: HN's vote?id=…) from the last look; an upvote or follow link asks too.
-        href = (self._recorded.get("controls", {}).get(c.id) or ("", "", ""))[2]
+        href = (self._recorded.get("controls", {}).get(c.id) or ("", "", "", ""))[2]
         if needs_confirmation(c, href) and not (self.approve and self.approve.casefold() == norm):  # "" is no yes
             return f"refused: {c.label!r} is a sensitive control without approval"
         loc = self._locator(c)
@@ -1111,6 +1199,7 @@ class BrowserLane:
         self._context: Any = None
         self._page: Optional[_Page] = None
         self._plain_http: dict[str, str] = {}          # tests only: an https URL the plan contract insists on → a loopback http one
+        self._page_options: dict[str, Any] = {}        # tests only: the _Page clock and sleep (the bot-check wait)
         self._browser: Any = None                         # attach mode: the owner's Chrome, connected over CDP
         self._profile_map: Optional[dict[str, Any]] = None  # attach mode: {account: context}, per connection
         self._fetch_accounts: Callable[[str, str, float], str] = fetch_accounts   # tests swap the HTTP call
@@ -1158,7 +1247,7 @@ class BrowserLane:
             self._context = self._pick_profile(self.config.chrome_profile)   # the owner's profile: their logins
             page = self._context.new_page()                   # eve's own tab; the owner's tabs are never touched
             page.bring_to_front()
-            self._page = _Page(page, vault=self.vault, webmcp_probe=True)
+            self._page = _Page(page, vault=self.vault, webmcp_probe=True, **self._page_options)
             return self._page
         if self._context is None:
             if self._launcher is not None:
@@ -1180,7 +1269,7 @@ class BrowserLane:
             pages = list(self._context.pages)
             page = pages[0] if pages else self._context.new_page()
         page.bring_to_front()
-        self._page = _Page(page, vault=self.vault, webmcp_probe=True)
+        self._page = _Page(page, vault=self.vault, webmcp_probe=True, **self._page_options)
         return self._page
 
     def _profiles(self) -> dict[str, Any]:
@@ -1256,7 +1345,7 @@ class BrowserLane:
             self._context = target
             page = target.new_page()
             page.bring_to_front()
-            self._page = _Page(page, vault=self.vault, webmcp_probe=True)
+            self._page = _Page(page, vault=self.vault, webmcp_probe=True, **self._page_options)
         return email
 
     def _alive(self) -> bool:
@@ -1393,6 +1482,8 @@ class BrowserLane:
         """Read once the text stops growing: a web app (Gmail) says "Loading…" for seconds after the load event
         (live, 2026-09-23: 190 characters read too early). Polls every READ_POLL_SECS, up to READ_WAIT_SECS."""
         p = self._ensure()
+        if not isinstance(p, _Page):                        # a stand-in holding only .page: wall-clock waits
+            p = _Page(p.page, sleep=time.sleep)
 
         def body() -> str:
             try:
@@ -1404,13 +1495,17 @@ class BrowserLane:
             url = str(p.page.url or "")
             return blocked_line(url) if browser_blocker(url, str(p.page.title() or ""), text) else ""
 
-        text, deadline = body(), time.perf_counter() + READ_WAIT_SECS
+        # A Cloudflare check that clears by itself is waited out first (settle_check); a hard one is not.
+        text = p.settle_check(body, lambda t: (str(p.page.url or ""), str(p.page.title() or ""), t))
+        deadline = p.clock() + READ_WAIT_SECS
         blocked = challenge(text)
         if blocked:                                         # a bot check never grows into the answer: no wait
             return {"title": p.page.title(), "url": p.page.url, "text": text[:limit], "signed_out": False,
                     "blocked": blocked}
-        while time.perf_counter() < deadline:
-            time.sleep(READ_POLL_SECS)
+        for _ in range(int(READ_WAIT_SECS / max(READ_POLL_SECS, 0.05)) + 1):   # bounded if the clock stands still
+            if p.clock() >= deadline:
+                break
+            p.sleep(READ_POLL_SECS)
             again = body()
             if len(again) <= len(text) and len(again) >= READ_ENOUGH_CHARS:
                 break                                       # stopped growing, and there is something to read

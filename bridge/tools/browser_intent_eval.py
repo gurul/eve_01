@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """How well does browser_intent.expected_outcome name what a request asks for? Scored with the REAL local Laya.
 
-    .venv/bin/python tools/browser_intent_eval.py [--holdout PATH] [--out PATH]
+    .venv/bin/python tools/browser_intent_eval.py [--holdout PATH] [--out PATH] [--label NAME] [--note TEXT]
+
+--label replaces the holdout path in the report's "holdout" key (for example "v2"); the path is kept in
+"holdout_path". --note is stored as "note", for example to mark a re-run on a set the builders have since seen.
 
 Each line of the holdout is {"id", "request", "kind", "site_host", "query", "n"}, labelled by hand by someone who
 did not read browser_intent.py. Nothing here is stubbed: the shared LayaKindEngine loads the pinned cklxx/laya-browser
@@ -29,7 +32,6 @@ import argparse
 import json
 import os
 import re
-import statistics
 import subprocess
 import sys
 import time
@@ -99,6 +101,8 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--holdout", type=Path, default=HOLDOUT)
     parser.add_argument("--out", type=Path, default=OUT)
+    parser.add_argument("--label", default=None, help='short name for the holdout, stored as "holdout"')
+    parser.add_argument("--note", default=None, help='free text stored as "note"')
     args = parser.parse_args(argv)
 
     cases = [json.loads(line) for line in args.holdout.read_text().splitlines() if line.strip()]
@@ -144,6 +148,8 @@ def main(argv: Optional[list[str]] = None) -> int:
             "wrong": sum(r["wrong"] for r in group),
         }
     precision = round(full / len(answered), 4) if answered else None
+    holdout_path = (str(args.holdout.resolve().relative_to(ROOT.parent)) if args.holdout.resolve().is_relative_to(ROOT.parent)
+                    else str(args.holdout))
     report = {
         "n": n,
         "accuracy": round(full / n, 4) if n else None,
@@ -172,8 +178,9 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "clears": bool(precision is not None and precision >= BAR_PRECISION
                                and n and wrong / n <= BAR_WRONG_SHARE)},
         "model": f"{browser_intent.BROWSER_MODEL}@{browser_intent.BROWSER_REVISION[:7]}/{browser_intent.BROWSER_SUBFOLDER}",
-        "holdout": str(args.holdout.relative_to(ROOT.parent)) if args.holdout.is_relative_to(ROOT.parent)
-                   else str(args.holdout),
+        "holdout": args.label or holdout_path,
+        "holdout_path": holdout_path,
+        **({"note": args.note} if args.note else {}),
         "measured_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
         "misses": [{k: r[k] for k in ("id", "request", "expected", "got", "abstain", "wrong", "fields_wrong")}
                    for r in rows if not r["full_correct"]],
