@@ -41,13 +41,15 @@ EOF
 
 case "${1:-}" in
   --schedule)
+    # launchd started as /bin/sh may not read ~/Documents ("Operation not permitted", 2026-10-16: no run had ever
+    # worked). Started through the venv's python, as the daemon's agent is, the shell it runs can (docs/refresh.md).
     mkdir -p "$(dirname "$PLIST")"
     cat >"$PLIST" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
   <key>Label</key><string>$LABEL</string>
-  <key>ProgramArguments</key><array><string>/bin/sh</string><string>$EVE/tools/steel_update.sh</string></array>
+  <key>ProgramArguments</key><array><string>$PY</string><string>-c</string><string>import subprocess, sys; sys.exit(subprocess.call(["/bin/sh", "$EVE/tools/steel_update.sh"]))</string></array>
   <key>StartCalendarInterval</key><dict><key>Hour</key><integer>5</integer><key>Minute</key><integer>10</integer></dict>
   <key>StandardOutPath</key><string>$LOG</string>
   <key>StandardErrorPath</key><string>$LOG</string>
