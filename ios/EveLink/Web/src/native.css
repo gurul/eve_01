@@ -137,6 +137,26 @@ textarea,
   gap: 14px !important;
 }
 
+/* OpenUI 0.18.1 boxes the thread in a lighter rounded pane wherever the
+   container is not "mobile" (ours never is); the native view paints the
+   only background, so the thread stays flat and transparent. */
+.openui-agent-container,
+.openui-agent-container > .openui-agent-thread-container {
+  margin: 0 !important;
+  border-radius: 0 !important;
+  outline: none !important;
+  background: transparent !important;
+}
+
+/* OpenUI 0.18.1's mascot (the "Working" row before a reply, the Behind the
+   scenes header, the welcome screen): eve shows no OpenUI branding. */
+.openui-behind-the-scenes__glyph,
+.openui-agent-mascot,
+.openui-agent-mascot-loader,
+.openui-agent-welcome-mascot {
+  display: none !important;
+}
+
 /* Owner bubbles: iMessage shape and width. */
 .openui-agent-thread-message-user__content,
 .openui-shell-thread-message-user__content {
