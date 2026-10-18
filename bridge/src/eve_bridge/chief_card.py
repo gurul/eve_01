@@ -501,7 +501,8 @@ def revise(card: Card, patch: Mapping[str, Any], *, said: str, live: Live = LIVE
            home: Optional[Path] = None) -> Card | Refusal:
     """The owner's correction: the take_on fields in ``patch`` replace the card's, as one new revision (rev+1).
     The kind never changes; a finished card is reopened, not revised. Each phase keeps the higher of its old and
-    new door (add-only), phases that already ran keep their state, and every pending approval is cancelled."""
+    new door (add-only), phases that already ran keep their state (a phase is matched by its kind and goal, so
+    one added, removed or moved never resets another), and every pending approval is cancelled."""
     if card.terminal:
         return Refusal(f"{card.id} is {card.status}; reopen it first")
     if "kind" in patch and patch["kind"] != card.kind:
@@ -511,19 +512,29 @@ def revise(card: Card, patch: Mapping[str, Any], *, said: str, live: Live = LIVE
                 home=home)
     if isinstance(new, Refusal):
         return new
+    # A phase is the same phase by what it is (its kind and goal), never by its number: matched by number, a
+    # phase inserted at the front put every later one "in a new place", and a phase that had already run went
+    # back to queued with its result gone, so an act that ran could become eligible again.
+    unclaimed = list(card.phases)
     phases = []
     for p in new.phases:
+        same = next((o for o in unclaimed if o.do == p.do and o.goal == p.goal), None)
+        if same is not None:                             # the same phase: its state stays, its approval does not
+            unclaimed.remove(same)
+            if same.status == "running" and same.n != p.n:
+                # its result comes back by number (chief.on_phase_result) and would land on another phase
+                return Refusal(f"step {same.n} is running; change the card's steps once it finishes")
+            d = higher(same.door, p.door)
+            g = same.grounded if same.door == d else grounded(p.goal, said)
+            phases.append(dataclasses.replace(same, n=p.n, door=d, grounded=g, approval=None))
+            continue
         old = card.phase(p.n)
         if old is None:
             phases.append(p)
             continue
-        d = higher(old.door, p.door)
-        if old.goal == p.goal and old.do == p.do:        # the same phase: its state stays, its approval does not
-            g = old.grounded if old.door == d else grounded(p.goal, said)
-            phases.append(dataclasses.replace(old, door=d, grounded=g, approval=None))
-        else:                                            # a new phase in this place: it inherits the higher door
-            g = p.grounded if p.door == d else grounded(p.goal, said)
-            phases.append(dataclasses.replace(p, door=d, grounded=g))
+        d = higher(old.door, p.door)                     # a new phase in this place: it inherits the higher door
+        g = p.grounded if p.door == d else grounded(p.goal, said)
+        phases.append(dataclasses.replace(p, door=d, grounded=g))
     if missing(new):
         status, waiting = "waiting", "question"
     elif card.status == "waiting" and card.waiting_for == "question":

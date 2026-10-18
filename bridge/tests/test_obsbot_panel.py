@@ -101,6 +101,35 @@ def test_a_new_direction_replaces_the_turn() -> None:
     asyncio.run(go())
 
 
+def test_a_stop_during_the_first_beats_wake_never_turns() -> None:
+    """The wake takes up to about 7 s; a stop in it used to be undone when the turn went out after it."""
+    import threading
+
+    async def go() -> None:
+        sent: list = []
+        p = make_panel(sent)
+        await p._ready()
+        usb = p._cam.usb
+        entered, release = threading.Event(), threading.Event()
+
+        def slow_wake() -> bool:
+            entered.set()
+            release.wait(5)
+            sent.append(("wake", []))
+            return True
+        usb.wake = slow_wake
+        beat = asyncio.ensure_future(p.panel({"action": "hold", "dir": "left", "hold": "a"}))
+        await asyncio.to_thread(entered.wait, 5)
+        assert (await p.panel({"action": "stop", "hold": "a"}))["stopped"]
+        release.set()
+        res = await beat
+        assert res["stopped"] and not res["ok"]
+        assert turns(sent) == ["stop"]                  # no turn after the stop
+        await p.close()
+
+    asyncio.run(go())
+
+
 def test_no_beat_stops_the_gimbal() -> None:
     async def go() -> None:
         sent: list = []

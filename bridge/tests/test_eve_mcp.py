@@ -12,6 +12,7 @@ import dataclasses
 import io
 import json
 import shutil
+import socket
 import tempfile
 import threading
 import time
@@ -188,6 +189,47 @@ def test_post_over_a_real_socket_and_its_two_failures() -> None:
     try:
         asyncio.run(go())
     finally:
+        shutil.rmtree(folder, ignore_errors=True)
+
+
+@pytest.mark.parametrize("reply", [b"", b'{"ok": tr'])
+def test_a_connection_lost_after_the_request_went_out_is_unknown_not_unreachable(reply: bytes) -> None:
+    """The daemon read the whole request (so it may have run it) and the line back never came whole: that
+    used to read as "eve isn't running", which tells the session the call did not happen."""
+    folder = Path(tempfile.mkdtemp(prefix="evm", dir="/tmp"))
+    path = str(folder / "s.sock")
+    listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    listener.bind(path)
+    listener.listen(1)
+    got: list[bytes] = []
+
+    def serve_once() -> None:
+        conn, _ = listener.accept()
+        buf = b""
+        while b"\n" not in buf:
+            chunk = conn.recv(65536)
+            if not chunk:
+                break
+            buf += chunk
+        got.append(buf)
+        conn.sendall(reply)
+        conn.close()
+
+    thread = threading.Thread(target=serve_once, daemon=True)
+    thread.start()
+    try:
+        with pytest.raises(eve_mcp.Lost):
+            eve_mcp.post({"evt": "mcp_call", "name": "send_email"}, 5.0, path)
+        thread.join(5)
+        assert got and got[0].endswith(b"\n")                          # control: the request did arrive whole
+        w = Wire(lambda e, t: (_ for _ in ()).throw(eve_mcp.Lost("reset")))
+        out = w.ask({"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "remember",
+                                                                                  "arguments": {}}})
+        reason = json.loads(out[0]["result"]["content"][0]["text"])["reason"]
+        assert reason == eve_mcp.NO_OUTCOME and "unknown" in reason and "not retry" in reason
+        assert "isn't running" not in reason and "did not run" not in reason
+    finally:
+        listener.close()
         shutil.rmtree(folder, ignore_errors=True)
 
 

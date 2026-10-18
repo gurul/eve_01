@@ -366,3 +366,23 @@ def test_a_finished_plan_never_starts_the_owners_chrome() -> None:
         called.append("ready")
     agent._before_fallback = ready
     assert asyncio.run(agent.run("x")) == "done" and called == []
+
+
+def test_a_stop_while_the_owners_chrome_gets_ready_never_starts_codex() -> None:
+    """A cancel() during _before_fallback only reached the finished planner; Codex then ran the whole task."""
+    agent, made, events = rig(("", ""))
+
+    async def go() -> str:
+        entered, release = asyncio.Event(), asyncio.Event()
+
+        async def ready() -> None:
+            entered.set()
+            await release.wait()
+        agent._before_fallback = ready
+        task = asyncio.create_task(agent.run("log in to turnitin"))
+        await entered.wait()
+        agent.cancel(reason="stopped from Telegram")
+        release.set()
+        return await task
+
+    assert asyncio.run(go()) == "Stopped." and "codex" not in made and events[-1] == ("cancelled", "Stopped.")

@@ -355,7 +355,21 @@ class ReflexFirstAgent:
             if self._cancel_reason is not None:
                 self._on_event(AgentEvent("cancelled", "Stopped."))
                 return "Stopped."
-        self._inner = await self._choose_body(goal)
+        body = await self._choose_body(goal)
+        # The router is an await (Jev, about 2 s) and a Stop in it only set _cancel_reason, since there was no
+        # body to forward it to: look again, or the task starts anyway.
+        if self._cancel_reason is not None:
+            # The body was built and will not run: a warm Codex agent's app-server is closed, and on_done
+            # tells codex_warm.py the hand-out is over, as a run that ended would.
+            discard = getattr(body, "discard", None)
+            try:
+                if discard is not None:
+                    await discard()
+            finally:
+                self._on_done()
+            self._on_event(AgentEvent("cancelled", "Stopped."))
+            return "Stopped."
+        self._inner = body
         # The goal's shape, never its words: enough to tell later whether a link reached the body.
         log.info("app-reflex: %s gets a goal of %s", self.provider, goal_shape(goal))
         try:

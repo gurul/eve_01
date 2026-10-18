@@ -450,6 +450,10 @@ class ObsbotPanel:
                 self._hold = None
                 self._end(hold)
                 return {"ok": False, "line": cam.usb.why or "The camera is asleep and didn't wake.", "stopped": True}
+            if self._hold != (hold, direction):
+                # The wake takes up to about 7 s and the press ended (or another replaced it) meanwhile: the
+                # stop already went out, and a turn now would run the gimbal to the end of its range.
+                return {"ok": False, "line": "", "stopped": True}
             # a new direction replaces the old turn in one request; later beats only renew it
             await asyncio.to_thread(cam.usb.turn, direction, HOLD_SPEED)
             self._beat = self._clock()

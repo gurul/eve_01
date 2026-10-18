@@ -335,7 +335,9 @@ other places. Now it is two calls and one confirmation.
      gives the fact away. The preview counts it;
    - removes matching lines from the records, the profile, `starred.md` and the
      journal (never frontmatter);
-   - deletes matching mem0 memories and their rows in mem0's history database;
+   - deletes matching mem0 memories and their rows in mem0's history database. When mem0 cannot be opened
+     (its ten-minute retry window, no key) or cannot list its memories, the index is reported failed, never
+     as nothing to forget;
    - whenever the search index file exists (with the hybrid switch on, or left from when it was on), deletes every
      round whose full stored text (the opening line, every reply line, or the line before it) matches and its FTS
      row, indexes every indexed day whose file changed again from the redacted transcripts, drops every vector no
@@ -343,7 +345,8 @@ other places. Now it is two calls and one confirmation.
      secure-delete on (counted under `index`). A step that still fails after a few retries (a busy file) makes the
      result `ok: false` with `failed: ["index"]`, never a silent success; a failure in any other layer is reported
      the same way;
-   - removes matching lines from the archive's and the meeting notes' markdown;
+   - removes matching lines from the archive's and the meeting notes' markdown. A file that cannot be
+     rewritten is not counted, and its layer (`archive` or `meetings`) is reported in `failed`;
    - removes matching lines from the Telegram chat log (the `chat_log` layer), and
      the chat's history with them. The daemon and `eve-bridge memory forget`
      both reach it: a daemon that finds the file rewritten by the CLI reads it

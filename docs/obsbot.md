@@ -159,7 +159,8 @@ Holding an arrow works like [Pika's](pika.md#safety) hold-to-drive. The camera o
 - The Mac stops the gimbal when you release the arrow, when no beat came for 450 ms, when the screen closes, and
   when the daemon stops.
 - Each press has its own id. If a beat arrives late, after its press ended, the Mac refuses it. So a late beat never
-  starts the camera turning again.
+  starts the camera turning again. A release while the first beat is still waking the camera (up to about
+  7 s) holds too: the turn never goes out after the wake.
 
 ## Direct USB
 

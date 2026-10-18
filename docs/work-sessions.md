@@ -170,8 +170,10 @@ running daemon over its 0600 local socket (the hooks' transport):
   is unknown and not to retry it.
 - The MCP side waits longer (`call_secs`: the ask timeout plus 120 s). If the
   daemon never answers, closing the socket cancels nothing there, so it says
-  the outcome is unknown and not to retry, never "it did not run"; "eve isn't
-  running on this Mac" when the socket is not there. Arguments over 48 kB never leave.
+  the outcome is unknown and not to retry, never "it did not run". The same
+  holds when the connection breaks after the request went out (a reset, a
+  closed socket, half an answer). "eve isn't running on this Mac" only when
+  the socket is not there or the request never went out. Arguments over 48 kB never leave.
 - **Outside text stays marked.** A result whose words come from outside eve
   (`tool_gate.taints`: mail, the web, memory, notes, a file...) comes back
   with a first text block naming its source and saying it is data, not

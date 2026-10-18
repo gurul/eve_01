@@ -226,8 +226,8 @@ class CodexChat(CodexComputerAgent):
                         answer = await self.ask_user(question + '\n' + reason + '\nReply yes or no.')
                         if answer.strip().lower().rstrip('.!') in ONCE_ANSWERS:
                             decision = 'accept'
-                    except (OSError, TimeoutError):
-                        pass
+                    except Exception:  # noqa: BLE001 — a question that could not be asked is a decline, sent
+                        pass               # now: unanswered, Codex would wait on the approval until max_secs
                 else:
                     self._emit('progress', 'Codex requested permission without enough detail to review here. '
                                'It was declined; no permission was changed.')

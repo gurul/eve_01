@@ -146,6 +146,12 @@ class ChromeLaneAgent:
                 await self._before_fallback()
             except Exception as e:  # noqa: BLE001 — Codex still runs and says what it cannot reach
                 log.warning("chrome-lane: getting the owner's Chrome ready failed (%s)", e)
+        if self._cancel_reason is not None:
+            # A Stop while the owner's Chrome was getting ready reached only the finished planner: Codex
+            # must not start the whole task after it.
+            self.final = "Stopped."
+            self.on_event(AgentEvent("cancelled", self.final))
+            return self.final
         self._current = self._make_fallback()
         self.final = await self._current.run(goal + note)
         return self.final

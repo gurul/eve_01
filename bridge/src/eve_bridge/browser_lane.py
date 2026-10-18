@@ -1248,10 +1248,16 @@ class BrowserLane:
                     raise AttachError("Chrome refused the connection (403): it was declined, or Chrome had no "
                                       "window to ask in") from None
                 raise
-            self._context = self._pick_profile(self.config.chrome_profile)   # the owner's profile: their logins
-            page = self._context.new_page()                   # eve's own tab; the owner's tabs are never touched
-            page.bring_to_front()
-            self._page = _Page(page, vault=self.vault, webmcp_probe=True, **self._page_options)
+            try:
+                self._context = self._pick_profile(self.config.chrome_profile)   # the owner's profile: their logins
+                page = self._context.new_page()               # eve's own tab; the owner's tabs are never touched
+                page.bring_to_front()
+                self._page = _Page(page, vault=self.vault, webmcp_probe=True, **self._page_options)
+            except BaseException:
+                # No profile window (AttachError) or no tab: disconnect and stop the driver, or the connection
+                # leaks and the next _ensure starts a second driver beside it.
+                self._close()
+                raise
             return self._page
         if self._context is None:
             if self._launcher is not None:

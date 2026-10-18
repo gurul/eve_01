@@ -93,6 +93,12 @@ CUSTOM_INSTRUCTIONS = (
 _DAY = re.compile(r"(\d{4}-\d{2}-\d{2})")
 
 
+class Mem0ForgetError(Exception):
+    """A forget that could not reach mem0 (not opened: the retry window, no key; or the listing failed). A 0
+    here would read as "nothing to forget" while the memories stay in Qdrant, so memory.forget_apply reports
+    the index as failed instead."""
+
+
 @dataclass(frozen=True)
 class Mem0Config:
     enabled: bool = False
@@ -632,7 +638,7 @@ class OwnerMemory:
 
     def forget(self, ids: list[str]) -> int:
         """Delete these memories, then everything mem0's history database still holds of them. → how many
-        memories were deleted.
+        memories were deleted. Raises Mem0ForgetError when mem0 is not open.
 
         mem0's ``delete`` removes the vector but writes the old text into its history table (a DELETE row),
         and every earlier ADD/UPDATE row keeps it too; its messages table keeps the last raw messages it was
@@ -646,7 +652,7 @@ class OwnerMemory:
             self._forgets += 1
             mem = self._memory()
             if mem is None:
-                return 0
+                raise Mem0ForgetError("mem0 is not open")
             gone = self._delete(mem, ids)
             self._scrub(ids)
         log.info("mem0: forgot %d memories", len(gone))
@@ -655,18 +661,19 @@ class OwnerMemory:
     def forget_matching(self, match: Callable[[str], bool]) -> int:
         """``find`` and ``forget`` in one hold of the lock, so nothing ``ingest_day`` adds can land between
         the listing and the deletes; and an ingest that read its conversation before this adds nothing
-        after it. → how many memories were deleted."""
+        after it. → how many memories were deleted. Raises Mem0ForgetError when mem0 cannot be reached, as
+        ``forget`` does."""
         with self._lock:
             self._forgets += 1
             mem = self._memory()
             if mem is None:
-                return 0
+                raise Mem0ForgetError("mem0 is not open")
             try:
                 rows = self._all(mem)
             except Exception as e:  # noqa: BLE001
                 log.warning("mem0: listing failed (%s)", type(e).__name__)
-                return 0
-            ids = [str(r["id"]) for r in rows if r.get("id") and match(_match_text(r))]
+                raise Mem0ForgetError(type(e).__name__) from e
+            ids =[str(r["id"]) for r in rows if r.get("id") and match(_match_text(r))]
             gone = self._delete(mem, ids) if ids else []
             if ids:
                 self._scrub(ids)
