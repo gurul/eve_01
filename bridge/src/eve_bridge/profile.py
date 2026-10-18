@@ -554,11 +554,20 @@ class _Guard:
             return None                                   # no working folder: a relative path reaches nothing
         normal = os.path.normpath(path)
         name = self.lexical(normal)
-        if name:
-            # this process's own code, when it lives in a protected folder (a checkout under ~/Documents): only by
-            # its words, so a link from a code folder into a protected one is still followed and refused below
-            return None if self.exempt and (_fold(normal) + "/").startswith(self.exempt) else name
+        if name and not self.in_code(normal):
+            return name
+        # this process's own code may live in a protected folder (a checkout under ~/Documents): its words pass,
+        # but its links are still followed, so one from the checkout into ~/Desktop is refused (review A6)
         return self.walk(path)
+
+    def in_code(self, path: str) -> bool:
+        """Whether a path is at or inside one of this process's own code folders (``exempt``)."""
+        return bool(self.exempt) and (_fold(path) + "/").startswith(self.exempt)
+
+    def toward_code(self, path: str) -> bool:
+        """Whether a path is a code folder, inside one, or a folder on the way to one: the walk may pass these."""
+        folded = _fold(path) + "/"
+        return any(folded.startswith(root) or root.startswith(folded) for root in self.exempt)
 
     def lexical(self, path: str) -> Optional[str]:
         if path.startswith("//"):
@@ -571,7 +580,8 @@ class _Guard:
 
     def walk(self, path: str) -> Optional[str]:
         """Follow ``path``'s symlinks the way the kernel does (posixpath.realpath's walk), stopping short of a protected
-        folder: nothing at or inside one is looked at, since an lstat there is itself an access macOS may ask about."""
+        folder: nothing at or inside one is looked at, since an lstat there is itself an access macOS may ask about.
+        The one exception is the way to this process's own code folders (``toward_code``), which it already reads."""
         seen: dict[str, Optional[str]] = {}
         links = [_MAX_LINKS]
 
@@ -586,7 +596,7 @@ class _Guard:
                     continue
                 new = os.path.join(base, part)
                 name = self.lexical(new)
-                if name:
+                if name and not self.toward_code(new):
                     raise _Reached(name)
                 try:
                     is_link = stat.S_ISLNK(os.lstat(new).st_mode)
@@ -610,7 +620,8 @@ class _Guard:
             return base
 
         try:
-            return self.lexical(follow("/", path))
+            end = follow("/", path)
+            return None if self.in_code(end) else self.lexical(end)
         except _Reached as reached:
             return reached.name
         except (OSError, RecursionError):

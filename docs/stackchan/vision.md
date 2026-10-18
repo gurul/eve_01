@@ -210,7 +210,8 @@ Learned places are brought inside ±`MAX_YAW` and 5..85 before they are looked a
 firmware's owner model learned during the fault were cleared (`presence.json.bak-20260927-*`;
 `{"cmd":"owner","op":"reset"}`).
 
-**The head calibration page.** `eve-bridge head-cal` opens a page on `http://127.0.0.1:8766/` with one
+**The head calibration page.** `eve-bridge head-cal` opens a page on `http://127.0.0.1:8766/` (that address
+only: another Host or another site's Origin gets a 403, so no web page can flip the axes) with one
 button per extreme (up, down, your left, your right, centre). Each holds the head there for 6 s; under each
 axis, "looks right" or "flip". A flip goes to the board as `{"cmd":"axis","pitch_rev":bool,"yaw_rev":bool}`
 (daemon `axis` IPC) and is saved in NVS (`body`: `p_rev`, `y_rev`), applied at the one servo write in

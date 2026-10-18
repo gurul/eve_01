@@ -128,15 +128,17 @@ def ask(predict: Predict, goal: str, clock: Callable[[], float]) -> BodyAnswer:
     except Exception as e:  # noqa: BLE001 — a model that fails abstains: Codex, as before
         return BodyAnswer(0.0, 1.0, 1.0, 0.0, 1.0, 1.0, (clock() - t0) * 1000.0, f"{type(e).__name__}: {e}"[:160])
 
-    def noul(key: str) -> float:
+    # An answer the model left out (or gave as a non-number) fails closed: the safety gates read it as "yes"
+    # (1.0) and the public-job gate as "no" (0.0), so a half-answered private request stays with Codex.
+    def noul(key: str, missing: float) -> float:
         v = (answers.get(key) or {}).get("noul")
-        return float(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else 0.0
+        return float(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else missing
 
     probs = (answers.get("body") or {}).get("probabilities") or {}
     p = probs.get("web_reader")
-    return BodyAnswer(p_auto=float(p) if isinstance(p, (int, float)) else 0.0, accounts=noul("needs_accounts"),
-                      mac=noul("needs_mac"), public=noul("public_read_job"), show=noul("show_owner"),
-                      interact=noul("needs_interaction"), ms=(clock() - t0) * 1000.0)
+    return BodyAnswer(p_auto=float(p) if isinstance(p, (int, float)) else 0.0, accounts=noul("needs_accounts", 1.0),
+                      mac=noul("needs_mac", 1.0), public=noul("public_read_job", 0.0), show=noul("show_owner", 1.0),
+                      interact=noul("needs_interaction", 1.0), ms=(clock() - t0) * 1000.0)
 
 
 def decide(a: BodyAnswer, g: BodyGates) -> str:

@@ -81,3 +81,25 @@ def test_anything_that_reaches_out_or_hides_what_it_calls_still_asks(code: str) 
 def test_no_code_at_all_asks_and_the_bash_tool_always_asks() -> None:
     assert decide(WORKBENCH, {}).action == "ask"
     assert decide("COMPOSIO_REMOTE_BASH_TOOL", {"command": "ls"}).action == "ask"
+
+
+# A string annotation is code Python can evaluate later (typing.get_type_hints; functools.singledispatch's register
+# calls it), and the AST reads it as a plain string, so a tool call hidden in one was never judged.
+@pytest.mark.parametrize("code", [
+    "import typing\ndef f(x: \"run_composio_tool('GOOGLEDRIVE_UPLOAD_FILE', {})\"): pass\ntyping.get_type_hints(f)",
+    "from typing import get_type_hints\ndef f(x: 'run_composio_tool(\"GOOGLEDRIVE_UPLOAD_FILE\", {})'): pass\n"
+    "get_type_hints(f)",
+    "import typing\nA = list[\"run_composio_tool('GOOGLEDRIVE_UPLOAD_FILE', {})\"]\ndef f(x: A): pass\n"
+    "typing.get_type_hints(f)",
+    "import functools\n@functools.singledispatch\ndef f(x): pass\n"
+    "def g(x: \"run_composio_tool('GOOGLEDRIVE_UPLOAD_FILE', {})\"): pass\nf.register(g)",
+    "from typing import ForwardRef\nForwardRef(\"run_composio_tool('GOOGLEDRIVE_UPLOAD_FILE', {})\")",
+])
+def test_a_tool_call_hidden_in_a_string_annotation_asks(code: str) -> None:
+    assert workbench_slugs(code) is None, code
+    assert decide(WORKBENCH, wb(code), DEFAULT_TOOLKIT_POLICY).action == "ask", code
+
+
+def test_plain_typing_still_runs() -> None:
+    code = "from typing import Any\ndef f(x: Any) -> list[str]:\n    return [str(x)]\nprint(f(1))"
+    assert decide(WORKBENCH, wb(code)).action == "run"

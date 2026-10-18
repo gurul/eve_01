@@ -45,3 +45,14 @@ def test_no_daemon_is_said_plainly() -> None:
     ipc, _ = fake(None)
     code, out = head_cal.handle("/api/move", {"pose": "up"}, ipc)
     assert code == 502 and "not reachable" in out["error"]
+
+
+def test_only_the_page_itself_may_call_the_api() -> None:
+    """Review A9 (2026-10-18): any web page could POST /api/axis (text/plain, no preflight) and flip the robot's
+    axes. learning/server.py's guard: the Host is this server's, and an Origin, when sent, is too."""
+    ok = head_cal.allowed
+    assert ok({"Host": "127.0.0.1:8766"}, 8766)                                   # curl, or the page's own GET
+    assert ok({"Host": "127.0.0.1:8766", "Origin": "http://127.0.0.1:8766"}, 8766)
+    assert not ok({"Host": "127.0.0.1:8766", "Origin": "https://evil.example"}, 8766)
+    assert not ok({"Host": "evil.example:8766"}, 8766)                             # DNS rebinding
+    assert not ok({}, 8766)

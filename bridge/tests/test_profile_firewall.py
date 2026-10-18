@@ -403,6 +403,24 @@ def test_this_processs_own_code_stays_importable_inside_a_protected_folder(tmp_p
     assert os.path.normpath(sys.prefix) in roots and (str(SRC) in roots or os.path.realpath(SRC) in roots)
 
 
+def test_a_link_inside_an_exempt_checkout_into_a_protected_folder_is_still_refused(tmp_path: Path) -> None:
+    """Review A6 (2026-10-18): a code folder inside ~/Documents was exempt by its words alone, so a link in it to
+    ~/Desktop (or to the rest of ~/Documents) was read straight through. Its links are followed now."""
+    documents, desktop = tmp_path / "Documents", tmp_path / "Desktop"
+    code = documents / "checkout" / "src"
+    (code / "pkg").mkdir(parents=True)
+    desktop.mkdir()
+    (code / "desk").symlink_to(desktop)
+    (code / "notes").symlink_to(documents / "checkout")
+    (code / "same").symlink_to(code / "pkg")                         # control: a link that stays inside the code
+    guard = profile._Guard("enforce", [(str(documents), "~/Documents"), (str(desktop), "~/Desktop")], os.getpid(),
+                           [str(code)])
+    assert guard.reaches(str(code / "desk" / "secret.txt")) == "~/Desktop"
+    assert guard.reaches(str(code / "notes" / "todo.txt")) == "~/Documents"
+    assert guard.reaches(str(code / "same" / "x.py")) is None
+    assert guard.reaches(str(code / "pkg" / "x.py")) is None
+
+
 # ---- modes, logs, counts ----------------------------------------------------------------------------------------
 
 def test_audit_mode_lets_everything_through_and_counts_it(box: dict[str, Path]) -> None:

@@ -46,6 +46,17 @@ def test_router_needs_every_condition() -> None:
     assert br.make_router(boom, lambda: 0.0)("x") == br.CODEX
 
 
+def test_a_safety_answer_the_model_leaves_out_keeps_codex() -> None:
+    """A gate answer missing from the reply is not a "no": each safety gate reads as "yes" (1.0), so a private
+    request the model half-answered stays on the owner's computer (review A3, 2026-10-18)."""
+    for gate in ("needs_accounts", "needs_mac", "show_owner", "needs_interaction"):
+        a = answer(0.99, 0.05, 0.02, 0.93, 0.1)
+        del a["answers"][gate]
+        assert br.make_router(lambda state, qs, a=a: a, lambda: 0.0)("order history on amazon") == br.CODEX, gate
+        a["answers"][gate] = {"noul": "yes"}                                 # not a number: same as missing
+        assert br.make_router(lambda state, qs, a=a: a, lambda: 0.0)("order history on amazon") == br.CODEX, gate
+
+
 def test_router_state_is_the_request_only_and_the_bodies_are_structured() -> None:
     seen: dict[str, Any] = {}
 

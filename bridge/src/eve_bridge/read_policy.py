@@ -8,17 +8,19 @@ without a card.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 
 def is_within(path: str, base: str) -> bool:
     """True if `path` is inside (or equal to) `base`. Purely lexical — no
-    filesystem access, so it cannot block the event loop or leak reads."""
+    filesystem access, so it cannot block the event loop or leak reads. `..`
+    is folded first (normpath): Path keeps it, so `proj/../../etc` sat "in" proj."""
     if not path or not base:
         return False
     try:
-        p = Path(path).expanduser()
-        b = Path(base).expanduser()
+        p = Path(os.path.normpath(Path(path).expanduser()))
+        b = Path(os.path.normpath(Path(base).expanduser()))
     except (ValueError, RuntimeError):
         return False
     if not (p.is_absolute() and b.is_absolute()):

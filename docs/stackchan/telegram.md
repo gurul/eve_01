@@ -439,6 +439,9 @@ regarding this"). eve reads the script before it runs, without running it
     `_` (`__builtins__` reached `exec`, found by the Lean model, 2026-10-05);
   - a pickle or HDF loader (`pd.read_pickle`, `allow_pickle=`, `read_hdf`),
     pandas' `.eval`/`.query`, and `operator.attrgetter`/`methodcaller`;
+  - anything that evaluates a string annotation as code (`typing.get_type_hints`,
+    `ForwardRef`, `functools.singledispatch`), since a tool call can hide in
+    one;
   - a slug that is not written out as a string, or the helper passed around
     under another name;
   - code that does not parse.

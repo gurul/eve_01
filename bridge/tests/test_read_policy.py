@@ -34,3 +34,11 @@ def test_relative_paths_rejected() -> None:
 def test_empty_rejected() -> None:
     assert not is_within("", "/a")
     assert not is_within("/a", "")
+
+
+def test_dotdot_that_climbs_out_is_not_within():
+    # review A5 (2026-10-18): `..` was never folded, so this read deferred with no card
+    assert not is_within("/Users/a/proj/../../../etc/passwd", "/Users/a/proj")
+    assert not is_within("/Users/a/proj/sub/../../other/x", "/Users/a/proj")
+    assert is_within("/Users/a/proj/sub/../x.txt", "/Users/a/proj")
+    assert is_within("/Users/a/proj/x.txt", "/Users/a/proj/sub/..")

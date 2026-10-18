@@ -134,7 +134,10 @@ DEFAULT_ALWAYS_ASK: tuple[str, ...] = (
     r"^git filter-(branch|repo)",
     r"^git checkout -- ",
     r"^git restore( |$)",
-    r"^git branch -[dD]( |$)",
+    # `git branch` lists by default, so it sits in auto_allow; any flag that
+    # deletes, force-resets, renames, copies or rewires a branch asks — in a
+    # short cluster (`-vd`) or long form (`--delete`), anywhere in the line.
+    r"^git branch\b.*\s(-[a-zA-Z]*[dDfmMcCu]|--(delete|force|move|copy|set-upstream|unset-upstream|edit-description))",
     r"^git tag -d( |$)",
     r"^docker( |$)",
     r"^podman( |$)",

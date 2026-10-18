@@ -107,6 +107,13 @@ document.querySelectorAll('[data-ok]').forEach(b=>b.onclick=()=>{st.textContent=
 </script></html>"""
 
 
+def allowed(headers: Any, port: int) -> bool:
+    """Only this page may call the API (learning/server.py's guard): the Host must be this server's, which stops a
+    rebound DNS name, and an Origin, when the browser sends one, must be too, which stops another site's POST."""
+    here = f"127.0.0.1:{port}"
+    return headers.get("Host") == here and headers.get("Origin", f"http://{here}") == f"http://{here}"
+
+
 def serve(port: int = 8766, socket_path: Optional[str] = None, open_browser: bool = True) -> int:
     def ipc(req: dict[str, Any]) -> Optional[dict[str, Any]]:
         return post(req, socket_path=socket_path, timeout=10.0)
@@ -123,9 +130,13 @@ def serve(port: int = 8766, socket_path: Optional[str] = None, open_browser: boo
             self.wfile.write(body)
 
         def do_GET(self) -> None:  # noqa: N802
+            if not allowed(self.headers, port):
+                return self._send(403, b'{"ok": false, "error": "local access only"}', "application/json")
             self._send(200, PAGE.encode(), "text/html; charset=utf-8")
 
         def do_POST(self) -> None:  # noqa: N802
+            if not allowed(self.headers, port):
+                return self._send(403, b'{"ok": false, "error": "local access only"}', "application/json")
             n = int(self.headers.get("Content-Length") or 0)
             try:
                 body = json.loads(self.rfile.read(n) or b"{}")

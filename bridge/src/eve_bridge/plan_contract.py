@@ -354,9 +354,11 @@ def parse_step(raw: Any, index: int, request: str) -> PlanStep:
         raise PlanError(f"{where}: key must be one of {KEYS}, not {key!r}")
     # The planner's word on where text came from is checked, not trusted: text is the human's only when
     # the request really contains it. Everything else is composed, and composed text is never submitted
-    # without the human's yes (plan_executor).
+    # without the human's yes (plan_executor). It must match whole words: "rm" is inside "terminal".
     said = " ".join(request.casefold().split())
-    source = "utterance" if text and " ".join(text.casefold().split()) in said else "composed"
+    typed = " ".join(text.casefold().split())
+    source = ("utterance" if typed and re.search(r"(?<!\w)" + re.escape(typed) + r"(?!\w)", said)
+              else "composed")
     return PlanStep(kind=str(kind), target=target, label_hint=_text(raw.get("label_hint"), MAX_TARGET_CHARS),
                     text=text, text_source=source if kind == "type" else "utterance", key=key,
                     expect=_expect(raw.get("expect"), where), consequential=bool(raw.get("consequential")))

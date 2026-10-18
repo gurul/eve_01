@@ -864,6 +864,10 @@ def _origin(url: str) -> tuple[str, str, int]:
     return parts.scheme, (parts.hostname or "").lower(), parts.port or (443 if parts.scheme == "https" else 80)
 
 
+# The request headers that may follow a redirect to another origin; every other one is dropped (review A7).
+_REDIRECT_SAFE_HEADERS = frozenset({"Accept", "Accept-language", "Accept-encoding", "User-agent", "Content-type"})
+
+
 class _GuardedRedirects(urllib.request.HTTPRedirectHandler):
     """A redirect is checked like the first URL: a public page cannot bounce the fetch onto the LAN."""
 
@@ -881,11 +885,12 @@ class _GuardedRedirects(urllib.request.HTTPRedirectHandler):
             raise FetchError(f"redirected somewhere not allowed ({why})")
         new = super().redirect_request(req, fp, code, msg, headers, newurl)
         if new is not None and _origin(newurl) != _origin(req.full_url):
-            # urllib copies every header onto a redirect: the OpenRouter key must not follow one to another host,
-            # another port, or down from https to http
-            for name in ("Authorization", "Cookie"):
-                new.headers.pop(name, None)
-                new.unredirected_hdrs.pop(name, None)
+            # urllib copies every header onto a redirect: no key (OpenRouter's Authorization, TinyFish's X-API-Key,
+            # any other a caller sets) may follow one to another host, another port, or down from https to http.
+            # Only the plain request headers cross; urllib stores names capitalize()d.
+            for hdrs in (new.headers, new.unredirected_hdrs):
+                for name in [n for n in hdrs if n.capitalize() not in _REDIRECT_SAFE_HEADERS]:
+                    del hdrs[name]
         return new
 
 

@@ -56,6 +56,25 @@ def test_find_delete_is_always_ask(defaults: MatcherConfig):
     assert classify_command("find . -name '*.pyc' -delete", defaults) == "ask"
 
 
+@pytest.mark.parametrize("command", [
+    "git branch -d old", "git branch -D old", "git branch --delete --force x",
+    "git branch -f main HEAD~5", "git branch --force main HEAD~5",
+    "git branch -M main", "git branch -m old new", "git branch --move old new",
+    "git branch -C a b", "git branch -u origin/x",
+    "git branch --set-upstream-to=origin/x", "git branch -vd old",
+])
+def test_a_git_branch_that_deletes_moves_or_resets_asks(defaults: MatcherConfig, command: str):
+    assert classify_command(command, defaults) == "ask"
+
+
+@pytest.mark.parametrize("command", [
+    "git branch", "git branch -a", "git branch -vv", "git branch --show-current",
+    "git branch --list", "git branch --contains HEAD", "git branch -r --merged",
+])
+def test_a_git_branch_listing_is_still_allowed(defaults: MatcherConfig, command: str):
+    assert classify_command(command, defaults) == "allow"
+
+
 def test_unknown_command_is_default(defaults: MatcherConfig):
     assert classify_command("some-custom-script --flag", defaults) == "default"
 

@@ -22,7 +22,9 @@ refocused on the robot; the current knobs are in [../../bridge/README.md](../../
   `fd -x`, `rg --pre`, `tree -o`, `git --output`/`--ext-diff`/`-c`) falls through as
   unmatched, whatever the config says. Before 2026-09-25 the anchored patterns allowed
   `echo x; rm -rf ~`. This holds for every `matchers.toml`, and is proved in Lean
-  (`verification/Eve/Command.lean`; see [verification](../verification.md)).
+  (`verification/Eve/Command.lean`; see [verification](../verification.md)). `git branch`
+  lists without asking; with a flag that deletes, force-resets, renames, copies or rewires a
+  branch (`-d`, `-D`, `-f`, `-m`, `-M`, `-c`, `-C`, `-u`, or their long forms) it always asks.
 - **Summons your terminal.** Tap the pet while it demands attention and the daemon raises
   the terminal of the session that's blocked on you. Window-level matching by the session's repo name works everywhere —
   AppleScript for iTerm2/Terminal.app, Accessibility (AXRaise) for Ghostty, Warp, cmux and
