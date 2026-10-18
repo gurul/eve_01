@@ -30,6 +30,15 @@ enum ChatBridgeMessage: Equatable, Sendable {
     /// message of emoji, flags or combining marks that passes here is never refused there.
     static func tooLong(_ text: String) -> Bool { text.unicodeScalars.count > maxText }
 
+    /// For a turn `init` refused: the page's open turn must still end, so it hears onError with `line` (as the eve
+    /// lite host's turnProblem answers). nil when the message is not a turn with an id to answer.
+    static func refusedTurn(_ body: Any) -> (id: String, line: String)? {
+        guard let msg = body as? [String: Any], msg["type"] as? String == "turn",
+              let id = msg["id"] as? String, !id.isEmpty, id.count <= maxID else { return nil }
+        let text = ((msg["text"] as? String) ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        return (id, tooLong(text) ? "Too long: \(maxText) characters at most." : "That message couldn't be sent. Send it again.")
+    }
+
     /// `body` is WKScriptMessage.body: a dictionary for a JS object.
     init?(body: Any) {
         guard let msg = body as? [String: Any], let type = msg["type"] as? String else { return nil }

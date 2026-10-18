@@ -16,10 +16,16 @@ final class Dictation: ObservableObject {
     private var task: SFSpeechRecognitionTask?
     private var recognizer: SFSpeechRecognizer?
     private var onText: ((String) -> Void)?
+    /// A start is waiting on the permission answers; a stop meanwhile cancels it.
+    private var starting = false
+    private var startCancelled = false
 
     /// Start listening. `onText` gets the whole transcription so far each time it changes.
     func start(onText: @escaping (String) -> Void) async {
-        guard !listening else { return }
+        guard !listening, !starting else { return }
+        starting = true
+        startCancelled = false
+        defer { starting = false }
         problem = nil
         guard await Self.speechAllowed() else {
             problem = "Allow Speech Recognition for Eve Link in Settings to dictate."
@@ -29,6 +35,7 @@ final class Dictation: ObservableObject {
             problem = "Allow the microphone for Eve Link in Settings to dictate."
             return
         }
+        guard !startCancelled else { return }        // stopped (a call, the background, send) while asking
         guard let recognizer = SFSpeechRecognizer() ?? SFSpeechRecognizer(locale: Locale(identifier: "en-US")),
               recognizer.isAvailable else {
             problem = "Dictation isn't available right now."
@@ -76,6 +83,7 @@ final class Dictation: ObservableObject {
     /// Stop listening. `releaseSession: false` when a call is taking the microphone: the shared audio session is the
     /// call's now, and deactivating it would cut the call's audio.
     func stop(releaseSession: Bool = true) {
+        if starting { startCancelled = true }
         guard listening else { return }
         listening = false
         engine.stop()

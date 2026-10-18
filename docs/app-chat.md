@@ -621,11 +621,18 @@ failed call: the first-message title and the rules above.
   loader and its "Something went wrong" callout are hidden. The page retries
   the history quietly with backoff (1 s, doubling to 15 s), and the list fills
   when eve answers.
+- No OpenUI branding and no lighter pane. Since react-ui 0.18.1 OpenUI draws
+  its mascot in the "Working" row before a reply, in the Behind the scenes
+  header, in its loaders and on the welcome screen; all of them are hidden
+  (`native.css`). The Thinking and tool icons in the same row stay. 0.18.1
+  also boxes the thread in a lighter rounded pane when the container is not
+  "mobile" (under 768 px wide, measured), which on the phone is the first
+  frame; the pane is flattened, so the native background is the only one.
 - No sticky hover. iOS keeps `:hover` on a tapped element until the next tap,
   so the build moves every `:hover` rule into `@media (hover: hover)`
   (`vite.config.ts`, `hoverOnlyWithPointer`). A tapped button does not stay
   highlighted.
-- A markdown reply streams in word by word. OpenUI (react-ui 0.18.0) shows a live reply
+- A markdown reply streams in word by word. OpenUI (react-ui 0.18.1) shows a live reply
   only when its text has an OpenUI Lang fence, so the page puts an empty
   ```` ```openui-lang ```` fence in front of each live reply
   (`llm.ts`, `liveMarkdownAdapter`) and the renderer drops it (`replyParts.ts`,
@@ -944,7 +951,7 @@ only the components that suit a phone chat (`CHAT_COMPONENTS`):
   their articles, and a comparison table.
 - The two syntax rules that show a placeholder component name now show real
   components.
-- The app is on OpenUI Lang 1.0 (react-lang 1.0.0, react-ui 0.18.0). One
+- The app is on OpenUI Lang 1.0 (react-lang 1.0.1, react-ui 0.18.1). One
   action step goes bare, `Button("Go", @ToAssistant("Go"))`; several go in
   `Action([...])`. The examples use the bare form, as the library's own prompt
   does. The script stops with an error if the reference names any step other

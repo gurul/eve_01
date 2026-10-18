@@ -81,18 +81,27 @@ final class ChatModel: NSObject, ObservableObject {
     }
 
     /// Read the eve/Muse switch from the daemon (when the chat becomes ready and when the app comes back).
-    func refreshMuse() { museCall(nil) }
+    /// A read never cancels a flip in flight (the flip's answer is the newer state); a flip cancels a read.
+    func refreshMuse() {
+        guard !transport.inFlight(Self.museSet) else { return }
+        museCall(nil)
+    }
 
     /// The composer's switch: the next words go to Muse, or back to eve. Shown flipped at once; the daemon's answer wins.
     func toggleMuse() {
         Self.play(.light)
         let next = !muse.on
         muse.on = next
+        transport.cancel(id: Self.museRead)
         museCall(next)
     }
 
+    private static let museRead = "muse"
+    private static let museSet = "muse-set"
+
     private func museCall(_ on: Bool?) {
-        transport.json(id: "muse", { ChatRequests.muse($0, on: on) }) { [weak self] result in
+        let id = on == nil ? Self.museRead : Self.museSet
+        transport.json(id: id, { ChatRequests.muse($0, on: on) }) { [weak self] result in
             guard let self else { return }
             switch result {
             case .success(let json):
@@ -180,6 +189,9 @@ final class ChatModel: NSObject, ObservableObject {
     fileprivate func received(_ body: Any) {
         guard let msg = ChatBridgeMessage(body: body) else {
             diag("chat: dropped a message the bridge does not know")
+            if let refused = ChatBridgeMessage.refusedTurn(body) {
+                js("onError", [ChatJS.literal(refused.id), ChatJS.literal(refused.line)])
+            }
             return
         }
         handle(msg)

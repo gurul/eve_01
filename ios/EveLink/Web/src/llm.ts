@@ -26,10 +26,11 @@ function lastUser(messages: Message[]): Message | undefined {
 
 /**
  * openAIAdapter, with LIVE_MARK (an empty ```openui-lang fence) in front of
- * the reply's first words. OpenUI (react-ui 0.18.0)'s InterleavedTurn renders a live
- * turn's message only once its text "has lang syntax" (a fence or `root =`),
- * so a plain markdown reply stayed hidden behind the loader until the run
- * ended. splitReply drops the mark, so it never shows.
+ * the reply's first words. OpenUI's InterleavedTurn (react-ui 0.18.0, still
+ * so in 0.18.1) renders a live turn's message only once its text "has lang
+ * syntax" (a fence or `root =`), so a plain markdown reply stayed hidden
+ * behind the loader until the run ended. splitReply drops the mark, so it
+ * never shows.
  */
 export function liveMarkdownAdapter(inner: StreamProtocolAdapter = openAIAdapter()): StreamProtocolAdapter {
   return {

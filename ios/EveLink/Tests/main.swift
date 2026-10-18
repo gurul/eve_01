@@ -270,6 +270,14 @@ check(ChatBridgeMessage(body: ["type": "turn", "id": "t1", "text": String(repeat
       == nil, "a turn over 4000 characters refused")
 check(ChatBridgeMessage(body: ["type": "turn", "id": "t1", "text": String(repeating: "x", count: 4000), "client_id": "c"])
       != nil, "4000 characters allowed (control)")
+// A refused turn still ends on the page: native answers onError for its id, so the page never waits forever.
+let longTurn: [String: Any] = ["type": "turn", "id": "t1", "text": String(repeating: "x", count: 4001), "client_id": "c"]
+check(ChatBridgeMessage.refusedTurn(longTurn)?.id == "t1"
+      && ChatBridgeMessage.refusedTurn(longTurn)?.line == "Too long: 4000 characters at most.", "a long turn hears why")
+check(ChatBridgeMessage.refusedTurn(["type": "turn", "id": "t2", "text": "hi"])?.line
+      == "That message couldn't be sent. Send it again.", "a turn refused for another reason still hears onError")
+check(ChatBridgeMessage.refusedTurn(["type": "turn", "text": "hi"]) == nil
+      && ChatBridgeMessage.refusedTurn(["type": "topics", "id": "q1"]) == nil, "no turn id, or not a turn: nothing to answer")
 check(ChatBridgeMessage(body: ["type": "turn", "id": "t1", "text": "hi", "client_id": String(repeating: "c", count: 65)])
       == nil, "client_id over 64 refused")
 check(ChatBridgeMessage(body: ["type": "turn", "id": "t1", "text": "hi"]) == nil, "turn without client_id refused")
@@ -372,6 +380,8 @@ check(ChatFailure.from(URLError(.cannotFindHost)).addressMayHaveMoved
 check(!ChatFailure.from(status: 401, body: Data()).addressMayHaveMoved
       && !ChatFailure.from(status: 503, body: Data()).addressMayHaveMoved
       && !ChatFailure.from(URLError(.cancelled)).addressMayHaveMoved, "401, 503 and a cancel do not")
+check(ChatFailure.from(status: 401, body: Data()).message.contains("eve-bridge link pair"),
+      "a 401 says how to pair again: on the Mac")
 check(ChatFailure.from(status: 503, body: Data(#"{"ok":false,"error":"no chat"}"#.utf8)).message == "no chat",
       "503 shows the daemon's words")
 
@@ -1733,5 +1743,40 @@ check(WorkFailure.from(status: 401, body: Data(), for: .sessions).message.hasPre
       "the shared words otherwise: 401 re-pair, 530 retried at the new address")
 check(WorkFailure.from(status: 503, body: Data(), for: .jobs).message == "eve's chief is off.", "jobs keep their words")
 print("WORK_SESSIONS_OK")
+
+// ChatTransport: a request replaced under the same id keeps its entry when the older one finishes, and a poll the
+// app gives up on (the background grace) ends with onError, not silence. Nothing listens on 127.0.0.1:1, so each
+// request fails at once as "address may have moved" and waits in `refresh`, which the test answers.
+do {
+    var refreshes: [CheckedContinuation<Bool, Never>] = []
+    let t = ChatTransport(endpoint: { ChatEndpoint(base: URL(string: "http://127.0.0.1:1")!, token: "t") },
+                          refresh: { await withCheckedContinuation { refreshes.append($0) } })
+    func spin(until done: () -> Bool) async {     // yields the main actor, where the transport's tasks run
+        let end = Date().addingTimeInterval(10)
+        while !done() && Date() < end { try? await Task.sleep(for: .milliseconds(10)) }
+    }
+    var firstEnded = false
+    var secondEnded: Result<String, ChatFailure>?
+    t.messages(id: "p", after: nil, wait: 0) { _ in firstEnded = true }
+    await spin { refreshes.count == 1 }
+    t.messages(id: "p", after: nil, wait: 0) { secondEnded = $0 }
+    await spin { refreshes.count == 2 }
+    check(refreshes.count == 2, "both polls reached refresh")
+    if refreshes.count == 2 {
+        refreshes[0].resume(returning: false)
+        try? await Task.sleep(for: .milliseconds(200))     // the replaced poll's tail runs
+        check(t.inFlight("p") && !firstEnded, "the replaced poll's end leaves the newer one in place, and says nothing")
+        t.cancelAll(as: .error("Stopped while Eve Link was in the background."))
+        refreshes[1].resume(returning: false)
+        await spin { secondEnded != nil }
+    }
+    if case .failure(let f) = secondEnded {
+        check(f.message == "Stopped while Eve Link was in the background.", "a poll stopped in the background says so")
+    } else {
+        check(false, "a poll stopped in the background ends with onError")
+    }
+    check(!t.inFlight("p"), "and is forgotten")
+}
+print("CHAT_TRANSPORT_OK")
 if failures > 0 { print("\(failures) check(s) failed"); exit(1) }
 print("eve link: all checks passed")

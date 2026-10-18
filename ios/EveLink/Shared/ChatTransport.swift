@@ -172,8 +172,9 @@ struct ChatFailure: Error, Equatable, Sendable {
     static func from(status: Int, body: Data) -> ChatFailure {
         let said = (try? JSONSerialization.jsonObject(with: body) as? [String: Any])?["error"] as? String
         switch status {
-        case 401: return ChatFailure(message: "Eve Link's pairing is out of date. Pair again from Telegram (/stick).",
-                                     addressMayHaveMoved: false)
+        case 401:
+            let line = "Eve Link's pairing is out of date. Pair again: run eve-bridge link pair on the Mac."
+            return ChatFailure(message: line, addressMayHaveMoved: false)
         case 403: return ChatFailure(message: "eve refused the request.", addressMayHaveMoved: false)
         case 503: return ChatFailure(message: said ?? "eve's chat isn't running.", addressMayHaveMoved: false)
         case 502, 530: return ChatFailure(message: "Can't reach eve.", addressMayHaveMoved: true)
@@ -300,8 +301,10 @@ final class ChatTransport {
     private let session: URLSession
     private let endpoint: @MainActor () -> ChatEndpoint?
     private let refresh: @MainActor () async -> Bool
-    private var tasks: [String: Task<Void, Never>] = [:]
-    private var cancelledAs: [String: ChatEnding] = [:]
+    /// Each request under its page id, with a token of its own: a request that replaces another under the same id
+    /// must not have its entry cleared by the older one's tail.
+    private var tasks: [String: (token: UUID, task: Task<Void, Never>)] = [:]
+    private var cancelledAs: [UUID: ChatEnding] = [:]
     private(set) var turnsInFlight: Set<String> = [] {
         didSet { if turnsInFlight.isEmpty != oldValue.isEmpty { onBusy?(!turnsInFlight.isEmpty) } }
     }
@@ -328,7 +331,8 @@ final class ChatTransport {
         cancel(id: id, as: .silent)
         turnsInFlight.insert(id)
         let session = session
-        tasks[id] = Task { [weak self] in
+        let token = UUID()
+        tasks[id] = (token, Task { [weak self] in
             var ending = ChatEnding.done
             var retried = false
             while true {
@@ -349,12 +353,11 @@ final class ChatTransport {
                 break
             }
             guard let self else { return }
-            if Task.isCancelled { ending = self.cancelledAs[id] ?? .silent }
-            self.cancelledAs[id] = nil
-            self.tasks[id] = nil
-            self.turnsInFlight.remove(id)
+            let cancelledAs = self.finish(id, token)
+            if Task.isCancelled { ending = cancelledAs ?? .silent }
+            if self.tasks[id] == nil { self.turnsInFlight.remove(id) }
             onEnd(ending)
-        }
+        })
     }
 
     /// GET the messages and hand back the response body as text.
@@ -362,7 +365,8 @@ final class ChatTransport {
                   onEnd: @escaping @MainActor (Result<String, ChatFailure>) -> Void) {
         cancel(id: id, as: .silent)
         let session = session
-        tasks[id] = Task { [weak self] in
+        let token = UUID()
+        tasks[id] = (token, Task { [weak self] in
             var result: Result<String, ChatFailure> = .failure(ChatFailure(message: "Eve Link isn't paired.",
                                                                            addressMayHaveMoved: false))
             var retried = false
@@ -377,11 +381,14 @@ final class ChatTransport {
                 break
             }
             guard let self else { return }
-            let cancelled = Task.isCancelled
-            self.cancelledAs[id] = nil
-            self.tasks[id] = nil
-            if !cancelled { onEnd(result) }
-        }
+            let cancelledAs = self.finish(id, token)
+            if !Task.isCancelled {
+                onEnd(result)
+            } else if case .error(let message) = cancelledAs {
+                // The app gave up on it (the background grace): the page hears it now, not at its own timeout.
+                onEnd(.failure(ChatFailure(message: message, addressMayHaveMoved: false)))
+            }
+        })
     }
 
     /// One small JSON request for the page (Horizontal History), with one retry at eve's new address like
@@ -390,7 +397,8 @@ final class ChatTransport {
               onEnd: @escaping @MainActor (Result<String, ChatFailure>) -> Void) {
         cancel(id: id, as: .silent)
         let session = session
-        tasks[id] = Task { [weak self] in
+        let token = UUID()
+        tasks[id] = (token, Task { [weak self] in
             var result: Result<String, ChatFailure> = .failure(ChatFailure(message: "Eve Link isn't paired.",
                                                                            addressMayHaveMoved: false))
             var retried = false
@@ -404,11 +412,14 @@ final class ChatTransport {
                 break
             }
             guard let self else { return }
-            let cancelled = Task.isCancelled
-            self.cancelledAs[id] = nil
-            self.tasks[id] = nil
-            if !cancelled { onEnd(result) }
-        }
+            let cancelledAs = self.finish(id, token)
+            if !Task.isCancelled {
+                onEnd(result)
+            } else if case .error(let message) = cancelledAs {
+                // The app gave up on it (the background grace): the page hears it now, not at its own timeout.
+                onEnd(.failure(ChatFailure(message: message, addressMayHaveMoved: false)))
+            }
+        })
     }
 
     /// Upload one attachment → what the daemon kept. One retry at eve's new address, as a turn has.
@@ -478,9 +489,18 @@ final class ChatTransport {
     /// Stop a turn or a poll. `as` is what the page hears for a turn: nothing when it asked, onDone for the native
     /// Stop button, onError when the app gave up on it in the background.
     func cancel(id: String, as ending: ChatEnding = .silent) {
-        guard let task = tasks[id] else { return }
-        cancelledAs[id] = ending
-        task.cancel()
+        guard let entry = tasks[id] else { return }
+        cancelledAs[entry.token] = ending
+        entry.task.cancel()
+    }
+
+    /// A request under `id` is still running.
+    func inFlight(_ id: String) -> Bool { tasks[id] != nil }
+
+    /// A request's tail: how it was cancelled, if it was; its entry is forgotten unless a newer one holds the id.
+    private func finish(_ id: String, _ token: UUID) -> ChatEnding? {
+        if tasks[id]?.token == token { tasks[id] = nil }
+        return cancelledAs.removeValue(forKey: token)
     }
 
     func cancelAll(as ending: ChatEnding) {

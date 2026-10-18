@@ -91,7 +91,7 @@ textarea,
 .openui-agent-container {
   height: 100%;
   width: 100%;
-  background: transparent;
+  background: transparent !important;
 }
 
 /* The list starts below the native top bar and ends 16 px above the native
@@ -137,10 +137,12 @@ textarea,
   gap: 14px !important;
 }
 
-/* OpenUI 0.18.1 boxes the thread in a lighter rounded pane wherever the
-   container is not "mobile" (ours never is); the native view paints the
-   only background, so the thread stays flat and transparent. */
-.openui-agent-container,
+/* OpenUI 0.18.1 boxes the thread in a lighter rounded pane whenever the
+   container is not "mobile". Mobile is 0 < width < 768, so on the phone
+   (portrait only) the pane shows on the first frame, before the width is
+   measured, and would at 768 px and wider. The native view paints the only
+   background, so the thread stays flat and transparent (the container's own
+   background is cleared with its other rules above). */
 .openui-agent-container > .openui-agent-thread-container {
   margin: 0 !important;
   border-radius: 0 !important;
@@ -149,8 +151,11 @@ textarea,
 }
 
 /* OpenUI 0.18.1's mascot (the "Working" row before a reply, the Behind the
-   scenes header, the welcome screen): eve shows no OpenUI branding. */
-.openui-behind-the-scenes__glyph,
+   scenes header, the welcome screen): eve shows no OpenUI branding. Only the
+   glyph slot that holds the mascot goes; the same slot holds the Thinking and
+   tool icons, which stay. The mascot loader goes too: like the hidden
+   "Loading conversation…" screen above, eve shows no web loading screen. */
+.openui-behind-the-scenes__glyph:has(> .openui-agent-mascot),
 .openui-agent-mascot,
 .openui-agent-mascot-loader,
 .openui-agent-welcome-mascot {
