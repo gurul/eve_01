@@ -230,3 +230,34 @@ def test_the_door_note_never_steers_the_route() -> None:
     agent, codex, chrome, opened = _routed_rig()
     asyncio.run(agent.run("open youtube.com in chrome", note=TASK_FILE_HINT))
     assert codex.goals == [] and chrome.goals == ["open youtube.com in chrome" + TASK_FILE_HINT]
+
+
+def test_a_stop_while_the_body_router_thinks_never_starts_the_body() -> None:
+    """A Stop during the router's await (Jev, about 2 s) used to be recorded and then ignored: the body ran."""
+    async def go() -> None:
+        events: list[tuple[str, str]] = []
+        codex, chrome = Inner(), Inner()
+        discarded: list[str] = []
+
+        async def discard() -> None:
+            discarded.append("codex")
+        codex.discard = discard                          # type: ignore[attr-defined]  # a warm agent's close
+        asked, release = asyncio.Event(), asyncio.Event()
+
+        async def route_body(goal: str) -> str:
+            asked.set()
+            await release.wait()
+            return "codex"
+
+        agent = ReflexFirstAgent(lambda: codex, lambda ev: events.append((ev.kind, ev.text)), apps=lambda: APPS,
+                                 opener=lambda app: _ok(), make_auto=lambda: chrome, route_body=route_body,
+                                 on_done=lambda: events.append(("done", "")))
+        task = asyncio.create_task(agent.run("play jazz on spotify"))
+        await asked.wait()
+        agent.cancel(reason="stop")
+        release.set()
+        assert await task == "Stopped."
+        assert codex.goals == chrome.goals == [] and ("cancelled", "Stopped.") in events
+        assert discarded == ["codex"] and ("done", "") in events      # the warm agent closed, the next one warmed
+
+    asyncio.run(go())

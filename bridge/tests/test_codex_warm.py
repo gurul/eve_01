@@ -94,6 +94,41 @@ def test_close_discards_the_ready_agent() -> None:
     asyncio.run(go())
 
 
+def test_the_refresh_loop_never_warms_a_second_app_server_while_a_task_runs() -> None:
+    """refresh_loop kicked every 60 s regardless: once take() handed out the warm agent, the next refresh
+    started a second app-server during the task. A warm-up still in flight at take() is called off too."""
+    async def go() -> None:
+        Fake.made = []
+        pool = WarmCodex(Fake)
+        pool.kick()
+        await asyncio.gather(*pool._jobs)
+        task_agent = pool.take(None, None)                 # a task starts with the warm agent
+        loop = asyncio.ensure_future(pool.refresh_loop(every=3600))
+        await asyncio.sleep(0)                             # the loop's first pass: its kick, then its sleep
+        await asyncio.gather(*pool._jobs)
+        assert Fake.made == [task_agent] and pool._ready is None
+        pool.kick()                                        # the task ended (app_reflex's on_done)
+        await asyncio.gather(*pool._jobs)
+        assert len(Fake.made) == 2 and pool._ready is Fake.made[1]      # control: warming still works after it
+
+        slow = asyncio.Event()
+
+        class Slow(Fake):
+            async def prewarm(self) -> None:
+                await slow.wait()
+                self.warmed = True
+        pool2 = WarmCodex(Slow)
+        pool2.kick()                                       # warming, not ready yet
+        await asyncio.sleep(0)
+        pool2.take(None, None)                             # a task starts cold meanwhile
+        slow.set()
+        await asyncio.gather(*pool2._jobs, return_exceptions=True)
+        assert pool2._ready is None and Fake.made[2].discarded
+        loop.cancel()
+        await asyncio.gather(loop, return_exceptions=True)
+    asyncio.run(go())
+
+
 def test_configured() -> None:
     assert codex_warm.configured({}) == (True, codex_warm.DEFAULT_MAX_AGE_SECS)
     assert codex_warm.configured({"EVE_CODEX_PREWARM": "0", "EVE_CODEX_WARM_SECS": "5"}) == (False, 60.0)

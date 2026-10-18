@@ -83,7 +83,11 @@ loads with its acts one-way. An act whose goal has none of the listed wording
 is not marked "not grounded": nothing in it came from eve's plan.
 
 The brain may raise a phase to one-way; it can never lower one. A revision keeps
-the higher door of each phase. A one-way phase whose wording is not in the
+the higher door of each phase. A revision matches each phase by its kind and
+goal, not its number: adding, removing or moving a step never resets a step
+that already ran, which keeps its status and result under its new number. A
+revision that would move a running step is refused until the step finishes,
+because its result comes back by number. A one-way phase whose wording is not in the
 owner's own words is marked **not grounded**, and the Go says so.
 
 `rev` counts changes to what the owner agreed to. A Go is bound to the card,

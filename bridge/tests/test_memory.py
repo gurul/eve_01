@@ -455,6 +455,38 @@ def test_forget_apply_does_not_squash_when_nothing_was_forgotten(
     assert out["ok"] is True and out["total"] == 0 and out["history_squashed"] == []
 
 
+def test_forget_apply_is_not_ok_when_mem0_could_not_be_opened(
+        tmp_path: Path, fake_records: FakeRecords) -> None:
+    """mem0 in its retry window (or with no key) answered a forget with 0, and the index read as done."""
+    from eve_bridge.mem0_memory import Mem0Config, OwnerMemory
+
+    def broken(_c: Mem0Config) -> Any:
+        raise ImportError("no mem0")
+
+    index = OwnerMemory(Mem0Config(enabled=True, home=tmp_path / "mem0"), factory=broken)
+    m, *_ = build(tmp_path, index)                     # type: ignore[arg-type]
+    out = m.forget_apply(m.forget_preview(SENTINEL)["token"])
+    assert out["ok"] is False and out["failed"] == ["index"]
+
+
+def test_forget_apply_is_not_ok_when_a_markdown_file_could_not_be_rewritten(
+        tmp_path: Path, fake_records: FakeRecords, monkeypatch: pytest.MonkeyPatch) -> None:
+    """The matched lines were counted before the rewrite and its OSError swallowed: ok, with the words on disk."""
+    m, _tx, _cfg, _index, _, files = forget_fixture(tmp_path)
+    token = m.forget_preview(SENTINEL)["token"]
+    real = mem._atomic_rewrite
+
+    def refuse_meetings(path: Path, text: str) -> None:
+        if path == files["meeting"]:
+            raise PermissionError("read-only")
+        real(path, text)
+    monkeypatch.setattr(mem, "_atomic_rewrite", refuse_meetings)
+    out = m.forget_apply(token)
+    assert out["ok"] is False and out["failed"] == ["meetings"]
+    assert out["layers"]["meetings"] == 0 and out["layers"]["archive"] == 2   # only what really went is counted
+    assert SENTINEL in files["meeting"].read_text() and files["day"].read_text() == "# Day\n- other\n"
+
+
 def test_forget_markdown_never_touches_frontmatter_symlinks_or_git(tmp_path: Path) -> None:
     folder = tmp_path / "md"
     note = write(folder / "a.md", f"---\nid: {SENTINEL}\n---\n{SENTINEL} body\nkeep\n")

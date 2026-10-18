@@ -222,6 +222,37 @@ def test_a_revision_cancels_approvals_keeps_state_and_never_changes_the_kind() -
     assert isinstance(answered, Card) and answered.status == "active" and answered.waiting_for is None
 
 
+def test_a_phase_inserted_at_the_front_keeps_every_phase_that_ran() -> None:
+    """Phases used to be matched by number: one inserted at the front put each later phase "in a new place",
+    and the research that had run went back to queued with its result gone (an act that ran could run again)."""
+    c = dataclasses.replace(card(), id="c1")
+    ran = dataclasses.replace(c.phases[0], status="ok", executor="search_router",
+                              result=PhaseResult("done", (Evidence("links", "https://a.example/1"),)))
+    acted = dataclasses.replace(c.phases[2], status="ok", executor="browser",
+                                result=PhaseResult("done", (Evidence("ui_seen", "order confirmed"),)))
+    c = dataclasses.replace(c, phases=(ran, c.phases[1], acted))
+    front = {"do": "research", "goal": "measure the office wall", "door": None}
+    patch = {"phases": [front] + [{"do": p.do, "goal": p.goal, "door": None} for p in c.phases]}
+    new = cc.revise(c, patch, said="change c1: measure the wall first, then order the picked desk")
+    assert isinstance(new, Card)
+    assert [p.n for p in new.phases] == [1, 2, 3, 4]
+    assert new.phases[0].goal == front["goal"] and new.phases[0].status == "queued" and new.phases[0].result is None
+    assert (new.phases[1].goal, new.phases[1].status, new.phases[1].result) == (ran.goal, "ok", ran.result)
+    assert new.phases[2].status == "queued"                                   # control: it never ran
+    assert (new.phases[3].goal, new.phases[3].status, new.phases[3].result) == (acted.goal, "ok", acted.result)
+    assert new.phases[3].door == "one_way" and new.phases[3].executor == "browser"
+    # a phase deleted before them: the later ones keep their state and take the new numbers
+    gone = cc.revise(c, {"phases": [{"do": p.do, "goal": p.goal, "door": None} for p in (c.phases[0], c.phases[2])],
+                         "done_checks": [{"kind": "read_links", "arg": 3}, {"kind": "ui_seen", "arg": "order confirmed"}]},
+                     said="change c1: skip the pick, order the picked desk")
+    assert isinstance(gone, Card) and [(p.n, p.status) for p in gone.phases] == [(1, "ok"), (2, "ok")]
+    assert gone.phases[1].result == acted.result
+    # a running phase's result comes back by its number: a revision never moves it while it runs
+    running = dataclasses.replace(c, phases=(ran, dataclasses.replace(c.phases[1], status="running"), acted))
+    assert isinstance(cc.revise(running, patch, said="change c1: measure the wall first"), Refusal)
+    assert isinstance(cc.revise(running, {"never": ["over $550"]}, said="change c1 never over $550"), Card)
+
+
 def test_a_stored_card_round_trips_and_a_bad_one_is_refused() -> None:
     c = dataclasses.replace(card(), id="c7")
     assert cc.from_json(cc.to_json(c)) == c

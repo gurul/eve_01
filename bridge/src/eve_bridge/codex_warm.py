@@ -49,6 +49,9 @@ class WarmCodex:
         self._ready: Any = None
         self._warming: Optional[asyncio.Task] = None
         self._jobs: set[asyncio.Task] = set()
+        # take() handed an agent to a task and kick() has not said it ended: the refresh loop warms nothing,
+        # or a second app-server would share the desktop with the task
+        self._in_use = False
 
     def _spawn(self, coro: Any) -> asyncio.Task:
         task = asyncio.ensure_future(coro)
@@ -57,8 +60,14 @@ class WarmCodex:
         return task
 
     def kick(self) -> None:
-        """Warm one now, unless one is ready or warming. Safe to call from any callback on the loop."""
-        if not self.enabled or self._ready is not None or (self._warming is not None and not self._warming.done()):
+        """A task ended (app_reflex's on_done), or the daemon starts: warm one now, unless one is ready or
+        warming. Safe to call from any callback on the loop."""
+        self._in_use = False
+        self._kick()
+
+    def _kick(self) -> None:
+        if (not self.enabled or self._in_use or self._ready is not None
+                or (self._warming is not None and not self._warming.done())):
             return
         self._warming = self._spawn(self._warm())
 
@@ -76,7 +85,11 @@ class WarmCodex:
         log.info("codex-warm: an agent is ready")
 
     def take(self, on_event: Callable[..., None], ask_user: Callable[..., Any]) -> Any:
-        """The warm agent, given this task's callbacks; or a new cold one when none is ready."""
+        """The warm agent, given this task's callbacks; or a new cold one when none is ready. Nothing is warmed
+        again until kick() says the task ended, and a warm-up still in flight is called off."""
+        self._in_use = True
+        if self._warming is not None and not self._warming.done():
+            self._warming.cancel()                     # _warm discards what it started
         agent, self._ready = self._ready, None
         if agent is not None and agent.warm(self.max_age):
             agent.on_event, agent.ask_user = on_event, ask_user
@@ -95,7 +108,7 @@ class WarmCodex:
                 if ready is not None and not ready.warm(self.max_age):
                     self._ready = None
                     await ready.discard()
-                self.kick()
+                self._kick()                           # never while a task holds the one it took
                 await asyncio.sleep(every)
         finally:
             await self.close()

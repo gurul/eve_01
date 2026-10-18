@@ -48,6 +48,8 @@ CONNECT_SECS = 3.0
 MAX_ARGS_BYTES = 48_000                   # the daemon reads one request line of at most 64 kB
 NO_ANSWER = ("eve did not answer in time, so the outcome is unknown: the call may have run or may still run. "
              "Do not retry it; ask the owner what happened.")
+NO_OUTCOME = ("The connection to eve broke after the call was sent, so the outcome is unknown: the call may have "
+              "run or may still run. Do not retry it; ask the owner what happened.")
 NO_DAEMON = "eve isn't running on this Mac, so its tools can't be reached."
 REFUSED = "eve refused this session"
 
@@ -61,13 +63,20 @@ class Unanswered(Exception):
     """The daemon took longer than the call may wait."""
 
 
+class Lost(Unanswered):
+    """The request went out whole and the answer never came back whole (a reset, a closed socket, a partial
+    line): the daemon may have run the call, so this is never "eve isn't running"."""
+
+
 class Unreachable(Exception):
-    """The daemon's socket could not be reached."""
+    """The daemon's socket could not be reached, or the request did not go out: nothing ran."""
 
 
 def post(event: dict[str, Any], timeout: float, spec: Optional[str] = None) -> dict[str, Any]:
-    """One request to the daemon, one JSON answer. Raises Unreachable (no daemon) or Unanswered (it took too long)."""
+    """One request to the daemon, one JSON answer. Raises Unreachable (no daemon, nothing sent), Unanswered
+    (it took too long) or Lost (sent, then the connection broke before a whole answer)."""
     s: Optional[socket.socket] = None
+    sent = False
     try:
         try:
             s = make_transport(spec).sync_connect(CONNECT_SECS)
@@ -77,6 +86,7 @@ def post(event: dict[str, Any], timeout: float, spec: Optional[str] = None) -> d
         buf = bytearray()
         try:
             s.sendall((json.dumps(event, ensure_ascii=False) + "\n").encode("utf-8"))
+            sent = True
             while b"\n" not in buf:
                 chunk = s.recv(65536)
                 if not chunk:
@@ -85,7 +95,7 @@ def post(event: dict[str, Any], timeout: float, spec: Optional[str] = None) -> d
         except socket.timeout as e:
             raise Unanswered() from e
         except OSError as e:
-            raise Unreachable(type(e).__name__) from e
+            raise (Lost if sent else Unreachable)(type(e).__name__) from e
     finally:
         if s is not None:
             try:
@@ -98,7 +108,7 @@ def post(event: dict[str, Any], timeout: float, spec: Optional[str] = None) -> d
     except ValueError:
         got = None
     if not isinstance(got, dict):
-        raise Unreachable("no answer")
+        raise Lost("no answer")                       # the request went out whole: it may have run
     return got
 
 
@@ -205,6 +215,8 @@ class Server:
         try:
             got = self._send({"evt": "mcp_call", "sid": self.sid, "token": self.token, "name": name, "args": args},
                              self.call_secs)
+        except Lost:
+            return _text_result({"ok": False, "reason": NO_OUTCOME}, error=True)
         except Unanswered:
             return _text_result({"ok": False, "reason": NO_ANSWER}, error=True)
         except Unreachable:

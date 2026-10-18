@@ -263,9 +263,19 @@ def _atomic_rewrite(path: Path, text: str) -> None:
         raise
 
 
+class MarkdownForgetError(OSError):
+    """A file the forget could not rewrite: its words are still on disk. ``removed`` is what did go."""
+
+    def __init__(self, removed: int, failed: int) -> None:
+        super().__init__(f"{failed} markdown file(s) could not be rewritten")
+        self.removed = removed
+
+
 def forget_markdown(folder: Path, pred: Callable[[str], bool], dry_run: bool = False) -> int:
-    """Remove every body line `pred` matches from the markdown under `folder`. → lines (to be) removed."""
-    total = 0
+    """Remove every body line `pred` matches from the markdown under `folder`. → lines (to be) removed.
+    A file that cannot be rewritten does not count, and after trying every file the forget raises
+    MarkdownForgetError, so forget_apply never reports words still on disk as forgotten."""
+    total = failed = 0
     for path in _markdown_files(folder):
         try:
             text = path.read_text(encoding="utf-8", errors="replace")
@@ -277,13 +287,18 @@ def forget_markdown(folder: Path, pred: Callable[[str], bool], dry_run: bool = F
         gone = len(rows) - len(kept)
         if not gone:
             continue
-        total += gone
         if dry_run:
+            total += gone
             continue
         try:
             _atomic_rewrite(path, head + "".join(kept))
         except OSError as e:
+            failed += 1
             log.warning("memory: a markdown file could not be rewritten during forget (%s)", type(e).__name__)
+            continue
+        total += gone
+    if failed:
+        raise MarkdownForgetError(total, failed)
     return total
 
 
@@ -712,8 +727,12 @@ class Memory:
             finally:
                 if opened:
                     ranked.close()
-        done["archive"] = forget_markdown(self.cfg.archive_dir, pred)
-        done["meetings"] = forget_markdown(self.cfg.transcripts_dir / MEETINGS_SUBDIR, pred)
+        for layer, folder in (("archive", self.cfg.archive_dir), ("meetings", self.cfg.transcripts_dir / MEETINGS_SUBDIR)):
+            try:
+                done[layer] = forget_markdown(folder, pred)
+            except MarkdownForgetError as e:
+                failed.append(layer)
+                done[layer] = e.removed
         if self.chat_log is not None:
             try:
                 done["chat_log"] = int(self.chat_log.forget(pred) or 0)

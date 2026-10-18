@@ -100,6 +100,56 @@ def _broker(showing_seq, reply="yes", press_ok=True, slow_reply=False):
     return b, pressed, told
 
 
+def test_a_connection_that_finishes_first_withdraws_the_phone_question() -> None:
+    """BrowserLane.connect cancels the broker when the connection is done; the CancelledError skipped the
+    cleanup, the Telegram question stayed pending, and the owner's next message was swallowed as its answer."""
+    async def go() -> None:
+        asked, withdrawn = asyncio.Event(), asyncio.Event()
+
+        async def showing() -> bool:
+            return True
+
+        async def pressing(label: str) -> bool:
+            return True
+
+        async def ask(q: str) -> str:
+            asked.set()
+            try:
+                await asyncio.Event().wait()
+            except asyncio.CancelledError:
+                withdrawn.set()
+                raise
+            return ""
+
+        b = ConsentBroker(ask, showing=showing, pressing=pressing, appear_secs=1, ask_timeout_secs=60,
+                          poll_secs=0.001, settle_secs=0.001)
+        answering = asyncio.ensure_future(b.answer_own_connection())
+        await asked.wait()
+        answering.cancel()                                # as connect() does once the connection is up
+        await asyncio.gather(answering, return_exceptions=True)
+        assert answering.cancelled() and withdrawn.is_set()
+
+    asyncio.run(go())
+
+
+def test_the_dialog_is_found_in_whichever_chrome_shows_it(monkeypatch: pytest.MonkeyPatch) -> None:
+    """With two Chromes running, only the first pgrep PID was searched: the dialog in the other was never seen."""
+    import subprocess
+    from types import SimpleNamespace
+
+    from eve_bridge import chrome_consent
+
+    heading = {"AXRole": "AXHeading", "AXTitle": chrome_consent.DIALOG_TEXT}
+    allow = {"AXRole": "AXButton", "AXTitle": "Allow"}
+    apps = {111: {"AXWindows": [{"AXRole": "AXWindow", "AXChildren": []}]},                 # a Chrome with no dialog
+            222: {"AXWindows": [{"AXRole": "AXWindow", "AXChildren": [heading, allow]}]}}  # the one that asks
+    monkeypatch.setattr(subprocess, "run", lambda *a, **k: SimpleNamespace(stdout="111\n222\n"))
+    monkeypatch.setattr(chrome_consent, "_ax", lambda: (lambda pid: apps[pid],
+                                                        lambda el, name, _x: (0, el.get(name)),
+                                                        lambda el, action: 0))
+    assert chrome_consent._find_dialog("Allow") == (True, allow)
+
+
 def test_answered_at_the_mac_withdraws_the_phone_question() -> None:
     from eve_bridge.chrome_consent import GONE_LINE
 

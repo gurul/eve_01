@@ -173,6 +173,23 @@ def test_command_permission_has_exact_scope(answer, decision):
     asyncio.run(go())
 
 
+def test_a_broken_question_still_answers_the_approval_with_decline():
+    """Only OSError and TimeoutError were caught: any other failure to ask left Codex waiting on the approval
+    until max_secs, with no decision sent."""
+    async def go():
+        responses = []
+        async def ask(q):
+            raise RuntimeError('telegram said 400')
+        async def send(m): responses.append(m)
+        chat = CodexChat(ask_user=ask)
+        chat.thread_id = 'thread'
+        chat._send = send
+        await chat._answer_request({'id': 7, 'method': 'item/commandExecution/requestApproval',
+                                   'params': {'threadId': 'thread', 'command': 'rm -rf build', 'cwd': '/project'}})
+        assert responses == [{'id': 7, 'result': {'decision': 'decline'}}]
+    asyncio.run(go())
+
+
 def test_stop_clears_a_pending_permission_question(tmp_path):
     async def go():
         p = ChatProcess(mode='approval')

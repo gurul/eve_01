@@ -428,3 +428,33 @@ def test_what_is_typed_into_a_secret_field_never_reaches_the_snapshot(tmp_path: 
     assert by_label["Search"].value == "ramen-control"            # an ordinary field is still read
     assert by_label["Card number"].value == "" and not by_label["Card number"].secure   # still typeable
     assert sum(c["secure"] for c in seen["snap"]) == 2, dump    # the password and the shown password
+
+
+def test_an_attach_that_fails_after_connecting_closes_the_driver(tmp_path: Path,
+                                                                 monkeypatch: pytest.MonkeyPatch) -> None:
+    """An AttachError from _pick_profile after the CDP connection was up leaked the connection and the
+    Playwright driver, and the next _ensure started a second driver. Fakes only: no real Chrome."""
+    import sys
+    from types import SimpleNamespace
+
+    drivers: list[SimpleNamespace] = []
+
+    def start() -> SimpleNamespace:
+        browser = SimpleNamespace(contexts=[SimpleNamespace()])
+        pw = SimpleNamespace(stopped=False, chromium=SimpleNamespace(connect_over_cdp=lambda *a, **k: browser))
+        pw.stop = lambda: setattr(pw, "stopped", True)
+        drivers.append(pw)
+        return pw
+
+    monkeypatch.setitem(sys.modules, "playwright.sync_api",
+                        SimpleNamespace(sync_playwright=lambda: SimpleNamespace(start=start)))
+    monkeypatch.setattr(bl, "devtools_endpoint", lambda *a: "ws://127.0.0.1:9/devtools/browser/x")
+    monkeypatch.setattr(bl, "ensure_chrome_window", lambda: None)
+    lane = BrowserLane(BrowserLaneConfig(profile=tmp_path / "p", attach=True, chrome_dir=tmp_path,
+                                         chrome_profile="someone@example.com"))
+    monkeypatch.setattr(lane, "_profiles", lambda: {})          # no window open in that profile
+    for _ in range(2):
+        with pytest.raises(bl.AttachError):
+            lane._ensure()
+        assert drivers[-1].stopped and lane._pw is None and lane._browser is None and lane._context is None
+    assert len(drivers) == 2 and all(d.stopped for d in drivers)                # never two drivers alive at once

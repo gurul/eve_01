@@ -189,8 +189,28 @@ def test_mem0_unavailable_is_silence(tmp_path: Path) -> None:
     mem = OwnerMemory(Mem0Config(enabled=True, home=tmp_path / "m"), factory=broken)
     t, _ = transcripts_with_a_day(tmp_path)
     assert mem.search("anything") == [] and mem.ingest_day(t, DAY) == 0
-    assert mem.tidy() == 0 and mem.find(lambda _t: True) == [] and mem.forget(["x"]) == 0
+    assert mem.tidy() == 0 and mem.find(lambda _t: True) == []
     assert not (tmp_path / "m" / mem0_memory.INGESTED_CONVS).exists()      # nothing marked read
+
+
+def test_a_forget_mem0_cannot_open_for_is_a_failure_never_a_done_zero(tmp_path: Path) -> None:
+    """A forget that could not reach mem0 (the retry window, no key) returned 0, and forget_apply then
+    reported the index as done while the memories stayed in Qdrant."""
+    def broken(_c: Mem0Config) -> Any:
+        raise ImportError("no mem0")
+
+    mem = OwnerMemory(Mem0Config(enabled=True, home=tmp_path / "m"), factory=broken)
+    with pytest.raises(mem0_memory.Mem0ForgetError):
+        mem.forget(["x"])
+    with pytest.raises(mem0_memory.Mem0ForgetError):
+        mem.forget_matching(lambda _t: True)
+    assert mem.forget([]) == 0                        # nothing asked: nothing to fail
+
+    fake = FakeMem0()
+    listing = OwnerMemory(Mem0Config(enabled=True, home=tmp_path / "l"), factory=lambda _c: fake)
+    fake.get_all = lambda **_kw: (_ for _ in ()).throw(RuntimeError("qdrant"))    # type: ignore[method-assign]
+    with pytest.raises(mem0_memory.Mem0ForgetError):
+        listing.forget_matching(lambda _t: True)
 
 
 # ---- ingest: each conversation, natively, once ------------------------------------------------------------

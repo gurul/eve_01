@@ -63,20 +63,19 @@ def _ax():
     return AXUIElementCreateApplication, AXUIElementCopyAttributeValue, AXUIElementPerformAction
 
 
-def _chrome_pid() -> Optional[int]:
+def _chrome_pids() -> list[int]:
+    """Every running Chrome (two profiles' instances, say): the dialog is in whichever one eve connected to,
+    and the first PID pgrep prints need not be it."""
     import subprocess
 
     out = subprocess.run(["pgrep", "-x", "Google Chrome"], capture_output=True, text=True).stdout.split()
-    return int(out[0]) if out else None
+    return [int(p) for p in out if p.isdigit()]
 
 
 def _find_dialog(label: str = "") -> tuple[bool, Any]:
-    """(dialog showing?, the button labelled ``label`` in that dialog's window, or None). Walks Chrome's windows
-    only as deep as needed; never presses anything."""
+    """(dialog showing?, the button labelled ``label`` in that dialog's window, or None). Walks each Chrome's
+    windows only as deep as needed; never presses anything."""
     create, get_attr, _ = _ax()
-    pid = _chrome_pid()
-    if pid is None:
-        return False, None
 
     def attr(el: Any, name: str) -> Any:
         err, value = get_attr(el, name, None)
@@ -85,20 +84,21 @@ def _find_dialog(label: str = "") -> tuple[bool, Any]:
     def label_of(el: Any) -> str:
         return str(attr(el, "AXTitle") or attr(el, "AXDescription") or attr(el, "AXValue") or "")
 
-    for window in attr(create(pid), "AXWindows") or []:
-        heading, button, count, stack = False, None, 0, [window]
-        while stack and count < MAX_NODES:
-            el = stack.pop()
-            count += 1
-            role = attr(el, "AXRole")
-            text = label_of(el)
-            if role in ("AXHeading", "AXStaticText") and text.strip() == DIALOG_TEXT:
-                heading = True
-            elif role == "AXButton" and label and text.strip() == label and button is None:
-                button = el
-            stack.extend(attr(el, "AXChildren") or [])
-        if heading:
-            return True, button
+    for pid in _chrome_pids():
+        for window in attr(create(pid), "AXWindows") or []:
+            heading, button, count, stack = False, None, 0, [window]
+            while stack and count < MAX_NODES:
+                el = stack.pop()
+                count += 1
+                role = attr(el, "AXRole")
+                text = label_of(el)
+                if role in ("AXHeading", "AXStaticText") and text.strip() == DIALOG_TEXT:
+                    heading = True
+                elif role == "AXButton" and label and text.strip() == label and button is None:
+                    button = el
+                stack.extend(attr(el, "AXChildren") or [])
+            if heading:
+                return True, button
     return False, None
 
 
@@ -197,6 +197,13 @@ class ConsentBroker:
                     self.last = "answered_at_mac"
                     return self.last
             reply = asking.result()
+        except asyncio.CancelledError:
+            # connect() cancels this once its connection is done (BrowserLane.connect): withdraw the phone
+            # question too, or the owner's next unrelated message is swallowed as its answer.
+            if not asking.done():
+                asking.cancel()
+                await asyncio.gather(asking, return_exceptions=True)
+            raise
         except (asyncio.TimeoutError, Exception) as e:  # noqa: BLE001 — no answer is a no
             log.info("chrome-consent: no answer from the owner (%s); cancelling", type(e).__name__)
             if not asking.done():
