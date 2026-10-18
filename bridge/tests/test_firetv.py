@@ -399,6 +399,11 @@ def test_parse_state_foreground_names() -> None:
     assert F.parse_state(state_text(focus="  mCurrentFocus=null")).app == ""
 
 
+def test_parse_state_projectivy_is_home() -> None:
+    focus = "  mCurrentFocus=Window{9d1e u0 com.spocky.projengmenu/com.spocky.projengmenu.ui.home.MainActivity}"
+    assert F.parse_state(state_text(focus=focus)).app == "home"
+
+
 def test_parse_state_missing_volume_is_unknown_not_guessed() -> None:
     st = F.parse_state(state_text(volume=None))
     assert st.volume is None and st.muted is None and "volume unknown" in F.said_state(st)

@@ -292,6 +292,7 @@ APPS: tuple[App, ...] = (
 )
 YOUTUBE = APPS[0]
 LAUNCHER_PACKAGE = "com.amazon.tv.launcher"
+PROJECTIVY_PACKAGE = "com.spocky.projengmenu"        # a third-party launcher the Home button may open instead
 SCREENSAVER_PACKAGE = "com.amazon.ftv.screensaver"
 PASSTHROUGH_ACTIVITY = "PassthroughPlayerActivity"   # the TV showing an HDMI input
 
@@ -324,6 +325,8 @@ def app_name(package: str, activity: str = "") -> str:
         return "screensaver"
     if package == LAUNCHER_PACKAGE:
         return "Settings" if "SettingsActivity" in activity else "home"
+    if package == PROJECTIVY_PACKAGE:
+        return "home"
     for a in APPS:
         if a.package == package:
             return a.name
