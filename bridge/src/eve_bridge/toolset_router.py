@@ -44,6 +44,7 @@ every Telegram turn while it is on.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import os
@@ -346,11 +347,13 @@ def make_router(environ: Optional[Mapping[str, str]] = None) -> Optional[Callabl
         url, key, model = jev.route_config(env)
     except Exception:  # noqa: BLE001
         return None
+    # the key is part of the route (a rotated key makes a new router), kept only as a fingerprint
+    route = (url, model, hashlib.sha256(str(key).encode()).hexdigest()[:16])
     with _JEV_LOCK:
         cached = _JEV.get("router")
-        if cached is None or _JEV.get("route") != (url, model):
+        if cached is None or _JEV.get("route") != route:
             cached = router_from(jev.make_predict(url, key, model, timeout_s=TIMEOUT_S), time.perf_counter)
-            _JEV.update(router=cached, route=(url, model))
+            _JEV.update(router=cached, route=route)
         return cached
 
 

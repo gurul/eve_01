@@ -252,9 +252,15 @@ def pick_field(fields: list[Field], part: str, label: str = "") -> tuple[Optiona
 
 
 def _same_page(url: str, page: str) -> bool:
-    """The field's page is the one Codex named: the same origin and path (a fragment or query aside)."""
+    """The field's page is the one Codex named: the same origin and path (a fragment or query aside). A page named
+    without a scheme ("shop.com/checkout") is read as https, as vault.canonical_origin reads a site."""
     from urllib.parse import urlsplit
-    a, b = urlsplit(url), urlsplit(page)
+
+    def split(u: str) -> Any:
+        u = str(u or "").strip()
+        return urlsplit(u if "://" in u else "https://" + u)
+
+    a, b = split(url), split(page)
     return (a.scheme, a.netloc.lower(), a.path.rstrip("/")) == (b.scheme, b.netloc.lower(), b.path.rstrip("/"))
 
 

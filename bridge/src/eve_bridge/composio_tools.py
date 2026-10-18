@@ -248,6 +248,13 @@ WORKBENCH_BLOCKED_NAMES = frozenset({
 # stores unpickle object columns), pandas' own expression evaluators, and the operator module's name-by-string
 # lookups. Any name or attribute holding "pickle" is blocked as well (workbench_slugs).
 WORKBENCH_BLOCKED_ATTRS = frozenset({"eval", "exec", "query", "attrgetter", "methodcaller", "read_hdf", "HDFStore"})
+# Helpers that evaluate a string annotation as code (review A2, 2026-10-18): the AST reads `x: "run_composio_tool(…)"`
+# or `list["…"]` as a plain string, so the call inside was never judged. typing and functools stay allowed; these
+# names, by name, attribute or import alias, ask.
+WORKBENCH_EVALS_STRINGS = frozenset({"get_type_hints", "ForwardRef", "evaluate_forward_ref", "get_annotations",
+                                     "singledispatch", "singledispatchmethod"})
+WORKBENCH_BLOCKED_NAMES = WORKBENCH_BLOCKED_NAMES | WORKBENCH_EVALS_STRINGS
+WORKBENCH_BLOCKED_ATTRS = WORKBENCH_BLOCKED_ATTRS | WORKBENCH_EVALS_STRINGS
 
 
 def workbench_slugs(code: Any) -> Optional[list[str]]:

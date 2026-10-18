@@ -1535,9 +1535,11 @@ class VoiceSession:
             self._emit_expression(who, text)
         listening = self._think_aloud is not None
         # While listening, neither side is kept for chat memory: the learner's words go to their lesson only.
-        if who == "assistant" and self._held is not None and not self._held_said:
+        if who == "assistant" and self._held is not None:
             # The gate's question goes to the voice as commentary (no verbatim path exists on a Live speech model):
-            # it counts as asked only once the voice's own transcript says the act whole (tool_gate.said_whole)
+            # it counts as asked only once the voice's own transcript says the act whole (tool_gate.said_whole).
+            # Every later turn of the voice's is checked again: the question must be the last thing heard before the
+            # yes, so a reframe said after it ("...or should I not?") drops the yes (review A8)
             self._held_said = tool_gate.said_whole(self._held_act, text)
         if who in ("user", "assistant") and not listening:
             outside = who == "assistant" and bool(self._taint)

@@ -331,6 +331,39 @@ def test_the_key_never_follows_a_redirect_to_another_port(loopback_is_public: No
         bounce.shutdown()
 
 
+def test_no_credential_header_follows_a_redirect_to_another_origin(loopback_is_public: None) -> None:
+    """Review A7 (2026-10-18): only Authorization and Cookie were stripped, so TinyFish's X-API-Key (and any other
+    key header a caller sets) followed a redirect to the new host. Only plain request headers cross now."""
+    seen: dict[str, Any] = {}
+
+    class Other(_Quiet):
+        def do_GET(self) -> None:
+            seen.update(self.headers.items())
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"{}")
+
+    other, po = _serve(Other)
+
+    class Bounce(_Quiet):
+        def do_GET(self) -> None:
+            self.send_response(302)
+            self.send_header("Location", f"http://127.0.0.1:{po}/")
+            self.end_headers()
+
+    bounce, pb = _serve(Bounce)
+    try:
+        watch.http_request(f"http://127.0.0.1:{pb}/", headers={
+            "X-API-Key": "tf-TEST", "x-goog-api-key": "g-TEST", "Proxy-Authorization": "Basic x",
+            "Accept": "application/json"})
+        lowered = {k.lower(): v for k, v in seen.items()}
+        assert not {"x-api-key", "x-goog-api-key", "proxy-authorization"} & set(lowered), lowered
+        assert lowered.get("accept") == "application/json"                  # a plain header still crosses
+    finally:
+        other.shutdown()
+        bounce.shutdown()
+
+
 def test_trickled_headers_are_cut_at_the_deadline(loopback_is_public: None) -> None:
     class SlowHead(_Quiet):
         def do_GET(self) -> None:

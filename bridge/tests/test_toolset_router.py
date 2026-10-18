@@ -217,6 +217,17 @@ def test_make_router_follows_the_mode_and_shipped_and_needs_a_jev_key(monkeypatc
     tr._JEV.clear()
 
 
+def test_a_rotated_key_makes_a_new_router(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Review A10 (2026-10-18): the cache was keyed on (url, model), so a rotated key kept the old one for the
+    process's life. The key's fingerprint (never the key) is part of the cache key now."""
+    tr._JEV.clear()
+    old = tr.make_router({"OPENROUTER_API_KEY": "k-old", "EVE_JEV_ROUTE": "openrouter", "EVE_TOOLSET_ROUTER": "on"})
+    new = tr.make_router({"OPENROUTER_API_KEY": "k-new", "EVE_JEV_ROUTE": "openrouter", "EVE_TOOLSET_ROUTER": "on"})
+    assert old is not None and new is not None and new is not old
+    assert "k-new" not in repr(tr._JEV) and "k-old" not in repr(tr._JEV)
+    tr._JEV.clear()
+
+
 # ---- the eval's arithmetic ----------------------------------------------------------------------------------------
 
 def test_the_score_counts_full_recall_extras_and_per_toolset_numbers() -> None:

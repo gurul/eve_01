@@ -297,6 +297,7 @@ class Vault:
         """Store an item; returns it (no value). The value is checked for its kind first."""
         if kind not in KINDS:
             raise VaultError(f"the kinds are {', '.join(KINDS)}")
+        label = _clean_label(label)      # before the Keychain: a bad label must not leave an unindexed secret
         if kind == "login":
             if not str(value.get("password") or ""):
                 raise VaultError("a login needs a password")
@@ -312,7 +313,7 @@ class Vault:
             if handle not in taken:
                 break
         self.keychain.put(handle, value)
-        item = Item(handle, kind, _clean_label(label), origin)
+        item = Item(handle, kind, label, origin)
         self._write(self.items() + [item])
         return item
 

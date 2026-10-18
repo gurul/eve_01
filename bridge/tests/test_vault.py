@@ -158,6 +158,11 @@ def test_bad_items_are_refused_before_the_keychain_is_touched(tmp_path: Path) ->
         with pytest.raises(VaultError):
             v.add(kind, "x", value, site=site)
     assert fake.calls == [] and v.items() == []
+    # review A11 (2026-10-18): a blank label raised only after the secret was in the Keychain, unindexed
+    for label in ("", "   "):
+        with pytest.raises(VaultError):
+            v.add("login", label, {"username": "a", "password": "hunter2"}, site="chase.com")
+    assert fake.calls == [] and fake.items == {} and v.items() == []
 
 
 def test_remove_deletes_the_keychain_item_and_the_index_line(tmp_path: Path) -> None:

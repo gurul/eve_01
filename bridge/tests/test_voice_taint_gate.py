@@ -250,3 +250,19 @@ def test_a_yes_after_the_voice_paraphrased_the_question_approves_nothing(monkeyp
         await task
 
     asyncio.run(go())
+
+
+def test_a_reframe_said_after_the_question_drops_its_yes() -> None:
+    """Review A8 (2026-10-18): once the voice had said the question whole, a later turn of its own ("...or should I
+    not? I'd say yes.") left the yes standing. The question must be the last thing heard before the yes."""
+    conn = FakeConnection()
+    s, _states, _ = _session(conn, [FakeAgent(None, None)])
+    q = tool_gate.spoken_question("forget_apply", {"token": TOKEN}, "a web search")
+    assert q is not None
+    s._held, s._held_act, s._held_said = ("forget_apply {}", 0), q, False
+    s._close_turn("assistant", q)
+    assert s._held_said
+    s._close_turn("assistant", "Or should I not? I'd say yes.")
+    assert not s._held_said
+    s._close_turn("assistant", q)                                         # asked again whole: counts again
+    assert s._held_said

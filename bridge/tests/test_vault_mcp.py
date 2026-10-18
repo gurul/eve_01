@@ -336,3 +336,15 @@ def test_live_a_card_fills_a_payment_frame_from_another_host_inside_the_named_pa
     assert not result["isError"] and "shows" not in result["content"][0]["text"], result
     assert in_frame is True and email == ""
     assert CANARY["number"] not in json.dumps(result)
+
+
+def test_a_page_named_without_its_scheme_is_still_that_page() -> None:
+    """Review A12 (2026-10-18): Codex may name the page as "shop.com/checkout"; the scheme was compared exactly, so
+    no field ever matched and a card fill said no page was in front. A bare page reads as https, like
+    vault.canonical_origin."""
+    same = vault_mcp._same_page
+    assert same("https://shop.com/checkout?step=2", "shop.com/checkout")
+    assert same("https://Shop.com/checkout/", "https://shop.com/checkout")
+    assert not same("https://shop.com/cart", "shop.com/checkout")
+    assert not same("http://shop.com/checkout", "shop.com/checkout")                # a bare page is https only
+    assert not same("https://evil.com/checkout", "shop.com/checkout")

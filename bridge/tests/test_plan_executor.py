@@ -72,6 +72,18 @@ def test_where_text_came_from_is_checked_not_trusted() -> None:
     assert [s.text_source for s in p.steps] == ["utterance", "composed"]
 
 
+def test_text_inside_a_longer_word_is_not_the_owners() -> None:
+    """"rm" sits inside "terminal": a raw substring match called it the owner's words and skipped the shell gate
+    (review A4, 2026-10-18). Only whole words of the request count."""
+    def source(text: str, request: str) -> str:
+        return pc.parse_plan({"steps": [{"kind": "type", "target": "Terminal", "text": text}]}, request).steps[0].text_source
+
+    assert source("rm", "open terminal and list the files") == "composed"
+    assert source("ls -la", "open terminal and run ls -lah") == "composed"
+    assert source("ls -la", "open terminal and run ls -la please") == "utterance"
+    assert source("blue adapter", "search for Blue Adapter.") == "utterance"
+
+
 def test_the_planner_can_decline() -> None:
     p = pc.parse_plan({"needs_eyes": True, "why": "it asks what is on the calendar", "steps": []}, "what's on tomorrow")
     assert p.needs_eyes and p.steps == ()
