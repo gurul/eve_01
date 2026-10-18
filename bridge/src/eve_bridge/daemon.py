@@ -971,7 +971,7 @@ class Daemon:
         if self._sound.set(on):
             log.info("sound: %s (the head and lights keep moving)", "on" if on else "muted")
         if self.ble.connected:
-            asyncio.create_task(self._send_sound())
+            _spawn(self, self._send_sound())
 
     async def _vision_stats_loop(self) -> None:
         """One summary line per window, and only when frames arrived. Never per-frame."""
@@ -1091,7 +1091,7 @@ class Daemon:
             return
         # A manual explore ignores activity, so end it here: the board
         # cannot pan the room and hold the conversation pose at once.
-        asyncio.create_task(self._dismiss_explore("wake word"))
+        _spawn(self, self._dismiss_explore("wake word"))
         # "lesson" on its own: the conversation opens with the lesson already requested.
         lesson_word = getattr(getattr(self, "_ears_cfg", None), "lesson_word", "")
         lesson = bool(lesson_word) and keyword == keyword_id(lesson_word)
@@ -1929,7 +1929,7 @@ class Daemon:
     def _start_think_aloud_conversation(self, lesson: dict[str, Any]) -> None:
         """Open a conversation for listening, without the wake word."""
         self._think_aloud_state, self._think_aloud_lesson_id = "starting", str(lesson.get("id"))
-        asyncio.create_task(self._dismiss_explore("think out loud"))
+        _spawn(self, self._dismiss_explore("think out loud"))
         self._conversation = asyncio.create_task(self._converse(think_aloud=lesson), name=THINK_ALOUD_TASK)
 
     def _on_voice_session(self, session: Any) -> None:
@@ -1968,7 +1968,7 @@ class Daemon:
         """One page of eve's reply (or a clear) onto the robot's screen; the pager owns the timing.
         Muted, the page goes without its talk chirp (older firmware has no sound command)."""
         if self.ble.connected:
-            asyncio.create_task(self.ble.send(quiet_caption(msg, self._sound.muted)))
+            _spawn(self, self.ble.send(quiet_caption(msg, self._sound.muted)))
 
     def _on_agent_state(self, state: str) -> None:
         """Mirror the conversation/task phase on the board."""
@@ -1981,10 +1981,10 @@ class Daemon:
         if bus is not None:
             bus.publish("/eve/state", {"state": state, "time": time.time()})
         if self.ble.connected:
-            asyncio.create_task(self.ble.send({"cmd": "agent", "state": state}))
+            _spawn(self, self.ble.send({"cmd": "agent", "state": state}))
         follower = getattr(self, "_follower", None)
         if follower is not None:
-            asyncio.create_task(follower.on_phase(state))
+            _spawn(self, follower.on_phase(state))
         Daemon._sync_listen_pose(self)   # by class: test stubs bind only the handlers they exercise
 
     def _sync_listen_pose(self) -> None:
@@ -1999,7 +1999,7 @@ class Daemon:
         if not self.ble.connected or want == getattr(self, "_listen_sent", None):
             return
         self._listen_sent = want
-        asyncio.create_task(self.ble.send({"cmd": "listen", "on": want}))
+        _spawn(self, self.ble.send({"cmd": "listen", "on": want}))
 
     # ---- idle explorer ----
 
@@ -2061,7 +2061,7 @@ class Daemon:
                 await self.ble.send(build_look_cmd(action.yaw, action.pitch, action.hold_ms))
         elif isinstance(action, Note):
             if self._notes is not None:
-                asyncio.create_task(self._notes.take(action))
+                _spawn(self, self._notes.take(action))
         elif isinstance(action, Rest):
             # Nothing over the wire: the board stays in explore mode and
             # looks around on its own until the next pan cycle.
@@ -2645,7 +2645,7 @@ class Daemon:
         # return {"ok": True} immediately — the Stop hook caller must not
         # block on _push_heartbeat(force=True) or it surfaces as ETIMEDOUT
         # in the plugin's spawnSync call.
-        asyncio.create_task(self._turn_end_side_effects(CELEBRATE_SECS))
+        _spawn(self, self._turn_end_side_effects(CELEBRATE_SECS))
         return {"ok": True}
 
     async def _ipc_pretooluse(self, req: dict[str, Any]) -> dict[str, Any]:
@@ -2814,7 +2814,7 @@ class Daemon:
         await self._push_heartbeat()
         inlet = getattr(self, "_telegram", None)
         if inlet is not None and inlet.claude:
-            asyncio.create_task(inlet.relay_notification(kind or "", msg if isinstance(msg, str) else "", waits))
+            _spawn(self, inlet.relay_notification(kind or "", msg if isinstance(msg, str) else "", waits))
         return {"ok": True}
 
     async def _handle_permission_request(self, req: dict[str, Any]) -> dict[str, Any]:
@@ -2892,8 +2892,8 @@ class Daemon:
         if risk is not None and decision_class != "ask":
             risk_mode, ask_cmd = risk
             if risk_mode == "shadow":
-                asyncio.create_task(self._shadow_command_risk(ask_cmd, tool_name, hint, cwd, audit_kwargs),
-                                    name="command-risk-shadow")
+                _spawn(self, self._shadow_command_risk(ask_cmd, tool_name, hint, cwd, audit_kwargs),
+                       name="command-risk-shadow")
             elif risk_mode == "ask":
                 verdict = await asyncio.to_thread(ask_cmd, tool_name, hint, cwd)
                 jev = {"verdict": verdict.decision, "why": verdict.why, **{k: round(v, 3) for k, v in
@@ -3161,7 +3161,7 @@ class Daemon:
             from .focus_terminal import focus_session_terminal
             cwd = self.state.attention_cwd()
             log.info("focus: requested for %r", cwd or "(unknown session)")
-            asyncio.create_task(focus_session_terminal(cwd))
+            _spawn(self, focus_session_terminal(cwd))
             return
         if cmd == "key":
             # Swipe-down on the pet → Enter on the host.
@@ -3226,7 +3226,7 @@ class Daemon:
             if isinstance(snd, bool) and snd != self._sound.on:
                 log.info("sound: board has sound %s but the owner chose %s — re-sending",
                          "on" if snd else "off", "on" if self._sound.on else "off")
-                asyncio.create_task(self._send_sound())
+                _spawn(self, self._send_sound())
             bat = data.get("bat") or {}
             if isinstance(bat, dict) and bat:
                 pct = bat.get("pct")
@@ -3317,7 +3317,7 @@ class Daemon:
         await self._push_heartbeat(force=True)
         inlet = getattr(self, "_telegram", None)
         if inlet is not None and inlet.claude:
-            asyncio.create_task(inlet.relay_text(text, session.cwd or ""))
+            _spawn(self, inlet.relay_text(text, session.cwd or ""))
 
     async def _turn_end_side_effects(self, celebrate_secs: float) -> None:
         """Post-response work for a turn_end event, run as a background task.
@@ -3334,7 +3334,7 @@ class Daemon:
             await self._push_heartbeat(force=True)
         except Exception:  # noqa: BLE001
             log.exception("turn_end side effects: _push_heartbeat(force=True) failed")
-        asyncio.create_task(self._heartbeat_after(celebrate_secs + 0.1))
+        _spawn(self, self._heartbeat_after(celebrate_secs + 0.1))
 
     async def _heartbeat_after(self, delay: float) -> None:
         """Schedule one heartbeat push after ``delay`` seconds. Used by the
@@ -3405,6 +3405,19 @@ def _mcp_late_done(task: "asyncio.Future[Any]") -> None:
         return
     err = task.exception()
     log.info("work sessions: a late tool call finished (%s)", type(err).__name__ if err else "done")
+
+
+def _spawn(daemon: Any, coro: Any, name: Optional[str] = None) -> "asyncio.Task[Any]":
+    """Fire-and-forget work, held in the daemon's `_background` set. The event loop keeps only a weak
+    reference to a task, so one nobody holds can be collected mid-run; held here it also gets drained at
+    shutdown (_drain_background) rather than cancelled. A stub daemon in a test may have no set: the task
+    still runs."""
+    task = asyncio.create_task(coro, name=name)
+    background = getattr(daemon, "_background", None)
+    if isinstance(background, set):
+        background.add(task)
+        task.add_done_callback(background.discard)
+    return task
 
 
 def _work_note(daemon: Any, evt: str, req: dict[str, Any]) -> None:

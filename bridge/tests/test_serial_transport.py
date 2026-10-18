@@ -406,3 +406,59 @@ def test_unplugged_board_warning_backs_off_to_ten_minutes(monkeypatch: pytest.Mo
     assert passes[0] >= 1990
     # 30 s, then doubling to the 600 s cap: 30, 90, 210, 450, 930, 1530 … 5730 → 13 warnings.
     assert len(warned) == 13, warned
+
+
+def test_handler_tasks_are_held_until_done(fast_watchdog: None, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Each line's on_message task is held by the transport (review D2): the loop keeps only a weak
+    reference to a task, so an unheld handler could be collected mid-run."""
+    release = asyncio.Event()
+    held: list[int] = []
+
+    async def slow(obj: dict) -> None:
+        await release.wait()
+
+    def fake_open(port: str, baud: int, timeout: int = 1, **kw: object) -> FakeSerial:
+        return FakeSerial([b'{"cmd":"a"}\n', b'{"cmd":"b"}\n'] + [b"[alive]\n"] * 100_000)
+
+    _patch_port(monkeypatch, fake_open)
+    bs = EveSerial(on_message=slow, port="/dev/fake")
+
+    async def go() -> None:
+        task = asyncio.create_task(bs.run())
+        await asyncio.sleep(0.1)
+        held.append(len(getattr(bs, "_tasks", ())))
+        release.set()
+        await asyncio.sleep(0.05)
+        held.append(len(getattr(bs, "_tasks", ())))
+        await bs.stop()
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+
+    _run(go())
+    assert held == [2, 0]
+
+
+def test_port_open_and_rts_pulse_run_off_the_loop(fast_watchdog: None, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Opening the port and the RTS pulse's 0.1 s sleep block; they run on a worker thread, not
+    the event loop every door shares (review D2)."""
+    import threading
+    loop_thread = threading.get_ident()
+    open_threads: list[int] = []
+    sleep_threads: list[int] = []
+    real_sleep = serial_transport.time.sleep
+
+    def fake_open(port: str, baud: int, timeout: int = 1, **kw: object) -> FakeSerial:
+        open_threads.append(threading.get_ident())
+        return FakeSerial([b"[alive]\n"] * 100_000)
+
+    def spy_sleep(secs: float) -> None:
+        sleep_threads.append(threading.get_ident())
+        real_sleep(secs)
+
+    _patch_port(monkeypatch, fake_open)
+    monkeypatch.setattr(serial_transport.time, "sleep", spy_sleep)
+    bs = EveSerial(on_message=_noop, port="/dev/fake")
+    bs._pulse_on_open = True
+    _run(_drive(bs, 0.3))
+    assert open_threads and loop_thread not in open_threads
+    assert sleep_threads and loop_thread not in sleep_threads

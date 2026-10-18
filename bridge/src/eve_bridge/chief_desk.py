@@ -62,7 +62,7 @@ from typing import Any, Callable, Mapping, Optional, Sequence
 
 from . import chief_card
 from .chief_card import Card, Nudges
-from .chief_ledger import Ledger, chief_dir
+from .chief_ledger import JsonlRows, Ledger, chief_dir
 
 log = logging.getLogger(__name__)
 
@@ -231,6 +231,7 @@ class Desk:
         self.dir = Path(folder).expanduser() if folder is not None else chief_dir(environ)
         self._clock = clock
         self._lock = threading.RLock()
+        self._attention_rows = JsonlRows()      # attention.jsonl, parsed once per line (pushes_today)
         self.mode = mode if mode in PUSH_MODES else push_mode(environ)
         if mandate is not None:
             self.mandate, self._problem = mandate, ""
@@ -273,19 +274,7 @@ class Desk:
                 return False
 
     def _rows(self) -> list[dict[str, Any]]:
-        try:
-            lines = self.path.read_text(encoding="utf-8", errors="replace").splitlines()
-        except OSError:
-            return []
-        out = []
-        for line in lines:
-            try:
-                row = json.loads(line)
-            except ValueError:
-                continue
-            if isinstance(row, dict):
-                out.append(row)
-        return out
+        return self._attention_rows.rows(self.path)
 
     def pushes_today(self, now: Optional[float] = None) -> int:
         """Unprompted pushes today (sent, or would-sent in shadow), read from the log: a restart keeps the count."""

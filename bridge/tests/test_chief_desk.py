@@ -394,3 +394,23 @@ def test_attack_a_budget_warning_is_unprompted(tmp_path: Path) -> None:
     on.breakpoint("task_end", morning)
     assert on.offer(Item("warn", "c1", queued_at=morning), morning) == Route("now", "budget_warning")
     assert on.pushes_today(morning) == 1                                     # it counts against the day's budget
+
+
+def test_pushes_today_parses_only_new_attention_lines(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Review D6: pushes_today re-parsed all of attention.jsonl on every offer."""
+    import json
+    row = '{{"t":{t},"kind":"verdict","id":"{i}","route":"{r}","unprompted":true}}\n'
+    (tmp_path / cd.ATTENTION_FILE).write_text(row.format(t=at(9), i="c1", r="now"))
+    d = Desk(tmp_path, mode="on")
+    assert d.pushes_today(at(10)) == 1
+    calls = [0]
+    real = json.loads
+
+    def counted(*a: Any, **k: Any) -> Any:
+        calls[0] += 1
+        return real(*a, **k)
+    monkeypatch.setattr(json, "loads", counted)
+    assert d.pushes_today(at(10)) == 1 and calls[0] == 0
+    with (tmp_path / cd.ATTENTION_FILE).open("a") as f:
+        f.write(row.format(t=at(9, 30), i="c2", r="silent"))
+    assert d.pushes_today(at(10)) == 2 and calls[0] == 1

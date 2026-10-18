@@ -513,3 +513,104 @@ def test_launcher_does_not_hide_other_startup_failures(tmp_path):
     ):
         with pytest.raises(OSError):
             main(["--data-dir", str(tmp_path), "--no-open"])
+
+
+def _png(size):
+    return "data:image/png;base64," + base64.b64encode(b"\x89PNG\r\n\x1a\n" + b"x" * size).decode()
+
+
+def test_an_unchanged_image_is_stored_once_across_revisions(tmp_path):
+    """Review D4: every autosave copied the screenshot (up to 6 MB) and the board into a new revision."""
+    import sqlite3
+    app = LearningApp(tmp_path, demo=True)
+    s = create(app, "help")
+    image = _png(300_000)
+    s = app.dispatch({"action": "save", "revision": s["revision"], "work": {"source_image": image}})
+    for i in range(10):
+        s = app.dispatch({"action": "save", "revision": s["revision"], "work": {"ideas": f"idea {i}"}})
+    db = sqlite3.connect(tmp_path / "lessons.sqlite3")
+    stored = db.execute("SELECT SUM(LENGTH(data)) FROM revisions").fetchone()[0]
+    blobs = db.execute("SELECT SUM(LENGTH(data)) FROM blobs").fetchone()[0]
+    db.close()
+    assert stored + blobs < 2 * len(image), "the image was copied into every revision"
+    history = app.store.history(s["id"])
+    assert len(history) == s["revision"]
+    assert [r["source_image"] for r in history][-11:] == [image] * 11   # history still returns it whole
+    assert history[-1] == app.store.get(s["id"])
+    app.dispatch({"action": "delete", "id": s["id"]})
+    db = sqlite3.connect(tmp_path / "lessons.sqlite3")
+    assert db.execute("SELECT COUNT(*) FROM blobs").fetchone()[0] == 0
+    db.close()
+
+
+def test_the_widget_and_list_read_summaries_without_parsing_lessons(tmp_path):
+    app = LearningApp(tmp_path, demo=True)
+    s = create(app)
+    with patch("eve_bridge.learning.store.json.loads", side_effect=AssertionError("parsed a whole lesson")):
+        rows = app.store.list()
+        app.store.write_widget()
+    assert rows == [Store.summary(app.store.get(s["id"]))]
+    assert rows[0]["demo"] is True
+    assert json.loads((tmp_path / "dashboard.json").read_text())["lessons"] == rows
+
+
+class _SlowTutor:
+    """DemoTutor that waits on ``release`` before answering a hint, like a live model call."""
+    demo = True
+
+    def __init__(self):
+        import threading
+        from eve_bridge.learning.tutor import DemoTutor
+        self.inner, self.entered, self.release = DemoTutor(), threading.Event(), threading.Event()
+
+    def __call__(self, action, lesson):
+        if action == "hint":
+            self.entered.set()
+            assert self.release.wait(5)
+        return self.inner(action, lesson)
+
+
+def test_the_tutor_call_does_not_hold_the_lesson_lock(tmp_path):
+    """Review D3: a slow tutor (up to 90 s live) must not block autosave or a spoken append."""
+    import threading
+    tutor = _SlowTutor()
+    app = LearningApp(tmp_path, tutor=tutor)
+    s = create(app)
+    out = {}
+    asker = threading.Thread(target=lambda: out.update(s=app.dispatch({"id": s["id"], "action": "hint"})))
+    asker.start()
+    assert tutor.entered.wait(5)
+    spoken = threading.Thread(target=lambda: out.update(spoken=app.append_spoken(s["id"], "maybe subtract three")))
+    spoken.start()
+    spoken.join(2)
+    saved = not spoken.is_alive()
+    tutor.release.set()
+    asker.join(5)
+    spoken.join(5)
+    assert saved, "append_spoken waited for the tutor"
+    assert out["spoken"] is True
+    assert out["s"]["events"][-1]["action"] == "hint"
+    assert "maybe subtract three" in out["s"]["ideas"]   # the answer lands on top of the spoken line
+
+
+def test_a_lesson_moved_on_during_the_tutor_call_is_refused(tmp_path):
+    import threading
+    tutor = _SlowTutor()
+    app = LearningApp(tmp_path, tutor=tutor)
+    s = create(app)
+    errors = []
+
+    def ask():
+        try:
+            app.dispatch({"id": s["id"], "action": "hint"})
+        except ValueError as exc:
+            errors.append(str(exc))
+
+    asker = threading.Thread(target=ask)
+    asker.start()
+    assert tutor.entered.wait(5)
+    app.dispatch({"id": s["id"], "action": "end"})
+    tutor.release.set()
+    asker.join(5)
+    assert errors and "changed in another window" in errors[0]
+    assert app.store.get(s["id"])["stage"] == "ended"

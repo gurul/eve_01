@@ -187,6 +187,30 @@ def _resolve_port(pattern: str, skip_serials: frozenset[str] = frozenset()) -> O
     return hits[0]
 
 
+def _open_port(port: str, baud: int, pulse: bool) -> serial.Serial:
+    """Worker thread. Open the port with DTR up, RTS-pulse the fresh handle when asked, and flush what
+    the board printed before we were listening. A failed open raises; a failed pulse is logged."""
+    ser = serial.Serial(port, baud, timeout=1, write_timeout=2, exclusive=True)
+    try:
+        ser.dtr = True  # firmware HWCDC drops TX without DTR
+    except Exception:
+        ser.close()
+        raise
+    if pulse:
+        try:
+            ser.rts = True
+            time.sleep(0.1)
+            ser.rts = False
+            ser.dtr = True
+        except Exception as e:  # noqa: BLE001
+            log.warning("serial: RTS pulse failed: %s", e)
+    try:
+        ser.reset_input_buffer()
+    except Exception:  # noqa: BLE001
+        pass
+    return ser
+
+
 class EveSerial:
     # A USB cable, not a radio link: the board's BLE "sec" flag says nothing about this link,
     # so the daemon ignores it here (docs/SETUP-ISSUES.md #10).
@@ -216,6 +240,7 @@ class EveSerial:
         self._reopen_holdoff = 0.0               # extra close-time before next open
         self._rx_trips: list[tuple[float, str]] = []  # (monotonic, port) silence trips
         self._pulse_on_open = False              # RTS-reset the board on next open
+        self._tasks: set[asyncio.Future[Any]] = set()  # on_message / on_boot handlers still running
 
     @property
     def connected(self) -> bool:
@@ -313,36 +338,24 @@ class EveSerial:
                 log.info("serial: device reappeared at %s after %.0fs away",
                          port, time.monotonic() - missing_since)
                 missing_since = None
-            try:
-                ser = serial.Serial(port, self.baud, timeout=1,
-                                    write_timeout=2, exclusive=True)
-                ser.dtr = True  # firmware HWCDC drops TX without DTR
-            except Exception as e:  # noqa: BLE001
-                log.warning("serial open %s failed: %s", port, e)
-                await asyncio.sleep(RECONNECT_SECS)
-                continue
-
-            if self._pulse_on_open:
+            # Opening the port, the RTS pulse's 0.1 s sleep and the buffer reset all block, so they run
+            # on a worker thread: on the loop they would stall every door for as long as the open takes.
+            pulse, self._pulse_on_open = self._pulse_on_open, False
+            if pulse:
                 # Escalation for the enumerated-but-silent board: pulse RTS on
                 # the FRESH handle (pulsing before reopen is a no-op — the old
                 # handle is already gone). Logs unconditionally: this line's
                 # absence from a log is proof the pulse never ran.
-                self._pulse_on_open = False
                 log.warning(
                     "serial: RTS-resetting the board — %d silent or deaf reopens of %s "
                     "within %.0f min", RX_TRIP_PULSE_COUNT, port,
                     RX_TRIP_WINDOW_SECS / 60)
-                try:
-                    ser.rts = True
-                    time.sleep(0.1)
-                    ser.rts = False
-                    ser.dtr = True
-                except Exception as e:  # noqa: BLE001
-                    log.warning("serial: RTS pulse failed: %s", e)
             try:
-                ser.reset_input_buffer()
-            except Exception:  # noqa: BLE001
-                pass
+                ser = await asyncio.to_thread(_open_port, port, self.baud, pulse)
+            except Exception as e:  # noqa: BLE001
+                log.warning("serial open %s failed: %s", port, e)
+                await asyncio.sleep(RECONNECT_SECS)
+                continue
 
             self._drop_reason = None
             self._ser = ser
@@ -417,14 +430,21 @@ class EveSerial:
                         and _IS_BOOT.search(text)
                         and time.monotonic() - self._last_boot_hook > 5.0):
                     self._last_boot_hook = time.monotonic()
-                    asyncio.create_task(self.on_boot())
+                    self._spawn(self.on_boot())
             return
         try:
             obj = json.loads(text)
         except json.JSONDecodeError:
             log.debug("serial: bad json: %r", text[:120])
             return
-        asyncio.create_task(self.on_message(obj))
+        self._spawn(self.on_message(obj))
+
+    def _spawn(self, coro: Awaitable[Any]) -> None:
+        """A handler task, held in _tasks until it finishes: the loop keeps only a weak reference to a
+        task, so one nobody holds can be collected mid-run."""
+        task = asyncio.ensure_future(coro)
+        self._tasks.add(task)
+        task.add_done_callback(self._tasks.discard)
 
     def _close_current(self) -> None:
         """Close the current handle. Reader-side only (run()'s finally)."""

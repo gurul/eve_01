@@ -424,6 +424,10 @@ def test_a_forget_that_cannot_clean_the_index_says_so(tmp_path: Path, monkeypatc
 def test_only_the_daemon_starts_the_index_worker(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     mem = memory(tmp_path, monkeypatch, at(9, 24, 20), hybrid=True)
     assert mem.ranked is not None and mem.ranked._worker is None           # the CLI and the eval: no worker
+    # Review D10: a search before the index is built must not start the build-and-embed worker either.
+    mem.ranked._built = False                                              # as for a missing index file
+    assert mem.ranked.search("rent", "2026-09-01", "2026-09-24") is None   # not built yet: the keyword AND
+    assert mem.ranked._worker is None
     mem.ranked.close()
     daemon = Memory(mem.cfg, mem.transcripts, None, background=True)
     assert daemon.ranked is not None and daemon.ranked._worker is not None

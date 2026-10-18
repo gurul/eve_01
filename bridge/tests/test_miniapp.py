@@ -548,6 +548,21 @@ def test_rename_undo_and_delete_from_the_page(tmp_path: Path) -> None:
     assert app.store.list() == [] and len(list((tmp_path / "apps" / ".trash").iterdir())) == 1
 
 
+def test_an_owner_signed_report_never_undoes_the_app(tmp_path: Path) -> None:
+    """Review D12: /report signed by the owner (not an app token) fell through to the Undo code and reverted."""
+    app = apps_server(tmp_path)
+    app.store.save(page_doc("v1"), "habit tracker")
+    app.store.save(page_doc("v2"), "add streaks", slug="habit-tracker")
+
+    async def body(port):
+        return await post(port, "/api/apps/habit-tracker/report", {"initData": signed(), "errors": []})
+
+    with_server(app, body)
+    assert app.store.info("habit-tracker").versions == 1                  # still two versions: nothing undone
+    status, _ = app.server._app_action("habit-tracker", "unknown", {})
+    assert status == 400 and app.store.info("habit-tracker").versions == 1
+
+
 def test_an_empty_name_and_a_missing_app_are_refused(tmp_path: Path) -> None:
     app = apps_server(tmp_path)
     app.store.save(page_doc("v1"), "habit tracker")

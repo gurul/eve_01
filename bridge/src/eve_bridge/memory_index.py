@@ -690,9 +690,10 @@ class MemoryIndex:
         """The best `limit` rounds between two days (inclusive), as transcript-search hits, best first:
         {"hits", "found"}. A round counts as found when it shares a telling word with the query or its cosine is at
         least MIN_COS. None when the index or the query's vector is not there."""
+        # Not built yet: the keyword AND answers. A search never starts the build-and-embed worker itself: only
+        # the daemon runs it (Memory(background=True) starts it when memory opens), and a CLI search that did
+        # would begin embedding a year of transcripts in a process about to exit.
         if not self.ok or self.embedder is None or not self._built:
-            if self.ok and not self._built:
-                self.start()
             return None
         t0 = time.monotonic()
         days = [d for d in self.transcripts.days() if first_day <= d <= last_day]

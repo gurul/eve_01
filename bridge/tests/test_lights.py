@@ -512,3 +512,80 @@ def test_cli_name_sets_room_and_key(tmp_path: Any) -> None:
     lt = L.load(p)[0]
     assert (lt.name, lt.room, lt.key) == ("desk bulb", "office", "secret")
     assert "secret" not in "\n".join(lines)
+
+
+class _Kernel:
+    """Fake UDP for the Govee reply port, no network: every listener shares port 4002 (SO_REUSEPORT),
+    and a unicast reply goes to whichever was bound last, as on macOS. Nothing leaves the process."""
+
+    def __init__(self) -> None:
+        import threading
+        self.lock = threading.Lock()
+        self.bound: list["_Sock"] = []
+
+
+class _Sock:
+    def __init__(self, kernel: _Kernel) -> None:
+        import queue
+        self.k, self.inbox, self.timeout = kernel, queue.Queue(), None
+
+    def __enter__(self) -> "_Sock":
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        with self.k.lock:
+            if self in self.k.bound:
+                self.k.bound.remove(self)
+
+    def setsockopt(self, *a: object) -> None:
+        pass
+
+    def settimeout(self, t: float) -> None:
+        self.timeout = t
+
+    def bind(self, addr: tuple) -> None:
+        with self.k.lock:
+            self.k.bound.append(self)
+
+    def sendto(self, data: bytes, addr: tuple) -> None:
+        import threading
+        import time as _t
+        _t.sleep(0.05)                   # both lights' listeners are bound before either answers
+        reply = json.dumps({"msg": {"cmd": "devStatus", "data": {"onOff": 1, "brightness": 50}}}).encode()
+
+        def answer() -> None:
+            with self.k.lock:
+                target = self.k.bound[-1] if self.k.bound else None
+            if target is not None:
+                target.inbox.put((reply, (addr[0], 4003)))
+        threading.Timer(0.02, answer).start()
+
+    def recvfrom(self, n: int) -> tuple:
+        import queue
+        try:
+            return self.inbox.get(timeout=self.timeout)
+        except queue.Empty:
+            raise TimeoutError("timed out") from None
+
+
+def test_parallel_govee_reads_each_get_their_own_reply(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Review D5: status('all') read every Govee light at once, each on its own socket bound to the shared
+    reply port, so one light's reply could land in the other's socket and be thrown away."""
+    import threading
+    kernel = _Kernel()
+    monkeypatch.setattr(L.socket, "socket", lambda *a, **k: _Sock(kernel))
+    drivers = [L.GoveeDriver(L.Light(n, "govee", ip=ip)) for n, ip in (("a", "192.0.2.10"), ("b", "192.0.2.11"))]
+    results: dict[str, Any] = {}
+
+    def read(d: L.GoveeDriver) -> None:
+        try:
+            results[d.light.name] = d._status_blocking()
+        except TimeoutError as e:
+            results[d.light.name] = e
+
+    threads = [threading.Thread(target=read, args=(d,)) for d in drivers]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join(10)
+    assert all(isinstance(r, L.State) for r in results.values()), results
