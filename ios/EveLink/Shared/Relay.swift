@@ -144,13 +144,19 @@ final class Relay: ObservableObject {
             diag("address: rendezvous had nothing")
             return false
         }
-        guard fresh != pairing.base, self.pairing?.token == pairing.token else {
+        // Compared with the pairing as it is now, not as it was before the await: two refreshes at once (chat and
+        // Work) both learn the new address, and only the first takes it.
+        guard let current = self.pairing, current.token == pairing.token, fresh != current.base else {
             diag("address: current")
             return false
         }
         self.pairing = Pairing(base: fresh, token: pairing.token)
-        hangUpCall()
         diag("address: updated to \(fresh.host ?? "?")")
+        if call.isOpen {
+            // A call on the old address ends as a drop does, so the phone's state ends with it (and notes call back).
+            hangUpCall()
+            fromEve(.ended("eve's address changed, so the call ended. Call again."))
+        }
         return true
     }
 
@@ -840,8 +846,9 @@ final class Relay: ObservableObject {
     private func keepAwake() {
         #if os(iOS)
         guard background == .invalid else { return }
+        // The expiration handler runs on the main thread and must end the task before it returns.
         background = UIApplication.shared.beginBackgroundTask(withName: "eve call") { [weak self] in
-            Task { @MainActor in self?.letSleep() }
+            MainActor.assumeIsolated { self?.letSleep() }
         }
         #endif
     }

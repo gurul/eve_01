@@ -49,6 +49,15 @@ function host(u: URL): string {
   return u.hostname.replace(/^www\./, "");
 }
 
+// A path segment that is not valid percent-encoding ("50%off") makes decodeURIComponent throw; show it as written.
+function decodeSegment(segment: string): string {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
+}
+
 export function linkLabel(raw: string): string {
   let u: URL;
   try {
@@ -63,7 +72,7 @@ export function linkLabel(raw: string): string {
   }
   if (h === "youtube.com" || h === "youtu.be") return "YouTube";
   const first = u.pathname.split("/").filter(Boolean)[0];
-  return first && first.length <= 24 ? `${h} › ${decodeURIComponent(first)}` : h;
+  return first && first.length <= 24 ? `${h} › ${decodeSegment(first)}` : h;
 }
 
 export function compactLinks(markdown: string): string {

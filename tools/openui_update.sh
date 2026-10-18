@@ -97,6 +97,12 @@ for c in $changes; do
   name="${c%@*}"; ver="${c##*@}"
   node -e "const f='package.json',j=require('./'+f);j.dependencies['$name']='$ver';require('fs').writeFileSync(f,JSON.stringify(j,null,2)+'\n')"
 done
+# pnpm holds back releases younger than its minimum age; every OpenUI entry in pnpm-workspace.yaml's
+# minimumReleaseAgeExclude (direct pins and the ones they pull in, like lang-core) moves to npm's newest with them.
+for name in $(sed -n "s/^  - '\(@openuidev\/[a-z-]*\)@.*'\$/\1/p" pnpm-workspace.yaml); do
+  ver="$(npm view "$name" version 2>/dev/null || true)"
+  [ -n "$ver" ] && sed -i '' "s|^  - '$name@.*'\$|  - '$name@$ver'|" pnpm-workspace.yaml
+done
 pnpm install --no-frozen-lockfile >/dev/null 2>&1 || fail "pnpm install"
 pnpm test >/dev/null 2>&1 || fail "the web tests"
 pnpm exec tsc --noEmit >/dev/null 2>&1 || fail "the type check"
@@ -108,7 +114,7 @@ sh ios/EveLink/Tests/run.sh >/dev/null 2>&1 || fail "the app's tests"
     tests/test_link_chat.py tests/test_link_topics.py >/dev/null 2>&1 ) || fail "the bridge's chat tests"
 sh ios/EveLink/build.sh >/dev/null 2>&1 || fail "the app build"
 git -C "$WT" checkout -q -- ios/EveLink/App/ChatWeb 2>/dev/null || true
-git -C "$WT" add ios/EveLink/Web/package.json ios/EveLink/Web/pnpm-lock.yaml bridge/src/eve_bridge/openui_prompt.txt
+git -C "$WT" add ios/EveLink/Web/package.json ios/EveLink/Web/pnpm-lock.yaml ios/EveLink/Web/pnpm-workspace.yaml bridge/src/eve_bridge/openui_prompt.txt
 git -C "$WT" commit -q -m "OpenUI:$changes
 
 Nightly update (tools/openui_update.sh): web tests, type check, card rules

@@ -27,4 +27,14 @@ describe("compactLinks", () => {
   it("survives a malformed URL", () => {
     expect(linkLabel("https://")).toBe("https://");
   });
+
+  it("survives a path segment that is not valid percent-encoding", () => {
+    // decodeURIComponent("50%off") throws URIError, which blanked the whole chat.
+    expect(linkLabel("https://shop.com/50%off")).toBe("shop.com › 50%off");
+    expect(compactLinks("see https://shop.com/50%off")).toBe("see [shop.com › 50%off](https://shop.com/50%off)");
+  });
+
+  it("positive control: a valid escape in the first segment is still decoded", () => {
+    expect(linkLabel("https://shop.com/caf%C3%A9")).toBe("shop.com › café");
+  });
 });
