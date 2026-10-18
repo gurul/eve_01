@@ -478,9 +478,13 @@ class Memory:
         for r in self.records:
             days = (now_ts - (r.last_accessed or r.ts)) / 86400.0
             if days >= 1.0 and r.importance > 1:
-                r.importance = max(1, int(round(r.importance * (0.98 ** days))))
-                r.last_accessed = now_ts
-                changed = True
+                lowered = max(1, int(round(r.importance * (0.98 ** days))))
+                # Restart the clock only when the whole number drops. Restarting it every pass meant a daily
+                # pass never lost anything: round(7 * 0.98) is 7 again.
+                if lowered < r.importance:
+                    r.importance = lowered
+                    r.last_accessed = now_ts
+                    changed = True
         if changed:
             self.rewrite()
 

@@ -523,6 +523,10 @@ def _cell_value(cell: Any, shared: list[str]) -> str:
     return text
 
 
+# Matched in place with .match(text, i): re.match on text[i:] copied the rest of the file once per control word.
+_RTF_WORD = re.compile(r"\\([a-z]+)(-?\d+)? ?")
+
+
 def _rtf_text(data: bytes) -> str:
     """The readable text of an RTF file: control words and groups dropped, unicode escapes and \\'xx bytes kept.
     A plain, bounded reader — enough for eve lite to read a note, not a full RTF engine."""
@@ -543,7 +547,7 @@ def _rtf_text(data: bytes) -> str:
                     pass
                 i += 4
                 continue
-            m = re.match(r"\\([a-z]+)(-?\d+)? ?", text[i:])            # a control word, with an optional number
+            m = _RTF_WORD.match(text, i)                              # a control word, with an optional number
             if m:
                 word = m.group(1)
                 if word == "u" and m.group(2):                        # \uN : a unicode character
@@ -553,7 +557,7 @@ def _rtf_text(data: bytes) -> str:
                     out.append("\n")
                 elif word in ("fonttbl", "colortbl", "stylesheet", "info", "pict", "object"):
                     depth_skip += 1                                   # a group to drop whole, at this brace depth
-                i += m.end()
+                i = m.end()
                 continue
             i += 1
             continue

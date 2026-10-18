@@ -312,6 +312,25 @@ async def test_the_voice_goes_to_the_board_in_decodable_pieces() -> None:
 
 
 @run
+async def test_an_odd_byte_never_reaches_the_board_and_the_samples_stay_aligned() -> None:
+    # The range stopped at an even length but the last slice ran to i + PCM_PIECE_BYTES, so a 4803-byte reply
+    # sent a 3-byte piece and every int16 after it on the board was split across two samples
+    import base64
+    clock = Clock()
+    spk, lines = board(clock)
+    first, second = bytes(range(200)) * 24 + b"\x01\x02\x03", b"\x04\x05\x06"     # 4803 bytes, then 3
+    await spk.play(first)
+    await spk.play(second)
+    pieces = [base64.b64decode(line["d"]) for line in lines]
+    assert all(len(p) % 2 == 0 for p in pieces), [len(p) for p in pieces]
+    assert b"".join(pieces) == first + second                       # the odd byte waited for its pair
+    await spk.play(b"\x07")                                         # held: half a sample
+    await spk.flush()                                                # a flush drops a held byte with the rest
+    await spk.play(b"\x08\x09")
+    assert base64.b64decode(lines[-1]["d"]) == b"\x08\x09"
+
+
+@run
 async def test_the_daemon_stays_at_most_three_seconds_ahead_of_the_board() -> None:
     clock = Clock()
     spk, lines = board(clock)

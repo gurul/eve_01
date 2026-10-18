@@ -236,7 +236,11 @@ def arithmetic(t: str) -> Optional[dict[str, Any]]:
         value = _eval(ast.parse(expr.strip(), mode="eval").body)
     except (SyntaxError, ValueError, ZeroDivisionError, OverflowError, RecursionError):
         return None
-    if not math.isfinite(value):
+    try:
+        finite = math.isfinite(value)
+    except OverflowError:                 # an exact int past the float range: 10**360 has no float
+        return None
+    if not finite:
         return None
     return {"said": body, "value": value}
 

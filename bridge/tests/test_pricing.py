@@ -140,3 +140,12 @@ def test_jev_input_is_priced_and_unknown_models_are_none():
     assert estimate_jev_cost(0) == 0.0 and estimate_jev_cost(-5) == 0.0
     assert estimate_openai_cost("gpt-9-unknown", {"input_tokens": 10}) is None
     assert estimate_openai_cost("", {"input_tokens": 10}) is None
+
+
+def test_estimate_cost_prices_a_model_the_current_table_names_at_its_rates():
+    # claude-opus-5-5 is in ANTHROPIC_RATES at $4 / $20; the family table priced it as an old Opus at $15 / $75
+    usage = {"input_tokens": 1_000_000, "output_tokens": 1_000_000, "cache_read_input_tokens": 1_000_000,
+             "cache_creation": {"ephemeral_5m_input_tokens": 1_000_000, "ephemeral_1h_input_tokens": 1_000_000}}
+    assert abs(estimate_cost("claude-opus-5-5", usage) - (4.0 + 20.0 + 0.20 + 5.0 + 8.0)) < 1e-9
+    assert abs(estimate_cost("claude-opus-5-5", {"input_tokens": 1_000_000, "cache_creation_input_tokens": 1_000_000})
+               - (4.0 + 5.0)) < 1e-9

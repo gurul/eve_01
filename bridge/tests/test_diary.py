@@ -187,6 +187,18 @@ def test_decay_lowers_importance_of_unretrieved_records(tmp_path: Path) -> None:
     assert m2.records[0].importance == m.records[0].importance   # persisted
 
 
+def test_decay_run_daily_still_lowers_importance(tmp_path: Path) -> None:
+    # The daemon decays about once a day. round(7 * 0.98) is 7 and the clock used to restart each pass, so a
+    # record decayed daily never lost anything.
+    m = Memory(tmp_path / "n")
+    m.load()
+    t0 = 1_700_000_000.0
+    m.add(_rec(1, t0, "old", importance=7))
+    for day in range(1, 31):
+        m.decay(t0 + day * 86400)
+    assert m.records[0].importance < 7
+
+
 def test_build_context_sections(tmp_path: Path) -> None:
     m = Memory(tmp_path / "n")
     m.load()

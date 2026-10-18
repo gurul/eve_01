@@ -63,7 +63,9 @@ TIMEOUT_S = 0.8                      # the toolset router's budget: past it the 
 GRID = tuple(round(0.05 * i, 2) for i in range(1, 20))      # 0.05 .. 0.95
 MIN_TUNING_RECALL = 0.95
 DEFAULT_GATE = 0.5                   # used only until grade_gate.json exists
-GATE_FILE = Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "grade_gate.json"
+# Beside this module and in package-data, so a wheel carries it: under tests/fixtures an installed eve had no file
+# and fell back to DEFAULT_GATE without a word. tools/grade_eval.py --tune writes it here.
+GATE_FILE = Path(__file__).resolve().parent / "grade_gate.json"
 SHIPPED = True                       # holdout 2026-10-08: recall 0.943, over-think 0.0, p95 482 ms, errors 0 (passed)
 
 ABOUT = ("A message the owner texted their personal assistant from their phone. When a previous message is given, "
@@ -152,6 +154,9 @@ def bar(grades: list[str], acceptable: list[list[str]], answers: list[GradeAnswe
     return out
 
 
+_GATE: Optional[float] = None         # the shipped gate, read once a process by grade_turn
+
+
 def load_gate(path: Path = GATE_FILE) -> float:
     try:
         return float(json.loads(path.read_text(encoding="utf-8"))["gate"])
@@ -232,5 +237,10 @@ def grade_turn(text: str, previous: str = "", grader: Optional[Callable[[str, st
     a = box.get("a")
     if not isinstance(a, GradeAnswer):
         return Grade(INSTANT, 0.0, (time.perf_counter() - t0) * 1000.0, True, "not an answer")
-    g = decide(a, load_gate() if gate is None else gate)
+    global _GATE
+    if gate is None:
+        if _GATE is None:
+            _GATE = load_gate()           # once: the file only changes when the gate is refitted
+        gate = _GATE
+    g = decide(a, gate)
     return Grade(g, a.noul, a.ms, True, a.error)

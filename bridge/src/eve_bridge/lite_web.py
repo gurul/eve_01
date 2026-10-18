@@ -963,7 +963,7 @@ class _Door:
     async def _body(self, req: _Request) -> Optional[dict[str, Any]]:
         """The request's JSON object ({} for no body); None once a refusal is answered."""
         raw = req.headers.get("content-length", "").strip() or "0"
-        if not raw.isdigit():
+        if not (raw.isascii() and raw.isdigit()):           # "²".isdigit() is True too, and int() of it raises
             await self._error(req, 400, BAD_BODY)
             return None
         size = int(raw)

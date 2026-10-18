@@ -152,6 +152,21 @@ def test_a_post_body_must_be_json_or_an_upload_of_bytes(tmp_path: Path) -> None:
     run(go())
 
 
+@pytest.mark.parametrize("length", [b"\xb2", b"1\xb2", b"-1", b"+2"])
+def test_a_content_length_that_is_not_ascii_digits_is_400(tmp_path: Path, length: bytes) -> None:
+    # "\u00b2".isdigit() is True and int() of it raises: the request got a 500 instead of a plain refusal
+    async def go() -> None:
+        async with Rig(tmp_path) as r:
+            mac = f"eve_mac={await r.login()}"
+            head = (f"POST {lite_web.COMPOSIO_SKIP_PATH} HTTP/1.1\r\nHost: localhost:{r.port}\r\n"
+                    f"Origin: http://localhost:{r.port}\r\nCookie: {mac}\r\nContent-Type: application/json\r\n").encode()
+            reply = await send_raw(r.port, head + b"Content-Length: " + length + b"\r\n\r\n{}")
+            assert reply.startswith(b"HTTP/1.1 400 "), reply[:80]
+            assert not r.ctx.shared.saved.composio_skipped
+
+    run(go())
+
+
 # ---- the cookie --------------------------------------------------------------------------------------------------
 
 COOKIE_GETS = (lite_web.STATUS_PATH, lite_web.APPS_PATH, "/api/web/link/messages", "/api/web/link/file/" + "a" * 32)

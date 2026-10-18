@@ -341,7 +341,8 @@ def _when(value: Any) -> Optional[datetime]:
     return dt if dt.tzinfo else dt.astimezone()
 
 
-_CLOCK = re.compile(r"\b(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)?\b", re.I)
+# (?!\w), not \b, at the end: after "p.m." there is no word boundary, so \b made the dotted forms never match
+_CLOCK = re.compile(r"\b(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)?(?!\w)", re.I)
 _NOW_WORDS = re.compile(r"^\s*(?:(?:join|my|the|a|this|current|meeting|call|meet|now|right now|in progress)\s*)*$", re.I)
 
 

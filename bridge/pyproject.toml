@@ -156,6 +156,6 @@ ignore = [
 eve_bridge = ["learning/web/*.html", "learning/web/*.css", "learning/web/*.js", "learning/web/fonts/*.woff2", "learning/web/fonts/OFL.txt",
                    "learning/web/canvas/*", "learning/web/canvas/assets/**/*", "skills/*/SKILL.md",
                    "miniapp_page.html", "miniapp_iro.min.js", "miniapp_iro.LICENSE.txt", "meet_page.js",
-                   "openui_prompt.txt", "native/*.c", "app_template/*.tmpl",
+                   "openui_prompt.txt", "grade_gate.json", "native/*.c", "app_template/*.tmpl",
                    # eve lite's web page, built by `pnpm build:web` (ios/EveLink/Web) and git-ignored
                    "web_lite/*", "web_lite/**/*"]

@@ -215,3 +215,19 @@ def test_history_does_not_grow_without_bound() -> None:
     for i in range(300):
         s.offer(i * 2.0, f"Remark {i} concerning item {i} and nothing else at all.", {f"t{i}"}, **GOOD)
     assert len(s.shown) <= max(s.history, s.per_hour * 8)
+
+
+def test_offer_keeps_the_tags_of_a_generator() -> None:
+    # offer() ran refusal() first, which used up a generator; the thought was recorded with no tags
+    s = _screen()
+    assert s.offer(0.0, VENT, (t for t in ["Vent", "ceiling"]), **GOOD)
+    assert s.shown[-1].tags == frozenset({"vent", "ceiling"})
+
+
+def test_record_shows_a_thought_already_judged_without_judging_it_again(monkeypatch) -> None:
+    # The daemon asks refusal() itself to log the reason; offer() then ran the whole screen a second time
+    s = _screen()
+    assert s.refusal(0.0, VENT, ["vent"], **GOOD) is None
+    monkeypatch.setattr(s, "refusal", lambda *a, **k: (_ for _ in ()).throw(AssertionError("judged twice")))
+    s.record(0.0, VENT, ["vent"])
+    assert [x.text for x in s.shown] == [VENT] and s.shown[-1].tags == frozenset({"vent"})

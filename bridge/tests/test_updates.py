@@ -365,6 +365,17 @@ def test_refresh_stores_cards_and_view_serves_the_contract(tmp_path: Path) -> No
     assert not [p for p in path.parent.iterdir() if p.name.endswith(".tmp")]
 
 
+def test_a_recent_day_that_is_not_a_date_does_not_stop_the_cards(tmp_path: Path) -> None:
+    # "2026-13-40" passes the digits pattern; date.fromisoformat raised in put_cards and the cards stopped refreshing
+    path = tmp_path / "u.json"
+    path.write_text(json.dumps({"cards": [], "recent": {"bad": {"refs": ["gmail:x"], "day": "2026-13-40"},
+                                                        "good": {"refs": ["gmail:y"], "day": NOW.date().isoformat()}}}))
+    store = UpdatesStore(path)
+    store.put_cards([{"id": "aaa", "verb": "Pay", "text": "x", "refs": ["gmail:a"]}], NOW.isoformat(), today=NOW.date())
+    state = store.load()
+    assert [c["id"] for c in state["cards"]] == ["aaa"] and set(state["recent"]) == {"good"}
+
+
 def test_dismiss_persists_hides_every_card_citing_the_refs_and_expires(tmp_path: Path) -> None:
     store = UpdatesStore(tmp_path / "u.json")
     cards = [{"id": "aaa", "verb": "Pay", "text": "x", "refs": ["gmail:a"], "kind": "email", "source": "s"},

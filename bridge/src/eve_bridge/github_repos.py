@@ -154,4 +154,6 @@ def names_repo(text: str, names: frozenset[str]) -> bool:
     if not names or not text:
         return False
     words = set(re.findall(r"[a-z0-9][a-z0-9._-]*", text.lower()))
+    # A name that ends a sentence comes with its full stop ("zorbcar."): try each word without trailing marks too
+    words |= {w.rstrip("._-") for w in words}
     return bool(words & names)

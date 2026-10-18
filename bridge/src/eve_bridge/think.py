@@ -112,18 +112,19 @@ def context_block(context: str) -> str:
     return CONTEXT_HEADER + text
 
 
-def request(config: ThinkConfig, items: list[dict[str, Any]], context: str = "") -> dict[str, Any]:
+def request(config: ThinkConfig, items: list[dict[str, Any]], context: str = "", final: bool = False) -> dict[str, Any]:
     """The exact Responses body for one round (tests check store=False, the effort and the search tool).
     `items` is the question, then, on a later round, the carried reasoning, the calls and their outputs.
     `context` (the owner's profile and today) goes after the instructions and what eve runs on
-    (``config.about``), and before the clock."""
+    (``config.about``), and before the clock. `final` is the last round: the tool stays declared (the carried
+    calls name it) but may not be called, so the model answers from what it found instead of searching again."""
     return {
         "model": config.model,
         "instructions": INSTRUCTIONS + config.about + context_block(context) + system_context.context(),
         "input": items,
         "reasoning": {"effort": config.effort},
         "tools": websearch.tools_for(config.search),
-        "tool_choice": "auto",
+        "tool_choice": "none" if final else "auto",
         "include": ["reasoning.encrypted_content"],
         "max_output_tokens": MAX_OUTPUT_TOKENS,
         "store": False,
@@ -186,7 +187,7 @@ class OpenAIThinker:
         items = question_items(question)
         text = ""
         for _round in range(MAX_SEARCH_ROUNDS + 1):
-            req = request(self.config, items, context)
+            req = request(self.config, items, context, final=_round == MAX_SEARCH_ROUNDS)
             resp = await self._create(req)
             body = resp if isinstance(resp, dict) else resp.model_dump(exclude_none=True)
             spend.record_response(spend.THINKING, body, model=req["model"])

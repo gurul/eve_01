@@ -268,6 +268,25 @@ def test_file_note_moves_updates_status_and_handles_clashes(vault: Path) -> None
     assert new2 == "03-projects/eve/2026-09-21-1830-a-thought-about-eve-2.md"
 
 
+def test_a_symlinked_project_folder_is_not_a_way_out_of_the_vault(vault: Path, tmp_path: Path) -> None:
+    # _destination did not resolve 03-projects/<x>: through a symlink, create/move/file wrote outside the vault,
+    # then _rel raised and the caller heard "failed" after the file had already gone
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (vault / sb.PROJECTS_DIR / "away").symlink_to(outside, target_is_directory=True)
+    with pytest.raises(ValueError):
+        sb.create_note(vault, f"{sb.PROJECTS_DIR}/away", "Escape")
+    note = vault / sb.INBOX_DIR / "n.md"
+    note.write_text("# N\n", encoding="utf-8")
+    with pytest.raises(ValueError):
+        sb.move_note(vault, f"{sb.INBOX_DIR}/n.md", f"{sb.PROJECTS_DIR}/away")
+    with pytest.raises(ValueError):
+        sb.file_note(vault, f"{sb.INBOX_DIR}/n.md", f"{sb.PROJECTS_DIR}/away")
+    assert list(outside.iterdir()) == [] and note.is_file()
+    made = sb.create_note(vault, f"{sb.PROJECTS_DIR}/home", "Stays")       # positive control: a real folder
+    assert made["path"] == f"{sb.PROJECTS_DIR}/home/stays.md"
+
+
 def test_file_note_rejects_unknown_folder_and_escapes(vault: Path) -> None:
     res = capture(vault, "x", now=NOW)
     for bad in ("10-nope", "03-projects/../..", "05-resources/sub/deeper", "", "../elsewhere", "03-projects/.hidden"):

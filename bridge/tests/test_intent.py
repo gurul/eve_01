@@ -30,6 +30,7 @@ LEAVES = [
     "I want you to leave.", "I want you to leave now", "we need you to go away", "leave me alone",
     "you can go now", "You can leave.", "get lost", "end the conversation", "I'm done talking",
     "Later.", "talk to you later", "Okay, see ya.",
+    "I'm heading home, bye.", "Got to run, see you later!",   # a goodbye clause after the sentence, then punctuation
 ]
 MUTES = ["mute", "Mute yourself.", "be quiet", "shh", "hush eve", "no more beeping",
          "turn your sound off", "stop making noise", "go silent", "sound off please"]
