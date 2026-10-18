@@ -423,6 +423,22 @@ def test_calendar_finds_the_meeting(words, now, title):
     assert e is not None and e["summary"] == title and link.startswith("https://meet.google.com/") and not why
 
 
+@pytest.mark.parametrize("words", ["join at 9 p.m.", "join at 9 P.M.", "9pm"])
+def test_calendar_reads_dotted_pm(words):
+    # "p.m." used to fall through the trailing \b, read as a bare 9, and join the 9 AM meeting
+    events = [ev("Standup", 9, link="https://meet.google.com/sta-ndup-aaa"),
+              ev("Late sync", 21, link="https://meet.google.com/lat-esyn-ccc")]
+    e, link, why = meet.find_meeting(events, words, datetime(2026, 9, 26, 8, 0, tzinfo=PT))
+    assert e is not None and e["summary"] == "Late sync" and not why
+
+
+def test_calendar_reads_dotted_am():
+    events = [ev("Standup", 9, link="https://meet.google.com/sta-ndup-aaa"),
+              ev("Late sync", 21, link="https://meet.google.com/lat-esyn-ccc")]
+    e, _link, _why = meet.find_meeting(events, "join at 9 a.m.", datetime(2026, 9, 26, 8, 0, tzinfo=PT))
+    assert e is not None and e["summary"] == "Standup"
+
+
 @pytest.mark.parametrize("words,now", [("now", (12, 10)), ("noon", (8, 0)), ("lunch", (8, 0)), ("11am", (8, 0))])
 def test_calendar_no_match_is_a_plain_reason(words, now):
     e, link, why = meet.find_meeting(EVENTS, words, datetime(2026, 9, 26, *now, tzinfo=PT))

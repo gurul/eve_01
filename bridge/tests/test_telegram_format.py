@@ -74,6 +74,17 @@ def test_markdown_from_a_model_becomes_telegram_markup_not_raw_stars_and_hashes(
     assert "*" not in visible(out) and "#" not in visible(out) and "`" not in visible(out)
 
 
+def test_a_link_url_keeps_its_underscores_and_stars() -> None:
+    # The styles ran over the finished href: https://x.com/_foo_/bar became href="https://x.com/<i>foo</i>/bar",
+    # which Telegram rejects as HTML
+    from eve_bridge.telegram_format import inline
+
+    assert inline("[docs](https://x.com/_foo_/bar)") == '<a href="https://x.com/_foo_/bar">docs</a>'
+    assert inline("see [a](https://x.com/**b**/c) and **bold**") == \
+        'see <a href="https://x.com/**b**/c">a</a> and <b>bold</b>'
+    assert inline("[_the_ docs](https://x.com/~~y~~)") == '<a href="https://x.com/~~y~~"><i>the</i> docs</a>'
+
+
 def test_code_fences_become_pre_blocks_verbatim_and_escaped() -> None:
     text = "Run this:\n```python\nif a < b and c > d:\n    print('x')   # two  spaces kept\n```\nThen `pytest -q`."
     out = render_body(text)

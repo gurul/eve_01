@@ -74,6 +74,24 @@ def test_a_think_that_searches_gets_the_sources_and_answers_in_a_later_round() -
         asyncio.run(OpenAIThinker(cfg, create=loop, search=search)("q"))
 
 
+def test_the_last_round_may_not_search_again() -> None:
+    # With tool_choice auto on the last round the model could ask for one more search, and the think ended in
+    # "empty answer". The last round must answer from what it already found.
+    requests: list[dict] = []
+    search_call = {"status": "completed", "output": [
+        {"type": "function_call", "name": "web_search", "call_id": "c", "arguments": "{\"query\": \"x\"}"}]}
+
+    async def create(req: dict) -> dict:
+        requests.append(req)
+        return search_call if len(requests) <= think.MAX_SEARCH_ROUNDS else {"status": "completed", "output": [
+            {"type": "message", "role": "assistant", "content": [{"type": "output_text", "text": "done"}]}]}
+
+    cfg = ThinkConfig(model="m", search=websearch.SearchConfig(engine="openrouter-exa"))
+    out = asyncio.run(OpenAIThinker(cfg, create=create, search=lambda q: {"ok": True})("q"))
+    assert out["answer"] == "done" and len(requests) == think.MAX_SEARCH_ROUNDS + 1
+    assert [r["tool_choice"] for r in requests] == ["auto"] * think.MAX_SEARCH_ROUNDS + ["none"]
+
+
 def test_configured_defaults_to_astra_at_high_effort() -> None:
     cfg = configured({}, backend_model="gpt-5-mini")                  # thinking is astra, whatever voice uses
     assert cfg == ThinkConfig(enabled=True, model="gpt-6-astra", effort="high", timeout_secs=90.0,

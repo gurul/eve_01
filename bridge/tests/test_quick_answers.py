@@ -68,6 +68,12 @@ def test_no_sum_runs_away_or_runs_code() -> None:
     assert qa.arithmetic("what's 2 plus") is None
 
 
+def test_a_sum_too_big_for_a_float_is_left_to_the_model() -> None:
+    # 10**360 is an exact int; math.isfinite on it raised OverflowError and the message got no reply
+    assert qa.arithmetic("1000000 to the power of 60") is None
+    assert match("what is 1000000 to the power of 60") is None
+
+
 @pytest.mark.parametrize("text,result", [
     ("convert 5 km to miles", 3.10686), ("72 fahrenheit in celsius", 22.2222), ("100 c to f", 212),
     ("how many ounces in a pound", 16), ("what's 3 cups in ml", 709.765), ("10 kg to pounds", 22.0462),

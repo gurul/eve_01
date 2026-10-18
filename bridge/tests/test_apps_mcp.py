@@ -789,6 +789,56 @@ def test_drive_reads_a_doc_by_export_and_says_when_it_cannot() -> None:
     assert zipped["text"] == "" and "not read as text" in zipped["note"]
 
 
+def test_drive_stops_reading_a_file_at_the_download_cap(monkeypatch: pytest.MonkeyPatch) -> None:
+    # The cap was checked after r.content had read the whole body into memory; now the read stops at it
+    monkeypatch.setattr(google_rest, "DOWNLOAD_MAX", 1024 * 1024)
+    pulled: list[int] = []
+
+    class Endless(httpx.SyncByteStream):
+        def __iter__(self):
+            for _ in range(100):                                     # 100 MB if read to the end
+                pulled.append(1)
+                yield b"x" * (1024 * 1024)
+
+    def routes(r: httpx.Request) -> Any:
+        if r.url.params.get("alt") == "media":
+            return httpx.Response(200, stream=Endless(), headers={"content-type": "text/plain"})
+        return {"name": "Big", "mimeType": "text/plain"}
+
+    client, _ = google(routes, "drive")
+    out = client.call_tool("read_file_content", {"fileId": "big"})
+    assert out["isError"] and "larger than 1 MB" in out["content"][0]["text"]
+    assert len(pulled) <= 3
+
+
+def test_drive_download_still_reports_the_http_error() -> None:
+    def routes(r: httpx.Request) -> Any:
+        if r.url.params.get("alt") == "media":
+            return httpx.Response(404, json={"error": {"message": "File not found"}})
+        return {"name": "Gone", "mimeType": "text/plain"}
+
+    client, _ = google(routes, "drive")
+    out = client.call_tool("read_file_content", {"fileId": "gone"})
+    assert out["isError"] and "HTTP 404: File not found" in out["content"][0]["text"]
+
+
+def test_suggest_time_keeps_an_explicit_midnight_workday_start(monkeypatch: pytest.MonkeyPatch) -> None:
+    # `or 9` read an explicit 0 as no answer and started the day at 9
+    seen: dict[str, Any] = {}
+    monkeypatch.setattr(google_rest, "free_slots",
+                        lambda busy, start, end, minutes, day_start, day_end: seen.update(s=day_start, e=day_end) or [])
+
+    def routes(r: httpx.Request) -> Any:
+        return {"items": [{"id": "me@x"}]} if r.url.path.endswith("/calendarList") else {"calendars": {}}
+
+    client, _ = google(routes, "calendar")
+    args = {"startTime": "2026-10-05T00:00:00-07:00", "endTime": "2026-10-05T20:00:00-07:00", "durationMinutes": 30}
+    client.call_tool("suggest_time", {**args, "workdayStartHour": 0})
+    assert seen == {"s": 0, "e": 18}
+    client.call_tool("suggest_time", args)
+    assert seen == {"s": 9, "e": 18}                                   # unset still means 9 to 18
+
+
 def test_a_google_error_is_a_tool_error_not_an_exception() -> None:
     client, _ = google(lambda r: httpx.Response(403, json={"error": {"message": "Gmail API has not been used"}}),
                        "gmail")

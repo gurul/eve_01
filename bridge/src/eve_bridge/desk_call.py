@@ -143,6 +143,7 @@ class BoardSpeaker:
         self.send, self.clock, self.sleep = send, clock, sleep
         self.started: Optional[float] = None    # when the current burst began playing, roughly
         self.queued = 0.0                       # seconds of audio sent in the current burst
+        self._odd = b""                         # a reply's last byte, half a sample, waiting for the next reply
 
     def ahead(self) -> float:
         """Seconds of audio the board has not played yet, by the clock."""
@@ -151,8 +152,13 @@ class BoardSpeaker:
         return max(0.0, self.queued - (self.clock() - self.started))
 
     async def play(self, pcm: bytes) -> None:
-        for i in range(0, len(pcm) - len(pcm) % 2, PCM_PIECE_BYTES):
-            piece = pcm[i:i + PCM_PIECE_BYTES]
+        # Only whole int16 samples go out. An odd last byte is kept for the next call: sent, it split every later
+        # sample on the board across two; dropped, the next reply would start half a sample in.
+        pcm = self._odd + pcm
+        end = len(pcm) - len(pcm) % 2
+        self._odd = pcm[end:]
+        for i in range(0, end, PCM_PIECE_BYTES):
+            piece = pcm[i:min(i + PCM_PIECE_BYTES, end)]
             if self.ahead() == 0.0:              # the board ran dry: a new burst starts now
                 self.started, self.queued = self.clock(), 0.0
             wait = self.ahead() + len(piece) / BYTES_PER_SEC - LEAD_SECS   # room for the whole piece
@@ -162,7 +168,7 @@ class BoardSpeaker:
             self.queued += len(piece) / BYTES_PER_SEC
 
     async def flush(self) -> None:
-        self.started, self.queued = None, 0.0
+        self.started, self.queued, self._odd = None, 0.0, b""
         await self.send({"cmd": "pcm_flush"})
 
     def close(self) -> None:

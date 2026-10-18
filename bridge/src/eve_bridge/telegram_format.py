@@ -74,13 +74,20 @@ _TABLE_SEP = re.compile(r"^\|?\s*:?-+:?\s*(?:\|\s*:?-+:?\s*)*\|?$")   # |---|:--
 
 
 def _styles(escaped: str) -> str:
-    """Inline markdown on already-escaped prose: links, bold, italic, strikethrough."""
-    out = _LINK.sub(lambda m: f'<a href="{m.group(2)}">{m.group(1)}</a>', escaped)
+    """Inline markdown on already-escaped prose: links, bold, italic, strikethrough. A link's URL is held out
+    while the styles run and put back after: run over it, "_foo_" in a path became <i> inside the href."""
+    urls: list[str] = []
+
+    def hold(m: re.Match[str]) -> str:
+        urls.append(m.group(2))
+        return f'<a href="\x00{len(urls) - 1}\x00">{m.group(1)}</a>'
+
+    out = _LINK.sub(hold, escaped.replace("\x00", ""))        # a NUL of the text's own is no placeholder
     out = _BOLD.sub(lambda m: f"<b>{m.group(1) or m.group(2)}</b>", out)
     out = _STRIKE.sub(r"<s>\1</s>", out)
     out = _ITALIC_STAR.sub(r"<i>\1</i>", out)
     out = _ITALIC_UNDER.sub(r"<i>\1</i>", out)
-    return out
+    return re.sub(r"\x00(\d+)\x00", lambda m: urls[int(m.group(1))], out) if urls else out
 
 
 def inline(text: str) -> str:

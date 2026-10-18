@@ -158,6 +158,18 @@ def test_the_cli_never_gets_eves_secrets(monkeypatch: pytest.MonkeyPatch) -> Non
     assert env["NO_COLOR"] == "1" and "/opt/homebrew/bin" in env["PATH"].split(":")
 
 
+def test_the_cli_path_keeps_the_daemons_path_and_the_system_dirs(monkeypatch: pytest.MonkeyPatch) -> None:
+    # PATH was read from the new, minimal dict, which never has one: /usr/bin, /bin and nvm's node went, and the
+    # CLI's `#!/usr/bin/env node` failed with 127
+    monkeypatch.setenv("PATH", "/home/o/.nvm/versions/node/v22/bin:/usr/bin:/bin")
+    path = monid._env("/opt/homebrew/bin/monid")["PATH"].split(":")
+    assert path[0] == "/opt/homebrew/bin" and "/home/o/.nvm/versions/node/v22/bin" in path
+    assert "/usr/bin" in path and "/bin" in path and len(path) == len(set(path))
+    monkeypatch.delenv("PATH")
+    path = monid._env("/opt/homebrew/bin/monid")["PATH"].split(":")
+    assert "/usr/bin" in path and "/bin" in path                     # a daemon started with no PATH still has env
+
+
 def test_the_reader_never_pays_for_monid(cli: FakeCli) -> None:
     out = ws.engine_search(QUERY, CFG, key="r", opener=_both_fail(), monid_ok=False)
     assert out["ok"] is False and cli.calls == []

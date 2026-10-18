@@ -204,11 +204,18 @@ class ThoughtScreen:
     def offer(self, now: float, thought: str, tags: Iterable[str] = (), *,
               importance: int = 0, novelty: int = 0, cool: float = 0.0) -> bool:
         """Show this thought? Records it when the answer is yes."""
+        tags = tuple(tags)                    # read twice, by refusal and by record: a generator would be spent
         why = self.refusal(now, thought, tags, importance=importance, novelty=novelty, cool=cool)
         if why is not None:
             self.refused += 1
             log.debug("screen: not showing (%s)", why)
             return False
+        self.record(now, thought, tags)
+        return True
+
+    def record(self, now: float, thought: str, tags: Iterable[str] = ()) -> None:
+        """Note a thought as shown, without judging it: for a caller that already asked refusal() (the daemon
+        does, to log the reason), so the screen is not run twice."""
         text = " ".join(thought.split())
         wanted = {str(t).lower() for t in tags if str(t).strip()}
         self.shown.append(Shown(now, text, frozenset(wanted), frozenset(self.subject_of(wanted))))
@@ -216,4 +223,3 @@ class ThoughtScreen:
         keep = max(self.history, self.per_hour * 8)
         if len(self.shown) > keep:
             del self.shown[:-keep]
-        return True

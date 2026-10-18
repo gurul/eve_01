@@ -102,8 +102,10 @@ def _env(cli: str) -> dict[str, str]:
     env["NO_COLOR"] = "1"
     dirs = [os.path.dirname(cli)] if os.path.dirname(cli) else []
     dirs += ["/opt/homebrew/bin", "/usr/local/bin"]
-    path = [d for d in (env.get("PATH") or "").split(os.pathsep) if d]
-    env["PATH"] = os.pathsep.join(dict.fromkeys(dirs + path))
+    # The daemon's own PATH (nvm's node lives there), not env's: env was just built without one. /usr/bin and
+    # /bin always, for the shebang's /usr/bin/env.
+    path = [d for d in (os.environ.get("PATH") or "").split(os.pathsep) if d]
+    env["PATH"] = os.pathsep.join(dict.fromkeys(dirs + path + ["/usr/bin", "/bin"]))
     return env
 
 

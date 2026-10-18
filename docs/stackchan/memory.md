@@ -543,6 +543,9 @@ eve-bridge memory reindex             # rebuild the mem0 index from every transc
 All three need `EVE_MEMORY=1` in the shell, as the daemon has it, and refuse
 until the daemon has started once with memory on (the one-time move is the
 daemon's, and `.migrated` must exist). They print counts, never the matched words.
+`dream --day` refuses the current transcript day and any later one: that day is
+not over, and dreaming it would mark it dreamt, so tonight's dream would skip the
+rest of it.
 
 **Run `dream` and `reindex` with the daemon stopped.** mem0's on-disk store takes
 one opener at a time. The CLI does not stop the daemon for you: `reindex` checks

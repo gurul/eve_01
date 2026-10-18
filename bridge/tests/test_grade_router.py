@@ -35,6 +35,28 @@ def test_ask_reads_the_noul_and_survives_a_broken_reply() -> None:
     assert gr.ask(boom, "x", "", clock).error.startswith("RuntimeError")
 
 
+def test_the_fitted_gate_ships_inside_the_package() -> None:
+    # It lived under tests/fixtures, which no wheel carries: an installed eve fell back to 0.5 without a word
+    import tomllib
+    from fnmatch import fnmatch
+
+    pkg = Path(gr.__file__).resolve().parent
+    assert gr.GATE_FILE.parent == pkg and gr.GATE_FILE.exists()
+    data = tomllib.loads((Path(__file__).resolve().parents[1] / "pyproject.toml").read_text(encoding="utf-8"))
+    globs = data["tool"]["setuptools"]["package-data"]["eve_bridge"]
+    assert any(fnmatch(gr.GATE_FILE.name, g) for g in globs)
+    assert gr.load_gate() == 0.65
+
+
+def test_grade_turn_reads_the_gate_file_once(monkeypatch: pytest.MonkeyPatch) -> None:
+    reads = []
+    monkeypatch.setattr(gr, "load_gate", lambda path=gr.GATE_FILE: reads.append(path) or 0.65)
+    monkeypatch.setattr(gr, "_GATE", None)
+    for _ in range(3):
+        assert gr.grade_turn("plan it", grader=lambda t, p: gr.GradeAnswer(0.9, 5)).grade == gr.THINK
+    assert len(reads) == 1
+
+
 def test_grade_turn_is_instant_without_a_grader_on_timeout_and_on_a_raise() -> None:
     assert gr.grade_turn("hi") == gr.Grade()
     hold = threading.Event()

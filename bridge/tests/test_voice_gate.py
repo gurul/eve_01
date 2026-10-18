@@ -200,6 +200,32 @@ def test_notes_are_not_gated_a_think_aloud_lesson_hears_everyone() -> None:
     assert feed(g, clock, room) == room and g.embedder.calls == calls    # forwarded whole, and nobody was judged
 
 
+def test_audio_held_for_a_decision_is_forwarded_when_the_gate_stops_judging() -> None:
+    # bypass set (a lesson starts) or mode off while the first 0.6 s of a segment was held: _end_segment cleared
+    # the held blocks, and up to 1.5 s of what was said never reached the ears
+    for stop in ("bypass", "off"):
+        g, clock = gate()
+        lock(g, clock)
+        start = speech(OWNER, 3)
+        assert feed(g, clock, start) == []                                  # held, not judged yet
+        if stop == "bypass":
+            g.bypass = True
+        else:
+            g.config = vg.GateConfig(mode="off", speech_rms=0.01)
+        more = speech(OWNER, 2)
+        assert feed(g, clock, more) == start + more, stop                   # nothing said is lost
+
+
+def test_shadow_never_repeats_the_held_audio_when_bypassed() -> None:
+    g, clock = gate("shadow")
+    lock(g, clock)
+    start = speech(OWNER, 3)
+    assert feed(g, clock, start) == start                                  # shadow hears it as it comes
+    g.bypass = True
+    more = speech(OWNER, 2)
+    assert feed(g, clock, more) == more
+
+
 # ---- failing open --------------------------------------------------------------------------------------
 
 

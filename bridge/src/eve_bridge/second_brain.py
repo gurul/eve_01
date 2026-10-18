@@ -1052,10 +1052,17 @@ def _destination(root: Path, into: str) -> Path:
     if not parts or parts[0] not in PARA_FOLDERS:
         raise ValueError(f"not a vault folder: {into!r}")
     if len(parts) == 1:
-        return Path(root) / parts[0]
-    if len(parts) == 2 and parts[0] in (PROJECTS_DIR, AREAS_DIR) and _SAFE_SEGMENT.match(parts[1]):
-        return Path(root) / parts[0] / parts[1]
-    raise ValueError(f"not a vault folder: {into!r}")
+        dest = Path(root) / parts[0]
+    elif len(parts) == 2 and parts[0] in (PROJECTS_DIR, AREAS_DIR) and _SAFE_SEGMENT.match(parts[1]):
+        dest = Path(root) / parts[0] / parts[1]
+    else:
+        raise ValueError(f"not a vault folder: {into!r}")
+    # Resolved, so a symlinked folder cannot point outside: unchecked, a note was written or moved out of the
+    # vault, and then _rel raised and the caller was told it failed after the file had gone
+    root_r, dest_r = Path(root).resolve(), dest.resolve()
+    if root_r not in dest_r.parents:
+        raise ValueError("path leaves the vault")
+    return dest_r
 
 
 def _move(root: Path, src: Path, dest_dir: Path, name: str, status: str) -> str:

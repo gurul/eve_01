@@ -438,3 +438,21 @@ def test_an_owner_lines_attachment_note_is_not_sent_to_the_app() -> None:
     assert plain is not None and plain["text"] == "ok [image attached]"
     mid = link_chat._row("2026-10-09", 2, {**base, "kind": "say", "text": "[image attached] is what it said"})
     assert mid is not None and mid["text"] == "[image attached] is what it said"
+
+
+def test_rtf_text_reads_control_words_in_place(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Each control word ran re.match on text[i:], a copy of the rest of the file: quadratic on a 20 MB note.
+    # Every string handed to re.match is counted; reading in place hands it none of the file.
+    import re
+
+    real, copied = re.match, []
+
+    def spy(pattern: Any, string: str, *a: Any, **k: Any) -> Any:
+        copied.append(len(string))
+        return real(pattern, string, *a, **k)
+
+    monkeypatch.setattr(re, "match", spy)
+    data = b"{\\rtf1\\ansi " + b"\\b word\\b0 \\par " * 2000 + b"\\u8364? end}"
+    text = link_uploads._rtf_text(data)
+    assert text.count("word") == 2000 and text.count("\n") == 2000 and text.endswith("\u20ac? end")
+    assert sum(copied) <= len(data)

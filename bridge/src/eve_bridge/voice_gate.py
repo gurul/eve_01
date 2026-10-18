@@ -248,8 +248,12 @@ class SpeakerGate:
     # -- the stream --
     def process(self, block: bytes) -> list[bytes]:
         if self.bypass or self.state == "open" or self.config.mode == "off":
+            # Blocks held for a decision that will not come now go out first: _end_segment drops them, and
+            # that was up to the first 1.5 s of a sentence. In shadow they were heard as they came.
+            pending = [] if self.config.mode == "shadow" else self._held
+            self._held = []
             self._end_segment()
-            return [block]
+            return [*pending, block]
         try:
             out = self._process(block)
         except Exception as e:  # noqa: BLE001 — a gate that breaks must never deafen eve

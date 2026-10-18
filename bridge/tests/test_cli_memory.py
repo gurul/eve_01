@@ -103,6 +103,37 @@ def test_dream_one_day(tmp_path: Path, monkeypatch, capsys) -> None:
     assert "no model client" in capsys.readouterr().err
 
 
+def test_dream_day_refuses_the_day_that_is_not_over(tmp_path: Path, monkeypatch, capsys) -> None:
+    # --day skipped due_nights' rule that the current day waits: dreaming it marked it dreamt, so tonight's
+    # dream skipped everything said after
+    from datetime import datetime, timedelta
+
+    memory = _memory(tmp_path)
+    days: list[str] = []
+
+    class FakeDreamer:
+        def __init__(self, cfg, transcripts, client, index) -> None:
+            pass
+
+        async def dream(self, day):
+            days.append(day)
+            return dream_mod.DreamReport(day=day, dreamt=True, changed=1)
+
+        _summary = staticmethod(dream_mod.Dreamer._summary)
+
+    monkeypatch.setattr(dream_mod, "Dreamer", FakeDreamer)
+    monkeypatch.setattr(records, "make_client", lambda environ=None: object())
+    current = memory.transcripts.day_of(datetime.now())
+    later = (datetime.strptime(current, "%Y-%m-%d") + timedelta(days=3)).strftime("%Y-%m-%d")
+    for day in (current, later):
+        assert _run(monkeypatch, memory, ["dream", "--day", day]) == 2
+        assert "not over" in capsys.readouterr().err
+    assert days == []
+    earlier = (datetime.strptime(current, "%Y-%m-%d") - timedelta(days=1)).strftime("%Y-%m-%d")
+    assert _run(monkeypatch, memory, ["dream", "--day", earlier]) == 0        # positive control
+    assert days == [earlier]
+
+
 def test_reindex_clears_the_ledger_and_reads_every_day(tmp_path: Path, monkeypatch, capsys) -> None:
     calls: list[Any] = []
 

@@ -2092,7 +2092,7 @@ class Daemon:
             self._screen.refused += 1
             log.info("explore: thought kept to itself (%s) — %s", why, text[:50])
             return
-        self._screen.offer(now, text, thought.tags, **judged)
+        self._screen.record(now, text, thought.tags)          # judged just above; offer() would judge again
         if thought.photographed:
             text = f"{text} [photo]"
         self._thought_pager.begin_reply(now)

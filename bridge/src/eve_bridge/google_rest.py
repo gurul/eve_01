@@ -481,6 +481,14 @@ def _person(p: Mapping[str, Any]) -> dict[str, Any]:
     return out
 
 
+def _http_error(r: httpx.Response) -> "GoogleError":
+    try:
+        msg = r.json().get("error", {}).get("message") or r.text
+    except (ValueError, AttributeError):
+        msg = r.text
+    return GoogleError(f"HTTP {r.status_code}: {str(msg)[:200]}")
+
+
 # -- the client --
 class GoogleRestClient:
     """One Google app (gmail | calendar | drive | contacts) over its plain API, with apps_mcp.McpClient's two
@@ -503,20 +511,28 @@ class GoogleRestClient:
         if not token:
             raise GoogleError("not signed in to Google (apps login google)")
         headers = {"Authorization": f"Bearer {token}", **kw.pop("headers", {})}
+        if raw:
+            return self._download(method, url, headers, **kw)
         r = self._http.request(method, url, headers=headers, **kw)
         if r.status_code >= 400:
-            try:
-                msg = r.json().get("error", {}).get("message") or r.text
-            except (ValueError, AttributeError):
-                msg = r.text
-            raise GoogleError(f"HTTP {r.status_code}: {str(msg)[:200]}")
-        if raw:
-            if len(r.content) > DOWNLOAD_MAX:
-                raise GoogleError(f"the file is larger than {DOWNLOAD_MAX // (1024 * 1024)} MB")
-            return r.content
+            raise _http_error(r)
         if not r.content:
             return {}
         return r.json() if "json" in r.headers.get("content-type", "") else r.text
+
+    def _download(self, method: str, url: str, headers: dict[str, str], **kw: Any) -> bytes:
+        """A file's bytes, read as they arrive and stopped at DOWNLOAD_MAX: reading the whole body first and
+        measuring it after held a file of any size in memory."""
+        with self._http.stream(method, url, headers=headers, **kw) as r:
+            if r.status_code >= 400:
+                r.read()
+                raise _http_error(r)
+            data = bytearray()
+            for chunk in r.iter_bytes():
+                data += chunk
+                if len(data) > DOWNLOAD_MAX:
+                    raise GoogleError(f"the file is larger than {DOWNLOAD_MAX // (1024 * 1024)} MB")
+            return bytes(data)
 
     def call_tool(self, name: str, arguments: Mapping[str, Any]) -> dict[str, Any]:
         handler = getattr(self, f"_{self.app}_{name}", None)
@@ -739,8 +755,10 @@ class GoogleRestClient:
         busy = [(datetime.fromisoformat(b["start"].replace("Z", "+00:00")).astimezone(start.tzinfo),
                  datetime.fromisoformat(b["end"].replace("Z", "+00:00")).astimezone(start.tzinfo))
                 for cal in (body.get("calendars") or {}).values() for b in cal.get("busy") or []]
-        slots = free_slots(busy, start, end, int(a["durationMinutes"]), int(a.get("workdayStartHour") or 9),
-                           int(a.get("workdayEndHour") or 18))
+        # `is None`, not `or`: an explicit 0 is midnight, not "unset"
+        day_start, day_end = a.get("workdayStartHour"), a.get("workdayEndHour")
+        slots = free_slots(busy, start, end, int(a["durationMinutes"]), 9 if day_start is None else int(day_start),
+                           18 if day_end is None else int(day_end))
         return {"free": slots, "calendarsChecked": len(ids)}
 
     def _event_body(self, a: Mapping[str, Any]) -> dict[str, Any]:

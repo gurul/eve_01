@@ -190,4 +190,6 @@ Leave the variables unset and eve never asks either provider.
   whole-account row, or OpenAI's and Anthropic's totals once admin keys are
   set. eve's meter only sees eve's own calls.
 - Claude Code's own usage has a separate estimate (`jsonl_tailer.py`, shown in
-  the statusline). That estimate is not part of this dashboard.
+  the statusline). That estimate is not part of this dashboard. It prices a
+  model `ANTHROPIC_RATES` names (Claude Opus 5.5) at that row, and any other
+  Claude model at the older per-family rates in `pricing.py`.

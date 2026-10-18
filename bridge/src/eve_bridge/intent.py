@@ -153,8 +153,10 @@ def fast_intent(text: str) -> Optional[str]:
     if not t:
         return None
     core = " ".join(_core(t.split()))
-    # A goodbye said as a separate clause: "alright, thanks, bye" → last clause "bye".
-    tail = " ".join(_core(re.split(r"[,.!?;]", text.lower().replace("’", "'"))[-1].split())) if text else ""
+    # A goodbye said as a separate clause: "alright, thanks, bye" → last clause "bye". The last clause with
+    # words in it: "heading home, bye." splits to a final "" after the full stop.
+    clauses = [c for c in re.split(r"[,.!?;]", text.lower().replace("’", "'")) if c.strip()] if text else []
+    tail = " ".join(_core(clauses[-1].split())) if clauses else ""
     tail = normalize(tail)
     for candidate in (core, tail):
         if not candidate:

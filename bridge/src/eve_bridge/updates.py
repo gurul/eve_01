@@ -858,9 +858,10 @@ class UpdatesStore:
             at = got.get("generated_at") if isinstance(got.get("generated_at"), str) else None
             sources = {k: v for k, v in got.get("sources").items() if isinstance(k, str) and isinstance(v, str)} \
                 if isinstance(got.get("sources"), dict) else {}
+            # _due, not _DATE alone: "2026-13-40" has the shape of a date, and put_cards' fromisoformat raised on it
             recent = {k: v for k, v in got.get("recent").items()
                       if isinstance(k, str) and isinstance(v, dict) and isinstance(v.get("refs"), list)
-                      and isinstance(v.get("day"), str) and _DATE.match(v["day"])} \
+                      and isinstance(v.get("day"), str) and _due(v["day"])} \
                 if isinstance(got.get("recent"), dict) else {}
             return {"cards": cards, "generated_at": at, "dismissed": dismissed, "sources": sources,
                     "recent": recent}

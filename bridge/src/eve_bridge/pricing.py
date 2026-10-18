@@ -53,8 +53,9 @@ def estimate_cost(model_id: str, usage: dict) -> float:
     flat ``cache_creation_input_tokens`` total at the 5-minute rate when the
     breakdown isn't present (older transcripts).
     """
-    family = family_of(model_id)
-    r = _RATES.get(family, _RATES[_DEFAULT_FAMILY])
+    # A model ANTHROPIC_RATES names (fetched later, below) prices at that row; the family table is for the rest.
+    # Without this, claude-opus-5-5 at $4 / $20 was priced as an old Opus at $15 / $75.
+    r = _named(ANTHROPIC_RATES, model_id) or _RATES.get(family_of(model_id), _RATES[_DEFAULT_FAMILY])
 
     inp = int(usage.get("input_tokens") or 0)
     out = int(usage.get("output_tokens") or 0)

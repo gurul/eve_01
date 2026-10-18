@@ -66,6 +66,8 @@ def test_only_unusual_names_open_github_as_words() -> None:
     assert "remix" not in names and "qbt" not in names                       # a word, and too short
     assert G.names_repo("any new commits on zorbcar?", names)
     assert G.names_repo("is plantpal-x green", names)
+    assert G.names_repo("Check the last commit on zorbcar.", names)          # the full stop is not the name
+    assert G.names_repo("look at plantpal-x...", names)
     assert not G.names_repo("can you remix this song", names) and not G.names_repo("zorbcars", names)
 
 

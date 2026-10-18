@@ -1116,6 +1116,11 @@ def _run_memory_store(args: Any, ask: Optional[Callable[[str], str]] = None) -> 
         if client is None:
             print("dream: no model client (OPENROUTER_API_KEY and the openai SDK are needed)", file=sys.stderr)
             return 1
+        if args.day is not None and args.day >= memory.transcripts.day_of(datetime.now()):
+            # due_nights holds the current day back; --day must too. Dreamt now, it is marked dreamt, and
+            # tonight's dream skips everything said after this.
+            print(f"dream: {args.day} is not over yet; it is dreamt the night after", file=sys.stderr)
+            return 2
         dreamer = dream.Dreamer(cfg, memory.transcripts, client, memory.index)
         days = [args.day] if args.day else dreamer.due_nights(datetime.now())
         if not days:
