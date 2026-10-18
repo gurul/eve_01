@@ -326,7 +326,7 @@ def app_name(package: str, activity: str = "") -> str:
     if package == LAUNCHER_PACKAGE:
         return "Settings" if "SettingsActivity" in activity else "home"
     if package == PROJECTIVY_PACKAGE:
-        return "home"
+        return "home" if ".ui.home." in activity else "Projectivy settings"
     for a in APPS:
         if a.package == package:
             return a.name

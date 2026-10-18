@@ -402,6 +402,9 @@ def test_parse_state_foreground_names() -> None:
 def test_parse_state_projectivy_is_home() -> None:
     focus = "  mCurrentFocus=Window{9d1e u0 com.spocky.projengmenu/com.spocky.projengmenu.ui.home.MainActivity}"
     assert F.parse_state(state_text(focus=focus)).app == "home"
+    settings = ("  mCurrentFocus=Window{9d1f u0 com.spocky.projengmenu/"
+                "com.spocky.projengmenu.ui.guidedActions.activities.settings.AppSettingsActivity}")
+    assert F.parse_state(state_text(focus=settings)).app == "Projectivy settings"
 
 
 def test_parse_state_missing_volume_is_unknown_not_guessed() -> None:

@@ -270,9 +270,10 @@ its chip suspends. So:
   previous and the seeks. eve says it doesn't know if the command was done.
   A state read, power, a volume level and opening an app are sent again once.
 - One key can be pressed at most 10 times in one command.
-- **A third-party launcher counts as home.** When the Home button opens
-  Projectivy Launcher instead of Amazon's home screen, eve still says the TV
-  is on "home".
+- **Projectivy Launcher counts as home.** When the Home button opens
+  Projectivy instead of Amazon's home screen, eve still says the TV is on
+  "home" (and "Projectivy settings" on its settings screens). Other
+  third-party launchers are read out by their package name.
 
 ## Privacy
 
