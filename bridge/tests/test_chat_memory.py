@@ -629,6 +629,20 @@ def test_the_seed_runs_once_and_forget_reaches_the_seeded_copy(tmp_path: Path, f
     assert "zebra" not in path.read_text()
 
 
+def test_the_seed_moves_a_quote_with_the_line_it_points_at(tmp_path: Path, fake_records: FakeRecords) -> None:  # noqa: F811
+    """Review D7: the seed renumbers every kept line; an eve line's ``quotes`` must follow its owner line."""
+    _, tx, _, _ = build(tmp_path)
+    tx.append("telegram", "t-1799998000000-abcd", "owner", "say", "an older made-up line", now=_at(NOW - 600))
+    log = new_log(tmp_path / "chat" / "log.json", Wall())
+    asked = log.append(OWNER, "user", "what did I say?", kind="say", conv="t-live", at=NOW - 100)
+    log.append(OWNER, "eve", "You said that.", kind="say", conv="t-live", at=NOW - 90, quotes=asked.seq)
+    assert log.seed(OWNER, tx) == 1
+    lines = log.lines(OWNER)
+    owner = next(ln for ln in lines if ln.text == "what did I say?")
+    eve = next(ln for ln in lines if ln.text == "You said that.")
+    assert eve.quotes == owner.seq
+
+
 # ---- a stretch of time (owner, 2026-10-09: "why is memory so ass") ------------------------------------------------
 
 def _iso(t: float) -> str:

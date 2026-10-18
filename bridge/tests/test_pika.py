@@ -310,6 +310,26 @@ def test_a_busy_car_says_so_in_one_line_and_lets_go() -> None:
     asyncio.run(go())
 
 
+def test_a_second_beat_during_the_hello_writes_no_drive_frame() -> None:
+    """Review D11: the writer was set before the car answered the hello, so `connected` was True during the wait
+    and a second drive beat wrote a drive frame to a car that had not shown it was free."""
+    async def go() -> None:
+        car = FakeCar(busy=True)
+        await car.start()
+        p = make(car)
+        first = asyncio.ensure_future(drive(p, "forward", "h"))
+        await settle(0.1)                                        # inside the 0.5 s hello wait
+        assert not p.connected
+        second = asyncio.ensure_future(drive(p, "forward", "h"))
+        outs = await asyncio.gather(first, second)
+        assert all(not o["ok"] for o in outs)
+        await settle(0.1)
+        assert not any(b'"N":2' in f for f in car.frames())
+        await car.close()
+
+    asyncio.run(go())
+
+
 def test_an_unreachable_car_says_so() -> None:
     async def go() -> None:
         async def refuse(host: str, port: int) -> Any:

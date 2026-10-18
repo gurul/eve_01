@@ -699,8 +699,12 @@ class MiniAppServer:
         """One app's load, save, delete, rename, revert or restore. Delete, rename and revert wait while the app
         is being changed: the build would otherwise save over a rename or bring a deleted app back."""
         assert self.store is not None
-        if action in ("load", "save"):
+        if action in ("load", "save", "report"):
             return self._app_io(slug, action, body)
+        if action not in ("delete", "rename", "revert", "restore"):
+            # Every action has its own branch: one without (an owner-signed report did) once fell through to
+            # Undo below and reverted the app.
+            return 400, {"error": "That isn't something an app can do."}
         if action in ("delete", "rename", "revert") and slug in self.changing:
             return 409, {"error": "That app is being changed right now. Try again when it is done."}
         try:

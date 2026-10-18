@@ -282,6 +282,7 @@ class Pika:
         self._watch: Optional[asyncio.Task] = None
         self._connecting: Optional[asyncio.Task] = None
         self._answered: Optional[asyncio.Event] = None
+        self._hello_ok = False                     # the car answered this connection's hello: it is ours
         self._tag = 0
         self._held: Optional[str] = None           # the hold driving now
         self._dir = 0
@@ -298,7 +299,9 @@ class Pika:
     # -- state --
     @property
     def connected(self) -> bool:
-        return self._writer is not None and not self._writer.is_closing()
+        # Only once the car has answered the hello: during the wait a second drive beat must wait on the same
+        # connect (_connect) rather than write a drive frame to a car that has not shown it is free.
+        return self._hello_ok and self._writer is not None and not self._writer.is_closing()
 
     def _next_tag(self) -> int:
         self._tag = self._tag % 99999 + 1
@@ -432,6 +435,7 @@ class Pika:
         except (OSError, asyncio.TimeoutError) as e:
             log.info("pika: car unreachable (%s %s)", type(e).__name__, getattr(e, "errno", None) or "")
             raise PikaError(UNREACHABLE_LINE) from None
+        self._hello_ok = False
         self._reader, self._writer = reader, writer
         self._answered = asyncio.Event()
         self._rx = asyncio.ensure_future(self._read(reader, writer))
@@ -445,6 +449,7 @@ class Pika:
         except (OSError, ConnectionError):
             self._drop()
             raise PikaError(UNREACHABLE_LINE) from None
+        self._hello_ok = True
         if self._watch is None or self._watch.done():
             self._watch = asyncio.ensure_future(self._watchdog())
         log.info("pika: connected")
@@ -490,6 +495,7 @@ class Pika:
 
     def _drop(self) -> None:
         writer, self._writer, self._reader = self._writer, None, None
+        self._hello_ok = False
         if writer is not None:
             with contextlib.suppress(Exception):
                 writer.close()

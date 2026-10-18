@@ -242,6 +242,8 @@ class ChatLog:
             k = len(picked)
             for ln in self._lines:
                 ln.seq += k
+                if ln.quotes:                    # the owner line it quoted moved up by k too (0: none known)
+                    ln.quotes += k
             new = [Line(i + 1, t, chat, who, text[:TEXT_CHARS], kind, conv, SEED_BOOT, outside=out)
                    for i, (t, who, text, kind, conv, out) in enumerate(picked)]
             self._lines = new + self._lines

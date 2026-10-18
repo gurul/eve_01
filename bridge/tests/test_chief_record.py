@@ -521,3 +521,41 @@ def test_a_stored_routine_two_way_act_keeps_its_door() -> None:
     assert [p.door for p in loaded.phases] == ["two_way", "two_way"]
     raw["phases"][1]["door"] = "one_way"
     assert cc.from_json(raw).phases[1].door == "one_way"
+
+
+def _counting_loads(monkeypatch: pytest.MonkeyPatch) -> list[int]:
+    calls = [0]
+    real = json.loads
+
+    def counted(*a: Any, **k: Any) -> Any:
+        calls[0] += 1
+        return real(*a, **k)
+    monkeypatch.setattr(json, "loads", counted)
+    return calls
+
+
+def test_events_parse_only_the_lines_appended_since_the_last_read(tmp_path: Path,
+                                                                  monkeypatch: pytest.MonkeyPatch) -> None:
+    """Review D6: events() re-read and parsed the whole append-only file on every call, many times a tick."""
+    led = cl.Ledger(tmp_path)
+    a = led.new(card())
+    led.event("checked", a.id, note="one")
+    first = led.events()
+    calls = _counting_loads(monkeypatch)
+    assert led.events() == first and calls[0] == 0              # nothing new: nothing parsed
+    led.event("checked", a.id, note="two")
+    now = led.events()
+    assert now[:-1] == first and now[-1]["note"] == "two" and calls[0] == 1
+    other = cl.Ledger(tmp_path)                                 # another writer appends: still seen
+    other.event("checked", a.id, note="three")
+    assert [e.get("note") for e in led.events(a.id)][-3:] == ["one", "two", "three"]
+    with (tmp_path / cl.EVENTS_FILE).open("a") as f:            # a torn tail is skipped, then read once whole
+        f.write('{"t":1,"e":"checked","id":"' + a.id + '","note":"fo')
+    assert [e.get("note") for e in led.events(a.id)][-1] == "three"
+    with (tmp_path / cl.EVENTS_FILE).open("a") as f:
+        f.write('ur"}\n')
+    assert [e.get("note") for e in led.events(a.id)][-1] == "four"
+    b = led.new(card(title="Monitor arm"))
+    assert led.redact([a.id]) == 1                              # a rewrite replaces the file: read afresh
+    assert all(e.get("id") != a.id for e in led.events())
+    assert [e["e"] for e in led.events(b.id)] == ["created"]

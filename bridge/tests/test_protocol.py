@@ -1,3 +1,4 @@
+import pytest
 
 from eve_bridge.ble import _utf8_safe_chunks
 from eve_bridge.protocol import (
@@ -85,6 +86,39 @@ def test_utf8_safe_chunks_keeps_codepoint_when_max_size_is_tiny():
     chunks = _utf8_safe_chunks(data, 1)
 
     assert chunks == [data]
+
+
+class _FakeBleClient:
+    """No radio: records each Write Without Response."""
+
+    is_connected = True
+    mtu_size = 23                                         # 20-byte writes
+
+    def __init__(self):
+        self.writes = []
+
+    async def write_gatt_char(self, uuid, data, response=False):
+        self.writes.append(bytes(data))
+
+
+@pytest.mark.parametrize("codec", ["gbk", "big5", "shift_jis"])
+def test_ble_send_never_cuts_a_double_byte_character(codec):
+    """Review D8: send() split CJK-codec bytes by the UTF-8 rule, whose second bytes are any of 0x40-0xFE."""
+    import asyncio
+    from eve_bridge.ble import EveBLE
+
+    async def noop(obj):
+        pass
+
+    ble = EveBLE(noop)
+    ble._client = _FakeBleClient()
+    text = "a" + "日本語の文字" * 10                       # odd offset: a pair lands on every 20-byte edge
+    data = encode({"msg": text}, codec=codec)
+    assert asyncio.run(ble.send({"msg": text}, codec=codec))
+    writes = ble._client.writes
+    assert b"".join(writes) == data
+    assert all(len(w) <= 20 for w in writes)
+    assert all(w.decode(codec) for w in writes)           # each write is whole characters
 
 
 def test_line_assembler_fragments():

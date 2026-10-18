@@ -364,7 +364,9 @@ unsaved, and warns before closing with unsaved work.
 The files are `lessons.sqlite3` and a small `dashboard.json` widget summary.
 They are separate from the room diary, automatic memories, and photo pruning.
 All saved revisions are retained, including erased writing; history can grow
-large over time. Protect/back up the directory as appropriate for learner data.
+large over time. A revision keeps the screenshot, whiteboard image, board and
+strokes by reference, so a value that did not change since the last save (an
+autosave of typed ideas, say) is stored once per lesson rather than copied again. Protect/back up the directory as appropriate for learner data.
 Uploaded images are resized to a maximum dimension of 1600 pixels. Live checks
 send the selected screenshot, current board, and relevant lesson context to
 the tutor. No automatic desktop capture is used.

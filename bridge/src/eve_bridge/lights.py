@@ -50,10 +50,12 @@ import math
 import os
 import re
 import socket
+import threading
 import time
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Iterable, Optional, Sequence
+from typing import Any, Callable, Iterable, Iterator, Optional, Sequence
 
 log = logging.getLogger(__name__)
 
@@ -294,6 +296,19 @@ GOVEE_SCAN_PORT, GOVEE_LISTEN_PORT, GOVEE_CMD_PORT = 4001, 4002, 4003
 GOVEE_KELVIN = (2000, 9000)
 
 
+# Every Govee light answers on the one reply port, and with SO_REUSEPORT the kernel hands a unicast reply to
+# just one of the sockets bound there: with status("all") reading lights in parallel, one light's reply
+# landed in another read's socket and was thrown away as the wrong sender. So one listen at a time.
+_GOVEE_LISTEN_LOCK = threading.Lock()
+
+
+@contextmanager
+def _govee_listening(timeout: float) -> Iterator[socket.socket]:
+    """The reply-port socket, held alone for as long as the caller listens."""
+    with _GOVEE_LISTEN_LOCK, _govee_listener(timeout) as r:
+        yield r
+
+
 def _govee_listener(timeout: float) -> socket.socket:
     r = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     r.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -308,7 +323,7 @@ def govee_scan(seconds: float = 3.0) -> list[dict[str, str]]:
     """Every Govee light with LAN Control on: ``{"device", "sku", "ip"}``. Blocking."""
     msg = json.dumps({"msg": {"cmd": "scan", "data": {"account_topic": "reserve"}}}).encode()
     found: dict[str, dict[str, str]] = {}
-    with _govee_listener(0.3) as r, socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+    with _govee_listening(0.3) as r, socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         s.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
         end, again = time.monotonic() + seconds, 0.0
         while time.monotonic() < end:
@@ -356,7 +371,7 @@ class GoveeDriver:
         self.light = light
 
     def _status_blocking(self) -> State:
-        with _govee_listener(1.5) as r, socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+        with _govee_listening(1.5) as r, socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             s.sendto(json.dumps({"msg": {"cmd": "devStatus", "data": {}}}).encode(), (self.light.ip, GOVEE_CMD_PORT))
             end = time.monotonic() + 1.5
             while time.monotonic() < end:

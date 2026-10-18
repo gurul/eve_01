@@ -110,6 +110,56 @@ def _scalar(value: Any) -> Any:
     return " ".join(str(value).split())[:MAX_EVENT_TEXT]
 
 
+class JsonlRows:
+    """The dict rows of an append-only JSONL file, parsed once each.
+
+    The chief reads its events (and the desk its attention log) many times a tick, and parsing the whole
+    file each time grew with every line ever written. This keeps the rows parsed so far and the byte offset
+    they end at, and reads only what was appended since. A file that was replaced (another inode, as
+    `Ledger.redact` does with os.replace) or shrank is read afresh. A last line without its newline yet (a
+    write in flight) is parsed for this answer but read again next time. A torn or non-dict line is skipped."""
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._key: Optional[tuple[int, int]] = None
+        self._offset = 0
+        self._rows: list[dict[str, Any]] = []
+
+    @staticmethod
+    def _parse(chunk: bytes) -> list[dict[str, Any]]:
+        out = []
+        for line in chunk.split(b"\n"):
+            if not line.strip():
+                continue
+            try:
+                row = json.loads(line.decode("utf-8", errors="replace"))
+            except ValueError:
+                continue
+            if isinstance(row, dict):
+                out.append(row)
+        return out
+
+    def rows(self, path: Path) -> list[dict[str, Any]]:
+        with self._lock:
+            try:
+                with open(path, "rb") as f:
+                    st = os.fstat(f.fileno())
+                    key = (st.st_dev, st.st_ino)
+                    if key != self._key or st.st_size < self._offset:
+                        self._key, self._offset, self._rows = key, 0, []
+                    f.seek(self._offset)
+                    data = f.read()
+            except OSError:
+                self._key, self._offset, self._rows = None, 0, []
+                return []
+            end = data.rfind(b"\n") + 1
+            if end:
+                self._rows.extend(self._parse(data[:end]))
+                self._offset += end
+            tail = self._parse(data[end:]) if end < len(data) and data[end:].strip() else []
+            return [dict(r) for r in self._rows] + tail
+
+
 class Ledger:
     """The cards and their events. Thread-safe: the chief's loop and the Telegram turn share one."""
 
@@ -119,6 +169,7 @@ class Ledger:
         self._lock = threading.RLock()
         self._last_id = 0
         self._problem = ""
+        self._event_rows = JsonlRows()          # events.jsonl, parsed once per line (events())
         self._cards: dict[str, Card] = self._load()
 
     @property
@@ -268,19 +319,8 @@ class Ledger:
 
     def events(self, cid: Optional[str] = None) -> list[dict[str, Any]]:
         """The events, oldest first (one card's with ``cid``). A torn or foreign line is skipped."""
-        try:
-            lines = self.events_path.read_text(encoding="utf-8", errors="replace").splitlines()
-        except OSError:
-            return []
-        out: list[dict[str, Any]] = []
-        for line in lines:
-            try:
-                row = json.loads(line)
-            except ValueError:
-                continue
-            if isinstance(row, dict) and row.get("e") in EVENT_KINDS and (cid is None or row.get("id") == cid):
-                out.append(row)
-        return out
+        return [row for row in self._event_rows.rows(self.events_path)
+                if row.get("e") in EVENT_KINDS and (cid is None or row.get("id") == cid)]
 
     # -- cards --
     def get(self, cid: str) -> Optional[Card]:

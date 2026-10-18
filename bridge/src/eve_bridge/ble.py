@@ -11,6 +11,7 @@ so the scan result is cached under the device's advertised name.
 from __future__ import annotations
 
 import asyncio
+import codecs
 import logging
 import sys
 import time
@@ -108,9 +109,10 @@ class EveBLE:
         try:
             async with self._send_lock:
                 # ATT Write Without Response payload = MTU - 3 bytes overhead.
-                # Chunk so multi-byte UTF-8 sequences never straddle a packet boundary.
+                # Chunk so a multi-byte character (UTF-8, or the CJK codec's two bytes) never straddles a
+                # packet boundary.
                 chunk_size = max(20, self._client.mtu_size - 3)
-                for chunk in _utf8_safe_chunks(data, chunk_size):
+                for chunk in _codec_safe_chunks(data, chunk_size, codec):
                     await self._client.write_gatt_char(NUS_RX_UUID, chunk, response=False)
                     # Yield so the BLE host stack can drain Write Without Response
                     # credits before the next chunk; prevents silent drops.
@@ -313,6 +315,33 @@ class EveBLE:
             await self.on_message(obj)
         except Exception:  # noqa: BLE001
             log.exception("on_message handler crashed")
+
+
+def _codec_safe_chunks(data: bytes, max_size: int, codec: Optional[str] = None) -> list[bytes]:
+    """Split ``data`` (from protocol.encode with this ``codec``) without ending a chunk inside a character.
+
+    UTF-8 is split by its continuation bytes. The CJK codecs (gbk, big5, shift_jis) are not: their second
+    byte can be any of 0x40-0xFE, ASCII included, so the UTF-8 rule cut a double-byte character across two
+    writes. For those, a character ends where the codec's incremental decoder holds no pending byte."""
+    if codec is None or codec == "utf-8":
+        return _utf8_safe_chunks(data, max_size)
+    if max_size <= 0:
+        raise ValueError("max_size must be positive")
+    decoder = codecs.getincrementaldecoder(codec)(errors="replace")
+    chunks: list[bytes] = []
+    start = boundary = 0
+    for i in range(len(data)):
+        decoder.decode(data[i:i + 1])
+        if decoder.getstate()[0]:
+            continue                      # inside a character: no boundary after this byte
+        end = i + 1
+        if end - start > max_size and boundary > start:
+            chunks.append(data[start:boundary])
+            start = boundary
+        boundary = end
+    if start < len(data):
+        chunks.append(data[start:])
+    return chunks
 
 
 def _utf8_safe_chunks(data: bytes, max_size: int) -> list[bytes]:

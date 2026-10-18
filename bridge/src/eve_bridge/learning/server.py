@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import copy
 import errno
 import json
 import logging
@@ -151,6 +152,25 @@ class LearningApp:
         self.active = None
         self.url = ""
 
+    def _ask_tutor(self, action, s):
+        """Call the tutor with the lesson lock released, then return (result, the lesson as it is now).
+
+        A live tutor call takes up to 90 s, and holding the lock across it stalled every autosave and
+        every spoken line for that long. The tutor answers from a copy; its answer is applied to the
+        lesson re-read under the lock, so a save or a spoken append made meanwhile is kept. A lesson
+        that moved to another stage (ended, completed, deleted) meanwhile is refused instead."""
+        stage = s["stage"]
+        snapshot = copy.deepcopy(s)
+        self.lock.release()
+        try:
+            result = self.tutor(action, snapshot)
+        finally:
+            self.lock.acquire()
+        fresh = self.store.get(s["id"])
+        if fresh["stage"] != stage:
+            raise ValueError("This lesson changed in another window. Reload it before continuing.")
+        return result, fresh
+
     def event(self, s, action, result):
         s["events"].append({"action": action, "time": time.time(), **result})
 
@@ -200,7 +220,7 @@ class LearningApp:
             elif action == "generate":
                 if s["stage"] != "setup":
                     raise ValueError("Start a new lesson to generate another problem.")
-                result = self.tutor("generate", s)
+                result, s = self._ask_tutor("generate", s)
                 if not result["problem"].strip():
                     raise ValueError("Eve did not generate a problem. Try again.")
                 s.update(problem=result["problem"], stage="working")
@@ -210,7 +230,7 @@ class LearningApp:
                     raise ValueError("Start a new lesson to change the problem.")
                 if not (s["problem"].strip() or s["source_image"] or mark_count(s)):
                     raise ValueError("Write a problem or add a screenshot first.")
-                result = self.tutor(action, s)
+                result, s = self._ask_tutor(action, s)
                 s.update(problem=result["problem"], stage="confirm")
                 self.event(s, action, result)
             elif action == "confirm":
@@ -226,7 +246,7 @@ class LearningApp:
                     raise ValueError("This problem is complete. Try another problem or review the recap.")
                 if s["mode"] == "help" and not (s["ideas"].strip() or s["stuck"] or mark_count(s) > s.get("problem_stroke_count", 0)):
                     raise ValueError("Put down your ideas first, or select I don't know how to start.")
-                result = self.tutor(action, s)
+                result, s = self._ask_tutor(action, s)
                 self.event(s, action, result)
                 if result["status"] == "complete":
                     s["stage"] = "complete"
