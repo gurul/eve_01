@@ -34,7 +34,7 @@ take the phone out.
 [What eve does](#what-eve-does) ·
 [Get started](#get-started) · [How it works](#how-it-works) ·
 [Data and controls](#data-and-controls) · [Repository guide](#repository-guide) ·
-[Development](#development) · [Credits](#credits)
+[Development](#development) · [Maintainers](#maintainers) · [Credits](#credits)
 
 Current model allocation and reasoning efforts are listed in the
 [model role table](docs/openrouter.md#models-by-role), with the measured comparison
@@ -755,6 +755,11 @@ bridge/.venv/bin/python -m pip install -e './bridge[dev]'
   review scope, transcription fixes, primary sources, and reproducible benchmarks.
 
 Hardware, live APIs and macOS-specific integrations need their own setup.
+
+## Maintainers
+
+- Gurucharan Lingamallu
+- Saharsh Maloo
 
 ## Credits
 
