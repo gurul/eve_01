@@ -471,6 +471,9 @@ the reply plays with captions.
 
 ## How it works
 
+See the [Mermaid system design diagrams](docs/system-design.md) for the full eve
+architecture, its approval boundary and the alternative eve lite deployment.
+
 The Mac is the hub. Device firmware handles the face, movement, buttons and audio;
 the daemon coordinates calls, tools, computer tasks and memory. The
 iPhone reaches that same daemon through Eve Link, rather than running a model
