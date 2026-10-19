@@ -25,6 +25,13 @@ def context(environ: Optional[Mapping[str, str]] = None, *, now: Optional[dateti
         lines += [f"Owner-configured location: {location}.",
                   "Use this location for local questions unless the owner names another place; "
                   "it is a configured default, not live GPS."]
+    # where the phone is, by name, from the places history (places.py): the brain reads "Home, since 18:40", never a
+    # coordinate; nothing while places are off or the phone has not shared a fix in the last hour
+    from . import places
+
+    here = places.here_line(environ)
+    if here:
+        lines.append(here)
     lines.append("The timestamp is a snapshot, not a ticking clock. For the current time later in a "
                  "conversation, use a fresh time lookup. Do not treat an old snapshot as the current time.")
     return "\n".join(lines)

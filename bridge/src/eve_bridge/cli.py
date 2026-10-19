@@ -425,6 +425,16 @@ def main(argv: list[str] | None = None) -> int:
     notify_sub.add_parser("topic", help="Print the ntfy topic and how to subscribe")
     notify_sub.add_parser("test", help="Post one test notification")
 
+    p_places = sub.add_parser(
+        "places",
+        help="The places history: a day's digest, the week, habits, or forget it all",
+        description="day [YYYY-MM-DD]: that day's places and times (today by default). week [YYYY-MM-DD]: the week "
+                    "holding it. habits: the usual places, days and times. summary: what is kept. forget: wipe the "
+                    "history, the places, the things and the latest fix, after a yes. See docs/places.md.")
+    p_places.add_argument("places_cmd", choices=("day", "week", "habits", "summary", "forget"))
+    p_places.add_argument("day", nargs="?", default="")
+    p_places.add_argument("--yes", action="store_true", help="forget without asking")
+
     p_refresh = sub.add_parser(
         "refresh",
         help="The weekly refresh reminder: when Eve Link's signing and the Google sign-in lapse",
@@ -497,6 +507,8 @@ def main(argv: list[str] | None = None) -> int:
             p_notify.print_help()
             return 1
         return _run_notify(args)
+    if args.cmd == "places":
+        return _places(args)
     if args.cmd == "refresh":
         if args.refresh_cmd is None:
             p_refresh.print_help()
@@ -2293,3 +2305,32 @@ def _lite_uninstall(*, dry_run: bool, ask: Optional[Callable[[str], str]] = None
 if __name__ == "__main__":
     sys.exit(main())
 
+
+
+def _places(args: argparse.Namespace) -> int:
+    """``eve-bridge places``: the places history in the terminal (places.py)."""
+    import json as _json
+
+    from . import places
+
+    if not places.enabled():
+        print(places.OFF_REASON)
+        return 1
+    store = places.Places()
+    if args.places_cmd == "forget":
+        summary = store.summary()
+        if not args.yes:
+            answer = input(f"Forget {summary['places']} places, {summary['visits']} visits and {summary['things']} "
+                           "things, and the phone's latest location? [y/N] ")
+            if answer.strip().lower() not in ("y", "yes"):
+                print("Nothing forgotten.")
+                return 0
+        print(_json.dumps(store.forget()))
+        return 0
+    if args.places_cmd == "summary":
+        print(_json.dumps(store.summary(), indent=2))
+        return 0
+    what = {"day": "day", "week": "week", "habits": "habits"}[args.places_cmd]
+    out = places.call(places.RECALL, {"what": what, "start_date": args.day, "end_date": ""}, store)
+    print(out.get("text") or _json.dumps(out, indent=2, ensure_ascii=False))
+    return 0 if out.get("ok") else 1

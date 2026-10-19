@@ -190,6 +190,8 @@ def _phone_location_in_tmp(_test_dir, monkeypatch: pytest.MonkeyPatch):
     request bytes are as before. A test that wants a fix stores one."""
     monkeypatch.setenv("EVE_PHONE_LOCATION_FILE", str(_test_dir / "phone" / "phone-location.json"))
     monkeypatch.delenv("EVE_PHONE_LOCATION", raising=False)
+    monkeypatch.setenv("EVE_PLACES_FILE", str(_test_dir / "phone" / "places.db"))     # places.py's history too
+    monkeypatch.delenv("EVE_PLACES", raising=False)
 
 
 @pytest.fixture(autouse=True)

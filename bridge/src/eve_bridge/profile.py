@@ -288,6 +288,8 @@ LITE_CLASSIFIED: dict[str, str] = {
     **_why("inert while EVE_PHONE_EXPRESSIONS is forced off: the phone's faces", "EVE_EXPRESSIONS_FILE",
            "EVE_EXPRESSION_BACKEND", "EVE_EXPRESSION_MODEL"),
     **_why("inert while EVE_PHONE_LOCATION is forced off: the phone's location", "EVE_PHONE_LOCATION_FILE"),
+    **_why("inert while EVE_PHONE_LOCATION is forced off: the places history is of the phone's fixes",
+           "EVE_PLACES", "EVE_PLACES_FILE", "EVE_PLACES_DAYS"),
     **_why("inert while EVE_AGENTCARD is forced off: AgentCard", "EVE_AGENTCARD_ADDRESS_FILE",
            "EVE_AGENTCARD_TIMEOUT_SECS"),
     **_why("inert while EVE_AMERICA is forced off: America", "EVE_AMERICA_JEV", "EVE_AMERICA_TRANSPORT"),
