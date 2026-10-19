@@ -444,6 +444,10 @@ class Daemon:
         # key; at start and hourly, on a worker thread. The Spending view shows them beside eve's own meter.
         from . import spend_sync
         tasks.append(asyncio.create_task(spend_sync.loop(self._shutdown), name="spend-sync"))
+        # The places history (places.py): hourly, raw fixes and visits past their days go, and home and work are
+        # inferred again. Nothing runs while EVE_PLACES is off or nothing has been kept.
+        from . import places
+        tasks.append(asyncio.create_task(places.loop(self._shutdown), name="places"))
         # The nightly dream (dream.py): the one automatic writer of the records and the mem0 index. It
         # watches the shutdown event itself and is drained, not cancelled, at the end: a night half written
         # is worse than a restart a few seconds late.

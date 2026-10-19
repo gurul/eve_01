@@ -135,7 +135,8 @@ def test_the_file_is_where_the_environment_says(tmp_path: Path, monkeypatch: pyt
 # ---- the tool ----------------------------------------------------------------------------------------------
 
 def test_the_tool_is_strict_with_no_arguments_and_says_when_to_use_it() -> None:
-    assert pl.TOOL_NAMES == ("phone_location",) and pl.TOOLS == [pl.TOOL]
+    # places.py's three ride with it (places_recall, place_name, thing_place: test_places)
+    assert pl.TOOL_NAMES == ("phone_location", *pl.PLACES_TOOL_NAMES) and pl.TOOLS == [pl.TOOL]
     params = pl.TOOL["parameters"]
     assert pl.TOOL["strict"] is True and params == {"type": "object", "additionalProperties": False,
                                                     "required": [], "properties": {}}
@@ -169,7 +170,7 @@ def test_the_answer_fresh_stale_and_missing() -> None:
 
 def test_the_switch_turns_off_the_tool_and_its_answer(monkeypatch: pytest.MonkeyPatch) -> None:
     pl.store(fix(1))
-    assert pl.enabled() and pl.offered() and pl.tools() == [pl.TOOL]
+    assert pl.enabled() and pl.offered() and pl.tools()[:1] == [pl.TOOL]
     for off in ("0", "false", "no", "off", " OFF "):
         monkeypatch.setenv(pl.SWITCH, off)
         assert not pl.enabled() and not pl.offered() and pl.tools() == []
@@ -183,7 +184,7 @@ def test_the_switch_turns_off_the_tool_and_its_answer(monkeypatch: pytest.Monkey
 def test_the_tool_is_offered_only_once_the_phone_shared_a_fix() -> None:
     assert not pl.offered() and pl.tools() == []           # never shared: every prompt as before
     pl.store(fix(500))                                     # any age: the tool says it is stale
-    assert pl.offered() and pl.tools() == [pl.TOOL]
+    assert pl.offered() and pl.tools()[:1] == [pl.TOOL]
     assert pl.fresh() is None                              # but it is not "here" for quick answers
 
 

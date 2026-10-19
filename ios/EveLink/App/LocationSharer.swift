@@ -4,6 +4,12 @@
 // also relaunches the app after iOS ended it, when the owner chose "Always". Nothing else runs in the background: no
 // standard updates, no timers.
 //
+// Visits (owner, 2026-10-18: "make a location service that tracks location ... patterns habits where things are"):
+// with Always, iOS's visit monitoring also says when the owner arrives at and leaves a place (CLVisit: no GPS of its
+// own, it rides the significant-change wakes). Each one is named (the street line, and the nearest point of interest
+// within 60 m from Apple Maps, which already names the place) and sent to the Mac's places (POST /api/link/visit). A
+// visit that cannot be sent waits in a small queue on this phone (VisitQueue, 50 at most) and goes with the next send.
+//
 // Threading: the manager is made on the main thread, so its delegate calls arrive there; each one turns the
 // CLLocation into a Sendable LocationFix first and then runs on the main actor. Diagnostics never carry a coordinate
 // or a place name, only accuracy, age and why a fix was or was not sent.
@@ -40,11 +46,18 @@ final class LocationSharer: NSObject, ObservableObject {
     /// Approximate location (the owner turned Precise Location off): fixes are a few km wide, places are cities.
     @Published private(set) var approximate = false
 
+    /// What the Mac's places hold (GET /api/link/places), for Settings; nil until read, or when the Mac has none.
+    @Published private(set) var places: PlacesSummary?
+    @Published private(set) var placesProblem: String?
+    @Published private(set) var forgetting = false
+
     private var manager: CLLocationManager?
     private var endpoint: @MainActor () -> ChatEndpoint? = { nil }
     private var refresh: @MainActor () async -> Bool = { false }
     private var active = false
     private var monitoringSignificant = false
+    private var monitoringVisits = false
+    private var sendingVisits = false
     private var updating = false
     private var heartbeat: Timer?
     private var sending = false
@@ -66,6 +79,7 @@ final class LocationSharer: NSObject, ObservableObject {
         static let lastFix = "location.lastFix"       // the fix sent last, for the throttle (on this phone only)
         static let lastSentAt = "location.lastSentAt"
         static let place = "location.place"           // the last place name and where it was named
+        static let visits = "location.visitQueue"     // visits not sent yet (VisitQueue), on this phone only
     }
 
     private override init() {
@@ -196,6 +210,17 @@ final class LocationSharer: NSObject, ObservableObject {
             // iOS requires before it hands over the fix that woke the app
             diag("location: background moves \(wantSignificant ? "on" : "off")")
         }
+        // visits: with Always too (they ride the same wakes); a fresh process restarts them here, as for moves
+        let wantVisits = wantSignificant
+        if wantVisits != monitoringVisits {
+            monitoringVisits = wantVisits
+            if wantVisits {
+                manager.startMonitoringVisits()
+            } else {
+                manager.stopMonitoringVisits()
+            }
+            diag("location: visits \(wantVisits ? "on" : "off")")
+        }
     }
 
     /// With the app open and the phone still, standard updates say nothing; every 10 minutes the updates restart,
@@ -256,6 +281,7 @@ final class LocationSharer: NSObject, ObservableObject {
             diag("location: not sent (\(reply.problem ?? "?"))")
         }
         sending = false
+        if reply == .ok { flushVisits() }     // the Mac is reachable now: what waited goes too
         if let next = waiting {
             waiting = nil
             received(next)
@@ -285,6 +311,139 @@ final class LocationSharer: NSObject, ObservableObject {
             let f = ChatFailure.from(error)
             return f.addressMayHaveMoved ? .unreachable : .failed(f.message)
         }
+    }
+
+    // ---- visits -------------------------------------------------------------------------------------------
+
+    fileprivate func received(_ visit: VisitEvent) {
+        guard enabled, permission.granted, endpoint() != nil else { return }
+        Task { await queue(visit) }
+    }
+
+    /// Name the visit, put it on the queue (a departure replaces its own arrival), and send what waits.
+    private func queue(_ visit: VisitEvent) async {
+        let background = BackgroundRun(name: "eve visit")
+        defer { background.end() }
+        var place: String?
+        var poi: (name: String?, category: String?) = (nil, nil)
+        if let fix = visit.fix {
+            place = await placeName(for: fix)
+            poi = await Self.nearestPOI(fix)
+        }
+        guard enabled else { return }
+        let body = PhoneVisitBody(visit, place: place, poi: poi.name, category: PhoneVisitBody.category(poi.category))
+        var q = Self.loadVisits()
+        q.add(body)
+        Self.saveVisits(q)
+        diag("location: visit \(visit.departed == nil ? "arrival" : "departure") (±\(Int(visit.accuracyM)) m\(active ? "" : ", background"))")
+        await sendVisits()
+    }
+
+    private func flushVisits() {
+        guard !Self.loadVisits().isEmpty else { return }
+        Task { await sendVisits() }
+    }
+
+    /// The queue, oldest first, until it is empty or a send must wait for later. One sender at a time.
+    private func sendVisits() async {
+        guard !sendingVisits else { return }
+        sendingVisits = true
+        defer { sendingVisits = false }
+        let background = BackgroundRun(name: "eve visits")
+        defer { background.end() }
+        while enabled, let body = Self.loadVisits().first {
+            guard let ep = endpoint() else { return }
+            var reply = await Self.fetch(LocationRequests.visit(ep, body), session: session)
+            if reply.addressMayHaveMoved, await refresh(), let ep2 = endpoint() {
+                reply = await Self.fetch(LocationRequests.visit(ep2, body), session: session)
+            }
+            switch VisitOutcome.from(reply) {
+            case .sent, .drop:
+                if reply == .outdated { diag("location: this eve has no places yet; visit dropped") }
+                else if reply != .ok { diag("location: visit dropped (\(reply.problem ?? "?"))") }
+                var q = Self.loadVisits()
+                if q.first == body { q.dropFirst() }
+                Self.saveVisits(q)
+            case .retry:
+                diag("location: visit kept for later (\(reply.problem ?? "?"))")
+                return
+            }
+        }
+    }
+
+    /// The nearest point of interest within 60 m (Apple Maps, as the place name), 6 s at most; nils when none.
+    private static func nearestPOI(_ fix: LocationFix) async -> (name: String?, category: String?) {
+        let center = CLLocationCoordinate2D(latitude: fix.lat, longitude: fix.lon)
+        let here = CLLocation(latitude: fix.lat, longitude: fix.lon)
+        let search = UncheckedBox(MKLocalSearch(request: MKLocalPointsOfInterestRequest(center: center, radius: 60)))
+        let lookup = Task { () -> (String?, String?) in
+            let response = await withTaskCancellationHandler {
+                try? await search.value.start()
+            } onCancel: {
+                search.value.cancel()
+            }
+            let nearest = response?.mapItems.min { a, b in
+                itemLocation(a).distance(from: here) < itemLocation(b).distance(from: here)
+            }
+            guard let nearest else { return (nil, nil) }
+            return (nearest.name, nearest.pointOfInterestCategory?.rawValue)
+        }
+        let timer = Task {
+            try? await Task.sleep(for: .seconds(6))
+            lookup.cancel()
+        }
+        defer { timer.cancel() }
+        let found = await lookup.value
+        return (found.0, found.1)
+    }
+
+    private static func itemLocation(_ item: MKMapItem) -> CLLocation {
+        if #available(iOS 26.0, *) { return item.location }
+        return legacyLocation(item)
+    }
+
+    @available(iOS, deprecated: 26.0, message: "the fallback for iOS 18 to 25; MKMapItem.location on 26 and later")
+    private static func legacyLocation(_ item: MKMapItem) -> CLLocation {
+        item.placemark.location ?? CLLocation(latitude: item.placemark.coordinate.latitude,
+                                              longitude: item.placemark.coordinate.longitude)
+    }
+
+    // ---- the Mac's places (Settings) ------------------------------------------------------------------------
+
+    /// GET /api/link/places: how many places the Mac knows, for the Settings row.
+    func refreshPlaces() async {
+        guard let ep = endpoint() else { return }
+        let (status, data) = await Self.raw(LocationRequests.places(ep), session: session)
+        places = PlacesSummary.from(status: status, body: data)
+        placesProblem = switch status {
+        case 200: nil
+        case 403: "Places are off on the Mac."
+        case 404: "This eve can't keep places yet: update it on the Mac."
+        default: nil
+        }
+    }
+
+    /// POST /api/link/places/forget: the Mac forgets the history, the places, the things and the latest fix; the
+    /// visits waiting on this phone go too. Settings asks first.
+    func forgetPlaces() async {
+        guard let ep = endpoint(), !forgetting else { return }
+        forgetting = true
+        defer { forgetting = false }
+        Self.saveVisits(VisitQueue())
+        let (status, _) = await Self.raw(LocationRequests.forgetPlaces(ep), session: session)
+        if status == 200 {
+            diag("location: the Mac forgot the location history")
+            placesProblem = nil
+            await refreshPlaces()
+        } else {
+            placesProblem = status == 404 ? "This eve keeps no history to forget." : "The Mac didn't forget it (\(status)). Try again."
+        }
+    }
+
+    @concurrent
+    private static func raw(_ request: URLRequest, session: URLSession) async -> (Int, Data) {
+        guard let (data, response) = try? await session.data(for: request) else { return (0, Data()) }
+        return ((response as? HTTPURLResponse)?.statusCode ?? 0, data)
     }
 
     // ---- the place name -----------------------------------------------------------------------------------
@@ -364,6 +523,18 @@ final class LocationSharer: NSObject, ObservableObject {
     private static func savePlace(_ c: PlaceRule.Cached) {
         if let data = try? JSONEncoder().encode(c) { UserDefaults.standard.set(data, forKey: Key.place) }
     }
+
+    private static func loadVisits() -> VisitQueue {
+        UserDefaults.standard.data(forKey: Key.visits).flatMap { try? JSONDecoder().decode(VisitQueue.self, from: $0) } ?? VisitQueue()
+    }
+
+    private static func saveVisits(_ q: VisitQueue) {
+        if q.isEmpty {
+            UserDefaults.standard.removeObject(forKey: Key.visits)
+        } else if let data = try? JSONEncoder().encode(q) {
+            UserDefaults.standard.set(data, forKey: Key.visits)
+        }
+    }
 }
 
 /// beginBackgroundTask's run time for one send, ended once: by the send, or by iOS's expiry, whichever comes first.
@@ -399,6 +570,15 @@ extension LocationSharer: CLLocationManagerDelegate {
         }.first
         guard let fix else { return }
         MainActor.assumeIsolated { self.received(fix) }
+    }
+
+    nonisolated func locationManager(_ manager: CLLocationManager, didVisit visit: CLVisit) {
+        // a Sendable value before leaving Core Location's call; iOS's sentinel dates become nil in VisitEvent
+        let event = VisitEvent(lat: visit.coordinate.latitude, lon: visit.coordinate.longitude,
+                               accuracyM: visit.horizontalAccuracy, arrival: visit.arrivalDate,
+                               departure: visit.departureDate)
+        guard let event else { return }
+        MainActor.assumeIsolated { self.received(event) }
     }
 
     nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {

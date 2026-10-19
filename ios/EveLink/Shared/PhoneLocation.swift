@@ -6,6 +6,17 @@
 //   POST /api/link/location   {"lat", "lon", "accuracy_m", "at": ISO 8601, "place": str | null, "speed_mps": num | null}
 //                             -> {"ok": true}; 400 for a fix the Mac refuses, 403 while EVE_PHONE_LOCATION=0
 //
+// Places (owner, 2026-10-18: "make a location service that tracks location ... patterns habits where things are,
+// cuz rn u get pure coordinates"): the Mac now keeps the fixes as history and turns them into places, visits and
+// routines (bridge places.py). With Always, iOS also tells the app when the owner arrives at and leaves a place
+// (CLVisit, the cheapest signal iOS has for it), and the app forwards each one:
+//
+//   POST /api/link/visit      {"lat", "lon", "accuracy_m", "arrived": ISO 8601 | null, "departed": ISO 8601 | null,
+//                              "place": str | null, "poi": str | null, "category": str | null}
+//                             -> {"ok": true}; 403 while places are off on the Mac, 404 from an older Mac (dropped)
+//   GET  /api/link/places     -> {"ok": true, "on", "places", "visits", "things", "since": "YYYY-MM-DD" | null}
+//   POST /api/link/places/forget  {} -> {"ok": true, "forgot": {...}}: the history, places, things and latest fix
+//
 // Nothing here logs a coordinate or a place: a diagnostics line says how accurate and how old a fix was, never where.
 import Foundation
 
@@ -245,5 +256,186 @@ enum LocationAge {
         if s < 86_400 { return "\(Int(s / 3600)) h ago" }
         let d = Int(s / 86_400)
         return d == 1 ? "1 day ago" : "\(d) days ago"
+    }
+}
+
+// ---- visits (CLVisit) ----------------------------------------------------------------------------------------------
+
+/// One arrival or departure iOS reported, checked like a fix. iOS marks an unknown arrival with `distantPast` and a
+/// visit still going on with `distantFuture`: both become nil here. A visit with neither time says nothing: nil.
+struct VisitEvent: Equatable, Sendable {
+    var lat: Double
+    var lon: Double
+    var accuracyM: Double
+    var arrived: Date?
+    var departed: Date?
+
+    init?(lat: Double, lon: Double, accuracyM: Double, arrival: Date, departure: Date) {
+        guard let fix = LocationFix(lat: lat, lon: lon, accuracyM: accuracyM, at: Date()) else { return nil }
+        self.lat = fix.lat
+        self.lon = fix.lon
+        self.accuracyM = fix.accuracyM
+        arrived = Self.real(arrival)
+        departed = Self.real(departure)
+        if arrived == nil, departed == nil { return nil }
+        if let a = arrived, let d = departed, d < a { return nil }
+    }
+
+    /// A date iOS means (not one of its sentinels): after 2001 and before 2200.
+    private static func real(_ d: Date) -> Date? {
+        let t = d.timeIntervalSinceReferenceDate
+        return t > 0 && t < 6_000_000_000 ? d : nil
+    }
+
+    /// The point as a fix, for naming the place (PlaceRule's cache and lookup take a fix).
+    var fix: LocationFix? { LocationFix(lat: lat, lon: lon, accuracyM: accuracyM, at: departed ?? arrived ?? Date()) }
+}
+
+/// The visit's request body, as the contract above names it: every key present, null when unknown.
+struct PhoneVisitBody: Codable, Equatable, Sendable {
+    var lat: Double
+    var lon: Double
+    var accuracyM: Double
+    var arrived: String?
+    var departed: String?
+    var place: String?
+    var poi: String?
+    var category: String?
+
+    enum CodingKeys: String, CodingKey {
+        case lat, lon, arrived, departed, place, poi, category
+        case accuracyM = "accuracy_m"
+    }
+
+    init(_ visit: VisitEvent, place: String?, poi: String?, category: String?) {
+        lat = (visit.lat * 1e6).rounded() / 1e6
+        lon = (visit.lon * 1e6).rounded() / 1e6
+        accuracyM = (visit.accuracyM * 10).rounded() / 10
+        arrived = visit.arrived.map(PhoneLocationBody.stamp)
+        departed = visit.departed.map(PhoneLocationBody.stamp)
+        self.place = Self.clean(place)
+        self.poi = Self.clean(poi)
+        self.category = Self.clean(category).map { String($0.prefix(40)) }
+    }
+
+    private static func clean(_ s: String?) -> String? {
+        let t = s?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return t.isEmpty ? nil : String(t.prefix(PlaceRule.maxLength))
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(lat, forKey: .lat)
+        try c.encode(lon, forKey: .lon)
+        try c.encode(accuracyM, forKey: .accuracyM)
+        try c.encode(arrived, forKey: .arrived)      // null, not left out
+        try c.encode(departed, forKey: .departed)
+        try c.encode(place, forKey: .place)
+        try c.encode(poi, forKey: .poi)
+        try c.encode(category, forKey: .category)
+    }
+
+    func json() -> Data {
+        let e = JSONEncoder()
+        e.outputFormatting = [.sortedKeys]
+        return (try? e.encode(self)) ?? Data("{}".utf8)
+    }
+
+    /// MapKit's category raw value ("MKPOICategoryFitnessCenter") in the contract's form ("fitnessCenter").
+    static func category(_ raw: String?) -> String? {
+        guard var s = raw?.trimmingCharacters(in: .whitespaces), !s.isEmpty else { return nil }
+        if s.hasPrefix("MKPOICategory") { s.removeFirst("MKPOICategory".count) }
+        guard let first = s.first else { return nil }
+        return first.lowercased() + s.dropFirst()
+    }
+}
+
+/// Visits that could not be sent yet (the Mac asleep, the tunnel gone), oldest first, kept on this phone until the next
+/// send gets through. Capped: past `limit` the oldest go, so a week away never becomes an unbounded backlog.
+struct VisitQueue: Codable, Equatable, Sendable {
+    static let limit = 50
+    private(set) var items: [PhoneVisitBody] = []
+
+    mutating func add(_ body: PhoneVisitBody) {
+        if let i = items.firstIndex(where: { $0.arrived != nil && $0.arrived == body.arrived
+                                            && LocationFix.distance(($0.lat, $0.lon), (body.lat, body.lon)) < 200 }) {
+            items[i] = body              // the departure replaces its own arrival: one visit, its latest word
+        } else {
+            items.append(body)
+        }
+        if items.count > Self.limit { items.removeFirst(items.count - Self.limit) }
+    }
+
+    mutating func dropFirst() { if !items.isEmpty { items.removeFirst() } }
+    var first: PhoneVisitBody? { items.first }
+    var isEmpty: Bool { items.isEmpty }
+}
+
+/// What a visit send means for the queue: sent and kept are plain; the rest decide whether to try again later.
+enum VisitOutcome: Equatable, Sendable {
+    case sent          // 200: off the queue
+    case drop          // 400 (refused), 403 (off on the Mac), 404 (an older Mac): off the queue, never retried
+    case retry         // anything else: stays, the next send tries again
+
+    static func from(_ reply: LocationReply) -> VisitOutcome {
+        switch reply {
+        case .ok: .sent
+        case .rejected, .offOnMac, .outdated: .drop
+        case .refused, .unreachable, .failed: .retry
+        }
+    }
+}
+
+/// GET /api/link/places, for the Settings row.
+struct PlacesSummary: Decodable, Equatable, Sendable {
+    var on: Bool
+    var places: Int
+    var visits: Int
+    var things: Int
+    var since: String?
+
+    static func from(status: Int, body: Data) -> PlacesSummary? {
+        guard status == 200,
+              let obj = (try? JSONSerialization.jsonObject(with: body)) as? [String: Any],
+              obj["ok"] as? Bool == true else { return nil }
+        return PlacesSummary(on: obj["on"] as? Bool ?? true, places: obj["places"] as? Int ?? 0,
+                             visits: obj["visits"] as? Int ?? 0, things: obj["things"] as? Int ?? 0,
+                             since: obj["since"] as? String)
+    }
+
+    /// "12 places" / "1 place" / "None yet".
+    var words: String {
+        if places == 0 { return "None yet" }
+        return places == 1 ? "1 place" : "\(places) places"
+    }
+}
+
+extension LocationRequests {
+    static func visit(_ ep: ChatEndpoint, _ body: PhoneVisitBody) -> URLRequest {
+        request(ep, ["api", "link", "visit"], method: "POST", body: body.json())
+    }
+
+    static func places(_ ep: ChatEndpoint) -> URLRequest {
+        request(ep, ["api", "link", "places"], method: "GET", body: nil)
+    }
+
+    static func forgetPlaces(_ ep: ChatEndpoint) -> URLRequest {
+        request(ep, ["api", "link", "places", "forget"], method: "POST", body: Data("{}".utf8))
+    }
+
+    private static func request(_ ep: ChatEndpoint, _ path: [String], method: String, body: Data?) -> URLRequest {
+        var url = ep.base
+        for part in path { url = url.appending(component: part) }
+        var r = URLRequest(url: url)
+        r.httpMethod = method
+        r.setValue("Bearer \(ep.token)", forHTTPHeaderField: "Authorization")
+        r.setValue("application/json", forHTTPHeaderField: "Accept")
+        if let body {
+            r.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            r.httpBody = body
+        }
+        r.timeoutInterval = 20
+        r.cachePolicy = .reloadIgnoringLocalCacheData
+        return r
     }
 }
