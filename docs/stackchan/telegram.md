@@ -442,6 +442,9 @@ regarding this"). eve reads the script before it runs, without running it
   - anything that evaluates a string annotation as code (`typing.get_type_hints`,
     `ForwardRef`, `functools.singledispatch`), since a tool call can hide in
     one;
+  - a pandas or numpy reader that can fetch a URL (`read_csv`, `read_json`,
+    `read_html`, `genfromtxt`…), since the owner's data could leave in its
+    query string (owner, 2026-10-18; it was eve lite only before);
   - a slug that is not written out as a string, or the helper passed around
     under another name;
   - code that does not parse.

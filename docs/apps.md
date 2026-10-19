@@ -422,9 +422,10 @@ Every other rule is full eve's:
   with the room full eve gives a Gmail send (`composio_tools.sends_mail`). Deleting and every
   other one-way act ask, showing the whole act. The remote bash tool always asks. A remote
   workbench script asks (`composio_tools.workbench_reaches_out_lite`) when it reads the
-  person's own mail or calendar, or when it could carry data off the Mac — a web-search or
-  scraping tool called in it, or a pandas or numpy reader that fetches a URL; a script that
-  only computes on results already fetched runs.
+  person's own mail or calendar, or when it could carry data off the Mac through a web-search
+  or scraping tool called in it. A pandas or numpy reader that fetches a URL asks in full eve
+  too (`composio_tools.workbench_slugs`). A script that only computes on results already
+  fetched runs.
 - **A connection change asks.** Full eve runs `COMPOSIO_MANAGE_CONNECTIONS` without asking.
   eve lite asks unless `composio_tools.manage_needs_yes` proves the call only checks or links:
   `toolkits`, a non-empty list of names; `reinitiate_all` absent or false (true replaces live
