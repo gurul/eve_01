@@ -774,7 +774,8 @@ is cited in [personality.md](docs/stackchan/personality.md).
 
 ## License
 
-eve is under the [PolyForm Noncommercial License 1.0.0](LICENSE.md): use it, study it, change it and share it for
+eve is copyright 2026 its two [maintainers](#maintainers), Gurucharan Lingamallu and Saharsh Maloo, and both
+license it under the [PolyForm Noncommercial License 1.0.0](LICENSE.md): use it, study it, change it and share it for
 personal, research, hobby and other noncommercial purposes, and for charities, schools and public bodies. No
 commercial use. Portions of `bridge/` come from software by Snow under the MIT License and stay under it
 ([bridge license](bridge/LICENSE)).
