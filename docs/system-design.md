@@ -33,6 +33,7 @@ flowchart TB
         tasks["Computer-task routing<br/>Browser lanes and Codex Computer Use"]
         jobs["Watches, chief and Updates<br/>Background checks, jobs and suggestions"]
         memory["Memory and local stores<br/>Chat log, opt-in transcripts, records,<br/>profile, dream, mem0 and notes vault"]
+        places["phone_location.py and places.py<br/>Latest fix, places history, habits,<br/>digests and where things are"]
         coding["Claude Code hooks and work sessions<br/>Session updates, questions and replies"]
         notify["notify.py<br/>Phone notifications"]
     end
@@ -76,6 +77,8 @@ flowchart TB
     wake <--> memory
     jobs <--> brain
     jobs <--> memory
+    api -->|"Location fixes and iOS visits"| places
+    brain <-->|"Place names and times, never coordinates"| places
     coding <--> ipc
     brain --> notify
     notify --> ntfy
@@ -97,7 +100,16 @@ OpenRouter supplies the shared model calls. The separate live voice connection a
 Codex's own sign-in or optional API billing are distinct paths. Device adapters use
 their own protocols: LAN, BLE, USB, service APIs or MCP. Pika can stream video from
 the Mac directly to the phone over WebRTC, with the tunnel as fallback; that media
-path is omitted above for clarity. Storage is on the Mac, but model requests and
+path is omitted above for clarity.
+
+Eve Link sends the phone's location fixes and, with Always permission, iOS's visits
+(arrival and departure at a place, named by Apple Maps on the phone). `places.py`
+keeps them in one owner-only SQLite file and turns them into places, home and work,
+habits, day and week digests, and remembered things. The brain reads place names
+and times from it, not coordinates: each turn's system context says where the owner
+is, and three tools answer the rest. See [places](places.md).
+
+Storage is on the Mac, but model requests and
 enabled external integrations send the relevant inputs to their providers.
 
 ## eve lite
@@ -105,7 +117,7 @@ enabled external integrations send the relevant inputs to their providers.
 eve lite is an alternative deployment selected by `EVE_PROFILE=lite`. It starts
 `lite.py` instead of the full daemon and reuses the shared chat, call, memory and
 tool-policy components. It does not start the full deployment's device links,
-desktop automation or coding sessions.
+desktop automation, coding sessions, or the phone's location and places history.
 
 ```mermaid
 flowchart LR
@@ -150,4 +162,5 @@ OpenRouter sign-in enables the brain.
 - [Connected accounts and their policies](apps.md)
 - [Computer-task routing](stackchan/routing.md) and [Codex integration](codex-computer-use/README.md)
 - [Conversation memory](stackchan/memory.md) and [chief's job lifecycle](stackchan/chief.md)
+- [Phone location](phone-location.md) and [places: visits, habits, digests and things](places.md)
 - [eve lite deployment](lite.md) and [verified state machines](verification.md)
