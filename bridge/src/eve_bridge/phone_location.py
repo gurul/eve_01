@@ -6,8 +6,9 @@ brain reads it with one read-only tool, ``phone_location``, in the chat, the app
 
 **What is kept.** Only the latest fix, in one small file (``DEFAULT_FILE``, beside the chief's folder and the
 link token; ``EVE_PHONE_LOCATION_FILE`` moves it). A new fix replaces it with a temp file in the same folder and
-``os.replace`` (atomic), owner-only (0600). There is no history: a fix older than (or as old as) the one stored is
-ignored, so a late retry never moves the owner back. Coordinates and the place are never logged and never sent
+``os.replace`` (atomic), owner-only (0600). This file has no history: a fix older than (or as old as) the one
+stored is ignored, so a late retry never moves the owner back. The history of fixes and visits is places.py's
+(owner, 2026-10-18), in its own file. Coordinates and the place are never logged and never sent
 anywhere by this module: a log line says "location updated" with the fix's age and accuracy only. The tool's
 answer goes to the model that asked for it, like any tool result, and is not written to the transcript
 (telegram.TRANSCRIBED_TOOLS, voice_agent.ANSWER_TOOLS do not list it). quick_answers.py sends a fresh fix's
@@ -30,6 +31,7 @@ neither offered nor answered.
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import json
 import logging
@@ -72,7 +74,10 @@ TOOL: dict[str, Any] = {
     "parameters": {"type": "object", "additionalProperties": False, "required": [], "properties": {}},
 }
 TOOLS: list[dict[str, Any]] = [TOOL]
-TOOL_NAMES = (TOOL_NAME,)
+# places.py's three tools ride with this one (the history it keeps is of these fixes), so every brain that offers and
+# answers phone_location offers and answers them too; test_places checks the names match places.TOOL_NAMES
+PLACES_TOOL_NAMES = ("places_recall", "place_name", "thing_place")
+TOOL_NAMES = (TOOL_NAME,) + PLACES_TOOL_NAMES
 
 _lock = threading.Lock()                # one writer at a time in this process: the compare and the replace
 
@@ -228,8 +233,12 @@ def offered(environ: Optional[Mapping[str, str]] = None) -> bool:
 
 
 def tools(environ: Optional[Mapping[str, str]] = None) -> list[dict[str, Any]]:
-    """The tool for this turn, or [] (``offered``)."""
-    return list(TOOLS) if offered(environ) else []
+    """The tool for this turn, or [] (``offered``), and places.py's while places are on."""
+    if not offered(environ):
+        return []
+    from . import places
+
+    return list(TOOLS) + places.tools(environ)
 
 
 def reading(environ: Optional[Mapping[str, str]] = None, now: Optional[datetime] = None) -> dict[str, Any]:
@@ -238,17 +247,33 @@ def reading(environ: Optional[Mapping[str, str]] = None, now: Optional[datetime]
     if fix is None:
         return {"error": NO_FIX}
     age = fix.age_secs(now)
-    return {"place": fix.place, "lat": round(fix.lat, COORD_DECIMALS), "lon": round(fix.lon, COORD_DECIMALS),
-            "accuracy_m": round(fix.accuracy_m), "age_min": int(age // 60), "stale": age > STALE_MIN * 60}
+    out = {"place": fix.place, "lat": round(fix.lat, COORD_DECIMALS), "lon": round(fix.lon, COORD_DECIMALS),
+           "accuracy_m": round(fix.accuracy_m), "age_min": int(age // 60), "stale": age > STALE_MIN * 60}
+    # the place in the owner's words when the history knows it (places.py): "Home, since 18:40", not a coordinate
+    from . import places
+
+    if places.enabled(environ) and places.state_path(environ).exists():
+        try:
+            known = places.Places(environ=environ).here()
+        except Exception as e:  # noqa: BLE001 — the fix alone is still an answer
+            log.info("phone location: the place history could not be read (%s)", type(e).__name__)
+            known = None
+        if known:
+            out["at"] = {k: known[k] for k in ("place", "kind", "is", "since") if k in known}
+    return out
 
 
 async def handle(name: str, args: Mapping[str, Any], environ: Optional[Mapping[str, str]] = None) -> dict[str, Any]:
     """One call of the tool (it takes no arguments). Off: the reason, never the stored fix."""
+    if name in PLACES_TOOL_NAMES:
+        from . import places
+
+        return await asyncio.to_thread(places.call, name, args, None, environ)
     if name != TOOL_NAME:
         return {"ok": False, "reason": f"{name} is not the phone's location tool"}
     if not enabled(environ):
         return {"ok": False, "reason": OFF_REASON}
-    return reading(environ)
+    return await asyncio.to_thread(reading, environ)
 
 
 def describe(fix: Fix, now: Optional[datetime] = None) -> str:

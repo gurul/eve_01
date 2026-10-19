@@ -104,8 +104,13 @@ view and does all its networking natively (ios/EveLink); this module is the daem
   is installed and EVE_OBSBOT isn't 0.
 * ``POST /api/link/location`` (phone_location.py; owner, 2026-10-12: "give access to live phone location through
   app"): ``{"lat", "lon", "accuracy_m", "at", "place", "speed_mps"}``, the phone's latest fix, kept as the only one
-  (no history) for eve's ``phone_location`` tool; ``{"ok": true}``. 400 for a body that is not a fix, 403 while
-  ``EVE_PHONE_LOCATION`` is 0. A fix older than the one kept is ignored. Logged as its age and accuracy only.
+  for eve's ``phone_location`` tool; ``{"ok": true}``. 400 for a body that is not a fix, 403 while
+  ``EVE_PHONE_LOCATION`` is 0. A fix older than the one kept is ignored. Logged as its age and accuracy only. Each
+  fix also goes into the places history (places.py) while ``EVE_PLACES`` is on.
+* ``POST /api/link/visit``, ``GET /api/link/places`` and ``POST /api/link/places/forget`` (places.py,
+  docs/places.md; owner, 2026-10-18: "a location service that tracks location ... patterns habits where things
+  are"): iOS's visits (arrived / departed at a place, with its nearest point of interest), the Settings row's
+  counts, and forgetting the whole history. 403 while ``EVE_PLACES`` or ``EVE_PHONE_LOCATION`` is off.
 * ``GET /api/link/today`` (link_today.py, docs/widget.md): the home-screen widget's one read. What needs the owner
   and what is going (the chief's open cards and the watches), the calendar's events left today and what plays now
   (Spotify, the TV), each source within its own short limit; one that is off or fails is left out and named in
@@ -196,6 +201,9 @@ UPDATES_REFRESH_PATH = "/api/link/updates/refresh"
 TOPICS_PATH = "/api/link/topics"         # link_topics.py: Horizontal History's cards
 TOPICS_BOOKMARK_PATH = "/api/link/topics/bookmark"
 LOCATION_PATH = "/api/link/location"     # phone_location.py: the phone's latest fix
+VISIT_PATH = "/api/link/visit"           # places.py: iOS's visits
+PLACES_PATH = "/api/link/places"         # places.py: the Settings row's counts
+PLACES_FORGET_PATH = "/api/link/places/forget"
 SESSIONS_PATH = "/api/link/sessions"     # work_sessions.py: the Work tab's Claude Code sessions
 SESSION_START_PATH = "/api/link/sessions/start"
 MUSE_PATH = "/api/link/muse"            # the composer's eve/Muse switch: GET {"available", "on"}; POST {"on"}
@@ -205,9 +213,9 @@ SESSION_RE = re.compile(r"^/api/link/sessions/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{
 FILE_RE = re.compile(r"^/api/link/file/([^/]{0,64})$")
 PATHS = (TURN_PATH, MESSAGES_PATH, JOBS_PATH, APPS_PATH, UPLOAD_PATH, CONTROLS_PATH, TODAY_PATH, *STREAM_PATHS,
          UPDATES_PATH, UPDATES_DISMISS_PATH, UPDATES_REFRESH_PATH, LOCATION_PATH, SESSIONS_PATH, SESSION_START_PATH,
-         TOPICS_PATH, TOPICS_BOOKMARK_PATH, MUSE_PATH)
+         TOPICS_PATH, TOPICS_BOOKMARK_PATH, MUSE_PATH, VISIT_PATH, PLACES_PATH, PLACES_FORGET_PATH)
 POST_PATHS = (TURN_PATH, UPLOAD_PATH, UPDATES_DISMISS_PATH, UPDATES_REFRESH_PATH, LOCATION_PATH, SESSION_START_PATH,
-              TOPICS_BOOKMARK_PATH)
+              TOPICS_BOOKMARK_PATH, VISIT_PATH, PLACES_FORGET_PATH)
 MAX_CARD_ID_CHARS = 64                # a dismissed Updates card's id (updates.card_id: 12 hex)
 GRADES = ("auto", "instant", "think")    # telegram.GRADES: the speed dial
 JOB_ACTIONS = ("go", "done", "drop", "raise", "happened", "didnt", "hide")
@@ -260,6 +268,7 @@ NO_CONTROL = {**{a.slot: a.no_control for a in app_registry.APPS},
               "notes": "Your notes are off on this Mac (EVE_SECOND_BRAIN)."}
 NO_MEMORY = "eve's memory is off on this Mac (EVE_MEMORY), so there is no conversation to read"
 NO_LOCATION = "phone location is off on this Mac (EVE_PHONE_LOCATION=0)"
+NO_PLACES = "places are off on this Mac (EVE_PLACES=0 or EVE_PHONE_LOCATION=0)"
 NO_WORK = "Work sessions are off on this Mac"
 
 PROMPT_PATH = Path(__file__).with_name("openui_prompt.txt")
@@ -910,6 +919,9 @@ class LinkChat:
         if path == LOCATION_PATH:
             await self._location(headers, reader, writer)
             return
+        if path in (VISIT_PATH, PLACES_PATH, PLACES_FORGET_PATH):
+            await self._places(path, headers, reader, writer)
+            return
         inlet = self._inlet()
         if inlet is None or getattr(inlet, "_chat_id", None) is None:
             await self._json(writer, 503, {"ok": False, "error": NO_CHAT})
@@ -1474,6 +1486,64 @@ class LinkChat:
             return
         log.info("link chat: location %s (%s)", "updated" if kept else "ignored, not newer",
                  phone_location.describe(fix))
+        from . import places
+
+        if places.enabled():
+            # into the history as well (a late fix too: the history keeps it; the stay ignores what is behind it)
+            try:
+                closed = await asyncio.to_thread(places.Places().record_fix, fix)
+                if closed:
+                    log.info("link chat: places: a stay ended (read from fixes)")
+            except Exception as e:  # noqa: BLE001 — the latest fix is kept; the history misses one
+                log.warning("link chat: places: the fix was not kept in the history (%s)", type(e).__name__)
+        await self._json(writer, 200, {"ok": True})
+
+    async def _places(self, path: str, headers: dict[str, str], reader: asyncio.StreamReader,
+                      writer: asyncio.StreamWriter) -> None:
+        """``POST /api/link/visit`` (an iOS visit), ``GET /api/link/places`` (the counts) and ``POST
+        /api/link/places/forget`` (everything, with the latest fix). 403 while places are off. Logs say what was
+        done, never where."""
+        from . import places
+
+        if not places.enabled():
+            if path != PLACES_PATH:
+                await self._discard(reader, _length(headers))
+            await self._json(writer, 403, {"ok": False, "error": NO_PLACES})
+            return
+        store = places.Places()
+        if path == PLACES_PATH:
+            try:
+                summary = await asyncio.to_thread(store.summary)
+            except Exception as e:  # noqa: BLE001
+                log.warning("link chat: places: the summary failed (%s)", type(e).__name__)
+                await self._json(writer, 500, {"ok": False, "error": "the Mac could not read the places"})
+                return
+            await self._json(writer, 200, {"ok": True, "on": True, **summary})
+            return
+        body = await self._optional_body(headers, reader, writer)
+        if body is None:
+            return
+        if path == PLACES_FORGET_PATH:
+            try:
+                forgot = await asyncio.to_thread(store.forget)
+            except Exception as e:  # noqa: BLE001
+                log.warning("link chat: places: forget failed (%s)", type(e).__name__)
+                await self._json(writer, 500, {"ok": False, "error": "the Mac could not forget the places"})
+                return
+            await self._json(writer, 200, {"ok": True, "forgot": forgot})
+            return
+        try:
+            visit = places.parse_visit(body)
+        except places.BadVisit as e:
+            await self._json(writer, 400, {"ok": False, "error": str(e)})
+            return
+        try:
+            done = await asyncio.to_thread(store.record_visit, visit)
+        except Exception as e:  # noqa: BLE001
+            log.warning("link chat: places: the visit was not kept (%s)", type(e).__name__)
+            await self._json(writer, 500, {"ok": False, "error": "the Mac could not keep the visit"})
+            return
+        log.info("link chat: places: visit %s (accuracy %d m)", done, round(visit.accuracy_m))
         await self._json(writer, 200, {"ok": True})
 
     async def _sessions(self, path: str, session: Optional[re.Match[str]], headers: dict[str, str],

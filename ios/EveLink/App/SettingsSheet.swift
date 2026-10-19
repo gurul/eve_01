@@ -13,6 +13,7 @@ struct SettingsSheet: View {
     @State private var pasted = ""
     @State private var pasteFailed = false
     @State private var copied = false
+    @State private var confirmForget = false
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
 
@@ -161,10 +162,26 @@ struct SettingsSheet: View {
                     Button("Open Settings") { location.openSettings() }
                 }
             }
+            // The Mac's places (bridge places.py): how many it knows, and a way to make it forget them all
+            if let places = location.places, places.on {
+                row("Places eve knows", places.words)
+                Button("Forget location history", role: .destructive) { confirmForget = true }
+                    .disabled(location.forgetting || relay.pairing == nil)
+            }
+            if let problem = location.placesProblem {
+                Text(problem).font(.footnote).foregroundStyle(.secondary)
+            }
         } header: {
             Text("Location")
         } footer: {
-            Text("eve uses where your phone is to answer things like what's near you and how long to get home. It stays on your Mac: only the latest place is kept there.")
+            Text("eve uses where your phone is to answer things like what's near you and how long to get home, and remembers the places you go so it can learn your routines. It all stays on your Mac.")
+        }
+        .task { await location.refreshPlaces() }
+        .confirmationDialog("Forget location history?", isPresented: $confirmForget, titleVisibility: .visible) {
+            Button("Forget everything", role: .destructive) { Task { await location.forgetPlaces() } }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("eve forgets every place and visit, the things you asked it to remember where they are, and where your phone is now. This can't be undone.")
         }
     }
 

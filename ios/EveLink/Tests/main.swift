@@ -1438,6 +1438,69 @@ check(LocationAge.words(since: nil, now: locT0) == "Not yet" && LocationAge.word
       && LocationAge.words(since: locT0, now: locT0.addingTimeInterval(4 * 60 + 5)) == "4 min ago"
       && LocationAge.words(since: locT0, now: locT0.addingTimeInterval(2 * 3600)) == "2 h ago"
       && LocationAge.words(since: locT0, now: locT0.addingTimeInterval(86_400 * 3)) == "3 days ago", "last sent ages")
+
+// Visits (CLVisit) for the Mac's places (2026-10-18): iOS's sentinels, the body, the queue and the replies.
+let visitArrive = locT0, visitLeave = locT0.addingTimeInterval(3600)
+check(VisitEvent(lat: 0, lon: 0, accuracyM: 30, arrival: .distantPast, departure: .distantFuture) == nil,
+      "a visit with neither time is nothing")
+let arriveOnly = VisitEvent(lat: 0, lon: 0, accuracyM: 30, arrival: visitArrive, departure: .distantFuture)!
+check(arriveOnly.arrived == visitArrive && arriveOnly.departed == nil, "distantFuture: still there")
+let leaveOnly = VisitEvent(lat: 0, lon: 0, accuracyM: 30, arrival: .distantPast, departure: visitLeave)!
+check(leaveOnly.arrived == nil && leaveOnly.departed == visitLeave, "distantPast: the arrival was not seen")
+check(VisitEvent(lat: 0, lon: 0, accuracyM: 30, arrival: visitLeave, departure: visitArrive) == nil, "a departure before the arrival is refused")
+check(VisitEvent(lat: 91, lon: 0, accuracyM: 30, arrival: visitArrive, departure: visitLeave) == nil
+      && VisitEvent(lat: 0, lon: 0, accuracyM: -1, arrival: visitArrive, departure: visitLeave) == nil, "an invalid point is refused")
+let visitBody = PhoneVisitBody(arriveOnly, place: " 1 Main St, Springfield, IL ", poi: "", category: nil)
+let visitObj = (try? JSONSerialization.jsonObject(with: visitBody.json())) as? [String: Any] ?? [:]
+check(Set(visitObj.keys) == ["lat", "lon", "accuracy_m", "arrived", "departed", "place", "poi", "category"],
+      "visit keys are the contract's (snake_case): \(visitObj.keys.sorted())")
+check(visitObj["departed"] is NSNull && visitObj["poi"] is NSNull && visitObj["category"] is NSNull,
+      "unknown visit fields are null, not missing")
+check(visitObj["arrived"] as? String == "2027-01-15T08:00:00Z" && visitObj["place"] as? String == "1 Main St, Springfield, IL",
+      "arrived is ISO 8601 with its offset (Z), place trimmed")
+check(ISO8601DateFormatter().date(from: visitObj["arrived"] as? String ?? "") == visitArrive, "the stamp reads back to the same instant")
+let fullVisit = PhoneVisitBody(VisitEvent(lat: 0, lon: 0, accuracyM: 30, arrival: visitArrive, departure: visitLeave)!,
+                               place: nil, poi: "Equinox", category: PhoneVisitBody.category("MKPOICategoryFitnessCenter"))
+check(fullVisit.category == "fitnessCenter" && fullVisit.poi == "Equinox" && fullVisit.departed == "2027-01-15T09:00:00Z",
+      "poi and category in the contract's form")
+check(PhoneVisitBody.category(nil) == nil && PhoneVisitBody.category("") == nil && PhoneVisitBody.category("Park") == "park",
+      "category without MapKit's prefix")
+check((try? JSONDecoder().decode(PhoneVisitBody.self, from: fullVisit.json())) == fullVisit, "the visit body round-trips")
+var visitQueue = VisitQueue()
+visitQueue.add(visitBody)
+visitQueue.add(fullVisit)
+check(visitQueue.items.count == 1 && visitQueue.first?.departed == "2027-01-15T09:00:00Z", "a departure replaces its own arrival")
+for i in 0..<(VisitQueue.limit + 7) {
+    let t = locT0.addingTimeInterval(Double(i + 2) * 7200)
+    visitQueue.add(PhoneVisitBody(VisitEvent(lat: 0, lon: Double(i) * 0.01, accuracyM: 30, arrival: t, departure: .distantFuture)!,
+                                  place: nil, poi: nil, category: nil))
+}
+check(visitQueue.items.count == VisitQueue.limit, "the queue is capped at \(VisitQueue.limit) (\(visitQueue.items.count))")
+check(visitQueue.first?.arrived == PhoneLocationBody.stamp(locT0.addingTimeInterval(9 * 7200)), "past the cap the oldest go")
+let queueData = try? JSONEncoder().encode(visitQueue)
+check(queueData.flatMap { try? JSONDecoder().decode(VisitQueue.self, from: $0) } == visitQueue, "the queue survives UserDefaults")
+visitQueue.dropFirst()
+check(visitQueue.items.count == VisitQueue.limit - 1, "dropFirst takes one")
+check(VisitOutcome.from(.ok) == .sent && VisitOutcome.from(.outdated) == .drop && VisitOutcome.from(.offOnMac) == .drop
+      && VisitOutcome.from(.rejected) == .drop, "404 from an older Mac, 403 and 400 drop the visit")
+check(VisitOutcome.from(.unreachable) == .retry && VisitOutcome.from(.failed("x")) == .retry && VisitOutcome.from(.refused) == .retry,
+      "the rest keep it for the next send")
+let summary = PlacesSummary.from(status: 200, body: Data(#"{"ok": true, "on": true, "places": 12, "visits": 140, "things": 2, "since": "2026-10-18"}"#.utf8))
+check(summary == PlacesSummary(on: true, places: 12, visits: 140, things: 2, since: "2026-10-18") && summary?.words == "12 places",
+      "the places summary")
+check(PlacesSummary.from(status: 403, body: Data(#"{"ok": false}"#.utf8)) == nil
+      && PlacesSummary.from(status: 200, body: Data("nope".utf8)) == nil, "no summary when off or garbled")
+check(PlacesSummary(on: true, places: 0, visits: 0, things: 0, since: nil).words == "None yet"
+      && PlacesSummary(on: true, places: 1, visits: 1, things: 0, since: nil).words == "1 place", "summary words")
+let placesEP = ChatEndpoint(base: URL(string: "https://mac.local:48782")!, token: "t0k")
+let visitReq = LocationRequests.visit(placesEP, fullVisit)
+check(visitReq.url?.path == "/api/link/visit" && visitReq.httpMethod == "POST"
+      && visitReq.value(forHTTPHeaderField: "Authorization") == "Bearer t0k" && visitReq.httpBody == fullVisit.json(), "visit POST")
+check(LocationRequests.places(placesEP).url?.path == "/api/link/places" && LocationRequests.places(placesEP).httpMethod == "GET"
+      && LocationRequests.places(placesEP).httpBody == nil, "places GET")
+let forgetReq = LocationRequests.forgetPlaces(placesEP)
+check(forgetReq.url?.path == "/api/link/places/forget" && forgetReq.httpMethod == "POST" && forgetReq.httpBody == Data("{}".utf8),
+      "forget POST")
 print("LOCATION_OK")
 // eve's expressions in the voice-mode face (Shared/FaceExpression.swift, docs/voice-mode.md, Expressions).
 func expressionMessage(_ json: String) -> FaceExpressionRequest? {

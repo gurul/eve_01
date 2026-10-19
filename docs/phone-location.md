@@ -11,8 +11,9 @@ Mac's side is `bridge/src/eve_bridge/phone_location.py`. The Settings row is des
 ## What the phone sends, and when
 
 Each send is one fix: latitude, longitude, how accurate it is in meters, when the phone took it, a place name
-the phone looked up itself, and the speed when iOS knows it. Nothing else: no history, no route, no other
-app's data.
+the phone looked up itself, and the speed when iOS knows it. Nothing else: no route, no other app's data. With
+Always, the app also sends iOS's visits (arrived and left a place, with its nearest point of interest); the Mac
+keeps both in the [places](places.md) history.
 
 - **Permission.** Once the app is paired and open, it asks for "While using the app", then once for "Always".
   Approximate location (Precise Location off in iOS) works; the Settings row says so.
@@ -61,7 +62,8 @@ retry never moves the owner back. With `EVE_PHONE_LOCATION=0` the route answers 
 
 - **Only the latest fix.** It is one file, `~/.config/eve-bridge/phone-location.json`
   (`EVE_PHONE_LOCATION_FILE` moves it). The file is replaced atomically (a temp file in the same folder,
-  then `os.replace`) and is owner-only (0600). There is no history.
+  then `os.replace`) and is owner-only (0600). This file has no history; the [places](places.md) history (on
+  unless `EVE_PLACES=0`) keeps every fix for 30 days and the visits read from them for a year.
 - **Never logged.** The log line is `link chat: location updated (age 12 s, accuracy 15 m)`, or `ignored,
   not newer`. It never has coordinates or the place. The weather calls to Open-Meteo do carry coordinates,
   and httpx logs each request line with its URL, so quick answers put a filter on the `httpx` logger that
@@ -109,12 +111,13 @@ before. A place the owner names ("weather in Tokyo") always wins.
 - **On the Mac:** `EVE_PHONE_LOCATION` in `~/.config/eve-bridge/env` is on unless it is `0`, `false`, `no` or
   `off`. When it is off, the route answers 403 (the phone's Settings row says location is off on the Mac), the
   tool is not offered, a stray call gets a reason instead of the fix, and quick answers ignore the file.
-- Neither switch deletes the fix the Mac already has. To forget it, delete
-  `~/.config/eve-bridge/phone-location.json`.
+- Neither switch deletes the fix the Mac already has. To forget it and the places history, use **Forget
+  location history** in Settings or `eve-bridge places forget`.
 
 ## Privacy
 
-- The Mac keeps only the latest fix, in one owner-only file. There is no history on the Mac.
+- The Mac keeps the latest fix in one owner-only file, and the [places](places.md) history in another
+  (`places.db`, owner-only). `EVE_PLACES=0` keeps no history; Settings, **Forget location history** wipes both.
 - The phone keeps only the last fix it sent and the last place name, in the app's own storage, to decide when
   to send next. It never leaves the phone except as the next send.
 - Neither side logs where the phone is. The Mac's log and the app's diagnostics say only how old and how

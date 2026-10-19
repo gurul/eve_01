@@ -34,9 +34,9 @@
 	<key>EveKeychainGroup</key>
 	<string>$(AppIdentifierPrefix)com.github.eve-bridge.EveLink.shared</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>eve uses where your phone is to answer things like what's near you and how long to get home. It stays on your Mac. With Always, Eve Link tells eve when you have moved a good distance, even when the app is closed.</string>
+	<string>eve uses where your phone is to answer things like what's near you and how long to get home, and remembers the places you go to learn your routines. It stays on your Mac. With Always, Eve Link tells eve when you have moved a good distance or arrived somewhere, even when the app is closed.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>eve uses where your phone is to answer things like what's near you and how long to get home. It stays on your Mac.</string>
+	<string>eve uses where your phone is to answer things like what's near you and how long to get home, and remembers the places you go to learn your routines. It stays on your Mac.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Eve Link sends what you say to eve when you hold Talk or press the Action Button, and types what you say when you tap the mic in Chat.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>

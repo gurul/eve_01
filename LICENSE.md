@@ -1,4 +1,4 @@
-Required Notice: Copyright 2026 gurul (https://github.com/gurul)
+Required Notice: Copyright 2026 gurul (https://github.com/gurul) and saharshmaloo (https://github.com/saharshmaloo)
 
 Required Notice: Portions of bridge/ are derived from software by Snow, Copyright (c) 2026 Snow, licensed under the MIT License (see bridge/LICENSE). Those portions remain available under the MIT License. Third-party components keep their own licenses (see the notices listed in README.md).
 

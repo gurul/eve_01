@@ -1871,3 +1871,67 @@ def test_an_app_turn_offers_and_answers_the_phone_location_from_the_fix_it_poste
     assert phone_location.TOOL in first["tools"]
     out = [json.loads(i["output"]) for i in second["input"] if i.get("type") == "function_call_output"]
     assert out[-1]["place"] == "Null Island" and out[-1]["stale"] is False and out[-1]["age_min"] in (1, 2)
+
+
+# ---- the places history (places.py) ------------------------------------------------------------------------------
+
+def a_visit(**kw: Any) -> dict[str, Any]:
+    from datetime import timezone
+
+    out = {"lat": 41.87, "lon": -87.64, "accuracy_m": 20.0, "place": "Somewhere St", "poi": "Equinox",
+           "category": "fitnessCenter",
+           "arrived": (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat(), "departed": None}
+    out.update(kw)
+    return out
+
+
+def test_visits_and_fixes_build_the_history_and_the_log_never_says_where(
+        tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    from datetime import timezone
+
+    from eve_bridge import places
+
+    async def go() -> None:
+        server, port, token = await serve(tmp_path, FakeInlet(store_at(tmp_path)))
+        assert (await http(port, "POST", link_chat.VISIT_PATH, a_visit()))[0] == 401           # the token first
+        arrival = a_visit()
+        status, _, raw = await http(port, "POST", link_chat.VISIT_PATH, arrival, token=token)
+        assert status == 200 and json.loads(raw) == {"ok": True}
+        left = dict(arrival, departed=datetime.now(timezone.utc).isoformat())
+        assert (await http(port, "POST", link_chat.VISIT_PATH, left, token=token))[0] == 200
+        assert (await http(port, "POST", link_chat.VISIT_PATH, a_visit(lat=99), token=token))[0] == 400
+        assert (await http(port, "POST", link_chat.LOCATION_PATH, location(lat=41.87, lon=-87.64),
+                           token=token))[0] == 200
+        status, _, raw = await http(port, "GET", link_chat.PLACES_PATH, token=token)
+        body = json.loads(raw)
+        assert status == 200 and body["ok"] and body["places"] == 1 and body["visits"] == 1
+        assert (await http(port, "GET", link_chat.VISIT_PATH, token=token))[0] == 405          # POST only
+        status, _, raw = await http(port, "POST", link_chat.PLACES_FORGET_PATH, {}, token=token)
+        assert status == 200 and json.loads(raw)["forgot"]["visits"] == 1
+        await server.close()
+
+    with caplog.at_level(logging.DEBUG):
+        asyncio.run(go())
+    assert places.Places().summary() == {"places": 0, "visits": 0, "things": 0, "since": None}
+    said = "\n".join(r.getMessage() for r in caplog.records)
+    assert "places: visit arrival" in said and "places: visit departure" in said
+    for secret in ("41.87", "87.64", "Equinox", "Somewhere St"):
+        assert secret not in said
+
+
+def test_places_off_is_a_403_and_keeps_nothing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from eve_bridge import places
+
+    monkeypatch.setenv("EVE_PLACES", "0")
+
+    async def go() -> None:
+        server, port, token = await serve(tmp_path, FakeInlet(store_at(tmp_path)))
+        for method, path, body in (("POST", link_chat.VISIT_PATH, a_visit()), ("GET", link_chat.PLACES_PATH, None),
+                                   ("POST", link_chat.PLACES_FORGET_PATH, {})):
+            status, _, raw = await http(port, method, path, body, token=token)
+            assert status == 403 and json.loads(raw) == {"ok": False, "error": link_chat.NO_PLACES}
+        assert (await http(port, "POST", link_chat.LOCATION_PATH, location(), token=token))[0] == 200
+        await server.close()
+
+    asyncio.run(go())
+    assert not places.state_path().exists()               # the latest fix is kept, the history is not
