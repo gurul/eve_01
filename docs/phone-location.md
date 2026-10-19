@@ -66,10 +66,11 @@ retry never moves the owner back. With `EVE_PHONE_LOCATION=0` the route answers 
   not newer`. It never has coordinates or the place. The weather calls to Open-Meteo do carry coordinates,
   and httpx logs each request line with its URL, so quick answers put a filter on the `httpx` logger that
   shows `latitude=<hidden>&longitude=<hidden>` in any Open-Meteo URL (`quick_answers.CoordinateFilter`).
-- **Never sent anywhere by the bridge**, except in two places. First, the `phone_location` tool's answer
+- **Never sent anywhere by the bridge**, except in three places. First, the `phone_location` tool's answer
   goes to the model that asked for it, like any tool result. It is not written to the transcript. Second,
   quick answers send a fresh fix's coordinates to Open-Meteo for the weather, rounded to two decimals
-  (about 1 km).
+  (about 1 km). Third, an `events_search` near the owner ("concerts near me") sends the same rounded
+  coordinates to Ticketmaster ([events](events.md#near-the-owner)); its URL is never logged.
 
 ## The tool
 
@@ -119,8 +120,8 @@ before. A place the owner names ("weather in Tokyo") always wins.
 - Neither side logs where the phone is. The Mac's log and the app's diagnostics say only how old and how
   accurate a fix was.
 - The fix goes from the phone to this Mac through eve's own tunnel, with the link token. The bridge sends it
-  nowhere else, except the two places listed above: the model that called the tool, and Open-Meteo (rounded to
-  about 1 km) for the weather.
+  nowhere else, except the three places listed above: the model that called the tool, Open-Meteo (rounded to
+  about 1 km) for the weather, and Ticketmaster (rounded the same) for events near the owner.
 
 ## Check it is live
 

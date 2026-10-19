@@ -55,11 +55,12 @@ class Fetch:
 
 
 def _finder(fetch: Fetch, **kw: Any) -> events.Events:
+    kw.setdefault("where", lambda: None)            # never the real phone's fix
     return events.Events(fetch=fetch, now=lambda: NOW, environ=kw.pop("environ", KEY), **kw)
 
 
 def _args(**over: Any) -> dict[str, Any]:
-    base = {"city": "", "keyword": "", "category": "", "start_date": "", "end_date": ""}
+    base = {"city": "", "near": False, "keyword": "", "category": "", "start_date": "", "end_date": ""}
     base.update(over)
     return base
 
@@ -228,13 +229,21 @@ def test_a_back_off_ticketmaster_asked_for_is_kept_with_no_request() -> None:
     assert fetch.urls == [] and lim.taken == []
 
 
-def test_a_long_rate_wait_is_said_and_a_short_one_is_waited() -> None:
-    fetch, lim = Fetch(_payload()), _Limiter(wait=events.MAX_WAIT_S + 5)
+def test_the_watches_pacing_never_refuses_the_owner_s_search() -> None:
+    """2026-10-18: a retry three seconds after a first search was refused by the watches' 20 s host gap."""
+    fetch, lim = Fetch(_payload()), _Limiter(wait=17.0)
+    started = time.monotonic()
     out = asyncio.run(_finder(fetch, limiter=lambda: lim).search(_args()))
-    assert out["ok"] is False and "rate limit" in out["reason"] and fetch.urls == []
-    lim.wait = 0.01
-    out = asyncio.run(_finder(fetch, limiter=lambda: lim).search(_args()))
-    assert out["ok"] and lim.taken == [watch.TM_HOST] and lim.cleared == [watch.TM_HOST]
+    assert out["ok"] and len(fetch.urls) == 1 and time.monotonic() - started < 1.0
+    assert lim.taken == [watch.TM_HOST] and lim.cleared == [watch.TM_HOST]
+
+
+def test_the_real_limiter_lets_a_second_search_through_at_once() -> None:
+    lim = watch.RateLimiter()
+    fetch = Fetch(_payload(_event("A")))
+    finder = _finder(fetch, limiter=lambda: lim)
+    assert asyncio.run(finder.search(_args(city="Seattle")))["ok"]
+    assert asyncio.run(finder.search(_args(city="Seattle")))["ok"] and len(fetch.urls) == 2
 
 
 def test_a_429_backs_the_shared_key_off_for_the_watches_too() -> None:
@@ -242,3 +251,45 @@ def test_a_429_backs_the_shared_key_off_for_the_watches_too() -> None:
     error = watch.FetchError("the site answered HTTP 429", 429, retry_after=20.0)
     out = asyncio.run(_finder(Fetch(error=error), limiter=lambda: lim).search(_args()))
     assert "slow down" in out["reason"] and lim.penalized == [(watch.TM_HOST, 20.0)] and lim.cleared == []
+
+
+# ---- near the owner (2026-10-18: "Concerts near me" searched everywhere) ----------------------------------------
+
+HERE = (41.88, -87.63)
+
+
+@pytest.mark.parametrize("over", [{"category": "music"}, {"near": True, "keyword": "jazz"}])
+def test_near_me_searches_around_the_owner(over: dict[str, Any]) -> None:
+    fetch = Fetch(_payload(_event("A")))
+    out = asyncio.run(_finder(fetch, where=lambda: HERE).search(_args(**over)))
+    q = fetch.query()
+    assert q["latlong"] == "41.88,-87.63" and q["radius"] == str(events.NEAR_RADIUS_MI) and q["unit"] == "miles"
+    assert "city" not in q and out["ok"] and "miles" in out["near"]
+
+
+@pytest.mark.parametrize("over", [{"city": "Portland, OR", "near": True}, {"keyword": "Mariners"}])
+def test_a_named_city_or_an_artist_s_tour_is_not_near(over: dict[str, Any]) -> None:
+    asked: list[int] = []
+    fetch = Fetch(_payload(_event("A")))
+    out = asyncio.run(_finder(fetch, where=lambda: asked.append(1) or HERE).search(_args(**over)))
+    assert "latlong" not in fetch.query() and "near" not in out and asked == []
+
+
+def test_near_me_with_no_known_place_searches_everywhere_and_says_so() -> None:
+    fetch = Fetch(_payload(_event("A")))
+    out = asyncio.run(_finder(fetch).search(_args(near=True)))
+    assert "latlong" not in fetch.query() and out["note"] == events.NO_HERE
+
+
+def test_here_is_the_phone_s_fresh_fix_else_the_weather_place_rounded(tmp_path: Any) -> None:
+    from eve_bridge import phone_location
+
+    env = {"EVE_PHONE_LOCATION_FILE": str(tmp_path / "loc.json"), "EVE_WEATHER_LAT": "40.71277",
+           "EVE_WEATHER_LON": "-74.00597"}
+    assert events.here(env) == (40.71, -74.01)
+    fix = phone_location.parse({"lat": 41.878114, "lon": -87.629798, "accuracy_m": 10,
+                                "at": datetime.now(timezone.utc).isoformat(), "place": None, "speed_mps": None})
+    assert phone_location.store(fix, tmp_path / "loc.json")
+    assert events.here(env) == (41.88, -87.63)
+    assert events.here({"EVE_PHONE_LOCATION_FILE": str(tmp_path / "none.json")}) is None
+    assert events.here({**env, "EVE_PHONE_LOCATION": "0", "EVE_WEATHER_LAT": "x"}) is None

@@ -20,7 +20,8 @@ kind. A rundown turn does not carry it.
 
 | Argument | Meaning |
 |---|---|
-| `city` | A city, or "city, ST" ("Portland, OR"); empty for anywhere |
+| `city` | A city, or "city, ST" ("Portland, OR"); empty for near the owner or anywhere |
+| `near` | True for "near me", "nearby", "around here" with no city |
 | `keyword` | An artist, team, show, venue or genre; empty for any |
 | `category` | `music`, `sports`, `arts & theatre`, `film`, `family`, or empty for every kind |
 | `start_date`, `end_date` | `YYYY-MM-DD` in the owner's own days; empty for from now / no end |
@@ -28,6 +29,17 @@ kind. A rundown turn does not carry it.
 It returns up to 8 upcoming events, soonest first. Each has its name, local date and time, venue, city, on-sale
 status, genre, a price range when Ticketmaster lists one (a missing range means unknown, never free) and the ticket
 link, plus the total number found.
+
+## Near the owner
+
+"Concerts near me" sent no city, so Ticketmaster searched the whole country (8 of 10,000 events, none local;
+2026-10-18). A search with no city is now near the owner when `near` is true, or when it has no keyword either (a
+what's-on search across the whole country is never what was meant). It goes to Ticketmaster as `latlong` with a
+50-mile radius around where the owner is: the phone's fresh fix ([phone location](phone-location.md), at most an
+hour old), else `EVE_WEATHER_LAT` / `EVE_WEATHER_LON`. Both are rounded to two decimals (about 1 km), as the
+weather's are. The result says `near: "within 50 miles of where the owner is"`. With neither known, the search
+goes everywhere and its `note` asks the brain to ask which city. An artist's tour or a team's schedule (a keyword,
+`near` false) still searches everywhere.
 
 ## Days and time zones
 
@@ -42,7 +54,8 @@ The key's quota (5 a second, 5000 a day) is shared with the Ticketmaster watches
 watcher's rate limiter when a watcher runs, the same way a watch does:
 
 - a back-off Ticketmaster asked for is kept: the search sends nothing and says when to try again;
-- a rate wait of up to 2 seconds is waited; a longer one is said, never slept through;
+- the watches' own pacing (20 seconds between two requests to one host) is not waited: it refused a retry three
+  seconds after a first search (2026-10-18), and the key allows 5 a second;
 - each search is counted (`take`); a 429 or 503 backs the key off for the watches too (`penalize`, with the
   server's Retry-After); an answer ends a back-off (`clear`).
 

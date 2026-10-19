@@ -296,7 +296,8 @@ The [Telegram door](docs/stackchan/telegram.md) is **off by default**. With it o
   See [confirmation rules](docs/stackchan/telegram.md).
 - **The `/` menu in plain words, and events from Ticketmaster.** Behind
   `EVE_MENU_TOOLS` (off until its blind eval passes): "what did you spend
-  today", "go quiet for a while", "any concerts in Seattle this weekend",
+  today", "go quiet for a while", "any concerts in Seattle this weekend"
+  (or "near me", from the phone's location, rounded to about 1 km),
   "book dinner for 4 fri at 7", "what does the notes file on my desktop say"
   (`read_file`). See [events](docs/events.md).
 

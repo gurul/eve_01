@@ -12,7 +12,7 @@ anywhere by this module: a log line says "location updated" with the fix's age a
 answer goes to the model that asked for it, like any tool result, and is not written to the transcript
 (telegram.TRANSCRIBED_TOOLS, voice_agent.ANSWER_TOOLS do not list it). quick_answers.py sends a fresh fix's
 coordinates, rounded to two decimals (about 1 km), to Open-Meteo for "what's the weather", as it sends
-``EVE_WEATHER_LAT``/``LON``.
+``EVE_WEATHER_LAT``/``LON``; events.py sends them, rounded the same, to Ticketmaster for "concerts near me".
 
 **The fix.** ``{"lat", "lon", "accuracy_m", "at", "place", "speed_mps"}``: degrees, the horizontal accuracy in
 meters, when the phone took it (ISO 8601 with a zone), the phone's reverse-geocoded name for it (a town or a

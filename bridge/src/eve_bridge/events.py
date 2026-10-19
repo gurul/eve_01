@@ -16,6 +16,15 @@ address checks, no proxy, a hard deadline) and, when a Watcher runs, its rate li
 the same 5-a-second, 5000-a-day key as the watches. The key is read from ``TICKETMASTER_API_KEY`` at each call and
 is never logged, returned or kept; a failure is reported by its HTTP status only, never with the URL.
 
+"Near me" (owner, 2026-10-18: "ticketmaster not working on eve"): "Concerts near me" sent no city, so Ticketmaster
+searched everywhere (8 of 10000, none local), and the brain's retry three seconds later was refused by the
+watcher's 20-second gap between two requests to one host. Now a search with no city that is near the owner (``near``,
+or no city and no keyword: a what's-on search anywhere is never what was meant) goes by ``latlong`` within
+NEAR_RADIUS_MI of where they are: the phone's fresh fix (phone_location.fresh), else ``EVE_WEATHER_LAT``/``LON``,
+rounded to NEAR_DECIMALS (about 1 km) as the weather's are. With neither, it searches everywhere and says so. A
+search keeps a back-off Ticketmaster asked for and is counted, but it does not wait out the watches' pacing: the
+key allows 5 a second, and the owner is waiting.
+
 ``search`` never raises: no key, a timeout, a refusal and an unreadable answer are each an ``ok: False`` result
 with a plain reason. The whole call is bounded by TIMEOUT_S.
 """
@@ -31,7 +40,7 @@ import urllib.parse
 from datetime import date, datetime, time, timedelta, timezone, tzinfo
 from typing import Any, Callable, Mapping, Optional
 
-from . import watch
+from . import phone_location, watch
 
 log = logging.getLogger(__name__)
 
@@ -39,11 +48,13 @@ TOOL_NAME = "events_search"
 TOOL_NAMES = (TOOL_NAME,)
 KEY_ENV = "TICKETMASTER_API_KEY"
 TIMEOUT_S = 6.0
-MAX_WAIT_S = 2.0                   # a rate wait this short is waited; a longer one is said, never slept through
+NEAR_RADIUS_MI = 50               # "near me": Ticketmaster's radius around the owner, in miles
+NEAR_DECIMALS = 2                  # the owner's position as sent: about 1 km, as the weather's (quick_answers.py)
 MAX_EVENTS = 8
 # Ticketmaster's segment names, as classificationName takes them; "" searches every kind.
 CATEGORIES = ("music", "sports", "arts & theatre", "film", "family", "")
 OFF_REASON = "Ticketmaster is not set up on this computer (TICKETMASTER_API_KEY)"
+NO_HERE = "eve does not know where the owner is, so these are from anywhere; ask which city"
 _DAY = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _STATE = re.compile(r"^[A-Za-z]{2}$")
 
@@ -54,11 +65,15 @@ TOOL: dict[str, Any] = {
                     "price range when listed, and the ticket link."),
     "parameters": {
         "type": "object", "additionalProperties": False,
-        "required": ["city", "keyword", "category", "start_date", "end_date"],
+        "required": ["city", "near", "keyword", "category", "start_date", "end_date"],
         "properties": {
             "city": {"type": "string",
                      "description": "The city, optionally with its state code (\"Seattle\", \"Portland, OR\"); "
-                                    "empty for anywhere."},
+                                    "empty for near the owner or anywhere."},
+            "near": {"type": "boolean",
+                     "description": "True when the owner means near where they are now (near me, nearby, around "
+                                    "here, in town) and names no city. A search with no city and no keyword is "
+                                    "always near them."},
             "keyword": {"type": "string",
                         "description": "An artist, team, show, venue or genre the owner named; empty for any."},
             "category": {"type": "string", "enum": list(CATEGORIES),
@@ -119,10 +134,38 @@ def midnight(day: date, zone: Optional[tzinfo]) -> datetime:
     return datetime.combine(day, time.min, tzinfo=zone)
 
 
-def query(args: Mapping[str, Any], now: datetime) -> dict[str, str]:
+def here(environ: Optional[Mapping[str, str]] = None) -> Optional[tuple[float, float]]:
+    """Where the owner is, for "near me": the phone's fresh fix, else EVE_WEATHER_LAT/LON; rounded to
+    NEAR_DECIMALS. None when neither is known."""
+    env = os.environ if environ is None else environ
+    try:
+        fix = phone_location.fresh(env)
+    except Exception:  # noqa: BLE001 — no fix is the configured place, as the weather does
+        fix = None
+    if fix is not None:
+        return round(fix.lat, NEAR_DECIMALS), round(fix.lon, NEAR_DECIMALS)
+    try:
+        lat, lon = float(env.get("EVE_WEATHER_LAT") or ""), float(env.get("EVE_WEATHER_LON") or "")
+    except ValueError:
+        return None
+    if not (-90 <= lat <= 90 and -180 <= lon <= 180):
+        return None
+    return round(lat, NEAR_DECIMALS), round(lon, NEAR_DECIMALS)
+
+
+def wants_near(args: Mapping[str, Any]) -> bool:
+    """Whether a search is near the owner: no city, and ``near`` or no keyword either."""
+    if " ".join(str(args.get("city") or "").split()):
+        return False
+    return args.get("near") is True or not " ".join(str(args.get("keyword") or "").split())
+
+
+def query(args: Mapping[str, Any], now: datetime,
+          near: Optional[tuple[float, float]] = None) -> dict[str, str]:
     """The Discovery API parameters for one search (without the key). ``now`` is aware, in the owner's zone: a
-    day is that zone's midnight to midnight (each with its own offset, ``midnight``), sent in UTC. Raises
-    ValueError for a date that is not YYYY-MM-DD or an end before the start."""
+    day is that zone's midnight to midnight (each with its own offset, ``midnight``), sent in UTC. ``near`` is the
+    owner's rounded position, used when ``wants_near``. Raises ValueError for a date that is not YYYY-MM-DD or an
+    end before the start."""
     zone = now.tzinfo
     first, last = _day(args.get("start_date")), _day(args.get("end_date"))
     start = now
@@ -144,6 +187,9 @@ def query(args: Mapping[str, Any], now: datetime) -> dict[str, str]:
         city = name.strip()
     if city:
         q["city"] = city[:80]
+    elif near is not None and wants_near(args):
+        q["latlong"] = f"{near[0]:.{NEAR_DECIMALS}f},{near[1]:.{NEAR_DECIMALS}f}"
+        q["radius"], q["unit"] = str(NEAR_RADIUS_MI), "miles"
     keyword = " ".join(str(args.get("keyword") or "").split())
     if keyword:
         q["keyword"] = keyword[:120]
@@ -246,13 +292,14 @@ class Events:
                  limiter: Callable[[], Any] = lambda: None,
                  now: Callable[[], datetime] = lambda: datetime.now().astimezone(),
                  environ: Optional[Mapping[str, str]] = None, timeout_s: float = TIMEOUT_S,
-                 offload: bool = True) -> None:
+                 offload: bool = True, where: Optional[Callable[[], Optional[tuple[float, float]]]] = None) -> None:
         self._fetch = fetch or (lambda url, **kw: watch.http_request(url, timeout=timeout_s, **kw))
         self._limiter = limiter
         self._now = now
         self._env = environ
         self._timeout = timeout_s
         self._offload = offload
+        self._where = where if where is not None else (lambda: here(self._env))
 
     def enabled(self) -> bool:
         return available(self._env)
@@ -277,24 +324,26 @@ class Events:
         key = (env.get(KEY_ENV) or "").strip()
         if not key:
             return {"ok": False, "reason": OFF_REASON}
+        near = None
+        if wants_near(args):
+            try:
+                near = self._where()
+            except Exception:  # noqa: BLE001 — not knowing where is searching everywhere, and saying so
+                near = None
         try:
-            q = query(args, self._now())
+            q = query(args, self._now(), near)
         except ValueError:
             return {"ok": False, "reason": "dates are YYYY-MM-DD, and the last day is not before the first"}
         url = f"{watch.TM_API}/events.json?" + urllib.parse.urlencode({"apikey": key, **q})
         limiter = self._limiter_now()
         if limiter is not None:
-            # The watcher's limiter, honoured as the watches honour it (review, 2026-10-08): a back-off Ticketmaster
-            # asked for is kept (a request now would only be refused again and lengthen it), a short wait for the
-            # rate is waited, a long one is said; each search is counted with the watches' requests.
+            # The watcher's limiter (review, 2026-10-08): a back-off Ticketmaster asked for is kept (a request now
+            # would only be refused again and lengthen it) and each search is counted with the watches' requests.
+            # The watches' own pacing (20 s between two requests to one host) is not waited: it refused the
+            # owner's retry three seconds after a first search (2026-10-18), and the key allows 5 a second.
             held = _seconds(limiter, "backed_off")
             if held > 0:
                 return {"ok": False, "reason": f"Ticketmaster asked to slow down; try again in {_round(held)} s"}
-            wait = _seconds(limiter, "ready_in")
-            if wait > MAX_WAIT_S:
-                return {"ok": False, "reason": f"Ticketmaster's rate limit is spent; try again in {_round(wait)} s"}
-            if wait > 0:
-                await asyncio.sleep(wait)
             try:
                 limiter.take(watch.TM_HOST)
             except Exception:  # noqa: BLE001 — a limiter that cannot count costs nothing here
@@ -325,7 +374,13 @@ class Events:
             except Exception:  # noqa: BLE001
                 pass
         out = parse(payload)
-        log.info("events: %d of %s events", len(out.get("events") or []), out.get("total", "?"))
+        if out.get("ok") and wants_near(args):
+            if "latlong" in q:
+                out["near"] = f"within {NEAR_RADIUS_MI} miles of where the owner is"
+            else:
+                out["note"] = NO_HERE
+        log.info("events: %d of %s events%s", len(out.get("events") or []), out.get("total", "?"),
+                 " near the owner" if "latlong" in q else "")
         return out
 
 
