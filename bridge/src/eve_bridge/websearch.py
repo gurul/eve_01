@@ -189,6 +189,9 @@ def answer_options(model: str, max_tokens: int) -> dict[str, Any]:
         return {"max_tokens": max(2048, max_tokens), "temperature": 0, "reasoning": {"effort": "low"}}
     if model_id == "anthropic/claude-haiku-5.5":
         return {"max_tokens": max_tokens}
+    if model_id.startswith("inception/"):
+        # Mercury reasons by default; low effort keeps the answer one burst (79 reasoning tokens, 2026-10-19)
+        return {"max_tokens": max(1024, max_tokens), "reasoning": {"effort": "low"}}
     return {"max_tokens": max_tokens, "temperature": 0}
 
 

@@ -50,6 +50,17 @@ These are role defaults; existing environment overrides still apply.
 | Camera descriptions, locating and exploration notes | `gpt-6-luna` | low |
 | Embeddings | local Gemma for mem0 on this installation; `text-embedding-3-small` for the hybrid index and standard mem0 default | none |
 
+**Inception's Mercury (tried 2026-10-19, not adopted).** Mercury is a diffusion
+model on OpenRouter (`inception/mercury-3`, `inception/mercury-2.5`): its whole
+reply lands in one burst, about twice as fast as the models above. A blind A/B
+(`bridge/tools/mercury_ab_eval.py`, judge `gpt-6.1-sol`, bar fixed before the
+run) kept both defaults. Web answers: Mercury won or tied 6 of 45 against luna
+and stated more facts its own sources did not hold (35 flags against 24), at
+p50 2.5 s against 4.9 s. Small talk: won or tied 11 of 30 against Haiku, at p50
+0.39 s against 0.99 s. Its replies run longer than asked. To try it anyway, set
+`EVE_WEB_SEARCH_MODEL` or `EVE_SMALL_TALK_MODEL` to an `inception/` id; the web
+answer step then asks it for low reasoning effort.
+
 The phone retains `gpt-4o-transcribe` and `deepgram/aura-2`. Set
 `EVE_VOICE=0` to disable desk real-time voice and
 `EVE_CALL_LIVE_STT=0` to keep phone transcription on the upload path.

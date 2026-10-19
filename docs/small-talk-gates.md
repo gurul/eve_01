@@ -23,6 +23,11 @@ Scope: the owner, 2026-10-12: "can simple interactions be handled with haiku for
   EXPECT: SMALL_TALK_BAR_OK
   EVIDENCE: exit=0, 2026-10-12, first scored run on the v2 set (frozen in 6f16eb9 before the run; the list was grown at the owner's word before the run, without the set). voice none and voice sample alike: needs_brain answered 0 (of 30); small_talk coverage 80.0% (24/30; misses 'perfect, thanks', 'ok thanks', 'how r u doing today', 'ur amazing eve ❤️', 'thnaks', 'nice one, thank you!' -> brain); judge yes 0; p50 1.17 / 1.21 s, p95 1.82 / 1.71 s; provider errors 0 | SMALL_TALK_BAR_OK. SHIPPED = True.
 
+- [ ] S3c: Mercury (`inception/mercury-3`) in Haiku's place, 2026-10-19. Bar fixed before the run: S3b on the v2 set with EVE_SMALL_TALK_MODEL set to Mercury, and a blind A/B against Haiku (tools/mercury_ab_eval.py small-talk) with Mercury winning or tying >= 50% and a lower p50.
+  CHECK: cd bridge && env $(grep -E '^(OPENROUTER_API_KEY)=' ~/.config/eve-bridge/env | xargs) EVE_SMALL_TALK_MODEL=inception/mercury-3 .venv/bin/python tools/small_talk_eval.py tests/fixtures/small_talk_blind_v2.json --coverage 70 --p50 1.8 --p95 3.0 && env $(grep -E '^(OPENROUTER_API_KEY)=' ~/.config/eve-bridge/env | xargs) .venv/bin/python tools/mercury_ab_eval.py small-talk
+  EXPECT: SMALL_TALK_BAR_OK, MERCURY_AB_OK
+  EVIDENCE: FAILED, 2026-10-19, first and only run. S3b: voice none passes (coverage 80.0%, judge yes 0, p50 0.37 s, p95 1.39 s); voice sample fails on judge yes 1 ('thank youuu so much' -> 'You got it.'), p50 0.28 s, p95 2.09 s | SMALL_TALK_BAR_FAILED. A/B: Mercury 8 wins, 3 ties, 19 losses (36.7%), p50 0.39 s against Haiku's 0.99 s; the judge preferred Haiku's shorter replies ('Anytime!' over 'Anytime, glad to help!') | MERCURY_AB_FAILED. Haiku stays.
+
 - [ ] S4: No personal data or token-shaped strings in the diff (the repo is public).
   CHECK: git diff main | python3 -c "import re,sys; d=sys.stdin.read(); bad=[p for p in (r'guru\.lingamallu', r'@gmail\.com', r'guruchara[n]', r'Bearer [A-Za-z0-9_-]{20,}', r'sk-[A-Za-z0-9]{20,}', r'/Users/') if re.search(p, d)]; print(bad or 'DIFF_CLEAN'); sys.exit(1 if bad else 0)"
   EXPECT: DIFF_CLEAN

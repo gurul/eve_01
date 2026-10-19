@@ -312,3 +312,11 @@ def test_the_whole_search_gives_up_at_its_budget(monkeypatch: pytest.MonkeyPatch
     out = ws.search("x", cfg, key="r", opener=both_hang)
     stop.set()
     assert out == {"ok": False, "reason": "the search timed out"} and time.monotonic() - t0 < 1.5
+
+
+def test_answer_options_asks_mercury_for_low_reasoning_with_room():
+    # Mercury reasons by default; without the low effort and the room it can spend the budget before the answer
+    opts = ws.answer_options("inception/mercury-3", 400)
+    assert opts == {"max_tokens": 1024, "reasoning": {"effort": "low"}}
+    assert "temperature" not in ws.request(
+        ws.SearchConfig(engine="openrouter-perplexity", model="inception/mercury-3"), "q")
