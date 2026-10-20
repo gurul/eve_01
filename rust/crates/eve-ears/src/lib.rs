@@ -698,7 +698,10 @@ impl Ears {
     /// Open the mic. Idempotent: a second call while open is a no-op. False (with
     /// one warning) when audio or the model is unavailable.
     pub fn start(&self) -> bool {
-        if self.stream.lock().is_some() {
+        // Held for the whole call, so two threads cannot both open a stream (Python's start runs on the
+        // one event loop thread).
+        let mut slot = self.stream.lock();
+        if slot.is_some() {
             return true;
         }
         if !self.prepare() {
@@ -726,7 +729,7 @@ impl Ears {
         };
         match open_input(backend, make, "ears") {
             Ok(stream) => {
-                *self.stream.lock() = Some(stream);
+                *slot = Some(stream);
             }
             Err(e) => {
                 warn!("ears: could not open the microphone ({:#}) — no wake word", e);
@@ -820,8 +823,13 @@ pub fn diagnose_with(cfg: &EarsConfig, backend: &dyn AudioBackend, seconds: f64)
     println!("wake word:      {}  (EVE_WAKE_WORD)", py::repr(&cfg.wake_word));
     println!("model dir:      {}  present={}", cfg.model_dir.display(), py_bool(model_present(&cfg.model_dir)));
     if !model_present(&cfg.model_dir) {
-        let parent = cfg.model_dir.parent().map(|p| p.display().to_string()).unwrap_or_else(|| ".".into());
-        println!("  download: curl -L {} | tar xj -C {}", MODEL_URL, if parent.is_empty() { "." } else { &parent });
+        // pathlib's `.parent`: "." for a bare name, the root itself for "/".
+        let parent = match cfg.model_dir.parent() {
+            None => cfg.model_dir.display().to_string(),
+            Some(p) if p.as_os_str().is_empty() => ".".to_string(),
+            Some(p) => p.display().to_string(),
+        };
+        println!("  download: curl -L {} | tar xj -C {}", MODEL_URL, parent);
         return 2;
     }
     if backend.available().is_err() {

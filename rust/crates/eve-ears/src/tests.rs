@@ -14,12 +14,20 @@ fn env_of(pairs: &[(&str, &str)]) -> impl Fn(&str) -> Option<String> {
     move |k: &str| map.get(k).cloned()
 }
 
-#[derive(Clone, Default)]
-struct LogBuf(Arc<Mutex<Vec<u8>>>);
+thread_local! {
+    static CAPTURED: std::cell::RefCell<Option<Arc<Mutex<Vec<u8>>>>> = const { std::cell::RefCell::new(None) };
+}
 
-impl std::io::Write for LogBuf {
+/// Writes to this thread's capture buffer, if a `capture` is running on it; otherwise nowhere.
+struct ThreadBuf;
+
+impl std::io::Write for ThreadBuf {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        self.0.lock().extend_from_slice(buf);
+        CAPTURED.with(|c| {
+            if let Some(b) = c.borrow().as_ref() {
+                b.lock().extend_from_slice(buf);
+            }
+        });
         Ok(buf.len())
     }
     fn flush(&mut self) -> std::io::Result<()> {
@@ -27,23 +35,32 @@ impl std::io::Write for LogBuf {
     }
 }
 
-impl LogBuf {
-    fn text(&self) -> String {
-        String::from_utf8_lossy(&self.0.lock()).into_owned()
-    }
-}
-
-/// caplog: run `f` with WARNING-and-above (or `level`) captured on this thread.
+/// caplog: run `f` with events at `level` and above, emitted on this thread, captured.
+///
+/// One global subscriber that always listens, writing to a per-thread buffer: per-test `with_default`
+/// subscribers race in tracing's process-wide callsite-interest cache when tests run in parallel, and an
+/// INFO line can then be dropped at random.
 fn capture<R>(level: tracing::Level, f: impl FnOnce() -> R) -> (R, String) {
-    let buf = LogBuf::default();
-    let writer = buf.clone();
-    let subscriber = tracing_subscriber::fmt()
-        .with_max_level(level)
-        .with_ansi(false)
-        .with_writer(move || writer.clone())
-        .finish();
-    let r = tracing::subscriber::with_default(subscriber, f);
-    (r, buf.text())
+    static INSTALL: std::sync::Once = std::sync::Once::new();
+    INSTALL.call_once(|| {
+        let subscriber = tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::TRACE)
+            .with_ansi(false)
+            .with_writer(|| ThreadBuf)
+            .finish();
+        let _ = tracing::subscriber::set_global_default(subscriber);
+    });
+    let buf = Arc::new(Mutex::new(Vec::new()));
+    CAPTURED.with(|c| *c.borrow_mut() = Some(buf.clone()));
+    let r = f();
+    CAPTURED.with(|c| *c.borrow_mut() = None);
+    let text = String::from_utf8_lossy(&buf.lock()).into_owned();
+    // Keep only the lines at `level` or above, as caplog.at_level does.
+    let keep = |line: &str| {
+        let lvl = line.split_whitespace().nth(1).and_then(|w| w.parse::<tracing::Level>().ok());
+        lvl.is_none_or(|l| l <= level)
+    };
+    (r, text.lines().filter(|l| keep(l)).map(|l| format!("{l}\n")).collect())
 }
 
 struct FakeSpotter {
@@ -758,6 +775,17 @@ fn python_formatting_helpers_match() {
     assert_eq!(py::repr("it's"), "\"it's\"");
     assert_eq!(py::repr("a\"b'c"), "'a\"b\\'c'");
     assert_eq!(py::repr("tab\there\x01\x7f\u{a0}é"), "'tab\\there\\x01\\x7f\\xa0é'");
+    // Python's isprintable: \u / \U escapes past Latin-1 (Zs, Cf, Zl, unassigned), emoji kept.
+    assert_eq!(py::repr("a\u{3000}b\u{200b}\u{2028}"), "'a\\u3000b\\u200b\\u2028'");
+    assert_eq!(py::repr("\u{e0001}x\u{1f600}"), "'\\U000e0001x\u{1f600}'");
+    assert_eq!(py::repr("\u{378}"), "'\\u0378'");
+    // Unicode digits are mapped to ASCII before the underscore rule.
+    assert_eq!(py::parse_float("\u{661}_7"), Some(17.0));
+    // An exact tie between two shortest strings: Python's repr takes the even one.
+    #[allow(clippy::excessive_precision)] // exact in binary: the point of the case
+    let tie = 94484364830932.125_f64;
+    assert_eq!(tie.fract(), 0.125);
+    assert_eq!(py::float_str(tie), "94484364830932.12");
     assert_eq!(py::strip("\u{1c} x \u{3000}"), "x");
     assert_eq!(py::path_str("~/a//b/./c/"), "~/a/b/c");
     assert_eq!(py::path_str("//x"), "//x");
