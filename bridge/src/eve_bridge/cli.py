@@ -105,6 +105,11 @@ def main(argv: list[str] | None = None) -> int:
              "into the service so the daemon uses serial instead of BLE.",
     )
     p_install.add_argument(
+        "--hooks-dir", default=None, metavar="DIR",
+        help="Register the Rust hook binaries in DIR (rust/target/release, built with "
+             "`cargo build --release -p eve-hooks`) instead of this Python; they start about 9x faster",
+    )
+    p_install.add_argument(
         "--notes-widget", action="store_true",
         help="macOS: also install a second launchd agent that shows the robot's idle-explorer "
              "notes as a desktop widget at login (com.github.eve-bridge.notes-widget)",
@@ -531,7 +536,8 @@ def main(argv: list[str] | None = None) -> int:
                 serial_port=getattr(args, "serial_port", None),
             )
         from .installer import install_hooks
-        return install_hooks(config_dir=getattr(args, "config_dir", None))
+        return install_hooks(config_dir=getattr(args, "config_dir", None),
+                             hooks_dir=getattr(args, "hooks_dir", None))
     if args.cmd == "uninstall":
         if getattr(args, "notes_widget", False):
             from .service import uninstall_notes_widget

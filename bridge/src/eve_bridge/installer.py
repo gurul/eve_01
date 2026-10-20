@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import os
+import shlex
 import shutil
 import sys
 from datetime import datetime
@@ -59,11 +60,27 @@ def _python_executable() -> str:
     return exe
 
 
-def _hook_command(module: str) -> str:
+def _hook_command(module: str, hooks_dir: str | None = None) -> str:
     """``-I`` (isolated): Claude Code runs a hook in the session's folder, and plain ``-m`` puts that folder first
     on ``sys.path``, so a ``json.py`` planted there ran as the hook (shown 2026-10-12). Isolated mode leaves the
-    folder and the PYTHON* variables out; the venv's own packages still load."""
-    return f"{_python_executable()} -I -m {module}"
+    folder and the PYTHON* variables out; the venv's own packages still load.
+
+    With ``hooks_dir``, the hook is the Rust binary for the module in that folder (``rust/target/release``): it starts
+    in about 3 ms where the interpreter takes about 29, on every tool call. The trailing comment carries the module, so
+    either form replaces the other and status/uninstall find both (Claude Code's shell drops the comment)."""
+    if hooks_dir is None:
+        return f"{_python_executable()} -I -m {module}"
+    path = str(Path(hooks_dir) / native_binary(module))
+    if sys.platform == "win32":
+        path = path.replace("\\", "/")
+    return f"{shlex.quote(path)} # {module}"
+
+
+def native_binary(module: str) -> str:
+    """The Rust hook binary (rust/crates/eve-hooks) for a hook module: ``eve_bridge.hooks.session_start`` is
+    ``eve-hook-session-start``."""
+    name = module[len(MARKER):] if module.startswith(MARKER) else module
+    return "eve-hook-" + name.replace("_", "-")
 
 
 def _is_our_entry(hook_obj: dict[str, Any]) -> bool:
@@ -97,8 +114,17 @@ def _backup(path: Path) -> Path:
     return dest
 
 
-def install_hooks(config_dir: str | None = None) -> int:
+def install_hooks(config_dir: str | None = None, hooks_dir: str | None = None) -> int:
     path = settings_path(config_dir)
+    if hooks_dir is not None:
+        hooks_dir = str(Path(hooks_dir).expanduser().resolve())
+        missing = sorted({native_binary(m) for _, m, _, _ in HOOK_DEFS
+                          if not os.access(Path(hooks_dir) / native_binary(m), os.X_OK)})
+        if missing:
+            # A hook that names a missing binary fails on every tool call, so nothing is written.
+            print(f"no hook binaries in {hooks_dir}: {', '.join(missing)}\n"
+                  "Build them first: (cd rust && cargo build --release -p eve-hooks)", file=sys.stderr)
+            return 2
     # The config HOME must exist — that proves Claude Code actually uses it, and
     # guards against a typo'd --config-dir silently creating a tree nothing
     # reads. The local settings file itself is ours to create: it is the file
@@ -133,7 +159,7 @@ def install_hooks(config_dir: str | None = None) -> int:
     added = 0
     for event, module, matcher, needs_decision in HOOK_DEFS:
         entries = hooks.setdefault(event, [])
-        cmd = _hook_command(module)
+        cmd = _hook_command(module, hooks_dir)
 
         # Find or create the matcher group.
         group = _find_matcher_group(entries, matcher)
