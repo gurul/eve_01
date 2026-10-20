@@ -629,6 +629,7 @@ fn test_cli_move_nudge_and_exit_codes() {
     );
     assert_eq!(cli(&s(&[]), &mut |l| out.push(l.into()), &make), 2);
     assert_eq!(cli(&s(&["--help"]), &mut |l| out.push(l.into()), &make), 0);
+    assert_eq!(cli(&s(&["help"]), &mut |l| out.push(l.into()), &make), 2);
 }
 
 #[test]

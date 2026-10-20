@@ -1212,6 +1212,8 @@ fn parser() -> Command {
         .about("Control the OBSBOT camera: moves over USB, OBSBOT's own features through OBSBOT Center while it runs.")
         .infer_long_args(true)
         .subcommand_required(true)
+        // argparse has no "help" subcommand: `obsbot help` is an invalid choice (exit 2)
+        .disable_help_subcommand(true)
         .arg(Arg::new("json").long("json").action(ArgAction::SetTrue).help("print the result as JSON"))
         .arg(
             Arg::new("device")

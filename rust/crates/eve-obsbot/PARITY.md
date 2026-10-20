@@ -40,7 +40,7 @@ Status: complete
 | `Obsbot.fov`, `preset`, `track`, `mode`, `framing`, `track_speed`, `focus`, `mirror` | same names | same checks in the same order, same lines |
 | `setup` | `setup(ini, out, usb)`, `setup_with(ini, out, usb, app_path, app_running)`, `expand_user` | the tests patch `APP_PATH` and `_app_running`, so `setup_with` takes them; the ini edit (replace in place, insert the missing keys after `[SoftSetting]` or append the section, `"\n".join + "\n"`) is line for line Python's |
 | `_number` | `number(&str) -> OscValue` | Python's `int()` then `float()` string rules (whitespace, sign, underscores, inf/nan) |
-| `cli` | `cli(argv, out, make) -> i32`, `main_with_args(argv)` | clap builder with argparse's subcommands, choices, help text and defaults; `--json` anywhere and `--device N` after the first word are moved to the front exactly as Python does; `make(device)` opens the camera; prints `json.dumps(res, ensure_ascii=False)` (", " and ": " separators, Python float repr) or the line; exit 0 when ok, 1 when not, clap's 0/2 for help/usage errors like argparse |
+| `cli` | `cli(argv, out, make) -> i32`, `main_with_args(argv)` | clap builder with argparse's subcommands, choices, help text and defaults; `--json` anywhere and `--device N` after the first word are moved to the front exactly as Python does; `make(device)` opens the camera; prints `json.dumps(res, ensure_ascii=False)` (", " and ": " separators, Python float repr) or the line; exit 0 when ok, 1 when not, clap's 0/2 for help/usage errors like argparse; clap's implicit `help` subcommand is off, so `obsbot help` is a usage error (exit 2) as argparse's invalid choice |
 
 ## Tests
 | Python file | Python tests | Rust tests | Not ported (why) |
