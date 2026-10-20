@@ -372,13 +372,22 @@ pub fn open_port(
     Ok(ser)
 }
 
-/// `time.monotonic()`: CLOCK_MONOTONIC seconds.
+/// `time.monotonic()` in seconds, on the clock CPython reads: on macOS
+/// `mach_absolute_time()` (`CLOCK_UPTIME_RAW`), which stands still while the
+/// Mac sleeps, so a lid closed for an hour is not 3600 s of board silence
+/// (CLOCK_MONOTONIC there counts the sleep, and every wake would trip the
+/// RX_SILENCE_SECS watchdog and count toward the RTS reset); elsewhere
+/// `CLOCK_MONOTONIC`.
 pub fn monotonic() -> f64 {
     #[cfg(unix)]
     {
+        #[cfg(any(target_os = "macos", target_os = "ios"))]
+        let clock = libc::CLOCK_UPTIME_RAW;
+        #[cfg(not(any(target_os = "macos", target_os = "ios")))]
+        let clock = libc::CLOCK_MONOTONIC;
         let mut ts = libc::timespec { tv_sec: 0, tv_nsec: 0 };
         // SAFETY: clock_gettime fills the timespec.
-        unsafe { libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut ts) };
+        unsafe { libc::clock_gettime(clock, &mut ts) };
         ts.tv_sec as f64 + ts.tv_nsec as f64 * 1e-9
     }
     #[cfg(not(unix))]

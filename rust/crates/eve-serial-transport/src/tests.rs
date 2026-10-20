@@ -979,3 +979,32 @@ fn the_usb_listing_names_callout_nodes_only() {
         assert!(ports.iter().all(|p| p.device.starts_with("/dev/cu.")), "{ports:?}");
     }
 }
+
+/// `time.monotonic()` reads CPython's clock: `mach_absolute_time()` on macOS, which stands still
+/// while the Mac sleeps (CLOCK_MONOTONIC does not).
+#[cfg(target_os = "macos")]
+#[test]
+#[allow(deprecated)]
+fn monotonic_is_pythons_clock() {
+    let mut tb = libc::mach_timebase_info { numer: 0, denom: 0 };
+    // SAFETY: mach_timebase_info fills the struct; mach_absolute_time takes nothing.
+    let mach = unsafe {
+        libc::mach_timebase_info(&mut tb);
+        libc::mach_absolute_time()
+    };
+    let python = mach as f64 * tb.numer as f64 / tb.denom as f64 * 1e-9;
+    let ours = monotonic();
+    assert!((ours - python).abs() < 0.05, "monotonic() {ours} vs mach_absolute_time {python}");
+}
+
+/// PARITY Differences: a lone surrogate escape cannot become a Rust `String`, so the line is bad
+/// JSON here (Python delivers it).
+#[tokio::test]
+async fn a_lone_surrogate_escape_is_bad_json() {
+    let logs = Logs::default();
+    let _guard = logs.install();
+    let bs = transport(noop(), Seams::default(), Timing::default());
+    bs.dispatch_line(br#"{"a":"\ud800"}"#);
+    assert_eq!(bs.pending_tasks(), 0);
+    assert_eq!(logs.matching("bad json").len(), 1);
+}

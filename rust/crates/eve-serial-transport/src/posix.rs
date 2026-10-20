@@ -283,6 +283,21 @@ fn modem_line(fd: RawFd, line: libc::c_int, on: bool) -> Result<(), i32> {
     Ok(())
 }
 
+/// pyserial's open: DTR then RTS raised inside one `try` that ignores
+/// "Invalid argument" and "Inappropriate ioctl", so a DTR that fails that way
+/// leaves RTS untouched. `Err` carries any other errno.
+fn raise_modem_lines(mut raise: impl FnMut(libc::c_int) -> Result<(), i32>) -> Result<(), i32> {
+    for line in [modem::TIOCM_DTR, modem::TIOCM_RTS] {
+        if let Err(e) = raise(line) {
+            if e != libc::EINVAL && e != libc::ENOTTY {
+                return Err(e);
+            }
+            break;
+        }
+    }
+    Ok(())
+}
+
 /// One open serial port, the way `serial.Serial(port, baud, timeout=1,
 /// write_timeout=2, exclusive=True)` opens it.
 pub struct PosixSerial {
@@ -317,14 +332,7 @@ impl PosixSerial {
         }
         let setup = || -> Result<Fds, String> {
             configure(fd, port, baud)?;
-            for line in [modem::TIOCM_DTR, modem::TIOCM_RTS] {
-                if let Err(e) = modem_line(fd, line, true) {
-                    // pyserial ignores "Invalid argument" and "Inappropriate ioctl" here.
-                    if e != libc::EINVAL && e != libc::ENOTTY {
-                        return Err(os_error(e));
-                    }
-                }
-            }
+            raise_modem_lines(|line| modem_line(fd, line, true)).map_err(os_error)?;
             // SAFETY: tcflush on an fd we own.
             if unsafe { libc::tcflush(fd, libc::TCIFLUSH) } != 0 {
                 let e = errno();
@@ -576,6 +584,29 @@ mod tests {
             Duration::from_millis(write_timeout_ms),
         )
         .expect("open pty")
+    }
+
+    #[test]
+    fn modem_lines_go_up_in_one_try_like_pyserial() {
+        let run = |fail: Option<(libc::c_int, i32)>| {
+            let mut raised = Vec::new();
+            let r = raise_modem_lines(|line| {
+                if let Some((bad, e)) = fail {
+                    if bad == line {
+                        return Err(e);
+                    }
+                }
+                raised.push(line);
+                Ok(())
+            });
+            (r, raised)
+        };
+        assert_eq!(run(None), (Ok(()), vec![modem::TIOCM_DTR, modem::TIOCM_RTS]));
+        // An ignorable DTR failure ends the try: RTS is never raised.
+        assert_eq!(run(Some((modem::TIOCM_DTR, libc::ENOTTY))), (Ok(()), vec![]));
+        assert_eq!(run(Some((modem::TIOCM_DTR, libc::EINVAL))), (Ok(()), vec![]));
+        assert_eq!(run(Some((modem::TIOCM_RTS, libc::EINVAL))), (Ok(()), vec![modem::TIOCM_DTR]));
+        assert_eq!(run(Some((modem::TIOCM_DTR, libc::EIO))), (Err(libc::EIO), vec![]));
     }
 
     #[test]
