@@ -118,6 +118,8 @@ pub fn build_heartbeat(
 /// Desktop sends on (re)connect: epoch seconds + timezone offset seconds.
 pub fn build_time_sync() -> Map<String, Value> {
     let now = eve_state::wall_time().trunc() as i64;
+    // `tm_gmtoff` is a C long: i64 here, i32 on 32-bit targets.
+    #[allow(clippy::useless_conversion)]
     let offset = local_tm(now).map(|tm| i64::from(tm.tm_gmtoff)).unwrap_or(0);
     let mut m = Map::new();
     m.insert("time".into(), Value::Array(vec![now.into(), offset.into()]));
