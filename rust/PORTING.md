@@ -46,8 +46,11 @@ are the spec.
   requirement. If none does, take the newest release from
   `cargo search <crate> --limit 1`. The point is that `objc2`, `btleplug` and
   the others resolve once and their types can cross crate boundaries.
-- Write `src/lib.rs` before `Cargo.toml`, so that the workspace never holds a
-  manifest that has no target, because that breaks every other agent's build.
+- Every crate directory already exists with a minimal `Cargo.toml` and a
+  one-line `src/lib.rs`: read them, then replace them. Never delete either
+  file, even for a moment, and never create a directory under `crates/`
+  without both. `crates/*` is a glob, so one crate directory without a
+  manifest stops every other agent's cargo from loading the workspace.
 
 ## Idioms
 
