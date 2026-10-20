@@ -1,6 +1,6 @@
 //! The few `posixpath` and `os` functions the firewall reads paths with, as CPython writes them, so a path is judged
 //! the same way in both daemons: `os.path.join`, `dirname`, `basename`, `normpath`, `abspath`, `realpath` (not
-//! strict), `os.get_exec_path`, `os.path.isfile` plus `os.access(X_OK)`.
+//! strict, as 3.13 walks it), `os.get_exec_path`, `os.path.isfile` plus `os.access(X_OK)`.
 
 use std::collections::HashMap;
 use std::io;
@@ -100,55 +100,55 @@ pub fn is_link(path: &str) -> bool {
     std::fs::symlink_metadata(path).map(|m| m.file_type().is_symlink()).unwrap_or(false)
 }
 
-/// `os.path.realpath(path)` (strict=False): every symlink resolved, a missing part kept as written, a loop left
-/// where it starts.
-pub fn realpath(path: &str) -> String {
-    let mut seen: HashMap<String, Option<String>> = HashMap::new();
-    let (resolved, _ok) = join_realpath("", path, &mut seen);
-    abspath(&resolved).unwrap_or(resolved)
-}
-
-fn join_realpath(base: &str, rest: &str, seen: &mut HashMap<String, Option<String>>) -> (String, bool) {
-    let mut path = base.to_string();
-    let mut rest = rest.to_string();
-    if isabs(&rest) {
-        rest = rest[1..].to_string();
-        path = "/".to_string();
+/// `os.path.realpath(path)` (strict=False), as CPython 3.13 walks it (the daemon's interpreter): every symlink
+/// resolved, a part that cannot be read kept as written, and a link met again before it resolved (a loop) kept as
+/// written while the parts after it are still walked (a ".." after it climbs out and resolves on).
+pub fn realpath(filename: &str) -> String {
+    enum Part {
+        Name(String),
+        /// A symlink whose target has been walked: the path reached so far is what it resolves to.
+        Resolved(String),
     }
-    while !rest.is_empty() {
-        let (name, remainder) = match rest.find('/') {
-            Some(i) => (rest[..i].to_string(), rest[i + 1..].to_string()),
-            None => (rest.clone(), String::new()),
+    let mut rest: Vec<Part> = filename.split('/').rev().map(|p| Part::Name(p.to_string())).collect();
+    let mut part_count = rest.len();
+    // the resolved path, absolute throughout (getcwd is normalized and free of symlinks)
+    let mut path = if filename.starts_with('/') {
+        "/".to_string()
+    } else {
+        match getcwd() {
+            Ok(cwd) => cwd,
+            // Python raises here; every caller passes an absolute path
+            Err(_) => return filename.to_string(),
+        }
+    };
+    let mut seen: HashMap<String, Option<String>> = HashMap::new();
+    while part_count > 0 {
+        let Some(part) = rest.pop() else { break };
+        let name = match part {
+            Part::Resolved(link) => {
+                seen.insert(link, Some(path.clone()));
+                continue;
+            }
+            Part::Name(name) => name,
         };
-        rest = remainder;
+        part_count -= 1;
         if name.is_empty() || name == "." {
             continue;
         }
         if name == ".." {
-            if !path.is_empty() {
-                let (head, tail) = split(&path);
-                path = head;
-                if tail == ".." {
-                    path = join(&join(&path, ".."), "..");
-                }
-            } else {
-                path = "..".to_string();
-            }
+            let cut = path.rfind('/').map(|i| &path[..i]).unwrap_or("");
+            path = if cut.is_empty() { "/".to_string() } else { cut.to_string() };
             continue;
         }
-        let newpath = join(&path, &name);
+        let newpath = if path == "/" { format!("/{name}") } else { format!("{path}/{name}") };
         if !is_link(&newpath) {
             path = newpath;
             continue;
         }
         if let Some(known) = seen.get(&newpath) {
-            match known {
-                Some(resolved) => {
-                    path = resolved.clone();
-                    continue;
-                }
-                None => return (join(&newpath, &rest), false),
-            }
+            // a cached target, or a loop: the link kept as written
+            path = known.clone().unwrap_or(newpath);
+            continue;
         }
         let target = match std::fs::read_link(&newpath) {
             Ok(t) => t.to_string_lossy().into_owned(),
@@ -157,15 +157,16 @@ fn join_realpath(base: &str, rest: &str, seen: &mut HashMap<String, Option<Strin
                 continue;
             }
         };
-        seen.insert(newpath.clone(), None);
-        let (resolved, ok) = join_realpath(&path, &target, seen);
-        path = resolved;
-        if !ok {
-            return (join(&path, &rest), false);
+        if target.starts_with('/') {
+            path = "/".to_string();
         }
-        seen.insert(newpath, Some(path.clone()));
+        seen.insert(newpath.clone(), None);
+        rest.push(Part::Resolved(newpath));
+        let parts: Vec<&str> = target.split('/').collect();
+        part_count += parts.len();
+        rest.extend(parts.into_iter().rev().map(|p| Part::Name(p.to_string())));
     }
-    (path, true)
+    path
 }
 
 /// `os.get_exec_path(env)`: the PATH of `env` (the process's own when None), else `os.defpath`, split on ":".
@@ -241,5 +242,18 @@ mod tests {
         std::os::unix::fs::symlink(format!("{root}/b"), format!("{root}/a")).unwrap();
         std::os::unix::fs::symlink(format!("{root}/a"), format!("{root}/b")).unwrap();
         assert_eq!(realpath(&format!("{root}/a/f")), format!("{root}/a/f"));
+        // 3.13 walks on past a loop: ".." climbs out of it and the links after it still resolve
+        assert_eq!(realpath(&format!("{root}/a/../link/z")), format!("{root}/real/z"));
+        assert_eq!(realpath(&format!("{root}/a/x/../../rel")), format!("{root}/real"));
+        // a chain of links, a relative one climbing with "..", and a link met twice
+        std::fs::create_dir(format!("{root}/real/sub")).unwrap();
+        std::os::unix::fs::symlink("../real/sub", format!("{root}/real/up")).unwrap();
+        std::os::unix::fs::symlink(format!("{root}/link"), format!("{root}/chain")).unwrap();
+        assert_eq!(realpath(&format!("{root}/chain/up/q")), format!("{root}/real/sub/q"));
+        assert_eq!(realpath(&format!("{root}/link/../link/up")), format!("{root}/real/sub"));
+        assert_eq!(realpath(&format!("{root}//real/./sub/")), format!("{root}/real/sub"));
+        assert_eq!(realpath("/"), "/");
+        assert_eq!(realpath("//"), "/");
+        assert_eq!(realpath("/.."), "/");
     }
 }
