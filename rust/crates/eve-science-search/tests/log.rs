@@ -76,5 +76,8 @@ async fn test_the_owners_words_never_reach_the_log() {
     assert!(!filtered.contains("zebrafish") && filtered.contains("q=<hidden>&k=8"));
     let other = ss::QueryFilter.filter("GET https://example.org/?q=zebrafish");
     assert!(other.contains("zebrafish"));
+    // Python's \s ends the value at the separators \x1c-\x1f too, so what follows one stays in the line
+    let sep = ss::QueryFilter.filter(&format!("GET {}?q=zebra\u{1c}tail&k=8", ss::SEARCH_URL));
+    assert!(sep.ends_with("q=<hidden>\u{1c}tail&k=8"), "{sep}");
 }
 

@@ -116,7 +116,9 @@ pub const TOOL_NAMES: [&str; 1] = [TOOL_NAME];
 static TAG: LazyLock<Regex> = LazyLock::new(|| {
     RegexBuilder::new(r"<[^<>]{0,200}>").size_limit(64 << 20).build().expect("valid regex")
 });
-static Q_PARAM: LazyLock<Regex> = LazyLock::new(|| Regex::new(r#"([?&]q=)[^&\s"']*"#).expect("valid regex"));
+// Python's `\s` is `str.isspace`, which also counts the separators \x1c-\x1f that the regex crate's `\s` leaves out
+static Q_PARAM: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r#"([?&]q=)[^&\s\x1c-\x1f"']*"#).expect("valid regex"));
 pub const HIDDEN: &str = "<hidden>";
 
 // ---- the log ----------------------------------------------------------------------------------------------------
@@ -234,7 +236,10 @@ pub fn clean_str(raw: &str, limit: usize) -> String {
     if text.chars().count() <= limit {
         return text;
     }
-    let head: String = text.chars().take(limit.saturating_sub(1)).collect();
+    // `text[:limit - 1]`: a limit of 0 slices to -1, every character but the last
+    let count = text.chars().count();
+    let keep = if limit == 0 { count - 1 } else { limit - 1 };
+    let head: String = text.chars().take(keep).collect();
     format!("{}…", py::rstrip(&head))
 }
 
@@ -246,6 +251,12 @@ pub fn clean_text(raw: Option<&Value>, limit: usize) -> String {
 /// `str` digits as `int()` reads them: `\s*-?\d{1,9}\s*`.
 fn int_of_str(s: &str) -> Option<i64> {
     let body = py::strip(s);
+    // The pattern's `\s` takes the separators \x1c-\x1f but `int()` does not strip them, so Python raises
+    // ValueError out of `params` (and `search`) for "2020\x1c". Rust cannot raise there: the value reads as no
+    // number, so no request carries a value Python never sent (PARITY.md, Differences).
+    if body.len() != s.trim_matches(py::is_number_space).len() {
+        return None;
+    }
     let digits = body.strip_prefix('-').unwrap_or(body);
     let n = digits.chars().count();
     if !(1..=9).contains(&n) || !digits.chars().all(|c| py::digit(c).is_some()) {
@@ -493,10 +504,62 @@ impl Limiter {
 /// The process's limiter.
 pub static LIMITER: LazyLock<Arc<Limiter>> = LazyLock::new(|| Arc::new(Limiter::default()));
 
-/// `response.json()`: the body as JSON (a UTF-8 byte-order mark allowed), or None.
+/// `response.json()`: the body as JSON (a UTF-8 byte-order mark allowed), or None. `json.loads` takes a `\uXXXX`
+/// escape of a lone surrogate, which serde_json refuses and a Rust string cannot hold; such a body is read again
+/// with each lone surrogate as U+FFFD, so one odd character in an abstract does not sink the whole answer.
 fn json_body(response: &HttpResponse) -> Option<Value> {
     let body = response.body.strip_prefix(b"\xef\xbb\xbf".as_slice()).unwrap_or(&response.body);
-    serde_json::from_slice(body).ok()
+    match serde_json::from_slice(body) {
+        Ok(v) => Some(v),
+        Err(_) => {
+            let text = std::str::from_utf8(body).ok()?;
+            let fixed = replace_lone_surrogates(text)?;
+            serde_json::from_str(&fixed).ok()
+        }
+    }
+}
+
+/// The text with every `\uXXXX` escape of a lone surrogate (inside a string) written `\ufffd`, or None when it has
+/// none (the body failed for another reason).
+fn replace_lone_surrogates(text: &str) -> Option<String> {
+    let hex4 = |at: usize| -> Option<u32> {
+        let s = text.get(at..at + 4)?;
+        s.bytes().all(|c| c.is_ascii_hexdigit()).then(|| u32::from_str_radix(s, 16).ok()).flatten()
+    };
+    let b = text.as_bytes();
+    let mut out = String::with_capacity(text.len());
+    let (mut i, mut start, mut in_str, mut changed) = (0, 0, false, false);
+    while i < b.len() {
+        match b[i] {
+            b'"' => in_str = !in_str,
+            b'\\' if in_str => {
+                if b.get(i + 1) == Some(&b'u') {
+                    if let Some(u) = hex4(i + 2) {
+                        let low_follows = text.get(i + 6..i + 8) == Some("\\u")
+                            && hex4(i + 8).is_some_and(|l| (0xdc00..0xe000).contains(&l));
+                        if (0xd800..0xdc00).contains(&u) && low_follows {
+                            i += 12; // a real pair
+                            continue;
+                        }
+                        if (0xd800..0xe000).contains(&u) {
+                            out.push_str(&text[start..i]);
+                            out.push_str("\\ufffd");
+                            changed = true;
+                            i += 6;
+                            start = i;
+                            continue;
+                        }
+                    }
+                }
+                i += 2; // the escaped character (an ASCII byte in valid JSON)
+                continue;
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+    out.push_str(&text[start.min(text.len())..]);
+    changed.then_some(out)
 }
 
 /// `int(f)` for a float, None where Python raises (nan, inf).
@@ -505,7 +568,8 @@ fn trunc(f: f64) -> Option<i64> {
 }
 
 fn retry_after(response: &HttpResponse) -> Option<i64> {
-    let header = response.joined_header("Retry-After").as_deref().and_then(py::parse_float).and_then(trunc);
+    // `int(float(str(raw).strip()))`: str.strip first, then float
+    let header = response.joined_header("Retry-After").as_deref().map(py::strip).and_then(py::parse_float).and_then(trunc);
     let secs = match header {
         Some(s) => s,
         None => {

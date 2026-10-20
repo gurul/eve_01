@@ -168,6 +168,12 @@ pub fn strip(s: &str) -> &str {
     s.trim_matches(is_space)
 }
 
+/// The whitespace `int()` and `float()` strip around a number: `str.isspace` but for the four ASCII separators
+/// \x1c-\x1f, which CPython keeps (they sit below 127, where only space, \t, \n, \v, \f and \r count).
+pub fn is_number_space(c: char) -> bool {
+    is_space(c) && !('\u{1c}'..='\u{1f}').contains(&c)
+}
+
 /// `str.rstrip()`.
 pub fn rstrip(s: &str) -> &str {
     s.trim_end_matches(is_space)
@@ -214,11 +220,15 @@ pub fn parse_digits(s: &str) -> Option<i64> {
     Some(if neg { -n } else { n })
 }
 
-/// `float(s)` for a string: surrounding whitespace stripped, any Unicode decimal digit read as its value, an
-/// underscore only between two digits, and "inf", "infinity" and "nan" in any case. None where Python raises
-/// ValueError.
+/// `float(s)` for a string: surrounding whitespace stripped (`is_number_space`: "12\x1c" raises in Python), any
+/// Unicode decimal digit read as its value, an underscore only between two digits, and "inf", "infinity" and "nan"
+/// in any case. None where Python raises ValueError.
 pub fn parse_float(s: &str) -> Option<f64> {
-    let chars: Vec<char> = strip(s).chars().map(|c| digit(c).and_then(|d| char::from_digit(d, 10)).unwrap_or(c)).collect();
+    let chars: Vec<char> = s
+        .trim_matches(is_number_space)
+        .chars()
+        .map(|c| digit(c).and_then(|d| char::from_digit(d, 10)).unwrap_or(c))
+        .collect();
     let mut text = String::with_capacity(chars.len());
     for (i, &c) in chars.iter().enumerate() {
         if c == '_' {
@@ -319,6 +329,9 @@ mod tests {
         assert!(parse_float("nan").is_some_and(f64::is_nan));
         assert_eq!(parse_float("None"), None);
         assert_eq!(parse_float(""), None);
+        // float() strips Unicode spaces but keeps the ASCII separators, so "12\x1c" is no number
+        assert_eq!(parse_float("\u{a0}12\u{3000}"), Some(12.0));
+        assert_eq!(parse_float("12\u{1c}"), None);
         assert_eq!(float_of(Some(&json!(true))), Some(1.0));
         assert_eq!(float_of(Some(&json!(null))), None);
         assert_eq!(float_of(Some(&json!([1]))), None);

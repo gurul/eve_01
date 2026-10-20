@@ -253,6 +253,9 @@ fn test_k_is_clamped_to_one_through_twenty() {
         (json!(" -4 "), 1),
         (json!("1234567890"), 8),
         (json!(u64::MAX), 20),
+        // Python's pattern takes "12\x1c" but int() raises on it; Rust reads it as no number
+        (json!("12\u{1c}"), 8),
+        (json!("\u{a0}12\u{3000}"), 12),
     ];
     for (k, sent) in cases {
         assert_eq!(ss::params(&with_args(json!({"k": k.clone()})), Some(*NOW)).unwrap()["k"], json!(sent), "{k}");
@@ -288,6 +291,9 @@ fn test_the_query_is_one_clean_line_clipped() {
     let long = long.as_str().unwrap();
     assert!(len(long) <= ss::MAX_QUERY_CHARS && !long.ends_with('…') && !long.ends_with(' '));
     let q = "\"gut microbiome\" AND (autism OR ASD) NOT mice";
+    // clean_text's clip is text[:limit - 1]: a limit of 0 keeps all but the last character, as Python's slice does
+    assert_eq!(ss::clean_str("abc", 0), "ab…");
+    assert_eq!(ss::clean_str("", 0), "");
     // the service's own syntax passes untouched
     assert_eq!(ss::params(&with_args(json!({"query": q})), Some(*NOW)).unwrap()["q"], json!(q));
 }
@@ -452,6 +458,12 @@ async fn test_a_429_is_never_retried_and_says_how_long_to_wait() {
         vec![("Retry-After".into(), "12".into()), ("retry-after".into(), "13".into())],
     )]);
     assert_eq!(run(&args(), &twice).await["retry_after_s"], json!(17));
+    // the header is str.strip()ped before float(); the body's value goes to float() as it is, and float() keeps
+    // the separators \x1c-\x1f (so "9\x1c" is no number) while it strips a no-break space
+    let sep = Server::new(vec![ok(429, json!({"retry_after": "9\u{1c}"}))]);
+    assert!(run(&args(), &sep).await.get("retry_after_s").is_none());
+    let nbsp = Server::new(vec![ok(429, json!({"retry_after": "\u{a0}9\u{a0}"}))]);
+    assert_eq!(run(&args(), &nbsp).await["retry_after_s"], json!(9));
 }
 
 #[tokio::test]
@@ -559,6 +571,19 @@ async fn test_a_refusal_says_why_and_is_not_retried() {
 async fn test_an_answer_that_is_not_json_is_said_plainly() {
     let out = run(&args(), &Server::new(vec![ok(200, json!("<html>maintenance</html>"))])).await;
     assert_eq!(out, json!({"ok": false, "reason": "Ask science sent an answer eve could not read."}));
+}
+
+/// An answer whose abstract carries a lone surrogate escape: json.loads reads it, so it is an answer, not "could not
+/// read" (the surrogate reads as U+FFFD; a real pair stays the character it encodes).
+#[tokio::test]
+async fn test_an_answer_with_a_lone_surrogate_is_still_read() {
+    let raw = r#"{"mode": "semantic", "results": [{"title": "A \ud800 B \ud83d\ude00 \"q\" \\ud800", "year": 2020}]}"#;
+    let server = Server::new(vec![ok(200, json!(raw))]);
+    let out = run(&args(), &server).await;
+    assert_eq!(out["ok"], json!(true), "{out}");
+    assert_eq!(out["results"][0]["title"], json!("A \u{fffd} B \u{1f600} \"q\" \\ud800"));
+    let broken = Server::new(vec![ok(200, json!(r#"{"results": [}"#))]);
+    assert_eq!(run(&args(), &broken).await["reason"], json!("Ask science sent an answer eve could not read."));
 }
 
 #[tokio::test]
