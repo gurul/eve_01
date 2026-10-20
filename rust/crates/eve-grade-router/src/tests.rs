@@ -309,6 +309,8 @@ fn mode_reads_eve_grade_router() {
     assert_eq!(mode(&env(&[])), "auto");
     assert_eq!(mode(&env(&[("EVE_GRADE_ROUTER", "")])), "auto");
     assert_eq!(mode(&env(&[("EVE_GRADE_ROUTER", " OFF ")])), "off");
+    assert_eq!(mode(&env(&[("EVE_GRADE_ROUTER", "\x1con\x1f")])), "on");
+    assert_eq!(mode(&env(&[("EVE_GRADE_ROUTER", "   ")])), "auto");
     assert_eq!(mode(&env(&[("EVE_GRADE_ROUTER", "on")])), "on");
     assert_eq!(mode(&env(&[("EVE_GRADE_ROUTER", "sometimes")])), "auto");
 }
@@ -345,6 +347,16 @@ fn grade_answers_round_trip_their_json() {
     assert_eq!((e.kind.as_str(), e.message.as_str()), ("ValueError", "could not convert string to float: 'high'"));
     let e = GradeAnswer::from_json(&json!({"ms": [1]})).unwrap_err();
     assert_eq!(e.kind, "TypeError");
+    // float() takes `_` only between digits, and strips Python's whitespace
+    assert_eq!(GradeAnswer::from_json(&json!({"ms": "1_000"})).unwrap().ms, 1000.0);
+    assert_eq!(GradeAnswer::from_json(&json!({"ms": "\u{a0}2.5\n"})).unwrap().ms, 2.5);
+    assert_eq!(GradeAnswer::from_json(&json!({"ms": "1e1_0"})).unwrap().ms, 1e10);
+    for bad in ["1_.5", "_1", "1_", "1__0", "_", "\x1f2.5"] {
+        assert_eq!(GradeAnswer::from_json(&json!({"ms": bad})).unwrap_err().kind, "ValueError", "{bad}");
+    }
+    // raw.get on a list: the AttributeError Python raises
+    let e = GradeAnswer::from_json(&json!([1])).unwrap_err();
+    assert_eq!((e.kind.as_str(), e.message.as_str()), ("AttributeError", "'list' object has no attribute 'get'"));
 }
 
 #[test]

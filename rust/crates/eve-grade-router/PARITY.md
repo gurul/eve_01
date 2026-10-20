@@ -18,14 +18,14 @@ Status: complete
 | `state` | `state(text, previous) -> Value` | Whitespace collapsed as `" ".join(s.split())` (Unicode whitespace plus `\x1c`-`\x1f`), clipped to 500 characters; keys `about`, `previous`, `request` in order |
 | `GradeAnswer` | `struct GradeAnswer { noul, ms, error }` (`Default`, `new`, `failed`) | |
 | `GradeAnswer.to_json` | `GradeAnswer::to_json() -> Value` | `round(noul, 4)`, `round(ms, 1)` half to even |
-| `GradeAnswer.from_json` | `GradeAnswer::from_json(&Value) -> Result<GradeAnswer, Raised>` | `float(x or 0.0)` (numbers, bools, numeric strings), `str(x or "")`; a value `float()` refuses is the `ValueError`/`TypeError` Python raises |
+| `GradeAnswer.from_json` | `GradeAnswer::from_json(&Value) -> Result<GradeAnswer, Raised>` | `float(x or 0.0)` (numbers, bools, numeric strings with `float()`'s `_` and whitespace rules), `str(x or "")`; a value `float()` refuses is the `ValueError`/`TypeError` Python raises, a non-object `raw` the `AttributeError` |
 | `ask` | `ask(predict, text, previous, &mut clock) -> Result<GradeAnswer, Raised>` | A raising predict, or a reply that is not an object, is an answer with `error` = `"<Class>: <message>"[:160]`; `Err` only where Python raises out of `ask` (a truthy non-object `answers`: `AttributeError`). Noul read only from a non-bool JSON number |
 | `decide` | `decide(&a, gate, budget_ms) -> &'static str` | Pass `f64::INFINITY` for Python's default budget |
 | `fit` | `fit(&answers, &acceptable) -> Result<(gate, recall), Raised>` | `ValueError` for no think-only case and for `zip(strict=True)` length mismatches, messages verbatim |
 | `bar` | `bar(&grades, &acceptable, &answers) -> Result<Bar, Raised>`; `Bar` serializes as the dict, same keys in the same order (`"1"`..`"4"` renamed fields) | The kept holdout `bar` in `grade_result.json` round-trips byte for byte (test) |
 | `_GATE` | `GateCache` (`OnceLock<f64>`) and `static GATE` | Read once a process |
 | `load_gate` | `load_gate(&Path) -> f64`; `load_shipped_gate()` | DEFAULT_GATE on any failure. See Differences for `load_shipped_gate` |
-| `mode` | `mode(&impl eve_jev::Env) -> &'static str` | `EVE_GRADE_ROUTER`, unset or empty is `auto`; stripped, lowercased; unknown warns `grade router: EVE_GRADE_ROUTER='x' is not one of ('auto', 'on', 'off'); auto` |
+| `mode` | `mode(&impl eve_jev::Env) -> &'static str` | `EVE_GRADE_ROUTER`, unset or empty is `auto`; stripped (Python's whitespace, `\x1c`-`\x1f` included), lowercased; unknown warns `grade router: EVE_GRADE_ROUTER='x' is not one of ('auto', 'on', 'off'); auto` |
 | `Grade` | `struct Grade { grade, noul, ms, asked, error }` (`Default` = instant, not asked) | |
 | `Grade.log_line` | `Grade::log_line()` | `"{grade}; jev off"` or `"{grade} (noul {:.2}); jev {:.0} ms"` + `" ({error})"` |
 | `_JEV`, `_JEV_LOCK` | `static JEV: LazyLock<Mutex<Option<JevCache>>>` | Remade only when `(url, model)` changes |
@@ -49,4 +49,5 @@ None
 - `bar` returns a typed `Bar`; with no successful answer `p95_ms` is infinity, which `serde_json` writes as `null` where Python's `json.dumps` writes `Infinity`.
 - A grader that panics (Rust's uncaught failure) leaves no answer: `grade_turn` reports `"not an answer"`; Python would have caught an exception and reported its class name.
 - `GradeAnswer.from_json`'s `str()` of a non-string `error` prints containers as JSON and very large/small floats in Rust's notation rather than Python's repr. Kept files only hold strings there.
+- `grade_turn` with an infinite `timeout_s` (or one past `threading.TIMEOUT_MAX`) waits for the grader with no limit; Python's `Event.wait` raises `OverflowError` out of `grade_turn` there. Callers pass TIMEOUT_S.
 - `ask`'s clock is `&mut dyn FnMut() -> f64` in seconds (`time.perf_counter` is `perf_counter()`, seconds since first use).

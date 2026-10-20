@@ -174,8 +174,13 @@ fn py_float(v: &Value) -> Result<f64, Raised> {
         Value::Bool(b) => Ok(if *b { 1.0 } else { 0.0 }),
         Value::Number(n) => n.as_f64().ok_or_else(|| Raised::new("OverflowError", "int too large to convert to float")),
         Value::String(s) => {
+            // float() strips ASCII and Unicode whitespace but not \x1c-\x1f (str.strip() would): `str::trim`.
             let t = s.trim();
-            let digits_ok = !t.contains("__") && !t.starts_with('_') && !t.ends_with('_');
+            // Python allows `_` only between two digits ("1_000", never "1__0", "_1", "1_" or "1_.5").
+            let b = t.as_bytes();
+            let digits_ok = b.iter().enumerate().all(|(i, c)| {
+                *c != b'_' || (i > 0 && i + 1 < b.len() && b[i - 1].is_ascii_digit() && b[i + 1].is_ascii_digit())
+            });
             let cleaned = t.replace('_', "");
             match cleaned.parse::<f64>() {
                 Ok(f) if digits_ok && !t.is_empty() => Ok(f),
@@ -215,9 +220,15 @@ fn py_str(v: &Value) -> String {
     }
 }
 
-/// `" ".join(s.split())`: Python splits on Unicode whitespace and the ASCII separators \x1c-\x1f.
+/// What Python's `str.split()` / `str.strip()` treat as whitespace: Unicode whitespace and the ASCII separators
+/// \x1c-\x1f.
+fn is_py_space(c: char) -> bool {
+    c.is_whitespace() || ('\x1c'..='\x1f').contains(&c)
+}
+
+/// `" ".join(s.split())`.
 fn collapse_ws(s: &str) -> String {
-    s.split(|c: char| c.is_whitespace() || ('\x1c'..='\x1f').contains(&c))
+    s.split(is_py_space)
         .filter(|w| !w.is_empty())
         .collect::<Vec<_>>()
         .join(" ")
@@ -290,6 +301,9 @@ impl GradeAnswer {
     /// `GradeAnswer.from_json(raw)`: `float(raw.get("noul") or 0.0)`, the same for `ms`, `str(raw.get("error")
     /// or "")`. A value `float()` refuses is the `ValueError`/`TypeError` Python raises.
     pub fn from_json(raw: &Value) -> Result<GradeAnswer, Raised> {
+        if !raw.is_object() {
+            return Err(Raised::new("AttributeError", format!("'{}' object has no attribute 'get'", py_type_name(raw))));
+        }
         let field = |k: &str| raw.get(k).filter(|v| truthy(v));
         let noul = field("noul").map(py_float).transpose()?.unwrap_or(0.0);
         let ms = field("ms").map(py_float).transpose()?.unwrap_or(0.0);
@@ -487,7 +501,7 @@ pub static GATE: GateCache = GateCache::new();
 /// `EVE_GRADE_ROUTER`: one of MODES, `auto` when unset, empty or unknown (with a warning).
 pub fn mode<E: Env + ?Sized>(env: &E) -> &'static str {
     let raw = env.var("EVE_GRADE_ROUTER").filter(|v| !v.is_empty()).unwrap_or_else(|| "auto".to_string());
-    let raw = raw.trim().to_lowercase();
+    let raw = raw.trim_matches(is_py_space).to_lowercase();
     if let Some(m) = MODES.iter().find(|m| **m == raw) {
         return m;
     }
