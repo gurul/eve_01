@@ -461,9 +461,14 @@ pub struct TelegramInlet {
     pub(crate) st: Mutex<TelegramInletState>,
 }
 
+/// `websearch.search(query, cfg)`, replaced: what a test lends in its place.
+pub type WebSearchFn = Arc<dyn Fn(&str, &eve_web::websearch::SearchConfig) -> Value + Send + Sync>;
+
 /// `TelegramInlet`'s mutable state (the attributes Python reassigns or mutates after `__init__`).
 #[derive(Default)]
 pub(crate) struct TelegramInletState {
+    /// The tests' `monkeypatch.setattr(websearch, "search", ...)`: None is websearch.search itself.
+    pub(crate) web_search: Option<WebSearchFn>,
     pub(crate) chat_log: Option<Arc<eve_chat_log::ChatLog>>,
     /// the log line the shown history starts at (_log_window)
     pub(crate) window_seq: i64,

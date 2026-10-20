@@ -1124,8 +1124,10 @@ impl TelegramInlet {
         // websearch.search (the engine, or routed by Jev), off the loop: a second or two of network
         let query = itl_str(args, "query");
         let config = self.config.search.clone();
-        let found = tokio::task::spawn_blocking(move || {
-            eve_web::websearch::search(eve_web::Ctx::global(), &query, Some(&config), &eve_web::websearch::EngineOpts::default())
+        let lent = self.st.lock().web_search.clone();
+        let found = tokio::task::spawn_blocking(move || match lent {
+            Some(search) => search(&query, &config),
+            None => eve_web::websearch::search(eve_web::Ctx::global(), &query, Some(&config), &eve_web::websearch::EngineOpts::default()),
         })
         .await;
         match found {
@@ -1224,6 +1226,10 @@ impl TelegramInlet {
         if on {
             st.claude_on_job = Some(crate::seams::Job::spawn("claude-on", futures::future::pending::<()>()));
         }
+    }
+    /// `monkeypatch.setattr(websearch, "search", search)` for this inlet.
+    pub fn tt_set_web_search(&self, search: Option<WebSearchFn>) {
+        self.st.lock().web_search = search;
     }
     /// `inlet._agent = agent`.
     pub fn tt_set_agent(&self, agent: Option<Arc<dyn TaskAgent>>) {
