@@ -1,0 +1,82 @@
+[
+ [
+  "/opentable",
+  null
+ ],
+ [
+  "/OPENTABLE@EveBot",
+  null
+ ],
+ [
+  "/opentable   ",
+  ""
+ ],
+ [
+  "/opentable x",
+  "x"
+ ],
+ [
+  "/opentable\u001fx",
+  "x"
+ ],
+ [
+  "/opentable x",
+  "x"
+ ],
+ [
+  "/opentable@Bot_1 x\ny",
+  "x\ny"
+ ],
+ [
+  "/opentable@Bot\n",
+  ""
+ ],
+ [
+  "/opentable\n",
+  ""
+ ],
+ [
+  "/opentable@é x",
+  "x"
+ ],
+ [
+  "/opentable@x² y",
+  "y"
+ ],
+ [
+  "/opentableish",
+  false
+ ],
+ [
+  "/opentable@",
+  false
+ ],
+ [
+  "/opentable@a@b",
+  false
+ ],
+ [
+  "/opentable/x",
+  false
+ ],
+ [
+  " /opentable",
+  false
+ ],
+ [
+  "/opentable　hi",
+  "hi"
+ ],
+ [
+  "/OpenTable@EVE\tSeattle\nfor 2\n",
+  "Seattle\nfor 2\n"
+ ],
+ [
+  "/opentable@bot-x",
+  false
+ ],
+ [
+  "/Kopentable",
+  false
+ ]
+]

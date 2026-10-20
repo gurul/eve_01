@@ -1,0 +1,13 @@
+[package]
+name = "eve-opentable"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+thiserror.workspace = true
+serde_json.workspace = true
+regex.workspace = true
+chrono.workspace = true
+libc.workspace = true
