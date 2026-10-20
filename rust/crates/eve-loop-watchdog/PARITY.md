@@ -45,7 +45,9 @@ Status: complete
 - The dump is written by a helper thread (`loop-watchdog-dump`) that the signal
   handler wakes through a pipe and waits for (up to 3 s), because symbolizing is
   not async-signal-safe. It covers every thread of the process, not only those
-  running Python code. After the dump the signal is chained exactly as faulthandler
+  running Python code. Every thread's stack is read before any is symbolized, so a
+  slow first symbolization (seconds, while debug info loads) cannot let a thread exit
+  before its turn; the text is the same. After the dump the signal is chained exactly as faulthandler
   does: the previous handler is restored, the signal re-raised, and ours put back;
   with no previous handler SIGUSR1's default action ends the process, as the
   Python daemon does (`kill -USR1` dumps, then exits with status 158).

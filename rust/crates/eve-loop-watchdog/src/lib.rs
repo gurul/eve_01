@@ -786,7 +786,10 @@ mod dump {
             }
             let ports: Vec<mach_port_t> = std::slice::from_raw_parts(list, count as usize).to_vec();
             let me = libc::pthread_mach_thread_np(libc::pthread_self());
-            let mut first = true;
+            // Read every stack before symbolizing any: the first symbolization loads debug
+            // info and can take seconds, long enough for a short-lived thread to exit before
+            // its turn and leave "<no frame>" (2026-10-20, full-workspace test run).
+            let mut snapshot: Vec<(mach_port_t, usize, Vec<usize>)> = Vec::with_capacity(ports.len());
             for &port in &ports {
                 if port == me {
                     continue;
@@ -799,13 +802,17 @@ mod dump {
                     (pt as usize, hi.saturating_sub(libc::pthread_get_stacksize_np(pt)), hi)
                 };
                 let ips = super::mach::capture(port, lo, hi).unwrap_or_default();
+                snapshot.push((port, ident, ips));
+            }
+            let mut first = true;
+            for (port, ident, ips) in &snapshot {
                 if !first {
                     out.push('\n');
                 }
                 first = false;
-                let label = if Some(port) == current { "Current thread" } else { "Thread" };
+                let label = if Some(*port) == current { "Current thread" } else { "Thread" };
                 out.push_str(&format!("{label} 0x{ident:016x} (most recent call first):\n"));
-                out.push_str(&super::faulthandler_frames(&ips));
+                out.push_str(&super::faulthandler_frames(ips));
             }
             for &port in &ports {
                 mach_port_deallocate(task, port);

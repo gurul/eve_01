@@ -2454,7 +2454,8 @@ impl<'a> tracing_subscriber::fmt::MakeWriter<'a> for Captured {
 
 fn capture() -> (Captured, tracing::subscriber::DefaultGuard) {
     let out = Captured::default();
-    let sub = tracing_subscriber::fmt().with_writer(out.clone()).with_ansi(false).with_max_level(tracing::Level::DEBUG).finish();
+    // No timestamp: a fractional second like "41.87" would otherwise match the coordinates this log must never say.
+    let sub = tracing_subscriber::fmt().with_writer(out.clone()).with_ansi(false).without_time().with_max_level(tracing::Level::DEBUG).finish();
     let guard = tracing::subscriber::set_default(sub);
     (out, guard)
 }
@@ -2532,7 +2533,7 @@ async fn an_older_fix_is_ignored_and_the_log_never_says_where() {
     let said = String::from_utf8(said.0.lock().clone()).unwrap();
     assert!(said.contains("location updated") && said.contains("location ignored") && said.contains("accuracy 15 m"), "{said}");
     for secret in ["37.77", "122.4", "San Francisco", "Null Island", "1.0, 1.0"] {
-        assert!(!said.contains(secret), "{secret}");
+        assert!(!said.contains(secret), "{secret} in: {said}");
     }
 }
 
@@ -2614,7 +2615,7 @@ async fn visits_and_fixes_build_the_history_and_the_log_never_says_where() {
     let said = String::from_utf8(said.0.lock().clone()).unwrap();
     assert!(said.contains("places: visit arrival") && said.contains("places: visit departure"), "{said}");
     for secret in ["41.87", "87.64", "Equinox", "Somewhere St"] {
-        assert!(!said.contains(secret), "{secret}");
+        assert!(!said.contains(secret), "{secret} in: {said}");
     }
 }
 

@@ -50,6 +50,17 @@ fn with_caplog<T>(f: impl FnOnce() -> T) -> (T, Caplog) {
     (out, cap)
 }
 
+/// Symbolize once before a timed test. The first symbolization in a process loads the binary's
+/// debug info and takes seconds in a debug build, so a stall's stack would be logged after
+/// `stop()` had stopped waiting, and a short-lived thread would exit before a dump reached it.
+/// The daemon pays that once, on its first stall; the tests pay it here, outside the timing.
+fn warm_symbolizer() {
+    static WARM: std::sync::OnceLock<()> = std::sync::OnceLock::new();
+    WARM.get_or_init(|| {
+        let _ = format_stack(&LoopThread::current());
+    });
+}
+
 fn current_thread_runtime() -> tokio::runtime::Runtime {
     tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap()
 }
@@ -82,6 +93,7 @@ where
 
 #[test]
 fn test_a_stall_logs_the_loop_threads_stack() {
+    warm_symbolizer();
     let (wd, caplog) = with_caplog(|| {
         run(
             || async {
@@ -121,6 +133,7 @@ fn test_a_healthy_loop_logs_nothing() {
 
 #[test]
 fn test_a_long_stall_is_reported_again_while_it_lasts() {
+    warm_symbolizer();
     // The threshold must sit clearly above PET_SECS (0.25 s): at 0.2 an ordinary gap between two pets already
     // read as a stall, so a little scheduling jitter around the real one counted a second stall (1 run in 7,
     // 2026-09-23). A 1.0 s hold still crosses 0.4 and repeats every 0.3 s, so it is reported at least twice.
@@ -214,6 +227,7 @@ fn test_format_stack_of_the_calling_thread_names_this_test() {
 #[cfg(target_os = "macos")]
 #[test]
 fn test_format_stack_reads_another_thread() {
+    warm_symbolizer();
     let (tx, rx) = std::sync::mpsc::channel();
     let t = std::thread::spawn(move || {
         tx.send(LoopThread::current()).unwrap();
@@ -243,6 +257,7 @@ fn test_dump_signal_rejects_what_faulthandler_rejects() {
 #[cfg(target_os = "macos")]
 #[test]
 fn test_dump_all_threads_shows_every_thread_most_recent_first() {
+    warm_symbolizer();
     let (tx, rx) = std::sync::mpsc::channel();
     let t = std::thread::spawn(move || {
         tx.send(LoopThread::current()).unwrap();
@@ -266,6 +281,7 @@ fn test_dump_all_threads_shows_every_thread_most_recent_first() {
 #[cfg(target_os = "macos")]
 #[test]
 fn test_dump_signal_dumps_then_chains_to_the_earlier_handler() {
+    warm_symbolizer();
     use std::sync::atomic::AtomicUsize;
     use std::io::Read;
 

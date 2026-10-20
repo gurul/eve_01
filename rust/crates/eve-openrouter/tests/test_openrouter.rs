@@ -454,14 +454,46 @@ fn rust_sources(dir: &Path, out: &mut Vec<PathBuf>) {
     }
 }
 
-/// Whether a file is one of the allowed modules: `<module>.rs` anywhere, or the root of the crate named after it
+/// Whether a file is one of the allowed modules: `<module>.rs` anywhere, a file inside a `<module>/` directory (a
+/// module split into submodules, like eve-brain's `voice_agent/live.rs`), or the root of the crate named after it
 /// (a single-module crate keeps its code in src/lib.rs).
 fn allowed(path: &Path, crates: &Path) -> Option<&'static str> {
     let stem = path.file_stem()?.to_str()?;
-    let krate = path.strip_prefix(crates).ok()?.components().next()?.as_os_str().to_str()?.to_string();
+    let rel = path.strip_prefix(crates).ok()?;
+    let krate = rel.components().next()?.as_os_str().to_str()?.to_string();
+    let dirs: Vec<&str> = rel.parent()?.components().filter_map(|c| c.as_os_str().to_str()).collect();
     ALLOWED.iter().copied().find(|m| {
-        stem == *m || ((stem == "lib" || stem == "main") && krate == format!("eve-{}", m.replace('_', "-")))
+        stem == *m
+            || dirs.contains(m)
+            || ((stem == "lib" || stem == "main") && krate == format!("eve-{}", m.replace('_', "-")))
     })
+}
+
+/// Whether a file under `src/` is a `#[cfg(test)]` module (`tests.rs`, `tests_*.rs`, `test_support.rs`, or anything in
+/// a `tests/` directory). Python's guard scans the package and never `bridge/tests`; these are Rust's equivalent.
+fn is_test_module(path: &Path, crates: &Path) -> bool {
+    let Some(stem) = path.file_stem().and_then(|s| s.to_str()) else { return false };
+    let in_tests_dir = path
+        .strip_prefix(crates)
+        .ok()
+        .and_then(|rel| rel.parent())
+        .is_some_and(|dir| dir.components().skip(2).any(|c| c.as_os_str() == "tests"));
+    stem == "tests" || stem.starts_with("tests_") || stem == "test_support" || in_tests_dir
+}
+
+#[test]
+fn test_the_scope_is_production_modules_and_split_allowed_modules() {
+    let crates = Path::new("/w/crates");
+    // positive controls: test modules are out of scope, production modules are in
+    for t in ["eve-x/src/tests.rs", "eve-x/src/tests_call.rs", "eve-x/src/test_support.rs", "eve-x/src/tests/live.rs"] {
+        assert!(is_test_module(&crates.join(t), crates), "{t}");
+    }
+    for p in ["eve-x/src/lib.rs", "eve-x/src/telegram/inlet/call.rs", "eve-x/src/contests.rs", "eve-tests/src/lib.rs"] {
+        assert!(!is_test_module(&crates.join(p), crates), "{p}");
+    }
+    assert_eq!(allowed(&crates.join("eve-brain/src/voice_agent/live.rs"), crates), Some("voice_agent"));
+    assert_eq!(allowed(&crates.join("eve-phone-call/src/lib.rs"), crates), Some("phone_call"));
+    assert_eq!(allowed(&crates.join("eve-brain/src/telegram/inlet/call.rs"), crates), None);
 }
 
 #[test]
@@ -471,8 +503,9 @@ fn test_no_production_module_reads_the_openai_or_anthropic_key_except_the_allowe
     for e in std::fs::read_dir(&crates).unwrap().flatten() {
         rust_sources(&e.path().join("src"), &mut files);
     }
+    files.retain(|p| !is_test_module(p, &crates));
     files.sort();
-    assert!(!files.is_empty()); // the workspace, not an empty folder
+    assert!(files.len() > 100); // the workspace, not an empty folder
     let mut bad: Vec<(String, Vec<String>)> = Vec::new();
     let mut seen_allowed: HashMap<&str, bool> = HashMap::new();
     for p in &files {
@@ -495,6 +528,7 @@ fn test_no_production_module_reads_the_openai_or_anthropic_key_except_the_allowe
             let krate = crates.join(format!("eve-{}", m.replace('_', "-")));
             let mut all = Vec::new();
             rust_sources(&krate.join("src"), &mut all);
+            all.retain(|p| !is_test_module(p, &crates));
             let any = all.iter().any(|p| std::fs::read_to_string(p).map(|t| !offences(&t).is_empty()).unwrap_or(false))
                 || files.iter().any(|p| {
                     p.file_stem().and_then(|s| s.to_str()) == Some(m)
