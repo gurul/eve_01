@@ -1,0 +1,21 @@
+[package]
+name = "eve-serial-transport"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+eve-protocol = { path = "../eve-protocol" }
+glob.workspace = true
+libc.workspace = true
+parking_lot.workspace = true
+regex.workspace = true
+serde_json.workspace = true
+serialport.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+tracing-subscriber.workspace = true
