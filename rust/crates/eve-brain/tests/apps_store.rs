@@ -23,7 +23,7 @@ use tempfile::TempDir;
 use eve_app_check::cdp::{find_chromium, Browser, ContextOptions, Page};
 use eve_app_check::{CheckOptions, CheckReport};
 use eve_brain::apps_maker::{
-    data_sample, extract_html, load_issues, owner_context, serve_app_html, slugify, static_issues, AppMaker, AppStore,
+    data_sample, description_of, extract_html, load_issues, owner_context, serve_app_html, slugify, static_issues, AppMaker, AppStore,
     ChatMaker, Check, Generate, Generated, MakerProgress, PageDisk, StoreError, DATA_SAMPLE_CHARS, EVE_JS,
     MAKER_PROMPT, MAX_VERSIONS, SKELETON,
 };
@@ -1340,4 +1340,39 @@ fn test_the_store_is_eve_links_app_list() {
     assert!(listed[0].slug == "habit-tracker" && listed[0].title == "Habit Tracker" && listed[0].updated > 1.0e9);
     assert_eq!(view.info(&a.slug).unwrap(), listed[0]);
     assert!(view.info("nope").is_none());
+}
+
+
+// Not a Python test: the module's patterns in Python's regex classes, against what Python's `re` gives for the
+// same input (computed with apps_maker.py). Python's `\w` takes no marks and no joiners, so a zero-width joiner
+// or a combining accent before "eve.load(" is a word boundary; its `\s` takes the separators \x1c-\x1f; and
+// under IGNORECASE an "i" also matches "İ" and "ı".
+#[test]
+fn the_patterns_read_text_as_pythons_re_does() {
+    let no_title = "The file has no <title>, so the app has no name in the owner's list.";
+    let no_load = "The app never calls eve.load(), so it cannot show anything it saved before.";
+    let no_save = "The app never calls eve.save(), so nothing the owner enters survives closing it.";
+    let host = |h: &str| format!("The app loads from {h}; the only address it may load from is cdn.jsdelivr.net (everything else inline).");
+    assert!(static_issues("<title>A</title>\u{200d}eve.load(1);\u{200d}eve.save(2)").is_empty());
+    assert!(static_issues("<title>A</title>e\u{301}eve.load(1); eve\u{1c}.\u{1c}save(2)").is_empty());
+    let none = [no_title, no_load, no_save].map(String::from).to_vec();
+    let with = |h: &str| none.iter().cloned().chain([host(h)]).collect::<Vec<_>>();
+    assert_eq!(static_issues("\u{200d}from \"//evil.com/x.js\""), with("evil.com"));
+    assert_eq!(static_issues("<scr\u{130}pt src=//ev\u{130}l.com/a.js>"), with("evi\u{307}l.com"));
+    assert_eq!(static_issues("<img\u{200d}src=//bad.com/x>"), with("bad.com"));
+    assert_eq!(static_issues("@\u{130}mport \"//\u{131}.net/x.css\""), with("\u{131}.net"));
+    assert_eq!(static_issues("x\u{1c}//cdn.jsdelivr.net/npm/a@1.0.0/x.js\u{1c}y"), none);
+    assert_eq!(static_issues("<t\u{130}tle>\u{1c}</t\u{130}tle>"), vec![no_load.to_string(), no_save.to_string()]);
+    assert_eq!(description_of("<meta\u{200d}name=\"description\" content=\"zz\">"), "zz");
+    assert_eq!(description_of("<meta name=\"description\" content=\"a\u{1c}b\">"), "a b");
+    let now = chrono::DateTime::parse_from_rfc3339("2026-03-29T00:30:00+00:00").unwrap();
+    let lives = |loc: &str| {
+        let env: Environ = [("EVE_TIMEZONE", "UTC"), ("EVE_LOCATION", loc)].iter().map(|(k, v)| (k.to_string(), v.to_string())).collect();
+        owner_context(Some(&env), Some(&now)).lines().nth(1).unwrap().to_string()
+    };
+    assert_eq!(lives("\u{130}ndia"), "The owner lives in \u{130}ndia. Unless they say otherwise, assume metric units, Indian rupees (₹), weeks start on Monday.");
+    assert_eq!(lives("u.s."), "The owner lives in u.s.. Unless they say otherwise, assume metric units (kg, km, °C, ml), weeks start on Monday.");
+    let uk = "metric units (kg, km, °C, ml) except miles for road distances, pounds sterling (£), weeks start on Monday.";
+    assert_eq!(lives("u.k.x"), format!("The owner lives in u.k.x. Unless they say otherwise, assume {uk}"));
+    assert_eq!(lives("\u{200d}london"), format!("The owner lives in \u{200d}london. Unless they say otherwise, assume {uk}"));
 }

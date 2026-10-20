@@ -48,14 +48,21 @@ pub static SLUG_RE: LazyLock<Regex> =
 pub const ALLOWED_HOSTS: &[&str] = &["cdn.jsdelivr.net", "telegram.org"];
 
 /// py: apps_maker.py:64 `PINNED_LIB_RE`
-/// Python flags 34.
-pub static PINNED_LIB_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r#"(?i)/npm/(?:@[a-z0-9][\w.-]*/)?[a-z0-9][\w.-]*@\d+\.\d+\.\d+(?:-[\w.]+)?(?:/|(?:\n?\z))"#).expect("PINNED_LIB_RE"));
+/// Python flags 34. Written in Python's terms (see "Python's regex classes" below): `\w` is `[\p{L}\p{N}_]`,
+/// and under IGNORECASE `[a-z]` also takes "İ" and "ı".
+pub static PINNED_LIB_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(concat!(
+        r#"(?i)/npm/(?:@[a-z0-9İı][\p{L}\p{N}_.-]*/)?[a-z0-9İı][\p{L}\p{N}_.-]*@\d+\.\d+\.\d+(?:-[\p{L}\p{N}_.]+)?"#,
+        r#"(?:/|(?:\n?\z))"#
+    ))
+    .expect("PINNED_LIB_RE")
+});
 
 /// py: apps_maker.py:65 `_JSDELIVR_URL`
-/// Python flags 34.
-pub(crate) static JSDELIVR_URL: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r#"(?i)(?:https?:)?//cdn\.jsdelivr\.net(/[^\s\"'`)<>\\]*)?"#).expect("JSDELIVR_URL"));
+/// Python flags 34. Python's `\s` (with the separators \x1c-\x1f), and its IGNORECASE "i" (also "İ", "ı").
+pub(crate) static JSDELIVR_URL: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r#"(?i)(?:https?:)?//cdn\.jsdel[iİı]vr\.net(/[^\s\x1c-\x1f"'`)<>\\]*)?"#).expect("JSDELIVR_URL")
+});
 
 /// py: apps_maker.py:66 `_FILLER`
 /// A Python set: sorted here; membership is what matters.
@@ -527,8 +534,8 @@ Its journeys:
 /// Which units, currency and first weekday a configured location implies. A guess the prompt labels as one; the
 /// owner's own words in a request always win. Date and number formats are not here: the phone's locale formats
 /// those (the prompt says so), and a format named here is what a model hard-codes.
-pub(crate) static LOCALES: LazyLock<Vec<(Regex, &'static str)>> = LazyLock::new(|| {
-    let rx = |p: &str| Regex::new(&format!("(?i){p}")).expect("LOCALES");
+pub(crate) static LOCALES: LazyLock<Vec<(fancy_regex::Regex, &'static str)>> = LazyLock::new(|| {
+    let rx = |p: &str| fancy_regex::Regex::new(&format!("(?i){}", py_ignorecase_pattern(p))).expect("LOCALES");
     vec![
         (
             rx(r"\b(usa|u\.s\.a?\.?|united states|america)\b|,\s*(ca|ny|tx|wa|fl|ma|il|or|co|nj|pa)\b"),
@@ -560,6 +567,19 @@ pub fn default_root() -> PathBuf {
 }
 
 // ---- Python's behaviors this module leans on ---------------------------------------------------------------------
+
+// Python's regex classes, which Rust's differ from: Python's `\w` is `[\p{L}\p{N}_]` (`str.isalnum` or "_"; Rust's
+// adds the marks and the joiners, and leaves out \p{No}), so its `\b` sits elsewhere (a zero-width joiner before
+// "eve.load(" is a boundary in Python); its `\s` adds the separators \x1c-\x1f; and under IGNORECASE an "i"
+// also matches "İ" and "ı". The module's patterns are written in those terms.
+
+/// Python's `\b`, as lookarounds over Python's `\w`.
+const PY_BOUNDARY: &str = r"(?:(?<=[\p{L}\p{N}_])(?![\p{L}\p{N}_])|(?<![\p{L}\p{N}_])(?=[\p{L}\p{N}_]))";
+
+/// A Python IGNORECASE pattern made of letters, `\b`, `\s` and `\.` (the locale patterns), in fancy_regex's terms.
+fn py_ignorecase_pattern(p: &str) -> String {
+    p.replace('i', "[iİı]").replace(r"\b", PY_BOUNDARY).replace(r"\s", r"[\s\x1c-\x1f]")
+}
 
 /// `str.isspace()` for one character: Unicode White_Space plus the four separators Python also counts.
 fn py_space(c: char) -> bool {
@@ -896,7 +916,7 @@ pub fn owner_context(environ: Option<&Environ>, now: Option<&chrono::DateTime<ch
     if !location.is_empty() {
         let guess = LOCALES
             .iter()
-            .find(|(pattern, _)| pattern.is_match(&location))
+            .find(|(pattern, _)| pattern.is_match(&location).unwrap_or(false))
             .map(|(_, units)| *units)
             .unwrap_or("metric units (kg, km, °C, ml), weeks start on Monday");
         lines.push(format!("The owner lives in {location}. Unless they say otherwise, assume {guess}."));
@@ -1012,20 +1032,34 @@ impl AppInfo {
 }
 
 static WORD_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[a-z0-9]+").expect("WORD_RE"));
+// The patterns below are Python's, in Python's classes (see "Python's regex classes" above).
 /// Python's `\s+`: Unicode whitespace and the four separators `str.isspace` also counts.
 static SPACES_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[\s\x1c-\x1f]+").expect("SPACES_RE"));
 static SLUG_FULL: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\A[a-z0-9][a-z0-9-]{0,47}\z").expect("SLUG_FULL"));
-static TITLE_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?is)<title[^>]*>(.*?)</title>").expect("TITLE_RE"));
-static META_TAG_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?i)<meta\b[^>]*>").expect("META_TAG_RE"));
-static ATTR_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r#"([\w-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')"#).expect("ATTR_RE"));
+/// `<title[^>]*>(.*?)</title>`, IGNORECASE and DOTALL.
+static TITLE_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?is)<t[iİı]tle[^>]*>(.*?)</t[iİı]tle>").expect("TITLE_RE"));
+/// `<meta\b[^>]*>`, IGNORECASE: the boundary after "meta" is a non-word character that opens the rest, or the ">".
+static META_TAG_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)<meta(?:[^\p{L}\p{N}_>][^>]*)?>").expect("META_TAG_RE"));
+/// `([\w-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')`.
+static ATTR_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r#"([\p{L}\p{N}_-]+)[\s\x1c-\x1f]*=[\s\x1c-\x1f]*(?:"([^"]*)"|'([^']*)')"#).expect("ATTR_RE")
+});
 static ASCII_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[\x00-\x7f]").expect("ASCII_RE"));
-static HTML_BLOCK_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?is)```html\s*\n(.*?)```").expect("HTML_BLOCK_RE"));
+static HTML_BLOCK_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?is)```html[\s\x1c-\x1f]*\n(.*?)```").expect("HTML_BLOCK_RE"));
 static DOCTYPE_BLOCK_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?is)```\s*\n(<!doctype.*?)```").expect("DOCTYPE_BLOCK_RE"));
-static HAS_TITLE_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?i)<title[^>]*>\s*\S").expect("HAS_TITLE_RE"));
-static EVE_LOAD_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\beve\s*\.\s*load\s*\(").expect("EVE_LOAD_RE"));
-static EVE_SAVE_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\beve\s*\.\s*save\s*\(").expect("EVE_SAVE_RE"));
+    LazyLock::new(|| Regex::new(r"(?is)```[\s\x1c-\x1f]*\n(<!doctype.*?)```").expect("DOCTYPE_BLOCK_RE"));
+static HAS_TITLE_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)<t[iİı]tle[^>]*>[\s\x1c-\x1f]*[^\s\x1c-\x1f]").expect("HAS_TITLE_RE"));
+/// `\beve\s*\.\s*load\s*\(` (only ever asked whether it matches): the boundary as the start or a non-word character.
+static EVE_LOAD_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?:\A|[^\p{L}\p{N}_])eve[\s\x1c-\x1f]*\.[\s\x1c-\x1f]*load[\s\x1c-\x1f]*\(").expect("EVE_LOAD_RE")
+});
+static EVE_SAVE_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?:\A|[^\p{L}\p{N}_])eve[\s\x1c-\x1f]*\.[\s\x1c-\x1f]*save[\s\x1c-\x1f]*\(").expect("EVE_SAVE_RE")
+});
 
 /// py: apps_maker.py:606 `def slugify(text: str) -> str:`
 pub fn slugify(text: &str) -> String {
@@ -1040,7 +1074,9 @@ pub fn slugify(text: &str) -> String {
 
 /// py: apps_maker.py:611 `def _clean(text: str, limit: int) -> str:`
 pub(crate) fn clean(text: &str, limit: i64) -> String {
-    let unescaped = html_escape::decode_html_entities(text);
+    // `html.unescape`: the full HTML5 table, entities without their ";" ("&amp"), and Python's numeric
+    // reference rules (&#128; is "€", &#0; is U+FFFD), which html_escape's decoder does not follow.
+    let unescaped = eve_canvas::html::unescape(text);
     let spaced = SPACES_RE.replace_all(&unescaped, " ");
     take_py(py_strip(&spaced), limit)
 }
@@ -1105,16 +1141,28 @@ pub fn extract_html(text: &str) -> Option<String> {
 ///
 /// Where a page actually loads something from: a src/href on a loading tag, CSS url()/@import, fetch/import/
 /// WebSocket/EventSource/sendBeacon. Plain links and namespace strings (the SVG xmlns) are not loads.
+///
+/// Python's patterns in Python's classes (see "Python's regex classes" above). Each `\b` is spelled out: after a
+/// tag name and before "src", it is a non-word character (the two can be one); before "fetch" or "from", it is
+/// the start or a non-word character the match takes in. A host is a greedy run of letters, so the character a
+/// match takes in is never the end of the match before it.
 pub(crate) static LOADS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
     [
         concat!(
-            r#"(?i)<(?:script|link|img|iframe|audio|video|source|embed|object|track)\b[^>]*?\b(?:src|href|data)\s*=\s*"#,
-            r#"["']?\s*(?:https?:)?//([a-z0-9.-]+)"#
+            r#"(?i)<(?:scr[iİı]pt|l[iİı]nk|[iİı]mg|[iİı]frame|aud[iİı]o|v[iİı]deo|source|embed|object|track)"#,
+            r#"[^\p{L}\p{N}_>](?:[^>]*?[^\p{L}\p{N}_>])??(?:src|href|data)[\s\x1c-\x1f]*=[\s\x1c-\x1f]*"#,
+            r#"["']?[\s\x1c-\x1f]*(?:https?:)?//([a-z0-9İı.-]+)"#
         ),
-        r#"(?i)(?:url\(|@import)\s*["']?\s*(?:https?:)?//([a-z0-9.-]+)"#,
-        r#"(?i)\b(?:fetch|import|WebSocket|EventSource|sendBeacon)\s*\(\s*["'`](?:(?:https?|wss?):)?//([a-z0-9.-]+)"#,
-        r#"(?i)\.open\s*\(\s*["'](?:GET|POST|PUT|PATCH|DELETE)["']\s*,\s*["'`](?:https?:)?//([a-z0-9.-]+)"#,
-        r#"(?i)\bfrom\s*["'](?:https?:)?//([a-z0-9.-]+)"#,
+        r#"(?i)(?:url\(|@[iİı]mport)[\s\x1c-\x1f]*["']?[\s\x1c-\x1f]*(?:https?:)?//([a-z0-9İı.-]+)"#,
+        concat!(
+            r#"(?i)(?:\A|[^\p{L}\p{N}_])(?:fetch|[iİı]mport|WebSocket|EventSource|sendBeacon)[\s\x1c-\x1f]*\("#,
+            r#"[\s\x1c-\x1f]*["'`](?:(?:https?|wss?):)?//([a-z0-9İı.-]+)"#
+        ),
+        concat!(
+            r#"(?i)\.open[\s\x1c-\x1f]*\([\s\x1c-\x1f]*["'](?:GET|POST|PUT|PATCH|DELETE)["'][\s\x1c-\x1f]*,"#,
+            r#"[\s\x1c-\x1f]*["'`](?:https?:)?//([a-z0-9İı.-]+)"#
+        ),
+        r#"(?i)(?:\A|[^\p{L}\p{N}_])from[\s\x1c-\x1f]*["'](?:https?:)?//([a-z0-9İı.-]+)"#,
     ]
     .iter()
     .map(|p| Regex::new(p).expect("LOADS"))
