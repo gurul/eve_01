@@ -1,0 +1,33 @@
+[package]
+name = "eve-codex-computer"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+eve-agent-contract = { path = "../eve-agent-contract" }
+eve-codex-auth = { path = "../eve-codex-auth" }
+eve-codex-warm = { path = "../eve-codex-warm" }
+eve-pricing = { path = "../eve-pricing" }
+eve-spend = { path = "../eve-spend" }
+eve-telegram-images = { path = "../eve-telegram-images" }
+eve-vault = { path = "../eve-vault" }
+eve-vault-mcp = { path = "../eve-vault-mcp" }
+anyhow.workspace = true
+base64.workspace = true
+dirs.workspace = true
+futures.workspace = true
+indexmap.workspace = true
+libc.workspace = true
+parking_lot.workspace = true
+regex.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+chrono.workspace = true
+image.workspace = true
+tempfile.workspace = true
