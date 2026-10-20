@@ -135,6 +135,12 @@ beside the task file; `launch` reads it once, checks it is a UUID, and deletes
 it. A Work session that has ended can be continued the same way, in the work
 folder.
 
+A folder where Claude Code's folder-trust prompt was never accepted (neither it
+nor a folder above it is marked trusted in Claude's state file) is refused with
+409 and the reason: an interactive claude there stops at that prompt before it
+reads anything, and the phone cannot press it. Found live on 2026-10-20 with a
+folder that had only seen `claude -p`.
+
 `can_continue` is true for a session eve did not start whose folder and
 transcript are both there, and for an ended Work session with a transcript.
 The sheet shows a "Continue from here" box in place of the read-only note,

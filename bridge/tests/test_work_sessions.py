@@ -566,11 +566,21 @@ def test_the_switch() -> None:
 OTHER = "11111111-2222-4333-8444-555555555555"
 
 
+def trust(tmp_path: Path, *folders: Path) -> None:
+    state = tmp_path / "claude" / ".claude.json"
+    state.parent.mkdir(parents=True, exist_ok=True)
+    got = json.loads(state.read_text()) if state.exists() else {"projects": {}}
+    for f in folders:
+        got["projects"][str(f)] = {"hasTrustDialogAccepted": True}
+    state.write_text(json.dumps(got))
+
+
 def adopted(tmp_path: Path, state: State, folder: str = "eve") -> tuple[Path, Path]:
     """A session the daemon adopted from a tool hook after a restart: a cwd, no transcript_path. Its transcript is
-    where Claude Code writes it."""
+    where Claude Code writes it. Claude has been trusted in the folder above it."""
     cwd = tmp_path / "code" / folder
     cwd.mkdir(parents=True, exist_ok=True)
+    trust(tmp_path, tmp_path / "code")
     state.session_start(OTHER, cwd=str(cwd))
     path = transcript(work_sessions.derived_transcript(cwd, OTHER, tmp_path / "claude"), [
         line("user", "Make the hooks fast"), line("assistant", [{"type": "text", "text": "Ported them to Rust."}])])
@@ -729,3 +739,20 @@ def test_a_session_whose_shell_moved_continues_in_the_folder_it_started_in(tmp_p
     asyncio.run(work.continue_session(OTHER, "again"))
     assert mac.scripts[-1][1][0].startswith(f"cd {shlex.quote(str(sub))} && ")
     assert work_sessions.transcript_cwd(None) == "" and work_sessions.transcript_cwd(tmp_path / "none") == ""
+
+
+def test_continue_refuses_a_folder_claude_was_never_trusted_in(tmp_path: Path) -> None:
+    """An interactive claude in an untrusted folder stops at the trust prompt before its first prompt, and the
+    phone cannot press it: refuse with the reason instead of opening a window that waits (found live 2026-10-20)."""
+    state = State()
+    work, mac = make(tmp_path, state=state)
+    adopted(tmp_path, state)
+    claude_state = tmp_path / "claude" / ".claude.json"
+    claude_state.write_text(json.dumps({"projects": {str(tmp_path / "code"): {"hasTrustDialogAccepted": False}}}))
+    assert asyncio.run(work.continue_session(OTHER, "go")) == (409, {"ok": False, "reason": work_sessions.UNTRUSTED})
+    assert mac.scripts == []
+    assert work_sessions.folder_trusted(str(tmp_path / "code" / "eve"), tmp_path / "claude") is False
+    claude_state.write_text("not json")                                   # unreadable: never blocks
+    assert work_sessions.folder_trusted(str(tmp_path / "code" / "eve"), tmp_path / "claude") is None
+    claude_state.write_text(json.dumps({"projects": {str(tmp_path): {"hasTrustDialogAccepted": True}}}))
+    assert asyncio.run(work.continue_session(OTHER, "go"))[0] == 200     # a trusted folder above it: positive control

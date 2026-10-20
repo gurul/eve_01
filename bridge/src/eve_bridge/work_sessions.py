@@ -102,6 +102,8 @@ NO_WINDOW = "can't reach that session's window"
 NOT_OURS = "eve can only reply to or stop sessions it started from Work"
 NO_CONTINUE = "eve can't find that session's folder or transcript, so it can't continue it"
 LIVE_WORK = "that session takes replies as it is; continue is for one that can't"
+UNTRUSTED = ("Claude hasn't been trusted in that folder on this Mac yet, so it would stop at the trust prompt. "
+             "Open Claude there once and accept it.")
 UNKNOWN = "there is no such session"
 
 # Terminal.app, with every value an argument (``on run argv``), never part of the script's text.
@@ -325,6 +327,27 @@ def transcript_cwd(path: Optional[Path], limit: int = LINE_TAIL_BYTES) -> str:
         if isinstance(cwd, str) and cwd.startswith("/"):
             return cwd
     return ""
+
+
+def folder_trusted(cwd: str, config_dir: Optional[Path] = None) -> Optional[bool]:
+    """Whether Claude Code's folder-trust prompt is already accepted for ``cwd`` or a folder above it (its state file
+    keeps ``projects[<path>].hasTrustDialogAccepted``). An interactive session opens on that prompt in a folder that
+    is not, before it reads its first prompt. None when the state file cannot be read: the caller does not block."""
+    from .claude_home import claude_config_dir
+
+    base = config_dir or claude_config_dir()
+    state = Path.home() / ".claude.json" if base == Path.home() / ".claude" else base / ".claude.json"
+    try:
+        projects = json.loads(state.read_text(encoding="utf-8")).get("projects")
+    except (OSError, ValueError, AttributeError):
+        return None
+    if not isinstance(projects, dict):
+        return None
+    for folder in (Path(cwd), *Path(cwd).parents):
+        entry = projects.get(str(folder))
+        if isinstance(entry, dict) and entry.get("hasTrustDialogAccepted") is True:
+            return True
+    return False
 
 
 def last_line(path: Optional[Path]) -> str:
@@ -760,6 +783,8 @@ class WorkSessions:
                 cwd = started if started and Path(started).is_dir() else str(getattr(session, "cwd", "") or "")
             if not await asyncio.to_thread(self._continuable, cwd, path):
                 return 409, {"ok": False, "reason": NO_CONTINUE}
+            if await asyncio.to_thread(folder_trusted, cwd, self._claude_dir) is False:
+                return 409, {"ok": False, "reason": UNTRUSTED}
             title = rec.title if rec is not None and rec.title else Path(cwd).name
             new, problem = await self._open(text, client_id, now, cwd=cwd, resume=sid, title=title)
             if new is None:
