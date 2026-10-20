@@ -589,11 +589,19 @@ pub fn expanduser(raw: &str) -> PathBuf {
     let Some(home) = home_of(&first[1..]) else {
         return PathBuf::from(norm);
     };
+    PathBuf::from(expand_with_home(&home, rest))
+}
+
+/// `~` (or `~user`) and the rest of the path, as pathlib joins them: os.path.expanduser cuts the home's trailing
+/// slashes and gives "/" when nothing is left, so HOME=/ makes "/x", never the "//x" POSIX keeps as its own root.
+fn expand_with_home(home: &str, rest: Option<&str>) -> String {
+    let cut = home.trim_end_matches('/');
     let joined = match rest {
-        Some(r) => format!("{home}/{r}"),
-        None => home,
+        Some(r) => format!("{cut}/{r}"),
+        None if cut.is_empty() => "/".to_string(),
+        None => cut.to_string(),
     };
-    PathBuf::from(pure_path(&joined))
+    pure_path(&joined)
 }
 
 // ---- time --------------------------------------------------------------------------------------
@@ -723,5 +731,8 @@ mod tests {
         assert_eq!(expanduser("~/.config/eve-bridge/chief"), PathBuf::from(format!("{home}/.config/eve-bridge/chief")));
         assert_eq!(expanduser("/x/~"), PathBuf::from("/x/~"));
         assert_eq!(expanduser("~no-such-user-here/x"), PathBuf::from("~no-such-user-here/x"));
+        assert_eq!(expand_with_home("/", Some("x")), "/x");
+        assert_eq!(expand_with_home("//", None), "/");
+        assert_eq!(expand_with_home("//srv/me/", Some("a")), "//srv/me/a");
     }
 }

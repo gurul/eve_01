@@ -12,7 +12,9 @@ indexmap.workspace = true
 libc.workspace = true
 parking_lot.workspace = true
 regex.workspace = true
-serde_json.workspace = true
+# float_roundtrip: a card's times read back from cards.json are the floats Python wrote, to the bit, so a save
+# keeps their digits (the default parser can be one ulp off).
+serde_json = { workspace = true, features = ["float_roundtrip"] }
 tempfile.workspace = true
 thiserror.workspace = true
 tracing.workspace = true

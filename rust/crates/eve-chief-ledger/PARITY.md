@@ -7,7 +7,7 @@ read-backs (`due`, `for_turn`, `matching`). One Python module, ported into `src/
 files depend on (json dump/load incl. non-finite numbers, float repr, `round`, `repr`, `str.split`, `casefold`,
 `splitlines`, pathlib `expanduser`, naive `timestamp()`, OSError names) are in the private `src/py.rs`. Cards,
 parse, revise, reopen, `to_json`/`from_json`, `at_time` and `card_number` come from eve-chief-card.
-`cargo test -p eve-chief-ledger`: 36 tests pass (30 ledger, 6 py helpers).
+`cargo test -p eve-chief-ledger`: 37 tests pass (31 ledger, 6 py helpers).
 
 ## Modules
 | Python | Rust |
@@ -64,7 +64,7 @@ parse, revise, reopen, `to_json`/`from_json`, `at_time` and `card_number` come f
 | Python file | Python tests | Rust tests | Not ported (why) |
 |---|---|---|---|
 | test_chief_record.py (ledger half) | test_the_ledger_is_in_the_temp_folder_during_tests, test_positive_control_unset_the_ledger_resolves_to_the_config_folder, test_new_files_the_card_under_a_fresh_id_and_logs_created, test_ids_are_never_reused, test_a_failed_replace_leaves_the_old_file_and_memory_as_they_were, test_an_unreadable_file_moves_to_bad_and_is_reported_once, test_one_card_that_does_not_load_is_skipped_not_the_whole_list, test_state_changes_do_not_bump_rev_and_a_revision_does, test_an_event_that_cannot_be_written_says_so, test_events_carry_scalars_capped, test_due_finds_cues_and_nudges_that_have_come, test_for_turn_is_one_short_line, test_matching_finds_the_card_the_owners_words_are_about, test_redact_removes_the_cards_and_their_events, test_attack_a_number_too_big_sets_the_card_aside_instead_of_crashing, test_attack_a_card_that_does_not_load_is_kept_aside_and_reported, test_attack_a_file_of_the_wrong_shape_is_moved_aside_not_overwritten, test_events_parse_only_the_lines_appended_since_the_last_read | same names in src/tests.rs | The env fixture is a passed map (tests never set the process env). The failed `os.replace` is a swapped replace fn (`set_replace`). The json.loads counter is JsonlRows' parsed-line counter. "not a state field" and the Spent/Budget/Nudges type checks are compile-time (StateUpdate/PhaseUpdate). The card half belongs to eve-chief-card |
-| (new, against CPython output) | | the_cards_file_is_written_as_json_dump_indent_1, an_event_line_is_compact_json_with_ids_first, the_new_dir_is_made_700, a_cards_list_that_is_null_is_the_wrong_shape_and_a_missing_one_is_empty, a_card_that_is_not_an_object_is_named_by_its_place, jsonl_rows_skip_foreign_lines_and_read_a_missing_file_as_empty, claim_starts_a_queued_phase_once_and_only_with_its_go, claim_starts_nothing_when_the_dispatch_line_cannot_be_written, replan_applies_only_to_the_card_it_was_asked_about, the_store_gives_the_oldest_finished_cards_way_at_the_cap, describe_says_what_each_open_card_waits_on, redact_keeps_torn_lines_and_reads_text_as_python_does; py.rs unit tests | |
+| (new, against CPython output) | | the_cards_file_is_written_as_json_dump_indent_1, an_event_line_is_compact_json_with_ids_first, the_new_dir_is_made_700, a_cards_list_that_is_null_is_the_wrong_shape_and_a_missing_one_is_empty, a_card_that_is_not_an_object_is_named_by_its_place, jsonl_rows_skip_foreign_lines_and_read_a_missing_file_as_empty, claim_starts_a_queued_phase_once_and_only_with_its_go, claim_starts_nothing_when_the_dispatch_line_cannot_be_written, replan_applies_only_to_the_card_it_was_asked_about, the_store_gives_the_oldest_finished_cards_way_at_the_cap, describe_says_what_each_open_card_waits_on, redact_keeps_torn_lines_and_reads_text_as_python_does, for_turn_with_a_time_python_cannot_convert_has_nothing_due; py.rs unit tests | |
 | test_chief.py, test_chief_desk.py, test_chief_lean.py, test_telegram_chief.py | read for behavior (claim, replan, due, for_turn, first_brief over a Ledger) | covered by the tests above | they test chief, chief_desk and the Telegram door through the ledger; ported with those crates |
 
 ## Boundaries
@@ -79,5 +79,10 @@ None.
   `claim(..., phase=...)` would raise TypeError there).
 - An `EVE_CHIEF_DIR` or folder starting with `~unknown-user` is kept literally; pathlib raises RuntimeError.
 - `for_turn` with a time `fromtimestamp` cannot convert treats today as "" (no commitment is due); Python raises.
+- A cards file holding a lone surrogate escape (`"\ud800"`) is unreadable to serde_json, so Rust moves it aside
+  where Python loads it. CPython itself cannot write such a card to events.jsonl (utf-8 encode fails), and nothing
+  eve writes holds one.
+- An integer beyond u64/i64 (`rev` of 2**70) reads as a float in Rust and that card is set aside; Python keeps
+  the int. No eve number reaches that size.
 - serde_json's nesting limit (128) makes a deeper cards file "unreadable" (moved aside); CPython raises
   RecursionError past ~1000 levels.

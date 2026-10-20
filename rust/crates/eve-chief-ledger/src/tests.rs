@@ -708,3 +708,14 @@ fn redact_keeps_torn_lines_and_reads_text_as_python_does() {
     assert!(lines[1].contains("\"e\":\"redacted\",\"id\":\"\",\"count\":1}"), "{}", lines[1]);
     assert_eq!(led.redact(Vec::<String>::new()).unwrap(), 0);
 }
+
+#[test]
+fn for_turn_with_a_time_python_cannot_convert_has_nothing_due() {
+    let tmp = tempfile::tempdir().unwrap();
+    let led = ledger(tmp.path());
+    // a commitment with neither a deadline nor a cue: its "" dates must not match an unknown today
+    let bare = Card { deadline: None, cue: None, ..reminder() };
+    led.new_card(bare, "take_on").unwrap();
+    assert_eq!(led.for_turn(f64::NAN), "");
+    assert_eq!(led.for_turn(1e300), "");
+}

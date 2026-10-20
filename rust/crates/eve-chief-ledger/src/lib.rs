@@ -1079,7 +1079,8 @@ impl Ledger {
         let due: Vec<&Card> = cards
             .iter()
             .filter(|c| {
-                c.kind == "commitment" && c.status != "proposed" && {
+                // `today` is "" only where Python's fromtimestamp raises: then nothing is due today
+                c.kind == "commitment" && c.status != "proposed" && !today.is_empty() && {
                     let deadline = py::take_chars(c.deadline.as_deref().unwrap_or(""), 10);
                     let cue = py::take_chars(c.cue.as_ref().and_then(|q| q.at.as_deref()).unwrap_or(""), 10);
                     today == deadline || today == cue
