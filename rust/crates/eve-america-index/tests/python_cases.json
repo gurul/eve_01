@@ -1,0 +1,510 @@
+{
+ "canonical": [
+  {
+   "in": "https://uscode.house.gov/currency/currency.shtml",
+   "out": "https://uscode.house.gov/currency/currency.shtml"
+  },
+  {
+   "in": "https://WWW.IRS.GOV:443/forms;jsessionid=one?year=2025&utm_source=mail&form=1040#section",
+   "out": "https://www.irs.gov/forms?form=1040&year=2025"
+  },
+  {
+   "in": "https://www.irs.gov/forms%3Bjsessionid%3Dtwo?form=1040&year=2025&SESSION_ID=private",
+   "out": "https://www.irs.gov/forms?form=1040&year=2025"
+  },
+  {
+   "in": "https://www.irs.gov/forms%3bJSESSIONID%3dtwo/next;phpsessid=a;b",
+   "out": "https://www.irs.gov/forms/next;b"
+  },
+  {
+   "in": "https://www.irs.gov/a;sessionid=x;jsessionid=y/z",
+   "out": "https://www.irs.gov/a/z"
+  },
+  {
+   "in": "https://uscode.house.gov/%7Ecode%20page?title=42&section=1983&id=x&sid=y&x=b&x=a",
+   "out": "https://uscode.house.gov/~code%20page?id=x&section=1983&sid=y&title=42&x=b&x=a"
+  },
+  {
+   "in": "https://www.irs.gov.",
+   "out": "https://www.irs.gov/"
+  },
+  {
+   "in": "https://www.irs.gov",
+   "out": "https://www.irs.gov/"
+  },
+  {
+   "in": "https://www.irs.gov:",
+   "out": "https://www.irs.gov/"
+  },
+  {
+   "in": "https://www.irs.gov:/x",
+   "out": "https://www.irs.gov/x"
+  },
+  {
+   "in": "https://www.irs.gov/?query=benefits",
+   "out": "https://www.irs.gov/?query=benefits"
+  },
+  {
+   "in": "https://www.irs.gov/?a+b=c+d&e=%2B&f=%20",
+   "out": "https://www.irs.gov/?a+b=c+d&e=%2B&f=+"
+  },
+  {
+   "in": "https://www.irs.gov/?q=%C3%A9&r=%C3&s=%E2%82&t=%ED%A0%80&u=%F0%80",
+   "out": "https://www.irs.gov/?q=%C3%A9&r=%EF%BF%BD&s=%EF%BF%BD&t=%EF%BF%BD%EF%BF%BD%EF%BF%BD&u=%EF%BF%BD%EF%BF%BD"
+  },
+  {
+   "in": "https://www.irs.gov/?q=%C3é%A9",
+   "out": "https://www.irs.gov/?q=%EF%BF%BD%C3%A9%EF%BF%BD"
+  },
+  {
+   "in": "https://www.irs.gov/é?q=é",
+   "out": "https://www.irs.gov/é?q=%C3%A9"
+  },
+  {
+   "in": "https://www.irs.gov/?a&b=&=c&&d=1",
+   "out": "https://www.irs.gov/?=c&a=&b=&d=1"
+  },
+  {
+   "in": "https://www.irs.gov/?",
+   "out": "https://www.irs.gov/"
+  },
+  {
+   "in": "https://www.irs.gov/#frag",
+   "out": "https://www.irs.gov/"
+  },
+  {
+   "in": "https://www.irs.gov/?UTM_x=1&Utm_=2&ASPSESSIONIDabc=3&gclid=4&_GA=5&Access_Token=6&keep=7",
+   "out": "https://www.irs.gov/?keep=7"
+  },
+  {
+   "in": "https://www.irs.gov/?b=1&a=2&B=3&A=4&a=1",
+   "out": "https://www.irs.gov/?A=4&B=3&a=2&a=1&b=1"
+  },
+  {
+   "in": "https://www.irs.gov/%41%2f%2F%7e%5f%2d%2e%61%ff%c3%a9",
+   "out": "https://www.irs.gov/A%2F%2F~_-.a%FF%C3%A9"
+  },
+  {
+   "in": "https://www.irs.gov/%7f",
+   "out": null
+  },
+  {
+   "in": "https://www.irs.gov/%1f",
+   "out": null
+  },
+  {
+   "in": "https://www.irs.gov/?q=%7f",
+   "out": null
+  },
+  {
+   "in": "https://www.irs.gov/?q=%5c",
+   "out": null
+  },
+  {
+   "in": "https://www.irs.gov/?q=%5C",
+   "out": null
+  },
+  {
+   "in": "https://www.irs.gov/?%0a=1",
+   "out": null
+  },
+  {
+   "in": "https://Kansas.gov/",
+   "out": "https://kansas.gov/"
+  },
+  {
+   "in": "https://www.army.mil/legal",
+   "out": "https://www.army.mil/legal"
+  },
+  {
+   "in": "https://a-b.gov/",
+   "out": "https://a-b.gov/"
+  },
+  {
+   "in": "https://-ab.gov/",
+   "out": null
+  },
+  {
+   "in": "https://ab-.gov/",
+   "out": null
+  },
+  {
+   "in": "https://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gov/",
+   "out": "https://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gov/"
+  },
+  {
+   "in": "https://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gov/",
+   "out": null
+  },
+  {
+   "in": "https://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gov/",
+   "out": "https://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gov/"
+  },
+  {
+   "in": "https://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gov/",
+   "out": "https://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gov/"
+  },
+  {
+   "in": "HTTPS://www.irs.gov/a",
+   "out": "https://www.irs.gov/a"
+  },
+  {
+   "in": "https:www.irs.gov/a",
+   "out": null
+  },
+  {
+   "in": "https:///www.irs.gov",
+   "out": null
+  },
+  {
+   "in": "https://www.irs.gov//evil.com/x",
+   "out": "https://www.irs.gov//evil.com/x"
+  },
+  {
+   "in": "https://www.irs.gov?x=1",
+   "out": "https://www.irs.gov/?x=1"
+  },
+  {
+   "in": "https://www.irs.gov:443?x=1",
+   "out": "https://www.irs.gov/?x=1"
+  },
+  {
+   "in": "https://www.irs.gov:0443/",
+   "out": "https://www.irs.gov/"
+  },
+  {
+   "in": "https://www.irs.gov:99999/",
+   "out": null
+  },
+  {
+   "in": "https://www.irs.gov:４４３/",
+   "out": null
+  },
+  {
+   "in": "https://www.irs.gov./a",
+   "out": "https://www.irs.gov/a"
+  },
+  {
+   "in": "https://www.irs.gov../a",
+   "out": null
+  },
+  {
+   "in": "https://.gov/",
+   "out": null
+  },
+  {
+   "in": "https://irs.GOV.",
+   "out": "https://irs.gov/"
+  },
+  {
+   "in": "https://x.gov/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "out": null
+  },
+  {
+   "in": "https://x.gov/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "out": "https://x.gov/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  {
+   "in": "https://x.gov/?a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1",
+   "out": "https://x.gov/?a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1"
+  },
+  {
+   "in": "https://x.gov/?a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1",
+   "out": null
+  },
+  {
+   "in": "https://x.gov/?&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&",
+   "out": null
+  },
+  {
+   "in": "https://www.irs.gov/a b",
+   "out": null
+  },
+  {
+   "in": "https://www.irs.gov/a b",
+   "out": null
+  },
+  {
+   "in": "https://www.irs.gov/ab",
+   "out": null
+  },
+  {
+   "in": "https://www.irs.gov/a​b",
+   "out": "https://www.irs.gov/a​b"
+  },
+  {
+   "in": "https://[::1]/a",
+   "out": null
+  },
+  {
+   "in": "https://[v1.x]/a",
+   "out": null
+  },
+  {
+   "in": "https://www.irs.gov]/a",
+   "out": null
+  },
+  {
+   "in": "https://user@www.irs.gov/",
+   "out": null
+  },
+  {
+   "in": "https://:@www.irs.gov/",
+   "out": null
+  },
+  {
+   "in": "https://www.irs.gov/?q=a%3Db&r=%26",
+   "out": "https://www.irs.gov/?q=a%3Db&r=%26"
+  },
+  {
+   "in": "https://www.irs.gov/?q=é",
+   "out": "https://www.irs.gov/?q=%C3%A9"
+  },
+  {
+   "in": "https://www.irs.gov/?q=éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé",
+   "out": null
+  },
+  {
+   "in": "",
+   "out": null
+  },
+  {
+   "in": "https://www.irs.gov/%",
+   "out": null
+  },
+  {
+   "in": "https://www.irs.gov/%4",
+   "out": null
+  },
+  {
+   "in": "https://www.irs.gov/%4g",
+   "out": null
+  },
+  {
+   "in": "ftp://www.irs.gov/",
+   "out": null
+  },
+  {
+   "in": "https://www.irs.gov/;JsessionId%3Dabc?x",
+   "out": "https://www.irs.gov/?x="
+  },
+  {
+   "in": "https://www.irs.gov/a;jsessionid",
+   "out": "https://www.irs.gov/a;jsessionid"
+  },
+  {
+   "in": "https://www.irs.gov/a%3Bjsessionid=",
+   "out": "https://www.irs.gov/a"
+  },
+  {
+   "in": "https://www.irs.gov/path;ſessionid=x",
+   "out": "https://www.irs.gov/path"
+  },
+  {
+   "in": "https://www.irs.gov/?ſession=1&session=2",
+   "out": "https://www.irs.gov/?%C5%BFession=1"
+  },
+  {
+   "in": "https://www.irs.gov/?q=%E2%80%A8",
+   "out": "https://www.irs.gov/?q=%E2%80%A8"
+  },
+  {
+   "in": "https://www.irs.gov/a;jsessİonid=x/b",
+   "out": "https://www.irs.gov/a/b"
+  },
+  {
+   "in": "https://www.irs.gov/a;jsessıonid=x/b",
+   "out": "https://www.irs.gov/a/b"
+  },
+  {
+   "in": "https://www.irs.gov/a%3BPHPSESSID%3D1;b",
+   "out": "https://www.irs.gov/a;b"
+  },
+  {
+   "in": "https://www.irs.gov/a;Ksessionid=1",
+   "out": "https://www.irs.gov/a;Ksessionid=1"
+  },
+  {
+   "in": "https://www.irs.gov/a%3b%3bsessionid=1",
+   "out": "https://www.irs.gov/a%3B"
+  },
+  {
+   "in": "https://www.irs.gov/?Session=1&SESSIONİ=2&cfid=3&CFToken=4&mc_cid=5&MC_EID=6&dclid=7&msclkid=8&_gl=9&utm=10",
+   "out": "https://www.irs.gov/?SESSION%C4%B0=2&utm=10"
+  },
+  {
+   "in": "https://www.irs.gov/?q=+%2b+",
+   "out": "https://www.irs.gov/?q=+%2B+"
+  }
+ ],
+ "text": [
+  {
+   "in": "  a \t b\n\nc  ",
+   "limit": 10,
+   "text": "a b c",
+   "truncated": false
+  },
+  {
+   "in": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   "limit": 10,
+   "text": "xxxxxxxxxx",
+   "truncated": true
+  },
+  {
+   "in": "                                             abc",
+   "limit": 10,
+   "text": "",
+   "truncated": true
+  },
+  {
+   "in": "a\u001cb\u001fcd e f​g",
+   "limit": 100,
+   "text": "a b c d e f​g",
+   "truncated": false
+  },
+  {
+   "in": "éééééééééééééééééééééééééééééé",
+   "limit": 5,
+   "text": "ééééé",
+   "truncated": true
+  },
+  {
+   "in": "",
+   "limit": 3,
+   "text": "",
+   "truncated": false
+  },
+  {
+   "in": "a b",
+   "limit": 2,
+   "text": "a ",
+   "truncated": true
+  },
+  {
+   "in": "ab ",
+   "limit": 2,
+   "text": "ab",
+   "truncated": false
+  },
+  {
+   "in": "                                       a",
+   "limit": 10,
+   "text": "a",
+   "truncated": false
+  },
+  {
+   "in": "                                        a",
+   "limit": 10,
+   "text": "",
+   "truncated": true
+  }
+ ],
+ "indexed_at": [
+  {
+   "in": 1787585414000,
+   "out": "2026-08-24T15:30:14.000Z"
+  },
+  {
+   "in": 1787585414123,
+   "out": "2026-08-24T15:30:14.123Z"
+  },
+  {
+   "in": 1787585414123.7,
+   "out": "2026-08-24T15:30:14.123Z"
+  },
+  {
+   "in": 0,
+   "out": "1970-01-01T00:00:00.000Z"
+  },
+  {
+   "in": 0.4,
+   "out": "1970-01-01T00:00:00.000Z"
+  },
+  {
+   "in": 0.5,
+   "out": "1970-01-01T00:00:00.000Z"
+  },
+  {
+   "in": 0.0005,
+   "out": "1970-01-01T00:00:00.000Z"
+  },
+  {
+   "in": 253402300799999,
+   "out": "9999-12-31T23:59:59.998Z"
+  },
+  {
+   "in": 253402300800000,
+   "out": null
+  },
+  {
+   "in": 1787585414999.9995,
+   "out": "2026-08-24T15:30:15.000Z"
+  },
+  {
+   "in": 1500000000000000.0,
+   "out": null
+  },
+  {
+   "in": 1e+300,
+   "out": null
+  }
+ ],
+ "readable": [
+  {
+   "in": "<p>x</p>",
+   "out": true
+  },
+  {
+   "in": "﻿ \n%PDF-1.7\nA",
+   "out": false
+  },
+  {
+   "in": "PNG",
+   "out": false
+  },
+  {
+   "in": "�PNG...",
+   "out": false
+  },
+  {
+   "in": "GIF87a",
+   "out": false
+  },
+  {
+   "in": "GIF89a",
+   "out": false
+  },
+  {
+   "in": "PK\u0003\u0004",
+   "out": false
+  },
+  {
+   "in": "a\u0000b",
+   "out": false
+  },
+  {
+   "in": "a\u001bb",
+   "out": false
+  },
+  {
+   "in": " \t\r\n<p>",
+   "out": true
+  },
+  {
+   "in": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\u0000",
+   "out": true
+  },
+  {
+   "in": "﻿﻿PK\u0003\u0004",
+   "out": false
+  },
+  {
+   "in": "\fabc",
+   "out": false
+  },
+  {
+   "in": "%PDF",
+   "out": true
+  }
+ ]
+}
