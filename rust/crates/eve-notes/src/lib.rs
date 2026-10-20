@@ -76,3 +76,5 @@ mod tests;
 mod tests_detailed;
 #[cfg(test)]
 mod tests_ref;
+#[cfg(test)]
+mod tests_python_reference;

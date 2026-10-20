@@ -27,7 +27,7 @@ Status: complete
 | `make_notes_client` | `make_notes_client(Option<&HashMap>)` | `None` reads the process env; same warning text |
 | `NotesConfig` | `NotesConfig` (`Default` = the dataclass defaults) | |
 | `_off` | `off` | |
-| `configured` | `configured(Option<&HashMap>)` | `float()` parsing (whitespace, `_`, inf/nan), clamping with Python's NaN handling, same warning |
+| `configured` | `configured(Option<&HashMap>)` | `float()` parsing (whitespace, `_`, inf/nan, Unicode `Nd` digits), clamping with Python's NaN handling, same warning |
 | `to_wav` | `to_wav(pcm, rate)` | the bytes Python's `wave` writes (odd lengths too) |
 | `rms` | `rms` | same sampling step |
 | `wants_stop` | `wants_stop` | |
@@ -75,6 +75,7 @@ Status: complete
 |---|---|---|---|
 | `tests/test_notes.py` | all 22 | `src/tests.rs`: same names | none |
 | `tests/test_notes_detailed.py` | `test_schema_and_render_round_trip`, `test_a_conversation_and_a_memo_get_their_own_sections`, `test_the_prompt_states_its_values_as_sets_and_carries_no_banned_title`, `test_a_quote_that_is_not_in_its_line_is_dropped`, `test_a_long_recording_is_written_up_in_overlapping_windows_then_merged`, `test_a_failed_merge_is_done_in_code_and_a_short_recording_is_one_call`, `test_the_transcript_is_on_disk_before_the_summary_and_survives_its_crash`, `test_labels_stay_one_voice_across_pieces_through_known_speakers`, `test_the_owner_is_reference_one_on_every_piece`, `test_a_bad_reference_is_dropped_and_the_piece_tried_again`, `test_speaker_names_follow_first_appearance`, `test_without_afconvert_or_when_it_fails_the_pieces_go_as_wav_under_the_limit`, `test_afconvert_makes_a_small_aac_piece`, `test_a_session_ends_with_the_speaker_pass_and_its_count`, `test_the_pass_can_be_turned_off_and_the_owner_named`, `test_a_failed_pass_keeps_the_live_transcript` | `src/tests_detailed.rs`: same names, plus `render_writes_the_bytes_python_writes`, `the_prompts_are_byte_identical_to_the_python`, `the_combine_input_is_pythons_json_dumps`, `the_owner_clip_is_read_as_a_data_url_by_its_suffix` | `test_the_texted_notes_carry_every_section_in_messages_under_the_limit`, `test_the_texted_notes_cap_out_at_the_file_and_carry_the_words_when_there_is_no_file` test `phone_call.notes_messages` (the phone-call crate); `test_live_one_real_diarize_call_on_two_synthetic_voices` is `live` and skips itself in Python too, since `OpenAINotesClient` has no `diarize` |
+| (differential, no Python test) | `notes.py`'s own outputs for edge inputs, recorded in `tests/fixtures/python_reference.json` | `src/tests_python_reference.rs`: `the_pure_functions_match_pythons_outputs` (`clean_summary`, `render`, `note_sections`, `merge_partials`, `_segments`, `_at`, `_items`, `stitch`, `wants_stop`, `_slug`, `stamp`, `configured`) | |
 | `tests/test_model_memory_roles.py` (ref) | `test_room_notes_summary_and_reduce_use_summary_model` | `src/tests_ref.rs`: same name, both parametrizations, through the real OpenRouter client against a local server | the other tests are other modules' |
 | `tests/test_spend_wiring.py` (ref) | `test_room_notes_transcription_by_tokens_or_by_the_clip_and_the_summary` | `src/tests_ref.rs`: same name | the other tests are other modules' |
 | `tests/test_phone_notes.py` (ref) | `test_pushed_audio_feeds_only_a_listening_session` | `src/tests.rs`: `the_pushed_audio_feeds_only_a_listening_session` | the rest drive `phone_call`/`miniapp` (their crates) |
@@ -86,4 +87,6 @@ Status: complete
 - `RoomNotes.start()` must be called inside a tokio runtime (Python needs a running asyncio loop for the same reason).
 - The worker pool is a 2-permit semaphore over `spawn_blocking` rather than a `ThreadPoolExecutor(max_workers=2)`; a call's timeout still counts its queueing, and `close()` fails queued calls (`CancelledError`) while running ones finish, as `shutdown(wait=False, cancel_futures=True)` does.
 - `recent` returns `io::Result`: an unreadable folder is an error where Python's `iterdir` raises.
+- When the spool file cannot be created, its temporary folder is removed; the Python leaves the empty `eve-notes-*` folder behind (it only records the folder once both steps succeed).
+- Numbers in a model reply are parsed by the workspace's `serde_json`, which is built without `float_roundtrip`: a float with 17 significant digits can come back one unit in the last place off Python's `json.loads` (for example `2.0**70` in a list `_items` reads). Turning the feature on belongs in the root `Cargo.toml`.
 - Log lines name a test fake's plain `anyhow` error as `Exception` where Python would print the fake's own exception class.

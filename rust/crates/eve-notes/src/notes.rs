@@ -265,7 +265,17 @@ pub fn error_name(e: &anyhow::Error) -> String {
 /// `float(s)` for a string: surrounding whitespace, a sign, `_` between digits, `inf`/`infinity`/`nan`. None where
 /// Python raises ValueError.
 pub fn py_float(s: &str) -> Option<f64> {
-    let t = py::strip(s).to_ascii_lowercase();
+    // Any Unicode decimal digit (`Nd`) counts as its ASCII digit, as in Python: float("４") == 4.0.
+    let t: String = py::strip(s)
+        .chars()
+        .map(|c| {
+            if c.is_ascii() {
+                c.to_ascii_lowercase()
+            } else {
+                py::int(c.encode_utf8(&mut [0u8; 4])).and_then(|d| char::from_digit(d as u32, 10)).unwrap_or(c)
+            }
+        })
+        .collect();
     if t.is_empty() || !t.is_ascii() {
         return None;
     }
