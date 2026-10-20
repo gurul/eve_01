@@ -1,0 +1,40 @@
+[package]
+name = "eve-computer-agent"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+name = "eve_computer_agent"
+path = "src/lib.rs"
+
+[dependencies]
+eve-agent-contract = { path = "../eve-agent-contract" }
+eve-browser-lane = { path = "../eve-browser-lane" }
+eve-consent = { path = "../eve-consent" }
+eve-decider = { path = "../eve-decider" }
+eve-desktop-lanes = { path = "../eve-desktop-lanes" }
+eve-jev = { path = "../eve-jev" }
+eve-openrouter = { path = "../eve-openrouter" }
+eve-plan-contract = { path = "../eve-plan-contract" }
+eve-pricing = { path = "../eve-pricing" }
+eve-spend = { path = "../eve-spend" }
+eve-typed-ask = { path = "../eve-typed-ask" }
+anyhow.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+futures.workspace = true
+async-trait.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+regex.workspace = true
+indexmap.workspace = true
+parking_lot.workspace = true
+chrono.workspace = true
+tracing.workspace = true
+reqwest.workspace = true
+libc.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
