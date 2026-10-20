@@ -1,0 +1,16 @@
+[package]
+name = "eve-chrome-lane"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+eve-agent-contract = { path = "../eve-agent-contract" }
+anyhow.workspace = true
+async-trait.workspace = true
+futures.workspace = true
+parking_lot.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+tracing.workspace = true
