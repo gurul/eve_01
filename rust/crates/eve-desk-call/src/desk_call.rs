@@ -471,8 +471,16 @@ pub struct DeskLink {
     rx: tokio::sync::Mutex<mpsc::UnboundedReceiver<(i16, Vec<u8>)>>,
     ring: Mutex<String>,
     phase: Mutex<String>,
-    /// Phase hooks run one at a time, in order (Python's single loop thread never ran two at once).
+    /// Ring lines reach the board in the order the ring changed. Python got that for free: each `set_ring` set the
+    /// ring and handed its line to the board's writer in one step of the single loop thread. Here two tasks on two
+    /// worker threads could set the ring in one order and have their lines arrive in the other, leaving the board on
+    /// a state the ring no longer holds.
+    ring_turn: tokio::sync::Mutex<()>,
+    /// Phase hooks are told in the order the phase changed, for the same reason: on the multi-threaded runtime a
+    /// later hook could otherwise run before an earlier one and leave the follower on the wrong phase.
     phase_turn: tokio::sync::Mutex<()>,
+    /// The speaker failed a flush: in Python that exception left `Call.run`, so the call ended.
+    failed: AtomicBool,
 }
 
 impl DeskLink {
@@ -487,12 +495,19 @@ impl DeskLink {
             rx: tokio::sync::Mutex::new(rx),
             ring: Mutex::new("idle".into()),
             phase: Mutex::new("idle".into()),
+            ring_turn: tokio::sync::Mutex::new(()),
             phase_turn: tokio::sync::Mutex::new(()),
+            failed: AtomicBool::new(false),
         })
     }
 
     pub fn is_closed(&self) -> bool {
         self.closed.load(Ordering::SeqCst)
+    }
+
+    /// Whether the speaker failed a flush, which ends the call (Python's exception out of `Call.run`).
+    pub fn failed(&self) -> bool {
+        self.failed.load(Ordering::SeqCst)
     }
 
     /// The ring's state as last sent.
@@ -528,17 +543,20 @@ impl DeskLink {
     }
 
     pub async fn set_ring(&self, state: &str) {
-        let changed = {
-            let mut ring = self.ring.lock();
-            if *ring != state {
-                *ring = state.to_string();
-                true
-            } else {
-                false
+        {
+            let _turn = self.ring_turn.lock().await;
+            let changed = {
+                let mut ring = self.ring.lock();
+                if *ring != state {
+                    *ring = state.to_string();
+                    true
+                } else {
+                    false
+                }
+            };
+            if changed {
+                let _ = (self.send_board)(json!({"cmd": "agent", "state": state})).await;
             }
-        };
-        if changed {
-            let _ = (self.send_board)(json!({"cmd": "agent", "state": state})).await;
         }
         // The ring goes quiet between presses, but the call is still a conversation with someone at the desk.
         self.set_phase(if matches!(state, "thinking" | "speaking") { state } else { "listening" }).await;
@@ -595,10 +613,15 @@ impl CallSocket for DeskLink {
         let kind = obj.get("type").and_then(Value::as_str);
         match kind {
             Some("flush") => {
-                self.speaker.flush().await.map_err(|e| {
+                if let Err(e) = self.speaker.flush().await {
+                    // Python: the flush's exception (the board's link failed) is not Closed, so it left
+                    // Call.interrupt and Call.run and the call ended. The call's socket can only say Closed, so the
+                    // link closes: the call's next read ends it, and the desk logs the end as Python did ("?").
                     warn!("desk call: the speaker failed ({:#})", e);
-                    Closed(e.to_string())
-                })?;
+                    self.failed.store(true, Ordering::SeqCst);
+                    self.close(1000).await;
+                    return Err(Closed(e.to_string()));
+                }
             }
             Some("state") => {
                 let state = obj.get("state").map(py_str).unwrap_or_else(|| "None".into());
@@ -660,8 +683,10 @@ struct DeskState {
 }
 
 impl DeskState {
+    /// `task is not None and not task.done()`. The task's last step tells `done`; the handle itself reports finished
+    /// a moment later, so `stop()` returning would otherwise leave `active` true for that moment.
     fn active(&self) -> bool {
-        self.task.as_ref().is_some_and(|t| !t.is_finished())
+        self.task.as_ref().is_some_and(|t| !t.is_finished()) && !self.done.as_ref().is_some_and(|d| *d.borrow())
     }
 }
 
@@ -822,6 +847,8 @@ impl Inner {
             link.set_phase("listening").await;
             let pinger = tokio::spawn(keepalive(me.clone(), link.clone()));
             let reason = AssertUnwindSafe(call.run()).catch_unwind().await.unwrap_or_else(|_| "?".to_string());
+            // a failed flush ended the call as an exception did in Python, before `reason` was set
+            let reason = if link.failed() { "?".to_string() } else { reason };
             pinger.abort();
             {
                 let mut st = me.st.lock();

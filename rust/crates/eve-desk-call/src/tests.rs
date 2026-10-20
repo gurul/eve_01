@@ -630,3 +630,82 @@ fn the_resampler_keeps_the_rate_and_shape() {
     assert_eq!(int16_to_float(i16::MIN), -1.0);
     assert_eq!(int16_to_float(16384), 0.5);
 }
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn a_stopped_desk_call_is_not_active_the_moment_stop_returns() {
+    // test_desk_call_lean's P3 trace reads `active` straight after `stop()`, with no turn of the loop between.
+    for _ in 0..20 {
+        let rig = calls(Some(Brain::new("")), Some(Voice::new()), None);
+        rig.desk.press(true).await;
+        assert!(rig.desk.active());
+        rig.desk.stop().await;
+        assert!(!rig.desk.active() && !rig.desk.held());
+    }
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn a_board_that_fails_a_flush_ends_the_call() {
+    // Python: the flush's error is not Closed, so it left Call.run and the desk call ended ("ended (?)").
+    let (rec, sent) = recorder();
+    let failing: BoardSend = Arc::new(move |obj: Value| {
+        let flush = obj == json!({"cmd": "pcm_flush"});
+        let r = rec(obj);
+        Box::pin(async move {
+            r.await?;
+            if flush {
+                anyhow::bail!("serial link down");
+            }
+            Ok(())
+        })
+    });
+    let (mic_factory, made) = mic_factory();
+    let board_send = failing.clone();
+    let desk = DeskCalls::new(
+        Some(Brain::default_reply()),
+        Some(Voice::new()),
+        failing,
+        DeskOptions {
+            mic_factory,
+            speaker_factory: Arc::new(move || Arc::new(BoardSpeaker::new(board_send.clone())) as Arc<dyn DeskSpeaker>),
+            ..DeskOptions::default()
+        },
+    );
+    desk.press(true).await;
+    // the first press's interrupt already flushes the board, and that flush fails
+    let d = desk.clone();
+    until(|| !d.active(), 5.0).await;
+    assert!(desk.link().unwrap().failed() && desk.link().unwrap().closed());
+    assert!(sent.lock().contains(&json!({"cmd": "pcm_flush"})));
+    assert_eq!(rings(&sent).last().map(String::as_str), Some("idle"));
+    assert!(!desk.held() && made.lock().iter().all(|m| m.closed()));
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn ring_lines_reach_the_board_in_the_order_the_ring_changed() {
+    let gate = Arc::new(tokio::sync::Semaphore::new(0));
+    let (rec, sent) = recorder();
+    let g = gate.clone();
+    let send: BoardSend = Arc::new(move |obj: Value| {
+        let slow = obj == json!({"cmd": "agent", "state": "listening"});
+        let (g, rec) = (g.clone(), rec.clone());
+        Box::pin(async move {
+            if slow {
+                let _ = g.acquire().await; // the serial link is busy with the first line
+            }
+            rec(obj).await // recorded as it lands on the board
+        })
+    });
+    let link = DeskLink::new(send, Arc::new(FakeSpeaker::default()), None);
+    let l = link.clone();
+    let first = tokio::spawn(async move { l.set_ring("listening").await });
+    settle().await;
+    let l = link.clone();
+    let second = tokio::spawn(async move { l.set_ring("thinking").await });
+    settle().await;
+    gate.add_permits(1);
+    first.await.unwrap();
+    second.await.unwrap();
+    assert_eq!(link.ring(), "thinking");
+    // the second change waited for the first line to land
+    assert_eq!(rings(&sent), vec!["listening", "thinking"]);
+}
