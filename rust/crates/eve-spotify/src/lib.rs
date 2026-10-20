@@ -195,12 +195,41 @@ pub fn py_repr(s: &str) -> String {
                 out.push('\\');
                 out.push(c);
             }
-            c if (c as u32) < 0x20 || c as u32 == 0x7f => out.push_str(&format!("\\x{:02x}", c as u32)),
+            c if !py_printable(c) => {
+                let n = c as u32;
+                if n <= 0xff {
+                    out.push_str(&format!("\\x{n:02x}"));
+                } else if n <= 0xffff {
+                    out.push_str(&format!("\\u{n:04x}"));
+                } else {
+                    out.push_str(&format!("\\U{n:08x}"));
+                }
+            }
             c => out.push(c),
         }
     }
     out.push(quote);
     out
+}
+
+/// `str.isprintable()` for one character, as `repr()` uses it: control characters (Cc), the format characters
+/// a name can carry (Cf), private use (Co), the line and paragraph separators and every space but the ASCII one
+/// (Zl, Zp, Zs) are escaped.
+fn py_printable(c: char) -> bool {
+    let n = c as u32;
+    if c == ' ' {
+        return true;
+    }
+    if c.is_control() || c.is_whitespace() {
+        return false;
+    }
+    !matches!(n,
+        0xad | 0x600..=0x605 | 0x61c | 0x6dd | 0x70f | 0x890..=0x891 | 0x8e2 | 0x180e
+        | 0x200b..=0x200f | 0x202a..=0x202e | 0x2060..=0x2064 | 0x2066..=0x206f | 0xfeff | 0xfff9..=0xfffb
+        | 0x110bd | 0x110cd | 0x13430..=0x1343f | 0x1bca0..=0x1bca3 | 0x1d173..=0x1d17a | 0xe0001 | 0xe0020..=0xe007f
+        | 0xe000..=0xf8ff | 0xf0000..=0xffffd | 0x100000..=0x10fffd
+        | 0xfdd0..=0xfdef)
+        && (n & 0xfffe) != 0xfffe
 }
 
 /// `urllib.parse.quote_plus`: letters, digits and `_.-~` stay, a space is `+`, the rest is `%XX`.
@@ -1063,14 +1092,61 @@ pub fn join<S: AsRef<str>>(names: &[S]) -> String {
     }
 }
 
-static NORM_DROP: LazyLock<regex::Regex> = LazyLock::new(|| regex::Regex::new(r"[^\w%'\s-]").expect("norm"));
-static NORM_SPACE: LazyLock<regex::Regex> = LazyLock::new(|| regex::Regex::new(r"\s+").expect("space"));
+/// Python's `\s` (`str.isspace`): Unicode White_Space plus the four ASCII separators \x1c-\x1f.
+fn py_space(c: char) -> bool {
+    c.is_whitespace() || ('\u{1c}'..='\u{1f}').contains(&c)
+}
 
-/// Lower case, curly apostrophes straight, punctuation out, one space between words.
+/// Python's `\w` in a str pattern: `str.isalnum()` or `_`.
+fn py_word(c: char) -> bool {
+    c.is_alphanumeric() || c == '_'
+}
+
+/// Lower case, curly apostrophes straight, punctuation out, one space between words. Python's
+/// `re.sub(r"\s+", " ", re.sub(r"[^\w%'\s-]", " ", text.lower())).strip()`, on Python's character classes.
 pub fn norm(text: &str) -> String {
     let t = text.to_lowercase().replace('\u{2019}', "'");
-    let t = NORM_DROP.replace_all(&t, " ");
-    NORM_SPACE.replace_all(&t, " ").trim().to_string()
+    let mut out = String::with_capacity(t.len());
+    let mut space = false;
+    for c in t.chars() {
+        let c = if py_word(c) || c == '%' || c == '\'' || c == '-' || py_space(c) { c } else { ' ' };
+        if py_space(c) {
+            space = true;
+            continue;
+        }
+        if space && !out.is_empty() {
+            out.push(' ');
+        }
+        space = false;
+        out.push(c);
+    }
+    out
+}
+
+/// `int(s)` for what `\d{1,3}` matched: Python's `\d` and `int()` both take any Unicode decimal digit (Nd), and
+/// Unicode keeps each such digit in a contiguous run of ten, 0 to 9.
+fn py_int_digits(s: &str) -> Option<i64> {
+    static ND: LazyLock<regex::Regex> = LazyLock::new(|| regex::Regex::new(r"^\d$").expect("nd"));
+    let is_nd = |n: u32| char::from_u32(n).is_some_and(|c| ND.is_match(c.encode_utf8(&mut [0u8; 4])));
+    let mut v: i64 = 0;
+    for c in s.chars() {
+        let d = match c.to_digit(10) {
+            Some(d) if c.is_ascii() => i64::from(d),
+            _ => {
+                let n = c as u32;
+                if !is_nd(n) {
+                    return None;
+                }
+                let mut start = n;
+                while start > 0 && is_nd(start - 1) {
+                    start -= 1;
+                }
+                i64::from((n - start) % 10)
+            }
+        };
+        v = v.checked_mul(10)?.checked_add(d)?;
+    }
+    Some(v)
 }
 
 // ---- the code path -------------------------------------------------------------------------------------------
@@ -1144,7 +1220,7 @@ static PATTERNS: LazyLock<Vec<(fancy_regex::Regex, Make)>> = LazyLock::new(|| {
             ),
             |c| {
                 let g = (1..c.len()).find_map(|i| group(c, i))?;
-                let v = g.parse::<i64>().ok()?;
+                let v = py_int_digits(&g)?;
                 Some(Command { volume: Some(v), ..Command::new("volume") })
             },
         ),
@@ -1632,7 +1708,7 @@ impl Spotify {
                             )
                             .into());
                         };
-                        current + volume_change.unwrap_or(0)
+                        current.saturating_add(volume_change.unwrap_or(0))
                     }
                 };
                 let level = volume.clamp(0, 100);
@@ -1958,6 +2034,18 @@ async fn serve_callback(
     true
 }
 
+/// `str(OSError)`: `[Errno N] message`, as Python prints a socket error.
+fn py_oserror(e: &io::Error) -> String {
+    let text = e.to_string();
+    match e.raw_os_error() {
+        Some(n) => {
+            let msg = text.strip_suffix(&format!(" (os error {n})")).unwrap_or(&text);
+            format!("[Errno {n}] {msg}")
+        }
+        None => text,
+    }
+}
+
 /// The one-time authorization-code + PKCE flow on the loopback redirect; saves the refresh token.
 pub async fn login(
     client_id: &str,
@@ -1971,7 +2059,7 @@ pub async fn login(
     let listener = match tokio::net::TcpListener::bind(("127.0.0.1", LOGIN_PORT)).await {
         Ok(l) => l,
         Err(e) => {
-            out(format!("Port {LOGIN_PORT} is busy ({e}). Close whatever holds it and run this again."));
+            out(format!("Port {LOGIN_PORT} is busy ({}). Close whatever holds it and run this again.", py_oserror(&e)));
             return 1;
         }
     };
@@ -2044,15 +2132,17 @@ pub async fn login_on(
             return 1;
         }
     };
-    let refresh = data.get("refresh_token").map(py_str).unwrap_or_default();
+    // data.get("refresh_token", ""): kept as Spotify sent it; a missing, null or empty one is no login
+    let refresh = data.get("refresh_token").cloned().unwrap_or_else(|| json!(""));
     let mut cfg = Dict::new();
     cfg.insert("client_id".into(), json!(client_id));
-    cfg.insert("refresh_token".into(), json!(refresh));
+    let has_refresh = truthy(Some(&refresh));
+    cfg.insert("refresh_token".into(), refresh);
     cfg.insert("scopes".into(), json!(SCOPES));
     if !client_secret.is_empty() {
         cfg.insert("client_secret".into(), json!(client_secret));
     }
-    if refresh.is_empty() {
+    if !has_refresh {
         out("Spotify sent no refresh token.".to_string());
         return 1;
     }
@@ -2264,6 +2354,7 @@ mod tests {
         assert_eq!(py_repr("zzzz"), "'zzzz'");
         assert_eq!(py_repr("don't"), "\"don't\"");
         assert_eq!(py_repr("a'b\"c"), "'a\\'b\"c'");
+        assert_eq!(py_repr("a\u{a0}b\u{200b}c\u{85}"), "'a\\xa0b\\u200bc\\x85'");
     }
 
     #[test]
@@ -2283,5 +2374,14 @@ mod tests {
     fn norm_drops_punctuation_and_curly_quotes() {
         assert_eq!(norm("  What\u{2019}s   PLAYING?! "), "what's playing");
         assert_eq!(norm("hey eve, pause spotify"), "hey eve pause spotify");
+        assert_eq!(norm("pause\u{1c}the music\u{b2}!"), "pause the music\u{b2}");
+    }
+
+    #[test]
+    fn unicode_digits_read_as_python_int_reads_them() {
+        assert_eq!(py_int_digits("40"), Some(40));
+        assert_eq!(py_int_digits("\u{664}\u{660}"), Some(40));
+        assert_eq!(py_int_digits("\u{1d7ce}\u{1d7d9}"), Some(1)); // bold 0, then double-struck 1
+        assert_eq!(py_int_digits("\u{b2}"), None);
     }
 }

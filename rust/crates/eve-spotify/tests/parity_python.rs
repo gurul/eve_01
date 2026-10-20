@@ -70,6 +70,8 @@ const PHRASES: &[&str] = &[
     "now playing", "which song is on", "What\u{2019}s playing on Spotify", "skip this", "unpause music",
     "transfer playback to the bedroom speaker eve", "play \"Blinding Lights\" on Spotify!", "  ", "",
     "play spotify on spotify", "move the music to spotify", "spotify volume 0", "music volume 100 %",
+    "music volume \u{664}\u{660}", "spotify volume \u{1d7ce}\u{1d7d9}%", "music volume 4\u{b2}", "pause\u{1c}the music",
+    "pause the music\u{a0}please", "play caf\u{e9} del mar on spotify", "move the music to the k\u{f6}k",
 ];
 
 fn cmd_json(c: &Option<S::Command>) -> Value {
