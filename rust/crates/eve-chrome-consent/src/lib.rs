@@ -166,6 +166,12 @@ pub fn chrome_pids() -> Result<Vec<i32>, ReadError> {
     Ok(parse_pids(&String::from_utf8_lossy(&out.stdout)))
 }
 
+/// Python's `str.strip()` with no argument: Rust's `trim` plus the four separators `\x1c`..`\x1f`, which
+/// Python counts as whitespace and Rust does not.
+pub fn py_strip(s: &str) -> &str {
+    s.trim_matches(|c: char| c.is_whitespace() || ('\x1c'..='\x1f').contains(&c))
+}
+
 fn label_of<A: Ax>(ax: &A, el: &A::Node) -> String {
     for name in ["AXTitle", "AXDescription", "AXValue"] {
         if let Some(v) = ax.attr(el, name) {
@@ -205,9 +211,9 @@ pub fn find_dialog_in<A: Ax>(ax: &A, pids: &[i32], label: &str) -> (bool, Option
                     _ => String::new(),
                 };
                 let text = label_of(ax, &el);
-                if (role == "AXHeading" || role == "AXStaticText") && text.trim() == DIALOG_TEXT {
+                if (role == "AXHeading" || role == "AXStaticText") && py_strip(&text) == DIALOG_TEXT {
                     heading = true;
-                } else if role == "AXButton" && !label.is_empty() && text.trim() == label && button.is_none() {
+                } else if role == "AXButton" && !label.is_empty() && py_strip(&text) == label && button.is_none() {
                     button = Some(el.clone());
                 }
                 stack.extend(nodes_of(ax.attr(&el, "AXChildren")));
@@ -305,7 +311,7 @@ pub fn access_preference() -> &'static str {
 }
 
 fn pref_of(value: Option<&str>) -> &'static str {
-    if value.unwrap_or("").trim().to_lowercase() == "allow" {
+    if py_strip(value.unwrap_or("")).to_lowercase() == "allow" {
         "allow"
     } else {
         "ask"

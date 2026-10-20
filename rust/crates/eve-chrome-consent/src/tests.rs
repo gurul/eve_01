@@ -323,6 +323,7 @@ fn test_a_label_falls_back_to_description_then_value_and_is_stripped() {
     assert_eq!(find_dialog_in(&ax, &[7], "Cancel"), (true, Some(1)));
     // no label asked for: the dialog is seen, no button is picked
     assert_eq!(find_dialog_in(&ax, &[7], ""), (true, None));
+    assert_eq!(py_strip("\x1d Allow\u{3000}\x1e"), "Allow");
 }
 
 #[test]
@@ -542,6 +543,8 @@ fn test_the_access_preference_is_allow_only_when_spelled_allow() {
         (Some("yes"), "ask"),
         (None, "ask"),
     ];
+    // Python's strip() also drops the \x1c..\x1f separators
+    assert_eq!(access_preference_in(&HashMap::from([("EVE_CHROME_ACCESS".to_string(), "\x1callow\x1f".to_string())])), "allow");
     for (value, expect) in cases {
         let env: HashMap<String, String> = match value {
             None => HashMap::new(),
