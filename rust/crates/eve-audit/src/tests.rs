@@ -249,6 +249,9 @@ fn python_float_repr_and_round() {
         (f64::INFINITY, "Infinity"),
         (f64::NEG_INFINITY, "-Infinity"),
         (1.2345678901234567e20, "1.2345678901234567e+20"),
+        // Exact ties between two shortest candidates: repr takes the even digit.
+        (593349443380239.25, "593349443380239.2"),
+        (-637637799964508.25, "-637637799964508.2"),
     ] {
         assert_eq!(py_float_repr(x), want, "{x}");
     }

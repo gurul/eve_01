@@ -80,7 +80,7 @@ pub fn float_repr(x: f64) -> String {
     if x == 0.0 {
         return if x.is_sign_negative() { "-0.0".into() } else { "0.0".into() };
     }
-    let sci = format!("{:e}", x.abs());
+    let sci = shortest_sci(x.abs());
     let (mant, exp) = sci.split_once('e').unwrap_or((&sci, "0"));
     let exp: i32 = exp.parse().unwrap_or(0);
     let digits: String = mant.chars().filter(|c| c.is_ascii_digit()).collect();
@@ -101,6 +101,21 @@ pub fn float_repr(x: f64) -> String {
         let esign = if exp < 0 { '-' } else { '+' };
         format!("{sign}{}{frac}e{esign}{:02}", &digits[..1], exp.abs())
     }
+}
+
+/// The shortest scientific form of a finite positive `x` that reads back as
+/// `x`, nearest to `x` among those (ties to even), as `repr` picks it.
+/// Rust's `{:e}` also gives the shortest digits but can take the other
+/// neighbour on an exact tie (`593349443380239.25` → `…239.3`, where Python
+/// writes `…239.2`); exact formatting at each precision rounds half to even.
+fn shortest_sci(x: f64) -> String {
+    for prec in 0..17 {
+        let s = format!("{:.*e}", prec, x);
+        if s.parse::<f64>().ok() == Some(x) {
+            return s;
+        }
+    }
+    format!("{:.16e}", x)
 }
 
 /// Python's `round(x, ndigits)` for a float: correctly rounded, ties to even
