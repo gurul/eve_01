@@ -33,7 +33,7 @@ Status: complete
 | `LocalTls` | `struct LocalTls` | `root`, `ca_cert_path`, `ca_key_path`, `leaf_cert_path`, `leaf_key_path` public as in Python |
 | `LocalTls.__init__` | `LocalTls::new(root)` | |
 | `LocalTls.refresh` | `LocalTls::refresh(addresses, hostname) -> Result<bool>` | |
-| `LocalTls.context` | `LocalTls::context() -> Result<Arc<rustls::ServerConfig>>` | for `tokio_rustls::TlsAcceptor` after a plain accept (the `start_tls` shape); the same `Arc` until the leaf changes (`Arc::ptr_eq`); rechecks the dates once `RECHECK_SECS` has passed (`set_recheck_secs` for tests) |
+| `LocalTls.context` | `LocalTls::context() -> Result<Arc<rustls::ServerConfig>>` | for `tokio_rustls::TlsAcceptor` after a plain accept (the `start_tls` shape); the same `Arc` until the leaf changes (`Arc::ptr_eq`); rechecks the dates once `RECHECK_SECS` has passed on `fn monotonic` (Python's `time.monotonic()`: `CLOCK_UPTIME_RAW` on macOS, `CLOCK_MONOTONIC` elsewhere), from 0.0 as Python's `_checked` starts (`set_recheck_secs` for tests) |
 | `LocalTls.names` | `LocalTls::names() -> Result<HashSet<String>>` | |
 | `LocalTls.ca_pem` | `LocalTls::ca_pem() -> Result<Vec<u8>>` | byte-identical to Python's (checked against cryptography 50) |
 | `LocalTls.mobileconfig` | `LocalTls::mobileconfig() -> Result<Vec<u8>>` | byte-identical to Python's: `fn plist_xml` ports `plistlib.dumps(fmt=FMT_XML)` (tab indents, sorted keys, plistlib's base64 line width per depth, `_escape`); UUIDv5 under `NAMESPACE_DNS`, upper case |
@@ -58,7 +58,7 @@ Python. `ca_pem()` and `mobileconfig()` were byte-identical.
 | `bridge/tests/test_lite_tls.py` | `test_modes_hold_under_any_umask_and_loose_ones_are_tightened` | `tests/umask.rs` | none: own process, since the umask is process-wide |
 | `bridge/tests/test_lite_tls.py` | `test_logs_carry_no_name_and_no_address` | `tests/logs.rs` | none: own process, since a scoped tracing subscriber misses events while other test threads register the same callsites |
 | `bridge/tests/test_lite_web_local.py` (tests_ref) | uses `LocalTls(...)`, `tls.ca_cert_path`, `tls.names()` | covered by the tests above | the LAN door itself belongs to the lite-web crate |
-| (none) | | `src/tests.rs`: `label_*`, `san_addresses_*`, `the_plist_writer_matches_plistlib_byte_for_byte` (golden from plistlib, `tests/golden.plist`), `the_plist_writer_refuses_control_characters_and_writes_empty_containers`, `a_sec1_ec_private_key_loads_as_python_loads_it`, `der_lengths_are_minimal`, `serials_are_positive_and_at_most_20_bytes`, `realpath_resolves_what_exists_and_appends_the_rest`, `a_ca_without_the_constraints_is_not_usable`, `write_private_replaces_atomically_and_refuses_a_planted_symlink_tmp`, `a_cert_reads_from_the_first_certificate_block_only_whole` | |
+| (none) | | `src/tests.rs`: `label_*`, `san_addresses_*`, `the_plist_writer_matches_plistlib_byte_for_byte` (golden from plistlib, `tests/golden.plist`), `the_plist_writer_refuses_control_characters_and_writes_empty_containers`, `a_sec1_ec_private_key_loads_as_python_loads_it`, `der_lengths_are_minimal`, `serials_are_positive_and_at_most_20_bytes`, `realpath_resolves_what_exists_and_appends_the_rest`, `a_ca_without_the_constraints_is_not_usable`, `write_private_replaces_atomically_and_refuses_a_planted_symlink_tmp`, `a_cert_reads_from_the_first_certificate_block_only_whole`, `monotonic_is_the_clock_python_reads_and_moves_forward` | |
 
 Test notes: the handshake client is rustls/webpki with only the CA as a root (browser-strict, name constraints
 enforced) in place of OpenSSL with `VERIFY_X509_STRICT`. Where Python checks OpenSSL's `verify_message` for
@@ -73,8 +73,6 @@ None.
 - `context()` returns `Arc<rustls::ServerConfig>` instead of an `ssl.SSLContext`. A client whose ALPN offer lacks
   `http/1.1` is refused with `no_application_protocol` (rustls follows RFC 7301); OpenSSL went on without ALPN.
   Every browser offers `http/1.1`.
-- The once-a-day recheck in `context()` counts from the first call; Python's `time.monotonic() - 0.0` counted the
-  first day from boot. Either way the dates are looked at again at most a day apart.
 - Keys: only EC P-256 keys load (Python took an EC key on any curve), and a key without its public half embedded
   (ring requires it; OpenSSL always writes it) counts as damaged and is made again. This module and Python only ever
   write P-256 PKCS#8 keys with the public half, so neither case arises from either daemon's files.

@@ -293,3 +293,12 @@ fn a_cert_reads_from_the_first_certificate_block_only_whole() {
     assert!(Cert::from_pem(pem_encode("CERTIFICATE", &trailing).as_bytes()).is_none());
     assert!(Cert::from_pem(b"not a certificate").is_none());
 }
+
+#[test]
+fn monotonic_is_the_clock_python_reads_and_moves_forward() {
+    // Python 3.13's time.monotonic() on macOS is mach_absolute_time() since boot (sleep excluded): far above zero on
+    // any machine that has been up for more than a moment, and never going back.
+    let a = monotonic();
+    let b = monotonic();
+    assert!(a > 0.0 && b >= a, "{a} {b}");
+}

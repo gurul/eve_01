@@ -32,7 +32,6 @@ use std::os::unix::fs::{MetadataExt, OpenOptionsExt, PermissionsExt};
 use std::os::unix::io::AsRawFd;
 use std::path::{Component, Path, PathBuf};
 use std::sync::{Arc, LazyLock};
-use std::time::Instant;
 
 use anyhow::{anyhow, bail, Context as _, Result};
 use base64::Engine as _;
@@ -102,6 +101,22 @@ pub type Clock = Arc<dyn Fn() -> DateTime<Utc> + Send + Sync>;
 /// `_now`: the current time in UTC.
 pub fn now() -> DateTime<Utc> {
     Utc::now()
+}
+
+/// Python's `time.monotonic()`: seconds since boot on the clock CPython reads (`mach_absolute_time`, which is
+/// `CLOCK_UPTIME_RAW`, on macOS; `CLOCK_MONOTONIC` elsewhere). Like Python's `_checked = 0.0`, the first recheck is
+/// due once the machine has been up longer than `RECHECK_SECS`.
+pub fn monotonic() -> f64 {
+    #[cfg(target_os = "macos")]
+    const CLOCK: libc::clockid_t = libc::CLOCK_UPTIME_RAW;
+    #[cfg(not(target_os = "macos"))]
+    const CLOCK: libc::clockid_t = libc::CLOCK_MONOTONIC;
+    let mut ts = libc::timespec { tv_sec: 0, tv_nsec: 0 };
+    // SAFETY: `ts` is a valid, writable timespec for the duration of the call.
+    if unsafe { libc::clock_gettime(CLOCK, &mut ts) } != 0 {
+        return 0.0;
+    }
+    ts.tv_sec as f64 + ts.tv_nsec as f64 / 1e9
 }
 
 fn backdate() -> Duration {
@@ -675,7 +690,8 @@ struct State {
     names: HashSet<String>,
     /// The leaf file the context and the names came from.
     made_from: Option<(u64, i128)>,
-    checked: Option<Instant>,
+    /// `time.monotonic()` at the last date check; 0.0 before the first, as in Python.
+    checked: f64,
     clock: Clock,
     recheck_secs: f64,
 }
@@ -707,7 +723,7 @@ impl LocalTls {
                 ctx: None,
                 names: HashSet::new(),
                 made_from: None,
-                checked: None,
+                checked: 0.0,
                 clock: Arc::new(now),
                 recheck_secs: RECHECK_SECS,
             }),
@@ -746,12 +762,10 @@ impl LocalTls {
     pub fn context(&self) -> Result<Arc<ServerConfig>> {
         let _folder = self.lock.lock();
         let mut st = self.state.lock();
-        let due = st
-            .checked
-            .is_none_or(|t| t.elapsed().as_secs_f64() > st.recheck_secs);
+        let due = monotonic() - st.checked > st.recheck_secs;
         let ctx = self.current(&mut st, due)?;
         if due {
-            st.checked = Some(Instant::now());
+            st.checked = monotonic();
         }
         Ok(ctx)
     }
