@@ -286,6 +286,9 @@ pub async fn osascript(script: &str, args: &[&str]) -> anyhow::Result<Option<Str
         .arg("-e")
         .arg(script)
         .args(args)
+        // asyncio.create_subprocess_exec inherits stdin; Command::output()
+        // would default it to null.
+        .stdin(Stdio::inherit())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .output()
