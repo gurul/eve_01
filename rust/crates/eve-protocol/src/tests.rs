@@ -383,6 +383,13 @@ fn format_entry_timestamp_errors_match_python() {
 }
 
 #[test]
+fn os_errors_read_like_python_oserror() {
+    assert_eq!(os_error_message(libc::EINVAL), "[Errno 22] Invalid argument");
+    let e = TimestampError::Os(os_error_message(libc::EINVAL));
+    assert_eq!(e.to_string(), "[Errno 22] Invalid argument");
+}
+
+#[test]
 fn format_entry_rounds_to_microseconds_like_python() {
     // datetime.fromtimestamp(59.9999996) is 00:01:00 UTC-local, not 00:00:59.
     assert_eq!(local_hhmm(59.9999996).unwrap(), local_hhmm(60.0).unwrap());
@@ -514,10 +521,17 @@ fn differential_against_python_protocol() {
         texts.push(t);
     }
     let floats = [0.1, 1e16, 1e-5, 2.5, -3.75e-7, 123456.789, 1e22, 5e-324, 1.7976931348623157e308];
-    let input = json!({"texts": texts, "floats": floats});
+    // Entry timestamps around every error path of datetime.fromtimestamp,
+    // including the fold probe one day back (year 1's first local day).
+    let stamps = [
+        0.0, 1_700_000_000.25, 59.9999996, -0.5, 1e12, 1e18, -1e18, 1e20, 9.223372036854775e18,
+        -9.223372036854776e18, -62135596800.0 + 3600.0 * 5.0, -62135510401.0, -62135481600.0,
+        -62135456400.0, 253402300799.0, 253402387200.0,
+    ];
+    let input = json!({"texts": texts, "floats": floats, "stamps": stamps});
     let script = r#"
 import json, sys
-from eve_bridge.protocol import encode, sanitize_for_stick, truncate_utf8_bytes
+from eve_bridge.protocol import _format_entry, encode, sanitize_for_stick, truncate_utf8_bytes
 d = json.load(sys.stdin)
 out = []
 for codec in [None, "gbk", "big5", "shift_jis", "UTF8", "bogus"]:
@@ -529,6 +543,11 @@ for codec in [None, "gbk", "big5", "shift_jis", "UTF8", "bogus"]:
             out.append("LookupError:" + str(e))
 for t in d["texts"]:
     out.append(truncate_utf8_bytes(t, 20))
+for at in d["stamps"]:
+    try:
+        out.append(_format_entry(at, "  a\nb  "))
+    except Exception as e:
+        out.append(type(e).__name__ + ":" + str(e))
 json.dump(out, sys.stdout)
 "#;
     let mut child = std::process::Command::new(python)
@@ -560,6 +579,14 @@ json.dump(out, sys.stdout)
     }
     for t in &texts {
         got.push(truncate_utf8_bytes(t, 20));
+    }
+    for at in stamps {
+        got.push(match format_entry(at, "  a\nb  ") {
+            Ok(e) => e,
+            Err(e @ TimestampError::Value(_)) => format!("ValueError:{e}"),
+            Err(e @ TimestampError::Overflow(_)) => format!("OverflowError:{e}"),
+            Err(e @ TimestampError::Os(_)) => format!("OSError:{e}"),
+        });
     }
     assert_eq!(got.len(), want.len());
     for (i, (g, w)) in got.iter().zip(&want).enumerate() {

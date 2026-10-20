@@ -412,17 +412,61 @@ fn py_strip(s: &str) -> &str {
     s.trim_matches(|c: char| c.is_whitespace() || ('\u{1c}'..='\u{1f}').contains(&c))
 }
 
-fn local_tm(t: i64) -> Result<libc::tm, std::io::Error> {
+/// Point errno at zero before a libc call that only sets it on failure.
+fn clear_errno() {
+    // SAFETY: the errno location is thread-local and always valid to write.
+    unsafe {
+        #[cfg(any(target_os = "macos", target_os = "ios", target_os = "freebsd"))]
+        {
+            *libc::__error() = 0;
+        }
+        #[cfg(any(target_os = "linux", target_os = "android"))]
+        {
+            *libc::__errno_location() = 0;
+        }
+    }
+}
+
+/// `str(OSError(errno, strerror(errno)))`: `[Errno 22] Invalid argument`.
+fn os_error_message(errno: i32) -> String {
+    let mut buf = [0 as libc::c_char; 256];
+    // SAFETY: the buffer is valid for its length and strerror_r NUL-terminates it.
+    let rc = unsafe { libc::strerror_r(errno, buf.as_mut_ptr(), buf.len()) };
+    let text = if rc == 0 {
+        // SAFETY: strerror_r wrote a NUL-terminated string into buf.
+        unsafe { std::ffi::CStr::from_ptr(buf.as_ptr()) }.to_string_lossy().into_owned()
+    } else {
+        format!("Unknown error: {errno}")
+    };
+    format!("[Errno {errno}] {text}")
+}
+
+/// `_PyTime_localtime`: `localtime_r`, with errno 0 on failure read as EINVAL.
+/// The error is the errno.
+fn local_tm(t: i64) -> Result<libc::tm, i32> {
     let timet: libc::time_t = t as libc::time_t;
     // SAFETY: an all-zero `tm` is a valid out-parameter for localtime_r.
     let mut tm: libc::tm = unsafe { std::mem::zeroed() };
+    clear_errno();
     // SAFETY: both pointers are valid for the duration of the call.
     let r = unsafe { libc::localtime_r(&timet, &mut tm) };
     if r.is_null() {
-        Err(std::io::Error::last_os_error())
+        let errno = std::io::Error::last_os_error().raw_os_error().unwrap_or(0);
+        Err(if errno == 0 { libc::EINVAL } else { errno })
     } else {
         Ok(tm)
     }
+}
+
+/// `localtime` of `t` with datetime's year check (`utc_to_seconds` raises
+/// `year N is out of range` outside 1..=9999).
+fn local_tm_checked(t: i64) -> Result<libc::tm, TimestampError> {
+    let tm = local_tm(t).map_err(|e| TimestampError::Os(os_error_message(e)))?;
+    let year = i64::from(tm.tm_year) + 1900;
+    if !(1..=9999).contains(&year) {
+        return Err(TimestampError::Value(format!("year {year} is out of range")));
+    }
+    Ok(tm)
 }
 
 /// `datetime.fromtimestamp(at).strftime("%H:%M")`, with Python's rounding to
@@ -439,14 +483,22 @@ fn local_hhmm(at: f64) -> Result<String, TimestampError> {
     } else if us < 0.0 {
         int_part -= 1.0;
     }
-    // time_t is 64-bit on every platform eve runs on.
+    // `_Py_InIntegralTypeRange(time_t, intpart)`; time_t is 64-bit on every
+    // platform eve runs on, and its max rounds up to 2**63 as a double.
     if !(-9.223_372_036_854_776e18..9.223_372_036_854_776e18).contains(&int_part) {
         return Err(TimestampError::Overflow("timestamp out of range for platform time_t".into()));
     }
-    let tm = local_tm(int_part as i64).map_err(|e| TimestampError::Os(e.to_string()))?;
-    let year = i64::from(tm.tm_year) + 1900;
-    if !(1..=9999).contains(&year) {
-        return Err(TimestampError::Value(format!("year {year} is out of range")));
+    let t = int_part as i64;
+    let tm = local_tm_checked(t)?;
+    // A naive fromtimestamp probes local time one day earlier to detect a
+    // DST fold (`max_fold_seconds`), so the same errors apply to `t - 86400`:
+    // the first local day of year 1 raises `year 0 is out of range`. The
+    // second probe lies between the two, so it cannot fail where these did not.
+    match t.checked_sub(86_400) {
+        Some(probe) => {
+            local_tm_checked(probe)?;
+        }
+        None => return Err(TimestampError::Overflow("timestamp out of range for platform time_t".into())),
     }
     Ok(format!("{:02}:{:02}", tm.tm_hour, tm.tm_min))
 }
