@@ -103,6 +103,26 @@ pub fn float_repr(x: f64) -> String {
     out
 }
 
+/// `str.isprintable()` for one character: false for the categories Python counts as not printable (Cc, Cf,
+/// Cs, Co, Cn, Zl, Zp, and Zs other than the ASCII space), which `repr` escapes.
+fn is_printable(c: char) -> bool {
+    use unicode_general_category::{get_general_category, GeneralCategory as G};
+    if c == ' ' {
+        return true;
+    }
+    !matches!(
+        get_general_category(c),
+        G::Control
+            | G::Format
+            | G::Surrogate
+            | G::PrivateUse
+            | G::Unassigned
+            | G::LineSeparator
+            | G::ParagraphSeparator
+            | G::SpaceSeparator
+    )
+}
+
 /// `repr(str)`: single quotes unless the text has a single quote and no double one.
 pub fn str_repr(s: &str) -> String {
     let quote = if s.contains('\'') && !s.contains('"') {
@@ -122,7 +142,7 @@ pub fn str_repr(s: &str) -> String {
                 out.push('\\');
                 out.push(c);
             }
-            c if c.is_control() => {
+            c if !is_printable(c) => {
                 let n = c as u32;
                 if n < 0x100 {
                     out.push_str(&format!("\\x{n:02x}"));

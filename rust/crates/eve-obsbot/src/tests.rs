@@ -909,4 +909,20 @@ fn test_python_helpers() {
         "{\"a\": [1, 2.0], \"b\": \"é\"}"
     );
     assert_eq!(str_repr("a\nb"), "'a\\nb'");
+    // repr escapes what str.isprintable() refuses, not only control characters
+    assert_eq!(str_repr("a\u{a0}b"), "'a\\xa0b'");
+    assert_eq!(str_repr("\u{200b}"), "'\\u200b'");
+    assert_eq!(str_repr("caf\u{e9} \u{1f600}"), "'caf\u{e9} \u{1f600}'");
+}
+
+#[test]
+fn test_raw_repr_of_values_python_cannot_put_in_json() {
+    // the raw command's line is Python's repr of the decoded list: nan and inf print as such, not None
+    assert_eq!(
+        values_repr(&[OscValue::Float(f64::NAN), OscValue::Float(f64::INFINITY), OscValue::Float(f64::NEG_INFINITY)]),
+        "[nan, inf, -inf]"
+    );
+    let data = encode("/x", &[OscValue::Float(f64::INFINITY)]).unwrap();
+    assert_eq!(decode(&data).unwrap().1, vec![OscValue::Float(f64::INFINITY)]);
+    assert_eq!(values_repr(&[]), "[]");
 }

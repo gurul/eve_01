@@ -199,10 +199,17 @@ impl From<String> for OscValue {
 }
 
 /// Python's `repr` of a decoded value list, as the raw command prints it: `[1, 'Desk', 0.5]`.
+/// Each value is repr'd from itself, not through JSON, so a float NaN or infinity prints `nan`/`inf` as Python does.
 pub fn values_repr(values: &[OscValue]) -> String {
-    py::py_repr(&Value::Array(
-        values.iter().map(OscValue::to_json).collect(),
-    ))
+    let items: Vec<String> = values
+        .iter()
+        .map(|v| match v {
+            OscValue::Int(n) => n.to_string(),
+            OscValue::Float(f) => py::float_repr(*f),
+            OscValue::Str(s) => py::str_repr(s),
+        })
+        .collect();
+    format!("[{}]", items.join(", "))
 }
 
 /// What Python's struct and bytes.index raise for a value or packet OSC can't carry.
