@@ -966,3 +966,45 @@ fn the_cli_is_found_on_the_daemons_path() {
         .with_cli_paths(Vec::<String>::new());
     assert_eq!(m.find_cli(None), fake.to_string_lossy());
 }
+
+#[test]
+fn which_reads_the_path_as_shutil_does() {
+    let tmp = tempfile::tempdir().unwrap();
+    let bin = tmp.path().join("bin");
+    std::fs::create_dir(&bin).unwrap();
+    let fake = bin.join("monid");
+    std::fs::write(&fake, "#!/bin/sh\n").unwrap();
+    std::fs::set_permissions(&fake, std::os::unix::fs::PermissionsExt::from_mode(0o755)).unwrap();
+    // PATH set but empty: shutil.which matches nothing (bpo-35755), so only the fixed places are tried
+    let mut env = Environ::new();
+    env.insert("PATH".into(), String::new());
+    env.insert("HOME".into(), tmp.path().to_string_lossy().into_owned());
+    let m = Monid::new()
+        .with_process_env(env)
+        .with_cli_paths([fake.to_string_lossy().into_owned()]);
+    assert_eq!(m.which_monid(), None);
+    assert_eq!(m.find_cli(None), fake.to_string_lossy());
+    // PATH unset: os.confstr("CS_PATH")
+    #[cfg(target_os = "macos")]
+    assert_eq!(cs_path(), "/usr/bin:/bin:/usr/sbin:/sbin");
+    assert!(cs_path().split(':').any(|d| d == "/bin"));
+}
+
+#[test]
+fn expanduser_matches_posixpath() {
+    assert_eq!(py_expanduser("~/.local/bin", Some("/home/o".into())), "/home/o/.local/bin");
+    assert_eq!(py_expanduser("~/.local/bin", Some("/home/o/".into())), "/home/o/.local/bin");
+    assert_eq!(py_expanduser("~", Some("/home/o".into())), "/home/o");
+    // HOME set but empty is used as it is: "" + "/x"
+    assert_eq!(py_expanduser("~/x", Some(String::new())), "/x");
+    assert_eq!(py_expanduser("~", Some("/".into())), "/");
+    assert_eq!(py_expanduser("/abs/~", Some("/home/o".into())), "/abs/~");
+    // ~name from the password database; an unknown user is left alone
+    assert_eq!(
+        py_expanduser("~no-such-user-eve-xyz/bin", Some("/home/o".into())),
+        "~no-such-user-eve-xyz/bin"
+    );
+    assert_eq!(py_expanduser("~root/bin", None), format!("{}/bin", pw_dir(Some("root")).unwrap().trim_end_matches('/')));
+    // HOME unset: this user's home from the password database
+    assert_eq!(py_expanduser("~", None), pw_dir(None).unwrap());
+}

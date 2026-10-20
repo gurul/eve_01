@@ -287,32 +287,20 @@ impl Monid {
         self.view(None)
     }
 
+    /// `os.path.expanduser`, reading `HOME` where Python reads `os.environ`.
     fn expanduser(&self, raw: &str) -> String {
-        let home = || {
-            self.os_env()
-                .get("HOME")
-                .filter(|h| !h.is_empty())
-                .or_else(|| dirs::home_dir().map(|p| p.to_string_lossy().into_owned()))
-        };
-        if raw == "~" {
-            return home().unwrap_or_else(|| raw.to_string());
-        }
-        if let Some(rest) = raw.strip_prefix("~/") {
-            if let Some(h) = home() {
-                return Path::new(&h).join(rest).to_string_lossy().into_owned();
-            }
-        }
-        raw.to_string()
+        py_expanduser(raw, self.os_env().get("HOME"))
     }
 
+    /// `shutil.which("monid")`: the process PATH (unset: `os.confstr("CS_PATH")`; empty: no match).
     fn which_monid(&self) -> Option<String> {
         if let Some(w) = &self.which {
             return w("monid");
         }
-        let path = self
-            .os_env()
-            .get("PATH")
-            .unwrap_or_else(|| "/bin:/usr/bin".to_string());
+        let path = self.os_env().get("PATH").unwrap_or_else(cs_path);
+        if path.is_empty() {
+            return None; // PATH='' matches nothing, where PATH=':' looks in the current directory
+        }
         // An empty entry joins to a bare "monid", as os.path.join("", "monid") does.
         path.split(':').find_map(|d| {
             let p = Path::new(d).join("monid");
@@ -1553,6 +1541,78 @@ fn dirname(p: &str) -> String {
             }
         }
     }
+}
+
+/// `os.confstr("CS_PATH")` (macOS: `/usr/bin:/bin:/usr/sbin:/sbin`), else `os.defpath`.
+fn cs_path() -> String {
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
+    {
+        let mut buf = vec![0u8; 1024];
+        // SAFETY: `buf` is writable for `buf.len()` bytes; confstr writes at most that many, NUL-terminated.
+        let n = unsafe { libc::confstr(libc::_CS_PATH, buf.as_mut_ptr().cast(), buf.len()) };
+        if n > 0 && n <= buf.len() {
+            buf.truncate(n - 1);
+            if let Ok(s) = String::from_utf8(buf) {
+                return s;
+            }
+        }
+    }
+    "/bin:/usr/bin".to_string()
+}
+
+/// Python's `posixpath.expanduser`: `~` and `~/...` from `home` (`$HOME`; when unset, the password database),
+/// `~name/...` from the password database; an unknown user leaves the path as it is.
+fn py_expanduser(raw: &str, home: Option<String>) -> String {
+    let Some(rest) = raw.strip_prefix('~') else {
+        return raw.to_string();
+    };
+    let i = rest.find('/').unwrap_or(rest.len());
+    let (name, tail) = rest.split_at(i);
+    let userhome = if name.is_empty() {
+        match home {
+            Some(h) => h,
+            None => match pw_dir(None) {
+                Some(h) => h,
+                None => return raw.to_string(),
+            },
+        }
+    } else {
+        match pw_dir(Some(name)) {
+            Some(h) => h,
+            None => return raw.to_string(),
+        }
+    };
+    let joined = format!("{}{tail}", userhome.trim_end_matches('/'));
+    if joined.is_empty() {
+        "/".to_string()
+    } else {
+        joined
+    }
+}
+
+/// The home folder of user `name` (`None`: this process's user) from the password database.
+fn pw_dir(name: Option<&str>) -> Option<String> {
+    use std::ffi::CStr;
+    let cname = match name {
+        Some(n) => Some(CString::new(n).ok()?),
+        None => None,
+    };
+    let mut buf = vec![0 as libc::c_char; 16 * 1024];
+    // SAFETY: zeroed passwd is a valid out-parameter; the *_r calls write only into `pwd` and `buf`.
+    let mut pwd: libc::passwd = unsafe { std::mem::zeroed() };
+    let mut out: *mut libc::passwd = std::ptr::null_mut();
+    let rc = unsafe {
+        match &cname {
+            Some(c) => libc::getpwnam_r(c.as_ptr(), &mut pwd, buf.as_mut_ptr(), buf.len(), &mut out),
+            None => libc::getpwuid_r(libc::getuid(), &mut pwd, buf.as_mut_ptr(), buf.len(), &mut out),
+        }
+    };
+    if rc != 0 || out.is_null() || pwd.pw_dir.is_null() {
+        return None;
+    }
+    // SAFETY: pw_dir points into `buf`, NUL-terminated, alive for this scope.
+    let dir = unsafe { CStr::from_ptr(pwd.pw_dir) };
+    Some(dir.to_string_lossy().into_owned())
 }
 
 /// `os.access(p, os.X_OK)`.
