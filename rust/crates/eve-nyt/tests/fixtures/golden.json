@@ -1,0 +1,297 @@
+{
+ "clean_text": [
+  [
+   "  A <b>bold</b>\n\tline  ",
+   "A bold line"
+  ],
+  [
+   "&amp;&lt;&#39;&eacute &notit; &#x80; &#0; x",
+   "&<'é ¬it; € � x"
+  ],
+  [
+   "a bc d",
+   "a b c d"
+  ],
+  [
+   "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé",
+   "ééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé…"
+  ],
+  [
+   "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word ",
+   "word word word word word word word word word word word word word word word word word word word word word word word word…"
+  ],
+  [
+   "<xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx>tail",
+   "<xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…"
+  ],
+  [
+   "&#xD800;&#1114112;",
+   "��"
+  ],
+  [
+   "  ",
+   ""
+  ],
+  [
+   "Ünïcödé   ​zero-width",
+   "Ünïcödé ​zero-width"
+  ],
+  [
+   "<p>One</p><p>Two</p>",
+   "One Two"
+  ],
+  [
+   "x\u001cy\u001fz",
+   "x y z"
+  ],
+  [
+   "trailing space before clip yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+   "trailing space before clip yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy…"
+  ],
+  [
+   "  A <b>bold</b>\n\tline  ",
+   "A bold li…"
+  ],
+  [
+   "&amp;&lt;&#39;&eacute &notit; &#x80; &#0; x",
+   "&<'é ¬it;…"
+  ],
+  [
+   "a bc d",
+   "a b c d"
+  ],
+  [
+   "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé",
+   "ééééééééé…"
+  ],
+  [
+   "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word ",
+   "word word…"
+  ],
+  [
+   "<xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx>tail",
+   "<xxxxxxxx…"
+  ],
+  [
+   "&#xD800;&#1114112;",
+   "��"
+  ],
+  [
+   "  ",
+   ""
+  ],
+  [
+   "Ünïcödé   ​zero-width",
+   "Ünïcödé ​…"
+  ],
+  [
+   "<p>One</p><p>Two</p>",
+   "One Two"
+  ],
+  [
+   "x\u001cy\u001fz",
+   "x y z"
+  ],
+  [
+   "trailing space before clip yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+   "trailing…"
+  ]
+ ],
+ "clean_text_values": [
+  [
+   null,
+   ""
+  ],
+  [
+   0,
+   "0"
+  ],
+  [
+   1.5,
+   "1.5"
+  ],
+  [
+   true,
+   "True"
+  ],
+  [
+   [
+    1,
+    "a"
+   ],
+   "[1, 'a']"
+  ],
+  [
+   {
+    "k": "v"
+   },
+   "{'k': 'v'}"
+  ],
+  [
+   1e+16,
+   "1e+16"
+  ],
+  [
+   2.5e-05,
+   "2.5e-05"
+  ]
+ ],
+ "resolve_error": "no New York Times section is called that. The sections are: Africa, Americas, ArtandDesign, arts, AsiaPacific, automobiles, Baseball, books/review, business, Climate, CollegeBasketball, CollegeFootball, Dance, Dealbook, Economy, Education, EnergyEnvironment, Europe, fashion, food, Golf, health, Hockey, home, insider, Jobs, Lens, magazine, MediaandAdvertising, MiddleEast, MostEmailed, MostShared, MostViewed, movies, Music, nyregion, obituaries, opinion, PersonalTech, politics, ProBasketball, ProFootball, realestate, science, SmallBusiness, Soccer, Space, sports, SundayBookReview, sundayreview, t-magazine, technology, Television, Tennis, theater, travel, upshot, us, Weddings, Well, world, YourMoney",
+ "int": [
+  [
+   null,
+   null
+  ],
+  [
+   true,
+   null
+  ],
+  [
+   7,
+   7
+  ],
+  [
+   7.0,
+   7
+  ],
+  [
+   7.5,
+   null
+  ],
+  [
+   1000000000.0,
+   null
+  ],
+  [
+   -3,
+   -3
+  ],
+  [
+   " 12 ",
+   12
+  ],
+  [
+   "1234567890",
+   null
+  ],
+  [
+   "x",
+   null
+  ],
+  [
+   "-0",
+   0
+  ],
+  [
+   100000000.0,
+   100000000
+  ]
+ ],
+ "https": [
+  [
+   "https://a.b/c",
+   "https://a.b/c"
+  ],
+  [
+   " https://a.b/c ",
+   "https://a.b/c"
+  ],
+  [
+   "http://a",
+   null
+  ],
+  [
+   "https://a b",
+   null
+  ],
+  [
+   "https://xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   null
+  ],
+  [
+   null,
+   null
+  ],
+  [
+   0,
+   null
+  ]
+ ],
+ "days": [
+  [
+   "2026-10-01T09:00:00+0000",
+   "2026-10-01"
+  ],
+  [
+   " 2026-10-01",
+   "2026-10-01"
+  ],
+  [
+   "nope",
+   null
+  ],
+  [
+   null,
+   null
+  ]
+ ],
+ "keys": [
+  [
+   "U.S.",
+   "us"
+  ],
+  [
+   "Books/Review",
+   "books/review"
+  ],
+  [
+   "T Magazine",
+   "tmagazine"
+  ],
+  [
+   "Sunday-Review",
+   "sundayreview"
+  ],
+  [
+   null,
+   ""
+  ]
+ ],
+ "fq": [
+  [
+   "books",
+   "review",
+   "section.name:(\"Books\") AND typeOfMaterials:(\"Review\")"
+  ],
+  [
+   "u.s.",
+   null,
+   "section.name:(\"U.S.\")"
+  ],
+  [
+   null,
+   "op-ed",
+   "typeOfMaterials:(\"Op-Ed\")"
+  ],
+  [
+   "Books\") OR x:(\"y",
+   null,
+   "section.name:(\"Books\\\") OR x:(\\\"y\")"
+  ],
+  [
+   "En Espanol",
+   null,
+   "section.name:(\"En Espanol\")"
+  ],
+  [
+   "en español",
+   null,
+   "section.name:(\"En español\")"
+  ],
+  [
+   "today's paper",
+   "editors note",
+   "section.name:(\"Today's Paper\") AND typeOfMaterials:(\"Editors' Note\")"
+  ]
+ ]
+}
