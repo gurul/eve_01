@@ -790,3 +790,50 @@ fn test_the_followers_futures_are_send() {
     is_send(&b.f.on_phase("listening"));
     is_send(&b.f.release("why"));
 }
+
+// ---- vision's FaceTracker feeds the follower ----
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn test_the_tracker_hands_the_follower_every_face_with_the_frames_pose_and_never_dies_of_it() {
+    use base64::Engine as _;
+    use eve_vision::{FaceTracker, OnFaces, Rect};
+
+    let got = Arc::new(Mutex::new(Vec::<(Vec<(i64, i64)>, Option<f64>, Option<f64>)>::new()));
+    let sent = Arc::new(Mutex::new(Vec::<Value>::new()));
+    let s2 = sent.clone();
+    let send: Sender = Arc::new(move |cmd: Value| {
+        let s = s2.clone();
+        Box::pin(async move {
+            s.lock().push(cmd);
+            true
+        })
+    });
+    let g2 = got.clone();
+    let on_faces: OnFaces = Arc::new(move |faces, yaw, pitch| {
+        let g = g2.clone();
+        Box::pin(async move {
+            // the daemon's mapping, vision's FaceResult to the follower's Face
+            let faces: Vec<Face> = faces.iter().map(|f| Face::new(f.bx, f.by, f.size, f.conf)).collect();
+            g.lock().push((faces.iter().map(|f| (f.bx, f.size)).collect(), yaw, pitch));
+            anyhow::bail!("a follower bug") // must not stop the tracker
+        })
+    });
+    let rects = vec![Rect::with_conf(10.0, 30.0, 40.0, 40.0, 0.9), Rect::with_conf(110.0, 40.0, 20.0, 20.0, 0.8)];
+    let tracker = FaceTracker::new(Some(Arc::new(move |_f: &eve_vision::Frame| Ok(rects.clone()))), send);
+    tracker.set_on_faces(Some(on_faces));
+    let frame = serde_json::json!({"seq": 7, "w": 160, "h": 120, "fmt": "gray", "yaw": 12, "pitch": 40,
+        "b64": base64::engine::general_purpose::STANDARD.encode(vec![0u8; 160 * 120])});
+    tracker.on_frame(&frame).await;
+    for _ in 0..200 {
+        // the tracker works the frame on its own task: wait for it to finish
+        if !got.lock().is_empty() && !sent.lock().is_empty() && !tracker.governor().busy {
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+    }
+    tracker.stop();
+    assert_eq!(*got.lock(), vec![(vec![(-62, 25), (50, 12)], Some(12.0), Some(40.0))]); // both faces, left then right, with the pose
+    let sent = sent.lock();
+    // the board still gets the largest, as before
+    assert!(sent.iter().map(|c| c["cmd"].as_str().unwrap()).eq(["face"]) && sent[0]["seq"] == 7);
+}
