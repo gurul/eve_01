@@ -362,7 +362,7 @@ pub static TOOLS: LazyLock<Vec<Value>> = LazyLock::new(|| {
 
 pub const HIDDEN: &str = "<hidden>";
 static SECRET_PARAMS: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r#"(?i)([?&](?:api-key|api_key|q|fq)=)[^&\s"']*"#).expect("valid regex"));
+    LazyLock::new(|| Regex::new(r#"(?i)([?&](?:api-key|api_key|q|fq)=)[^&\s\x1c-\x1f"']*"#).expect("valid regex"));
 
 /// Rewrites a log line that quotes an NYT URL so its `api-key`, `q` and `fq` values read `HIDDEN`: the key and the
 /// owner's search words never reach eve's log.
@@ -528,7 +528,9 @@ pub fn to_int(raw: Option<&Value>) -> Option<i64> {
     }
 }
 
-static DAY: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^\s*(\d{4}-\d{2}-\d{2})").expect("valid regex"));
+// Python's `\s` (str patterns) also matches the four ASCII separators \x1c-\x1f; Rust's does not.
+static DAY: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^[\s\x1c-\x1f]*(\d{4}-\d{2}-\d{2})").expect("valid regex"));
 
 /// A date's YYYY-MM-DD from a timestamp NYT sends, or None.
 pub fn day(raw: Option<&Value>) -> Option<String> {

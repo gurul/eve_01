@@ -1190,6 +1190,16 @@ fn test_retry_after_reads_like_python() {
     assert_eq!(nyt::retry_after(None), None);
 }
 
+/// Python's `\s` also takes the ASCII separators \x1c-\x1f (outputs recorded from nyt.py).
+#[test]
+fn test_python_whitespace_includes_the_ascii_separators() {
+    assert_eq!(nyt::day(Some(&json!("\u{1c}2024-01-02T00:00:00"))), Some("2024-01-02".to_string()));
+    assert_eq!(
+        nyt::QueryFilter.filter("GET https://api.nytimes.com/x?q=a\u{1c}b&api-key=k1"),
+        "GET https://api.nytimes.com/x?q=<hidden>\u{1c}b&api-key=<hidden>"
+    );
+}
+
 #[tokio::test]
 #[ignore = "live: reads the NYT home page feed over the network (no key)"]
 async fn live_headlines_read_the_real_feed() {
