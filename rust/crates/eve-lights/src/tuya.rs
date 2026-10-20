@@ -20,7 +20,7 @@ pub const PYTHON_ENV: &str = "EVE_LIGHTS_PYTHON";
 
 pub(crate) const NOT_INSTALLED: &str = "tinytuya is not installed: pip install -e \".[lights]\"";
 
-/// The helper. It prints exactly one JSON line on stdout: `{"ok": result}` or `{"error": {"type", "message"}}`;
+/// The helper. It reads the request as JSON on stdin and prints exactly one JSON line on stdout: `{"ok": result}` or `{"error": {"type", "message"}}`;
 /// anything tinytuya prints goes to stderr.
 const HELPER: &str = r#"
 import contextlib, json, sys
@@ -63,7 +63,7 @@ def run(tinytuya, req):
 
 
 def main():
-    req = json.loads(sys.argv[1])
+    req = json.loads(sys.stdin.read())
     out = sys.stdout
     try:
         import tinytuya
@@ -95,14 +95,25 @@ async fn run_helper(req: &Value) -> Result<Value, LightError> {
 }
 
 pub(crate) async fn run_helper_with(python: &str, req: &Value) -> Result<Value, LightError> {
+    use tokio::io::AsyncWriteExt as _;
     let mut cmd = tokio::process::Command::new(python);
-    cmd.arg("-c").arg(HELPER).arg(py::dumps(req)).kill_on_drop(true);
-    cmd.stdin(std::process::Stdio::null());
-    let out = match cmd.output().await {
-        Ok(out) => out,
+    cmd.arg("-c").arg(HELPER).kill_on_drop(true);
+    // the request carries the light's local key: it goes in on stdin, never on the command line, where any
+    // user of the Mac could read it with `ps`
+    cmd.stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped());
+    let mut child = match cmd.spawn() {
+        Ok(child) => child,
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Err(LightError::Runtime(NOT_INSTALLED.into())),
         Err(e) => return Err(e.into()),
     };
+    if let Some(mut stdin) = child.stdin.take() {
+        // a helper that exits before reading (no interpreter behind a wrapper) closes the pipe: its output says why
+        let _ = stdin.write_all(py::dumps(req).as_bytes()).await;
+        let _ = stdin.shutdown().await;
+    }
+    let out = child.wait_with_output().await?;
     let stdout = String::from_utf8_lossy(&out.stdout);
     let line = stdout.lines().rev().find(|l| !l.trim().is_empty()).unwrap_or("");
     let reply: Value = match serde_json::from_str(line) {

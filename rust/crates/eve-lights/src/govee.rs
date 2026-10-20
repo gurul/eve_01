@@ -167,7 +167,7 @@ pub(crate) fn govee_status_blocking(ip: &str, ports: GoveePorts) -> Result<State
             }
             let reply: Value = serde_json::from_slice(&buf[..n])
                 .map_err(|e| LightError::py("JSONDecodeError", e.to_string()))?;
-            let d = key(obj(&reply)?, "msg")?;
+            let d = key(reply.as_object().ok_or_else(|| py::subscript_error(&reply))?, "msg")?;
             if obj(d)?.get("cmd") != Some(&json!("devStatus")) {
                 continue;
             }

@@ -197,11 +197,44 @@ pub fn repr_str(s: &str) -> String {
                 out.push(c);
             }
             c if (c as u32) < 0x20 || c as u32 == 0x7f => out.push_str(&format!("\\x{:02x}", c as u32)),
-            c => out.push(c),
+            c if (c as u32) < 0x7f || is_printable(c) => out.push(c),
+            c if (c as u32) <= 0xff => out.push_str(&format!("\\x{:02x}", c as u32)),
+            c if (c as u32) <= 0xffff => out.push_str(&format!("\\u{:04x}", c as u32)),
+            c => out.push_str(&format!("\\U{:08x}", c as u32)),
         }
     }
     out.push(q);
     out
+}
+
+/// Python's `str.isprintable()` for one character, which `repr` uses to decide what to escape: everything but
+/// the control, format, surrogate, private-use and unassigned characters and the separators other than space.
+pub fn is_printable(c: char) -> bool {
+    use unicode_general_category::{get_general_category, GeneralCategory::*};
+    if c == ' ' {
+        return true;
+    }
+    !matches!(
+        get_general_category(c),
+        Control
+            | Format
+            | Surrogate
+            | PrivateUse
+            | Unassigned
+            | LineSeparator
+            | ParagraphSeparator
+            | SpaceSeparator
+    )
+}
+
+/// `obj[key]` on a value that is not a dict: the `TypeError` Python raises.
+pub fn subscript_error(v: &Value) -> PyError {
+    let message = match v {
+        Value::Array(_) => "list indices must be integers or slices, not str".to_string(),
+        Value::String(_) => "string indices must be integers".to_string(),
+        other => format!("'{}' object is not subscriptable", type_name(other)),
+    };
+    PyError { kind: "TypeError", message }
 }
 
 /// Python truthiness of a JSON value.
@@ -452,6 +485,10 @@ mod tests {
         assert_eq!(float_repr(1e-5), "1e-05");
         assert_eq!(float_repr(1e16), "1e+16");
         assert_eq!(str_of(&json!(3.4)), "3.4");
+        // repr escapes what str.isprintable() refuses, and keeps the rest
+        assert_eq!(repr_str("caf\u{e9} \u{1F600}"), "'caf\u{e9} \u{1F600}'");
+        assert_eq!(repr_str("a\u{a0}b\u{200d}c\u{85}"), "'a\\xa0b\\u200dc\\x85'");
+        assert_eq!(repr_str("\u{e0001}"), "'\\U000e0001'");
     }
 
     #[test]

@@ -971,6 +971,33 @@ fn tuya_helper_without_tinytuya_says_how_to_install_it() {
 }
 
 #[test]
+fn tuya_key_never_on_the_command_line() {
+    // a wrapper that records its arguments and what came in on stdin, then answers as the helper does
+    let dir = tempfile::tempdir().unwrap();
+    let (args, input) = (dir.path().join("args"), dir.path().join("stdin"));
+    let wrapper = dir.path().join("python");
+    std::fs::write(
+        &wrapper,
+        format!(
+            "#!/bin/sh\nprintf '%s\\n' \"$@\" > '{}'\ncat > '{}'\necho '{{\"ok\": null}}'\n",
+            args.display(),
+            input.display()
+        ),
+    )
+    .unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&wrapper, std::fs::Permissions::from_mode(0o755)).unwrap();
+    }
+    let req = json!({"op": "apply", "light": {"id": "x", "ip": "", "key": "s3cret-local-key", "version": "3.3"},
+                     "calls": [["turn_on"]]});
+    rt().block_on(run_helper_with(&wrapper.display().to_string(), &req)).unwrap();
+    assert!(!std::fs::read_to_string(&args).unwrap().contains("s3cret-local-key"));
+    assert_eq!(std::fs::read_to_string(&input).unwrap(), py::dumps(&req));
+}
+
+#[test]
 #[ignore = "live: needs a Python with tinytuya in EVE_LIGHTS_PYTHON"]
 fn tuya_helper_reaches_tinytuya() {
     let python = std::env::var("EVE_LIGHTS_PYTHON").unwrap_or_else(|_| "python3".into());
