@@ -71,6 +71,8 @@ fn test_a_good_body_is_a_fix() {
         Some("Market St San Francisco")
     );
     assert_eq!(pl::parse(&body(json!({"place": "   "})), now).unwrap().place, None);
+    // str.strip() takes the separators \x1c-\x1f as whitespace
+    assert_eq!(pl::parse(&body(json!({"at": "\u{1f}2026-10-12T17:55:00Z"})), now).unwrap().at, f.at);
     // the edges are in range
     assert_eq!(pl::parse(&body(json!({"lat": -90, "lon": 180, "accuracy_m": 0})), now).unwrap().lat, -90.0);
 }

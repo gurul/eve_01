@@ -81,7 +81,7 @@ static LOCK: Mutex<()> = Mutex::new(());
 /// EVE_PHONE_LOCATION: on unless 0, false, no or off.
 pub fn enabled(environ: Option<&Env>) -> bool {
     let raw = env_get(environ, SWITCH).unwrap_or_default();
-    !matches!(raw.trim().to_lowercase().as_str(), "0" | "false" | "no" | "off")
+    !matches!(py::strip(&raw).to_lowercase().as_str(), "0" | "false" | "no" | "off")
 }
 
 /// The one file the latest fix lives in: EVE_PHONE_LOCATION_FILE (from `environ`, then the process's), else
@@ -91,7 +91,7 @@ pub fn state_path(environ: Option<&Env>) -> PathBuf {
         .filter(|v| !v.is_empty())
         .or_else(|| std::env::var(FILE_ENV).ok().filter(|v| !v.is_empty()))
         .unwrap_or_else(|| DEFAULT_FILE.to_string());
-    let raw = raw.trim();
+    let raw = py::strip(&raw);
     expanduser(if raw.is_empty() { "." } else { raw }) // Python: Path("") is "."
 }
 
@@ -170,7 +170,7 @@ pub(crate) fn when(raw: Option<&Value>) -> Result<DateTime<Utc>, BadFix> {
     if !(10..=40).contains(&n) {
         return Err(bad());
     }
-    let mut text = raw.trim().to_string();
+    let mut text = py::strip(raw).to_string();
     if text.ends_with('Z') || text.ends_with('z') {
         text.pop();
         text.push_str("+00:00");

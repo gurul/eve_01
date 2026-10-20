@@ -219,6 +219,21 @@ pub fn one_line(raw: &str) -> String {
     replaced.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
+/// Python's `str.isspace()`: Unicode White_Space plus the four separators `\x1c`-`\x1f`.
+pub fn is_space(c: char) -> bool {
+    c.is_whitespace() || ('\u{1c}'..='\u{1f}').contains(&c)
+}
+
+/// Python's `text.strip()`.
+pub fn strip(text: &str) -> &str {
+    text.trim_matches(is_space)
+}
+
+/// Python's `text.split()`: runs of whitespace separate, none empty.
+pub fn split(text: &str) -> Vec<&str> {
+    text.split(is_space).filter(|w| !w.is_empty()).collect()
+}
+
 /// Python's `len(text)`: code points.
 pub fn chars_len(text: &str) -> usize {
     text.chars().count()
@@ -600,11 +615,30 @@ mod tests {
         (base, us, !tz.is_empty())
     }
 
+    /// Python's json.loads reads back every float it wrote to the bit; serde_json does only with float_roundtrip
+    /// (without it the stay's center in meta drifted by an ulp, and the visits' coordinates with it).
+    #[test]
+    fn test_floats_read_back_to_the_bit() {
+        let mut x: u64 = 0x9E37_79B9_7F4A_7C15;
+        for _ in 0..20_000 {
+            x ^= x << 13;
+            x ^= x >> 7;
+            x ^= x << 17;
+            let f = 41.0 + (x % 1_000_000_007) as f64 / 1_000_000_007.0 * 0.1;
+            let text = format!("{{\"lat\": {}}}", float_repr(f));
+            let back: Value = serde_json::from_str(&text).unwrap();
+            assert_eq!(back["lat"].as_f64().unwrap().to_bits(), f.to_bits(), "{text}");
+        }
+    }
+
     #[test]
     fn test_one_line_and_isoformat() {
         assert_eq!(one_line("  Market St\n\tSan Francisco\u{2028} "), "Market St San Francisco");
         let dt = DateTime::from_timestamp_micros(1_760_291_700_000_001).unwrap();
         assert_eq!(isoformat_utc(&dt), "2025-10-12T17:55:00.000001+00:00");
         assert_eq!(median(&[3.0, 1.0, 2.0, 10.0]), 2.5);
+        // str.strip() and str.split() take \x1c-\x1f as whitespace too (Rust's trim does not)
+        assert_eq!(strip("\u{1f} 2026 \u{1c}"), "2026");
+        assert_eq!(split("a\u{1d}b  c\u{3000}"), ["a", "b", "c"]);
     }
 }

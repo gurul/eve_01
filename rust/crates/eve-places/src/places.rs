@@ -102,7 +102,8 @@ pub const NO_HERE: &str = "the phone has not shared where it is in the last hour
 const WEEK_S: f64 = 7.0 * 86400.0;
 
 static DAY: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^\d{4}-\d{2}-\d{2}$").expect("day pattern"));
-static NOT_WORD: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[^\w\s]").expect("word pattern"));
+/// Python's `[^\w\s]`: its `\w` is exactly letters, numbers (any kind) and `_`.
+static NOT_WORD: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[^\p{L}\p{N}_\s]").expect("word pattern"));
 static LETTERS: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[A-Za-z]+$").expect("letters pattern"));
 static PY_INT: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[+-]?[0-9]+(?:_[0-9]+)*$").expect("int pattern"));
 /// One connection at a time in this process.
@@ -147,7 +148,7 @@ type Res<T> = Result<T, PlacesError>;
 /// On unless EVE_PLACES is 0/false/no/off, and only while the phone's location is on.
 pub fn enabled(environ: Option<&Env>) -> bool {
     let raw = env_get(environ, SWITCH).unwrap_or_default();
-    !matches!(raw.trim().to_lowercase().as_str(), "0" | "false" | "no" | "off") && phone_location::enabled(environ)
+    !matches!(py::strip(&raw).to_lowercase().as_str(), "0" | "false" | "no" | "off") && phone_location::enabled(environ)
 }
 
 pub fn state_path(environ: Option<&Env>) -> PathBuf {
@@ -155,13 +156,13 @@ pub fn state_path(environ: Option<&Env>) -> PathBuf {
         .filter(|v| !v.is_empty())
         .or_else(|| std::env::var(FILE_ENV).ok().filter(|v| !v.is_empty()))
         .unwrap_or_else(|| DEFAULT_FILE.to_string());
-    let raw = raw.trim();
+    let raw = py::strip(&raw);
     expanduser(if raw.is_empty() { "." } else { raw })
 }
 
 pub fn keep_days(environ: Option<&Env>) -> i64 {
     let raw = env_get(environ, DAYS_ENV).unwrap_or_default();
-    let raw = raw.trim();
+    let raw = py::strip(&raw);
     let days = if raw.is_empty() {
         KEEP_DAYS
     } else if PY_INT.is_match(raw) {
@@ -209,7 +210,7 @@ impl Zone {
 
 pub fn zone(environ: Option<&Env>) -> Zone {
     let name = env_get(environ, "EVE_TIMEZONE").unwrap_or_default();
-    let name = name.trim();
+    let name = py::strip(&name);
     if !name.is_empty() {
         if let Ok(tz) = name.parse::<chrono_tz::Tz>() {
             return Zone::Named(tz);
@@ -1216,8 +1217,17 @@ impl Places {
     fn maybe_infer(&self) -> Res<()> {
         let last = self.db(|con| Self::meta(con, "labelled"))?;
         let last = match last {
+            // `or 0`: every falsy value is 0
             None | Some(Value::Null) | Some(Value::Bool(false)) => 0.0,
-            Some(v) => v.as_f64().ok_or_else(|| PlacesError::Value(format!("could not convert to float: {v}")))?,
+            Some(Value::String(text)) if text.is_empty() => 0.0,
+            Some(Value::Array(items)) if items.is_empty() => 0.0,
+            Some(Value::Object(items)) if items.is_empty() => 0.0,
+            Some(Value::Bool(true)) => 1.0,
+            // float() reads a numeric string; any other text is its ValueError
+            Some(Value::String(text)) => py::strip(&text)
+                .parse::<f64>()
+                .map_err(|_| PlacesError::Value(format!("could not convert string to float: '{text}'")))?,
+            Some(v) => v.as_f64().ok_or_else(|| PlacesError::Other(format!("float() argument must be a string or a real number, not {v}")))?,
         };
         if self.ts() - last >= 3600.0 {
             self.infer_labels()?;
@@ -1511,7 +1521,7 @@ impl Places {
             )?;
             return Ok(con.query_row("select * from places where id = ?", [pid], PlaceRow::from_row).optional()?);
         }
-        let key = which.trim().to_lowercase();
+        let key = py::strip(which).to_lowercase();
         let rows = all(con, "select * from places", [], PlaceRow::from_row)?;
         for field in ["name", "label", "poi", "address"] {
             for r in &rows {
@@ -1535,7 +1545,7 @@ impl Places {
             Ok(n) => n,
             Err(e) => return Ok(obj([("ok", json!(false)), ("reason", json!(format!("name {e}")))])),
         };
-        let normalized = which.split_whitespace().collect::<Vec<_>>().join(" ");
+        let normalized = py::split(which).join(" ");
         let row = self.db(|con| {
             let Some(row) = self.find_place(con, &normalized)? else { return Ok(None) };
             con.execute("update places set name = ? where id = ?", params![clean_name, row.id])?;
@@ -1556,8 +1566,8 @@ impl Places {
         let lowered = thing.to_lowercase();
         let spaced = NOT_WORD.replace_all(&lowered, " ");
         spaced
-            .split_whitespace()
-            .filter(|w| !matches!(*w, "my" | "the" | "a" | "an" | "our"))
+            .split(py::is_space)
+            .filter(|w| !w.is_empty() && !matches!(*w, "my" | "the" | "a" | "an" | "our"))
             .collect::<Vec<_>>()
             .join(" ")
     }
@@ -1580,7 +1590,7 @@ impl Places {
             }
             let (lat, lon, acc, pid, row);
             if !which.is_empty() {
-                let normalized = which.split_whitespace().collect::<Vec<_>>().join(" ");
+                let normalized = py::split(which).join(" ");
                 let Some(found) = self.find_place(con, &normalized)? else {
                     return refused("no known place goes by that name".into());
                 };
@@ -1800,7 +1810,7 @@ pub fn tools(environ: Option<&Env>) -> Vec<Value> {
 
 fn day_arg(raw: Option<&Value>, default: NaiveDate) -> Res<NaiveDate> {
     let text = py::truthy_str(raw).unwrap_or_default();
-    let text = text.trim();
+    let text = py::strip(&text);
     if text.is_empty() {
         return Ok(default);
     }

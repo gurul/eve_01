@@ -75,7 +75,7 @@ Status: complete
 | `Places.digest`, `_days_of`, `_digest_text` | `digest(day)`, private `days_of`, `digest_text` | |
 | `Places.week` | `week(day)` | |
 | `Places._find_place`, `name_place` | private `find_place`, `name_place(name, which)` | |
-| `Places._key`, `remember_thing`, `_thing_out`, `find_thing`, `list_things`, `forget_thing` | private `key`, `thing_out`; `remember_thing(thing, note, which)`, `find_thing`, `list_things`, `forget_thing` | |
+| `Places._key`, `remember_thing`, `_thing_out`, `find_thing`, `list_things`, `forget_thing` | private `key`, `thing_out`; `remember_thing(thing, note, which)`, `find_thing`, `list_things`, `forget_thing` | the key strips `[^\p{L}\p{N}_\s]`, which is exactly Python's `[^\w\s]` |
 | `Places.prune`, `summary`, `forget` | `prune() -> IndexMap`, `summary() -> Map`, `forget() -> IndexMap` | counts keep Python's key order; `forget` removes the phone's latest fix and logs counts only |
 | `RECALL`, `NAME`, `THING`, `TOOL_NAMES`, `TOOLS` | same names | `TOOLS` byte-identical to Python's (checked) |
 | `offered` | `offered` | |
@@ -89,15 +89,24 @@ Status: complete
 | Python file | Python tests | Rust tests | Not ported (why) |
 |---|---|---|---|
 | `bridge/tests/test_phone_location.py` | `test_a_good_body_is_a_fix`, `test_garbage_is_refused_with_a_reason`, `test_a_little_clock_skew_is_allowed`, `test_only_the_newest_fix_is_kept_atomically_and_owner_only`, `test_a_failed_write_leaves_the_old_fix_and_no_temp_file`, `test_a_broken_file_is_no_fix_and_is_replaced`, `test_the_file_is_where_the_environment_says`, `test_the_tool_is_strict_with_no_arguments_and_says_when_to_use_it`, `test_the_answer_fresh_stale_and_missing`, `test_the_switch_turns_off_the_tool_and_its_answer`, `test_the_tool_is_offered_only_once_the_phone_shared_a_fix`, `test_the_log_words_carry_age_and_accuracy_only` | same names in `tests/phone_location.rs` (the failed write in `src/phone_location.rs`, with the rename lent through `store_with`), plus `test_the_file_is_what_python_json_dump_writes`, `test_another_tool_name_is_refused` | NaN, infinity and `10**400` bodies cannot exist in a `serde_json::Value` (the JSON reader refuses them before `parse`); `1e300` stands in for out of range. The surface tests (`test_the_chat_brain_*`, `test_its_result_is_not_written_to_the_transcript`, `test_out_loud_*`, `test_the_taint_gate_*`, `test_the_intent_eval_*`, the quick-answers "here" tests, the coordinate log filter tests, `test_the_check_*`) exercise telegram, voice_agent, tool_gate, quick_answers and tools/ scripts, ported with those crates |
-| `bridge/tests/test_places.py` | `test_an_arrival_and_its_departure_are_one_visit_at_a_named_place`, `test_nearby_visits_share_a_place_and_a_far_one_starts_another`, `test_a_stay_is_read_from_fixes_and_an_ios_visit_replaces_it`, `test_a_short_stop_and_a_vague_fix_are_not_visits`, `test_a_body_that_is_not_a_visit_is_refused`, `test_a_visit_body_parses_and_drops_an_odd_category`, `test_home_and_work_are_inferred_and_named`, `test_habits_are_the_usual_days_times_and_stays`, `test_a_day_digest_says_the_day_in_order_and_what_was_missed`, `test_today_s_digest_ends_now_and_a_week_digest_ranks_places`, `test_new_places_show_in_their_day`, `test_the_owner_names_where_they_are_and_renames_it`, `test_things_are_kept_where_the_owner_is_and_found_with_how_far`, `test_a_thing_at_a_known_place_needs_no_fix`, `test_where_the_owner_is_now_is_said_by_name_in_the_system_context`, `test_the_tools_ride_with_phone_location_once_the_phone_has_shared`, `test_the_recall_tool_answers_each_kind_and_refuses_bad_dates`, `test_the_file_is_owner_only_and_old_evidence_is_pruned`, `test_forget_wipes_everything_with_the_latest_fix` | same names in `tests/places.rs`, plus `test_the_stay_is_kept_as_python_json_in_meta`, `test_a_day_in_a_dst_change_is_bounded_like_python` | the `system_context.context()` assertions in `test_where_the_owner_is_now_*` belong to system_context's crate (`here_line` and `reading()["at"]` are asserted here) |
+| `bridge/tests/test_places.py` | `test_an_arrival_and_its_departure_are_one_visit_at_a_named_place`, `test_nearby_visits_share_a_place_and_a_far_one_starts_another`, `test_a_stay_is_read_from_fixes_and_an_ios_visit_replaces_it`, `test_a_short_stop_and_a_vague_fix_are_not_visits`, `test_a_body_that_is_not_a_visit_is_refused`, `test_a_visit_body_parses_and_drops_an_odd_category`, `test_home_and_work_are_inferred_and_named`, `test_habits_are_the_usual_days_times_and_stays`, `test_a_day_digest_says_the_day_in_order_and_what_was_missed`, `test_today_s_digest_ends_now_and_a_week_digest_ranks_places`, `test_new_places_show_in_their_day`, `test_the_owner_names_where_they_are_and_renames_it`, `test_things_are_kept_where_the_owner_is_and_found_with_how_far`, `test_a_thing_at_a_known_place_needs_no_fix`, `test_where_the_owner_is_now_is_said_by_name_in_the_system_context`, `test_the_tools_ride_with_phone_location_once_the_phone_has_shared`, `test_the_recall_tool_answers_each_kind_and_refuses_bad_dates`, `test_the_file_is_owner_only_and_old_evidence_is_pruned`, `test_forget_wipes_everything_with_the_latest_fix` | same names in `tests/places.rs`, plus `test_the_stay_is_kept_as_python_json_in_meta`, `test_a_day_in_a_dst_change_is_bounded_like_python`, `test_a_thing_key_is_python_s_words` | the `system_context.context()` assertions in `test_where_the_owner_is_now_*` belong to system_context's crate (`here_line` and `reading()["at"]` are asserted here) |
 | `bridge/tests/test_events.py`, `test_link_chat.py`, `test_updates.py` (tests_ref) | their uses of `parse`, `store`, `load`, `state_path`, `Places().summary()` | covered by the tests above | the routes and digests themselves are those crates' |
-| (Python built-ins) | | `src/py.rs`: `test_float_repr_matches_python`, `test_dumps_matches_python`, `test_round_and_g`, `test_fromisoformat_matches_cpython` (29 strings run through CPython 3.13), `test_one_line_and_isoformat` | |
+| (Python built-ins) | | `src/py.rs`: `test_float_repr_matches_python`, `test_dumps_matches_python`, `test_round_and_g`, `test_fromisoformat_matches_cpython` (29 strings run through CPython 3.13), `test_one_line_and_isoformat` (also `py::strip`/`py::split`, Python's `str.strip()`/`split()` with `\x1c`-`\x1f`), `test_floats_read_back_to_the_bit` | |
 
 Cross-checks run during the port (not committed, they need the Python daemon): a four-week history built by
 `places.py` was read by this crate and 42 answers (31 day digests, 5 weeks, habits, places, a 22-day timeline,
 labels, summary, prune) matched Python's JSON exactly, key order included; the same history built by this crate
 dumped (`sqlite3 .dump`) identically to Python's; 49 fix and visit bodies parsed to the same results and reasons;
 the four tool schemas serialize byte for byte as Python's.
+
+Verification pass (also not committed, same reason): six random six-week histories (about 3 000 fixes and iOS
+visits each, four time zones, the DST change, late and repeated fixes, departures without arrivals, names and
+things) were replayed through `places.py` (CPython 3.13) and this crate. All 19 154 answers (every `record_fix` and
+`record_visit` result, every day, week and timeline digest, habits, places, things, labels, summary, prune, at two
+clocks) were identical as `json.dumps` text, and the two SQLite files dumped identically, once serde_json's
+`float_roundtrip` was on (without it the stay's center read back from `meta` drifted by an ulp). 144 answers of
+`reading`, `here`, `here_line` and the thing tools with a fresh fix at each known place matched too, and 28 318
+mutated `at` strings parsed to the same instant or reason as `phone_location.parse`.
 
 ## Boundaries
 None
@@ -109,6 +118,4 @@ None
   would raise KeyError out of the tool call.
 - A corrupt JSON value in `meta` gives serde_json's message as the tool's reason, where Python gives
   `json.JSONDecodeError`'s.
-- The thing key's `[^\w\s]` uses Rust regex's Unicode `\w`, which leaves out a few numeric symbols (e.g. `½`)
-  that Python's `\w` keeps.
 - `keep_days` does not read non-ASCII digits as Python's `int()` does.

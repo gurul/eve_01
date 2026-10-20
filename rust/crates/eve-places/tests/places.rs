@@ -305,6 +305,18 @@ fn test_new_places_show_in_their_day() {
     assert!(!st.digest(d - Duration::days(1)).unwrap().contains_key("new_places"));
 }
 
+#[test]
+fn test_a_thing_key_is_python_s_words() {
+    // Python's \w is letters, numbers and _: a combining accent splits a word, a ½ stays in it
+    let tmp = tempfile::tempdir().unwrap();
+    let st = store(tmp.path());
+    visit_full(&st, MARKET, t(today(), 9, 0), Some(t(today(), 10, 0)), Some("Sam's"), None);
+    assert_eq!(st.remember_thing("My e\u{301}bike", "", "Sam's").unwrap()["ok"], true);
+    assert_eq!(st.forget_thing("e bike").unwrap()["ok"], true);
+    assert_eq!(st.remember_thing("½ box", "", "Sam's").unwrap()["ok"], true);
+    assert_eq!(st.forget_thing("the ½ box!").unwrap()["ok"], true);
+}
+
 // ---- naming, things, here ----------------------------------------------------------------------------------------
 
 #[test]

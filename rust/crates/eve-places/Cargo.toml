@@ -11,7 +11,8 @@ indexmap.workspace = true
 parking_lot.workspace = true
 regex.workspace = true
 rusqlite.workspace = true
-serde_json.workspace = true
+# float_roundtrip: a float read back from JSON (the stay in meta, the fix file) is the one Python wrote, to the bit
+serde_json = { workspace = true, features = ["float_roundtrip"] }
 tempfile.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
