@@ -175,7 +175,9 @@ static OPEN_TODO: LazyLock<Regex> = LazyLock::new(|| re(r"\A\s*[-*]\s+\[ \]\s+(.
 static SAFE_SEGMENT: LazyLock<Regex> = LazyLock::new(|| re(r"\A[A-Za-z0-9][A-Za-z0-9 ._-]{0,79}\n?\z"));
 static CHANGE_ID: LazyLock<Regex> = LazyLock::new(|| re(r"\A\d{8}T\d{12}-[a-f0-9]{32}\z"));
 static PACK_NAME: LazyLock<Regex> = LazyLock::new(|| re(r"\A[a-z0-9][a-z0-9-]{0,40}\z"));
-static INT: LazyLock<Regex> = LazyLock::new(|| re(r"\A-?[0-9]+\z"));
+// `\d` is Unicode Nd in both engines, so `-?\d+` takes Arabic-Indic and the other decimal digits as Python does.
+static INT: LazyLock<Regex> = LazyLock::new(|| re(r"\A-?\d+\z"));
+static DIGIT: LazyLock<Regex> = LazyLock::new(|| re(r"\A\d\z"));
 static PREVIEW_MARK: LazyLock<Regex> =
     LazyLock::new(|| re(r"\A(#{1,6}\s+|[-*+]\s+\[[ xX]\]\s+|[-*+]\s+|\d+[.)]\s+|>\s*)"));
 static PREVIEW_INLINE: LazyLock<Regex> = LazyLock::new(|| re(r"[*_`~]|\[\[|\]\]"));
@@ -1242,6 +1244,8 @@ enum Yaml {
     Null,
     Bool(bool),
     Int(i64),
+    /// An int beyond i64, as its decimal text (Python's ints are unbounded); `int()` of it saturates.
+    BigInt(String),
     Str(String),
     List(Vec<Yaml>),
     Map(IndexMap<String, Yaml>),
@@ -1253,6 +1257,7 @@ impl Yaml {
             Yaml::Null => false,
             Yaml::Bool(b) => *b,
             Yaml::Int(n) => *n != 0,
+            Yaml::BigInt(_) => true,
             Yaml::Str(s) => !s.is_empty(),
             Yaml::List(l) => !l.is_empty(),
             Yaml::Map(m) => !m.is_empty(),
@@ -1263,7 +1268,7 @@ impl Yaml {
         match self {
             Yaml::Null => "NoneType",
             Yaml::Bool(_) => "bool",
-            Yaml::Int(_) => "int",
+            Yaml::Int(_) | Yaml::BigInt(_) => "int",
             Yaml::Str(_) => "str",
             Yaml::List(_) => "list",
             Yaml::Map(_) => "dict",
@@ -1284,7 +1289,7 @@ impl Yaml {
             Yaml::Bool(true) => "True".to_string(),
             Yaml::Bool(false) => "False".to_string(),
             Yaml::Int(n) => n.to_string(),
-            Yaml::Str(s) => s.clone(),
+            Yaml::BigInt(s) | Yaml::Str(s) => s.clone(),
             Yaml::List(l) => format!("[{}]", l.iter().map(Yaml::py_repr).collect::<Vec<_>>().join(", ")),
             Yaml::Map(m) => format!(
                 "{{{}}}",
@@ -1297,6 +1302,7 @@ impl Yaml {
     fn py_int(&self) -> Result<i64, BrainError> {
         match self {
             Yaml::Int(n) => Ok(*n),
+            Yaml::BigInt(s) => Ok(if s.starts_with('-') { i64::MIN } else { i64::MAX }),
             Yaml::Bool(b) => Ok(i64::from(*b)),
             Yaml::Str(s) => parse_py_int(s),
             other => Err(type_err(format!(
@@ -1329,7 +1335,39 @@ impl Yaml {
     }
 }
 
-/// `int(s)` for a string: surrounding whitespace, a sign, ASCII digits with single underscores between them.
+/// The value of one Unicode decimal digit (category Nd), as Python's `int()` reads it. Nd characters come in
+/// contiguous runs of ten starting at zero, so the value is the distance from the start of the run, modulo ten.
+fn digit_value(c: char) -> Option<u32> {
+    if c.is_ascii_digit() {
+        return Some(c as u32 - '0' as u32);
+    }
+    let is_digit = |u: u32| char::from_u32(u).map(|ch| DIGIT.is_match(ch.encode_utf8(&mut [0; 4]))).unwrap_or(false);
+    if !is_digit(c as u32) {
+        return None;
+    }
+    let mut start = c as u32;
+    while start > 0 && is_digit(start - 1) {
+        start -= 1;
+    }
+    Some((c as u32 - start) % 10)
+}
+
+/// An int from a sign and decimal digit values: `Yaml::Int` when it fits in i64, else `Yaml::BigInt` with its
+/// decimal text as Python's `str(int)` prints it.
+fn int_from_digits(neg: bool, digits: &[u32]) -> Yaml {
+    let text: String = digits.iter().skip_while(|d| **d == 0).map(|d| char::from_digit(*d, 10).unwrap_or('0')).collect();
+    if text.is_empty() {
+        return Yaml::Int(0);
+    }
+    let signed = if neg { format!("-{text}") } else { text };
+    match signed.parse::<i64>() {
+        Ok(n) => Yaml::Int(n),
+        Err(_) => Yaml::BigInt(signed),
+    }
+}
+
+/// `int(s)` for a string: surrounding whitespace, a sign, decimal digits (any Unicode Nd) with single underscores
+/// between them. Beyond i64 the value saturates (Python's is unbounded; every caller only compares it).
 fn parse_py_int(s: &str) -> Result<i64, BrainError> {
     let invalid = || BrainError::Value(format!("invalid literal for int() with base 10: {}", py::repr(s)));
     let t = py::strip(s);
@@ -1338,17 +1376,14 @@ fn parse_py_int(s: &str) -> Result<i64, BrainError> {
         Some(b'+') => (false, &t[1..]),
         _ => (false, t),
     };
-    if digits.is_empty()
-        || digits.starts_with('_')
-        || digits.ends_with('_')
-        || digits.contains("__")
-        || !digits.chars().all(|c| c.is_ascii_digit() || c == '_')
-    {
+    if digits.is_empty() || digits.starts_with('_') || digits.ends_with('_') || digits.contains("__") {
         return Err(invalid());
     }
-    let clean: String = digits.chars().filter(|c| *c != '_').collect();
-    let n: i64 = clean.parse().map_err(|_| invalid())?;
-    Ok(if neg { -n } else { n })
+    let mut values = Vec::new();
+    for c in digits.chars().filter(|c| *c != '_') {
+        values.push(digit_value(c).ok_or_else(invalid)?);
+    }
+    int_from_digits(neg, &values).py_int()
 }
 
 fn scalar(raw: &str) -> Yaml {
@@ -1368,9 +1403,12 @@ fn scalar(raw: &str) -> Yaml {
         return Yaml::Bool(low == "true");
     }
     if INT.is_match(v) {
-        if let Ok(n) = v.parse::<i64>() {
-            return Yaml::Int(n);
-        }
+        let (neg, digits) = match v.strip_prefix('-') {
+            Some(rest) => (true, rest),
+            None => (false, v),
+        };
+        let values: Vec<u32> = digits.chars().filter_map(digit_value).collect();
+        return int_from_digits(neg, &values);
     }
     Yaml::Str(v.to_string())
 }
@@ -1475,7 +1513,6 @@ pub fn parse_pack(text: &str) -> Result<PackDef, BrainError> {
         Some(r @ Yaml::Map(_)) => r.clone(),
         _ => Yaml::Map(IndexMap::new()),
     };
-    let prefer = rules.get_or("prefer_files", &empty).py_iter()?;
     let default_max = Yaml::Int(DEFAULT_MAX_PER_GLOB);
     let max_per = match rules.get("max_per_glob").filter(|v| v.truthy()) {
         Some(v) => v.clone(),
@@ -1486,6 +1523,8 @@ pub fn parse_pack(text: &str) -> Result<PackDef, BrainError> {
     let description = data.get("description").filter(|v| v.truthy()).map(Yaml::py_str).unwrap_or_default();
     let budget_tokens = data.get_or("budget_tokens", &default_budget).py_int()?;
     let exclude = data.get_or("exclude", &empty).py_iter()?.iter().map(Yaml::py_str).collect();
+    // PackDef's arguments are evaluated in this order in Python, so the first bad field is the one reported
+    let prefer = rules.get_or("prefer_files", &empty).py_iter()?;
     Ok(PackDef {
         name,
         description,
@@ -1682,8 +1721,7 @@ pub fn value_str(v: &Value) -> String {
         Value::Number(n) => match (n.as_i64(), n.as_u64(), n.as_f64()) {
             (Some(i), _, _) => i.to_string(),
             (_, Some(u), _) => u.to_string(),
-            (_, _, Some(f)) if f.fract() == 0.0 && f.is_finite() => format!("{f:.1}"),
-            (_, _, Some(f)) => f.to_string(),
+            (_, _, Some(f)) => py::float_repr(f),
             _ => n.to_string(),
         },
         Value::String(s) => s.clone(),

@@ -149,6 +149,42 @@ pub fn repr(s: &str) -> String {
     out
 }
 
+/// `repr(float)` / `str(float)`: the shortest digits that round-trip, fixed notation for exponents -4..16 and
+/// `d.ddde±XX` outside it, as Python prints them.
+pub fn float_repr(f: f64) -> String {
+    if f.is_nan() {
+        return "nan".to_string();
+    }
+    if f.is_infinite() {
+        return if f > 0.0 { "inf" } else { "-inf" }.to_string();
+    }
+    let sci = format!("{f:e}");
+    let (mantissa, exp) = sci.split_once('e').unwrap_or((sci.as_str(), "0"));
+    let exp: i32 = exp.parse().unwrap_or(0);
+    let neg = mantissa.starts_with('-');
+    let digits: String = mantissa.chars().filter(char::is_ascii_digit).collect();
+    let body = if (-4..16).contains(&exp) {
+        if exp >= 0 {
+            let whole = exp as usize + 1;
+            if digits.len() <= whole {
+                format!("{digits}{}.0", "0".repeat(whole - digits.len()))
+            } else {
+                format!("{}.{}", &digits[..whole], &digits[whole..])
+            }
+        } else {
+            format!("0.{}{digits}", "0".repeat((-exp - 1) as usize))
+        }
+    } else {
+        let tail = if digits.len() > 1 { format!(".{}", &digits[1..]) } else { String::new() };
+        format!("{}{tail}e{}{:02}", &digits[..1], if exp < 0 { '-' } else { '+' }, exp.abs())
+    };
+    if neg {
+        format!("-{body}")
+    } else {
+        body
+    }
+}
+
 /// A JSON string literal exactly as Python's `json.dumps(s, ensure_ascii=False)` writes it.
 pub fn json_str(s: &str) -> String {
     serde_json::to_string(s).unwrap_or_else(|_| String::from("\"\""))

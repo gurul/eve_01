@@ -430,6 +430,36 @@ fn test_parse_pack_follows_pythons_types() {
     assert_eq!(not_iterable.type_name(), "TypeError");
     assert_eq!(parse_pack("name: 7\n").unwrap().name, "7");
     assert_eq!(parse_pack("name: x\n").unwrap().budget_tokens, 4000);
+    // PackDef's fields are converted in order, so a bad budget is reported before a bad prefer_files
+    let first = parse_pack("name: x\nbudget_tokens: abc\nrules:\n  prefer_files: 7\n").unwrap_err();
+    assert_eq!(first, BrainError::Value("invalid literal for int() with base 10: 'abc'".to_string()));
+    // Python's \d and int() take every Unicode decimal digit, and its ints are unbounded
+    let arabic = parse_pack("name: \u{663}\nbudget_tokens: \u{661}\u{662}\n").unwrap();
+    assert_eq!((arabic.name.as_str(), arabic.budget_tokens), ("3", 12));
+    assert_eq!(parse_pack("name: x\nbudget_tokens: ' \u{967}_0 '\n").unwrap().budget_tokens, 10);
+    let big = parse_pack("name: 0099999999999999999999\nbudget_tokens: 99999999999999999999\n").unwrap();
+    assert_eq!((big.name.as_str(), big.budget_tokens), ("99999999999999999999", i64::MAX));
+    assert_eq!(parse_pack("name: x\nmax_per_glob: -99999999999999999999\n").unwrap().max_per_glob, i64::MIN);
+}
+
+#[test]
+fn test_str_of_a_json_float_is_pythons() {
+    use crate::py::float_repr;
+    for (f, want) in [
+        (1.5, "1.5"),
+        (1.0, "1.0"),
+        (-0.0, "-0.0"),
+        (1e20, "1e+20"),
+        (1e16, "1e+16"),
+        (123456789012345.6, "123456789012345.6"),
+        (0.0001, "0.0001"),
+        (0.00001, "1e-05"),
+        (1.25e-7, "1.25e-07"),
+        (0.1 + 0.2, "0.30000000000000004"),
+    ] {
+        assert_eq!(float_repr(f), want, "{f}");
+    }
+    assert_eq!(value_str(&json!([1.5, 1e20, "a"])), "[1.5, 1e+20, 'a']");
 }
 
 #[test]
