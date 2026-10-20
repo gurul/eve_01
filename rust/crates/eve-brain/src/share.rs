@@ -280,14 +280,14 @@ pub(crate) fn kill(proc: &mut tokio::process::Child) {
 // ---- small rules --------------------------------------------------------------------------------------------
 
 /// py: share.py:175 `_EMAIL`
-/// Python flags 32.
+/// Python flags 32. Python's `\s` also takes \x1c-\x1f (str.isspace), which Rust's does not: added to each class.
 pub(crate) static EMAIL: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r#"^[^@\s]+@[^@\s]+\.[^@\s]+(?:\n?\z)"#).expect("EMAIL"));
+    LazyLock::new(|| Regex::new(r#"^[^@\s\x1c-\x1f]+@[^@\s\x1c-\x1f]+\.[^@\s\x1c-\x1f]+(?:\n?\z)"#).expect("EMAIL"));
 
 /// py: share.py:176 `_PHONE`
-/// Python flags 32.
+/// Python flags 32. `\s` with \x1c-\x1f, as Python reads it.
 pub(crate) static PHONE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r#"^\+?[\d\s().\-]{7,20}(?:\n?\z)"#).expect("PHONE"));
+    LazyLock::new(|| Regex::new(r#"^\+?[\d\s\x1c-\x1f().\-]{7,20}(?:\n?\z)"#).expect("PHONE"));
 
 /// py: share.py:177 `_LABEL`
 /// Python flags 32.
@@ -1858,8 +1858,26 @@ fn steal_trailing_wsp(lines: &mut Vec<String>) -> String {
     }
 }
 
-/// The encoded word last laid on the last line: where it starts and ends there, and the text it encodes (what
-/// Python gets back by parsing the line from `last_ew` again).
+/// `len(s)`: Python counts characters.
+fn clen(s: &str) -> usize {
+    s.chars().count()
+}
+
+/// `len(lines[-1])`.
+fn last_len(lines: &[String]) -> usize {
+    lines.last().map(|l| clen(l)).unwrap_or(0)
+}
+
+/// `lines[-1]`, made when `lines` is empty (Python would raise; the folds below never leave it empty there).
+fn last_line(lines: &mut Vec<String>) -> &mut String {
+    if lines.is_empty() {
+        lines.push(String::new());
+    }
+    lines.last_mut().expect("a line")
+}
+
+/// The encoded word last laid on the last line: where it starts and ends there (byte offsets), and the text it
+/// encodes (what Python gets back by parsing the line from `last_ew` again with `get_unstructured`).
 #[derive(Clone)]
 struct LastEw {
     start: usize,
@@ -1867,19 +1885,25 @@ struct LastEw {
     text: String,
 }
 
-/// email's `_fold_as_ew(to_encode, lines, maxlen, last_ew, ew_combine_allowed=True, charset, last_word_is_ew)`.
-fn fold_as_ew(mut to_encode: String, lines: &mut Vec<String>, last_ew: Option<LastEw>, last_word_is_ew: bool) -> Option<LastEw> {
-    let mut start = None;
-    if let Some(ew) = &last_ew {
+/// email's `_fold_as_ew(to_encode, lines, maxlen, last_ew, ew_combine_allowed, charset, last_word_is_ew)`; every
+/// word here is encoded as utf-8 (`encode_as` is utf-8 for a us-ascii part too).
+fn fold_as_ew(
+    mut to_encode: String,
+    lines: &mut Vec<String>,
+    last_ew: Option<LastEw>,
+    ew_combine_allowed: bool,
+    last_word_is_ew: bool,
+) -> Option<LastEw> {
+    let combined = last_ew.filter(|_| ew_combine_allowed);
+    if let Some(ew) = &combined {
         // decode the encoded word already on the line, combine it with what follows it and with to_encode
-        let line = lines.last_mut().expect("a line");
+        let line = last_line(lines);
         to_encode = format!("{}{}{to_encode}", ew.text, &line[ew.end..]);
         line.truncate(ew.start);
-        start = Some(ew.start);
     } else if last_word_is_ew {
         // following an encoded word with another: whitespace between them is dropped when decoded, so it is
         // encoded in the second
-        let line = lines.last_mut().expect("a line");
+        let line = last_line(lines);
         let kept = line.trim_end_matches(is_wsp).len();
         let leading = line[kept..].to_string();
         line.truncate(kept);
@@ -1890,30 +1914,32 @@ fn fold_as_ew(mut to_encode: String, lines: &mut Vec<String>, last_ew: Option<La
     } else if to_encode.starts_with(is_wsp) {
         // joining this to non-encoded text: the leading blank stays plain
         let lead = to_encode.remove(0);
-        if lines.last().map(String::len) == Some(MAIL_LINE) {
+        if last_len(lines) == MAIL_LINE {
             let stolen = steal_trailing_wsp(lines);
             lines.push(stolen);
         }
-        lines.last_mut().expect("a line").push(lead);
+        last_line(lines).push(lead);
     }
     let mut trailing = String::new();
     if to_encode.ends_with(is_wsp) {
         trailing = to_encode.pop().map(String::from).unwrap_or_default();
     }
-    let mut new_last = start.unwrap_or_else(|| lines.last().map(String::len).unwrap_or(0));
+    let mut new_last = match &combined {
+        Some(ew) => ew.start,
+        None => last_line(lines).len(),
+    };
     // "=?utf-8?" + "?" + "?=" around the text, and the encoding's letter
     let chrome_len = "utf-8".len() + 7;
     let mut last_text = String::new();
     let mut last_end = new_last;
     let mut rest: Vec<char> = to_encode.chars().collect();
     while !rest.is_empty() {
-        let current = lines.last().map(String::len).unwrap_or(0);
-        let remaining = MAIL_LINE as isize - current as isize;
+        let remaining = MAIL_LINE as isize - last_len(lines) as isize;
         let text_space = remaining - chrome_len as isize;
         if text_space <= 0 {
             let stolen = steal_trailing_wsp(lines);
             lines.push(if stolen.is_empty() { " ".into() } else { stolen });
-            new_last = lines.last().map(String::len).unwrap_or(0);
+            new_last = last_line(lines).len();
             continue;
         }
         let mut take = (text_space as usize).min(rest.len());
@@ -1924,111 +1950,293 @@ fn fold_as_ew(mut to_encode: String, lines: &mut Vec<String>, last_ew: Option<La
             word = rest[..take].iter().collect();
             encoded = ew_encode(&word);
         }
-        let line = lines.last_mut().expect("a line");
-        new_last = line.len();
+        let line = last_line(lines);
         line.push_str(&encoded);
         last_end = line.len();
         last_text = word;
         rest.drain(..take);
         if !rest.is_empty() {
             lines.push(" ".into());
+            new_last = last_line(lines).len();
         }
     }
-    lines.last_mut().expect("a line").push_str(&trailing);
+    last_line(lines).push_str(&trailing);
+    if !ew_combine_allowed {
+        return None;
+    }
     Some(LastEw { start: new_last, end: last_end, text: last_text })
 }
 
-/// One piece of a header's parse tree as `_refold_parse_tree` walks it.
-enum HeaderPart {
-    /// a token list (the header's label, its value): written whole when it fits, else split into its terminals
-    List { text: String, terms: Vec<(String, bool)> },
-    /// a terminal: its text, and whether it is folding white space
-    Term(String, bool),
+/// A node of a header's parse tree, as email's `_header_value_parser` builds it and `_refold_parse_tree` walks it.
+#[derive(Clone)]
+enum Tok {
+    /// a TokenList: `ew` is its class's fixed `as_ew_allowed` (None: all of its parts allow it)
+    List { kids: Vec<Tok>, ew: Option<bool> },
+    /// a Terminal: its text, its token type, and whether it is a WhiteSpaceTerminal
+    Term { text: String, ttype: &'static str, ws: bool },
+    /// `end_ew_not_allowed`: where a part that may not be encoded ends
+    EndBlocked,
 }
 
-/// An unstructured header (Subject) folded as the SMTP policy folds it: email's `_refold_parse_tree` over
-/// `get_unstructured(value)`, with `_fold_as_ew` for the words that need RFC 2047.
-fn unstructured_header(name: &str, value: &str) -> String {
-    // get_unstructured: runs of blanks (fws) and the words between them (utext)
-    let mut terms: Vec<(String, bool)> = Vec::new();
-    for c in value.chars() {
-        let fws = is_wsp(c);
-        match terms.last_mut() {
-            Some((text, kind)) if *kind == fws => text.push(c),
-            _ => terms.push((c.to_string(), fws)),
+impl Tok {
+    fn list(kids: Vec<Tok>) -> Self {
+        Tok::List { kids, ew: None }
+    }
+
+    fn fixed(kids: Vec<Tok>, ew: bool) -> Self {
+        Tok::List { kids, ew: Some(ew) }
+    }
+
+    fn value(text: &str, ttype: &'static str) -> Self {
+        Tok::Term { text: text.to_string(), ttype, ws: false }
+    }
+
+    fn space(text: &str, ttype: &'static str) -> Self {
+        Tok::Term { text: text.to_string(), ttype, ws: true }
+    }
+
+    /// `str(part)`.
+    fn text(&self) -> String {
+        match self {
+            Tok::List { kids, .. } => kids.iter().map(Tok::text).collect(),
+            Tok::Term { text, .. } => text.clone(),
+            Tok::EndBlocked => String::new(),
         }
     }
-    let mut parts: VecDeque<HeaderPart> = VecDeque::new();
-    parts.push_back(HeaderPart::List { text: format!("{name}:"), terms: vec![(format!("{name}:"), false)] });
-    if !value.is_empty() {
-        parts.push_back(HeaderPart::Term(" ".into(), true));
-        parts.push_back(HeaderPart::List { text: value.to_string(), terms });
+
+    fn as_ew_allowed(&self) -> bool {
+        match self {
+            Tok::List { ew: Some(ew), .. } => *ew,
+            Tok::List { kids, ew: None } => kids.iter().all(Tok::as_ew_allowed),
+            _ => true,
+        }
     }
+
+    fn startswith_fws(&self) -> bool {
+        match self {
+            Tok::List { kids, .. } => kids.first().is_some_and(Tok::startswith_fws),
+            Tok::Term { text, ws, .. } => *ws && text.starts_with(is_wsp),
+            Tok::EndBlocked => false,
+        }
+    }
+
+    fn token_type(&self) -> &'static str {
+        match self {
+            Tok::Term { ttype, .. } => ttype,
+            _ => "",
+        }
+    }
+}
+
+/// email's `_refold_parse_tree(parse_tree, policy=SMTP)` (max_line_length 78, us-ascii): the lines, joined with
+/// CRLF and ended with one. Every token list here breaks syntactically and lets its encoded words combine, and no
+/// part carries undecodable bytes; mime parameters are folded by [`disposition_header`].
+fn refold(parse_tree: &[Tok]) -> String {
+    let maxlen = MAIL_LINE;
     let mut lines: Vec<String> = vec![String::new()];
     let mut last_word_is_ew = false;
     let mut last_ew: Option<LastEw> = None;
+    let mut wrap_as_ew_blocked = 0usize;
     let mut want_encoding = false;
+    let mut parts: VecDeque<Tok> = parse_tree.iter().cloned().collect();
     while let Some(part) = parts.pop_front() {
-        let (tstr, starts_with_fws) = match &part {
-            HeaderPart::List { text, terms } => (text.clone(), terms.first().is_some_and(|(_, fws)| *fws)),
-            HeaderPart::Term(text, fws) => (text.clone(), *fws && text.starts_with(is_wsp)),
-        };
+        if matches!(part, Tok::EndBlocked) {
+            wrap_as_ew_blocked = wrap_as_ew_blocked.saturating_sub(1);
+            continue;
+        }
+        let tstr = part.text();
+        if !want_encoding {
+            want_encoding = if matches!(part.token_type(), "ptext" | "vtext") {
+                // encode if tstr contains special characters
+                tstr.chars().any(|c| "()<>@,:;.\\\"[]\r\n".contains(c))
+            } else {
+                // encode if tstr contains newlines
+                tstr.contains(['\r', '\n'])
+            };
+        }
         if !tstr.is_ascii() {
             want_encoding = true;
         }
-        if want_encoding {
-            match part {
-                HeaderPart::List { terms, .. } => {
-                    for (text, fws) in terms.into_iter().rev() {
-                        parts.push_front(HeaderPart::Term(text, fws));
+        if want_encoding && wrap_as_ew_blocked == 0 {
+            if !part.as_ew_allowed() {
+                want_encoding = false;
+                last_ew = None;
+                if let Tok::List { kids, .. } = &part {
+                    let folded = refold(kids);
+                    let encoded = folded.strip_suffix("\r\n").unwrap_or(&folded);
+                    if !encoded.contains("\r\n") {
+                        // it fits on a single line
+                        if clen(encoded) as isize > maxlen as isize - last_len(&lines) as isize {
+                            // but not on this one, so start a new one
+                            let newline = steal_trailing_wsp(&mut lines);
+                            lines.push(newline);
+                        }
+                        last_line(&mut lines).push_str(encoded);
+                        last_word_is_ew = false;
+                        continue;
                     }
-                    want_encoding = false;
-                    continue;
                 }
-                HeaderPart::Term(text, _) => {
-                    // every encoded word here is utf-8: they combine
-                    last_ew = fold_as_ew(text, &mut lines, last_ew.take(), last_word_is_ew);
-                    last_word_is_ew = true;
-                    want_encoding = false;
-                    continue;
-                }
+                // it doesn't fit on a line by itself: unpack the subparts and wrap them
             }
+            if let Tok::List { kids, .. } = part {
+                // not a Terminal: each piece individually
+                for kid in kids.into_iter().rev() {
+                    parts.push_front(kid);
+                }
+                want_encoding = false;
+                continue;
+            }
+            // a terminal, wrapped as an encoded word, combined with the encoded words before it
+            last_ew = fold_as_ew(tstr, &mut lines, last_ew.take(), true, last_word_is_ew);
+            last_word_is_ew = true;
+            want_encoding = false;
+            continue;
         }
-        let current = lines.last().map(String::len).unwrap_or(0);
-        if tstr.len() + current <= MAIL_LINE {
-            lines.last_mut().expect("a line").push_str(&tstr);
+        if clen(&tstr) as isize <= maxlen as isize - last_len(&lines) as isize {
+            last_line(&mut lines).push_str(&tstr);
             last_word_is_ew = last_word_is_ew && tstr.trim_matches(is_wsp).is_empty();
             continue;
         }
-        // too long for this line: a syntactic break, so try it on the next line by itself
-        if tstr.len() < MAIL_LINE {
+        // too long to fit: a major syntactic break, so try it on the next line by itself
+        if clen(&tstr) < maxlen {
             let newline = steal_trailing_wsp(&mut lines);
-            if !newline.is_empty() || starts_with_fws {
+            if !newline.is_empty() || part.startswith_fws() {
                 lines.push(format!("{newline}{tstr}"));
                 last_word_is_ew = last_word_is_ew && lines.last().is_some_and(|l| l.trim_matches(is_wsp).is_empty());
                 last_ew = None;
                 continue;
             }
         }
-        match part {
-            HeaderPart::List { terms, .. } => {
-                for (text, fws) in terms.into_iter().rev() {
-                    parts.push_front(HeaderPart::Term(text, fws));
-                }
+        if let Tok::List { .. } = part {
+            // not a terminal: fold the subparts
+            let blocked = !part.as_ew_allowed();
+            let Tok::List { kids, .. } = part else { continue };
+            if blocked {
+                wrap_as_ew_blocked += 1;
+                parts.push_front(Tok::EndBlocked);
             }
-            term @ HeaderPart::Term(..) => {
-                // it needs no encoding, but is encoded anyway so it can wrap
-                parts.push_front(term);
-                want_encoding = true;
+            for kid in kids.into_iter().rev() {
+                parts.push_front(kid);
             }
+            continue;
         }
+        if part.as_ew_allowed() && wrap_as_ew_blocked == 0 {
+            // it needs no encoding, but is encoded anyway so it can wrap
+            parts.push_front(part);
+            want_encoding = true;
+            continue;
+        }
+        // no way to wrap it
+        let newline = steal_trailing_wsp(&mut lines);
+        if !newline.is_empty() || part.startswith_fws() {
+            lines.push(format!("{newline}{tstr}"));
+        } else {
+            // nor to fold it onto the next line
+            last_line(&mut lines).push_str(&tstr);
+        }
+        last_word_is_ew = last_word_is_ew && tstr.trim_matches(is_wsp).is_empty();
     }
-    lines.join("\r\n")
+    format!("{}\r\n", lines.join("\r\n"))
 }
 
-/// An address header (To): as it is when it fits, else on a folded line; a part of the address with non-ASCII
-/// characters as an encoded word.
+/// `BaseHeader.fold`: the label, a blank when there is a value, the value's parse tree; the final CRLF dropped.
+fn fold_header(name: &str, tree: Tok) -> String {
+    let label = Tok::fixed(vec![Tok::value(name, "header-name"), Tok::value(":", "header-sep")], false);
+    let mut parts = vec![label];
+    if matches!(&tree, Tok::List { kids, .. } if !kids.is_empty()) {
+        parts.push(Tok::list(vec![Tok::space(" ", "fws")]));
+    }
+    parts.push(tree);
+    let folded = refold(&parts);
+    folded.strip_suffix("\r\n").unwrap_or(&folded).to_string()
+}
+
+/// `get_unstructured(value)`: runs of blanks (fws, which also take the Unicode spaces after a blank, as
+/// `str.lstrip` does) and the words between them (utext).
+fn get_unstructured(value: &str) -> Tok {
+    let mut kids = Vec::new();
+    let mut rest = value;
+    while let Some(first) = rest.chars().next() {
+        if is_wsp(first) {
+            let after = rest.trim_start_matches(eve_envfile::is_py_space);
+            kids.push(Tok::space(&rest[..rest.len() - after.len()], "fws"));
+            rest = after;
+            continue;
+        }
+        let end = rest.find(is_wsp).unwrap_or(rest.len());
+        kids.push(Tok::value(&rest[..end], "utext"));
+        rest = &rest[end..];
+    }
+    Tok::list(kids)
+}
+
+/// An unstructured header (Subject) folded as the SMTP policy folds it. A file name holding a literal RFC 2047
+/// encoded word (`=?utf-8?q?...?=`) is written as it is: Python's parser would decode it first.
+fn unstructured_header(name: &str, value: &str) -> String {
+    fold_header(name, get_unstructured(value))
+}
+
+/// `get_dot_atom_text`: atext runs and the dots between them, or None when `value` is not one.
+fn dot_atom_text(value: &str) -> Option<Tok> {
+    let atom_end = |c: char| "()<>@,:;.\\\"[] \t".contains(c);
+    if value.is_empty() || value.starts_with("=?") {
+        return None;
+    }
+    let mut kids = Vec::new();
+    for (i, atext) in value.split('.').enumerate() {
+        if atext.is_empty() || atext.contains(atom_end) {
+            return None;
+        }
+        if i > 0 {
+            kids.push(Tok::value(".", "dot"));
+        }
+        kids.push(Tok::value(atext, "atext"));
+    }
+    Some(Tok::fixed(kids, true))
+}
+
+/// `get_addr_spec` for `local@domain` with both parts dot-atoms: AddrSpec, LocalPart and Domain around them.
+fn addr_spec(value: &str) -> Option<Tok> {
+    let (local, domain) = value.split_once('@')?;
+    let local = dot_atom_text(local)?;
+    let domain = dot_atom_text(domain)?;
+    Some(Tok::fixed(
+        vec![
+            Tok::fixed(vec![Tok::list(vec![local])], false),
+            Tok::value("@", "address-at-symbol"),
+            Tok::fixed(vec![Tok::list(vec![domain])], false),
+        ],
+        false,
+    ))
+}
+
+/// `get_address_list(value)` for one plain address (what an email address in Contacts or a handle the model
+/// wrote is): `local@domain`, or `<local@domain>` (a NameAddr of an AngleAddr), both parts dot-atoms. None for
+/// any other form.
+fn plain_address(value: &str) -> Option<Tok> {
+    let mailbox = match value.strip_prefix('<').and_then(|v| v.strip_suffix('>')) {
+        Some(inner) => {
+            let angle = Tok::list(vec![
+                Tok::value("<", "angle-addr-start"),
+                addr_spec(inner)?,
+                Tok::value(">", "angle-addr-end"),
+            ]);
+            Tok::list(vec![Tok::list(vec![angle])])
+        }
+        None => Tok::list(vec![addr_spec(value)?]),
+    };
+    Some(Tok::list(vec![Tok::list(vec![mailbox])]))
+}
+
+/// An address header (To) as the SMTP policy folds it. A plain `local@domain` (or `<local@domain>`) goes through
+/// the parse tree Python builds for it. Any other form (a display name, a part that is not a dot-atom such as a
+/// quoted local part or `a..b`, a comment, a group, a domain literal) is written as given when it fits, else on a folded line, with a part
+/// holding non-ASCII characters as an encoded word: Python's parser would repair such a value (close a quote or
+/// a group) before writing it. Neither a Contacts address nor a handle `is_email` passes takes those forms.
 fn address_header(name: &str, value: &str) -> String {
+    if let Some(tree) = plain_address(value) {
+        return fold_header(name, tree);
+    }
     let shown = if value.is_ascii() {
         value.to_string()
     } else {
@@ -2078,15 +2286,20 @@ fn quote_2231(c: char) -> String {
 /// line cannot hold it.
 fn disposition_header(filename: &str) -> String {
     let head = "Content-Disposition: attachment;";
+    if filename.is_empty() {
+        // `_formatparam` writes a parameter with an empty value as its bare name
+        return format!("{head} filename");
+    }
     let (param, charset) = if filename.is_ascii() {
         (format!("filename=\"{}\"", filename.replace('\\', "\\\\").replace('"', "\\\"")), "us-ascii")
     } else {
         (format!("filename*=utf-8''{}", filename.chars().map(quote_2231).collect::<String>()), "utf-8")
     };
-    if head.len() + 1 + param.len() <= MAIL_LINE {
+    // `_fold_mime_parameters`: on this line while it stays under the limit, else alone on the next when it fits
+    if head.len() + param.len() + 1 < MAIL_LINE {
         return format!("{head} {param}");
     }
-    if param.len() < MAIL_LINE {
+    if param.len() + 2 <= MAIL_LINE {
         return format!("{head}\r\n {param}");
     }
     let mut sections: Vec<String> = Vec::new();

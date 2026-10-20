@@ -22,7 +22,7 @@ use serde_json::{json, Map, Value};
 use eve_brain::notify::{self, Notifier, PostError, PostFn};
 use eve_brain::prelude::{HttpError, HttpRequest, HttpResponse, HttpTransport};
 use eve_brain::share::{self as S, Ask, Runner, Share, ShareConfig, TokenFn};
-use eve_brain::telegram::STOP_BUTTON;
+use eve_brain::telegram::{TelegramApi as _, STOP_BUTTON};
 
 type Obj = Map<String, Value>;
 type Calls = Arc<Mutex<Vec<(Vec<String>, Vec<u8>)>>>;
@@ -313,6 +313,58 @@ async fn test_stale_file_is_refused() {
     let done = sh.confirm(&s(&out, "token")).await;
     assert_eq!(done["ok"], false);
     assert!(s(&done, "reason").contains("changed") && r.sends().is_empty());
+}
+
+/// test_lean_sharegate_replay.py (ShareGate.lean `current_violates`): the path resolves while `inbox` is a folder
+/// and `inbox` becomes a link to ~/.ssh before the bytes are read. Python injects the move by wrapping
+/// `resolve_file`; here the reads the race lands between are called on the resolved path directly, and the whole
+/// flow is run with the link in place by the send.
+#[tokio::test]
+async fn test_a_folder_swapped_for_a_link_between_resolve_and_open_never_sends_a_hidden_file() {
+    const SECRET: &[u8] = b"-----BEGIN OPENSSH PRIVATE KEY----- not really\n";
+    let h = home();
+    let inbox = h.home.join("Documents").join("inbox");
+    std::fs::create_dir_all(&inbox).unwrap();
+    std::fs::write(inbox.join("notes.txt"), b"shopping list\n").unwrap();
+    std::fs::create_dir(h.home.join(".ssh")).unwrap();
+    std::fs::write(h.home.join(".ssh").join("notes.txt"), SECRET).unwrap();
+    let parked = h.home.join("Documents").join(".inbox-parked");
+    let as_link = || {
+        std::fs::rename(&inbox, &parked).unwrap();
+        std::os::unix::fs::symlink(h.home.join(".ssh"), &inbox).unwrap();
+    };
+    let as_folder = || {
+        std::fs::remove_file(&inbox).unwrap();
+        std::fs::rename(&parked, &inbox).unwrap();
+    };
+    // the question's read, right after the resolve: a link on the way is refused, never followed
+    let (real, why) = S::resolve_file("~/Documents/inbox/notes.txt", Some(&h.home));
+    let real = real.unwrap_or_else(|| panic!("{why}"));
+    as_link();
+    assert!(S::fingerprint(&real).is_err());
+    // the send's read: the fingerprint was of the folder's file, the copy is attempted through the link
+    as_folder();
+    let (st, digest) = S::fingerprint(&real).unwrap();
+    as_link();
+    let pending = S::Pending {
+        token: "t".into(), via: "imessage".into(), path: real.clone(), size: st.size, mtime_ns: st.mtime_ns,
+        handle: "+15550100199".into(), who: "+1 555 010 0199".into(), note: String::new(), created: 0.0,
+        raw: "~/Documents/inbox/notes.txt".into(), attach: false, ino: st.ino, dev: st.dev, sha256: digest,
+    };
+    let dest = h.root.join("staged.txt");
+    assert!(S::stage_exact(&pending, &dest).is_err() && !dest.exists());
+    // the whole flow: asked while a folder, allowed, sent after the move: nothing under ~/.ssh goes out
+    as_folder();
+    let r = FakeRunner::new(vec![]);
+    let sh = make(&h, &r);
+    let out = sh.handle("share_file", &share_args("+1 555 010 0199", "imessage", "~/Documents/inbox/notes.txt", None)).await;
+    assert!(b(&out, "needs_approval"), "{out:?}");
+    as_link();
+    let done = sh.confirm(&s(&out, "token")).await;
+    assert_eq!(done["ok"], false, "{done:?}");
+    for (argv, _) in r.calls.lock().iter().filter(|(argv, _)| !argv.iter().any(|a| a == "JavaScript")) {
+        assert!(!std::fs::read(&argv[3]).unwrap_or_default().windows(SECRET.len()).any(|w| w == SECRET));
+    }
 }
 
 /// Review, 2026-10-05: confirm checked size and mtime through stat(), which follows a link, so a report.pdf
@@ -844,6 +896,47 @@ fn test_attachment_mail_matches_pythons_bytes() {
     ), "{m}");
 }
 
+/// The headers before MIME-Version, and the Content-Disposition line(s), of a mail.
+fn mail_headers(to: &str, filename: &str) -> (String, String) {
+    let m = mail_with_boundary(to, filename, "x", b"x");
+    let head = m.split("\r\nMIME-Version").next().unwrap().to_string();
+    let start = m.find("Content-Disposition:").unwrap();
+    let end = start + m[start..].find("\r\nMIME-Version").unwrap();
+    (head, m[start..end].to_string())
+}
+
+#[test]
+fn test_attachment_mail_folds_addresses_and_parameters_as_python() {
+    // python3.13 (the daemon's): each expectation is EmailMessage(policy=SMTP)'s own output
+    let long = format!("{}@example.com", "a".repeat(66)); // no place to fold an address: one long line
+    assert_eq!(mail_headers(&long, "r.pdf").0, format!("To: {long}\r\nSubject: r.pdf"));
+    let fits = format!("{}@example.com", "a".repeat(63)); // fits on a line of its own
+    assert_eq!(mail_headers(&fits, "r.pdf").0, format!("To:\r\n {fits}\r\nSubject: r.pdf"));
+    let angle = format!("<{}@example.com>", "a".repeat(70));
+    assert_eq!(mail_headers(&angle, "r.pdf").0, format!("To: {angle}\r\nSubject: r.pdf"));
+    assert_eq!(
+        mail_headers("jos\u{e9}.garc\u{ed}a@ex\u{e4}mple.com", "r.pdf").0,
+        "To: =?utf-8?q?jos=C3=A9=2Egarc=C3=ADa?=@=?utf-8?q?ex=C3=A4mple?=.com\r\nSubject: r.pdf"
+    );
+    let (head, disposition) = mail_headers("ana@example.com", "Zo\u{eb} notes 2026 final report report plan.jpg");
+    assert_eq!(head, "To: ana@example.com\r\nSubject: =?utf-8?q?Zo=C3=AB?= notes 2026 final report report plan.jpg");
+    assert_eq!(
+        disposition,
+        "Content-Disposition: attachment;\r\n filename*0*=utf-8''Zo%C3%AB%20notes%202026%20final%20report%20report%20plan.;\r\n filename*1*=jpg"
+    );
+    assert_eq!(
+        mail_headers("ana@example.com", &format!("{}.pdf", "r".repeat(62))).1,
+        format!("Content-Disposition: attachment;\r\n filename*0*=us-ascii''{};\r\n filename*1*={}.pdf", "r".repeat(54), "r".repeat(8))
+    );
+    let (head, disposition) = mail_headers("ana@example.com", "draft  caf\u{e9}  vu");
+    assert_eq!(head, "To: ana@example.com\r\nSubject: draft  =?utf-8?q?caf=C3=A9?=  vu");
+    assert_eq!(disposition, "Content-Disposition: attachment;\r\n filename*=utf-8''draft%20%20caf%C3%A9%20%20vu");
+    assert_eq!(
+        mail_headers("ana@example.com", ""),
+        ("To: ana@example.com\r\nSubject:".to_string(), "Content-Disposition: attachment; filename".to_string())
+    );
+}
+
 #[test]
 fn test_attachment_mail_refuses_a_line_break_in_a_header() {
     assert!(S::attachment_mail("a@b.co", "a\nb.pdf", "x", b"x").is_err());
@@ -857,8 +950,13 @@ fn test_small_rules() {
     assert!(S::is_phone("+1 (555) 010-0199") && !S::is_phone("555-01") && !S::is_phone("call me"));
     assert_eq!(S::phone_handle("+1 (555) 010-0199"), "+15550100199");
     assert_eq!(S::phone_handle("555.010.0199"), "5550100199");
+    // Python's `\s` (str.isspace) also takes \x1c-\x1f; checked against python3's re
+    assert!(!S::is_email("x\u{1c}y@b.co") && S::is_phone("123\u{1c}4567"));
     assert_eq!(S::human_size(512), "512 bytes");
     assert_eq!(S::human_size(2009), "2 KB");
+    // Python's format rounds a half to even
+    let sizes: Vec<String> = [2560, 3584, 1310720, 1415577, 1023, 1048575].into_iter().map(S::human_size).collect();
+    assert_eq!(sizes, ["2 KB", "4 KB", "1.2 MB", "1.3 MB", "1023 bytes", "1024 KB"]);
     assert_eq!(S::human_size(S::MAX_IMESSAGE_BYTES as i64), "100.0 MB");
     assert_eq!(S::human_size(S::MAX_DRIVE_BYTES as i64), "1024.0 MB");
 }
@@ -969,26 +1067,27 @@ fn test_plain_text_strips_html_markdown_and_openui_and_caps() {
 
 // ---- the hook: MutedBotApi's sends ---------------------------------------------------------------------------
 //
-// MutedBotApi hands every Bot API call it swallows to `offer_send(method, data)` (telegram_wire's tests cover that
-// hand-over); these send the calls it makes, as the Bot API names and shapes them.
+// As in Python, these go through MutedBotApi, which hands every Bot API call it swallows to
+// `offer_send(method, data)`.
 
-fn send(n: &Arc<Notifier>, method: &str, data: Value) {
-    n.offer_send(method, &obj(data));
+fn muted(n: &Arc<Notifier>) -> eve_brain::telegram::MutedBotApi {
+    eve_brain::telegram::MutedBotApi::new("", Some(n.clone()))
 }
 
-fn inline(rows: Value) -> Value {
-    json!({"inline_keyboard": rows})
+fn row(buttons: &[(&str, &str, &str)]) -> Vec<(String, String, String)> {
+    buttons.iter().map(|(a, b, c)| (a.to_string(), b.to_string(), c.to_string())).collect()
 }
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_muted_sends_make_exactly_one_coalesced_post() {
     let post = FakePost::new();
     let n = quick(&post, true);
-    send(&n, "sendMessage", json!({"chat_id": OWNER, "text": "first", "parse_mode": "HTML"}));
-    send(&n, "sendMessage", json!({"chat_id": OWNER, "text": "the price <b>dropped</b>", "parse_mode": "HTML"}));
-    send(&n, "sendMessage", json!({"chat_id": OWNER, "text": "Go on the chief's job?", "parse_mode": "HTML",
-        "reply_markup": inline(json!([[{"text": "Go", "callback_data": "k1", "style": "success"},
-                                        {"text": "No", "callback_data": "k2"}]]))}));
+    let api = muted(&n);
+    api.send_message(OWNER, "first", None, None, &[], 0, None).await.unwrap();
+    api.send_message(OWNER, "the price **dropped**", None, None, &[], 0, None).await.unwrap();
+    api.send_inline(OWNER, "Go on the chief's job?", &[row(&[("Go", "k1", "success"), ("No", "k2", "")])], None, None)
+        .await
+        .unwrap();
     sleep(0.1).await;
     let calls = post.calls.lock().clone();
     assert!(calls.len() == 1 && n.posts() == 1);
@@ -1001,16 +1100,15 @@ async fn test_muted_sends_make_exactly_one_coalesced_post() {
 #[tokio::test(flavor = "multi_thread")]
 async fn test_edits_typing_drafts_reactions_commands_and_progress_cards_do_not_notify() {
     let post = FakePost::new();
-    let n = quick(&post, true);
-    send(&n, "editMessageText", json!({"chat_id": OWNER, "message_id": 5, "text": "edited"}));
-    send(&n, "editMessageReplyMarkup", json!({"chat_id": OWNER, "message_id": 5, "reply_markup": inline(json!([]))}));
-    send(&n, "sendChatAction", json!({"chat_id": OWNER, "action": "typing"}));
-    send(&n, "sendMessageDraft", json!({"chat_id": OWNER, "draft_id": 1, "text": ""}));
-    send(&n, "setMessageReaction", json!({"chat_id": OWNER, "message_id": 5, "reaction": []}));
-    send(&n, "answerCallbackQuery", json!({"callback_query_id": "q", "text": "ok"}));
-    send(&n, "setMyCommands", json!({"commands": [{"command": "jobs", "description": "your jobs"}]}));
-    send(&n, "sendMessage", json!({"chat_id": OWNER, "text": "Working on it",
-        "reply_markup": inline(json!([[{"text": STOP_BUTTON, "callback_data": "s1", "style": "danger"}]]))}));
+    let api = muted(&quick(&post, true));
+    let _ = api.edit_message(OWNER, 5, "edited", None, None, None).await;
+    let _ = api.drop_buttons(OWNER, 5).await;
+    let _ = api.typing(OWNER).await;
+    let _ = api.send_draft(OWNER, 1, "").await;
+    let _ = api.react(OWNER, 5, "").await;
+    let _ = api.answer_callback("q", "ok").await;
+    let _ = api.set_commands(&[("jobs".to_string(), "your jobs".to_string())], OWNER).await;
+    let _ = api.send_inline(OWNER, "Working on it", &[row(&[(STOP_BUTTON, "s1", "danger")])], None, None).await;
     sleep(0.1).await;
     assert!(post.calls.lock().is_empty());
 }
@@ -1018,10 +1116,13 @@ async fn test_edits_typing_drafts_reactions_commands_and_progress_cards_do_not_n
 #[tokio::test(flavor = "multi_thread")]
 async fn test_a_picture_and_a_file_notify() {
     let post = FakePost::new();
-    let n = quick(&post, true);
-    send(&n, "sendPhoto", json!({"chat_id": OWNER, "caption": ""}));
+    let tmp = tempfile::tempdir().unwrap();
+    let pic = tmp.path().join("p.jpg");
+    std::fs::write(&pic, b"x").unwrap();
+    let api = muted(&quick(&post, true));
+    api.send_photo(OWNER, &pic, "").await.unwrap();
     sleep(0.1).await;
-    send(&n, "sendDocument", json!({"chat_id": OWNER, "caption": "the notes"}));
+    api.send_document(OWNER, &pic, "the notes").await.unwrap();
     sleep(0.3).await;
     assert_eq!(post.bodies(), ["eve sent a picture", "the notes"]);
 }
@@ -1093,7 +1194,8 @@ impl std::io::Write for Sink {
 async fn failure_case(post: FakePost, warning: &str) {
     let logs = captured();
     let n = quick(&post, true);
-    send(&n, "sendMessage", json!({"chat_id": OWNER, "text": "private words"})); // returns, never raises
+    let sent = muted(&n).send_message(OWNER, "private words", None, None, &[], 0, None).await; // never raises
+    assert!(sent.is_ok());
     sleep(0.1).await;
     assert_eq!(n.posts(), 0);
     assert_eq!(post.calls.lock().len(), 1);
@@ -1135,12 +1237,26 @@ fn test_offer_never_blocks_without_a_loop_and_never_raises() {
     assert!(post.calls.lock().is_empty());
 }
 
+/// Python counts a message offered with no loop before it finds none: the next notification folds it in.
+#[test]
+fn offer_without_a_loop_is_folded_into_the_next_notification() {
+    let post = FakePost::new();
+    let n = quick(&post, true);
+    n.offer("no loop here");
+    tokio::runtime::Builder::new_multi_thread().enable_all().build().unwrap().block_on(async {
+        n.offer("then a loop");
+        sleep(0.1).await;
+    });
+    assert_eq!(post.bodies(), ["then a loop (+1 more)"]);
+}
+
 #[tokio::test(flavor = "multi_thread")]
 async fn test_close_cancels_a_pending_post() {
     let post = FakePost::new();
     let n = Notifier::new(fixed(TOKEN), notify::NOTIFY_URL, true, post.post(), Arc::new(eve_brain::prelude::monotonic), 5.0, notify::MIN_GAP_SECS);
-    send(&n, "sendMessage", json!({"chat_id": OWNER, "text": "later"}));
-    n.close().await; // MutedBotApi.close closes its notifier
+    let api = muted(&n);
+    api.send_message(OWNER, "later", None, None, &[], 0, None).await.unwrap();
+    eve_brain::telegram::TelegramApi::close(&api).await; // MutedBotApi.close closes its notifier
     assert!(post.calls.lock().is_empty());
 }
 

@@ -141,14 +141,14 @@ pub(crate) static MD_MARKS: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r#"(\*\*|__|~~|`+)"#).expect("MD_MARKS"));
 
 /// py: notify.py:94 `_MD_HEADING`
-/// Python flags 40.
+/// Python flags 40. Python's `\s` also takes \x1c-\x1f (str.isspace), which Rust's does not.
 pub(crate) static MD_HEADING: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r#"(?m)^\s{0,3}#{1,6}\s+"#).expect("MD_HEADING"));
+    LazyLock::new(|| Regex::new(r#"(?m)^[\s\x1c-\x1f]{0,3}#{1,6}[\s\x1c-\x1f]+"#).expect("MD_HEADING"));
 
 /// py: notify.py:95 `_BLANKS`
-/// Python flags 32.
+/// Python flags 32. `\s` with \x1c-\x1f, as Python reads it.
 pub(crate) static BLANKS: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r#"\n\s*\n+"#).expect("BLANKS"));
+    LazyLock::new(|| Regex::new(r#"\n[\s\x1c-\x1f]*\n+"#).expect("BLANKS"));
 
 /// py: notify.py:96 `_SPACES`
 /// Python flags 32.
@@ -361,11 +361,8 @@ impl Notifier {
         if line.is_empty() {
             return;
         }
-        let Ok(runtime) = tokio::runtime::Handle::try_current() else {
-            // no running loop: nothing to post from (never the case in the inlet)
-            tracing::debug!("notify: no event loop; a notification was skipped");
-            return;
-        };
+        // Python counts the message before it looks for a loop: one offered with no loop is folded into the
+        // next notification that does go out.
         let generation = {
             let mut state = self.state.lock();
             state.last = line;
@@ -373,10 +370,16 @@ impl Notifier {
             if state.running {
                 return;
             }
+            let Ok(_) = tokio::runtime::Handle::try_current() else {
+                // no running loop: nothing to post from (never the case in the inlet)
+                tracing::debug!("notify: no event loop; a notification was skipped");
+                return;
+            };
             state.running = true;
             state.generation += 1;
             state.generation
         };
+        let runtime = tokio::runtime::Handle::current();
         // spawned with the lock released: a task dropped at once (a runtime shutting down) takes it in its guard
         let guard = Running { notifier: self.clone(), generation };
         let me = self.clone();
