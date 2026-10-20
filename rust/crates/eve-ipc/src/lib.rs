@@ -45,6 +45,7 @@ use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, ReadBuf};
 use tokio::sync::{mpsc, watch};
 use tokio::task::JoinHandle;
 
+mod printable;
 pub mod pyjson;
 pub use pyjson::LoadsError;
 
@@ -1192,7 +1193,19 @@ pub fn py_float_repr(f: f64) -> String {
         return if f.is_sign_negative() { "-0.0" } else { "0.0" }.to_string();
     }
     let sign = if f < 0.0 { "-" } else { "" };
-    let sci = format!("{:e}", f.abs());
+    let mut sci = format!("{:e}", f.abs());
+    // Rust's shortest form can end on either side of a tie (`…000.25` gives
+    // `.3`); Python's dtoa takes the shortest length and then the digits
+    // nearest the exact value, ties to even. Re-round the exact value to that
+    // many digits (Rust's exact formatting rounds half to even) and keep it
+    // when it still reads back as the same float.
+    let n_digits = sci.split_once('e').map_or(sci.len(), |(m, _)| m.chars().filter(char::is_ascii_digit).count());
+    if n_digits > 1 {
+        let nearest = format!("{:.*e}", n_digits - 1, f.abs());
+        if nearest.parse::<f64>().ok() == Some(f.abs()) {
+            sci = nearest;
+        }
+    }
     let (mant, exp) = sci.split_once('e').unwrap_or((sci.as_str(), "0"));
     let exp: i32 = exp.parse().unwrap_or(0);
     let digits: String = mant.chars().filter(|c| *c != '.').collect();
@@ -1246,21 +1259,20 @@ pub fn py_str_repr(s: &str) -> String {
     out
 }
 
-/// `str.isprintable()` for one character: not a control, format, separator
-/// (other than space) or private-use character.
+/// `str.isprintable()` for one character, from CPython 3.13's own table.
 fn py_printable(c: char) -> bool {
-    if c == ' ' {
-        return true;
-    }
-    if c.is_control() {
-        return false;
-    }
-    !matches!(c as u32,
-        0x00A0 | 0x00AD | 0x061C | 0x1680 | 0x180E
-        | 0x2000..=0x200F | 0x2028..=0x202F | 0x205F..=0x2064 | 0x2066..=0x206F
-        | 0x3000 | 0xFEFF | 0xFFF9..=0xFFFB
-        | 0xE000..=0xF8FF | 0xF0000..=0xFFFFD | 0x100000..=0x10FFFD
-        | 0xE0001 | 0xE0020..=0xE007F)
+    let cp = c as u32;
+    printable::NOT_PRINTABLE
+        .binary_search_by(|&(lo, hi)| {
+            if hi < cp {
+                std::cmp::Ordering::Less
+            } else if lo > cp {
+                std::cmp::Ordering::Greater
+            } else {
+                std::cmp::Ordering::Equal
+            }
+        })
+        .is_err()
 }
 
 /// Python's `repr()` of the value `json.loads` would have produced: dicts as

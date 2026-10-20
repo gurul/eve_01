@@ -4,7 +4,7 @@ Status: complete
 ## Modules
 | Python | Rust |
 |---|---|
-| `bridge/src/eve_bridge/ipc.py` | `src/lib.rs`, plus `src/pyjson.rs` for the `json.loads` it calls (tests in `src/tests.rs`) |
+| `bridge/src/eve_bridge/ipc.py` | `src/lib.rs`, plus `src/pyjson.rs` for the `json.loads` it calls and `src/printable.rs` for `str.isprintable()` (tests in `src/tests.rs`) |
 
 ## API
 | Python | Rust | Notes |
@@ -45,9 +45,9 @@ Status: complete
 | `IPCServer._on_conn` | `handle_conn` (pub, generic over the stream) | readline (64 KiB limit) → empty: no reply; undecodable: `{"ok": false, "error": "bad json: ..."}` with CPython's `UnicodeDecodeError` / `JSONDecodeError` text; nesting past `pyjson::MAX_DEPTH` (Python's `RecursionError`), an over-long line or a read error: no reply, logged `Unhandled exception in client_connected_cb: <Type>: <msg>`; handler error or panic (in the call or the future): `{"ok": false, "error": "<Type>: <msg>"}` and `handler error for req=<repr>` logged |
 | `IPCServer._reply` | private `reply` | `json.dumps(obj, ensure_ascii=False) + "\n"` via `dumps`; reset / broken pipe logged at debug `ipc: client hung up before reply was flushed`; any other write error logged as unhandled, as asyncio does |
 | `json.loads(line.decode("utf-8"))` | private `decode_request`, `pyjson::loads` | an iterative port of CPython 3.13's C scanner: same messages, character positions and `line L column C (char P)` format, BOM refusal, `Extra data`, `Illegal trailing comma`, surrogate-pair joining, the 4300-digit int limit; checked against 4,479 cases recorded from CPython (`tests/data/pyjson_cases.jsonl`, written by `tests/data/gen_pyjson_cases.py`) |
-| `json.dumps(..., ensure_ascii=False)` | `dumps` | `", "`/`": "` separators, raw non-ASCII, Python float repr |
+| `json.dumps(..., ensure_ascii=False)` | `dumps` | `", "`/`": "` separators, raw non-ASCII, Python float repr (`py_float_repr`: shortest round-trip digits, a tie between two shortest forms going to the even digit as dtoa does; checked against 30,000 CPython reprs) |
 | `type(e).__name__` / `str(e)` | `NamedError`, `error_type_name`, `io_error_type_name`, `error_message`, `py_os_error_str` | a handler names its Python class with `NamedError`; `SpecError`, `LoadsError`, `io::Error` (by errno, as `OSError(errno, ...)` picks the subclass) and `serde_json::Error` (`JSONDecodeError` for syntax) map to their Python classes; anything else is `Exception`. An OS error's text is `[Errno N] <strerror>` |
-| `repr(...)` | `py_repr`, `py_str_repr`, `py_float_repr` | for log lines and messages that show `%r` |
+| `repr(...)` | `py_repr`, `py_str_repr`, `py_float_repr` | for log lines and messages that show `%r`; `py_str_repr` escapes exactly what CPython 3.13's `str.isprintable()` refuses (`src/printable.rs`, generated from it) |
 
 ## Tests
 | Python file | Python tests | Rust tests | Not ported (why) |
@@ -70,4 +70,3 @@ None
 - `parse_spec` takes ASCII digits as a port; Python's `str.isdigit` also accepts other Unicode digits (and then `int()` either reads them or raises).
 - `IpcServer::serve_forever` returns `Ok(())` when the server is stopped; Python's raises `CancelledError` out of the cancelled `serve_forever`. Its RuntimeError texts are `server is closed` / `server is already being awaited on serve_forever()`, without asyncio's `<Server sockets=(...)>` repr.
 - `Server::close` stops the accept tasks; their listening sockets close when the runtime drops them, a moment later, where asyncio closes them inside `close()`. The Unix socket file is removed inside `close()`, so a new client sees `ENOENT` at once, as with Python 3.13.
-- `py_str_repr` treats control, format, separator and private-use characters as unprintable; Python also escapes unassigned code points. It only shapes log lines and error text.

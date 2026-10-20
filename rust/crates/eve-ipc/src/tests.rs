@@ -125,6 +125,7 @@ fn test_dumps_matches_python_json_dumps() {
 }
 
 #[test]
+#[allow(clippy::excessive_precision)]
 fn test_py_float_repr() {
     for (f, want) in [
         (1.0, "1.0"),
@@ -136,6 +137,12 @@ fn test_py_float_repr() {
         (-0.0, "-0.0"),
         (1.2345e-4, "0.00012345"),
         (2.5e300, "2.5e+300"),
+        // Ties between two shortest forms go to the even digit, as dtoa does.
+        (1449045000000000.25, "1449045000000000.2"),
+        (-13707474961670.3125, "-13707474961670.312"),
+        (0.125, "0.125"),
+        (5e-324, "5e-324"),
+        (1.7976931348623157e308, "1.7976931348623157e+308"),
     ] {
         assert_eq!(py_float_repr(f), want, "{f}");
     }
@@ -146,6 +153,12 @@ fn test_py_repr() {
     assert_eq!(py_repr(&json!({"evt": "nope", "n": [1, true, null]})), "{'evt': 'nope', 'n': [1, True, None]}");
     assert_eq!(py_str_repr("it's"), "\"it's\"");
     assert_eq!(py_str_repr("a\\b\t\u{7f}\u{a0}é"), "'a\\\\b\\t\\x7f\\xa0é'");
+    // Format characters, unassigned code points and private use are escaped;
+    // a variation selector and an emoji are not (CPython 3.13).
+    assert_eq!(
+        py_str_repr("\u{600}\u{378}\u{e0100}\u{2028}\u{1f600}x\u{e000}"),
+        "'\\u0600\\u0378\u{e0100}\\u2028\u{1f600}x\\ue000'"
+    );
 }
 
 #[test]
