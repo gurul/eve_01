@@ -116,10 +116,17 @@ pub fn merge(existing: Vec<Light>, found: Vec<Light>) -> (Vec<Light>, Vec<Light>
     (out, new)
 }
 
-fn parser() -> ClapCommand {
+/// argparse's `type=int`: Python's `int()` ("+5", " 50 ", "5_0" and "５０" are all numbers).
+fn py_int(s: &str) -> Result<i64, String> {
+    py::int_of(&Value::String(s.to_string())).map_err(|_| format!("invalid int value: {}", py::repr_str(s)))
+}
+
+pub(crate) fn parser() -> ClapCommand {
     ClapCommand::new("eve-bridge lights")
         .no_binary_name(true)
         .subcommand_required(true)
+        // argparse takes a long option by any unique prefix ("--bright 40")
+        .infer_long_args(true)
         .subcommand(
             ClapCommand::new("scan")
                 .about("Find Govee, WiZ, HappyLighting and Tuya lights and add new ones to the lights file")
@@ -154,7 +161,7 @@ fn parser() -> ClapCommand {
                     Arg::new("brightness")
                         .long("brightness")
                         .allow_negative_numbers(true)
-                        .value_parser(clap::value_parser!(i64)),
+                        .value_parser(py_int),
                 )
                 .arg(Arg::new("color").long("color")),
         )
@@ -273,12 +280,12 @@ pub fn cli(argv: &[String], path: Option<&Path>, out: &mut dyn FnMut(&str)) -> i
         let at = hub.lights.iter().position(|lt| std::ptr::eq(lt, matched[0])).unwrap_or(0);
         let mut lights = hub.lights;
         let lt = &mut lights[at];
-        lt.name = sub.get_one::<String>("new").map(|s| s.trim().to_string()).unwrap_or_default();
+        lt.name = sub.get_one::<String>("new").map(|s| py::strip(s).to_string()).unwrap_or_default();
         if let Some(room) = sub.get_one::<String>("room") {
-            lt.room = room.trim().to_string();
+            lt.room = py::strip(room).to_string();
         }
         if let Some(key) = sub.get_one::<String>("key") {
-            lt.key = key.trim().to_string();
+            lt.key = py::strip(key).to_string();
         }
         let line = format!("{}  [{}]", lt.name, lt.kind) + &if lt.room.is_empty() {
             String::new()

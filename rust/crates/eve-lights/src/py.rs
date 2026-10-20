@@ -280,9 +280,94 @@ pub fn int_of(v: &Value) -> Result<i64, PyError> {
     }
 }
 
-/// `int(text)` for base 10: surrounding whitespace, a sign, and underscores between digits.
+/// Python's `str.isspace()` for one character: Unicode White_Space plus the separators U+001C..U+001F.
+pub fn is_space(c: char) -> bool {
+    c.is_whitespace() || ('\u{1c}'..='\u{1f}').contains(&c)
+}
+
+/// `text.strip()`.
+pub fn strip(text: &str) -> &str {
+    text.trim_matches(is_space)
+}
+
+/// Python's `\w` in a str pattern: `str.isalnum()` (every letter and number category) or `_`. Rust's own
+/// `\w` also takes combining marks and every connector punctuation, and leaves out `½` and `²`.
+pub fn is_word(c: char) -> bool {
+    use unicode_general_category::{get_general_category, GeneralCategory::*};
+    c == '_'
+        || matches!(
+            get_general_category(c),
+            UppercaseLetter
+                | LowercaseLetter
+                | TitlecaseLetter
+                | ModifierLetter
+                | OtherLetter
+                | DecimalNumber
+                | LetterNumber
+                | OtherNumber
+        )
+}
+
+/// The value of a Unicode decimal digit (category Nd, what Python's `\d` matches and `int()` reads): "５" is 5.
+/// Unicode assigns Nd only in runs of ten, 0 to 9, so the value is the offset from the start of the run.
+pub fn decimal_value(c: char) -> Option<u32> {
+    use unicode_general_category::{get_general_category, GeneralCategory::DecimalNumber};
+    if c.is_ascii_digit() {
+        return c.to_digit(10);
+    }
+    if get_general_category(c) != DecimalNumber {
+        return None;
+    }
+    let mut start = c as u32;
+    while let Some(prev) = start.checked_sub(1).and_then(char::from_u32) {
+        if get_general_category(prev) != DecimalNumber {
+            break;
+        }
+        start -= 1;
+    }
+    Some((c as u32 - start) % 10)
+}
+
+/// `int(digits)` for a run of decimal digits (any script), as a regex's `\d+` group gives them.
+pub fn digits_value(digits: &str) -> Option<i64> {
+    if digits.is_empty() {
+        return None;
+    }
+    let mut n: i64 = 0;
+    for c in digits.chars() {
+        n = n.saturating_mul(10).saturating_add(decimal_value(c)? as i64);
+    }
+    Some(n)
+}
+
+/// `re.search(rf"\b{re.escape(needle)}\b", hay)` with Python's word characters.
+pub fn contains_bounded(hay: &str, needle: &str) -> bool {
+    let (Some(first), Some(last)) = (needle.chars().next(), needle.chars().next_back()) else {
+        // \b\b on its own: a boundary anywhere
+        let chars: Vec<char> = hay.chars().collect();
+        return (0..=chars.len()).any(|i| {
+            let before = i.checked_sub(1).map(|j| is_word(chars[j])).unwrap_or(false);
+            let after = chars.get(i).map(|c| is_word(*c)).unwrap_or(false);
+            before != after
+        });
+    };
+    for (at, _) in hay.char_indices() {
+        if !hay[at..].starts_with(needle) {
+            continue;
+        }
+        let before = hay[..at].chars().next_back().map(is_word).unwrap_or(false);
+        let after = hay[at + needle.len()..].chars().next().map(is_word).unwrap_or(false);
+        if before != is_word(first) && is_word(last) != after {
+            return true;
+        }
+    }
+    false
+}
+
+/// `int(text)` for base 10: surrounding whitespace, a sign, underscores between digits, and decimal digits of
+/// any script.
 fn parse_int(s: &str) -> Option<i64> {
-    let t = s.trim();
+    let t = strip(s);
     let (neg, digits) = match t.as_bytes().first() {
         Some(b'-') => (true, &t[1..]),
         Some(b'+') => (false, &t[1..]),
@@ -292,10 +377,7 @@ fn parse_int(s: &str) -> Option<i64> {
         return None;
     }
     let clean: String = digits.chars().filter(|c| *c != '_').collect();
-    if !clean.chars().all(|c| c.is_ascii_digit()) {
-        return None;
-    }
-    let n: i64 = clean.parse().unwrap_or(i64::MAX);
+    let n = digits_value(&clean)?;
     Some(if neg { -n } else { n })
 }
 

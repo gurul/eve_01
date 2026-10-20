@@ -1015,3 +1015,83 @@ fn live_lan_lights_read() {
     }
     rt.block_on(h.close());
 }
+
+// ---- verification: Python 3.11+ timeouts, Python's string classes, argparse's int ----
+
+struct TimesOut;
+
+#[async_trait]
+impl Driver for TimesOut {
+    async fn state(&self) -> Result<State, LightError> {
+        Err(LightError::Timeout("the WiZ light did not answer; is it on the same Wi-Fi?".into()))
+    }
+
+    async fn apply(&self, _change: &Change) -> Result<(), LightError> {
+        Err(LightError::Timeout("the WiZ light did not answer; is it on the same Wi-Fi?".into()))
+    }
+
+    async fn close(&self) -> Result<(), LightError> {
+        Ok(())
+    }
+}
+
+#[test]
+fn a_drivers_own_timeout_is_did_not_answer_in_time_for_a_change() {
+    // asyncio.TimeoutError is TimeoutError since 3.11, so _one's handler takes a driver's TimeoutError too;
+    // status keeps the driver's message (its handler is the generic one)
+    let mut make: HashMap<String, DriverFactory> = HashMap::new();
+    make.insert("wiz".into(), Arc::new(|_: &Light| Arc::new(TimesOut) as Arc<dyn Driver>));
+    let h = Lights::with(vec![light("a", "wiz")], Some(make), Duration::from_secs(5));
+    let rt = rt();
+    let out = rt.block_on(h.set("all", &Change { power: Some(true), ..Change::default() }));
+    assert_eq!(out["failed"], json!([{"name": "a", "reason": "it did not answer in time"}]));
+    let st = rt.block_on(h.status("all"));
+    assert_eq!(st["lights"][0]["reason"], json!("the WiZ light did not answer; is it on the same Wi-Fi?"));
+}
+
+#[test]
+fn norm_and_colours_use_pythons_whitespace_words_and_digits() {
+    assert_eq!(norm("lamp\u{bd} x\u{b2}\u{1c}y caf\u{e9}"), "lamp\u{bd} x\u{b2} y caf\u{e9}");
+    assert_eq!(norm("cafe\u{301} lamp"), "cafe lamp");
+    assert_eq!(norm("Lamp\u{203f}x"), "lamp x");
+    let warm = parse_color(" warm\u{1c}white\u{1f}").unwrap();
+    assert_eq!((warm.kelvin, warm.word.as_str()), (Some(2700), "warm white"));
+    let full = parse_color("\u{ff12}\u{ff17}\u{ff10}\u{ff10}K").unwrap();
+    assert_eq!((full.kelvin, full.word.as_str()), (Some(2700), "\u{ff12}\u{ff17}\u{ff10}\u{ff10}K"));
+    let h = Lights::new(vec![light("floor lamp", "govee")]);
+    let cmd = h.match_command("lamp \u{ff15}\u{ff10}%").unwrap();
+    assert_eq!((cmd.change.brightness, names(&cmd)), (Some(50), vec!["floor lamp"]));
+    let lt = Light::from_dict(&json!({"kind": " WIZ\u{1c}", "name": "\u{1f}a\u{1d}"})).unwrap();
+    assert_eq!((lt.kind.as_str(), lt.name.as_str()), ("wiz", "a"));
+    assert!(!enabled(Some(&HashMap::from([("EVE_LIGHTS".to_string(), "\u{1c}off".to_string())]))));
+}
+
+#[test]
+fn a_partial_name_needs_pythons_word_boundary() {
+    // "²" is a word character to Python, so "lamp" is not a whole word of "desk lamp²"
+    let h = Lights::new(vec![light("desk lamp\u{b2}", "govee"), light("wiz", "wiz")]);
+    let (found, why) = h.resolve("lamp");
+    assert!(found.is_empty());
+    assert_eq!(why, "no light called 'lamp'; the lights are: desk lamp\u{b2}, wiz");
+    let h = Lights::new(vec![light("desk lamp", "govee"), light("wiz", "wiz")]);
+    assert_eq!(h.resolve("lamp").0[0].name, "desk lamp");
+    // re.search(rf"\b{re.escape(n)}\b", h) in Python 3.13, case by case
+    for (hay, needle, want) in
+        [("#1 desk", "#1", false), ("a#1", "#1", true), ("x#1 y", "#1", true), ("lamp\u{b2}", "lamp", false),
+         ("lamp 2", "lamp", true)]
+    {
+        assert_eq!(py::contains_bounded(hay, needle), want, "{hay} {needle}");
+    }
+}
+
+#[test]
+fn cli_brightness_is_pythons_int_and_options_take_a_prefix() {
+    let m = crate::cli::parser()
+        .try_get_matches_from(["set", "all", "--bright", "\u{ff15}\u{ff10}"])
+        .unwrap();
+    let (_, sub) = m.subcommand().unwrap();
+    assert_eq!(sub.get_one::<i64>("brightness").copied(), Some(50));
+    let m = crate::cli::parser().try_get_matches_from(["set", "all", "--brightness", " +5_0 "]).unwrap();
+    assert_eq!(m.subcommand().unwrap().1.get_one::<i64>("brightness").copied(), Some(50));
+    assert!(crate::cli::parser().try_get_matches_from(["set", "all", "--brightness", "5.0"]).is_err());
+}

@@ -203,8 +203,9 @@ pub const KELVIN_MIN: i64 = 1500;
 pub const KELVIN_MAX: i64 = 9000;
 
 static HEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^#?([0-9a-f]{6})$").unwrap());
-static KELVIN: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^(\d{4,5})\s*k$").unwrap());
-static SPACES: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\s+").unwrap());
+static KELVIN: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^(\d{4,5})[\s\x1C-\x1F]*k$").unwrap());
+/// Python's `\s+`: its whitespace takes U+001C..U+001F too.
+static SPACES: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[\s\x1C-\x1F]+").unwrap());
 
 fn color_rgb(name: &str) -> Option<Rgb> {
     COLORS.iter().find(|(n, _)| *n == name).map(|(_, c)| *c)
@@ -236,7 +237,7 @@ impl Color {
 
 /// A colour name, a `#rrggbb`, a white ("warm white", "daylight") or a temperature ("2700K"). None otherwise.
 pub fn parse_color(text: &str) -> Option<Color> {
-    let lowered = text.trim().to_lowercase();
+    let lowered = py::strip(text).to_lowercase();
     let mut t = SPACES.replace_all(&lowered, " ").into_owned();
     if t.ends_with(" light") {
         t.truncate(t.len() - " light".len());
@@ -254,7 +255,7 @@ pub fn parse_color(text: &str) -> Option<Color> {
     }
     if let Some(m) = KELVIN.captures(&t) {
         let digits = &m[1];
-        let k: i64 = digits.parse().ok()?;
+        let k: i64 = py::digits_value(digits)?;
         return Some(Color { rgb: None, kelvin: Some(k.clamp(KELVIN_MIN, KELVIN_MAX)), word: format!("{digits}K") });
     }
     None
@@ -473,11 +474,11 @@ impl Light {
         let Some(d) = d.as_object() else {
             return Err(format!("'{}' object has no attribute 'get'", py::type_name(d)));
         };
-        let kind = field(d, "kind", "").trim().to_lowercase();
+        let kind = py::strip(&field(d, "kind", "")).to_lowercase();
         if !KINDS.contains(&kind.as_str()) {
             return Err(format!("unknown light kind {}", py::repr_str(&kind)));
         }
-        let name = field(d, "name", "").trim().to_string();
+        let name = py::strip(&field(d, "name", "")).to_string();
         if name.is_empty() {
             return Err("a light needs a name".into());
         }
@@ -490,11 +491,11 @@ impl Light {
             },
             _ => Vec::new(),
         };
-        let aliases = aliases.iter().map(|a| a.trim().to_string()).filter(|a| !a.is_empty()).collect();
+        let aliases = aliases.iter().map(|a| py::strip(a).to_string()).filter(|a| !a.is_empty()).collect();
         Ok(Light {
             name,
             kind,
-            room: field(d, "room", "").trim().to_string(),
+            room: py::strip(&field(d, "room", "")).to_string(),
             aliases,
             ip: field(d, "ip", ""),
             device: field(d, "device", ""),
@@ -670,12 +671,13 @@ pub const ALL_WORDS: &[&str] = &[
     "everything", "them", "it",
 ];
 
-static NORM_DROP: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[^\w#%\s-]").unwrap());
+/// Python's `[^\w#%\s-]`, with Python's word characters (letters and numbers, no combining marks) and spaces.
+static NORM_DROP: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[^\p{L}\p{N}_#%\s\x1C-\x1F-]").unwrap());
 
 pub(crate) fn norm(text: &str) -> String {
     let lowered = text.to_lowercase().replace('\u{2019}', "'");
     let dropped = NORM_DROP.replace_all(&lowered, " ");
-    SPACES.replace_all(&dropped, " ").trim().to_string()
+    py::strip(&SPACES.replace_all(&dropped, " ")).to_string()
 }
 
 // ---- the tools --------------------------------------------------------------------------------------------------
@@ -854,11 +856,9 @@ impl Lights {
         if !by_kind.is_empty() {
             return Ok(by_kind);
         }
-        if let Ok(re) = Regex::new(&format!(r"\b{}\b", regex::escape(&t))) {
-            let partial = pick(&|lt| Self::words_of(lt).iter().any(|w| re.is_match(w)));
-            if !partial.is_empty() {
-                return Ok(partial);
-            }
+        let partial = pick(&|lt| Self::words_of(lt).iter().any(|w| py::contains_bounded(w, &t)));
+        if !partial.is_empty() {
+            return Ok(partial);
         }
         Err(format!("no light called {}; the lights are: ", py::repr_str(target)) + &self.names_line())
     }
@@ -886,7 +886,10 @@ impl Lights {
         };
         match tokio::time::timeout(self.timeout, work).await {
             Ok(Ok(())) => Outcome { name: light.name.clone(), ok: true, reason: String::new() },
-            Err(_) => Outcome { name: light.name.clone(), ok: false, reason: "it did not answer in time".into() },
+            // asyncio.TimeoutError is TimeoutError (Python 3.11+): a driver's own timeout reads the same way
+            Err(_) | Ok(Err(LightError::Timeout(_))) => {
+                Outcome { name: light.name.clone(), ok: false, reason: "it did not answer in time".into() }
+            }
             Ok(Err(e)) => {
                 // one light failing never stops the others
                 warn!("lights: {} failed: {}: {}", light.name, e.kind_name(), e);
@@ -1182,7 +1185,7 @@ impl Lights {
         let mut light_word = !targets.is_empty();
         let mut leftover: Vec<&str> = Vec::new();
         for w in rest.split_whitespace() {
-            let pct = PCT.captures(w).and_then(|m| m[1].parse::<i64>().ok());
+            let pct = PCT.captures(w).and_then(|m| py::digits_value(&m[1]));
             if let Some(p) = power_word(w) {
                 if power.is_some() && power != Some(p) {
                     return None;
@@ -1250,7 +1253,7 @@ impl Lights {
     /// Target and source must both name lights, or it is not this command.
     fn match_copy(&self, t: &str) -> Option<Command> {
         let lead = COPY_LEAD.replace(t, "");
-        let t = COPY_TAIL.replace(&lead, "").trim().to_string();
+        let t = py::strip(&COPY_TAIL.replace(&lead, "")).to_string();
         if COPY_ALL.is_match(&t) {
             return Some(Command {
                 target: "all".into(),
@@ -1262,7 +1265,7 @@ impl Lights {
         let m = COPY_AS.captures(&t).or_else(|| COPY_TO.captures(&t))?;
         let target = m.name("target").map(|g| g.as_str()).unwrap_or("").to_string();
         let source_raw = m.name("source").map(|g| g.as_str()).unwrap_or("");
-        let source = COPY_TAIL.replace(source_raw, "").trim().to_string();
+        let source = py::strip(&COPY_TAIL.replace(source_raw, "")).to_string();
         let targets = self.resolve_idx(&target).ok()?;
         if !source.is_empty() && !OTHERS.contains(&source.as_str()) && self.resolve_idx(&source).is_err() {
             return None;
@@ -1413,7 +1416,7 @@ pub fn enabled(environ: Option<&HashMap<String, String>>) -> bool {
         Some(env) => env.get("EVE_LIGHTS").cloned().unwrap_or_default(),
         None => std::env::var("EVE_LIGHTS").unwrap_or_default(),
     };
-    !matches!(v.trim().to_lowercase().as_str(), "0" | "false" | "no" | "off")
+    !matches!(py::strip(&v).to_lowercase().as_str(), "0" | "false" | "no" | "off")
 }
 
 /// The owner's Lights, or None when switched off or there are none (then no tool is lent).
