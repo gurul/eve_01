@@ -276,26 +276,24 @@ fn expand<E: EnvMap + ?Sized>(value: &str, environ: &E) -> String {
     value.to_string()
 }
 
-/// `os.path.expanduser("~")`: this process's HOME, else the account's home folder, else "~".
+/// `os.path.expanduser("~")`: this process's HOME, else the account's home folder, either with its trailing "/"
+/// taken off ("/" when nothing is left); "~" itself when the account has no entry.
 fn expanduser_home() -> String {
-    match std::env::var_os("HOME") {
-        Some(h) => {
-            let h = h.to_string_lossy().into_owned();
-            let trimmed = h.trim_end_matches('/');
-            if trimmed.is_empty() {
-                "/".to_string()
-            } else {
-                trimmed.to_string()
-            }
-        }
+    let home = match std::env::var_os("HOME") {
+        Some(h) => h.to_string_lossy().into_owned(),
         None => {
             let home = firewall::account_home();
             if home.is_empty() {
-                "~".to_string()
-            } else {
-                home
+                return "~".to_string();
             }
+            home
         }
+    };
+    let trimmed = home.trim_end_matches('/');
+    if trimmed.is_empty() {
+        "/".to_string()
+    } else {
+        trimmed.to_string()
     }
 }
 

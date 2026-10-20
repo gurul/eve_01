@@ -908,7 +908,7 @@ pub fn popen_event(cmd: &Command) -> Event {
     Event::Popen { executable, cwd, env }
 }
 
-/// Judge a process start before it is made.
+/// Judge a process start before it is made. A `tokio::process::Command` is judged through its `as_std()`.
 pub fn audit_command(cmd: &Command) -> io::Result<()> {
     if GUARD.get().is_none() {
         return Ok(());

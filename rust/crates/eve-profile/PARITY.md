@@ -64,7 +64,8 @@ Status: complete
 Python's firewall is a `sys.addaudithook` hook: the interpreter itself reports every process start and file open to
 it, so every Python call site is covered without being changed. Rust has no audit hook. The Rust guard is the same
 judge (same programs, same folders, same symlink walk, same counts, log lines and error text), and a Rust call site is
-covered when it goes through it: `eve_profile::spawn`/`output`/`status` (or `audit_command`) for a `Command`, and
+covered when it goes through it: `eve_profile::spawn`/`output`/`status` (or `audit_command`) for a `Command` (a
+`tokio::process::Command` through `audit_command(cmd.as_std())`, as asyncio's starts raise Popen's event), and
 `audit_path` before a file operation. Code that does not ask goes around it, as native code (PortAudio, ONNX, ctypes)
 goes around Python's hook (the spec's Risk 5). The lite daemon's crates are the ones that must ask: quick_answers'
 pmset, watch's ifconfig, lan_net's scutil, and any file they open on a path that came from outside.
