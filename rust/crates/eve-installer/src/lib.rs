@@ -403,6 +403,9 @@ pub fn merge_hooks(data: &mut Value, launch: &HookLaunch, console: &mut dyn Cons
             Value::Null | Value::Bool(_) | Value::Number(_) => return Err(not_iterable(inner)),
             Value::String(s) if !s.is_empty() => return Err(no_attribute(&Value::String(String::new()), "get")),
             Value::Object(m) if !m.is_empty() => return Err(no_attribute(&Value::String(String::new()), "get")),
+            // An empty dict takes `inner[:] = [...]` as a new key (slices are hashable from Python 3.12, and the
+            // daemon's venv runs 3.13), then has no `append`.
+            Value::Object(_) => return Err(no_attribute(inner, "append")),
             other => {
                 return Err(anyhow!(
                     "TypeError: '{}' object does not support item assignment",
@@ -573,9 +576,7 @@ pub fn show_status_in(
         console.print(&format!("  settings.json not found at {}", path.display()));
     } else {
         let data = load_settings(&path)?;
-        for line in installed_lines(&data)? {
-            console.print(&line);
-        }
+        print_installed(&data, console)?;
     }
 
     let service = service()?;
@@ -600,14 +601,22 @@ pub fn show_status_in(
 }
 
 /// The hook lines of `show_status` for parsed settings: one `  <event> [<matcher>] → <command>` per entry of
-/// ours, or `  no eve-bridge hooks installed`.
+/// ours, or `  no eve-bridge hooks installed`. Err where Python raises; the lines before the error are lost here,
+/// so `show_status` uses [`print_installed`], which prints them as Python does.
 pub fn installed_lines(data: &Value) -> anyhow::Result<Vec<String>> {
+    let mut lines = Captured::default();
+    print_installed(data, &mut lines)?;
+    Ok(lines.out.lines().map(str::to_string).collect())
+}
+
+/// The hook lines of `show_status`, printed one by one as Python prints them: on malformed settings the lines
+/// found before the bad entry are already out when the error comes back.
+pub fn print_installed(data: &Value, console: &mut dyn Console) -> anyhow::Result<()> {
     let raw = dict_get(data, "hooks")?.cloned().unwrap_or(Value::Null);
     let hooks = if truthy(&raw) { raw } else { Value::Object(Map::new()) };
     let Value::Object(hooks) = hooks else {
         return Err(no_attribute(&hooks, "items"));
     };
-    let mut lines = Vec::new();
     let mut any_installed = false;
     for (event, entries) in &hooks {
         let Value::Array(entries) = entries else { continue };
@@ -625,15 +634,15 @@ pub fn installed_lines(data: &Value) -> anyhow::Result<Vec<String>> {
                     any_installed = true;
                     let matcher = g.get("matcher").map(py_str).unwrap_or_else(|| "*".into());
                     let command = h.get("command").map(py_str).unwrap_or_else(|| "None".into());
-                    lines.push(format!("  {event} [{matcher}] → {command}"));
+                    console.print(&format!("  {event} [{matcher}] → {command}"));
                 }
             }
         }
     }
     if !any_installed {
-        lines.push("  no eve-bridge hooks installed".into());
+        console.print("  no eve-bridge hooks installed");
     }
-    Ok(lines)
+    Ok(())
 }
 
 #[cfg(test)]

@@ -408,6 +408,26 @@ fn a_hook_entry_that_is_not_a_dict_raises_as_python_does() {
     write(&t.settings(), &json!({"hooks": {"Stop": null}}));
     let err = install_hooks_in(&t.env, None, &python(), &mut c).unwrap_err();
     assert_eq!(err.to_string(), "TypeError: 'NoneType' object is not iterable");
+
+    // Python 3.13 (the daemon's venv): `{}[:] = []` adds a key, then `{}.append` fails.
+    write(&t.settings(), &json!({"hooks": {"Stop": [{"hooks": {}}]}}));
+    let err = install_hooks_in(&t.env, None, &python(), &mut c).unwrap_err();
+    assert_eq!(err.to_string(), "AttributeError: 'dict' object has no attribute 'append'");
+    write(&t.settings(), &json!({"hooks": {"Stop": [{"hooks": ""}]}}));
+    let err = install_hooks_in(&t.env, None, &python(), &mut c).unwrap_err();
+    assert_eq!(err.to_string(), "TypeError: 'str' object does not support item assignment");
+}
+
+/// Python prints each status line as it finds it, so the entries before a malformed one are already out when it
+/// raises (output taken from the Python module on the same settings).
+#[test]
+fn status_prints_the_lines_found_before_a_bad_entry() {
+    let data = json!({"hooks": {"Stop": [{"hooks": [{"command": "/x/python -m eve_bridge.hooks.stop"}, "junk"]}]}});
+    let mut c = Captured::default();
+    let err = print_installed(&data, &mut c).unwrap_err();
+    assert_eq!(err.to_string(), "AttributeError: 'str' object has no attribute 'get'");
+    assert_eq!(c.out, "  Stop [*] → /x/python -m eve_bridge.hooks.stop\n");
+    assert!(installed_lines(&data).is_err());
 }
 
 #[test]
