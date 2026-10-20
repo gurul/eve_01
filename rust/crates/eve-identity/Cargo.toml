@@ -1,0 +1,30 @@
+[package]
+name = "eve-identity"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+eve-vision = { path = "../eve-vision" }
+eve-hooks = { path = "../eve-hooks" }
+eve-ipc = { path = "../eve-ipc" }
+anyhow.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+parking_lot.workspace = true
+chrono.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6.5"
+objc2-foundation = { version = "0.3.2", default-features = false, features = ["std", "NSArray", "NSData", "NSDictionary", "NSIndexSet", "NSString", "NSError", "NSObject"] }
+objc2-core-foundation = { version = "0.3.2", default-features = false, features = ["std", "CFBase", "CFCGTypes"] }
+objc2-core-graphics = { version = "0.3.2", default-features = false, features = ["std", "CGImage"] }
+objc2-vision = { version = "0.3.2", default-features = false, features = ["std", "objc2-core-graphics", "objc2-core-foundation", "VNRequest", "VNRequestHandler", "VNObservation", "VNGenerateImageFeaturePrintRequest", "VNTypes"] }
+
+[dev-dependencies]
+tempfile.workspace = true
+tracing-subscriber.workspace = true
+tokio.workspace = true
+futures.workspace = true
+base64.workspace = true

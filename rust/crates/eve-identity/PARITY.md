@@ -1,0 +1,59 @@
+# eve-identity
+Status: complete
+
+## Modules
+| Python | Rust |
+|---|---|
+| `bridge/src/eve_bridge/identity.py` | `src/lib.rs` (pure core, driver, crop geometry, CLI), `src/mac.rs` (macOS Vision feature-print adapter), tests in `src/tests.rs` |
+
+## API
+| Python | Rust | Notes |
+|---|---|---|
+| `log` | `tracing` | Same messages: `identity: bad EVE_OWNER_THRESHOLD='…'; using 0.90`, `identity: EVE_OWNER_THRESHOLD='…' out of range; using 0.90`, `identity: ignoring <path>: <error>`, `identity: feature print failed on frame N`, `identity: enrolled owner print #N (size=N%, N/N held)`, `identity: could not save <path>: <error>`, `identity: owner recognised (d=…)`, `identity: unknown face (d=…)`, `identity: owner recognition needs macOS Vision — every face stays 'unknown'` |
+| `WHO_OWNER`, `WHO_UNKNOWN`, `CAPACITY`, `DEFAULT_THRESHOLD`, `MIN_FACE_SIZE_PCT`, `ENROL_INTERVAL_SECS`, `TRANSITION_LOG_SECS`, `FEATURE_PRINT_REVISION`, `CROP_PAD`, `FILE_VERSION` | same names | Values verbatim (`owner`, `unknown`, 24, 0.9, 20, 2.0, 30.0, 2, 0.25, 1); `MIN_FACE_SIZE_PCT` is `f64` 20.0, `CAPACITY` is `usize` |
+| `Vector`, `Distance`, `Describer` | `Vector = Vec<f64>`, `Distance = Arc<dyn Fn(&[f64], &[f64]) -> anyhow::Result<f64>>`, `Describer = Arc<dyn Fn(&Frame, &Rect) -> anyhow::Result<Option<Vector>>>`; plus `ListenDown` | `Err` is the exception Python's callable raises |
+| `default_path` | `default_path()`, `default_path_from(override, xdg)` | `EVE_OWNER_PRINTS` (user-expanded via `eve_vision::expanduser`), else `$XDG_CONFIG_HOME` or `~/.config`, then `eve-bridge/owner_faceprints.json`; empty values count as unset |
+| `configured_threshold` | `configured_threshold()`, `configured_threshold_from(raw)` | `(raw or "").strip()`, Python `float()` grammar (`py_float_str`: whitespace, `_` between digits, inf/nan), non-finite or `<= 0` falls back with a warning; `%r` via `eve_ipc::py_str_repr` |
+| `euclidean` | `euclidean(&[f64], &[f64]) -> Result<f64, eve_vision::ValueError>` | Same `print length mismatch: N vs M`; the sum is CPython 3.12+'s Neumaier-compensated float `sum()` (`py_sum`), so distances are bit-identical to the daemon's interpreter |
+| `OwnerIdentity` | `OwnerIdentity` (`new()` + `with_distance`/`with_threshold`/`with_capacity`/`with_path`) | pub `distance`, `threshold`, `capacity`, `path`; prints and `enrolled_at` behind a `parking_lot::Mutex`, read with `prints()`, `enrolled_at()` |
+| `OwnerIdentity.__len__` | `len()`, `is_empty()` | |
+| `OwnerIdentity.classify` | `classify(&[f64]) -> anyhow::Result<(&'static str, Option<f64>)>` | Copies the prints under the lock; Python `min()` (first of equals); `d < threshold` |
+| `OwnerIdentity.enrol` | `enrol(&[f64], now: Option<f64>) -> anyhow::Result<usize>` | Appends, or replaces the nearest print when full; 1-based slot; `enrolled_at = now or time.time()`; a full store with nothing in it fails as `min()` does |
+| `OwnerIdentity.reset` | `reset() -> io::Result<usize>` | Memory cleared first; missing file ignored, any other unlink error returned as Python raises it |
+| `OwnerIdentity.snapshot` | `snapshot() -> Value` | Keys `version, revision, threshold, enrolled_at, prints` in order |
+| `OwnerIdentity.save` | `save(Option<&Path>) -> io::Result<PathBuf>` | `mkdir -p` parent, `<name>.tmp` opened `O_WRONLY|O_CREAT|O_TRUNC` 0600, chmod 0600, rename. Bytes are `json.dump(..., separators=(",", ":"))`: compact, floats as Python's `repr` (`1e-05`, `1e+16`), NaN/Infinity literals. Errors read like Python's OSError (`[Errno 17] File exists: '…'`, `'tmp' -> 'target'` for the rename); no path → `InvalidInput` `no path to save to` |
+| `OwnerIdentity.load` | `load(Option<&Path>) -> usize` | Missing file → 0 silently; any read, UTF-8, JSON or shape error → `identity: ignoring <path>: <msg>` and the in-memory store is kept; truncates to `capacity`; `enrolled_at` taken when it is a number (bools count, as `isinstance(x, int)` does) |
+| `_parse_prints` | private `parse_prints` (+ `py_float_value`, `py_eq_int`) | Same checks and messages in the same order; `version == 1` / `revision == 2` with Python equality (`1.0` and `true` equal 1); each element through Python `float()` (numbers, bools, numeric strings), with Python's `could not convert string to float: '…'` and `float() argument must be a string or a real number, not '…'` |
+| `EnrolmentGate` | `EnrolmentGate` (`new(min_size_pct, interval)`, `Default`) | |
+| `EnrolmentGate.allows` | `allows(listen_down, n_faces, size_pct, now)` | |
+| `EnrolmentGate.mark` | `mark(now)` | |
+| `FaceIdentity` | `FaceIdentity` (`new(core: Arc<OwnerIdentity>, describe)` + `with_listen_down`/`with_gate`/`with_clock`) | Default listen key never down, default gate, `eve_vision::monotonic`. Driver state behind a mutex so `status()` can run on another thread. `enrolments()`, `last_who()`, `set_last_who()` (the daemon's `identity.last_who = None` on reset), `last_distance()` |
+| `FaceIdentity.process` | `process(&Frame, &[Rect]) -> anyhow::Result<String>`; also `impl eve_vision::Identity` | Largest face; describer errors and panics logged, answer `unknown`; clock, size %, listen key, gate, enrol + log + persist, classify, note. `Err` only from the distance (Python lets that raise to the tracker) |
+| `FaceIdentity._persist` | private `persist` | Save on every enrolment when the core has a path; first failure in a row logged |
+| `FaceIdentity._note` | private `note` | Transition lines at most every 30 s, `(d=%.2f)` |
+| `FaceIdentity.status` | `status() -> Value` | Keys `prints, capacity, threshold, path, enrolled_at, last_who, last_distance, enrolments` in order |
+| `crop_rect` | `crop_rect(&Rect, width, height)`, `crop_rect_padded(.., pad)` | floor/ceil, clamped, `max(0, …)` |
+| `make_describer` | `make_describer() -> Option<Describer>` | Off-mac: the same warning and None. On macOS: checks the Vision classes and that `VNGenerateImageFeaturePrintRequest.supportedRevisions` contains revision 2 (Python's "macOS 14+" check), with the same warning text |
+| `vision_feature_print` | `vision_feature_print(&Frame, &Rect) -> anyhow::Result<Option<Vector>>` | Autorelease pool; `eve_vision::cgimage_from_frame`; `crop_rect`; under 2 px → None; `CGImageCreateWithImageInRect`; request with revision 2; handler with default options; `Vision feature print failed: <NSError description>`; first result; little-endian float32 unpack with the `feature print is N bytes for M elements; expected float32` check. Off-mac it fails as Python's import would |
+| `run_identity` | `run_identity(action, socket_path) -> i32`, `run_identity_with(action, path, threshold, post, out)` | `eve_hooks::client::post({"evt":"identity","action":…}, socket, 3.0)`; reset through the daemon or on the file; status from the daemon's `identity` dict or from the file; same stdout lines. A reply that is not a dict fails with `AttributeError: '<t>' object has no attribute 'get'` (stderr, exit 1) |
+| `_print_status` | private `print_status` | Same lines and spacing; values printed with Python `str()` (`eve_hooks::py_str`); `last enrol` in local time, floored to the second; `(d=%.2f)` |
+
+## Tests
+| Python file | Python tests | Rust tests | Not ported (why) |
+|---|---|---|---|
+| `bridge/tests/test_identity.py` | `test_empty_store_is_unknown`, `test_classify_by_min_distance_against_threshold`, `test_threshold_boundary_is_exclusive`, `test_enrol_returns_slot_and_copies_vector`, `test_full_store_replaces_the_print_nearest_to_the_new_one`, `test_default_capacity_is_24`, `test_reset_clears_memory_and_file`, `test_save_load_round_trip_mode_600`, `test_load_missing_file_is_empty`, `test_load_rejects_malformed_and_keeps_going` (8 params), `test_default_path_env_override`, `test_configured_threshold`, `test_gate_requires_key_one_face_and_size`, `test_gate_one_enrolment_per_interval`, `test_process_enrols_only_while_key_down_with_one_big_face`, `test_process_rate_limits_enrolment_to_one_per_2s`, `test_process_no_face_or_no_print_is_unknown`, `test_process_describer_failure_is_logged_not_raised`, `test_transition_logs_are_rate_limited`, `test_status_shape`, `test_crop_rect_pads_25_percent_and_clamps`, `test_tracker_puts_identity_answer_in_who`, `test_make_describer_none_off_darwin` | same names in `src/tests.rs` (`test_make_describer_none_off_darwin` is `cfg(not(macos))`, with `test_make_describer_some_on_darwin` on macOS; env tests use `default_path_from` / `configured_threshold_from`). Added: `test_process_describer_panic_is_logged_not_raised`, `test_tracker_runs_the_real_face_identity`, `test_native_identity_tiny_crop_is_none`, `test_euclidean_sums_like_cpython`, `test_classify_length_mismatch_propagates`, `test_saved_bytes_match_python_json_dump` (bytes written by CPython), `test_load_takes_what_python_float_takes`, `test_load_truncates_to_capacity_and_logs_python_messages`, `test_py_float_str_like_python`, `test_save_failure_is_logged_once_and_classification_goes_on`, `test_full_store_with_zero_capacity_fails_like_python_min`, `test_set_last_who_clears_after_reset`, `test_cli_reset_through_the_daemon`, `test_cli_reset_without_daemon_removes_the_file`, `test_cli_status_from_the_daemon`, `test_cli_status_from_the_file_when_daemon_is_down`, `test_cli_reply_that_is_not_a_dict_fails_like_python` | `test_daemon_face_reply_carries_who_owner`, `test_daemon_tracks_listen_key_even_while_disconnected`, `test_daemon_identity_ipc_status_and_reset`, `test_daemon_identity_ipc_without_identity_reads_file`: they drive `Daemon` methods (`_handle_ble`, `_on_listen_key`, `_handle_identity`) and belong to the eve-daemon port, which has `status()`, `reset()`, `set_last_who()`, `load()` and `default_path()` to build them |
+| `bridge/tests/test_vision_native.py` (ref) | `test_native_identity_request_accepts_default_options` | same name (macOS only; runs the real Vision request) | `test_native_face_request_accepts_default_options` is eve-vision's |
+
+## Boundaries
+None. The feature print goes through `objc2-vision` 0.3.2 (`VNGenerateImageFeaturePrintRequest`, `VNFeaturePrintObservation`) and `objc2-core-graphics` (`CGImageCreateWithImageInRect`) on macOS; off macOS `make_describer` returns None exactly as Python does.
+
+## Differences
+- `make_describer` on macOS asks the running Vision framework whether revision 2 is supported instead of checking that pyobjc's bindings define the constant; both mean macOS 14+. The pyobjc import-failure warning has no counterpart (the framework is linked); a missing Vision class gets its own warning.
+- `load` messages for unparsable JSON come from serde_json (`expected value at line 1 column 1`), not Python's `JSONDecodeError` text. Python's `json.loads` also accepts `NaN`/`Infinity` literals and integers beyond float range: here those fail to parse and the file is ignored with a warning, where Python ignores a NaN print with `print holds a non-finite value` and lets an over-range integer's `OverflowError` escape `load`.
+- `float()` on a string with non-ASCII Unicode digits (Python accepts e.g. Arabic-Indic digits) is rejected here.
+- A describer panic is caught and logged like a Python exception from the describer.
+- `snapshot()` returns a `serde_json::Value`, which cannot hold NaN: a NaN threshold reads as `null` there (the file written by `save` still carries `NaN`, as Python's `json.dump` does).
+- `crop_rect` on an infinite rect saturates to `i64` bounds where Python's `int(math.floor(inf))` raises.
+- `save` reports a `mkdir` failure against the parent directory; Python names whichever ancestor failed.
+- `run_identity` prints only the last traceback line for an uncaught error. Its warnings (a bad `EVE_OWNER_THRESHOLD`) go to `tracing`; the CLI binary decides where they are printed.
+- `last enrol` for a timestamp outside chrono's range is omitted where Python's `time.localtime` raises.
