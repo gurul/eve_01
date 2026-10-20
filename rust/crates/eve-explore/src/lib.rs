@@ -162,7 +162,7 @@ impl Default for ExploreConfig {
             after_secs: DEFAULT_AFTER_MIN * 60.0,
             notes_per_hour: DEFAULT_NOTES_PER_HOUR,
             model: DEFAULT_MODEL.to_string(),
-            notes_dir: eve_vision::expanduser(DEFAULT_NOTES_DIR),
+            notes_dir: py_path(&eve_vision::expanduser(DEFAULT_NOTES_DIR)),
             cycle_wait_secs: DEFAULT_CYCLE_MIN * 60.0,
         }
     }
@@ -305,6 +305,23 @@ fn env_float(name: &str, default: f64, env: Option<&HashMap<String, String>>) ->
     v
 }
 
+/// `pathlib.Path(p)`'s normal form: repeated and trailing slashes dropped and
+/// `.` segments removed (a lone `.` stays), so `EVE_NOTES_DIR=/tmp/notes/`
+/// prints as `/tmp/notes` the way Python prints it.
+pub(crate) fn py_path(p: &Path) -> PathBuf {
+    use std::path::Component;
+    let mut out = PathBuf::new();
+    for c in p.components() {
+        if c != Component::CurDir {
+            out.push(c.as_os_str());
+        }
+    }
+    if out.as_os_str().is_empty() && !p.as_os_str().is_empty() {
+        out.push(".");
+    }
+    out
+}
+
 /// Build the config from EVE_EXPLORE* / EVE_NOTES* env vars. `None` reads the process environment.
 pub fn configured(environ: Option<&HashMap<String, String>>) -> ExploreConfig {
     // Exploring is explicit — "go explore", the CLI, a text — never something eve starts on its own from
@@ -327,7 +344,7 @@ pub fn configured(environ: Option<&HashMap<String, String>>) -> ExploreConfig {
         after_secs: env_float("EVE_EXPLORE_AFTER_MIN", DEFAULT_AFTER_MIN, environ) * 60.0,
         notes_per_hour: env_float("EVE_NOTES_PER_HOUR", DEFAULT_NOTES_PER_HOUR, environ),
         model: model.to_string(),
-        notes_dir: eve_vision::expanduser(notes_dir),
+        notes_dir: py_path(&eve_vision::expanduser(notes_dir)),
         cycle_wait_secs: env_float("EVE_EXPLORE_CYCLE_MIN", DEFAULT_CYCLE_MIN, environ) * 60.0,
     }
 }
@@ -1527,8 +1544,15 @@ impl NoteTaker {
                 });
             let _ = tx.send(result);
         }))?;
-        let limit = Duration::try_from_secs_f64(self.timeout).unwrap_or(Duration::ZERO);
-        let text = match tokio::time::timeout(limit, rx).await {
+        // asyncio.wait_for: an infinite timeout waits for as long as it takes; zero or
+        // less only takes an answer that is already there.
+        let waited = if self.timeout == f64::INFINITY {
+            Ok(rx.await)
+        } else {
+            let limit = Duration::try_from_secs_f64(self.timeout).unwrap_or(Duration::ZERO);
+            tokio::time::timeout(limit, rx).await
+        };
+        let text = match waited {
             Err(_) => return Ok(self.fail(Failure::TimedOut)),
             Ok(Err(_dropped)) => return Err(NoteCancelled.into()),
             Ok(Ok(Err(e))) => return Ok(self.fail(Failure::Raised(e))),

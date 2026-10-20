@@ -224,6 +224,11 @@ fn test_configured_parses_like_python() {
     }
     assert!(py_float("NaN").unwrap().is_nan());
     assert!(!configured(Some(&env(&[("EVE_EXPLORE", "2")]))).enabled);
+    // EVE_NOTES_DIR comes out in pathlib's normal form
+    let c = configured(Some(&env(&[("EVE_NOTES_DIR", "/tmp//eve/./notes/")])));
+    assert_eq!(c.notes_dir.to_str().unwrap(), "/tmp/eve/notes");
+    assert_eq!(py_path(Path::new("./x")).to_str().unwrap(), "x");
+    assert_eq!(py_path(Path::new(".")).to_str().unwrap(), ".");
 }
 
 #[test]
@@ -787,6 +792,18 @@ fn test_note_taker_timeout() {
     assert_eq!(r.unwrap(), None);
     assert!(logs.contains("timed out"), "{logs}");
     assert_eq!(taker.failed(), 1);
+}
+
+#[test]
+fn test_note_taker_infinite_timeout_waits() {
+    // asyncio.wait_for(timeout=inf) waits for the answer instead of timing out at once.
+    let tmp = tempfile::tempdir().unwrap();
+    let taker = NoteTaker::new(FakeClient::slow(0.05), tmp.path())
+        .with_timeout(f64::INFINITY)
+        .with_wall(Arc::new(|| dt(2026, 9, 5, 9, 0)));
+    assert!(block_on(taker.take(&Note::new(frame(0), 0, 40))).unwrap().is_some());
+    taker.stop();
+    assert_eq!((taker.taken(), taker.failed()), (1, 0));
 }
 
 #[test]
