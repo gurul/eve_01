@@ -1,7 +1,6 @@
 //! A port of `apps_maker.py`, lines 1-1126: the maker's prompt, the skeleton app, the owner's context, the app store.
 //!
-//! Skeleton: constants and prompts are verbatim (generated from the Python values); bodies are
-//! `todo!()` until this file's unit fills them.
+//! Constants and prompts are verbatim (generated from the Python values).
 
 pub mod maker;
 pub use maker::*;
@@ -9,9 +8,7 @@ pub use maker::*;
 #[allow(unused_imports)]
 use crate::prelude::*;
 
-// py: apps_maker.py:47 `log` (Logger): ported by this file's unit.
 
-// py: apps_maker.py:49 `DEFAULT_ROOT` (PosixPath): ported by this file's unit.
 
 /// py: apps_maker.py:50 `MAX_DATA_BYTES`
 pub const MAX_DATA_BYTES: usize = 1000000;
@@ -525,19 +522,399 @@ Its journeys:
 ```
 </skeleton>";
 
-// py: apps_maker.py:510 `_LOCALES` (list): ported by this file's unit.
+/// py: apps_maker.py:510 `_LOCALES`
+///
+/// Which units, currency and first weekday a configured location implies. A guess the prompt labels as one; the
+/// owner's own words in a request always win. Date and number formats are not here: the phone's locale formats
+/// those (the prompt says so), and a format named here is what a model hard-codes.
+pub(crate) static LOCALES: LazyLock<Vec<(Regex, &'static str)>> = LazyLock::new(|| {
+    let rx = |p: &str| Regex::new(&format!("(?i){p}")).expect("LOCALES");
+    vec![
+        (
+            rx(r"\b(usa|u\.s\.a?\.?|united states|america)\b|,\s*(ca|ny|tx|wa|fl|ma|il|or|co|nj|pa)\b"),
+            "US customary units (miles, pounds, °F, fl oz), US dollars, weeks start on Sunday",
+        ),
+        (
+            rx(r"\b(uk|u\.k\.|united kingdom|england|scotland|wales|britain|london)\b"),
+            "metric units (kg, km, °C, ml) except miles for road distances, pounds sterling (£), weeks start on Monday",
+        ),
+        (
+            rx(r"\b(india|bengaluru|bangalore|mumbai|delhi|hyderabad|chennai|pune|kolkata)\b"),
+            "metric units, Indian rupees (₹), weeks start on Monday",
+        ),
+        (rx(r"\b(canada|toronto|vancouver|montreal)\b"), "metric units (kg, km, °C), Canadian dollars, weeks start on Sunday"),
+        (rx(r"\b(australia|sydney|melbourne|brisbane|perth)\b"), "metric units, Australian dollars, weeks start on Monday"),
+        (
+            rx(concat!(
+                r"\b(germany|france|spain|italy|netherlands|ireland|portugal|austria|belgium|finland|berlin|",
+                r"paris|madrid|rome|amsterdam|dublin|lisbon|vienna)\b"
+            )),
+            "metric units, euros (€), weeks start on Monday",
+        ),
+    ]
+});
+
+/// py: apps_maker.py:49 `DEFAULT_ROOT`: `~/.config/eve-bridge/apps`.
+pub fn default_root() -> PathBuf {
+    home().join(".config").join("eve-bridge").join("apps")
+}
+
+// ---- Python's behaviors this module leans on ---------------------------------------------------------------------
+
+/// `str.isspace()` for one character: Unicode White_Space plus the four separators Python also counts.
+fn py_space(c: char) -> bool {
+    c.is_whitespace() || ('\x1c'..='\x1f').contains(&c)
+}
+
+/// `str.strip()`.
+fn py_strip(s: &str) -> &str {
+    s.trim_matches(py_space)
+}
+
+/// `s[:n]` in characters.
+fn take(s: &str, n: usize) -> String {
+    s.chars().take(n).collect()
+}
+
+/// `s[:n]` in characters, with Python's meaning for a negative `n` (counted from the end).
+fn take_py(s: &str, n: i64) -> String {
+    if n >= 0 {
+        return take(s, n as usize);
+    }
+    let len = s.chars().count() as i64;
+    take(s, (len + n).max(0) as usize)
+}
+
+/// `len(s)` in characters.
+fn char_len(s: &str) -> usize {
+    s.chars().count()
+}
+
+/// Python's truthiness of a JSON value.
+fn truthy(v: Option<&Value>) -> bool {
+    match v {
+        None | Some(Value::Null) => false,
+        Some(Value::Bool(b)) => *b,
+        Some(Value::Number(n)) => n.as_f64().is_some_and(|f| f != 0.0),
+        Some(Value::String(s)) => !s.is_empty(),
+        Some(Value::Array(a)) => !a.is_empty(),
+        Some(Value::Object(o)) => !o.is_empty(),
+    }
+}
+
+/// `x if isinstance(x, int) else None`: a JSON integer, or a bool (an int in Python).
+fn py_int(v: Option<&Value>) -> Option<i64> {
+    match v {
+        Some(Value::Bool(b)) => Some(i64::from(*b)),
+        Some(Value::Number(n)) if !n.is_f64() => n.as_i64(),
+        _ => None,
+    }
+}
+
+/// `repr(float)`: the shortest digits that read back, scientific below 1e-4 and from 1e16.
+fn float_repr(f: f64) -> String {
+    if f.is_nan() {
+        return "nan".into();
+    }
+    if f.is_infinite() {
+        return if f > 0.0 { "inf".into() } else { "-inf".into() };
+    }
+    if f == 0.0 {
+        return if f.is_sign_negative() { "-0.0".into() } else { "0.0".into() };
+    }
+    let sci = format!("{:e}", f.abs());
+    let (mant, exp) = sci.split_once('e').unwrap_or((&sci, "0"));
+    let exp: i32 = exp.parse().unwrap_or(0);
+    let digits: String = mant.chars().filter(|c| *c != '.').collect();
+    let sign = if f < 0.0 { "-" } else { "" };
+    if (-4..16).contains(&exp) {
+        let point = exp + 1; // digits before the decimal point
+        let body = if point <= 0 {
+            format!("0.{}{}", "0".repeat((-point) as usize), digits)
+        } else if (point as usize) >= digits.len() {
+            format!("{}{}.0", digits, "0".repeat(point as usize - digits.len()))
+        } else {
+            format!("{}.{}", &digits[..point as usize], &digits[point as usize..])
+        };
+        return format!("{sign}{body}");
+    }
+    let rest = if digits.len() > 1 { format!(".{}", &digits[1..]) } else { String::new() };
+    let esign = if exp < 0 { "-" } else { "+" };
+    format!("{sign}{}{rest}e{esign}{:02}", &digits[..1], exp.abs())
+}
+
+/// `repr(str)`: single quotes unless the text holds one and no double quote.
+fn str_repr(s: &str) -> String {
+    let quote = if s.contains('\'') && !s.contains('"') { '"' } else { '\'' };
+    let mut out = String::with_capacity(s.len() + 2);
+    out.push(quote);
+    for c in s.chars() {
+        match c {
+            '\\' => out.push_str("\\\\"),
+            '\n' => out.push_str("\\n"),
+            '\r' => out.push_str("\\r"),
+            '\t' => out.push_str("\\t"),
+            c if c == quote => {
+                out.push('\\');
+                out.push(c);
+            }
+            c if !printable(c) => {
+                let n = c as u32;
+                if n < 0x100 {
+                    out.push_str(&format!("\\x{n:02x}"));
+                } else if n < 0x10000 {
+                    out.push_str(&format!("\\u{n:04x}"));
+                } else {
+                    out.push_str(&format!("\\U{n:08x}"));
+                }
+            }
+            c => out.push(c),
+        }
+    }
+    out.push(quote);
+    out
+}
+
+/// `str.isprintable()` for one character, for the characters JSON text can carry: the controls, the separators
+/// other than the space, and the format characters are not.
+fn printable(c: char) -> bool {
+    let n = c as u32;
+    !(n < 0x20
+        || (0x7f..=0xa0).contains(&n)
+        || n == 0xad
+        || n == 0x1680
+        || (0x2000..=0x200f).contains(&n)
+        || (0x2028..=0x202f).contains(&n)
+        || (0x205f..=0x206f).contains(&n)
+        || n == 0x3000
+        || n == 0xfeff
+        || (0xfff9..=0xfffb).contains(&n)
+        || (0xe000..=0xf8ff).contains(&n))
+}
+
+/// `repr(value)` of the Python value a JSON value loads as.
+fn py_repr(v: &Value) -> String {
+    match v {
+        Value::String(s) => str_repr(s),
+        Value::Array(items) => format!("[{}]", items.iter().map(py_repr).collect::<Vec<_>>().join(", ")),
+        Value::Object(map) => {
+            let parts: Vec<String> = map.iter().map(|(k, v)| format!("{}: {}", str_repr(k), py_repr(v))).collect();
+            format!("{{{}}}", parts.join(", "))
+        }
+        other => py_str(other),
+    }
+}
+
+/// `str(value)` of the Python value a JSON value loads as.
+fn py_str(v: &Value) -> String {
+    match v {
+        Value::Null => "None".into(),
+        Value::Bool(true) => "True".into(),
+        Value::Bool(false) => "False".into(),
+        Value::Number(n) if n.is_f64() => float_repr(n.as_f64().unwrap_or(f64::NAN)),
+        Value::Number(n) => n.to_string(),
+        Value::String(s) => s.clone(),
+        other => py_repr(other),
+    }
+}
+
+/// `str(d.get(key, default))`.
+fn get_str(d: &Obj, key: &str, default: &str) -> String {
+    d.get(key).map(py_str).unwrap_or_else(|| default.to_string())
+}
+
+/// `json.loads(text)`.
+fn loads(text: &str) -> Option<Value> {
+    serde_json::from_str(text).ok()
+}
+
+/// `json.dumps(value, ensure_ascii=…)`.
+fn dumps(value: &Value, ensure_ascii: bool) -> String {
+    eve_apps_mcp::py::dumps(value, ensure_ascii)
+}
+
+/// `json.dumps(value, ensure_ascii=False, indent=1)`: `","` at line ends, `": "` between a key and its value.
+fn dumps_indent1(value: &Value) -> String {
+    fn go(out: &mut String, v: &Value, depth: usize) {
+        let pad = |out: &mut String, d: usize| {
+            out.push('\n');
+            out.push_str(&" ".repeat(d));
+        };
+        match v {
+            Value::Array(items) if !items.is_empty() => {
+                out.push('[');
+                for (i, item) in items.iter().enumerate() {
+                    if i > 0 {
+                        out.push(',');
+                    }
+                    pad(out, depth + 1);
+                    go(out, item, depth + 1);
+                }
+                pad(out, depth);
+                out.push(']');
+            }
+            Value::Object(map) if !map.is_empty() => {
+                out.push('{');
+                for (i, (k, item)) in map.iter().enumerate() {
+                    if i > 0 {
+                        out.push(',');
+                    }
+                    pad(out, depth + 1);
+                    out.push_str(&dumps(&Value::String(k.clone()), false));
+                    out.push_str(": ");
+                    go(out, item, depth + 1);
+                }
+                pad(out, depth);
+                out.push('}');
+            }
+            leaf => out.push_str(&dumps(leaf, false)),
+        }
+    }
+    let mut out = String::new();
+    go(&mut out, value, 0);
+    out
+}
+
+/// `datetime.now().isoformat(timespec="seconds")`: local, naive.
+fn now_iso() -> String {
+    chrono::Local::now().format("%Y-%m-%dT%H:%M:%S").to_string()
+}
+
+/// `path.is_symlink()`.
+fn is_symlink(p: &Path) -> bool {
+    std::fs::symlink_metadata(p).map(|m| m.file_type().is_symlink()).unwrap_or(false)
+}
+
+/// `path.unlink(missing_ok=True)`.
+fn unlink_missing_ok(p: &Path) -> std::io::Result<()> {
+    match std::fs::remove_file(p) {
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        other => other,
+    }
+}
+
+/// `path.mkdir(exist_ok=True)`: an existing directory is fine, anything else in the way is an error.
+fn mkdir_exist_ok(p: &Path) -> std::io::Result<()> {
+    match std::fs::create_dir(p) {
+        Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists && p.is_dir() => Ok(()),
+        other => other,
+    }
+}
+
+/// `path.stem` of a file name.
+fn stem(p: &Path) -> String {
+    p.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default()
+}
+
+/// `str.isdigit()` for a version file's stem.
+fn digits(s: &str) -> Option<u64> {
+    if !s.is_empty() && s.chars().all(|c| c.is_ascii_digit()) {
+        s.parse().ok()
+    } else {
+        None
+    }
+}
+
+/// The time zone's name for a moment in the Mac's own zone (`datetime.tzname()` after `astimezone()`).
+fn local_tzname(at: &chrono::DateTime<chrono::Local>) -> String {
+    #[cfg(unix)]
+    {
+        let secs: libc::time_t = at.timestamp() as libc::time_t;
+        // SAFETY: localtime_r writes into the zeroed tm we own; tm_zone then points at static zone data.
+        unsafe {
+            let mut tm: libc::tm = std::mem::zeroed();
+            if !libc::localtime_r(&secs, &mut tm).is_null() && !tm.tm_zone.is_null() {
+                let name = std::ffi::CStr::from_ptr(tm.tm_zone).to_string_lossy().into_owned();
+                if !name.is_empty() {
+                    return name;
+                }
+            }
+        }
+    }
+    let secs = at.offset().local_minus_utc();
+    if secs == 0 {
+        return "UTC".into();
+    }
+    let sign = if secs < 0 { '-' } else { '+' };
+    let secs = secs.abs();
+    format!("UTC{sign}{:02}:{:02}", secs / 3600, secs % 3600 / 60)
+}
+
+/// `ZoneInfo(name)`, None when there is no such zone. The Mac's zone files sit on a case-insensitive disk, so a
+/// name in other case is found there too.
+fn zone_named(name: &str) -> Option<chrono_tz::Tz> {
+    if name.is_empty() {
+        return None;
+    }
+    name.parse::<chrono_tz::Tz>()
+        .ok()
+        .or_else(|| chrono_tz::TZ_VARIANTS.iter().copied().find(|t| t.name().eq_ignore_ascii_case(name)))
+}
 
 /// py: apps_maker.py:528 `def owner_context(environ: Optional[Mapping[str, str]] = None, *, now: Optional[_dt.datetime] = None) -> str:`
 ///
 /// Today, the time and where the owner is, for a build prompt: an app that shows "today" or a unit needs it.
 /// EVE_TIMEZONE (an IANA name) and EVE_LOCATION (free text), as system_context.py reads them.
 pub fn owner_context(environ: Option<&Environ>, now: Option<&chrono::DateTime<chrono::FixedOffset>>) -> String {
-    todo!("apps_maker.py:528 owner_context")
+    use chrono::{Datelike, Utc};
+    let zone_name = env_get(environ, "EVE_TIMEZONE").unwrap_or_default();
+    let zone_name = py_strip(&zone_name).to_string();
+    let zone = zone_named(&zone_name);
+    let utc = now.map(|n| n.with_timezone(&Utc)).unwrap_or_else(Utc::now);
+    let line = |weekday: String, day: u32, month_year: String, date: String, hm: String, tz: String| {
+        format!(
+            "Today is {weekday}, {day} {month_year} ({date}); the owner's local time is {hm}, time zone {tz}."
+        )
+    };
+    let first = match zone {
+        Some(tz) => {
+            let local = utc.with_timezone(&tz);
+            line(
+                local.format("%A").to_string(),
+                local.day(),
+                local.format("%B %Y").to_string(),
+                local.format("%Y-%m-%d").to_string(),
+                local.format("%H:%M").to_string(),
+                zone_name.clone(),
+            )
+        }
+        None => {
+            let local = utc.with_timezone(&chrono::Local);
+            line(
+                local.format("%A").to_string(),
+                local.day(),
+                local.format("%B %Y").to_string(),
+                local.format("%Y-%m-%d").to_string(),
+                local.format("%H:%M").to_string(),
+                local_tzname(&local),
+            )
+        }
+    };
+    let raw = env_get(environ, "EVE_LOCATION").unwrap_or_default();
+    let location = take(&raw.split(py_space).filter(|w| !w.is_empty()).collect::<Vec<_>>().join(" "), 200);
+    let mut lines = vec![first];
+    if !location.is_empty() {
+        let guess = LOCALES
+            .iter()
+            .find(|(pattern, _)| pattern.is_match(&location))
+            .map(|(_, units)| *units)
+            .unwrap_or("metric units (kg, km, °C, ml), weeks start on Monday");
+        lines.push(format!("The owner lives in {location}. Unless they say otherwise, assume {guess}."));
+    } else {
+        lines.push("No location is configured: use metric units.".into());
+    }
+    lines.join("\n")
 }
+
+// ---- the store ---------------------------------------------------------------------------------------------------
 
 /// py: apps_maker.py:552 `def _cut(text: str, limit: int) -> str:`
 pub(crate) fn cut(text: &str, limit: i64) -> String {
-    todo!("apps_maker.py:552 _cut")
+    if char_len(text) as i64 <= limit {
+        return text.to_string();
+    }
+    let head = take_py(text, limit - 1);
+    format!("{}…", head.trim_end_matches(py_space))
 }
 
 /// py: apps_maker.py:556 `def owner_issues(report: Optional[app_check.CheckReport], issues: list[str], limit: int = 300) -> list[str]:`
@@ -546,7 +923,16 @@ pub(crate) fn cut(text: &str, limit: i64) -> String {
 /// short line ("Couldn't tap "Add expense" in "Split a dinner"."), not the repair round's text with its control
 /// list and screen dump; anything longer than ``limit`` ends in "…".
 pub fn owner_issues(report: Option<&eve_app_check::CheckReport>, issues: &[String], limit: i64) -> Vec<String> {
-    todo!("apps_maker.py:556 owner_issues")
+    let plain = report.and_then(|r| r.journeys.as_ref()).map(|run| run.owner_lines()).unwrap_or_default();
+    issues.iter().map(|i| cut(plain.get(i).unwrap_or(i), limit)).collect()
+}
+
+/// `round(x, 4)`: to the nearest, ties to even, on the float's exact value.
+fn round4(x: f64) -> f64 {
+    if !x.is_finite() {
+        return x;
+    }
+    format!("{x:.4}").parse().unwrap_or(x)
 }
 
 /// py: apps_maker.py:565 `def build_record(*, ok: bool, report: Optional[app_check.CheckReport], issues: list[str], usd: float, secs: float, rounds: int, reason: str = "") -> dict[str, Any]:`
@@ -555,7 +941,34 @@ pub fn owner_issues(report: Option<&eve_app_check::CheckReport>, issues: &[Strin
 /// check's line ("passed: 3 fields filled, 9 taps, 4 saves, journeys 3/3"), the journeys Jev walked, what may
 /// still be wrong, and what it cost. The store adds when, the request and the version number.
 pub fn build_record(ok: bool, report: Option<&eve_app_check::CheckReport>, issues: &[String], usd: f64, secs: f64, rounds: i64, reason: &str) -> Obj {
-    todo!("apps_maker.py:565 build_record")
+    let run = report.and_then(|r| r.journeys.as_ref());
+    let journeys = match run {
+        Some(run) if run.total > 0 => {
+            let mut j = Obj::new();
+            j.insert("passed".into(), json!(run.passed()));
+            j.insert("total".into(), json!(run.total));
+            j.insert("not_run".into(), json!(run.not_run));
+            if !run.not_run.is_empty() && !run.results.is_empty() {
+                j.insert("ran".into(), json!(run.results.len()));
+            }
+            Value::Object(j)
+        }
+        _ => Value::Null,
+    };
+    let first_two: Vec<String> = issues.iter().take(2).cloned().collect();
+    let secs_rounded = if secs.is_finite() { json!(secs.round_ties_even() as i64) } else { json!(secs) };
+    let mut out = Obj::new();
+    out.insert("ok".into(), json!(ok));
+    out.insert("check".into(), json!(report.map(|r| r.summary()).unwrap_or_else(|| "not tested".into())));
+    out.insert("tested".into(), json!(report.is_some_and(|r| r.skipped.is_empty())));
+    out.insert("journeys".into(), journeys);
+    out.insert("problems".into(), json!(issues.len()));
+    out.insert("issues".into(), json!(owner_issues(report, &first_two, 300)));
+    out.insert("usd".into(), json!(round4(usd)));
+    out.insert("secs".into(), secs_rounded);
+    out.insert("rounds".into(), json!(rounds));
+    out.insert("reason".into(), json!(reason));
+    out
 }
 
 /// py: apps_maker.py:580 `_RESULT_KEYS`
@@ -563,11 +976,11 @@ pub(crate) const RESULT_KEYS: &[&str] = &["ok", "version", "check", "tested", "j
 
 /// py: apps_maker.py:583 `def _result(build: dict[str, Any]) -> dict[str, Any]:`
 pub(crate) fn result(build: &Obj) -> Obj {
-    todo!("apps_maker.py:583 _result")
+    RESULT_KEYS.iter().map(|k| (k.to_string(), build.get(*k).cloned().unwrap_or(Value::Null))).collect()
 }
 
 /// py: apps_maker.py:588 `class AppInfo:`
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct AppInfo {
     pub slug: String,
     pub title: String,
@@ -577,58 +990,136 @@ pub struct AppInfo {
     pub description: String,
     /// how many earlier versions undo can restore
     pub versions: i64,
+    /// The saved data has a newer shape (its "v") than the version undo would restore was written for: that
+    /// page would show its "can't read this data" banner, so an undo says so before it runs.
     pub undo_warning: bool,
 }
 
 impl AppInfo {
     /// py: apps_maker.py:600 `def as_dict(self) -> dict[str, Any]:`
     pub fn as_dict(&self) -> Obj {
-        todo!("apps_maker.py:600 AppInfo.as_dict")
+        let mut out = Obj::new();
+        out.insert("slug".into(), json!(self.slug));
+        out.insert("title".into(), json!(self.title));
+        out.insert("created".into(), json!(self.created));
+        out.insert("updated".into(), json!(self.updated));
+        out.insert("icon".into(), json!(self.icon));
+        out.insert("description".into(), json!(self.description));
+        out.insert("versions".into(), json!(self.versions));
+        out.insert("undo_warning".into(), json!(self.undo_warning));
+        out
     }
 }
 
+static WORD_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[a-z0-9]+").expect("WORD_RE"));
+/// Python's `\s+`: Unicode whitespace and the four separators `str.isspace` also counts.
+static SPACES_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[\s\x1c-\x1f]+").expect("SPACES_RE"));
+static SLUG_FULL: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\A[a-z0-9][a-z0-9-]{0,47}\z").expect("SLUG_FULL"));
+static TITLE_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?is)<title[^>]*>(.*?)</title>").expect("TITLE_RE"));
+static META_TAG_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?i)<meta\b[^>]*>").expect("META_TAG_RE"));
+static ATTR_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r#"([\w-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')"#).expect("ATTR_RE"));
+static ASCII_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[\x00-\x7f]").expect("ASCII_RE"));
+static HTML_BLOCK_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?is)```html\s*\n(.*?)```").expect("HTML_BLOCK_RE"));
+static DOCTYPE_BLOCK_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?is)```\s*\n(<!doctype.*?)```").expect("DOCTYPE_BLOCK_RE"));
+static HAS_TITLE_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?i)<title[^>]*>\s*\S").expect("HAS_TITLE_RE"));
+static EVE_LOAD_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\beve\s*\.\s*load\s*\(").expect("EVE_LOAD_RE"));
+static EVE_SAVE_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\beve\s*\.\s*save\s*\(").expect("EVE_SAVE_RE"));
+
 /// py: apps_maker.py:606 `def slugify(text: str) -> str:`
 pub fn slugify(text: &str) -> String {
-    todo!("apps_maker.py:606 slugify")
+    let low = text.to_lowercase();
+    let words: Vec<&str> = WORD_RE.find_iter(&low).take(6).map(|m| m.as_str()).collect();
+    let joined = words.join("-");
+    let joined = if joined.is_empty() { "app".to_string() } else { joined };
+    let cut = take(&joined, 40);
+    let cut = cut.trim_matches('-');
+    if cut.is_empty() { "app".into() } else { cut.to_string() }
 }
 
 /// py: apps_maker.py:611 `def _clean(text: str, limit: int) -> str:`
 pub(crate) fn clean(text: &str, limit: i64) -> String {
-    todo!("apps_maker.py:611 _clean")
+    let unescaped = html_escape::decode_html_entities(text);
+    let spaced = SPACES_RE.replace_all(&unescaped, " ");
+    take_py(py_strip(&spaced), limit)
 }
 
 /// py: apps_maker.py:615 `def title_of(html: str, fallback: str = "App") -> str:`
 pub fn title_of(html: &str, fallback: &str) -> String {
-    todo!("apps_maker.py:615 title_of")
+    let raw = TITLE_RE.captures(html).and_then(|c| c.get(1)).map(|m| m.as_str()).unwrap_or("");
+    let title = clean(raw, 60);
+    if title.is_empty() { take(fallback, 60) } else { title }
 }
 
 /// py: apps_maker.py:620 `def _meta(html: str, name: str) -> str:`
 ///
 /// The content of ``<meta name="<name>" content="…">``, whatever the attribute order.
 pub(crate) fn meta(html: &str, name: &str) -> String {
-    todo!("apps_maker.py:620 _meta")
+    for tag in META_TAG_RE.find_iter(html) {
+        let mut attrs: HashMap<String, String> = HashMap::new();
+        for c in ATTR_RE.captures_iter(tag.as_str()) {
+            let v1 = c.get(2).map(|m| m.as_str()).unwrap_or("");
+            let v2 = c.get(3).map(|m| m.as_str()).unwrap_or("");
+            attrs.insert(c[1].to_lowercase(), if v1.is_empty() { v2.to_string() } else { v1.to_string() });
+        }
+        if attrs.get("name").map(|n| n.to_lowercase()).unwrap_or_default() == name {
+            return attrs.get("content").cloned().unwrap_or_default();
+        }
+    }
+    String::new()
 }
 
 /// py: apps_maker.py:629 `def icon_of(html: str) -> str:`
 ///
 /// The app's emoji (``<meta name="eve-icon">``): a short run of non-ASCII symbols, else nothing.
 pub fn icon_of(html: &str) -> String {
-    todo!("apps_maker.py:629 icon_of")
+    let icon = clean(&meta(html, "eve-icon"), 16).replace(' ', "");
+    if !icon.is_empty() && char_len(&icon) <= 8 && !ASCII_RE.is_match(&icon.replace('\u{200d}', "")) {
+        icon
+    } else {
+        String::new()
+    }
 }
 
 /// py: apps_maker.py:635 `def description_of(html: str) -> str:`
 pub fn description_of(html: &str) -> String {
-    todo!("apps_maker.py:635 description_of")
+    clean(&meta(html, "description"), 120)
 }
 
-/// py: apps_maker.py:639 `def extract_html(text: str) -> Optional[str]:`
+/// py: apps_maker.py:639 `def extract_html(text: str) -> Option<String>:`
 ///
 /// The HTML document in Claude's answer: the ```html block, else the whole answer if it is a document.
 pub fn extract_html(text: &str) -> Option<String> {
-    todo!("apps_maker.py:639 extract_html")
+    let m = HTML_BLOCK_RE.captures(text).or_else(|| DOCTYPE_BLOCK_RE.captures(text));
+    let html = py_strip(m.as_ref().and_then(|c| c.get(1)).map(|g| g.as_str()).unwrap_or(text)).to_string();
+    let low = html.to_lowercase();
+    if (low.contains("<!doctype html") || low.contains("<html")) && low.contains("</html>") && html.len() <= MAX_APP_BYTES
+    {
+        return Some(html);
+    }
+    None
 }
 
-// py: apps_maker.py:651 `_LOADS` (list): ported by this file's unit.
+/// py: apps_maker.py:651 `_LOADS`
+///
+/// Where a page actually loads something from: a src/href on a loading tag, CSS url()/@import, fetch/import/
+/// WebSocket/EventSource/sendBeacon. Plain links and namespace strings (the SVG xmlns) are not loads.
+pub(crate) static LOADS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
+    [
+        concat!(
+            r#"(?i)<(?:script|link|img|iframe|audio|video|source|embed|object|track)\b[^>]*?\b(?:src|href|data)\s*=\s*"#,
+            r#"["']?\s*(?:https?:)?//([a-z0-9.-]+)"#
+        ),
+        r#"(?i)(?:url\(|@import)\s*["']?\s*(?:https?:)?//([a-z0-9.-]+)"#,
+        r#"(?i)\b(?:fetch|import|WebSocket|EventSource|sendBeacon)\s*\(\s*["'`](?:(?:https?|wss?):)?//([a-z0-9.-]+)"#,
+        r#"(?i)\.open\s*\(\s*["'](?:GET|POST|PUT|PATCH|DELETE)["']\s*,\s*["'`](?:https?:)?//([a-z0-9.-]+)"#,
+        r#"(?i)\bfrom\s*["'](?:https?:)?//([a-z0-9.-]+)"#,
+    ]
+    .iter()
+    .map(|p| Regex::new(p).expect("LOADS"))
+    .collect()
+});
 
 /// py: apps_maker.py:662 `def load_issues(html: str) -> list[str]:`
 ///
@@ -636,27 +1127,127 @@ pub fn extract_html(text: &str) -> Option<String> {
 /// but a gate: a version with one of these is never saved (AppMaker._run), because a script from outside runs
 /// with the app's access to the owner's data.
 pub fn load_issues(html: &str) -> Vec<String> {
-    todo!("apps_maker.py:662 load_issues")
+    let mut issues = Vec::new();
+    let hosts: std::collections::BTreeSet<String> =
+        LOADS.iter().flat_map(|rx| rx.captures_iter(html).map(|c| c[1].to_lowercase()).collect::<Vec<_>>()).collect();
+    for host in hosts.iter().filter(|h| !ALLOWED_HOSTS.iter().any(|a| *h == a || h.ends_with(&format!(".{a}")))) {
+        issues.push(format!(
+            "The app loads from {host}; the only address it may load from is cdn.jsdelivr.net (everything else inline)."
+        ));
+    }
+    let paths: std::collections::BTreeSet<String> = JSDELIVR_URL
+        .captures_iter(html)
+        .map(|c| c.get(1).map(|m| m.as_str()).filter(|s| !s.is_empty()).unwrap_or("/").to_string())
+        .collect();
+    for path in paths {
+        // `PINNED_LIB_RE.match`: anchored at the start; the leftmost match starts there when one can
+        let pinned = PINNED_LIB_RE.find(&path).is_some_and(|m| m.start() == 0);
+        if !pinned {
+            issues.push(format!(
+                "The app loads https://cdn.jsdelivr.net{}, which is not an npm package at an exact version, so the \
+                 code behind it can change after the app was tested. Load \
+                 https://cdn.jsdelivr.net/npm/<package>@<exact version>/<file>, or do it inline.",
+                take(&path, 80)
+            ));
+        }
+    }
+    issues
 }
 
 /// py: apps_maker.py:679 `def static_issues(html: str) -> list[str]:`
 ///
 /// What is wrong with a file before it is even run: the storage contract, its name, where it loads from.
 pub fn static_issues(html: &str) -> Vec<String> {
-    todo!("apps_maker.py:679 static_issues")
+    let mut issues = Vec::new();
+    if !HAS_TITLE_RE.is_match(html) {
+        issues.push("The file has no <title>, so the app has no name in the owner's list.".to_string());
+    }
+    if !EVE_LOAD_RE.is_match(html) {
+        issues.push("The app never calls eve.load(), so it cannot show anything it saved before.".to_string());
+    }
+    if !EVE_SAVE_RE.is_match(html) {
+        issues.push("The app never calls eve.save(), so nothing the owner enters survives closing it.".to_string());
+    }
+    issues.extend(load_issues(html));
+    issues
 }
 
 /// py: apps_maker.py:691 `def _sample(value: Any, depth: int = 0) -> Any:`
 ///
 /// ``value`` with long lists and strings shortened, keeping its shape readable for a migration.
 pub(crate) fn sample(value: &Value, depth: i64) -> Value {
-    todo!("apps_maker.py:691 _sample")
+    if depth > 8 {
+        return json!("…");
+    }
+    match value {
+        Value::Array(items) => {
+            if items.len() > 8 {
+                let mut out: Vec<Value> = items[..4].iter().map(|v| sample(v, depth + 1)).collect();
+                out.push(json!(format!("… {} more items …", items.len() - 6)));
+                out.extend(items[items.len() - 2..].iter().map(|v| sample(v, depth + 1)));
+                return Value::Array(out);
+            }
+            Value::Array(items.iter().map(|v| sample(v, depth + 1)).collect())
+        }
+        Value::Object(map) => {
+            let mut out: Obj = map.iter().take(40).map(|(k, v)| (k.clone(), sample(v, depth + 1))).collect();
+            if map.len() > 40 {
+                let last: Vec<String> = map.keys().skip(map.len() - 3).map(|k| str_repr(k)).collect();
+                out.insert("…".into(), json!(format!("{} more keys, e.g. {}", map.len() - 40, last.join(", "))));
+            }
+            Value::Object(out)
+        }
+        Value::String(s) if char_len(s) > 200 => json!(format!("{}…", take(s, 200))),
+        other => other.clone(),
+    }
 }
 
 /// py: apps_maker.py:711 `def data_sample(value: Any, limit: int = DATA_SAMPLE_CHARS) -> str:`
 pub fn data_sample(value: &Value, limit: i64) -> String {
-    todo!("apps_maker.py:711 data_sample")
+    let raw = dumps(value, false);
+    if char_len(&raw) as i64 <= limit {
+        return raw;
+    }
+    let text = dumps(&sample(value, 0), false);
+    if char_len(&text) as i64 <= limit { text } else { format!("{} …(cut)", take_py(&text, limit)) }
 }
+
+/// What the store raises, by the Python exception its callers catch.
+#[derive(Debug, thiserror::Error)]
+pub enum StoreError {
+    /// `KeyError`: no such app (or nothing to go back to, or nothing in the trash). Shown as Python shows the
+    /// key.
+    #[error("'{0}'")]
+    Missing(String),
+    /// `ValueError`: a bad name or too much data.
+    #[error("{0}")]
+    Invalid(String),
+    /// `FileExistsError`: a live app has the address a restore needs.
+    #[error("{0}")]
+    Exists(String),
+    /// `OSError`: the disk.
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+}
+
+/// The store's result.
+pub type StoreResult<T> = Result<T, StoreError>;
+
+/// How `AppStore::save` writes the new page (``index.tmp``) and moves it over the live one: the disk, or a
+/// test's disk that fills up (Python's tests patch ``Path.write_text`` and ``Path.replace``).
+pub trait PageDisk {
+    fn write(&self, path: &Path, text: &str) -> std::io::Result<()> {
+        std::fs::write(path, text)
+    }
+    fn replace(&self, from: &Path, to: &Path) -> std::io::Result<()> {
+        std::fs::rename(from, to)
+    }
+}
+
+/// The disk itself.
+pub struct RealDisk;
+
+impl PageDisk for RealDisk {}
 
 /// py: apps_maker.py:719 `class AppStore:`
 ///
@@ -670,44 +1261,105 @@ pub struct AppStore {
     pub root: PathBuf,
 }
 
+impl Default for AppStore {
+    fn default() -> Self {
+        Self::new(&default_root())
+    }
+}
+
 impl AppStore {
     /// py: apps_maker.py:727 `def __init__(self, root: Path = DEFAULT_ROOT) -> None:`
     pub fn new(root: &Path) -> Self {
-        todo!("apps_maker.py:727 AppStore.__init__")
+        Self { root: root.to_path_buf() }
     }
 
     /// py: apps_maker.py:730 `def _dir(self, slug: str) -> Optional[Path]:`
     pub(crate) fn dir(&self, slug: &str) -> Option<PathBuf> {
-        todo!("apps_maker.py:730 AppStore._dir")
+        if !SLUG_FULL.is_match(slug) {
+            return None;
+        }
+        let d = self.root.join(slug);
+        if is_symlink(&d) { None } else { Some(d) }
     }
 
     /// py: apps_maker.py:736 `def _app_dir(self, slug: str) -> Path:`
     ///
     /// The folder of an app that exists, else KeyError.
-    pub(crate) fn app_dir(&self, slug: &str) -> PathBuf {
-        todo!("apps_maker.py:736 AppStore._app_dir")
+    pub(crate) fn app_dir(&self, slug: &str) -> StoreResult<PathBuf> {
+        match self.dir(slug) {
+            Some(d) if d.join("index.html").is_file() => Ok(d),
+            _ => Err(StoreError::Missing(slug.to_string())),
+        }
     }
 
     /// py: apps_maker.py:743 `def _meta(self, d: Path) -> dict[str, Any]:`
     pub(crate) fn meta(&self, d: &Path) -> Obj {
-        todo!("apps_maker.py:743 AppStore._meta")
+        let Some(Value::Object(mut m)) = std::fs::read_to_string(d.join("meta.json")).ok().and_then(|t| loads(&t)) else {
+            return Obj::new();
+        };
+        // meta written before requests
+        if !m.contains_key("requests") && truthy(m.get("request")) {
+            let at = m.get("created").cloned().unwrap_or_else(|| json!(""));
+            let text = py_str(&m["request"]);
+            m.insert("requests".into(), json!([{"at": at, "text": text}]));
+        }
+        m
     }
 
     /// py: apps_maker.py:752 `def _write_meta(self, d: Path, meta: dict[str, Any]) -> None:`
-    pub(crate) fn write_meta(&self, d: &Path, meta: &Obj) {
-        todo!("apps_maker.py:752 AppStore._write_meta")
+    pub(crate) fn write_meta(&self, d: &Path, meta: &mut Obj) -> std::io::Result<()> {
+        meta.shift_remove("request");
+        let tmp = d.join("meta.tmp");
+        std::fs::write(&tmp, dumps(&Value::Object(meta.clone()), false))?;
+        std::fs::rename(&tmp, d.join("meta.json"))
+    }
+
+    /// The `*.html` in `versions/` whose stem is a number, oldest first.
+    fn numbered(vdir: &Path) -> Vec<(u64, PathBuf)> {
+        let mut found: Vec<(u64, PathBuf)> = std::fs::read_dir(vdir)
+            .map(|rd| {
+                rd.filter_map(|e| e.ok())
+                    .map(|e| e.path())
+                    .filter(|p| p.extension().is_some_and(|x| x == "html"))
+                    .filter_map(|p| digits(&stem(&p)).map(|n| (n, p)))
+                    .collect()
+            })
+            .unwrap_or_default();
+        found.sort_by_key(|(n, _)| *n);
+        found
     }
 
     /// py: apps_maker.py:758 `def _versions(self, d: Path) -> list[Path]:`
     ///
     /// Earlier versions, oldest first. The single ``index.prev.html`` of the first builds becomes version 1.
-    pub(crate) fn versions(&self, d: &Path) -> Vec<PathBuf> {
-        todo!("apps_maker.py:758 AppStore._versions")
+    pub(crate) fn versions(&self, d: &Path) -> std::io::Result<Vec<PathBuf>> {
+        let vdir = d.join("versions");
+        let prev = d.join("index.prev.html");
+        if prev.is_file() {
+            mkdir_exist_ok(&vdir)?;
+            let n = Self::numbered(&vdir).last().map(|(n, _)| *n).unwrap_or(0);
+            if n == 0 {
+                std::fs::rename(&prev, vdir.join("1.html"))?;
+            } else {
+                std::fs::remove_file(&prev)?;
+            }
+        }
+        Ok(Self::numbered(&vdir).into_iter().map(|(_, p)| p).collect())
     }
 
     /// py: apps_maker.py:771 `def list(self) -> list[AppInfo]:`
     pub fn list(&self) -> Vec<AppInfo> {
-        todo!("apps_maker.py:771 AppStore.list")
+        let mut apps: Vec<AppInfo> = std::fs::read_dir(&self.root)
+            .map(|rd| {
+                rd.filter_map(|e| e.ok())
+                    .filter(|e| e.path().join("meta.json").exists())
+                    .filter_map(|e| e.file_name().to_str().map(str::to_string))
+                    .filter_map(|name| self.info(&name))
+                    .collect()
+            })
+            .unwrap_or_default();
+        apps.sort_by(|a, b| b.updated.cmp(&a.updated));
+        apps
     }
 
     /// py: apps_maker.py:780 `def _data_v(d: Path) -> Optional[int]:`
@@ -715,36 +1367,91 @@ impl AppStore {
     /// The ``v`` of the app's saved data, read from the start of data.json only (every app keeps one root
     /// object that starts with it, as the prompt asks): cheap enough for every listing. None when unknown.
     pub(crate) fn data_v(d: &Path) -> Option<i64> {
-        todo!("apps_maker.py:780 AppStore._data_v")
+        use std::io::Read;
+        let f = std::fs::File::open(d.join("data.json")).ok()?;
+        let mut head = Vec::with_capacity(256);
+        f.take(256).read_to_end(&mut head).ok()?;
+        DATA_V_RE.captures(&head).and_then(|c| std::str::from_utf8(&c[1]).ok()?.parse().ok())
     }
 
-    /// py: apps_maker.py:790 `def info(self, slug: str) -> Optional[AppInfo]:`
+    /// py: apps_maker.py:790 `def info(self, slug: str) -> Option<AppInfo>:`
     pub fn info(&self, slug: &str) -> Option<AppInfo> {
-        todo!("apps_maker.py:790 AppStore.info")
+        let d = self.dir(slug)?;
+        if !d.join("index.html").is_file() {
+            return None;
+        }
+        let m = self.meta(&d);
+        let versions = match self.versions(&d) {
+            Ok(v) => v,
+            Err(e) => {
+                tracing::warn!("apps: {} versions unreadable: {}", slug, e);
+                return None;
+            }
+        };
+        let mut warn = false;
+        if let Some(last) = versions.last() {
+            let then = match m.get("data_v") {
+                Some(Value::Object(seen)) => py_int(seen.get(&stem(last))),
+                _ => None,
+            };
+            if let Some(then) = then {
+                warn = Self::data_v(&d).is_some_and(|now| now > then);
+            }
+        }
+        let (Some(title), Some(created), Some(updated)) = (m.get("title"), m.get("created"), m.get("updated")) else {
+            return None;
+        };
+        Some(AppInfo {
+            slug: slug.to_string(),
+            title: py_str(title),
+            created: py_str(created),
+            updated: py_str(updated),
+            icon: get_str(&m, "icon", ""),
+            description: get_str(&m, "description", ""),
+            versions: versions.len() as i64,
+            undo_warning: warn,
+        })
     }
 
-    /// py: apps_maker.py:808 `def html(self, slug: str) -> Optional[str]:`
+    /// py: apps_maker.py:808 `def html(self, slug: str) -> Option<String>:`
     pub fn html(&self, slug: &str) -> Option<String> {
-        todo!("apps_maker.py:808 AppStore.html")
+        std::fs::read_to_string(self.dir(slug)?.join("index.html")).ok()
     }
 
     /// py: apps_maker.py:815 `def journeys(self, slug: str) -> Optional[list[jev_verify.Journey]]:`
     ///
     /// The journeys of the app's current page, or None when it has none (an app built before them).
     pub fn journeys(&self, slug: &str) -> Option<Vec<eve_jev_verify::Journey>> {
-        todo!("apps_maker.py:815 AppStore.journeys")
+        let d = self.dir(slug)?;
+        let raw = loads(&std::fs::read_to_string(d.join("journeys.json")).ok()?)?;
+        if raw.is_null() {
+            return None;
+        }
+        let (found, _) = eve_jev_verify::parse_journeys(&raw);
+        if found.is_empty() { None } else { Some(found) }
     }
 
     /// py: apps_maker.py:828 `def _journeys_of(version: Path) -> Path:`
     pub(crate) fn journeys_of(version: &Path) -> PathBuf {
-        todo!("apps_maker.py:828 AppStore._journeys_of")
+        version.with_file_name(format!("{}.journeys.json", stem(version)))
     }
 
     /// py: apps_maker.py:831 `def requests(self, slug: str) -> list[dict[str, str]]:`
     ///
-    /// What the owner asked of this app, oldest first.
+    /// What the owner asked of this app, oldest first. Each request's fields as text (`str()` of what
+    /// meta.json holds).
     pub fn requests(&self, slug: &str) -> Vec<HashMap<String, String>> {
-        todo!("apps_maker.py:831 AppStore.requests")
+        let Some(d) = self.dir(slug) else {
+            return Vec::new();
+        };
+        match self.meta(&d).get("requests") {
+            Some(Value::Array(items)) => items
+                .iter()
+                .filter_map(|r| r.as_object())
+                .map(|r| r.iter().map(|(k, v)| (k.clone(), py_str(v))).collect())
+                .collect(),
+            _ => Vec::new(),
+        }
     }
 
     /// py: apps_maker.py:837 `def _exact(apps: list[AppInfo], name: str) -> list[AppInfo]:`
@@ -752,23 +1459,58 @@ impl AppStore {
     /// The apps ``name`` names exactly. A slug is checked across every app before any title: two builds of
     /// "Notes" are ``notes`` and ``notes-2``, both titled Notes, and "notes" is the first one.
     pub(crate) fn exact(apps: &[AppInfo], name: &str) -> Vec<AppInfo> {
-        todo!("apps_maker.py:837 AppStore._exact")
+        let wanted = py_strip(name).to_lowercase();
+        let s = slugify(name);
+        let tests: [&dyn Fn(&AppInfo) -> bool; 3] =
+            [&|a| a.slug == wanted, &|a| a.title.to_lowercase() == wanted, &|a| a.slug == s];
+        for test in tests {
+            let hits: Vec<AppInfo> = apps.iter().filter(|a| test(a)).cloned().collect();
+            if !hits.is_empty() {
+                return hits;
+            }
+        }
+        Vec::new()
     }
 
     /// py: apps_maker.py:849 `def _words(text: str) -> set[str]:`
     ///
     /// The words that tell apps apart ("my habit trackers" -> {habit, tracker}).
-    pub(crate) fn words(text: &str) -> Vec<String> {
-        todo!("apps_maker.py:849 AppStore._words")
+    pub(crate) fn words(text: &str) -> HashSet<String> {
+        let low = text.to_lowercase();
+        WORD_RE
+            .find_iter(&low)
+            .map(|m| {
+                let w = m.as_str();
+                if w.len() > 3 && w.ends_with('s') { w[..w.len() - 1].to_string() } else { w.to_string() }
+            })
+            .filter(|w| !FILLER.contains(&w.as_str()))
+            .collect()
     }
 
-    /// py: apps_maker.py:854 `def find(self, name: str) -> Optional[AppInfo]:`
+    fn words_of(a: &AppInfo) -> HashSet<String> {
+        Self::words(&format!("{} {}", a.title, a.slug))
+    }
+
+    /// py: apps_maker.py:854 `def find(self, name: str) -> Option<AppInfo>:`
     ///
     /// The app a request names ("the habit tracker", "habit-tracker"): exact slug, then exact title, else the
     /// best word overlap (a tie goes to the newest). For a change, which keeps the old page as a version; a
     /// delete or an undo goes through ``resolve``.
     pub fn find(&self, name: &str) -> Option<AppInfo> {
-        todo!("apps_maker.py:854 AppStore.find")
+        let apps = self.list();
+        if let Some(first) = Self::exact(&apps, name).into_iter().next() {
+            return Some(first);
+        }
+        let words = Self::words(name);
+        let mut best: Option<(usize, &AppInfo)> = None;
+        for a in &apps {
+            let score = words.intersection(&Self::words_of(a)).count();
+            // max() keeps the first of equals: the list is newest first
+            if score > 0 && best.is_none_or(|(b, _)| score > b) {
+                best = Some((score, a));
+            }
+        }
+        best.map(|(_, a)| a.clone())
     }
 
     /// py: apps_maker.py:867 `def resolve(self, name: str) -> tuple[Optional[AppInfo], list[AppInfo]]:`
@@ -777,14 +1519,32 @@ impl AppStore {
     /// app whose name holds every word asked for. Else (None, the apps it might mean), so the owner is asked
     /// which; nothing is picked by a guess.
     pub fn resolve(&self, name: &str) -> (Option<AppInfo>, Vec<AppInfo>) {
-        todo!("apps_maker.py:867 AppStore.resolve")
+        Self::pick(&self.list(), name)
     }
 
     /// py: apps_maker.py:874 `def pick(cls, apps: list[AppInfo], name: str) -> tuple[Optional[AppInfo], list[AppInfo]]:`
     ///
     /// ``resolve`` over any list of apps (the trash's, for a restore).
     pub fn pick(apps: &[AppInfo], name: &str) -> (Option<AppInfo>, Vec<AppInfo>) {
-        todo!("apps_maker.py:874 AppStore.pick")
+        let mut exact = Self::exact(apps, name);
+        if exact.len() == 1 {
+            return (exact.pop(), Vec::new());
+        }
+        if !exact.is_empty() {
+            return (None, exact);
+        }
+        let words = Self::words(name);
+        if words.is_empty() {
+            return (None, Vec::new());
+        }
+        let mut full: Vec<AppInfo> = apps.iter().filter(|a| words.is_subset(&Self::words_of(a))).cloned().collect();
+        if full.len() == 1 {
+            return (full.pop(), Vec::new());
+        }
+        if !full.is_empty() {
+            return (None, full);
+        }
+        (None, apps.iter().filter(|a| !words.is_disjoint(&Self::words_of(a))).cloned().collect())
     }
 
     /// py: apps_maker.py:889 `def save(self, html: str, request: str, slug: str = "", journeys: Optional[list[jev_verify.Journey]] = None, build: Optional[dict[str, Any]] = None) -> AppInfo:`
@@ -794,21 +1554,147 @@ impl AppStore {
     /// kept); the title follows the page's <title> unless the owner renamed the app. Each save is the app's
     /// next version number (``meta["version"]``); ``build`` is how the build that made the page went
     /// (``build_record``), kept with that number for the app's change chat (``thread``).
-    pub fn save(&self, html: &str, request: &str, slug: &str, journeys: Option<&[eve_jev_verify::Journey]>, build: Option<&Obj>) -> AppInfo {
-        todo!("apps_maker.py:889 AppStore.save")
+    pub fn save(&self, html: &str, request: &str, slug: &str, journeys: Option<&[eve_jev_verify::Journey]>, build: Option<&Obj>) -> StoreResult<AppInfo> {
+        self.save_with(html, request, slug, journeys, build, &RealDisk)
+    }
+
+    /// `save`, with the new page's write and its move into place lent (a test's full disk).
+    pub fn save_with(
+        &self,
+        html: &str,
+        request: &str,
+        slug: &str,
+        journeys: Option<&[eve_jev_verify::Journey]>,
+        build: Option<&Obj>,
+        disk: &dyn PageDisk,
+    ) -> StoreResult<AppInfo> {
+        let now = now_iso();
+        let mut slug = slug.to_string();
+        if slug.is_empty() {
+            let short = take(request, 40);
+            let base = slugify(&title_of(html, if short.is_empty() { "App" } else { &short }));
+            slug = base.clone();
+            let mut n = 2;
+            while self.root.join(&slug).exists() {
+                slug = take(&format!("{base}-{n}"), 48);
+                n += 1;
+            }
+        }
+        let d = self.dir(&slug).ok_or_else(|| StoreError::Invalid("bad app name".into()))?;
+        std::fs::create_dir_all(&d)?;
+        let mut meta = self.meta(&d);
+        // The new page is written in full before the live one moves: a disk that fills up, or any other failed
+        // write, leaves the app as it was instead of an app with no page (which would vanish from the list).
+        let tmp = d.join("index.tmp");
+        let live = d.join("index.html");
+        if let Err(e) = disk.write(&tmp, html) {
+            let _ = unlink_missing_ok(&tmp);
+            return Err(e.into());
+        }
+        let mut kept: Option<PathBuf> = None;
+        if live.is_file() {
+            let versions = self.versions(&d)?;
+            mkdir_exist_ok(&d.join("versions"))?;
+            let n = versions.last().and_then(|v| digits(&stem(v))).map(|n| n + 1).unwrap_or(1);
+            let k = d.join("versions").join(format!("{n}.html"));
+            std::fs::rename(&live, &k)?;
+            kept = Some(k.clone());
+            if d.join("journeys.json").is_file() {
+                std::fs::rename(d.join("journeys.json"), Self::journeys_of(&k))?;
+            }
+            // which shape of data that page was written for: an undo to it can then warn (AppInfo.undo_warning)
+            let mut seen = match meta.get("data_v") {
+                Some(Value::Object(s)) => s.clone(),
+                _ => Obj::new(),
+            };
+            seen.insert(n.to_string(), Self::data_v(&d).map_or(Value::Null, |v| json!(v)));
+            meta.insert("data_v".into(), Value::Object(seen));
+        }
+        if let Err(e) = disk.replace(&tmp, &live) {
+            if let Some(k) = &kept {
+                // the page that was there comes back
+                let _ = std::fs::rename(k, &live);
+                if Self::journeys_of(k).is_file() {
+                    let _ = std::fs::rename(Self::journeys_of(k), d.join("journeys.json"));
+                }
+            }
+            let _ = unlink_missing_ok(&tmp);
+            return Err(e.into());
+        }
+        match journeys {
+            Some(j) if !j.is_empty() => {
+                let jtmp = d.join("journeys.tmp");
+                std::fs::write(&jtmp, dumps_indent1(&eve_jev_verify::journeys_json(j)))?;
+                std::fs::rename(&jtmp, d.join("journeys.json"))?;
+            }
+            _ => unlink_missing_ok(&d.join("journeys.json"))?,
+        }
+        let versions = self.versions(&d)?;
+        if versions.len() > MAX_VERSIONS {
+            for old in &versions[..versions.len() - MAX_VERSIONS] {
+                std::fs::remove_file(old)?;
+                unlink_missing_ok(&Self::journeys_of(old))?;
+            }
+        }
+        if let Some(Value::Object(dv)) = meta.get("data_v") {
+            let names: HashSet<String> = self.versions(&d)?.iter().map(|p| stem(p)).collect();
+            let kept_v: Obj = dv
+                .iter()
+                .filter(|(k, v)| names.contains(k.as_str()) && py_int(Some(v)).is_some())
+                .map(|(k, v)| (k.clone(), v.clone()))
+                .collect();
+            meta.insert("data_v".into(), Value::Object(kept_v));
+        }
+        let before: Vec<Value> = match meta.get("requests") {
+            Some(Value::Array(a)) => a.clone(),
+            _ => Vec::new(),
+        };
+        // An app from before version numbers counts its earlier builds (every request but an undo) as versions.
+        let version = py_int(meta.get("version")).unwrap_or_else(|| {
+            before.iter().filter(|r| r.as_object().is_some_and(|r| r.get("text") != Some(&json!(UNDO_REQUEST)))).count()
+                as i64
+        }) + 1;
+        let n = Self::next(&mut meta);
+        let mut requests = before;
+        requests.push(json!({"at": now, "text": take(request, 500), "n": n}));
+        let created = meta.get("created").cloned().unwrap_or_else(|| json!(now));
+        meta.insert("created".into(), created);
+        meta.insert("updated".into(), json!(now));
+        let skip = requests.len().saturating_sub(MAX_REQUESTS);
+        meta.insert("requests".into(), Value::Array(requests.split_off(skip)));
+        meta.insert("version".into(), json!(version));
+        if let Some(build) = build {
+            let mut record = build.clone();
+            record.insert("at".into(), json!(now));
+            record.insert("request".into(), json!(take(request, 500)));
+            record.insert("version".into(), json!(version));
+            record.insert("n".into(), json!(n));
+            Self::add_build(&mut meta, &record);
+        }
+        self.describe(&mut meta, html, request);
+        self.write_meta(&d, &mut meta)?;
+        self.info(&slug).ok_or(StoreError::Missing(slug))
     }
 
     /// py: apps_maker.py:966 `def _next(meta: dict[str, Any]) -> int:`
     ///
     /// The next number in the app's own order of events (``meta["seq"]``): two builds in the same second (a
     /// change that failed at once, then its retry) still show in the order they happened.
-    pub(crate) fn next(meta: &Obj) -> i64 {
-        todo!("apps_maker.py:966 AppStore._next")
+    pub(crate) fn next(meta: &mut Obj) -> i64 {
+        let seq = py_int(meta.get("seq")).unwrap_or(0);
+        meta.insert("seq".into(), json!(seq + 1));
+        seq + 1
     }
 
     /// py: apps_maker.py:974 `def _add_build(meta: dict[str, Any], record: dict[str, Any]) -> None:`
-    pub(crate) fn add_build(meta: &Obj, record: &Obj) {
-        todo!("apps_maker.py:974 AppStore._add_build")
+    pub(crate) fn add_build(meta: &mut Obj, record: &Obj) {
+        let mut builds: Vec<Value> = match meta.get("builds") {
+            Some(Value::Array(a)) => a.iter().filter(|b| b.is_object()).cloned().collect(),
+            _ => Vec::new(),
+        };
+        builds.push(Value::Object(record.clone()));
+        let skip = builds.len().saturating_sub(MAX_BUILDS);
+        meta.insert("builds".into(), Value::Array(builds.split_off(skip)));
     }
 
     /// py: apps_maker.py:978 `def record_build(self, slug: str, request: str, build: dict[str, Any]) -> None:`
@@ -817,8 +1703,17 @@ impl AppStore {
     /// kept for the app's change chat, so a change that cost money and did nothing still shows there. It is
     /// not added to the requests, which tell the next build what the app was asked to do. KeyError when the
     /// app is gone.
-    pub fn record_build(&self, slug: &str, request: &str, build: &Obj) {
-        todo!("apps_maker.py:978 AppStore.record_build")
+    pub fn record_build(&self, slug: &str, request: &str, build: &Obj) -> StoreResult<()> {
+        let d = self.app_dir(slug)?;
+        let mut meta = self.meta(&d);
+        let mut record = build.clone();
+        record.insert("at".into(), json!(now_iso()));
+        record.insert("request".into(), json!(take(request, 500)));
+        let n = Self::next(&mut meta);
+        record.insert("n".into(), json!(n));
+        Self::add_build(&mut meta, &record);
+        self.write_meta(&d, &mut meta)?;
+        Ok(())
     }
 
     /// py: apps_maker.py:989 `def thread(self, slug: str) -> list[dict[str, Any]]:`
@@ -827,70 +1722,269 @@ impl AppStore {
     /// build went (``result``: build_record's fields plus ``version``) when that was recorded, and the builds
     /// that saved nothing. A request from before results were recorded has ``result`` None. KeyError when the
     /// app is gone.
-    pub fn thread(&self, slug: &str) -> Vec<Obj> {
-        todo!("apps_maker.py:989 AppStore.thread")
+    pub fn thread(&self, slug: &str) -> StoreResult<Vec<Obj>> {
+        let meta = self.meta(&self.app_dir(slug)?);
+        let builds: Vec<&Obj> = match meta.get("builds") {
+            Some(Value::Array(a)) => a.iter().filter_map(|b| b.as_object()).collect(),
+            _ => Vec::new(),
+        };
+        // 0: from before "n"
+        let order = |x: &Obj| py_int(x.get("n")).unwrap_or(0);
+        // a saved build and its request carry the same number (AppStore.save writes both at once)
+        let mut saved: HashMap<i64, &Obj> = HashMap::new();
+        for b in &builds {
+            if truthy(b.get("ok")) && order(b) != 0 {
+                saved.insert(order(b), b);
+            }
+        }
+        let mut items: Vec<((String, i64), Obj)> = Vec::new();
+        if let Some(Value::Array(requests)) = meta.get("requests") {
+            for r in requests.iter().filter_map(|r| r.as_object()) {
+                let at = get_str(r, "at", "");
+                let text = get_str(r, "text", "");
+                let b = if order(r) != 0 { saved.remove(&order(r)) } else { None };
+                let mut item = Obj::new();
+                item.insert("at".into(), json!(at));
+                item.insert("text".into(), json!(text));
+                item.insert("kind".into(), json!(if text == UNDO_REQUEST { "undo" } else { "request" }));
+                item.insert("result".into(), b.map_or(Value::Null, |b| Value::Object(result(b))));
+                items.push(((at, order(r)), item));
+            }
+        }
+        for b in &builds {
+            // a failed build, or a saved one whose request was trimmed off the (shorter-lived) request list
+            if !truthy(b.get("ok")) || saved.contains_key(&order(b)) {
+                let at = get_str(b, "at", "");
+                let mut item = Obj::new();
+                item.insert("at".into(), json!(at));
+                item.insert("text".into(), json!(get_str(b, "request", "")));
+                item.insert("kind".into(), json!("request"));
+                item.insert("result".into(), Value::Object(result(b)));
+                items.push(((at, order(b)), item));
+            }
+        }
+        items.sort_by(|a, b| a.0.cmp(&b.0));
+        Ok(items.into_iter().map(|(_, item)| item).collect())
     }
 
     /// py: apps_maker.py:1016 `def _describe(self, meta: dict[str, Any], html: str, request: str = "") -> None:`
-    pub(crate) fn describe(&self, meta: &Obj, html: &str, request: &str) {
-        todo!("apps_maker.py:1016 AppStore._describe")
+    pub(crate) fn describe(&self, meta: &mut Obj, html: &str, request: &str) {
+        if !truthy(meta.get("renamed")) {
+            let fallback = match meta.get("title") {
+                t @ Some(v) if truthy(t) => py_str(v),
+                _ => {
+                    let short = take(request, 40);
+                    if short.is_empty() { "App".to_string() } else { short }
+                }
+            };
+            meta.insert("title".into(), json!(title_of(html, &fallback)));
+        }
+        let icon = icon_of(html);
+        let icon = if icon.is_empty() { meta.get("icon").cloned().unwrap_or_else(|| json!("")) } else { json!(icon) };
+        meta.insert("icon".into(), icon);
+        let description = description_of(html);
+        let description = if description.is_empty() {
+            meta.get("description").cloned().unwrap_or_else(|| json!(""))
+        } else {
+            json!(description)
+        };
+        meta.insert("description".into(), description);
     }
 
     /// py: apps_maker.py:1022 `def rename(self, slug: str, title: str) -> AppInfo:`
     ///
     /// The owner's name for the app: kept through later changes. The slug (its address) stays.
-    pub fn rename(&self, slug: &str, title: &str) -> AppInfo {
-        todo!("apps_maker.py:1022 AppStore.rename")
+    pub fn rename(&self, slug: &str, title: &str) -> StoreResult<AppInfo> {
+        let d = self.app_dir(slug)?;
+        let title = clean(title, 60);
+        if title.is_empty() {
+            return Err(StoreError::Invalid("an app needs a name".into()));
+        }
+        let mut meta = self.meta(&d);
+        meta.insert("title".into(), json!(title));
+        meta.insert("renamed".into(), json!(true));
+        self.write_meta(&d, &mut meta)?;
+        self.info(slug).ok_or_else(|| StoreError::Missing(slug.to_string()))
     }
 
     /// py: apps_maker.py:1035 `def revert(self, slug: str) -> AppInfo:`
     ///
     /// Undo the last change: the newest earlier version becomes the app again, and leaves the versions. The
     /// page it replaces is not kept (undo is a pop). KeyError when there is nothing to go back to.
-    pub fn revert(&self, slug: &str) -> AppInfo {
-        todo!("apps_maker.py:1035 AppStore.revert")
+    pub fn revert(&self, slug: &str) -> StoreResult<AppInfo> {
+        let d = self.app_dir(slug)?;
+        let versions = self.versions(&d)?;
+        let Some(last) = versions.last() else {
+            return Err(StoreError::Missing(format!("{slug} has no earlier version")));
+        };
+        std::fs::rename(last, d.join("index.html"))?;
+        if Self::journeys_of(last).is_file() {
+            std::fs::rename(Self::journeys_of(last), d.join("journeys.json"))?;
+        } else {
+            // that page was built before journeys
+            unlink_missing_ok(&d.join("journeys.json"))?;
+        }
+        let html = std::fs::read_to_string(d.join("index.html"))?;
+        let mut meta = self.meta(&d);
+        if let Some(Value::Object(dv)) = meta.get_mut("data_v") {
+            dv.shift_remove(&stem(last));
+        }
+        let updated = now_iso();
+        meta.insert("updated".into(), json!(updated));
+        meta.insert("icon".into(), json!(""));
+        meta.insert("description".into(), json!(""));
+        self.describe(&mut meta, &html, "");
+        let mut requests: Vec<Value> = match meta.get("requests") {
+            Some(Value::Array(a)) => a.clone(),
+            _ => Vec::new(),
+        };
+        let n = Self::next(&mut meta);
+        requests.push(json!({"at": updated, "text": UNDO_REQUEST, "n": n}));
+        meta.insert("requests".into(), Value::Array(requests));
+        self.write_meta(&d, &mut meta)?;
+        self.info(slug).ok_or_else(|| StoreError::Missing(slug.to_string()))
     }
 
     /// py: apps_maker.py:1061 `def delete(self, slug: str) -> None:`
     ///
     /// Move the whole app (page, data, versions) to ``<root>/.trash/<slug>-<stamp>/``: out of the list, never
     /// erased, so a regretted delete can be undone (``restore``).
-    pub fn delete(&self, slug: &str) {
-        todo!("apps_maker.py:1061 AppStore.delete")
+    pub fn delete(&self, slug: &str) -> StoreResult<()> {
+        let d = self.app_dir(slug)?;
+        let trash = self.root.join(TRASH);
+        std::fs::create_dir_all(&trash)?;
+        let stamp = chrono::Local::now().format("%Y%m%d-%H%M%S").to_string();
+        let mut target = trash.join(format!("{slug}-{stamp}"));
+        let mut n = 2;
+        while target.exists() {
+            target = trash.join(format!("{slug}-{stamp}-{n}"));
+            n += 1;
+        }
+        std::fs::rename(&d, &target)?;
+        Ok(())
+    }
+
+    /// The trash's copies whose folder name is `<slug>-<stamp>` with a page in them: (folder, slug, stamp).
+    fn trash_copies(&self) -> Vec<(PathBuf, String, String)> {
+        let trash = self.root.join(TRASH);
+        if !trash.is_dir() {
+            return Vec::new();
+        }
+        std::fs::read_dir(&trash)
+            .map(|rd| {
+                rd.filter_map(|e| e.ok())
+                    .filter_map(|e| {
+                        let name = e.file_name().to_str()?.to_string();
+                        let c = TRASHED_RE.captures(&name)?;
+                        let (slug, stamp) = (c[1].to_string(), c[2].to_string());
+                        let d = e.path();
+                        if is_symlink(&d) || !d.join("index.html").is_file() {
+                            return None;
+                        }
+                        Some((d, slug, stamp))
+                    })
+                    .collect()
+            })
+            .unwrap_or_default()
     }
 
     /// py: apps_maker.py:1073 `def trashed(self) -> list[AppInfo]:`
     ///
     /// Deleted apps that can come back, the most recently deleted first; one per slug (its newest delete).
     pub fn trashed(&self) -> Vec<AppInfo> {
-        todo!("apps_maker.py:1073 AppStore.trashed")
+        let mut found: HashMap<String, (String, AppInfo)> = HashMap::new();
+        for (d, slug, stamp) in self.trash_copies() {
+            let meta = self.meta(&d);
+            let title = match meta.get("title") {
+                t @ Some(v) if truthy(t) => py_str(v),
+                _ => slug.clone(),
+            };
+            let info = AppInfo {
+                slug: slug.clone(),
+                title,
+                created: get_str(&meta, "created", ""),
+                updated: get_str(&meta, "updated", ""),
+                icon: get_str(&meta, "icon", ""),
+                description: get_str(&meta, "description", ""),
+                versions: 0,
+                undo_warning: false,
+            };
+            // when it was deleted, then the -2 of a second delete
+            let key = format!("{stamp}{}", d.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default());
+            if found.get(&slug).is_none_or(|(k, _)| key > *k) {
+                found.insert(slug, (key, info));
+            }
+        }
+        let mut out: Vec<(String, AppInfo)> = found.into_values().collect();
+        out.sort_by(|a, b| b.0.cmp(&a.0));
+        out.into_iter().map(|(_, info)| info).collect()
     }
 
     /// py: apps_maker.py:1090 `def restore(self, slug: str) -> AppInfo:`
     ///
     /// Bring the newest deleted copy of ``slug`` back from the trash. KeyError when there is none,
     /// FileExistsError when a live app has that address now (a new app took the name).
-    pub fn restore(&self, slug: &str) -> AppInfo {
-        todo!("apps_maker.py:1090 AppStore.restore")
+    pub fn restore(&self, slug: &str) -> StoreResult<AppInfo> {
+        if self.dir(slug).is_none() {
+            return Err(StoreError::Missing(slug.to_string()));
+        }
+        let mut copies: Vec<PathBuf> =
+            self.trash_copies().into_iter().filter(|(_, s, _)| s == slug).map(|(d, _, _)| d).collect();
+        copies.sort_by(|a, b| a.file_name().cmp(&b.file_name()));
+        let Some(newest) = copies.pop() else {
+            return Err(StoreError::Missing(slug.to_string()));
+        };
+        let home = self.root.join(slug);
+        if home.exists() {
+            return Err(StoreError::Exists(slug.to_string()));
+        }
+        std::fs::rename(&newest, &home)?;
+        self.info(slug).ok_or_else(|| StoreError::Missing(slug.to_string()))
     }
 
     /// py: apps_maker.py:1109 `def load_data(self, slug: str) -> Any:`
-    pub fn load_data(&self, slug: &str) -> Value {
-        todo!("apps_maker.py:1109 AppStore.load_data")
+    pub fn load_data(&self, slug: &str) -> StoreResult<Value> {
+        let d = self.app_dir(slug)?;
+        Ok(std::fs::read_to_string(d.join("data.json")).ok().and_then(|t| loads(&t)).unwrap_or(Value::Null))
     }
 
     /// py: apps_maker.py:1116 `def save_data(self, slug: str, value: Any) -> int:`
-    pub fn save_data(&self, slug: &str, value: &Value) -> i64 {
-        todo!("apps_maker.py:1116 AppStore.save_data")
+    pub fn save_data(&self, slug: &str, value: &Value) -> StoreResult<i64> {
+        let d = self.app_dir(slug)?;
+        let raw = dumps(value, true);
+        if raw.len() > MAX_DATA_BYTES {
+            return Err(StoreError::Invalid("too large".into()));
+        }
+        let tmp = d.join("data.tmp");
+        std::fs::write(&tmp, &raw)?;
+        std::fs::rename(&tmp, d.join("data.json"))?;
+        Ok(char_len(&raw) as i64)
     }
+}
+
+/// An app's `updated` (a local ISO time, as meta.json keeps it) in seconds since the epoch; 0 when unreadable.
+fn epoch_of(updated: &str) -> f64 {
+    use chrono::TimeZone;
+    chrono::DateTime::parse_from_rfc3339(updated)
+        .map(|t| t.timestamp() as f64)
+        .ok()
+        .or_else(|| {
+            let naive = chrono::NaiveDateTime::parse_from_str(updated, "%Y-%m-%dT%H:%M:%S%.f").ok()?;
+            chrono::Local.from_local_datetime(&naive).earliest().map(|t| t.timestamp() as f64)
+        })
+        .unwrap_or(0.0)
+}
+
+fn link_info(a: AppInfo) -> eve_link::seams::AppInfo {
+    eve_link::seams::AppInfo { updated: epoch_of(&a.updated), slug: a.slug, title: a.title }
 }
 
 /// The store as Eve Link's app list reads it (link.py: `server.store.list()`, `.info(slug)`).
 impl eve_link::seams::AppStoreView for AppStore {
     fn list(&self) -> Vec<eve_link::seams::AppInfo> {
-        todo!("apps_maker.py AppStore.list, as Eve Link's AppInfo")
+        AppStore::list(self).into_iter().map(link_info).collect()
     }
     fn info(&self, slug: &str) -> Option<eve_link::seams::AppInfo> {
-        todo!("apps_maker.py AppStore.info, as Eve Link's AppInfo")
+        AppStore::info(self, slug).map(link_info)
     }
 }
