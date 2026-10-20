@@ -35,6 +35,7 @@ None.
 ## Differences
 - Threads become tokio tasks: `start()` must run inside a tokio runtime, and `stop(wait)` is `async`. Dropping a started mirror stops it.
 - Error class names in the warning lines are urllib's (`URLError`, `HTTPError`, `TimeoutError`, `JSONDecodeError`, `UnicodeDecodeError`, `ValueError`), chosen from the reqwest error kind; the message after the name is reqwest's text, not urllib's (`<urlopen error [Errno 61] Connection refused>`).
+- A request that times out before the response head is logged as `TimeoutError`; urllib names a timeout while connecting or sending `URLError` (`<urlopen error timed out>`) and one while reading the head `TimeoutError`.
 - urllib's timeout bounds each socket operation; here `timeout` bounds the connect and response head together, and then each body read.
 - `_META_FIELDS` is a frozenset, so Python's metadata key order varies with hash seeding; Rust writes the allowlist order. The receiver reads JSON, so order carries no meaning.
 - A search-table row id beyond i64, a row id written in non-ASCII digits, and a port written in non-ASCII digits are skipped; Python's `int()` would read them. The worker writes ASCII ids.

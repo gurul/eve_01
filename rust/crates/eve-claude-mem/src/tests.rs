@@ -602,6 +602,11 @@ fn recall_walks_the_answer_as_python_does() {
         ]
     );
     assert!(parse_rows("| ID | Time | T | Title | Read |\n|----|\n  | #3|t|x|y|  \r\n").len() == 1);
+    // `\s` in Python's row pattern also matches U+001F, which Rust's `\s` does not
+    assert_eq!(
+        parse_rows("| #4 |\u{1f}9 AM\u{1f}| x |\u{1f}A title\u{1f}| ~1 |"),
+        vec![Row { id: 4, time: "9 AM".into(), title: "A title".into() }]
+    );
     assert_eq!(search_text(&json!(null)).unwrap(), "");
     assert_eq!(search_text(&json!({})).unwrap(), "");
     assert_eq!(search_text(&json!({"content": "abc"})).unwrap(), "");

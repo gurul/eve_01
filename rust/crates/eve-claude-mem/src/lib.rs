@@ -55,8 +55,10 @@ pub const LESSON_ACTIONS_KEPT: [&str; 6] = ["start", "step", "check", "recap", "
 const MAX_STR: usize = 2000;
 const MAX_LIST: usize = 20;
 const WARN_EVERY_SECS: f64 = 600.0;
+// Python's `re` `\s` is `str.isspace()`, which also counts U+001C..U+001F; Rust's `\s` does not, so `S` spells it.
 static ROW: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"^\|\s*#([0-9]+)\s*\|\s*([^|]*?)\s*\|\s*[^|]*\|\s*([^|]*?)\s*\|").expect("row pattern")
+    let pattern = r"^\|S*#([0-9]+)S*\|S*([^|]*?)S*\|S*[^|]*\|S*([^|]*?)S*\|".replace('S', r"[\s\x1c-\x1f]");
+    Regex::new(&pattern).expect("row pattern")
 });
 
 // ---- the bus -------------------------------------------------------------------------------
