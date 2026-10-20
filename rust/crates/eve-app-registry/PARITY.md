@@ -26,7 +26,7 @@ Status: complete
 | `ordered` | `ordered` | listed slots first (duplicates kept, unknown skipped), then the rest in APPS order |
 | `by_code` | `by_code` | |
 | `for_phone` | `for_phone` | |
-| `switched_on` | `switched_on(app, Option<&HashMap>)` | None reads the process env; `strip().lower()` → `trim().to_lowercase()` |
+| `switched_on` | `switched_on(app, Option<&HashMap>)` | None reads the process env; `strip().lower()` → `py_strip` (Python's `isspace` set, U+001C to U+001F included) then `to_lowercase()` |
 | `owner` | `owner(name, voice)` / `owner_in(name, voice, src)` | |
 | `_union` | `union` (private) | |
 | `ACTING` | `acting()` | `BTreeSet<String>` |
@@ -78,7 +78,7 @@ Status: complete
 - A module that no app crate registered: Python's import would raise. `check` reports
   `eve_bridge.<module> is not registered` and stops (and, for a CLI module such as `obsbot` that is not
   registered, `eve_bridge.<cli_module> is not registered`); `owner` and `name_problem` skip that app's tool names and
-  log a warning.
+  log a warning, once per module.
 - `site_names` skips a site file it cannot read (logged); Python would raise on a decode error.
 - `check_panel`: an unhashable control id (a list or object) makes Python's `in ids` raise; Rust treats it as unseen.
 - Python's `str.isidentifier()` / `str.islower()` use Unicode XID / cased tables; Rust approximates with

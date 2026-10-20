@@ -408,11 +408,27 @@ pub fn switched_on(app: &App, environ: Option<&HashMap<String, String>>) -> bool
         Some(env) => env.get(&app.switch).cloned().unwrap_or_default(),
         None => std::env::var(&app.switch).unwrap_or_default(),
     };
-    let raw = raw.trim().to_lowercase();
+    let raw = py_strip(&raw).to_lowercase();
     if app.default_on {
         !OFF.contains(&raw.as_str())
     } else {
         ON.contains(&raw.as_str())
+    }
+}
+
+/// Python's `str.strip()`: trims what `str.isspace()` calls whitespace, which is Rust's `White_Space` plus the
+/// information separators U+001C to U+001F.
+fn py_strip(s: &str) -> &str {
+    s.trim_matches(|c: char| c.is_whitespace() || ('\u{1c}'..='\u{1f}').contains(&c))
+}
+
+static WARNED: LazyLock<parking_lot::Mutex<BTreeSet<String>>> =
+    LazyLock::new(|| parking_lot::Mutex::new(BTreeSet::new()));
+
+/// Warn once per module that no app crate registered it (owner() runs on every tool call).
+fn warn_unregistered(module: &str, what: &str) {
+    if WARNED.lock().insert(module.to_string()) {
+        tracing::warn!("app_registry: module {module} is not registered; {what}");
     }
 }
 
@@ -426,7 +442,7 @@ pub fn owner(name: &str, voice: bool) -> Option<&'static App> {
 pub fn owner_in(name: &str, voice: bool, src: &dyn ModuleSource) -> Option<&'static App> {
     for app in with_tools() {
         let Some(module) = app.module_in(src) else {
-            tracing::warn!("app_registry: module {} is not registered; {} holds no tools", app.module, app.slot);
+            warn_unregistered(&app.module, &format!("the {} app holds no tools", app.slot));
             continue;
         };
         if module.tool_names().iter().any(|n| n == name) && !(voice && app.voice_omit.contains(name)) {
@@ -1077,7 +1093,7 @@ where
             return format!("{name}_ would collide with the {} app's tools ({mine}…)", app.slot);
         }
         let Some(module) = app.module_in(src) else {
-            tracing::warn!("app_registry: module {} is not registered; its tool names are not checked", app.module);
+            warn_unregistered(&app.module, "its tool names are not checked");
             continue;
         };
         if let Some(clash) = module.tool_names().iter().find(|n| n.as_str() == name || n.starts_with(&prefix)) {

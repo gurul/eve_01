@@ -143,6 +143,9 @@ fn test_switched_on_reads_the_switch_both_ways() {
     // stripped and lowercased, as Python's str(...).strip().lower()
     assert!(!switched_on(lights, Some(&env("EVE_LIGHTS", "  FALSE \n"))));
     assert!(switched_on(pika, Some(&env("EVE_PIKA", " On "))));
+    // Python's strip() also trims the information separators U+001C to U+001F
+    assert!(!switched_on(lights, Some(&env("EVE_LIGHTS", "\u{1f}off\u{1c}"))));
+    assert!(switched_on(pika, Some(&env("EVE_PIKA", "\u{1d}1\u{a0}"))));
     // anything that is not an off word leaves a default-on app on, and an on word is needed for a default-off app
     assert!(switched_on(lights, Some(&env("EVE_LIGHTS", "maybe"))));
     assert!(!switched_on(pika, Some(&env("EVE_PIKA", "maybe"))));
