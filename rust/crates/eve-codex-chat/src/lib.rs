@@ -687,10 +687,10 @@ impl Inner {
     }
 
     /// Whether the chat answers this request itself: `Some(true)` for a command or file-change approval,
-    /// `Some(false)` where Python's override raises before answering (an unhashable method), `None` for the
-    /// agent's own answer.
+    /// `Some(false)` where Python's override raises before answering (`msg['method']` on a message that is not a
+    /// dict or has no method, or an unhashable method), `None` for the agent's own answer.
     fn handles(&self, msg: &Value) -> Option<bool> {
-        let method = msg.as_object()?.get("method")?;
+        let Some(method) = msg.as_object().and_then(|m| m.get("method")) else { return Some(false) };
         if py::hashable(method).is_err() {
             return Some(false);
         }
@@ -847,7 +847,8 @@ impl Inner {
             }
         }
         if !agent.is_cancelled() {
-            let id = obj.get("id").cloned().unwrap_or(Value::Null);
+            // `msg['id']` raises on a message without one: nothing is sent.
+            let Some(id) = obj.get("id").cloned() else { return };
             let _ = agent.send_message(&json!({"id": id, "result": {"decision": decision}})).await;
         }
     }

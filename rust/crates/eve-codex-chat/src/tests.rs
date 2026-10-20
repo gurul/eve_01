@@ -935,10 +935,17 @@ async fn file_changes_and_bare_commands_are_declined_with_a_note() {
         "params": {"threadId": "thread", "command": "ls", "reason": 5}})).await;
     // A params that is not an object raises before answering: nothing is sent.
     chat.answer_request(json!({"id": 25, "method": "item/commandExecution/requestApproval", "params": []})).await;
+    // `msg['method']` and `msg['id']` raise on a message without them: nothing is sent.
+    chat.answer_request(json!({"id": 26, "params": {"threadId": "thread", "command": "ls"}})).await;
+    chat.answer_request(json!({"method": "item/commandExecution/requestApproval",
+        "params": {"threadId": "thread", "command": "ls", "reason": 5}})).await;
+    chat.answer_request(json!(["method", "id"])).await;
     for id in [21, 22, 23, 24] {
         assert_eq!(sent_with_id(&p, id), vec![json!({"id": id, "result": {"decision": "decline"}})], "{id}");
     }
     assert!(sent_with_id(&p, 25).is_empty());
+    assert!(sent_with_id(&p, 26).is_empty());
+    assert!(!p.requests().iter().any(|m| m.get("method").is_none() && m.get("id").is_none_or(Value::is_null)));
     settle().await;
     let note = "Codex requested permission without enough detail to review here. \
                 It was declined; no permission was changed.";
