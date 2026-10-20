@@ -40,4 +40,5 @@ Status: complete
 - `LOG` is read from the `Launchd`'s HOME when the plist is built rather than fixed at import (the same path unless HOME changes mid-process).
 - `EVE` is the checkout the crate was compiled from (`CARGO_MANIFEST_DIR/../../..`) rather than the one a module file was imported from.
 - A token file holding a bare `NaN`/`Infinity` literal is invalid JSON here (None); Python's `json.loads` accepts it.
+- A `signed_in_at` number beyond f64 range (`1e400`, a 400-digit integer) is a parse error for serde_json (None); Python reads it as `inf` or a huge int and then raises OverflowError. `google_login` only ever writes `time.time()`.
 - Plist dates are parsed by the `plist` crate, which wants a full `YYYY-MM-DDTHH:MM:SSZ`; plistlib also accepts truncated dates. Signing profiles always carry the full form.
