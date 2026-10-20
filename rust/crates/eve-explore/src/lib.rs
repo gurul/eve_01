@@ -1533,6 +1533,13 @@ impl NoteTaker {
         let (tx, rx) = tokio::sync::oneshot::channel::<anyhow::Result<String>>();
         let client = self.client.clone();
         self.submit(Box::new(move || {
+            // asyncio.wait_for cancels the executor future when it gives up (a
+            // timeout, or the awaiting task cancelled), and a cancelled future
+            // that has not started never runs: a call queued behind a slow one
+            // is not made once nobody is waiting for it, so it costs nothing.
+            if tx.is_closed() {
+                return;
+            }
             let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| client.describe(&image, mime)))
                 .unwrap_or_else(|p| {
                     let msg = p

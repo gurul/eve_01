@@ -832,6 +832,26 @@ fn test_note_taker_stop_cancels_a_queued_call_and_restarts_lazily() {
 }
 
 #[test]
+fn test_note_taker_queued_call_that_timed_out_is_never_made() {
+    // wait_for cancels the executor future on timeout; one still queued never runs.
+    let tmp = tempfile::tempdir().unwrap();
+    let client = FakeClient::slow(0.2);
+    let taker = Arc::new(NoteTaker::new(client.clone(), tmp.path()).with_timeout(0.05));
+    block_on(async {
+        let a = taker.clone();
+        let first = tokio::spawn(async move { a.take(&Note::new(frame(0), 0, 40)).await });
+        tokio::time::sleep(Duration::from_millis(10)).await; // the first call is running
+        // queued behind it, and gives up before the worker is free
+        assert_eq!(taker.take(&Note::new(frame(0), 0, 40)).await.unwrap(), None);
+        assert_eq!(first.await.unwrap().unwrap(), None);
+        tokio::time::sleep(Duration::from_millis(250)).await; // the worker is free again
+    });
+    taker.stop();
+    assert_eq!(client.calls.lock().unwrap().len(), 1);
+    assert_eq!(taker.failed(), 2);
+}
+
+#[test]
 fn test_note_taker_bad_frame_escapes_take() {
     let tmp = tempfile::tempdir().unwrap();
     let taker = NoteTaker::new(FakeClient::ok("x"), tmp.path());
