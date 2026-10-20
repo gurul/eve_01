@@ -38,9 +38,31 @@ pub struct HttpResponse {
 }
 
 impl HttpResponse {
-    /// A header, matched case-insensitively (httpx's `Headers.get`).
+    /// The first value of a header, matched case-insensitively.
     pub fn header(&self, name: &str) -> Option<&str> {
         self.headers.iter().find(|(k, _)| k.eq_ignore_ascii_case(name)).map(|(_, v)| v.as_str())
+    }
+
+    /// httpx's `Headers.get`: every value of a header, matched case-insensitively, joined by ", " (a repeated
+    /// `Retry-After` reads "12, 13", which no number parses).
+    pub fn joined_header(&self, name: &str) -> Option<String> {
+        let values: Vec<&str> =
+            self.headers.iter().filter(|(k, _)| k.eq_ignore_ascii_case(name)).map(|(_, v)| v.as_str()).collect();
+        (!values.is_empty()).then(|| values.join(", "))
+    }
+}
+
+/// Header bytes as httpx decodes them: ASCII when every name and value is ASCII, else UTF-8 when every one is
+/// valid UTF-8, else ISO-8859-1 (`Headers.encoding`).
+fn decode_headers(raw: &[(&[u8], &[u8])]) -> Vec<(String, String)> {
+    let all = |ok: &dyn Fn(&[u8]) -> bool| raw.iter().all(|(k, v)| ok(k) && ok(v));
+    let latin1 = |b: &[u8]| b.iter().map(|&c| char::from(c)).collect::<String>();
+    if all(&|b: &[u8]| std::str::from_utf8(b).is_ok()) {
+        raw.iter()
+            .map(|(k, v)| (String::from_utf8_lossy(k).into_owned(), String::from_utf8_lossy(v).into_owned()))
+            .collect()
+    } else {
+        raw.iter().map(|(k, v)| (latin1(k), latin1(v))).collect()
     }
 }
 
@@ -97,11 +119,9 @@ impl Transport for ReqwestTransport {
         }
         let response = builder.send().await.map_err(|e| kind(&e))?;
         let status = response.status().as_u16();
-        let headers = response
-            .headers()
-            .iter()
-            .filter_map(|(k, v)| v.to_str().ok().map(|v| (k.as_str().to_string(), v.to_string())))
-            .collect();
+        let raw: Vec<(&[u8], &[u8])> =
+            response.headers().iter().map(|(k, v)| (k.as_str().as_bytes(), v.as_bytes())).collect();
+        let headers = decode_headers(&raw);
         let body = response.bytes().await.map_err(|e| kind(&e))?.to_vec();
         Ok(HttpResponse { status, headers, body })
     }
@@ -109,3 +129,22 @@ impl Transport for ReqwestTransport {
 
 /// One client for the process (Python opens one per call; the connection pool is reqwest's).
 pub static DEFAULT_TRANSPORT: LazyLock<Arc<dyn Transport>> = LazyLock::new(|| Arc::new(ReqwestTransport::new()));
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn headers_decode_as_httpx_does() {
+        assert_eq!(decode_headers(&[(b"a", b"x"), (b"b", "\u{661}".as_bytes())])[1].1, "\u{661}");
+        assert_eq!(decode_headers(&[(b"a", b"x"), (b"b", b"\xe9")])[1].1, "\u{e9}");
+        let r = HttpResponse {
+            status: 429,
+            headers: vec![("Retry-After".into(), "12".into()), ("retry-after".into(), "13".into())],
+            body: Vec::new(),
+        };
+        assert_eq!(r.joined_header("RETRY-AFTER").as_deref(), Some("12, 13"));
+        assert_eq!(r.header("retry-after"), Some("12"));
+        assert_eq!(r.joined_header("x"), None);
+    }
+}

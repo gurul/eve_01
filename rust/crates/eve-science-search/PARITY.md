@@ -22,7 +22,7 @@ Status: complete
 | `_int` | `int_arg` (private) | int, finite float under 1e9 truncated, `\s*-?\d{1,9}\s*` string (Unicode digits read as `int()` does) |
 | `_flag` | `flag` (private) | |
 | `params` | `params(&Value, Option<DateTime<Utc>>) -> Result<Map, BadArgs>` | key order q, k, year_from, year_to, type, open_access |
-| `_authors` | `authors` (private) | |
+| `_authors` | `authors` (private) | the count in i128, so a count past i64 still reads as Python's unbounded int |
 | `_abstract` | `abstract_text` (private) | tag regex then full HTML5 `html.unescape` |
 | `_site` | `site` (private) | `urllib.parse.quote(ref, safe="/:")` |
 | `paper` | `paper(&Map) -> Map` | same keys, same order (`plain_words` before `abstract`); `smr == 1` true for 1, 1.0 and true |
@@ -34,7 +34,7 @@ Status: complete
 | `_detail` | `detail` (private) | |
 | `search` | `async fn search(&Value, &SearchOptions) -> Value` | `SearchOptions { transport, limiter, sleep, now, clock }` are Python's keywords plus the monotonic clock its tests patch |
 | `handle` | `async fn handle(name, &Value, environ, &SearchOptions) -> Value` | |
-| (httpx transport) | `trait Transport`, `ReqwestTransport`, `DEFAULT_TRANSPORT`, `HttpRequest`, `HttpResponse`, `TransportError` | redirects not followed; query string written as httpx writes `params=` (`quote_plus`) |
+| (httpx transport) | `trait Transport`, `ReqwestTransport`, `DEFAULT_TRANSPORT`, `HttpRequest`, `HttpResponse` (`header`, `joined_header`), `TransportError` | redirects not followed; query string written as httpx writes `params=` (`quote_plus`); header bytes decoded as httpx's `Headers.encoding` (ASCII/UTF-8, else ISO-8859-1); `joined_header` is httpx's `Headers.get` (repeated values joined by ", "), which `retry_after` reads |
 
 ## Tests
 | Python file | Python tests | Rust tests | Not ported (why) |
@@ -50,4 +50,5 @@ None.
 - JSON integers beyond u64 (e.g. `k: 10**30`) arrive as floats through serde_json, so they read as out of range (default k, no year) where Python clamps the big int. Model arguments never carry such numbers.
 - A `Retry-After` header of `inf` (or a value past a float's range) makes Python's `int(float(...))` raise OverflowError out of `search`; Rust ignores such a header and reads the body's `retry_after`, as for any other unreadable header.
 - Bodies: a UTF-8 byte-order mark is accepted as in `json.loads`; UTF-16/32 bodies and the non-standard `NaN`/`Infinity` literals Python's json accepts are read as "not JSON".
+- Request headers: httpx adds `Accept-Encoding: gzip, deflate`; reqwest (gzip and brotli features) sends `gzip, br`. Both decode what they ask for.
 - Logging: messages are the same text through `tracing::info!` (Python's `%.1f` and `%d` formats kept).

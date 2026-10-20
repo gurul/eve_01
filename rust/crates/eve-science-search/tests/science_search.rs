@@ -445,6 +445,13 @@ async fn test_a_429_is_never_retried_and_says_how_long_to_wait() {
         vec![("Retry-After".into(), "Wed, 21 Oct 2026 07:28:00 GMT".into())],
     )]);
     assert_eq!(run(&args(), &date).await["retry_after_s"], json!(4));
+    // a repeated header reads as httpx joins it ("12, 13"), which is no number: the body's hint
+    let twice = Server::new(vec![Reply::Answer(
+        429,
+        json!({"retry_after": 17}),
+        vec![("Retry-After".into(), "12".into()), ("retry-after".into(), "13".into())],
+    )]);
+    assert_eq!(run(&args(), &twice).await["retry_after_s"], json!(17));
 }
 
 #[tokio::test]

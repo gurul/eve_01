@@ -323,13 +323,19 @@ fn authors(raw: Option<&Value>, count: Option<&Value>) -> String {
     if names.is_empty() {
         return String::new();
     }
-    let len = names.len() as i64;
+    // Python's ints have no ceiling: a count past i64 (up to u64::MAX, serde_json's largest integer) still counts
+    let len = names.len() as i128;
     let total = match count {
-        Some(Value::Number(n)) if n.is_i64() || n.is_u64() => py::as_int(n).filter(|&c| c >= len).unwrap_or(len),
+        Some(Value::Number(n)) => n
+            .as_i64()
+            .map(i128::from)
+            .or_else(|| n.as_u64().map(i128::from))
+            .filter(|&c| c >= len)
+            .unwrap_or(len),
         _ => len,
     };
     let shown = &names[..names.len().min(MAX_AUTHORS)];
-    let more = total - shown.len() as i64;
+    let more = total - shown.len() as i128;
     let mut out = shown.join(", ");
     if more > 0 {
         out.push_str(&format!(" and {more} more"));
@@ -499,7 +505,7 @@ fn trunc(f: f64) -> Option<i64> {
 }
 
 fn retry_after(response: &HttpResponse) -> Option<i64> {
-    let header = response.header("Retry-After").and_then(py::parse_float).and_then(trunc);
+    let header = response.joined_header("Retry-After").as_deref().and_then(py::parse_float).and_then(trunc);
     let secs = match header {
         Some(s) => s,
         None => {
