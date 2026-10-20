@@ -230,6 +230,42 @@ fn test_default_path_env_override() {
     assert_eq!(default_path_from(Some("~/mine.json"), Some("/x/cfg")), home.join("mine.json"));
     // Empty values count as unset, as Python's truthiness does.
     assert_eq!(default_path_from(Some(""), Some("")), default_path_from(None, None));
+    // pathlib spelling: str(Path(...)) as the Python daemon reports it.
+    assert_eq!(default_path_from(None, Some("/x//cfg/./")), PathBuf::from("/x/cfg/eve-bridge/owner_faceprints.json"));
+    assert_eq!(default_path_from(Some("/tmp//a/./o.json/"), None), PathBuf::from("/tmp/a/o.json"));
+    assert_eq!(default_path_from(Some("~//x//o.json"), None), home.join("x").join("o.json"));
+}
+
+#[test]
+fn test_pathlib_path_like_python() {
+    // Values from CPython: str(pathlib.PurePosixPath(s)).
+    for (raw, want) in [
+        ("//a//b", "//a/b"),
+        ("///a", "/a"),
+        ("./a/./b/", "a/b"),
+        ("a/../b", "a/../b"),
+        (".", "."),
+        ("/", "/"),
+        ("rel//o.json", "rel/o.json"),
+    ] {
+        assert_eq!(pathlib_path(Path::new(raw)), PathBuf::from(want), "{raw}");
+    }
+}
+
+#[test]
+fn test_load_logs_python_json_decode_errors() {
+    let tmp = tempfile::tempdir().unwrap();
+    let path = tmp.path().join("o.json");
+    for (raw, msg) in [
+        ("not json", "Expecting value: line 1 column 1 (char 0)"),
+        ("{\"version\": 1,}", "Illegal trailing comma before end of object: line 1 column 14 (char 13)"),
+        ("{} x", "Extra data: line 1 column 4 (char 3)"),
+    ] {
+        std::fs::write(&path, raw).unwrap();
+        let (n, logs) = capture_logs(|| core_at(&path).load(None));
+        assert_eq!(n, 0);
+        assert!(logs.contains(&format!("identity: ignoring {}: {msg}", path.display())), "{raw}: {logs}");
+    }
 }
 
 #[test]

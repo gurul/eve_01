@@ -99,13 +99,33 @@ pub fn default_path() -> PathBuf {
 /// [`default_path`] with the two environment values passed in.
 pub fn default_path_from(override_path: Option<&str>, xdg_config_home: Option<&str>) -> PathBuf {
     if let Some(o) = override_path.filter(|s| !s.is_empty()) {
-        return eve_vision::expanduser(o);
+        return pathlib_path(&eve_vision::expanduser(o));
     }
     let root = match xdg_config_home.filter(|s| !s.is_empty()) {
         Some(base) => PathBuf::from(base),
         None => eve_vision::expanduser("~").join(".config"),
     };
-    root.join("eve-bridge").join("owner_faceprints.json")
+    pathlib_path(&root.join("eve-bridge").join("owner_faceprints.json"))
+}
+
+/// The path as POSIX `pathlib.Path` spells it: runs of `/` collapsed, `.`
+/// components and a trailing `/` dropped, exactly two leading slashes kept,
+/// `..` left alone. So `str(path)` (the CLI's `file:` line, the IPC status
+/// `path`) reads the same as the Python daemon's.
+pub fn pathlib_path(p: &Path) -> PathBuf {
+    let s = p.to_string_lossy();
+    let root = if s.starts_with("//") && !s.starts_with("///") {
+        "//"
+    } else if s.starts_with('/') {
+        "/"
+    } else {
+        ""
+    };
+    let parts: Vec<&str> = s.split('/').filter(|c| !c.is_empty() && *c != ".").collect();
+    if root.is_empty() && parts.is_empty() {
+        return PathBuf::from(".");
+    }
+    PathBuf::from(format!("{root}{}", parts.join("/")))
 }
 
 /// `EVE_OWNER_THRESHOLD` as a positive finite float, else [`DEFAULT_THRESHOLD`]
@@ -477,7 +497,9 @@ fn read_store(source: &Path) -> Result<Option<(Value, Vec<Vector>)>, String> {
         Err(e) => return Err(os_error(e, source).to_string()),
     };
     let text = String::from_utf8(bytes).map_err(|e| utf8_error_text(e.as_bytes(), e.utf8_error()))?;
-    let raw: Value = serde_json::from_str(&text).map_err(|e| e.to_string())?;
+    // Python's json.loads, so a malformed file is logged with the same
+    // JSONDecodeError text (`Expecting value: line 1 column 1 (char 0)`).
+    let raw: Value = eve_ipc::pyjson::loads(&text).map_err(|e| e.to_string())?;
     let prints = parse_prints(&raw)?;
     Ok(Some((raw, prints)))
 }
