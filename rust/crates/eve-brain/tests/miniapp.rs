@@ -1911,3 +1911,122 @@ fn quick_tunnel_reads_its_address_and_stops_cloudflared() {
         assert_eq!(tunnel.wait().await, -15);
     });
 }
+
+// ---- the lights card over the real lights (test_the_lights_card_is_the_owners_only_and_drives_the_lights) ------
+
+type LightsApplied = Arc<Mutex<Vec<(String, eve_lights::Change)>>>;
+
+/// The card's `Driver`: the strip is out of range; every other light records its change.
+struct CardDriver {
+    name: String,
+    applied: LightsApplied,
+}
+
+#[async_trait::async_trait]
+impl eve_lights::Driver for CardDriver {
+    async fn state(&self) -> Result<eve_lights::State, eve_lights::LightError> {
+        Ok(eve_lights::State { on: Some(true), brightness: Some(30), rgb: Some([0, 255, 0]), kelvin: None })
+    }
+    async fn apply(&self, change: &eve_lights::Change) -> Result<(), eve_lights::LightError> {
+        if self.name == "strip" {
+            return Err(eve_lights::LightError::Connection("out of range".into()));
+        }
+        self.applied.lock().push((self.name.clone(), change.clone()));
+        Ok(())
+    }
+    async fn close(&self) -> Result<(), eve_lights::LightError> {
+        Ok(())
+    }
+}
+
+/// `lights.Lights` as the card's hub (what the daemon lends the Mini App).
+struct LightsCard(eve_lights::Lights);
+
+#[async_trait::async_trait]
+impl eve_link::seams::Hub for LightsCard {
+    fn listing(&self) -> Vec<Value> {
+        self.0.listing()
+    }
+    async fn panel(&self, body: &Value) -> anyhow::Result<Value> {
+        Ok(self.0.panel(body).await)
+    }
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn test_the_lights_card_is_the_owners_only_and_drives_the_lights() {
+    let _spend = SpendDir::new();
+    let tmp = tempfile::tempdir().unwrap();
+    let applied: LightsApplied = Arc::default();
+    let drivers: HashMap<String, eve_lights::DriverFactory> = eve_lights::KINDS
+        .iter()
+        .map(|k| {
+            let a = applied.clone();
+            let f: eve_lights::DriverFactory = Arc::new(move |lt: &eve_lights::Light| {
+                Arc::new(CardDriver { name: lt.name.clone(), applied: a.clone() }) as Arc<dyn eve_lights::Driver>
+            });
+            (k.to_string(), f)
+        })
+        .collect();
+    let mut lamp = eve_lights::Light::new("floor lamp", "govee");
+    lamp.room = "bedroom".into();
+    lamp.ip = "192.0.2.1".into();
+    lamp.device = "d".into();
+    let mut strip = eve_lights::Light::new("strip", "triones");
+    strip.room = "bedroom".into();
+    strip.address = "u".into();
+    let hub = Arc::new(LightsCard(eve_lights::Lights::with(vec![lamp, strip], Some(drivers), Duration::from_secs_f64(eve_lights::LIGHT_TIMEOUT_SECS))));
+    let srv = run_server(tmp.path(), 0.0);
+    let port = srv.start(0).await.unwrap();
+    let off = post(port, "/api/me", json!({"initData": signed()})).await; // no lights lent: none listed
+    let none = post(port, "/api/lights", json!({"initData": signed(), "action": "status"})).await;
+    *srv.lights.lock() = Some(hub);
+    let me = post(port, "/api/me", json!({"initData": signed()})).await;
+    let stranger = post(port, "/api/lights", json!({"initData": signed_by(999), "action": "set", "color": "red"})).await;
+    let status = post(port, "/api/lights", json!({"initData": signed(), "action": "status"})).await;
+    let blue = post(port, "/api/lights", json!({"initData": signed(), "action": "set", "target": "all", "color": "blue"})).await;
+    let dim = post(port, "/api/lights", json!({"initData": signed(), "action": "set", "target": "floor lamp", "brightness": 40})).await;
+    let bad = post(port, "/api/lights", json!({"initData": signed(), "action": "set", "color": "plaid"})).await;
+    srv.close().await;
+    assert!(off.json()["lights"] == json!([]) && none.status == 404);
+    assert_eq!(me.json()["lights"], json!([{"name": "floor lamp", "room": "bedroom"}, {"name": "strip", "room": "bedroom"}]));
+    assert!(!me.text.contains("192.0.2.1")); // names and rooms only, never addresses
+    let red = eve_lights::Change { color: eve_lights::parse_color("red"), ..Default::default() };
+    assert!(stranger.status == 403 && applied.lock().first().map(|(n, c)| (n.clone(), c.clone())) != Some(("floor lamp".to_string(), red)));
+    let names: Vec<Value> = status.json()["lights"].as_array().unwrap().iter().map(|x| x["name"].clone()).collect();
+    assert_eq!(names, [json!("floor lamp"), json!("strip")]);
+    assert_eq!(blue.json(), json!({"ok": true, "line": "Floor lamp blue. strip: out of range.", "failed": ["strip"]}));
+    assert_eq!(dim.json()["line"], "Floor lamp at 40%.");
+    assert_eq!(
+        *applied.lock(),
+        vec![
+            ("floor lamp".to_string(), eve_lights::Change { color: eve_lights::parse_color("blue"), ..Default::default() }),
+            ("floor lamp".to_string(), eve_lights::Change { brightness: Some(40), ..Default::default() }),
+        ]
+    );
+    assert_eq!(bad.json(), json!({"ok": false, "line": "Unknown colour 'plaid'."}));
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn test_each_spend_mark_crossed_is_a_line_in_the_chat_and_nothing_is_refused() {
+    let _spend = SpendDir::new();
+    let tmp = tempfile::tempdir().unwrap();
+    let led = SpendLedger::new(&tmp.path().join("s.json"), None, Some(Arc::new(|| "2026-09-24".to_string())));
+    let marks: Arc<Mutex<Vec<(f64, f64)>>> = Arc::default();
+    {
+        let marks = marks.clone();
+        *led.on_cross.lock() = Some(Arc::new(move |mark, total| marks.lock().push((mark, total))));
+    }
+    led.add(4.0);
+    led.add(2.0); // past 5
+    led.add(1.0);
+    led.add(60.0); // past 20 and 50 at once: one line, the higher mark
+    assert!(*marks.lock() == vec![(5.0, 6.0), (50.0, 67.0)] && !led.over());
+    // the Mini App wires the mark to a line in the owner's chat
+    let apps = apps_server(&tmp.path().join("b"), None, None, 0.0);
+    apps.app.ledger.add(6.0);
+    tokio::time::sleep(Duration::from_millis(50)).await;
+    let sent = apps.bot.sent();
+    assert_eq!(sent.len(), 1, "{sent:?}");
+    let text = sent[0]["text"].as_str().unwrap();
+    assert!(text.contains("$6.00 today") && text.contains("Nothing is capped"), "{text}");
+}
