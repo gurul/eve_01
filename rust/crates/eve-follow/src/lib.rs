@@ -679,12 +679,13 @@ impl SpeakerFollower {
     /// The conversation's phase changed. Leaving a follow phase hands the head back at once.
     pub async fn on_phase(&self, phase: &str) {
         let was = self.active();
-        let now = self.now();
+        let entering = is_follow_phase(phase) && !is_follow_phase(&self.st.lock().phase);
+        // the clock is read only for a new stretch, as in Python (never under the state lock)
+        let now = if entering { Some(self.now()) } else { None };
         {
             let mut st = self.st.lock();
-            let entering = is_follow_phase(phase) && !is_follow_phase(&st.phase);
             st.phase = phase.to_string();
-            if entering {
+            if let Some(now) = now {
                 // a new stretch: nobody in view by then earns a fresh opening
                 st.opened_at = Some(now);
                 st.acquired = false;
