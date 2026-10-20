@@ -279,6 +279,8 @@ Every Rust item carries a `/// py: <file>.py:<line>` comment naming the Python d
 | `test_telegram_toolsets.py` | 14 | 14 ported, same names (the `test_` prefix sometimes dropped, a parametrized case as a `_<case>` suffix), in `tests/inlet_turn.rs`, `tests/telegram_apps.rs` | none |
 | `test_think.py` | 9 | 9 ported, same names (the `test_` prefix sometimes dropped, a parametrized case as a `_<case>` suffix), in `tests/onboarding_think_self.rs` | none |
 | `test_voice_agent.py` | 115 | 115 ported, same names (the `test_` prefix sometimes dropped, a parametrized case as a `_<case>` suffix), in `tests/voice_events.rs`, `tests/voice_session.rs` | none |
+| `test_voice_taint_gate.py` (tests_ref; completeness critic) | 11 | 10 ported, same names, in `tests/voice_session.rs`: the web search is the session's `web_search` seam (Python monkeypatched `websearch.search`); the test hooks are `test_set_taint`, `test_set_held`, `test_held_said`, `test_pending_answer_done` and `test_ask_user` | `test_said_whole_needs_codes_question_word_for_word_and_nothing_else`: eve-tool-gate's (ported there) |
+| `test_relay_questions.py` (tests_ref; completeness critic) | 1 of 9 here | `test_a_restart_during_a_texted_task_tells_the_owner` in `tests/inlet_say_relay.rs` (the goal is the one the rig's model names, "open the calculator") | the rest are eve-hooks', eve-installer's and eve-daemon's, or already here under other names (the numbered relay question, `EVE_PREFIX`) |
 
 ## Boundaries
 What this crate leaves to the operating system or the network, unchanged from Python; the tests reach each one through a lent seam or not at all.

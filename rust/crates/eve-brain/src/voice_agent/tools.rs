@@ -510,13 +510,15 @@ impl VoiceSession {
             // websearch.search (the engine, or routed by Jev), off the loop: a second or two of network
             let query = arg_str(args, "query", "");
             let config = self.config.search.clone();
-            tokio::task::spawn_blocking(move || {
-                eve_web::websearch::search(
+            let lent = self.web_search.clone();
+            tokio::task::spawn_blocking(move || match lent {
+                Some(search) => search(&query, &config),
+                None => eve_web::websearch::search(
                     eve_web::Ctx::global(),
                     &query,
                     Some(&config),
                     &eve_web::websearch::EngineOpts::default(),
-                )
+                ),
             })
             .await
             .map_err(|e| anyhow::anyhow!("{e}"))?

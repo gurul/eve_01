@@ -2076,3 +2076,23 @@ async fn test_a_session_already_running_is_typed_into_at_once() {
     assert!(typing.await.expect("no wait"));
     assert_eq!(texts_typed(&typed), ["run it"]);
 }
+
+// ---- test_relay_questions.py: a restart during a texted task ------------------------------------------------------
+
+#[tokio::test]
+async fn test_a_restart_during_a_texted_task_tells_the_owner() {
+    // the goal is the one the model's start_task names (task_create): "open the calculator"
+    let rig = task_rig(Hooked::new(calculator()), Nap::Yield, |_| {});
+    let inlet = rig.inlet.clone();
+    let looping = tokio::spawn(async move { inlet.run().await });
+    settle(200).await;
+    assert!(rig.inlet.task_running()); // never released: still running when the daemon stops
+    let before = sent(&rig).len();
+    rig.probe().shutdown().await;
+    assert_eq!(rig.agents.last().cancel_reason.lock().as_deref(), Some("the daemon is stopping"));
+    let after: Vec<String> = sent(&rig)[before..].iter().map(|(_, t)| t.clone()).collect();
+    assert_eq!(after, vec![RESTART_LINE.replace("{goal}", "open the calculator")]);
+    assert_eq!(sent(&rig).last().unwrap().0, OWNER);
+    looping.abort();
+    let _ = looping.await;
+}

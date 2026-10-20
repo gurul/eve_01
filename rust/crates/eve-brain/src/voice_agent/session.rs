@@ -61,6 +61,8 @@ pub struct VoiceSession {
     pub system_context: StrFn,
     /// the environment the session's switchable tools are read from (None: the process's, Python's `os.environ`)
     pub environ: Option<Environ>,
+    /// `websearch.search(query, config)` (None: the real one); a test lends a stub, as Python's monkeypatch does
+    pub web_search: Option<WebSearchFn>,
     /// eve's apps' hubs by slot (`self.<slot>`)
     pub hubs: Mutex<AppHubs>,
     /// What Python reassigns after `__init__`, behind one lock.
@@ -108,7 +110,13 @@ pub struct VoiceSessionOptions {
     pub system_context: Option<StrFn>,
     /// Rust seam: the environment the switchable tools read (None: the process's).
     pub environ: Option<Environ>,
+    /// Rust seam: `websearch.search` (None: the real engine or router).
+    pub web_search: Option<WebSearchFn>,
 }
+
+/// `websearch.search(query, config)` as the voice calls it: the query in, the tool's result out. Called on a worker
+/// thread.
+pub type WebSearchFn = Arc<dyn Fn(&str, &eve_web::websearch::SearchConfig) -> Value + Send + Sync>;
 
 impl Default for VoiceSessionOptions {
     fn default() -> Self {
@@ -147,6 +155,7 @@ impl Default for VoiceSessionOptions {
             ledger: None,
             system_context: None,
             environ: None,
+            web_search: None,
         }
     }
 }
@@ -325,6 +334,7 @@ impl VoiceSession {
             ledger,
             system_context,
             environ,
+            web_search,
         } = options;
         let config = config.unwrap_or_default();
         let clock: Clock = clock.unwrap_or_else(|| Arc::new(monotonic));
@@ -464,6 +474,7 @@ impl VoiceSession {
             system_context: system_context
                 .unwrap_or_else(|| Arc::new(|| eve_system_context::context(None, None))),
             environ,
+            web_search,
             hubs: Mutex::new(app_hubs),
             st: Mutex::new(st),
         })
@@ -1148,6 +1159,39 @@ impl VoiceSession {
     #[doc(hidden)]
     pub fn test_taint(&self) -> String {
         self.st.lock().taint.clone()
+    }
+
+    /// `s._taint = reason`.
+    #[doc(hidden)]
+    pub fn test_set_taint(&self, reason: &str) {
+        self.st.lock().taint = reason.to_string();
+    }
+
+    /// `s._held, s._held_act, s._held_said = held, act, said`.
+    #[doc(hidden)]
+    pub fn test_set_held(&self, held: Option<(String, i64)>, act: &str, said: bool) {
+        let mut st = self.st.lock();
+        st.held = held;
+        st.held_act = act.to_string();
+        st.held_said = said;
+    }
+
+    /// `s._held_said`.
+    #[doc(hidden)]
+    pub fn test_held_said(&self) -> bool {
+        self.st.lock().held_said
+    }
+
+    /// `s._pending_answer`: None, or whether it is done.
+    #[doc(hidden)]
+    pub fn test_pending_answer_done(&self) -> Option<bool> {
+        self.st.lock().pending_answer.as_ref().map(|p| p.done())
+    }
+
+    /// `await s._ask_user(question)`: a computer task's question, asked out loud.
+    #[doc(hidden)]
+    pub async fn test_ask_user(self: &Arc<Self>, question: &str) -> anyhow::Result<String> {
+        self.ask_user(question).await
     }
 
     #[doc(hidden)]

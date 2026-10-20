@@ -732,3 +732,147 @@ async fn test_the_voice_pe_music_input_reaches_spotify_mode_or_puts_the_board_ba
     assert_eq!(*got.lock(), vec![json!({"cmd": "music_mode", "on": false})]);
     assert_eq!(link.0.lock().len(), 1, "the controller itself was not asked again");
 }
+
+// ---- test_mic.py: the Mac microphone follows the robot and the owner's switch -----------------------------------
+
+/// `_FakeEars`: start opens unless `can_open` is false; every call is recorded.
+struct FakeEars {
+    listening: AtomicBool,
+    can_open: bool,
+    events: Mutex<Vec<&'static str>>,
+}
+
+impl FakeEars {
+    fn new(can_open: bool) -> Arc<FakeEars> {
+        Arc::new(FakeEars { listening: AtomicBool::new(false), can_open, events: Mutex::new(Vec::new()) })
+    }
+    fn events(&self) -> Vec<&'static str> {
+        self.events.lock().clone()
+    }
+    fn is_listening(&self) -> bool {
+        self.listening.load(Ordering::SeqCst)
+    }
+}
+
+impl eve_daemon::seams::Mic for FakeEars {
+    fn listening(&self) -> bool {
+        self.listening.load(Ordering::SeqCst)
+    }
+    fn prepare(&self) -> bool {
+        true
+    }
+    fn start(&self) -> bool {
+        self.events.lock().push("start");
+        self.listening.store(self.can_open, Ordering::SeqCst);
+        self.can_open
+    }
+    fn stop(&self) {
+        self.events.lock().push("stop");
+        self.listening.store(false, Ordering::SeqCst);
+    }
+    fn subscribe(&self) -> eve_ears::PcmQueue {
+        eve_ears::PcmQueue::new(8)
+    }
+    fn unsubscribe(&self, _q: &eve_ears::PcmQueue) {}
+    fn take_last_wake_audio(&self) -> Vec<u8> {
+        Vec::new()
+    }
+}
+
+/// Python's `_daemon(tmp_path, connected, always, ears)`.
+fn mic_daemon(
+    dir: &std::path::Path,
+    connected: bool,
+    always: bool,
+    ears: Option<Arc<FakeEars>>,
+) -> (Arc<Daemon>, Arc<Ble>) {
+    let ble = Ble::new(connected);
+    let mut parts = DaemonParts::for_test(ble.clone(), dir);
+    parts.ears_cfg = eve_ears::configured_from(|k| (k == "EVE_MIC_ALWAYS" && always).then(|| "1".to_string()));
+    let d = Daemon::assemble(parts);
+    d.st.lock().ears = ears.map(|e| e as Arc<dyn eve_daemon::seams::Mic>);
+    (d, ble)
+}
+
+#[tokio::test]
+async fn test_the_mic_stays_closed_until_the_robot_connects() {
+    let dir = tempfile::tempdir().unwrap();
+    let ears = FakeEars::new(true);
+    let (d, ble) = mic_daemon(dir.path(), false, false, Some(ears.clone()));
+    d.apply_mic("boot");
+    assert!(ears.events().is_empty() && !ears.is_listening());
+    ble.set_connected(true);
+    d.apply_mic("the robot connected");
+    assert_eq!(ears.events(), ["start"]);
+    assert!(ears.is_listening());
+    d.apply_mic("the robot connected"); // a second connect event: no second open
+    assert_eq!(ears.events(), ["start"]);
+    ble.set_connected(false);
+    d.apply_mic("the robot is not connected");
+    assert_eq!(ears.events(), ["start", "stop"]);
+    assert!(!ears.is_listening());
+}
+
+#[tokio::test]
+async fn test_mic_always_opens_at_boot_and_survives_a_drop() {
+    let dir = tempfile::tempdir().unwrap();
+    let ears = FakeEars::new(true);
+    let (d, ble) = mic_daemon(dir.path(), false, true, Some(ears.clone()));
+    d.apply_mic("boot");
+    assert!(ears.is_listening());
+    ble.set_connected(true);
+    d.apply_mic("the robot connected");
+    ble.set_connected(false);
+    d.apply_mic("the robot is not connected");
+    assert_eq!(ears.events(), ["start"]);
+    assert!(ears.is_listening());
+}
+
+#[tokio::test]
+async fn test_the_owners_switch_outranks_the_robot() {
+    let dir = tempfile::tempdir().unwrap();
+    let ears = FakeEars::new(true);
+    let (d, _ble) = mic_daemon(dir.path(), true, false, Some(ears.clone()));
+    d.apply_mic("boot");
+    assert!(ears.is_listening());
+    let r = d.handle_ipc(obj(json!({"evt": "mic", "action": "off"}))).await.unwrap();
+    assert_eq!(
+        Value::Object(r),
+        json!({"ok": true, "mic": "off", "listening": false, "connected": true, "always": false, "available": true})
+    );
+    assert_eq!(ears.events(), ["start", "stop"]);
+    // a restart keeps it
+    let mut kept = eve_sound::SoundSetting::new(Some(dir.path().join("mic.json")), "mic");
+    assert!(!kept.load());
+    // the robot reconnecting does not reopen it
+    d.apply_mic("the robot connected");
+    assert!(!ears.is_listening());
+    let r = d.handle_ipc(obj(json!({"evt": "mic", "action": "on"}))).await.unwrap();
+    assert_eq!(r["mic"], json!("on"));
+    assert_eq!(r["listening"], json!(true));
+    assert_eq!(ears.events(), ["start", "stop", "start"]);
+}
+
+#[tokio::test]
+async fn test_mic_status_with_no_ears() {
+    let dir = tempfile::tempdir().unwrap();
+    let (d, _ble) = mic_daemon(dir.path(), false, false, None);
+    d.apply_mic("boot"); // no ears: nothing to do, nothing raised
+    let r = d.handle_ipc(obj(json!({"evt": "mic", "action": "status"}))).await.unwrap();
+    assert_eq!(r["available"], json!(false));
+    assert_eq!(r["listening"], json!(false));
+}
+
+#[tokio::test(flavor = "current_thread")]
+async fn test_a_mic_that_will_not_open_is_one_warning() {
+    let dir = tempfile::tempdir().unwrap();
+    let ears = FakeEars::new(false);
+    let (d, _ble) = mic_daemon(dir.path(), true, false, Some(ears.clone()));
+    let (cap, guard) = capture(tracing::Level::WARN);
+    d.apply_mic("the robot connected");
+    drop(guard);
+    let text = cap.text();
+    assert!(text.contains("did not open"), "{text}");
+    assert!(!ears.is_listening());
+    assert_eq!(text.matches("did not open").count(), 1);
+}
