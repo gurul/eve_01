@@ -1,0 +1,23 @@
+[package]
+name = "eve-jev"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+eve-decider = { path = "../eve-decider" }
+eve-pricing = { path = "../eve-pricing" }
+eve-spend = { path = "../eve-spend" }
+anyhow.workspace = true
+parking_lot.workspace = true
+reqwest = { workspace = true, features = ["blocking"] }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+indexmap.workspace = true
+tempfile.workspace = true
