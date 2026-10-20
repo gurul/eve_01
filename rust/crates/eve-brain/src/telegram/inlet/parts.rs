@@ -120,7 +120,7 @@ impl TelegramInlet {
         blocks.extend(live.iter().filter_map(|(_, hub)| hub.as_ref().map(|h| h.instructions(&Obj::new()))));
         blocks.extend([
             self.canvas.as_ref().map(|c| c.instructions().to_string()).unwrap_or_default(),
-            if self.agentcard.is_some() { eve_agentcard::AgentCard::instructions().to_string() } else { String::new() },
+            self.agentcard.as_ref().map(|a| a.instructions()).unwrap_or_default(),
             self.america.as_ref().map(|a| a.instructions().to_string()).unwrap_or_default(),
             if self.opentable_enabled { eve_opentable::instructions(menu_wide) } else { String::new() },
             match &self.share {

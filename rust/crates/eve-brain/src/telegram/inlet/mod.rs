@@ -215,7 +215,8 @@ pub struct InletOptions {
     pub chief: Option<Arc<eve_chief::Chief>>,
     pub meeter: Option<Arc<eve_meet::Meeter>>,
     pub canvas: Option<Arc<eve_canvas::Canvas>>,
-    pub agentcard: Option<Arc<eve_agentcard::AgentCard>>,
+    /// `agentcard`, with its approvals: [`CardPurchases::new`] over an `eve_agentcard::AgentCard`.
+    pub agentcard: Option<Arc<dyn Purchases>>,
     pub america: Option<Arc<eve_america::America>>,
     pub opentable_enabled: bool,
     pub share: Option<Arc<crate::share::Share>>,
@@ -402,8 +403,8 @@ pub struct TelegramInlet {
     pub(crate) meeter: Option<Arc<eve_meet::Meeter>>,
     /// canvas.Canvas, or None (no CANVAS_BASE_URL/CANVAS_API_TOKEN)
     pub(crate) canvas: Option<Arc<eve_canvas::Canvas>>,
-    pub(crate) agentcard: Option<Arc<eve_agentcard::AgentCard>>,
-    pub(crate) purchases: Option<eve_agentcard_tools::AgentCardTools<eve_agentcard::AgentCard>>,
+    pub(crate) agentcard: Option<Arc<dyn Purchases>>,
+    pub(crate) purchases: Option<Arc<dyn Purchases>>,
     /// optional U.S. legal/government sources
     pub(crate) america: Option<Arc<eve_america::America>>,
     pub(crate) opentable_enabled: bool,
@@ -669,7 +670,7 @@ impl TelegramInlet {
             ..Default::default()
         });
         let quick = eve_quick_answers::QuickAnswers::new(environ.clone());
-        let purchases = agentcard.as_ref().map(|card| eve_agentcard_tools::AgentCardTools::new(card.clone()));
+        let purchases = agentcard.clone();
         let opentable_enabled = opentable_enabled && agent_enabled && agent_factory.is_some();
         let chat_id = config.owner_ids.iter().copied().min();
         let drafts_ok = config.drafts;

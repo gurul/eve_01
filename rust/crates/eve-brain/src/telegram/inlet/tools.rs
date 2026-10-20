@@ -463,11 +463,17 @@ impl TelegramInlet {
                 return Ok(itl_refused("Only a configured owner can use AgentCard."));
             }
             let me = self.clone();
-            let ask = move |question: String, about: String| async move {
-                Ok(me
-                    .ask_user(&question, chat_id, "Confirm purchase", Some(&super::chief::itl_yes_no()), Some(&about), true, true, None, false)
-                    .await)
-            };
+            // The gateway asks from its own worker task; asyncio's task copies the context, so the question is
+            // still read on the call the work began on (`_FROM_CALL`).
+            let turn_ctx = crate::seams::ctx();
+            let ask: PurchaseAsk = Box::new(move |question: String, about: String| {
+                crate::seams::in_ctx(turn_ctx, async move {
+                    Ok(me
+                        .ask_user(&question, chat_id, "Confirm purchase", Some(&super::chief::itl_yes_no()), Some(&about), true, true, None, false)
+                        .await)
+                })
+                .boxed()
+            });
             return Ok(itl_obj(purchases.handle(name, &as_value, Some(chat_id), ask).await, name));
         }
         if eve_web::watch::tools::TOOL_NAMES.contains(&name) {
@@ -1199,6 +1205,24 @@ impl TelegramInlet {
     /// `inlet._chief_word(text)`: the chief's code word and card, or None.
     pub fn tt_chief_word(self: &Arc<Self>, text: &str) -> Option<(String, String)> {
         self.chief_word(text)
+    }
+    /// `await inlet._think(items, chat_id, taint=taint)`.
+    pub async fn tt_think(self: &Arc<Self>, items: &[Obj], chat_id: i64, taint: &str) -> anyhow::Result<(String, i64)> {
+        self.think(items, chat_id, false, 0, None, taint).await
+    }
+    /// `inlet._answers_pending(text)`.
+    pub fn tt_answers_pending(self: &Arc<Self>, text: &str) -> bool {
+        self.answers_pending(Some(text))
+    }
+    /// `inlet._claude_on_job = loop.create_future()` (on) and its `.cancel()` (off): a slow "claude on" listing.
+    pub fn tt_hold_claude_on(self: &Arc<Self>, on: bool) {
+        let mut st = self.st.lock();
+        if let Some(job) = st.claude_on_job.take() {
+            job.cancel();
+        }
+        if on {
+            st.claude_on_job = Some(crate::seams::Job::spawn("claude-on", futures::future::pending::<()>()));
+        }
     }
     /// `await inlet._judge_answer(question, choices, said)`.
     pub async fn tt_judge_answer(self: &Arc<Self>, question: &str, choices: &[&str], said: &str) -> Option<String> {

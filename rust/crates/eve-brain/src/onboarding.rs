@@ -164,7 +164,7 @@ pub(crate) static KEY_SHAPE: LazyLock<Regex> =
 
 /// py: onboarding.py:103 `_TOKEN_SHAPE`, anchored
 /// an access token may be a long JWT
-pub(crate) static TOKEN_SHAPE: LazyLock<Regex> =
+pub static TOKEN_SHAPE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r#"\A[\x21-\x7e]{8,16384}\z"#).expect("TOKEN_SHAPE"));
 
 /// py: onboarding.py:104 `_ID_SHAPE`, anchored
@@ -709,7 +709,7 @@ pub(crate) fn loads(text: &str) -> Option<Value> {
 }
 
 /// py: onboarding.py:223 `def _answer(response: httpx.Response) -> dict[str, Any]:`
-pub(crate) fn answer(response: &HttpResponse) -> Obj {
+pub fn answer(response: &HttpResponse) -> Obj {
     let Ok(text) = std::str::from_utf8(&response.body) else {
         return Obj::new();
     };
@@ -753,7 +753,7 @@ pub(crate) fn code_shaped(code: &Value) -> bool {
 /// py: onboarding.py:247 `def _oauth_word(answer: Mapping[str, Any]) -> str:`
 ///
 /// The answer's OAuth ``error`` code when it looks like one (safe to log and to branch on), else "".
-pub(crate) fn oauth_word(answer: &Obj) -> String {
+pub fn oauth_word(answer: &Obj) -> String {
     match answer.get("error").and_then(Value::as_str) {
         Some(w) if OAUTH_WORD.is_match(w) => w.to_string(),
         _ => String::new(),
@@ -1334,7 +1334,7 @@ impl ComposioConnectLogin {
 /// ``exp`` claim (read, not verified: it only times the refresh), else ``DEFAULT_TOKEN_SECS`` from now. A value
 /// that is not a sane lifetime (none, zero, past, absurdly far, not finite) is passed over, so the file always
 /// holds a finite number.
-pub(crate) fn expires_at(answer: &Obj, access: &str, now: f64) -> f64 {
+pub fn expires_at(answer: &Obj, access: &str, now: f64) -> f64 {
     let secs = match answer.get("expires_in") {
         Some(Value::String(s)) => eve_apps_mcp::py::parse_float(eve_envfile::py_strip(s)),
         Some(Value::Number(n)) => n.as_f64(),

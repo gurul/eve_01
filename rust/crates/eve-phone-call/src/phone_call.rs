@@ -2289,6 +2289,16 @@ impl PhoneCalls {
         (self.clock)()
     }
 
+    /// `calls.brain`: the chat this endpoint was lent, or None (lite_rtc.RtcHub.voice_ready reads it).
+    pub fn brain(&self) -> Option<Arc<dyn Brain>> {
+        self.brain.clone()
+    }
+
+    /// `calls.voice`: the ears and voice this endpoint was lent, or None (lite_rtc.RtcHub.voice_ready reads it).
+    pub fn voice(&self) -> Option<Arc<dyn Voice>> {
+        self.voice.clone()
+    }
+
     /// The call on now, if any.
     pub fn active(&self) -> Option<Arc<Call>> {
         self.active.lock().clone()

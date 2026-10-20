@@ -86,6 +86,8 @@ pub struct FakeApi {
     pub refuse_links: AtomicBool,
     /// sendMessageDraft refused with this
     pub fail_drafts: Mutex<Option<BotApiError>>,
+    /// sendMessage with an inline keyboard refused with this (nothing is logged)
+    pub fail_inline: Mutex<Option<BotApiError>>,
     /// receive_image's answer (None: an ImageError-free 1x1 JPEG)
     pub image: Mutex<Option<Result<eve_telegram_images::ReceivedImage, String>>>,
 }
@@ -99,6 +101,7 @@ impl FakeApi {
             fail_edits: Mutex::new(None),
             refuse_links: AtomicBool::new(false),
             fail_drafts: Mutex::new(None),
+            fail_inline: Mutex::new(None),
             image: Mutex::new(None),
         })
     }
@@ -202,6 +205,9 @@ impl TelegramApi for FakeApi {
         title: Option<&str>,
         subtitle: Option<&str>,
     ) -> Result<i64, BotApiError> {
+        if let Some(e) = self.fail_inline.lock().clone() {
+            return Err(e);
+        }
         let mut log = self.log.lock();
         log.sent.push((chat_id, text.to_string()));
         log.titled.push((title.map(str::to_string), subtitle.map(str::to_string), text.to_string()));
@@ -555,6 +561,29 @@ impl Rig {
         tweak(&mut options);
         let inlet = TelegramInlet::new(config, api.clone(), create.create(), options);
         Self { api, create, agents, states, clock, inlet }
+    }
+
+    /// `Rig(api, create)` over an API that is not a FakeApi (a MutedBotApi): the same lent fakes, and `api` is an
+    /// unused FakeApi.
+    pub fn over(other: Arc<dyn TelegramApi>, create: Arc<FakeCreate>, config: TelegramConfig) -> Self {
+        let made = Self::new(FakeApi::new(vec![]), create.clone(), config.clone(), |_| {});
+        let s = made.states.clone();
+        let options = InletOptions {
+            agent_factory: Some(made.agents.factory()),
+            brief: Some(Arc::new(String::new)),
+            on_state: Some(Arc::new(move |state: &str| s.lock().push(state.to_string()))),
+            clock: Some(made.clock.clock()),
+            wall: Some(Arc::new(|| NOW)),
+            sleep: Some(no_sleep()),
+            screen: Some(Arc::new(|| None)),
+            toolset_route: eve_brain::prelude::Lent::Given(None),
+            grader: eve_brain::prelude::Lent::Given(None),
+            small_talk_ask: eve_brain::prelude::Lent::Given(None),
+            environ: Some(conftest_env()),
+            ..InletOptions::default()
+        };
+        let inlet = TelegramInlet::new(config, other, create.create(), options);
+        Self { inlet, ..made }
     }
 }
 

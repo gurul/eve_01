@@ -2089,3 +2089,55 @@ fn test_each_block_follows_the_environment_it_is_given() {
     let lite = lines(&lite_env(), &connect_lent(home.path(), None));
     assert!(lite[0].starts_with("Chat brain (eve's web app") && !lite.join("\n").contains("Telegram"));
 }
+
+/// Python patches `system_context.context` to a fixed CLOCK; here the real clock is used and the test checks that its
+/// header never reaches the cached instructions. The lights file is the default one on both sides of the equality.
+#[test]
+fn test_the_telegram_brain_carries_it_right_after_its_instructions() {
+    use eve_brain::telegram;
+    // conftest's `_menu_tools_pinned_off`: the process environment the request reads has the menu tools off
+    let process = env(&[("EVE_MENU_TOOLS", "off")]);
+    let env = owner_env(&[]);
+    let cfg = telegram::configured(Some(&env));
+    assert_eq!(cfg.about, self_context::block(Some(&env), None, None));
+    assert!(!cfg.about.is_empty());
+    let items = vec![telegram::message_item("user", "what do you use for search")];
+    let request = |items: &[Obj], today: &str| {
+        telegram::request_in(Some(&process), &cfg, items, "", "PROFILE", &[], false, today, &[], None, &[], "", &[], "",
+                             "", "", &[])
+    };
+    let body = request(&items, "TODAY");
+    let instructions = body["instructions"].as_str().unwrap().to_string();
+    assert!(instructions.starts_with(&format!("{}{}{}", telegram::INSTRUCTIONS, cfg.about, telegram::PROFILE_HEADER)));
+    // stable from turn to turn: the block is in the cached prefix, the clock is not
+    let mut more = items.clone();
+    more.push(telegram::message_item("user", "and for reading pages?"));
+    let again = request(&more, "TODAY more");
+    let prefix = format!("{}{}{}\nPROFILE", telegram::INSTRUCTIONS, cfg.about, telegram::PROFILE_HEADER);
+    assert!(instructions.starts_with(&prefix));
+    assert!(again["instructions"].as_str().unwrap().starts_with(&prefix));
+    assert!(!instructions.contains("Local clock"));
+    assert_eq!(body["prompt_cache_key"], json!(telegram::PROMPT_CACHE_KEY));
+    // a hand-built config (the other tests) has none, and the instructions are as before
+    let plain = telegram::request_in(Some(&process), &telegram::TelegramConfig::default(), &items, "", "", &[], false, "",
+                                     &[], None, &[], "", &[], "", "", "", &[]);
+    assert_eq!(plain["instructions"], json!(telegram::INSTRUCTIONS));
+}
+
+#[test]
+fn test_the_voice_carries_it_in_both_halves() {
+    use eve_brain::voice_agent;
+    let env = owner_env(&[("EVE_VOICE", "1")]);
+    let cfg = voice_agent::configured(Some(&env));
+    assert_eq!(cfg.about, self_context::block(Some(&env), None, None));
+    assert!(cfg.about.contains("Voice:"));
+    let memory_tools = vec![json!({"type": "function", "name": "memory_search"}).as_object().unwrap().clone()];
+    let got = voice_agent::session_config(&cfg, "", None, "VOICE-PAGE", "FULL-PAGE", "", "", Some(&memory_tools), None);
+    let front = got["instructions"].as_str().unwrap();
+    assert!(front.starts_with(&format!("{}{}{}", voice_agent::INSTRUCTIONS, cfg.about, voice_agent::PROFILE_HEADER)));
+    let back = got["delegation"]["responses"]["instructions"].as_str().unwrap();
+    assert!(back.starts_with(&format!("{}{}{}{}", voice_agent::BACKEND_INSTRUCTIONS, voice_agent::BACKEND_MEMORY_RULES,
+                                      cfg.about, voice_agent::BACKEND_PROFILE_HEADER)));
+    let plain = voice_agent::session_config(&voice_agent::VoiceConfig::default(), "", None, "", "", "", "", None, None);
+    assert!(!serde_json::to_string(&plain).unwrap().contains(self_context::HEADER));
+}

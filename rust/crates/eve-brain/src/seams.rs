@@ -1056,3 +1056,82 @@ impl CodexDoor for eve_codex_chat::CodexChat {
         eve_codex_chat::CodexChat::close(self).await
     }
 }
+
+// ---- agentcard: the purchase card and its approvals (agentcard_tools.AgentCardTools) ------------------------------
+
+/// The owner question a purchase confirmation asks: `(question, about) -> answer`.
+pub type PurchaseAsk = Box<
+    dyn FnOnce(String, String) -> BoxFuture<'static, Result<String, eve_agentcard_tools::AskError>> + Send,
+>;
+
+/// The `agentcard` lent to the inlet (`agentcard.AgentCard`, duck-typed: Python's tests lend a Service of their
+/// own) as the inlet reads it (`tools()`, `instructions()`), with the approvals the inlet wraps around it
+/// (`self._purchases = agentcard_tools.AgentCardTools(agentcard)`).
+#[async_trait]
+pub trait Purchases: Send + Sync {
+    /// `agentcard.tools()`.
+    fn tools(&self) -> Vec<Value>;
+    /// `agentcard.instructions()`.
+    fn instructions(&self) -> String;
+    /// `purchases.active(chat_id)`.
+    fn active(&self, chat_id: Option<i64>) -> bool;
+    /// `purchases.stop(chat_id)`.
+    fn stop(&self, chat_id: Option<i64>) -> eve_agentcard_tools::StopReport;
+    /// `purchases.shutdown()`.
+    fn shutdown(&self) -> eve_agentcard_tools::StopReport;
+    /// `await purchases.handle(name, args, chat_id=..., ask_user=...)`.
+    async fn handle(&self, name: &str, args: &Value, chat_id: Option<i64>, ask: PurchaseAsk) -> Value;
+}
+
+/// A purchase card's own surface beside the client calls (`tools()`, `instructions()`).
+pub trait CardService: eve_agentcard_tools::Service {
+    fn tools(&self) -> Vec<Value>;
+    fn instructions(&self) -> String;
+}
+
+impl CardService for eve_agentcard::AgentCard {
+    fn tools(&self) -> Vec<Value> {
+        eve_agentcard::AgentCard::tools(self)
+    }
+    fn instructions(&self) -> String {
+        eve_agentcard::AgentCard::instructions().to_string()
+    }
+}
+
+/// [`Purchases`] over a card: `AgentCardTools(agentcard)`.
+pub struct CardPurchases<S: CardService> {
+    tools: eve_agentcard_tools::AgentCardTools<S>,
+}
+
+impl<S: CardService> CardPurchases<S> {
+    pub fn new(service: Arc<S>) -> Arc<Self> {
+        Arc::new(Self { tools: eve_agentcard_tools::AgentCardTools::new(service) })
+    }
+
+    /// The approvals themselves (`inlet._purchases`).
+    pub fn approvals(&self) -> &eve_agentcard_tools::AgentCardTools<S> {
+        &self.tools
+    }
+}
+
+#[async_trait]
+impl<S: CardService> Purchases for CardPurchases<S> {
+    fn tools(&self) -> Vec<Value> {
+        self.tools.service().tools()
+    }
+    fn instructions(&self) -> String {
+        self.tools.service().instructions()
+    }
+    fn active(&self, chat_id: Option<i64>) -> bool {
+        self.tools.active(chat_id)
+    }
+    fn stop(&self, chat_id: Option<i64>) -> eve_agentcard_tools::StopReport {
+        self.tools.stop(chat_id)
+    }
+    fn shutdown(&self) -> eve_agentcard_tools::StopReport {
+        self.tools.shutdown()
+    }
+    async fn handle(&self, name: &str, args: &Value, chat_id: Option<i64>, ask: PurchaseAsk) -> Value {
+        self.tools.handle(name, args, chat_id, ask).await
+    }
+}
