@@ -214,11 +214,7 @@ impl TelegramInlet {
                 let r = chief.raise_budget(cid)?;
                 if ok(&r) {
                     let usd = r.get("usd").and_then(Value::as_f64).ok_or_else(|| anyhow::anyhow!("KeyError: 'usd'"))?;
-                    format!(
-                        "{cid} may now spend ${} and {} min.",
-                        format!("{usd:.2}"),
-                        itl_py_str(r.get("minutes"))
-                    )
+                    format!("{cid} may now spend ${usd:.2} and {} min.", itl_py_str(r.get("minutes")))
                 } else {
                     reason(&r)
                 }
@@ -535,7 +531,17 @@ impl TelegramInlet {
     /// py: telegram.py:6873 `async def _stick_link(self, chat_id: int, rotate: bool) -> None:`
     ///
     /// /stick: Eve Link's pairing link, a URL button (it opens a page that hands off to the app).
+    ///
+    /// Rust: Python's `send_url_buttons` raising out of the command is logged here (the spawned /stick's task logs
+    /// it in Python); [`Self::stick_link_sent`] returns it, for `_tool_menu`.
     pub(crate) async fn stick_link(self: &Arc<Self>, chat_id: i64, rotate: bool) {
+        if let Err(e) = self.stick_link_sent(chat_id, rotate).await {
+            tracing::error!("telegram: /stick's button was not sent ({e})");
+        }
+    }
+
+    /// `_stick_link` with the Bot API's failure raised (returned), as Python raises it.
+    pub(crate) async fn stick_link_sent(self: &Arc<Self>, chat_id: i64, rotate: bool) -> Result<(), BotApiError> {
         let maker = self.maker.lock().clone();
         let url = match maker {
             Some(maker) => match AssertUnwindSafe(maker.stick_link(rotate)).catch_unwind().await {
@@ -550,29 +556,35 @@ impl TelegramInlet {
         };
         if url.is_empty() {
             self.say(chat_id, eve_stick_link::OFF_LINE, None, None, &[], 0, None).await;
-            return;
+            return Ok(());
         }
         let line = if rotate { eve_stick_link::NEW_LINE } else { eve_stick_link::PAIR_LINE };
         let buttons = [(eve_stick_link::UPDATE_TEXT.to_string(), url)];
-        if let Err(e) = self.api.send_url_buttons(chat_id, line, &buttons).await {
-            tracing::error!("telegram: /stick's button was not sent ({e})");
-        }
+        self.api.send_url_buttons(chat_id, line, &buttons).await
     }
 
     /// py: telegram.py:6887 `async def _open_apps(self, chat_id: int) -> None:`
     ///
     /// /apps: the Mini App's Open button, at its address right now.
+    ///
+    /// Rust: Python's `send_web_apps` raising out of the command is logged here (the spawned /apps's task logs it in
+    /// Python); [`Self::open_apps_sent`] returns it, for `_tool_menu`.
     pub(crate) async fn open_apps(self: &Arc<Self>, chat_id: i64) {
+        if let Err(e) = self.open_apps_sent(chat_id).await {
+            tracing::error!("telegram: /apps's button was not sent ({e})");
+        }
+    }
+
+    /// `_open_apps` with the Bot API's failure raised (returned), as Python raises it.
+    pub(crate) async fn open_apps_sent(self: &Arc<Self>, chat_id: i64) -> Result<(), BotApiError> {
         let maker = self.maker.lock().clone();
         let url = maker.map(|m| m.home_url()).unwrap_or_default();
         if url.is_empty() {
             self.say(chat_id, APPS_OFF_LINE, None, None, &[], 0, None).await;
-            return;
+            return Ok(());
         }
         let buttons = [("Open eve".to_string(), url)];
-        if let Err(e) = self.api.send_web_apps(chat_id, APPS_TEXT, &buttons).await {
-            tracing::error!("telegram: /apps's button was not sent ({e})");
-        }
+        self.api.send_web_apps(chat_id, APPS_TEXT, &buttons).await
     }
 
     /// py: telegram.py:6895 `def _app_tools(self, opened: Optional[set[str]] = None, lent: Optional[set[str]] = None, routed: Optional[bool] = None) -> list[dict[str, Any]]:`
@@ -610,7 +622,7 @@ impl TelegramInlet {
                                 let name = t.get("name").and_then(Value::as_str).unwrap_or("");
                                 opened.contains(eve_apps_mcp::split_name(name).0)
                             })
-                            .map(|t| itl_o(t)),
+                            .map(itl_o),
                     );
                 }
             }

@@ -397,8 +397,11 @@ impl TelegramInlet {
                     .catch_unwind()
                     .await;
                 let _ = std::fs::remove_file(&path);
-                if let Err(panic) = sent {
-                    std::panic::resume_unwind(panic);
+                match sent {
+                    Err(panic) => std::panic::resume_unwind(panic),
+                    // `finally:` only: a Bot API failure _send_media raises is _tool's caught exception
+                    Ok(Err(e)) => return Err(anyhow::Error::from(e)),
+                    Ok(Ok(())) => {}
                 }
                 return Ok(itl_o(json!({"ok": true, "sent": "photo", "shows": itl_str(&shot, "shows")})));
             }
@@ -980,12 +983,19 @@ impl TelegramInlet {
             self.set_stealth(chat_id, itl_truthy(args, "on"));
             return done();
         }
+        // A Bot API failure sending the button is raised in Python, and `_tool` answers it as `{name} failed`.
         if name == eve_menu_tools::APPS {
-            self.open_apps(chat_id).await;
+            if let Err(e) = self.open_apps_sent(chat_id).await {
+                tracing::error!("telegram: {name} failed: {e}");
+                return itl_failed(name);
+            }
             return done();
         }
         if name == eve_menu_tools::LINK {
-            self.stick_link(chat_id, itl_truthy(args, "new_link")).await;
+            if let Err(e) = self.stick_link_sent(chat_id, itl_truthy(args, "new_link")).await {
+                tracing::error!("telegram: {name} failed: {e}");
+                return itl_failed(name);
+            }
             return done();
         }
         itl_refused("not a menu tool")
@@ -1046,7 +1056,9 @@ impl TelegramInlet {
     /// py: telegram.py:6275 `async def _tool_read_file(self, name: str, args: dict[str, Any], chat_id: int) -> dict[str, Any]:`
     pub(crate) async fn tool_read_file(self: &Arc<Self>, name: &str, args: &Obj, _chat_id: i64) -> Obj {
         let raw = itl_str(args, "path");
-        match tokio::task::spawn_blocking(move || read_file(&raw, None)).await {
+        // the owner's home as list_files and send_file resolve it (Path.home(), from the inlet's environment)
+        let home = self.owner_home();
+        match tokio::task::spawn_blocking(move || read_file(&raw, home.as_deref())).await {
             Ok(out) => out,
             Err(e) if e.is_panic() => std::panic::resume_unwind(e.into_panic()),
             Err(_) => itl_failed(name),
