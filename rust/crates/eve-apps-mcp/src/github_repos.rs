@@ -128,7 +128,7 @@ where
 
 fn parse(result: Option<&Value>) -> Value {
     match result {
-        Some(Value::String(s)) => serde_json::from_str(s).unwrap_or_else(|_| json!({})),
+        Some(Value::String(s)) => crate::py::json_loads(s).unwrap_or_else(|_| json!({})),
         None | Some(Value::Null) => json!({}),
         Some(other) => other.clone(),
     }
@@ -236,7 +236,7 @@ pub async fn fetch(call: &dyn Call) -> Result<Option<Vec<Repo>>, CallError> {
 pub fn load(path: &Path) -> (Vec<Repo>, f64) {
     fn read(path: &Path) -> Option<(Vec<Repo>, f64)> {
         let text = String::from_utf8(std::fs::read(path).ok()?).ok()?;
-        let Value::Object(data) = serde_json::from_str::<Value>(&text).ok()? else {
+        let Value::Object(data) = crate::py::json_loads(&text).ok()? else {
             return None;
         };
         let repos: Vec<Value> = match data.get("repos").filter(|v| truthy(v)) {

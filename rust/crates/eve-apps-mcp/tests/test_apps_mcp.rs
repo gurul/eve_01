@@ -874,6 +874,48 @@ async fn test_the_client_reports_an_http_error_with_its_body_and_a_missing_reply
     );
 }
 
+#[tokio::test]
+async fn test_a_reply_that_is_not_json_fails_with_pythons_decode_error() {
+    // httpx's Response.json() is json.loads of the bytes: the owner reads CPython's own text
+    let http = Mock::new(|req| {
+        let msg = body_json(req);
+        if msg["method"] == "initialize" {
+            return json_reply(200, json!({"jsonrpc": "2.0", "id": msg["id"], "result": {}}));
+        }
+        if msg.get("id").is_none() {
+            return empty_reply(202);
+        }
+        Ok((200, vec![("content-type".into(), "text/html".into())], b"<html>busy</html>".to_vec()))
+    });
+    let client = McpClient::with_transport("https://x/mcp", no_tok(), &[], http, "");
+    let e = client.call_tool("t", &Map::new()).await.unwrap_err();
+    assert_eq!(
+        (e.kind.as_str(), e.message.as_str()),
+        ("JSONDecodeError", "Expecting value: line 1 column 1 (char 0)")
+    );
+}
+
+#[tokio::test]
+async fn test_a_result_whose_content_cannot_be_iterated_is_a_type_error_not_a_reply() {
+    // `for c in 3` raises inside execute's try in Python: the model reads the TypeError
+    let dir = tmp();
+    let (b, _) = bridge(dir.path(), &[], FakeResult::Value(json!({"content": 3})), &[]).await;
+    assert_eq!(
+        Value::Object(b.execute("calendar__list_events", &Map::new()).await),
+        json!({"ok": false, "reason": "TypeError: 'int' object is not iterable"})
+    );
+    let (b, _) = bridge(dir.path(), &[], FakeResult::Value(json!({"content": 0})), &[]).await;
+    assert_eq!(
+        Value::Object(b.execute("calendar__list_events", &Map::new()).await),
+        json!({"ok": true, "result": ""})
+    );
+    assert!(apps::try_result_for_model(&obj(json!({"content": true}))).is_err());
+    assert_eq!(
+        Value::Object(apps::result_for_model(&obj(json!({"content": {"type": "text"}})))),
+        json!({"ok": true, "result": ""})
+    );
+}
+
 // ---- tokens --------------------------------------------------------------------------------------------
 
 fn google_files(dir: &std::path::Path, expires_at: f64) {

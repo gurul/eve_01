@@ -581,7 +581,7 @@ pub fn read_json(path: &Path) -> Map<String, Value> {
     let Ok(text) = String::from_utf8(bytes) else {
         return Map::new();
     };
-    match serde_json::from_str::<Value>(&text) {
+    match crate::py::json_loads(&text) {
         Ok(Value::Object(m)) => m,
         _ => Map::new(),
     }
@@ -924,7 +924,7 @@ pub fn sse_messages(text: &str) -> Vec<Map<String, Value>> {
                     .to_string(),
             );
         } else if strip(line).is_empty() && !data.is_empty() {
-            if let Ok(Value::Object(m)) = serde_json::from_str::<Value>(&data.join("\n")) {
+            if let Ok(Value::Object(m)) = crate::py::json_loads(&data.join("\n")) {
                 out.push(m);
             }
             data.clear();
@@ -955,8 +955,9 @@ fn header<'a>(headers: &'a [(String, String)], name: &str) -> Option<&'a str> {
         .map(|(_, v)| v.as_str())
 }
 
+/// httpx's `Response.json()`: `json.loads` of the body's bytes, with Python's error class and text.
 fn parse_json(content: &[u8]) -> Result<Value, CallError> {
-    serde_json::from_slice(content).map_err(|e| CallError::new("JSONDecodeError", e.to_string()))
+    crate::py::json_loads_bytes(content)
 }
 
 /// Set a header as a dict assignment does: the same name replaced in place, else added at the end.
@@ -1770,7 +1771,22 @@ pub fn describe_whole(name: &str, args: &Map<String, Value>, limit: usize) -> Op
 }
 
 /// An MCP tools/call result as the brain reads it: the structured content when there is one, else the text.
+///
+/// A `content` that Python cannot iterate (a number or `true`) reads as no content here; `try_result_for_model`
+/// is the form that fails there as Python's TypeError does, and `execute` uses it.
 pub fn result_for_model(result: &Map<String, Value>) -> Map<String, Value> {
+    match try_result_for_model(result) {
+        Ok(out) => out,
+        Err(_) => {
+            let mut plain = result.clone();
+            plain.remove("content");
+            try_result_for_model(&plain).unwrap_or_default()
+        }
+    }
+}
+
+/// `result_for_model` with Python's TypeError for a `content` that is not iterable (`for c in 3`).
+pub fn try_result_for_model(result: &Map<String, Value>) -> Result<Map<String, Value>, CallError> {
     let mut out = Map::new();
     let ok = !result.get("isError").is_some_and(truthy);
     out.insert("ok".into(), json!(ok));
@@ -1779,8 +1795,18 @@ pub fn result_for_model(result: &Map<String, Value>) -> Map<String, Value> {
             out.insert("result".into(), structured.clone());
         }
         None => {
+            // `for c in result.get("content") or []`: a dict's keys and a string's characters are never dicts
             let content: Vec<&Map<String, Value>> = match result.get("content") {
                 Some(Value::Array(items)) => items.iter().filter_map(Value::as_object).collect(),
+                Some(other @ (Value::Number(_) | Value::Bool(true))) if truthy(other) => {
+                    return Err(CallError::new(
+                        "TypeError",
+                        format!(
+                            "'{}' object is not iterable",
+                            eve_google_rest::py::type_name(other)
+                        ),
+                    ))
+                }
                 _ => Vec::new(),
             };
             let texts: Vec<String> = content
@@ -1815,7 +1841,7 @@ pub fn result_for_model(result: &Map<String, Value>) -> Map<String, Value> {
     if !ok {
         out.insert("reason".into(), json!(clip(&raw, 300)));
     }
-    out
+    Ok(out)
 }
 
 // ---- the bridge -------------------------------------------------------------------------------------------
@@ -2293,7 +2319,10 @@ impl AppsBridge {
             out
         };
         match client.call_tool(&raw_name, args).await {
-            Ok(Value::Object(result)) => result_for_model(&result),
+            Ok(Value::Object(result)) => match try_result_for_model(&result) {
+                Ok(out) => out,
+                Err(e) => failed(e.type_name(), &e.message),
+            },
             Ok(other) => failed(
                 "AttributeError",
                 &format!(

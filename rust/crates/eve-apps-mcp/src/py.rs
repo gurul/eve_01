@@ -256,6 +256,138 @@ pub fn form_value(v: &Value) -> String {
     }
 }
 
+/// `json.loads(text)` for a `str`, as CPython parses it (eve-ipc's port of its scanner), with Python's
+/// exception class and message: `JSONDecodeError: Expecting value: line 1 column 1 (char 0)`.
+pub fn json_loads(text: &str) -> Result<Value, CallError> {
+    eve_ipc::pyjson::loads(text).map_err(|e| CallError::new(e.python_type(), e.to_string()))
+}
+
+/// `json.loads(content)` for `bytes`, which is what httpx's `Response.json()` runs: the encoding detected as
+/// `json.detect_encoding` does (UTF-32 or UTF-16 by BOM or by zero bytes, a UTF-8 BOM dropped, else UTF-8),
+/// then the text parsed. Bytes that do not decode are Python's `UnicodeDecodeError`.
+pub fn json_loads_bytes(content: &[u8]) -> Result<Value, CallError> {
+    json_loads(&decode_json_bytes(content)?)
+}
+
+fn unicode_error(codec: &str, data: &[u8], start: usize, end: usize, reason: &str) -> CallError {
+    let message = if end.saturating_sub(start) <= 1 {
+        let byte = data.get(start).copied().unwrap_or(0);
+        format!("'{codec}' codec can't decode byte 0x{byte:02x} in position {start}: {reason}")
+    } else {
+        format!("'{codec}' codec can't decode bytes in position {start}-{}: {reason}", end - 1)
+    };
+    CallError::new("UnicodeDecodeError", message)
+}
+
+fn decode_json_bytes(b: &[u8]) -> Result<String, CallError> {
+    const BOM_UTF32_BE: &[u8] = &[0x00, 0x00, 0xFE, 0xFF];
+    const BOM_UTF32_LE: &[u8] = &[0xFF, 0xFE, 0x00, 0x00];
+    const BOM_UTF16_BE: &[u8] = &[0xFE, 0xFF];
+    const BOM_UTF16_LE: &[u8] = &[0xFF, 0xFE];
+    const BOM_UTF8: &[u8] = &[0xEF, 0xBB, 0xBF];
+    if b.starts_with(BOM_UTF32_BE) {
+        return decode_utf32(&b[4..], true, "utf-32", 4);
+    }
+    if b.starts_with(BOM_UTF32_LE) {
+        return decode_utf32(&b[4..], false, "utf-32", 4);
+    }
+    if b.starts_with(BOM_UTF16_BE) {
+        return decode_utf16(&b[2..], true, "utf-16", 2);
+    }
+    if b.starts_with(BOM_UTF16_LE) {
+        return decode_utf16(&b[2..], false, "utf-16", 2);
+    }
+    if let Some(rest) = b.strip_prefix(BOM_UTF8) {
+        return decode_utf8_strict(rest, "utf-8-sig", 3);
+    }
+    if b.len() >= 4 {
+        if b[0] == 0 {
+            return if b[1] != 0 {
+                decode_utf16(b, true, "utf-16-be", 0)
+            } else {
+                decode_utf32(b, true, "utf-32-be", 0)
+            };
+        }
+        if b[1] == 0 {
+            return if b[2] != 0 || b[3] != 0 {
+                decode_utf16(b, false, "utf-16-le", 0)
+            } else {
+                decode_utf32(b, false, "utf-32-le", 0)
+            };
+        }
+    } else if b.len() == 2 {
+        if b[0] == 0 {
+            return decode_utf16(b, true, "utf-16-be", 0);
+        }
+        if b[1] == 0 {
+            return decode_utf16(b, false, "utf-16-le", 0);
+        }
+    }
+    decode_utf8_strict(b, "utf-8", 0)
+}
+
+/// UTF-8 with Python's error text; `offset` is how many bytes (a BOM) came before `b` in the body.
+fn decode_utf8_strict(b: &[u8], codec: &str, offset: usize) -> Result<String, CallError> {
+    match std::str::from_utf8(b) {
+        Ok(s) => Ok(s.to_string()),
+        Err(e) => {
+            let start = e.valid_up_to();
+            let (end, reason) = match e.error_len() {
+                None => (b.len(), "unexpected end of data"),
+                Some(n) => {
+                    let lead = b[start];
+                    let starts = matches!(lead, 0xC2..=0xF4);
+                    (start + n, if n == 1 && !starts { "invalid start byte" } else { "invalid continuation byte" })
+                }
+            };
+            let mut whole = vec![0u8; offset];
+            whole.extend_from_slice(b);
+            Err(unicode_error(codec, &whole, offset + start, offset + end, reason))
+        }
+    }
+}
+
+/// UTF-16 under `surrogatepass`: a lone surrogate cannot live in a Rust string, so it reads as U+FFFD (as
+/// eve-ipc's parser reads a lone `\ud800` escape).
+fn decode_utf16(b: &[u8], big: bool, codec: &str, offset: usize) -> Result<String, CallError> {
+    let whole_units = b.len() / 2 * 2;
+    let units = b[..whole_units]
+        .chunks_exact(2)
+        .map(|c| if big { u16::from_be_bytes([c[0], c[1]]) } else { u16::from_le_bytes([c[0], c[1]]) });
+    let text: String = char::decode_utf16(units).map(|r| r.unwrap_or('\u{FFFD}')).collect();
+    if whole_units != b.len() {
+        let mut whole = vec![0u8; offset];
+        whole.extend_from_slice(b);
+        let at = offset + whole_units;
+        return Err(unicode_error(codec, &whole, at, whole.len(), "truncated data"));
+    }
+    Ok(text)
+}
+
+fn decode_utf32(b: &[u8], big: bool, codec: &str, offset: usize) -> Result<String, CallError> {
+    let mut whole = vec![0u8; offset];
+    whole.extend_from_slice(b);
+    let mut out = String::new();
+    for (i, c) in b.chunks(4).enumerate() {
+        let at = offset + i * 4;
+        if c.len() < 4 {
+            return Err(unicode_error(codec, &whole, at, whole.len(), "truncated data"));
+        }
+        let cp = if big {
+            u32::from_be_bytes([c[0], c[1], c[2], c[3]])
+        } else {
+            u32::from_le_bytes([c[0], c[1], c[2], c[3]])
+        };
+        match char::from_u32(cp) {
+            Some(ch) => out.push(ch),
+            // a surrogate, passed by surrogatepass
+            None if (0xD800..=0xDFFF).contains(&cp) => out.push('\u{FFFD}'),
+            None => return Err(unicode_error(codec, &whole, at, at + 4, "code point not in range(0x110000)")),
+        }
+    }
+    Ok(out)
+}
+
 /// `value == id` in Python for the int id a request carried: a float equal to it and a bool (an int in
 /// Python) match too.
 pub fn id_matches(value: Option<&Value>, id: i64) -> bool {
@@ -314,6 +446,29 @@ mod tests {
         assert!(id_matches(Some(&json!(true)), 1));
         assert!(!id_matches(Some(&json!("1")), 1));
         assert!(!id_matches(None, 1));
+    }
+
+    #[test]
+    fn json_loads_reads_and_refuses_as_python() {
+        // json.loads(b'...') as httpx's Response.json() runs it (texts from CPython 3.13)
+        assert_eq!(json_loads_bytes(b"{\"a\": 1}").unwrap(), json!({"a": 1}));
+        assert_eq!(json_loads_bytes(b"\xef\xbb\xbf[1]").unwrap(), json!([1]));
+        assert_eq!(json_loads_bytes(&[0xFF, 0xFE, b'[', 0, b'2', 0, b']', 0]).unwrap(), json!([2]));
+        assert_eq!(json_loads_bytes(&[0, b'[', 0, b'3', 0, b']']).unwrap(), json!([3]));
+        let e = json_loads_bytes(b"<html>").unwrap_err();
+        assert_eq!((e.kind.as_str(), e.message.as_str()), ("JSONDecodeError", "Expecting value: line 1 column 1 (char 0)"));
+        let e = json_loads_bytes(b"{\"a\": 1} x").unwrap_err();
+        assert_eq!(e.message, "Extra data: line 1 column 10 (char 9)");
+        let e = json_loads_bytes(b"\xff{}").unwrap_err();
+        assert_eq!(
+            (e.kind.as_str(), e.message.as_str()),
+            ("UnicodeDecodeError", "'utf-8' codec can't decode byte 0xff in position 0: invalid start byte")
+        );
+        let e = json_loads_bytes(b"[\"\xe2\x82\"]").unwrap_err();
+        assert_eq!(e.message, "'utf-8' codec can't decode bytes in position 2-3: invalid continuation byte");
+        let e = json_loads_bytes(b"[\"\xe2").unwrap_err();
+        assert_eq!(e.message, "'utf-8' codec can't decode byte 0xe2 in position 2: unexpected end of data");
+        assert_eq!(json_loads("\u{feff}{}").unwrap_err().message, "Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)");
     }
 
     #[test]
