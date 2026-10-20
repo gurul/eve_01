@@ -508,3 +508,43 @@ fn routes_and_constants_match_python() {
     assert_eq!((DEFAULT_ROUTE, DEFAULT_TIMEOUT_S, MAX_LEN, HEAD_MAX_LEN, RETRIES), ("typesafe", 3.0, 32000, 30000, 2));
     assert_eq!(RETRY_STATUS, [429, 500, 502, 503, 529]);
 }
+
+#[test]
+fn a_url_is_read_as_urllib_reads_it() {
+    let dir = tempfile::tempdir().unwrap();
+    // Request() raises a bare ValueError for a URL with no scheme, before any send and unmetered.
+    let (p, meter) = predict_with("x", "m", |_: &Request, _: f64| reply(&answer()), dir.path());
+    let e = p.predict(&json!({}), &questions()).unwrap_err();
+    assert_eq!((e.kind(), e.to_string().as_str()), ("ValueError", "unknown url type: 'x'"));
+    assert_eq!(meter.snapshot().calls, 0);
+    // the opener sees Request.full_url: unwrapped and stripped
+    let seen: Arc<Mutex<Vec<String>>> = Arc::default();
+    let log = seen.clone();
+    let (p, _) = predict_with(
+        " <URL: https://h/v1> ",
+        "m",
+        move |r: &Request, _: f64| {
+            log.lock().push(r.url.clone());
+            reply(&answer())
+        },
+        dir.path(),
+    );
+    p.predict(&json!({}), &questions()).unwrap();
+    assert_eq!(*seen.lock(), vec!["https://h/v1".to_string()]);
+    // the real transport: urlopen's URLErrors for a scheme it cannot open and a missing host
+    for (url, said) in [
+        ("ftp2://x", "ftp2://x unreachable: unknown url type: ftp2"),
+        ("http://", "http:// unreachable: no host given"),
+        ("http:/x", "http:/x unreachable: no host given"),
+    ] {
+        let meter = Arc::new(Meter::new());
+        let p = make_predict(
+            url,
+            "k",
+            "m",
+            PredictOptions { meter: Some(meter.clone()), ledger: Some(eve_spend::Ledger::at(dir.path())), ..PredictOptions::default() },
+        );
+        assert_eq!(p.predict(&json!({}), &questions()).unwrap_err().to_string(), said);
+        assert_eq!(meter.snapshot().errors, 1);
+    }
+}

@@ -408,6 +408,44 @@ where
     }
 }
 
+/// urllib's `unwrap(url)`: strip, then drop a `<...>` wrapper and a `URL:` prefix. This is `Request.full_url`.
+fn urllib_unwrap(url: &str) -> String {
+    let mut u = url.trim();
+    if u.len() >= 2 && u.starts_with('<') && u.ends_with('>') {
+        u = u[1..u.len() - 1].trim();
+    }
+    if let Some(rest) = u.strip_prefix("URL:") {
+        u = rest.trim();
+    }
+    u.to_string()
+}
+
+/// urllib's `_splittype`: `([^/:]+):(.*)` at the start, the scheme lower-cased.
+fn urllib_splittype(url: &str) -> Option<(String, &str)> {
+    let colon = url.find([':', '/'])?;
+    if colon == 0 || url.as_bytes()[colon] != b':' {
+        return None;
+    }
+    Some((url[..colon].to_lowercase(), &url[colon + 1..]))
+}
+
+/// What urllib's `urlopen` says before touching a socket: `unknown url type: <scheme>` for a scheme it has no
+/// handler for (only http and https are served here) and `no host given` for an http(s) URL without a host.
+fn urllib_precheck(url: &str) -> Result<(), OpenError> {
+    let Some((scheme, rest)) = urllib_splittype(url) else {
+        return Err(OpenError::Value("ValueError".into()));
+    };
+    if scheme != "http" && scheme != "https" {
+        return Err(OpenError::Url(format!("unknown url type: {scheme}")));
+    }
+    // _splithost: `//([^/#?]*)(.*)`
+    let host = rest.strip_prefix("//").map(|h| h.split(['/', '#', '?']).next().unwrap_or(""));
+    if host.is_none_or(str::is_empty) {
+        return Err(OpenError::Url("no host given".into()));
+    }
+    Ok(())
+}
+
 /// Run `f` on a plain thread when called from inside a tokio runtime, where reqwest's blocking client may not
 /// be built, used or dropped. Python reaches this code from a plain thread; this keeps an async caller safe.
 fn off_runtime<R: Send>(f: impl FnOnce() -> R + Send) -> Option<R> {
@@ -452,6 +490,7 @@ struct HttpOpener {
 impl HttpOpener {
     fn send(&self, request: &Request, timeout_s: f64) -> Result<Vec<u8>, OpenError> {
         // socket.settimeout raises ValueError for a negative or non-finite timeout; jev.py reads it as undecodable.
+        urllib_precheck(&request.url)?;
         let timeout = Duration::try_from_secs_f64(timeout_s).map_err(|_| OpenError::Value("ValueError".into()))?;
         let client = {
             let mut held = self.client.lock();
@@ -628,9 +667,18 @@ impl JevPredict {
             self.meter().add(&json!({}), elapsed(), true);
             PredictFailure::Jev(JevError(msg))
         };
+        // urllib.request.Request(url, ...) runs outside jev.py's try: a URL with no scheme raises a bare
+        // ValueError that reaches the caller unmetered.
+        let full_url = urllib_unwrap(&me.url);
+        if urllib_splittype(&full_url).is_none() {
+            return Err(PredictFailure::Raised {
+                kind: "ValueError".into(),
+                message: format!("unknown url type: {}", eve_decider::py_str_repr(&full_url)),
+            });
+        }
         for attempt in 0..=RETRIES {
             let request = Request {
-                url: me.url.clone(),
+                url: full_url.clone(),
                 method: "POST".into(),
                 headers: vec![
                     ("Authorization".into(), format!("Bearer {}", me.key)),
