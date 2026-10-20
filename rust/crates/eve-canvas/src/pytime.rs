@@ -12,17 +12,75 @@ pub enum Zone {
     Named(chrono_tz::Tz),
 }
 
-/// The Mac's IANA zone: `TZ` when it names one, else the target of `/etc/localtime`.
-fn local_iana() -> Option<chrono_tz::Tz> {
-    if let Ok(tz) = std::env::var("TZ") {
-        if let Ok(z) = tz.trim_start_matches(':').parse::<chrono_tz::Tz>() {
-            return Some(z);
+/// Where the Mac's local zone comes from, read the way libc reads it (Python's `astimezone(None)` asks libc).
+enum LocalZone {
+    /// An IANA zone: `TZ` naming one, or the target of `/etc/localtime` when `TZ` is unset.
+    Iana(chrono_tz::Tz),
+    /// A POSIX `TZ` string ("XYZ-3", "<+05>-5"): chrono's `Local` reads its rules; these are its zone names.
+    Posix { std: String, std_east: i32, dst: Option<String> },
+    /// `TZ` set but empty or unreadable: libc falls back to UTC.
+    Utc,
+    /// No `TZ` and no readable `/etc/localtime` link.
+    Unknown,
+}
+
+fn local_zone() -> LocalZone {
+    if let Some(raw) = std::env::var_os("TZ") {
+        let raw = raw.to_string_lossy().into_owned();
+        let tz = raw.strip_prefix(':').unwrap_or(&raw);
+        if tz.is_empty() {
+            return LocalZone::Utc;
         }
+        if let Ok(z) = tz.parse::<chrono_tz::Tz>() {
+            return LocalZone::Iana(z);
+        }
+        return match posix_names(tz) {
+            Some((std, std_east, dst)) => LocalZone::Posix { std, std_east, dst },
+            None => LocalZone::Utc,
+        };
     }
-    let link = std::fs::canonicalize("/etc/localtime").ok()?;
+    let Some(link) = std::fs::canonicalize("/etc/localtime").ok() else {
+        return LocalZone::Unknown;
+    };
     let link = link.to_string_lossy();
-    let (_, name) = link.split_once("zoneinfo/")?;
-    name.parse().ok()
+    match link.split_once("zoneinfo/").and_then(|(_, name)| name.parse().ok()) {
+        Some(z) => LocalZone::Iana(z),
+        None => LocalZone::Unknown,
+    }
+}
+
+/// A POSIX TZ string's standard name, its offset east of UTC, and its daylight name: `std offset [dst ...]`.
+fn posix_names(tz: &str) -> Option<(String, i32, Option<String>)> {
+    fn name(s: &str) -> Option<(String, &str)> {
+        if let Some(rest) = s.strip_prefix('<') {
+            let (n, rest) = rest.split_once('>')?;
+            return (n.len() >= 3).then(|| (n.to_string(), rest));
+        }
+        let end = s.find(|c: char| !c.is_ascii_alphabetic()).unwrap_or(s.len());
+        (end >= 3).then(|| (s[..end].to_string(), &s[end..]))
+    }
+    fn offset(s: &str) -> Option<(i32, &str)> {
+        let (sign, body) = match s.as_bytes().first() {
+            Some(b'-') => (-1, &s[1..]),
+            Some(b'+') => (1, &s[1..]),
+            _ => (1, s),
+        };
+        let end = body.find(|c: char| !(c.is_ascii_digit() || c == ':')).unwrap_or(body.len());
+        let mut secs = 0;
+        let mut scale = 3600;
+        for (i, part) in body[..end].split(':').enumerate() {
+            if i > 2 || part.is_empty() {
+                return None;
+            }
+            secs += part.parse::<i32>().ok()? * scale;
+            scale /= 60;
+        }
+        Some((sign * secs, &body[end..]))
+    }
+    let (std, rest) = name(tz)?;
+    let (west, rest) = offset(rest)?;
+    let dst = if rest.is_empty() || rest.starts_with(',') { None } else { name(rest).map(|(n, _)| n) };
+    Some((std, -west, dst))
 }
 
 /// A fixed offset's name as Python's `timezone(offset).tzname()` gives it: "UTC", or "UTC-07:00".
@@ -33,7 +91,7 @@ fn offset_name(secs: i32) -> String {
     let sign = if secs < 0 { '-' } else { '+' };
     let a = secs.unsigned_abs();
     let mut s = format!("UTC{sign}{:02}:{:02}", a / 3600, (a % 3600) / 60);
-    if a % 60 != 0 {
+    if !a.is_multiple_of(60) {
         s.push_str(&format!(":{:02}", a % 60));
     }
     s
@@ -48,16 +106,24 @@ pub struct Wall {
 impl Zone {
     /// `dt.astimezone(tz)`: the same instant on this zone's clock, with the zone's name at that instant.
     pub fn wall(&self, dt: &DateTime<FixedOffset>) -> Wall {
-        let named = match self {
-            Zone::Named(tz) => Some(*tz),
-            Zone::Local => local_iana(),
+        let zone = match self {
+            Zone::Named(tz) => LocalZone::Iana(*tz),
+            Zone::Local => local_zone(),
         };
-        match named {
-            Some(tz) => {
-                let t = dt.with_timezone(&tz);
-                Wall { time: t.naive_local(), tzname: t.format("%Z").to_string() }
+        let named = |tz: chrono_tz::Tz| {
+            let t = dt.with_timezone(&tz);
+            Wall { time: t.naive_local(), tzname: t.format("%Z").to_string() }
+        };
+        match zone {
+            LocalZone::Iana(tz) => named(tz),
+            LocalZone::Utc => named(chrono_tz::UTC),
+            LocalZone::Posix { std, std_east, dst } => {
+                let t = dt.with_timezone(&Local);
+                let east = t.offset().fix().local_minus_utc();
+                let tzname = if east == std_east { std } else { dst.unwrap_or_else(|| offset_name(east)) };
+                Wall { time: t.naive_local(), tzname }
             }
-            None => {
+            LocalZone::Unknown => {
                 let t = dt.with_timezone(&Local);
                 Wall { time: t.naive_local(), tzname: offset_name(t.offset().fix().local_minus_utc()) }
             }
@@ -86,7 +152,7 @@ pub fn isoformat(dt: &DateTime<FixedOffset>) -> String {
     let sign = if off < 0 { '-' } else { '+' };
     let a = off.unsigned_abs();
     s.push_str(&format!("{sign}{:02}:{:02}", a / 3600, (a % 3600) / 60));
-    if a % 60 != 0 {
+    if !a.is_multiple_of(60) {
         s.push_str(&format!(":{:02}", a % 60));
     }
     s
@@ -362,5 +428,14 @@ mod tests {
         assert_eq!(w.time.to_string(), "2026-10-02 23:59:00");
         assert_eq!(offset_name(-7 * 3600), "UTC-07:00");
         assert_eq!(offset_name(0), "UTC");
+    }
+
+    #[test]
+    fn posix_tz_strings_give_their_names() {
+        assert_eq!(posix_names("XYZ-3"), Some(("XYZ".into(), 3 * 3600, None)));
+        assert_eq!(posix_names("AAA3BBB,M3.2.0,M11.1.0"), Some(("AAA".into(), -3 * 3600, Some("BBB".into()))));
+        assert_eq!(posix_names("<+0530>-5:30"), Some(("+0530".into(), 5 * 3600 + 1800, None)));
+        assert_eq!(posix_names("Bogus/Zone"), None);
+        assert_eq!(posix_names("AB1"), None);
     }
 }

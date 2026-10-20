@@ -354,7 +354,7 @@ impl CanvasApi {
         let mut ran_out = true;
         for _ in 0..self.max_pages {
             let resp = self.get(&url).await?;
-            let data = resp.json_body().map_err(|_| Failure::Other("JSONDecodeError"))?;
+            let data = resp.json_body().map_err(Failure::Other)?;
             if let Value::Array(list) = data {
                 rows.extend(list.into_iter().filter(Value::is_object));
             }

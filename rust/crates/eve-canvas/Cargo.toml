@@ -16,6 +16,8 @@ chrono.workspace = true
 chrono-tz.workspace = true
 tracing.workspace = true
 parking_lot.workspace = true
+unicode-general-category = "1.1.0"
+unicode-normalization = "0.1.26"
 
 [dev-dependencies]
 tokio.workspace = true

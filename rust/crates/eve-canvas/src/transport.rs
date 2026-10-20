@@ -93,11 +93,71 @@ impl HttpResponse {
         String::from_utf8_lossy(&self.body).into_owned()
     }
 
-    /// `resp.json()`; Err where Python raises JSONDecodeError. A UTF-8 byte order mark is skipped, as
-    /// `json.loads` of bytes does.
-    pub fn json_body(&self) -> Result<serde_json::Value, serde_json::Error> {
-        let body = self.body.strip_prefix(b"\xef\xbb\xbf").unwrap_or(&self.body);
-        serde_json::from_slice(body)
+    /// `resp.json()`, which is `json.loads(resp.content)`: the encoding found as `json.detect_encoding` finds
+    /// it (a byte order mark, or the zero bytes of UTF-16/32), then the JSON. Err names the Python exception:
+    /// UnicodeDecodeError for bytes the encoding cannot read, JSONDecodeError for text that is not JSON.
+    pub fn json_body(&self) -> Result<serde_json::Value, &'static str> {
+        let text = decode_json_bytes(&self.body).ok_or("UnicodeDecodeError")?;
+        serde_json::from_str(&text).map_err(|_| "JSONDecodeError")
+    }
+}
+
+/// `json.loads(bytes)`'s decoding step; None where Python's decode raises.
+fn decode_json_bytes(b: &[u8]) -> Option<String> {
+    const BOM32_BE: &[u8] = b"\x00\x00\xfe\xff";
+    const BOM32_LE: &[u8] = b"\xff\xfe\x00\x00";
+    enum Enc {
+        Utf8,
+        Utf16 { le: bool, skip: usize },
+        Utf32 { le: bool, skip: usize },
+    }
+    let enc = if b.starts_with(BOM32_BE) {
+        Enc::Utf32 { le: false, skip: 4 }
+    } else if b.starts_with(BOM32_LE) {
+        Enc::Utf32 { le: true, skip: 4 }
+    } else if b.starts_with(b"\xfe\xff") {
+        Enc::Utf16 { le: false, skip: 2 }
+    } else if b.starts_with(b"\xff\xfe") {
+        Enc::Utf16 { le: true, skip: 2 }
+    } else if let Some(rest) = b.strip_prefix(b"\xef\xbb\xbf") {
+        return std::str::from_utf8(rest).ok().map(str::to_string);
+    } else if b.len() >= 4 {
+        if b[0] == 0 {
+            if b[1] != 0 { Enc::Utf16 { le: false, skip: 0 } } else { Enc::Utf32 { le: false, skip: 0 } }
+        } else if b[1] == 0 {
+            if b[2] != 0 || b[3] != 0 { Enc::Utf16 { le: true, skip: 0 } } else { Enc::Utf32 { le: true, skip: 0 } }
+        } else {
+            Enc::Utf8
+        }
+    } else if b.len() == 2 && b[0] == 0 {
+        Enc::Utf16 { le: false, skip: 0 }
+    } else if b.len() == 2 && b[1] == 0 {
+        Enc::Utf16 { le: true, skip: 0 }
+    } else {
+        Enc::Utf8
+    };
+    match enc {
+        Enc::Utf8 => std::str::from_utf8(b).ok().map(str::to_string),
+        Enc::Utf16 { le, skip } => {
+            let body = &b[skip..];
+            if !body.len().is_multiple_of(2) {
+                return None;
+            }
+            let units = body.chunks(2).map(|c| if le { u16::from_le_bytes([c[0], c[1]]) } else { u16::from_be_bytes([c[0], c[1]]) });
+            char::decode_utf16(units).collect::<Result<String, _>>().ok()
+        }
+        Enc::Utf32 { le, skip } => {
+            let body = &b[skip..];
+            if !body.len().is_multiple_of(4) {
+                return None;
+            }
+            body.chunks(4)
+                .map(|c| {
+                    let a = [c[0], c[1], c[2], c[3]];
+                    char::from_u32(if le { u32::from_le_bytes(a) } else { u32::from_be_bytes(a) })
+                })
+                .collect()
+        }
     }
 }
 
@@ -212,5 +272,30 @@ impl Transport for ReadOnlyTransport {
 
     fn close(&self) {
         self.inner.close();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    fn body(b: &[u8]) -> Result<serde_json::Value, &'static str> {
+        HttpResponse { status: 200, headers: Vec::new(), body: b.to_vec() }.json_body()
+    }
+
+    #[test]
+    fn json_body_decodes_as_json_loads_of_bytes_does() {
+        assert_eq!(body(b"[1]"), Ok(json!([1])));
+        assert_eq!(body(b"\xef\xbb\xbf{\"a\": 1}"), Ok(json!({"a": 1})));
+        assert_eq!(body(b"\x00[\x001\x00]"), Ok(json!([1])));
+        assert_eq!(body(b"[\x001\x00]\x00"), Ok(json!([1])));
+        assert_eq!(body(b"\xff\xfe[\x001\x00]\x00"), Ok(json!([1])));
+        assert_eq!(body(b"\x00\x00\x00[\x00\x00\x001\x00\x00\x00]"), Ok(json!([1])));
+        assert_eq!(body(b"[\"\xff\"]"), Err("UnicodeDecodeError"));
+        assert_eq!(body(b"\x00[\x001\x00"), Err("UnicodeDecodeError"));
+        assert_eq!(body(b"\x00[\x001"), Err("JSONDecodeError"));
+        assert_eq!(body(b"<html>"), Err("JSONDecodeError"));
+        assert_eq!(body(b""), Err("JSONDecodeError"));
     }
 }

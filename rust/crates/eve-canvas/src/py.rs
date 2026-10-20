@@ -150,39 +150,24 @@ pub fn py_repr(v: &Value) -> String {
     }
 }
 
-/// `str.isprintable()` for one character, over the categories Python treats as not printable: controls,
-/// format characters, separators other than the ASCII space, private use and non-characters.
+/// `str.isprintable()` for one character: false for the categories Python counts as not printable (Cc, Cf,
+/// Cs, Co, Cn, Zl, Zp, and Zs other than the ASCII space).
 fn is_printable(c: char) -> bool {
-    let u = c as u32;
-    !(u < 0x20
-        || (0x7f..=0xa0).contains(&u)
-        || u == 0xad
-        || (0x600..=0x605).contains(&u)
-        || u == 0x61c
-        || u == 0x6dd
-        || u == 0x70f
-        || (0x890..=0x891).contains(&u)
-        || u == 0x8e2
-        || u == 0x1680
-        || u == 0x180e
-        || (0x2000..=0x200f).contains(&u)
-        || (0x2028..=0x202f).contains(&u)
-        || (0x205f..=0x2064).contains(&u)
-        || (0x2066..=0x206f).contains(&u)
-        || u == 0x3000
-        || (0xd800..=0xf8ff).contains(&u)
-        || (0xfdd0..=0xfdef).contains(&u)
-        || u == 0xfeff
-        || (0xfff9..=0xfffb).contains(&u)
-        || (u & 0xfffe) == 0xfffe
-        || u == 0x110bd
-        || u == 0x110cd
-        || (0x13430..=0x1343f).contains(&u)
-        || (0x1bca0..=0x1bca3).contains(&u)
-        || (0x1d173..=0x1d17a).contains(&u)
-        || u == 0xe0001
-        || (0xe0020..=0xe007f).contains(&u)
-        || u >= 0xf0000)
+    use unicode_general_category::{get_general_category, GeneralCategory as G};
+    if c == ' ' {
+        return true;
+    }
+    !matches!(
+        get_general_category(c),
+        G::Control
+            | G::Format
+            | G::Surrogate
+            | G::PrivateUse
+            | G::Unassigned
+            | G::LineSeparator
+            | G::ParagraphSeparator
+            | G::SpaceSeparator
+    )
 }
 
 /// `repr(str)`: single quotes unless the text holds a single quote and no double quote.
@@ -304,24 +289,71 @@ pub struct SplitUrl {
 }
 
 impl SplitUrl {
-    /// `.hostname`: the netloc without user info or port, lowercased; None when empty.
+    /// `.hostname`: the netloc without user info or port (the part inside brackets when there is a `[`),
+    /// lowercased up to a `%` zone; None when empty.
     pub fn hostname(&self) -> Option<String> {
-        let host = self.netloc.rsplit_once('@').map(|(_, h)| h).unwrap_or(&self.netloc);
-        let host = if let Some(rest) = host.strip_prefix('[') {
-            rest.split_once(']').map(|(h, _)| h).unwrap_or(rest)
-        } else {
-            host.split_once(':').map(|(h, _)| h).unwrap_or(host)
+        let hostinfo = self.netloc.rsplit_once('@').map(|(_, h)| h).unwrap_or(&self.netloc);
+        let host = match hostinfo.split_once('[') {
+            Some((_, bracketed)) => bracketed.split_once(']').map(|(h, _)| h).unwrap_or(bracketed),
+            None => hostinfo.split_once(':').map(|(h, _)| h).unwrap_or(hostinfo),
         };
         if host.is_empty() {
-            None
-        } else {
-            Some(host.to_lowercase())
+            return None;
         }
+        Some(match host.split_once('%') {
+            Some((h, zone)) => format!("{}%{zone}", h.to_lowercase()),
+            None => host.to_lowercase(),
+        })
     }
 }
 
-/// `urllib.parse.urlsplit(url)`'s scheme and netloc. Err where Python raises ValueError (an unbalanced IPv6
-/// bracket in the netloc).
+/// `ipaddress.ip_address(host)` is an IPv6 address: Python accepts a `%scope` after it (not empty, no
+/// second `%`).
+fn is_ipv6(host: &str) -> bool {
+    let addr = match host.split_once('%') {
+        Some((addr, scope)) if !scope.is_empty() && !scope.contains('%') => addr,
+        Some(_) => return false,
+        None => host,
+    };
+    addr.parse::<std::net::Ipv6Addr>().is_ok()
+}
+
+/// `_check_bracketed_netloc`: a `[` must open the host, be closed before a `:port`, and hold an IPv6
+/// address or an IPvFuture (`v1.x`); an IPv4 address in brackets is refused.
+fn bracketed_netloc_ok(netloc: &str) -> bool {
+    static FUTURE: std::sync::LazyLock<regex::Regex> =
+        std::sync::LazyLock::new(|| regex::Regex::new(r"\Av[a-fA-F0-9]+\..+\z").expect("valid regex"));
+    let hostinfo = netloc.rsplit_once('@').map(|(_, h)| h).unwrap_or(netloc);
+    let Some((before, bracketed)) = hostinfo.split_once('[') else {
+        return true;
+    };
+    if !before.is_empty() {
+        return false;
+    }
+    let (host, port) = bracketed.split_once(']').unwrap_or((bracketed, ""));
+    if !port.is_empty() && !port.starts_with(':') {
+        return false;
+    }
+    if host.starts_with('v') {
+        FUTURE.is_match(host)
+    } else {
+        is_ipv6(host)
+    }
+}
+
+/// `_checknetloc`: a non-ASCII netloc whose NFKC form (with `@:#?` taken out) gains one of `/?#@:` is refused.
+fn netloc_nfkc_ok(netloc: &str) -> bool {
+    use unicode_normalization::UnicodeNormalization;
+    if netloc.is_empty() || netloc.is_ascii() {
+        return true;
+    }
+    let n: String = netloc.chars().filter(|c| !matches!(c, '@' | ':' | '#' | '?')).collect();
+    let n2: String = n.nfkc().collect();
+    n == n2 || !n2.contains(['/', '?', '#', '@', ':'])
+}
+
+/// `urllib.parse.urlsplit(url)`'s scheme and netloc (CPython 3.13). Err where Python raises ValueError: an
+/// unbalanced or invalid IPv6 bracket in the netloc, or a netloc that NFKC turns into URL syntax.
 pub fn urlsplit(url: &str) -> Result<SplitUrl, &'static str> {
     // Python strips leading C0 controls and spaces, and drops every tab and newline.
     let url: String = url.trim_start_matches(|c: char| c <= ' ').chars().filter(|c| !matches!(c, '\t' | '\r' | '\n')).collect();
@@ -344,6 +376,12 @@ pub fn urlsplit(url: &str) -> Result<SplitUrl, &'static str> {
         if netloc.contains('[') != netloc.contains(']') {
             return Err("ValueError");
         }
+        if netloc.contains('[') && !bracketed_netloc_ok(&netloc) {
+            return Err("ValueError");
+        }
+    }
+    if !netloc_nfkc_ok(&netloc) {
+        return Err("ValueError");
     }
     Ok(SplitUrl { scheme, netloc })
 }
@@ -369,6 +407,30 @@ mod tests {
         assert_eq!(urlsplit("https:///path").unwrap().hostname(), None);
         assert!(urlsplit("https://[::1/x").is_err());
         assert_eq!(urlsplit("canvas.example.edu").unwrap().scheme, "");
+    }
+
+    #[test]
+    fn urlsplit_refuses_what_python_3_13_refuses() {
+        // each of these raised ValueError in CPython 3.13's urlsplit
+        for bad in ["https://x[]", "https://[1.2.3.4]/", "https://[v1.]/", "https://[fe80::1%]/", "https://a[::1]/",
+                    "https://[::1]x", "https://ex\u{ff0f}ample.edu", "https://ex\u{2100}ample.edu"] {
+            assert_eq!(urlsplit(bad), Err("ValueError"), "{bad}");
+        }
+        for good in ["https://[::1]:8443/x", "https://[v1.abc]/", "https://[fe80::1%eth0]/", "https://u@[::1]/",
+                     "https://[::FFFF:1.2.3.4]/", "https://exa\u{e9}mple.edu"] {
+            assert!(urlsplit(good).is_ok(), "{good}");
+        }
+        assert_eq!(urlsplit("https://[FE80::1%Eth0]:1").unwrap().hostname().as_deref(), Some("fe80::1%Eth0"));
+        let odd = SplitUrl { scheme: "https".into(), netloc: "u@x[Y]:1".into() };
+        assert_eq!(odd.hostname().as_deref(), Some("y"));
+    }
+
+    #[test]
+    fn repr_escapes_what_python_does_not_print() {
+        assert_eq!(repr_str("x\u{0}\u{7f}\u{85}\u{a0}\u{200b}\u{d7ff}"), "'x\\x00\\x7f\\x85\\xa0\\u200b\\ud7ff'");
+        assert_eq!(repr_str("\u{378}"), "'\\u0378'");
+        assert_eq!(repr_str("\u{e9}\u{6f22}\u{1f600}"), "'\u{e9}\u{6f22}\u{1f600}'");
+        assert_eq!(repr_str("a\"b'c"), "'a\"b\\'c'");
     }
 
     #[test]
