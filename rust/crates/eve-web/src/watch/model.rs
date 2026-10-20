@@ -4,13 +4,15 @@
 //! `json_object`, `reply_text` and `plain_link` are shared by firecrawl, web_reader and search_router; they are
 //! complete in the skeleton so those units can run their tests without this one.
 
-use std::sync::LazyLock;
+use std::sync::{Arc, LazyLock};
 
 use regex::Regex;
-use serde_json::{Map, Value};
+use serde_json::{json, Map, Value};
 
+use super::net::HttpOptions;
 use super::page::Reading;
-use super::FetchError;
+use super::rules::{plain_note, price_of, py};
+use super::{FetchError, DEFAULT_MODEL, OPENROUTER_HOST, OPENROUTER_URL};
 use crate::Ctx;
 
 pub const PAGE_SYSTEM: &str = "You read the visible text of one web page and report on the item a person is watching. Reply with \
@@ -45,21 +47,60 @@ pub const OPENROUTER_TIMEOUT_SECS: f64 = super::TIMEOUT_SECS + 10.0;
 /// headers. FetchError (with 429/5xx status for the limiter, and `host` OPENROUTER_HOST on a request failure: an
 /// OpenRouter 429 charged to the page's host held the wrong site).
 pub fn openrouter(ctx: &Ctx, body: &Value, timeout: f64) -> Result<Value, FetchError> {
-    let _ = (ctx, body, timeout);
-    todo!("watch.openrouter")
+    let key = py::strip(&ctx.get("OPENROUTER_API_KEY")).to_string();
+    if key.is_empty() {
+        return Err(FetchError::new("no OpenRouter key on this computer (OPENROUTER_API_KEY)"));
+    }
+    let mut body = body.clone();
+    if let Value::Object(map) = &mut body {
+        if !map.contains_key("provider") {
+            let model = py::str_or_empty(map.get("model"));
+            if let Some(prefs) = eve_openrouter::provider_prefs(&model) {
+                map.insert("provider".to_string(), prefs);
+            }
+        }
+    }
+    let data = serde_json::to_vec(&body).map_err(|_| FetchError::new("the model service sent an unreadable reply"))?;
+    let headers = [
+        ("Authorization", format!("Bearer {key}")),
+        ("Content-Type", "application/json".to_string()),
+        ("Accept", "application/json".to_string()),
+        ("HTTP-Referer", "https://github.com/gurul/eve_01".to_string()),
+        ("X-Title", "eve watch".to_string()),
+    ];
+    let opts = HttpOptions {
+        data: Some(data),
+        headers: headers.into_iter().map(|(k, v)| (k.to_string(), v)).collect(),
+        timeout,
+        ..HttpOptions::default()
+    };
+    // OpenRouter's 429 is OpenRouter's: charged to the page's host, it held the wrong site and left the model
+    // service unthrottled for every other watch (Lean verifier, 2026-09-25)
+    let (_, text) = ctx.http.request(OPENROUTER_URL, &opts).map_err(|e| e.at(OPENROUTER_HOST))?;
+    match serde_json::from_str::<Value>(&text) {
+        Ok(payload @ Value::Object(_)) => Ok(payload),
+        _ => Err(FetchError::new("the model service sent an unreadable reply")),
+    }
 }
 
 /// `watch.openrouter` over `ctx`, as an [`crate::Ask`] (the default timeout).
 pub fn openrouter_ask(ctx: &Ctx) -> crate::Ask {
-    let _ = ctx;
-    todo!("watch.openrouter as Ask")
+    let ctx = ctx.clone();
+    Arc::new(move |body: &Value| openrouter(&ctx, body, OPENROUTER_TIMEOUT_SECS))
 }
 
 /// `_model_options`: watch extraction needs a short JSON reply; disable DeepSeek's default reasoning so it fits
 /// the budget.
 pub fn model_options(model: &str) -> Map<String, Value> {
-    let _ = model;
-    todo!("watch._model_options")
+    let model_id = eve_openrouter::model(model);
+    let mut out = Map::new();
+    if model_id == DEFAULT_MODEL {
+        out.insert("temperature".to_string(), json!(0));
+        out.insert("reasoning".to_string(), json!({"enabled": false}));
+    } else if !(model_id == "anthropic/claude-haiku-5.5" || model_id.starts_with("openai/gpt-6")) {
+        out.insert("temperature".to_string(), json!(0));
+    }
+    out
 }
 
 /// `_json_object`: the first JSON object in a model's text (a code fence or a stray word around it is tolerated).
@@ -152,9 +193,35 @@ pub fn plain_link(url: &str) -> bool {
 /// only and only from a search (`source` "search"): the page and vision readers read the page's own words and
 /// pixels, and a page alert links the page the owner gave. `blocked` only when exactly true.
 pub fn model_reading(payload: &Value, source: &str) -> Result<Reading, FetchError> {
-    let _ = (payload, source);
-    todo!("watch.model_reading")
+    let data = json_object(&reply_text(payload)?)?;
+    // a JSON number only (a bool is no price either way)
+    let price = match data.get("price") {
+        Some(v @ Value::Number(_)) => price_of(Some(v)),
+        _ => None,
+    };
+    let available = data.get("available").and_then(Value::as_bool);
+    let currency = py::strip(&py::str_or_empty(data.get("currency"))).to_uppercase();
+    let currency = if CURRENCY.is_match(&currency) { currency } else { String::new() };
+    // [ and ] become ( and ): the Telegram formatter turns [words](link) into a link that shows only the words
+    let note = plain_note(&py::str_or_empty(data.get("note")));
+    let url = py::strip(&py::str_or_empty(data.get("url"))).to_string();
+    // A url only from a search, whose job is to find one. The page and vision readers read the page's own words
+    // and pixels: a url there is the page talking, and a page alert links the page the owner gave.
+    let url = if source == "search" && plain_link(&url) { url } else { String::new() };
+    Ok(Reading {
+        value: price,
+        currency,
+        available,
+        hit: None,
+        note,
+        url,
+        source: source.to_string(),
+        name: String::new(),
+        blocked: data.get("blocked") == Some(&Value::Bool(true)),
+    })
 }
+
+static CURRENCY: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[A-Z]{3}$").expect("currency regex"));
 
 #[cfg(test)]
 mod tests {
