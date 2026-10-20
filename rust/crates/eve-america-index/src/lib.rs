@@ -411,7 +411,8 @@ pub fn readable_body(body: &str) -> bool {
     !prefix.chars().any(|c| (c as u32) < 32 && !matches!(c, '\t' | '\r' | '\n'))
 }
 
-/// The default runner: `firecrawl.run_tool(request, timeout=...)` through `ctx`, its answer as Python's dict.
+/// The default runner: `firecrawl.run_tool(request, timeout=...)` through `ctx`, its answer as Python's dict (a
+/// bool `creditsCost` stays a bool, so `query` meters it unpriced as Python does).
 pub fn run_tool(ctx: &Ctx, request: &Value, timeout: f64) -> anyhow::Result<Value> {
     let field = |name: &str| request.get(name).and_then(Value::as_str).unwrap_or_default().to_string();
     let call = ToolCall {
@@ -420,8 +421,7 @@ pub fn run_tool(ctx: &Ctx, request: &Value, timeout: f64) -> anyhow::Result<Valu
         options: request.get("options").and_then(Value::as_object).cloned().unwrap_or_default(),
         name: String::new(),
     };
-    let ran = firecrawl::run_tool(ctx, &call, timeout)?;
-    Ok(json!({"data": ran.data, "credits": ran.credits}))
+    Ok(firecrawl::run_tool_reply(ctx, &call, timeout)?)
 }
 
 /// Synchronous source lookup; America runs this off its event loop.

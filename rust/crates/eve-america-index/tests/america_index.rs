@@ -653,3 +653,41 @@ fn test_python_reference_cases() {
     // Multi-byte text is measured in characters, as Python's len() does.
     assert!(index::readable_body(&"\u{e9}".repeat(watch::MAX_BYTES)));
 }
+
+/// Python's `run_tool` hands back a JSON `true` creditsCost as `True`, and `_finite_number(True)` is False, so the
+/// default runner's lookup is metered unpriced ("? credits"), never as one credit.
+#[test]
+fn test_default_runner_bool_credit_cost_is_metered_unpriced() {
+    let dir = tempfile::tempdir().unwrap();
+    let http = Arc::new(move |url: &str, _: &HttpOptions| -> Result<(u16, String), FetchError> {
+        assert_eq!(url, firecrawl::TOOL_URL);
+        Ok((
+            200,
+            json!({"success": true, "data": {"alexandria": [
+                {"creditsCost": true, "data": reply(&[url_row(URL)], json!(2))["data"]}]}})
+            .to_string(),
+        ))
+    });
+    let mut ctx = offline_ctx(&[("FIRECRAWL_API_KEY", "offline-key"), ("EVE_FIRECRAWL_USD", "0.004")])
+        .with_http(http)
+        .with_ledger(eve_spend::Ledger::at(dir.path()));
+    ctx.firecrawl_calls = Arc::new(DayCount::at(dir.path().join(firecrawl::COUNT_FILE)));
+    let reply = index::run_tool(&ctx, &json!({"provider": "firecrawl-gov-index", "capability": "search",
+                                               "options": {}}), 20.0)
+        .unwrap();
+    assert_eq!(reply["credits"], json!(true));
+    let fetches = Rec::default();
+    let lookup = GovernmentIndex::default().with_ctx(ctx).with_fetch(fixed_fetch(200, PAGE, &fetches));
+    assert!(lookup.query(QUESTION, JURISDICTION).unwrap().ok);
+    let ledger: String = std::fs::read_dir(dir.path())
+        .unwrap()
+        .filter_map(|e| e.ok())
+        .filter(|e| e.path().extension().is_some_and(|x| x == "jsonl"))
+        .map(|e| std::fs::read_to_string(e.path()).unwrap())
+        .collect();
+    let line = ledger.lines().find(|l| l.contains("alexandria firecrawl-gov-index")).expect("metered");
+    let row: Value = serde_json::from_str(line).unwrap();
+    assert_eq!(row["usd"], Value::Null, "{line}");
+    assert_eq!(row["unpriced"], json!(true), "{line}");
+    assert_eq!(row["note"], json!("? credits"), "{line}");
+}

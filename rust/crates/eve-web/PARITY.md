@@ -36,7 +36,7 @@ Ticketmaster requests. Prompts and tool schemas are verbatim (`src/watch/tools.r
 | firecrawl._post | firecrawl::post |  |
 | firecrawl._tool | firecrawl::tool |  |
 | firecrawl.search | firecrawl::search |  |
-| firecrawl.run_tool | firecrawl::run_tool |  |
+| firecrawl.run_tool | firecrawl::run_tool, firecrawl::run_tool_reply | `run_tool_reply` (added by the eve-america-index verifier) is Python's dict as returned, a bool `creditsCost` kept as a bool; `run_tool` builds `Ran` from it |
 | firecrawl.pick_tool | firecrawl::pick_tool |  |
 | search_router.questions | search_router::questions |  |
 | search_router.SearchAnswer | search_router::SearchAnswer |  |

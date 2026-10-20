@@ -426,6 +426,19 @@ pub fn search(ctx: &Ctx, query: &str, limit: usize, timeout: f64, tools: bool) -
 /// Run one Alexandria tool (default timeout TOOL_TIMEOUT_SECS). FetchError when it fails, including a provider
 /// whose terms the owner has not accepted (eve never accepts them).
 pub fn run_tool(ctx: &Ctx, call: &ToolCall, timeout: f64) -> Result<Ran, FetchError> {
+    let reply = run_tool_reply(ctx, call, timeout)?;
+    let credits = match reply.get("credits") {
+        Some(Value::Number(n)) => Some(n.clone()),
+        Some(Value::Bool(b)) => Some(Number::from(i64::from(*b))),
+        _ => None,
+    };
+    Ok(Ran { data: reply.get("data").cloned().unwrap_or(Value::Null), credits })
+}
+
+/// `run_tool`'s answer exactly as Python returns it: `{"data": its result, "credits": n}`, where `credits` is the
+/// `creditsCost` Firecrawl sent when it is a JSON number or bool (Python's `isinstance(credits, (int, float))`
+/// keeps a bool), else null. A caller that checks the type of `credits` itself, as america_index does, reads this.
+pub fn run_tool_reply(ctx: &Ctx, call: &ToolCall, timeout: f64) -> Result<Value, FetchError> {
     let mut body = Map::new();
     body.insert("alexandria".into(), Value::Array(vec![call.alexandria()]));
     body.insert("timeout".into(), Value::from(((timeout - 5.0) * 1000.0) as i64));
@@ -451,11 +464,13 @@ pub fn run_tool(ctx: &Ctx, call: &ToolCall, timeout: f64) -> Result<Ran, FetchEr
         ));
     }
     let credits = match item.get("creditsCost") {
-        Some(Value::Number(n)) => Some(n.clone()),
-        Some(Value::Bool(b)) => Some(Number::from(i64::from(*b))),
-        _ => None,
+        Some(v @ (Value::Number(_) | Value::Bool(_))) => v.clone(),
+        _ => Value::Null,
     };
-    Ok(Ran { data: item["data"].clone(), credits })
+    let mut reply = Map::new();
+    reply.insert("data".into(), item["data"].clone());
+    reply.insert("credits".into(), credits);
+    Ok(Value::Object(reply))
 }
 
 /// The call the model asked for, checked against what the search offered: a listed tool, only its declared
