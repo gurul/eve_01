@@ -583,3 +583,49 @@ fn test_loads_reads_what_python_reads() {
     assert_eq!(loads("{\"a\": tr"), None);
     assert_eq!(loads("Nope"), None);
 }
+
+#[test]
+fn test_loads_reads_nesting_and_numbers_as_cpython_does() {
+    // serde_json stops at 128 levels; CPython reads far deeper, and so does this.
+    let deep = format!("{}1{}", "[".repeat(500), "]".repeat(500));
+    assert!(loads(&deep).is_some());
+    // A float literal past f64 is infinity in Python: read as null like NaN; ints past 64 bits still read.
+    assert_eq!(loads("{\"a\": 1e400, \"b\": -1e400, \"c\": 1.5e3}"), Some(json!({"a": null, "b": null, "c": 1500.0})));
+    assert!(loads("[18446744073709551616]").is_some());
+    // CPython's strictness: a trailing comma and a raw control character are ValueErrors.
+    assert_eq!(loads("[1,]"), None);
+    assert_eq!(loads("\"a\u{1}b\""), None);
+    // Past the nesting limit is a RecursionError, not a ValueError.
+    let too_deep = format!("{}{}", "[".repeat(eve_ipc::pyjson::MAX_DEPTH + 1), "]".repeat(eve_ipc::pyjson::MAX_DEPTH + 1));
+    assert_eq!(try_loads(&too_deep), Err("RecursionError".to_string()));
+}
+
+#[test]
+fn test_deep_arguments_and_results_go_through_and_a_recursion_error_is_pythons() {
+    // A tools/call nested 300 levels deep reaches the daemon (serde_json alone answered a parse error).
+    let w = Wire::new(|_, _| Ok(obj(json!({"ok": true, "result": {"ok": true}}))));
+    let nested = format!("{}1{}", "[".repeat(300), "]".repeat(300));
+    let line = format!(
+        "{{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/call\", \"params\": {{\"name\": \"remember\", \"arguments\": {{\"x\": {nested}}}}}}}"
+    );
+    w.server.handle_line(&line).unwrap();
+    w.server.join_calls();
+    assert_eq!(w.sent().len(), 1);
+    assert_eq!(w.out.messages()[0]["result"]["isError"], false);
+    // A RecursionError reading stdin leaves serve.
+    let n = eve_ipc::pyjson::MAX_DEPTH + 5;
+    let err = w.server.handle_line(&format!("{}{}", "[".repeat(n), "]".repeat(n))).unwrap_err();
+    assert_eq!(err.to_string(), "RecursionError");
+    // A daemon answer nested deeply is read; one past the limit raises out of post.
+    let folder = short_dir();
+    let reply: &'static [u8] = Box::leak(format!("{{\"ok\": true, \"result\": {nested}}}\n").into_bytes().into_boxed_slice());
+    let (path, thread) = serve_once(&folder, reply);
+    assert!(post(&json!({}), 5.0, Some(path.to_str().unwrap())).is_ok());
+    thread.join().unwrap();
+    let folder = short_dir();
+    let reply: &'static [u8] =
+        Box::leak(format!("{{\"r\": {}{}}}\n", "[".repeat(n), "]".repeat(n)).into_bytes().into_boxed_slice());
+    let (path, thread) = serve_once(&folder, reply);
+    assert_eq!(post(&json!({}), 5.0, Some(path.to_str().unwrap())), Err(PostError::Raised("RecursionError".into())));
+    thread.join().unwrap();
+}

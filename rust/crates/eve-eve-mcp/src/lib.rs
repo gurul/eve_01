@@ -37,6 +37,8 @@ use std::time::Duration;
 use parking_lot::Mutex;
 use serde_json::{json, Map, Value};
 
+use eve_ipc::LoadsError;
+
 pub use eve_ipc::dumps;
 
 pub const PROTOCOL_VERSIONS: [&str; 3] = ["2025-06-18", "2025-03-26", "2024-11-05"];
@@ -140,7 +142,8 @@ pub fn post(event: &Value, timeout: f64, spec: Option<&str>) -> Result<Map<Strin
         .sync_connect(Duration::from_secs_f64(CONNECT_SECS))
         .map_err(|e| PostError::Unreachable(os_error_name(e)))?;
     let wait = socket_timeout(timeout)?;
-    s.set_timeout(wait).map_err(|e| PostError::Unreachable(os_error_name(e)))?;
+    // Python's settimeout sits outside the try that turns OSError into Unreachable: an error there propagates.
+    s.set_timeout(wait).map_err(|e| PostError::Raised(os_error_name(e)))?;
     let mut buf: Vec<u8> = Vec::new();
     let mut sent = false;
     let exchange = (|| -> io::Result<()> {
@@ -170,7 +173,10 @@ pub fn post(event: &Value, timeout: f64, spec: Option<&str>) -> Result<Map<Strin
         return Err(if sent { PostError::Lost(name) } else { PostError::Unreachable(name) });
     }
     let line = buf.split(|b| *b == b'\n').next().unwrap_or(&[]);
-    let got = if line.is_empty() { None } else { std::str::from_utf8(line).ok().and_then(loads) };
+    let got = match std::str::from_utf8(line) {
+        Ok(text) if !line.is_empty() => try_loads(text).map_err(PostError::Raised)?,
+        _ => None,
+    };
     match got {
         Some(Value::Object(map)) => Ok(map),
         // The request went out whole: it may have run.
@@ -178,19 +184,36 @@ pub fn post(event: &Value, timeout: f64, spec: Option<&str>) -> Result<Map<Strin
     }
 }
 
-/// `json.loads` for one line: strict JSON, plus the bare `NaN`, `Infinity` and `-Infinity` Python accepts
-/// (read as `null`, since a JSON value here cannot hold them). `None` where Python raises `ValueError`.
+/// `json.loads` for one line, as CPython reads it (`eve_ipc::pyjson`, a port of its C scanner: the same nesting
+/// depth, numbers and strictness), plus the bare `NaN`, `Infinity` and `-Infinity` and the float literals past
+/// f64 (`1e400`) Python accepts, read as `null` since a JSON value here cannot hold them. `None` where Python
+/// raises `ValueError`; a `RecursionError` (nesting past `pyjson::MAX_DEPTH`) is also `None` here, see
+/// [`try_loads`] for the call sites that tell the two apart.
 pub fn loads(text: &str) -> Option<Value> {
-    match serde_json::from_str(text) {
-        Ok(v) => Some(v),
-        Err(_) => {
-            let swapped = swap_non_finite(text)?;
-            serde_json::from_str(&swapped).ok()
-        }
+    try_loads(text).ok().flatten()
+}
+
+/// `json.loads`: `Ok(None)` where Python raises `ValueError` (the callers catch it), `Err(class)` where it raises
+/// something no caller catches (`RecursionError`).
+fn try_loads(text: &str) -> Result<Option<Value>, String> {
+    match eve_ipc::pyjson::loads(text) {
+        Ok(v) => Ok(Some(v)),
+        Err(e @ LoadsError::Recursion(_)) => Err(e.python_type().to_string()),
+        // Python parsed it; only a NaN or infinity stood in the way. Read those as null.
+        Err(LoadsError::Value(m)) if m.starts_with("Out of range float") => match swap_non_finite(text) {
+            Some(swapped) => match eve_ipc::pyjson::loads(&swapped) {
+                Ok(v) => Ok(Some(v)),
+                Err(e @ LoadsError::Recursion(_)) => Err(e.python_type().to_string()),
+                Err(LoadsError::Value(_)) => Ok(None),
+            },
+            None => Ok(None),
+        },
+        Err(LoadsError::Value(_)) => Ok(None),
     }
 }
 
-/// Swap bare `NaN` / `Infinity` / `-Infinity` tokens outside strings for `null`; `None` when there are none.
+/// Swap bare `NaN` / `Infinity` / `-Infinity` tokens and number literals that overflow an f64 (outside strings)
+/// for `null`; `None` when there are none.
 fn swap_non_finite(text: &str) -> Option<String> {
     let mut out = String::with_capacity(text.len());
     let mut in_string = false;
@@ -212,6 +235,19 @@ fn swap_non_finite(text: &str) -> Option<String> {
             out.push_str("null");
             rest = &rest[token.len()..];
             changed = true;
+            continue;
+        } else if c == '-' || c.is_ascii_digit() {
+            let len = rest
+                .find(|ch: char| !(ch.is_ascii_digit() || matches!(ch, '-' | '+' | '.' | 'e' | 'E')))
+                .unwrap_or(rest.len());
+            let literal = &rest[..len];
+            if literal.parse::<f64>().is_ok_and(f64::is_infinite) {
+                out.push_str("null");
+                changed = true;
+            } else {
+                out.push_str(literal);
+            }
+            rest = &rest[len..];
             continue;
         }
         out.push(c);
@@ -344,7 +380,8 @@ impl Server {
         if raw.is_empty() {
             return Ok(());
         }
-        let Some(msg) = loads(raw) else {
+        // A ValueError is a parse error; a RecursionError leaves serve, as in Python.
+        let Some(msg) = try_loads(raw).map_err(io::Error::other)? else {
             return self.error(&Value::Null, -32700, "parse error");
         };
         if let Value::Array(batch) = &msg {
