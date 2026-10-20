@@ -416,6 +416,57 @@ async fn test_slow_describe_times_out_and_blindness_is_said_once() {
     w.stop().await;
 }
 
+/// Blocks every call until the gate opens.
+struct Gated {
+    gate: Arc<(StdMutex<bool>, Condvar)>,
+}
+
+impl Gated {
+    fn wait(&self) {
+        let (lock, cv) = &*self.gate;
+        let open = lock.lock().unwrap();
+        let _ = cv.wait_timeout_while(open, Duration::from_secs(5), |open| !*open).unwrap();
+    }
+}
+
+impl SceneClient for Gated {
+    fn describe(&self, _image: &[u8], _mime: &str, _previous: Option<&str>) -> anyhow::Result<(String, String)> {
+        self.wait();
+        Ok(("A desk.".into(), "".into()))
+    }
+    fn locate(&self, _image: &[u8], _mime: &str, _target: &str) -> anyhow::Result<Map<String, Value>> {
+        self.wait();
+        Ok(Map::new())
+    }
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn test_a_describe_dropped_by_stop_is_not_a_failure() {
+    // Python: stop() cancels the queued future, CancelledError leaves `_describe`
+    // before any counter or note is touched.
+    let clock = TestClock::new();
+    let gate = Arc::new((StdMutex::new(false), Condvar::new()));
+    let w = watcher_with(Some(Arc::new(Gated { gate: gate.clone() })), &clock, SceneConfig {
+        timeout_secs: 5.0,
+        ..test_config()
+    });
+    w.start(false);
+    w.offer(jpeg_frame(1, None));
+    let w1 = w.clone();
+    let locating = tokio::spawn(async move { w1.locate("mug", None).await }); // holds the one worker
+    tokio::time::sleep(Duration::from_millis(100)).await;
+    let w2 = w.clone();
+    let ticking = tokio::spawn(async move { w2.tick().await }); // its describe queues behind
+    tokio::time::sleep(Duration::from_millis(100)).await;
+    w.stop().await;
+    *gate.0.lock().unwrap() = true;
+    gate.1.notify_all();
+    locating.await.unwrap();
+    ticking.await.unwrap();
+    assert_eq!((w.describes(), w.failures()), (0, 0));
+    assert!(w.notes().is_empty() && w.latest().is_none());
+}
+
 #[tokio::test]
 async fn test_look_reuses_a_fresh_view_and_refreshes_a_stale_one() {
     let clock = TestClock::new();

@@ -609,7 +609,8 @@ impl Worker {
             None => false,
         };
         if !sent {
-            return Err(Cancelled.into());
+            // `run_in_executor` on a shut-down executor.
+            return Err(RuntimeError("cannot schedule new futures after shutdown".into()).into());
         }
         let limit = Duration::try_from_secs_f64(timeout_secs.max(0.0)).unwrap_or(Duration::MAX);
         match tokio::time::timeout(limit, done_rx).await {
@@ -1024,6 +1025,9 @@ impl SceneWatcher {
         let mut st = self.state.lock();
         let (text, change, latency) = match result {
             Ok(v) => v,
+            // stop() dropped the queued call: Python's CancelledError is re-raised out of
+            // `_describe`, leaving every field (the busy flag included) as it is.
+            Err(e) if e.downcast_ref::<Cancelled>().is_some() => return,
             Err(e) => {
                 st.failures += 1;
                 if st.failures == 1 || st.failures.is_multiple_of(10) {
