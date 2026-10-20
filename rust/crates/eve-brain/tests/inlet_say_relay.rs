@@ -519,11 +519,15 @@ async fn test_a_permission_prompt_is_answered_from_the_phone_and_silence_defers(
         assert_eq!(inlet.decide_permission("Bash", "sleep 1", "", false).await, None); // silence: defer
         assert!(rig.create.requests.lock().is_empty()); // yes/no never became a chat turn
         assert!(inlet.turns().is_empty()); // the prompt and its answers were Claude's: never the history
-        // the shipped default: the phone never asks (owner, 2026-09-21)
+        // the shipped default: the phone never asks (owner, 2026-09-21); EVE_TELEGRAM_ASK=1 turns it on
         let quiet = TRig::plain(FakeApi::new(vec![]), FakeCreate::new(vec![]), config(), |_| {});
         quiet.probe().set_claude(true);
         assert_eq!(quiet.inlet.decide_permission("Bash", "rm -rf /", "", false).await, None);
         assert!(quiet.api.log.lock().sent.is_empty());
+        assert!(!configured(Some(&std::collections::HashMap::new())).ask_permissions);
+        let asked_on: std::collections::HashMap<String, String> =
+            [("EVE_TELEGRAM_ASK".to_string(), "1".to_string())].into_iter().collect();
+        assert!(configured(Some(&asked_on)).ask_permissions);
     })
     .await;
 }
