@@ -38,7 +38,11 @@ os.dup2(2, 1)
 
 NS = {"__builtins__": builtins}
 _ORIGINALS = {}          # PyAutoGUI input calls, unwrapped, for the Rust helpers' own input
-_STATE = {"gui": 0, "gui_exc": None}
+_STATE = {"gui": 0, "gui_exc": None, "exec": False}
+# One conversation with the Rust side at a time. The model's code may start threads that print, log or call a
+# helper; in desktop_worker.py those only appended to a list, here they talk over the pipe, so a thread waits
+# its turn (re-entrant: a request serves nested requests on the same thread).
+_LOCK = threading.RLock()
 _NAMED = {}              # exception classes named by the Rust side that builtins does not have
 
 
@@ -81,23 +85,37 @@ def _error(kind, message):
     return cls(message)
 
 
+class _BetweenCalls(Exception):
+    """A thread of the model's code spoke after its exec_py call ended: nobody on the Rust side is listening."""
+
+
 def _request(msg):
-    """Send one message to the Rust side and wait for its answer, serving nested requests meanwhile."""
-    _send(msg)
-    while True:
-        reply = _recv()
-        if "op" in reply:
-            _serve(reply)
-            continue
-        if "err" in reply:
-            raise _error(*reply["err"])
-        return reply.get("ok")
+    """Send one message to the Rust side and wait for its answer, serving nested requests meanwhile.
+
+    The main thread runs every request and every exec call. Another thread (one the model's code started) is
+    heard only while an exec call is in flight; after it, the Rust side reads the daemon, not this pipe, so
+    the message goes nowhere (in desktop_worker.py it went to a finished call's output list)."""
+    with _LOCK:
+        if threading.current_thread() is not threading.main_thread() and not _STATE["exec"]:
+            raise _BetweenCalls(msg.get("t"))
+        _send(msg)
+        while True:
+            reply = _recv()
+            if "op" in reply:
+                _serve(reply)
+                continue
+            if "err" in reply:
+                raise _error(*reply["err"])
+            return reply.get("ok")
 
 
 # ---- what the model's code sees ---------------------------------------------------------------------
 
 def log(*values):
-    _request({"t": "log", "text": " ".join(str(v) for v in values)})
+    try:
+        _request({"t": "log", "text": " ".join(str(v) for v in values)})
+    except _BetweenCalls:
+        pass
 
 
 def display(value):
@@ -115,7 +133,11 @@ def display(value):
         value = buf.getvalue()
         encode = time.perf_counter() - t0
     png = base64.b64encode(value).decode("ascii") if isinstance(value, bytes) else None
-    _request({"t": "display", "png": png, "encode": encode})
+    try:
+        _request({"t": "display", "png": png, "encode": encode})
+    except _BetweenCalls:
+        if png is None or not value.startswith(b"\x89PNG\r\n\x1a\n"):
+            raise TypeError("display() expects a Pillow image or PNG bytes") from None
 
 
 class _Writer:
@@ -129,7 +151,11 @@ class _Writer:
 
 
 def _call(helper, /, **kwargs):
-    return _request({"t": "call", "name": helper, "kwargs": kwargs})
+    try:
+        return _request({"t": "call", "name": helper, "kwargs": kwargs})
+    except _BetweenCalls:
+        raise RuntimeError(f"{helper}() ran after its exec_py call ended; the desktop helpers answer only "
+                           "while a call is running") from None
 
 
 def click_element(x, y, expect="", clicks=1):
@@ -207,17 +233,24 @@ def _acting(original):
         if _STATE["gui"]:
             return original(*args, **kwargs)     # the Rust helpers' own input: already marked there
         point = None
-        if name in ("click", "doubleClick", "rightClick") and len(args) >= 2:
-            try:
-                point = [int(args[0]), int(args[1])]
-            except BaseException:
-                _request({"t": "act", "name": name, "point": None, "timed": False})
-                raise
-        _request({"t": "act", "name": name, "point": point, "timed": True})
+        try:
+            if name in ("click", "doubleClick", "rightClick") and len(args) >= 2:
+                try:
+                    point = [int(args[0]), int(args[1])]
+                except BaseException:
+                    _request({"t": "act", "name": name, "point": None, "timed": False})
+                    raise
+            _request({"t": "act", "name": name, "point": point, "timed": True})
+        except _BetweenCalls:
+            # between calls nothing reads `acted` (the next call's begin() clears it): the input alone
+            return original(*args, **kwargs)
         try:
             return original(*args, **kwargs)
         finally:
-            _request({"t": "act_end"})
+            try:
+                _request({"t": "act_end"})
+            except _BetweenCalls:
+                pass
 
     wrapped._eve_wrapped = True
     wrapped.__name__ = name
@@ -339,7 +372,13 @@ _OPS = {"init": _op_init, "setup": _op_setup, "check_desktop": _op_check_desktop
 def _serve(req):
     op = req.get("op")
     if op == "exec":
-        _send({"t": "done", **_op_exec(req)})
+        _STATE["exec"] = True
+        done = _op_exec(req)       # catches everything the model's code raises
+        # under the lock: a thread of the model's code is either finished with its request or not yet
+        # started, so "done" is the last line of the call
+        with _LOCK:
+            _STATE["exec"] = False
+            _send({"t": "done", **done})
         return
     try:
         result = _OPS[op](req)

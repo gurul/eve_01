@@ -1035,3 +1035,53 @@ fn test_the_models_stdin_and_stdout_cannot_reach_the_pipe() {
     assert_eq!(texts(&r), vec!["''"]);
     assert_eq!(run(&ns, "log('fine')")["output"][0]["text"], "fine");
 }
+
+#[test]
+fn test_threads_of_the_models_code_take_turns_on_the_pipe() {
+    // Python's log() only appended to a list, so the model's own threads could log freely; here they talk over
+    // the pipe, one at a time, and every line lands in the call's output
+    let ns = ns();
+    let code = "import threading\n\
+                def worker(i):\n    for j in range(25):\n        log('t', i, j)\n\
+                ts = [threading.Thread(target=worker, args=(i,)) for i in range(4)]\n\
+                [t.start() for t in ts]\n[t.join() for t in ts]\nlog('joined')";
+    let r = run(&ns, code);
+    let t = texts(&r);
+    assert_eq!(t.iter().filter(|l| l.starts_with("t ")).count(), 100, "{t:?}");
+    assert_eq!(t.last().unwrap(), "joined");
+    assert_eq!(run(&ns, "log('fine')")["output"], json!([{"type": "input_text", "text": "fine"}]));
+}
+
+#[test]
+fn test_a_thread_that_outlives_its_call_cannot_corrupt_the_next_one() {
+    let b = helpers_bench();
+    let code = "import threading, time\n\
+                def late():\n    time.sleep(0.2)\n    log('late')\n    print('late print')\n    pyautogui.click(5, 6)\n    \
+                try:\n        frontmost()\n    except RuntimeError as e:\n        globals()['late_err'] = str(e)\n\
+                threading.Thread(target=late).start()";
+    b.exec(code);
+    std::thread::sleep(std::time::Duration::from_millis(800));
+    let r = b.exec("log(late_err)");
+    let t = texts(&r);
+    assert_eq!(
+        t[0],
+        "frontmost() ran after its exec_py call ended; the desktop helpers answer only while a call is running"
+    );
+    assert!(!t.iter().any(|l| l.contains("late")), "{t:?}"); // the late log went nowhere, as in Python
+    assert_eq!(b.ns.eval("pyautogui.clicks").unwrap(), json!([[5, 6]])); // the input itself still ran
+    assert_eq!(b.exec("log('next')")["output"][0], json!({"type": "input_text", "text": "next"}));
+}
+
+#[test]
+fn test_a_script_delegate_ignores_the_objectives_arguments() {
+    let b = lane_bench(vec![calendar(false), calendar(true)]);
+    let on = env(&[("EVE_FAST_LANE", "1"), ("EVE_LANE_FIRST", "0")]);
+    if start_fast_lane(&b.h, &on, None, false) != "ready (keyword gate)" {
+        return; // the lane runs on macOS only
+    }
+    install(&mut b.h.lock(), &b.ns).unwrap();
+    let r = b.exec("log(delegate(steps=['Week'], text=5, key=1, done_when=2, dry_run=True))");
+    let t = texts(&r);
+    assert!(!t.iter().any(|l| l.contains("TypeError")), "{t:?}");
+    assert_eq!(b.ns.eval("pyautogui.clicks").unwrap(), json!([])); // a dry run clicks nothing
+}

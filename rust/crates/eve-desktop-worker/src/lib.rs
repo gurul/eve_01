@@ -554,13 +554,16 @@ pub fn call_helper(h: &mut Helpers, name: &str, kwargs: &Map<String, Value>) -> 
                 ),
                 other => return Err(type_error("steps", "a list", other)),
             };
+            // A script (steps=[…]) reads only `approve` and `dry_run`, as Python's run_script call did: the
+            // objective's arguments are not looked at, so a wrong type there is no error.
+            let script = steps.is_some();
             let call = DelegateCall {
-                objective: if steps.is_some() { String::new() } else { arg_str(k, "objective")? },
-                text: arg_opt_str(k, "text")?,
-                key: arg_opt_str(k, "key")?,
-                done_when: arg_opt_str(k, "done_when")?,
+                objective: if script { String::new() } else { arg_str(k, "objective")? },
+                text: if script { None } else { arg_opt_str(k, "text")? },
+                key: if script { None } else { arg_opt_str(k, "key")? },
+                done_when: if script { None } else { arg_opt_str(k, "done_when")? },
                 approve: arg_opt_str(k, "approve")?,
-                max_steps: if steps.is_some() { 4 } else { arg_int(k, "max_steps")? },
+                max_steps: if script { 4 } else { arg_int(k, "max_steps")? },
                 dry_run: py_truthy(kw(k, "dry_run")),
                 steps,
             };
