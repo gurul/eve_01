@@ -481,6 +481,8 @@ fn test_py_repr_matches_python() {
     assert_eq!(py_str_repr("it's"), "\"it's\"");
     assert_eq!(py_str_repr("a\nb\\"), "'a\\nb\\\\'");
     assert_eq!(py_str_repr("\u{7}"), "'\\x07'");
+    // Zs other than space, Cf, Co and Cn are escaped; letters outside ASCII are not.
+    assert_eq!(py_str_repr("\u{a0}\u{200b}\u{e000}\u{378}é"), "'\\xa0\\u200b\\ue000\\u0378é'");
     assert_eq!(py_repr(&json!(1e-5)), "1e-05");
     assert_eq!(py_repr(&json!(1.0)), "1.0");
     assert_eq!(py_repr(&json!(1e16)), "1e+16");

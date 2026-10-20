@@ -31,7 +31,7 @@ Status: complete
 | `Decider._lock` | private `parking_lot::Mutex<()>`, `Decider::predict_locked()` | Held only around predict |
 | (predict seam) | `Predict` = `Fn(&Value, &Value) -> Result<Value, PredictError>`, `PredictError { kind, message }` | `kind` is the Python exception class name the error reports (`RuntimeError`, `JevError`); `From<anyhow::Error>` gives `Exception` |
 | (`time.perf_counter`) | `perf_counter()`, `Clock` | |
-| (`repr`) | `py_repr(&Value)`, `py_str_repr(&str)` | Python `repr` of the decoded JSON value (quotes, escapes, float form `1e-05`) |
+| (`repr`) | `py_repr(&Value)`, `py_str_repr(&str)` | Python `repr` of the decoded JSON value (quotes, escapes, float form `1e-05`); `isprintable` by Unicode general category (`unicode-general-category`), so the Unicode version may differ from the running Python's by a few new code points |
 
 ## Tests
 | Python file | Python tests | Rust tests | Not ported (why) |

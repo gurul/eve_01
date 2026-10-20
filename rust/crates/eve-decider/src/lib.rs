@@ -676,20 +676,24 @@ pub fn py_str_repr(s: &str) -> String {
     out
 }
 
-/// An approximation of Python's `str.isprintable()` for one char: controls, separators other
-/// than the ASCII space, surrogates and unassigned format marks are escaped.
+/// Python's `str.isprintable()` for one char: every general category is printable except
+/// Cc, Cf, Cs, Co, Cn, Zl, Zp and Zs, and the ASCII space is printable.
 fn is_printable(c: char) -> bool {
+    use unicode_general_category::{get_general_category, GeneralCategory as G};
     if c == ' ' {
         return true;
     }
-    if c.is_control() || c.is_whitespace() {
-        return false;
-    }
-    !matches!(c as u32,
-        0xad | 0x600..=0x605 | 0x61c | 0x6dd | 0x70f | 0x8e2 | 0x180e | 0x200b..=0x200f | 0x202a..=0x202e
-        | 0x2060..=0x2064 | 0x2066..=0x206f | 0xfeff | 0xfff9..=0xfffb | 0xe000..=0xf8ff
-        | 0x110bd | 0x110cd | 0x1bca0..=0x1bca3 | 0x1d173..=0x1d17a | 0xe0001 | 0xe0020..=0xe007f
-        | 0xf0000..=0x10ffff)
+    !matches!(
+        get_general_category(c),
+        G::Control
+            | G::Format
+            | G::Surrogate
+            | G::PrivateUse
+            | G::Unassigned
+            | G::LineSeparator
+            | G::ParagraphSeparator
+            | G::SpaceSeparator
+    )
 }
 
 /// Python's `repr()` of a float.
