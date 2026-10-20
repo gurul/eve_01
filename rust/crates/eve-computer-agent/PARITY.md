@@ -59,10 +59,10 @@ Status: complete
 | `bridge/tests/test_desktop_live.py` (ref) | `test_worker_check_prints_ready` | Same name, `#[ignore = "live: ..."]`; plus `test_desktop_grants_names_the_process` | `test_screen_text_finds_the_frontmost_app_in_the_menu_bar` belongs to the desktop helpers |
 | `bridge/tests/test_app_reflex.py`, `test_rundown.py`, `test_voice_agent.py` (ref) | use `AgentEvent` | `test_agent_event_is_the_contract_s_type` | The rest belong to their crates |
 | `bridge/tests/test_telegram.py`, `test_telegram_chief.py` (ref) | use the creators / `ComputerAgent` | Covered by the creator tests above | They belong to the telegram crates |
-| (parity) | | `test_python_semantics_the_agent_leans_on`, `test_error_names_are_the_python_class_names`, `test_a_worker_that_cannot_start_is_a_generic_failure`, `test_a_child_that_never_says_ready_fails_to_start`, `test_a_client_with_no_child_answers_softly`, `test_a_connection_drop_is_told_apart_from_other_failures`, `test_plain_response_drops_what_the_stream_helper_parsed`, `test_an_unwritable_runs_dir_still_runs` | |
+| (parity) | | `test_python_semantics_the_agent_leans_on`, `test_error_names_are_the_python_class_names`, `test_a_worker_that_cannot_start_is_a_generic_failure`, `test_a_child_that_never_says_ready_fails_to_start`, `test_a_client_with_no_child_answers_softly`, `test_a_connection_drop_is_told_apart_from_other_failures`, `test_plain_response_drops_what_the_stream_helper_parsed`, `test_an_unwritable_runs_dir_still_runs`, `test_a_status_that_is_not_a_string_is_shown_as_python_repr`, `test_the_release_pass_runs_the_worker_program_with_its_arguments` | |
 
 ## Boundaries
-- The desktop worker child is the Rust `eve-desktop-worker` binary (beside the current executable, else on `PATH`), started with no arguments; Python started `python -m eve_bridge.desktop_worker`. The wire protocol is identical, so either child works (`WorkerClient::with_program`). The release step runs the same program with `--release`.
+- The desktop worker child is the Rust `eve-desktop-worker` binary (beside the current executable, else on `PATH`), started with no arguments; Python started `python -m eve_bridge.desktop_worker`. The wire protocol is identical, so either child works (`WorkerClient::with_program`). The release step runs the same program with the same arguments plus `--release` (Python ran `python -m eve_bridge.desktop_worker --release`; with the Rust binary that is `eve-desktop-worker --release`).
 - The Responses client is `eve_openrouter::Client` (crate eve-openrouter); the browser lane is `eve_browser_lane::BrowserLane`, wrapped as `BrowserLaneWorker`.
 - Spend goes to `eve_spend::Ledger::record_response` under the "browser & Mac tasks" feature; Jev calls are read from `eve_jev::METER`.
 
@@ -76,4 +76,4 @@ Status: complete
 - JSON decode error messages in log lines are serde's text, not `json.JSONDecodeError`'s.
 - `desktop_grants()["python"]` keeps its key name and holds the real path of the current executable (the binary TCC credits), not `sys.executable`.
 - The router asker's warning names the error class `JevError` directly.
-- Cancellation is a `watch` channel raced against the in-flight request or exec (`tokio::select!`), where Python cancelled the asyncio task; the observable result (`Stopped.` / `Stopped: <reason>.`, worker closed, `cancelled` log line) is the same.
+- Cancellation is a `watch` channel raced against the in-flight request or exec (`tokio::select!`), where Python cancelled the asyncio task; the observable result (`Stopped.` / `Stopped: <reason>.`, worker closed, `cancelled` log line) is the same. As with `asyncio.wait(FIRST_COMPLETED)`, a call that is already done when the cancel is seen returns its result; the loop's next `_check_cancel` then stops the run.

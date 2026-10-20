@@ -437,9 +437,11 @@ impl WorkerClient {
         self.soft(body, "run_plan", timeout, fallback).await
     }
 
-    /// Key-ups and mouse-ups for everything, in a fresh process (works when the worker is dead).
+    /// Key-ups and mouse-ups for everything, in a fresh process (works when the worker is dead): the worker
+    /// program and its arguments plus `--release` (Python: `python -m eve_bridge.desktop_worker --release`).
     async fn release_inputs(&self) -> anyhow::Result<()> {
         let mut p = Command::new(&self.program)
+            .args(&self.args)
             .arg("--release")
             .stdin(Stdio::null())
             .stdout(Stdio::null())

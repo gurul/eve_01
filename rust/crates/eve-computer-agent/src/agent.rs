@@ -454,10 +454,10 @@ impl ComputerAgent {
 
     /// Await `fut`, but let cancel() win at once (the SDK's own timeout is long).
     async fn interruptible<T, F: Future<Output = Res<T>>>(&self, fut: F) -> Res<T> {
+        // As asyncio.wait(FIRST_COMPLETED) over the call and the cancel event: an awaitable that is already done
+        // wins even when cancel() came first (both are done, and Python returns the result); one still pending
+        // loses to a cancel at once.
         let mut rx = self.cancel_tx.subscribe();
-        if *rx.borrow() {
-            return Err(cancelled());
-        }
         tokio::select! {
             biased;
             r = fut => r,

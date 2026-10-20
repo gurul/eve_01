@@ -700,9 +700,8 @@ pub fn classify_response(response: &Value) -> anyhow::Result<Classified> {
             _ => String::new(),
         };
         let status_repr = match status {
-            Some(Value::String(s)) => py::py_repr(s),
-            Some(Value::Null) | None => "None".to_string(),
-            Some(v) => v.to_string(),
+            Some(v) => py::value_repr(v),
+            None => "None".to_string(),
         };
         return Err(runtime(
             format!("Responses API did not complete (status {status_repr}) {msg}").trim().to_string(),
@@ -723,11 +722,7 @@ pub fn classify_response(response: &Value) -> anyhow::Result<Classified> {
         if t == "function_call" {
             let name = item.get("name").and_then(Value::as_str).unwrap_or("");
             if name != "exec_py" && name != "ask_user" {
-                let shown = match item.get("name") {
-                    Some(Value::String(s)) => py::py_repr(s),
-                    None | Some(Value::Null) => "None".into(),
-                    Some(v) => v.to_string(),
-                };
+                let shown = item.get("name").map(py::value_repr).unwrap_or_else(|| "None".into());
                 return Err(runtime(format!("unexpected function call {shown}")));
             }
             let raw = match item.get("arguments") {
@@ -866,11 +861,7 @@ pub fn user(text: &str) -> Value {
 /// `{"valid": bool, "guidance": str}` from a structured-output reply; an error when it is not one.
 pub fn verdict(response: &Value) -> anyhow::Result<(bool, String)> {
     if response.get("status") != Some(&Value::String("completed".into())) {
-        let status_repr = match response.get("status") {
-            Some(Value::String(s)) => py::py_repr(s),
-            Some(Value::Null) | None => "None".to_string(),
-            Some(v) => v.to_string(),
-        };
+        let status_repr = response.get("status").map(py::value_repr).unwrap_or_else(|| "None".into());
         return Err(runtime(format!("verifier did not complete (status {status_repr})")));
     }
     let output = response.get("output").and_then(Value::as_array).cloned().unwrap_or_default();

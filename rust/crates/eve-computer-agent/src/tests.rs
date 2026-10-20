@@ -2761,3 +2761,31 @@ fn test_the_browser_wording_never_sends_a_blank_page_to_needs_eyes() {
     assert!(PLAN_INSTRUCTIONS_BROWSER.contains("asked again with the new page's controls"));
     assert!(PLAN_INSTRUCTIONS.contains("operate the human's own Mac")); // the Mac lane's wording is its own
 }
+
+// ==== verifier additions =======================================================================================
+
+#[test]
+fn test_a_status_that_is_not_a_string_is_shown_as_python_repr() {
+    let e = classify_response(&json!({"status": 5, "id": "r", "output": []})).unwrap_err();
+    assert_eq!(e.to_string(), "Responses API did not complete (status 5)");
+    let e = classify_response(&json!({"status": true, "id": "r", "output": []})).unwrap_err();
+    assert_eq!(e.to_string(), "Responses API did not complete (status True)");
+    let e = classify_response(&json!({"id": "r", "output": []})).unwrap_err();
+    assert_eq!(e.to_string(), "Responses API did not complete (status None)");
+    let e = verdict(&json!({"status": false})).unwrap_err();
+    assert_eq!(e.to_string(), "verifier did not complete (status False)");
+    let bad = json!({"status": "completed", "id": "r", "output": [{"type": "function_call", "name": 7, "call_id": "c"}]});
+    assert_eq!(classify_response(&bad).unwrap_err().to_string(), "unexpected function call 7");
+}
+
+#[tokio::test]
+async fn test_the_release_pass_runs_the_worker_program_with_its_arguments() {
+    let t = tmp();
+    let out = t.path().join("argv.txt");
+    let script = t.path().join("worker.sh");
+    std::fs::write(&script, format!("echo \"$@\" > '{}'\n", out.display())).unwrap();
+    let w = WorkerClient::new(5.0).with_program("/bin/sh", vec![script.to_string_lossy().into_owned(), "-m".into(), "w".into()]);
+    w.close().await; // no child: only the release pass runs
+    assert_eq!(std::fs::read_to_string(&out).unwrap().trim(), "-m w --release");
+}
+
