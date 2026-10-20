@@ -627,7 +627,21 @@ fn py_oserror(e: &io::Error, path: &Path) -> String {
     }
 }
 
-/// Python's `repr()` of a str, for the common characters.
+/// Python's `str.isprintable()` for one character: exact for Latin-1 (controls, U+00A0 and the soft hyphen are
+/// not printable), and above it every separator (whitespace other than the space) and the common format
+/// characters are not; the rest of Unicode is taken as printable.
+fn py_printable(c: char) -> bool {
+    let n = c as u32;
+    if n < 0x100 {
+        return matches!(n, 0x20..=0x7e | 0xa1..=0xac | 0xae..=0xff);
+    }
+    !(c.is_whitespace()
+        || matches!(n, 0x180e | 0x200b..=0x200f | 0x202a..=0x202e | 0x2060..=0x2064 | 0x2066..=0x206f | 0xfeff)
+        || matches!(n, 0xd800..=0xdfff | 0xe000..=0xf8ff | 0xfff9..=0xfffb))
+}
+
+/// Python's `repr()` of a str: Python's quote choice and escapes, with [`py_printable`] deciding what is
+/// escaped.
 fn py_repr(s: &str) -> String {
     let quote = if s.contains('\'') && !s.contains('"') { '"' } else { '\'' };
     let mut out = String::with_capacity(s.len() + 2);
@@ -642,7 +656,16 @@ fn py_repr(s: &str) -> String {
                 out.push('\\');
                 out.push(c);
             }
-            c if (c as u32) < 0x20 || c as u32 == 0x7f => out.push_str(&format!("\\x{:02x}", c as u32)),
+            c if !py_printable(c) => {
+                let n = c as u32;
+                if n < 0x100 {
+                    out.push_str(&format!("\\x{n:02x}"));
+                } else if n < 0x10000 {
+                    out.push_str(&format!("\\u{n:04x}"));
+                } else {
+                    out.push_str(&format!("\\U{n:08x}"));
+                }
+            }
             c => out.push(c),
         }
     }

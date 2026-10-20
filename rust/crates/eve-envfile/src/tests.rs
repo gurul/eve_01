@@ -656,3 +656,20 @@ fn the_empty_env_file_var_means_the_default() {
     let environ = map(&[("EVE_ENV_FILE", "")]);
     assert_eq!(configured_path(&environ, h).unwrap(), d.path().join(".config/eve-bridge/env"));
 }
+
+#[test]
+fn repr_matches_python() {
+    // What Python 3.13 prints for repr() of each string.
+    let cases = [
+        ("/a/b", "'/a/b'"),
+        ("it's", "\"it's\""),
+        ("q\"'x", "'q\"\\'x'"),
+        ("a\u{7f}b\u{85}c\u{a0}d\u{ad}e\u{e9}", "'a\\x7fb\\x85c\\xa0d\\xade\u{e9}'"),
+        ("x\u{2028}y\u{200b}z\u{3000}w\u{feff}", "'x\\u2028y\\u200bz\\u3000w\\ufeff'"),
+        ("tab\tnl\n", "'tab\\tnl\\n'"),
+        ("\u{fc}\u{2713}\u{1f600}", "'\u{fc}\u{2713}\u{1f600}'"),
+    ];
+    for (s, want) in cases {
+        assert_eq!(py_repr(s), want, "{s:?}");
+    }
+}
