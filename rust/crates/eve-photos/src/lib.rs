@@ -70,11 +70,17 @@ impl Default for PhotoConfig {
     }
 }
 
+/// Python's `str.strip()`: Rust's Unicode whitespace plus the four ASCII
+/// separators (`\x1c`-`\x1f`) Python's `isspace` also counts.
+fn py_strip(s: &str) -> &str {
+    s.trim_matches(|c: char| c.is_whitespace() || ('\x1c'..='\x1f').contains(&c))
+}
+
 /// Python's `float(str)` for an already-stripped string: Rust's parser plus
 /// the underscore digit separators Python accepts (`"1_000"`). `None` where
 /// Python raises `ValueError`.
 fn py_float(raw: &str) -> Option<f64> {
-    let s = raw.trim();
+    let s = py_strip(raw);
     if s.is_empty() {
         return None;
     }
@@ -137,7 +143,7 @@ fn env_get<'a>(env: &'a HashMap<String, String>, name: &str) -> &'a str {
 
 /// `_env_int`: blank → default; junk → warning and default; negative → 0.
 fn env_int(name: &str, default: i64, environ: &HashMap<String, String>) -> i64 {
-    let raw = env_get(environ, name).trim();
+    let raw = py_strip(env_get(environ, name));
     if raw.is_empty() {
         return default;
     }
@@ -170,7 +176,7 @@ pub fn configured(environ: Option<&HashMap<String, String>>) -> PhotoConfig {
 
 /// `configured` over an explicit environment map.
 pub fn configured_from(env: &HashMap<String, String>) -> PhotoConfig {
-    let mb = env_get(env, "EVE_PHOTOS_MAX_MB").trim();
+    let mb = py_strip(env_get(env, "EVE_PHOTOS_MAX_MB"));
     let max_mb = if mb.is_empty() {
         DEFAULT_MAX_MB
     } else {

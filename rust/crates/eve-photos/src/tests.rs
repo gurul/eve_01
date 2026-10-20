@@ -262,3 +262,12 @@ fn py_repr_quotes_like_python() {
     assert_eq!(py_repr("it's"), "\"it's\"");
     assert_eq!(py_repr("a'\"b"), "'a\\'\"b'");
 }
+
+#[test]
+fn configured_strips_like_python_str_strip() {
+    // Python's strip() also drops the ASCII separators \x1c-\x1f.
+    let c = configured(Some(&env(&[("EVE_PHOTOS_MAX", "\x1c 7\x1f"), ("EVE_PHOTOS_MAX_MB", "\x1e1\n")])));
+    assert_eq!(c.max_photos, 7);
+    assert_eq!(c.max_bytes, 1024 * 1024);
+    assert_eq!(py_strip("\x1f\u{3000}x\x1c"), "x");
+}
