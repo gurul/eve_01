@@ -723,3 +723,78 @@ fn a_lite_rtf_upload_is_read() {
     let parts = text_of(&brain_parts_in(&up, &lite_env()).unwrap());
     assert!(parts.contains("the document \"note.rtf\" (application/rtf)") && parts.contains("Hello\nworld"));
 }
+
+/// A zip of (name, body, method) members.
+fn zip_with(members: &[(&str, &str, zip::CompressionMethod)]) -> Vec<u8> {
+    let mut out = Cursor::new(Vec::new());
+    {
+        let mut zf = zip::ZipWriter::new(&mut out);
+        for (name, body, method) in members {
+            zf.start_file(*name, zip::write::SimpleFileOptions::default().compression_method(*method))
+                .expect("member");
+            zf.write_all(body.as_bytes()).expect("write member");
+        }
+        zf.finish().expect("finish zip");
+    }
+    out.into_inner()
+}
+
+/// Where a member's stored bytes start: after its local header, name and extra field.
+fn data_start(zip: &[u8], name: &str) -> usize {
+    let at = zip.windows(name.len()).position(|w| w == name.as_bytes()).expect("member name") - 30;
+    assert_eq!(&zip[at..at + 4], b"PK\x03\x04");
+    let extra = u16::from_le_bytes([zip[at + 28], zip[at + 29]]) as usize;
+    at + 30 + name.len() + extra
+}
+
+#[test]
+fn a_corrupt_deflate_member_fails_the_document_and_a_crc_mismatch_reads_as_absent() {
+    // Python (checked against the bridge venv): a corrupt deflate stream is zlib.error out of zf.read, which
+    // _zip_xml_text does not catch, so office_text raises; a CRC mismatch is BadZipFile, caught: that slide is None.
+    use zip::CompressionMethod::{Deflated, Stored};
+    let draw = "http://schemas.openxmlformats.org/drawingml/2006/main";
+    let slide = |words: &str| format!("<p:sld xmlns:p=\"p\" xmlns:a=\"{draw}\"><a:t>{words}</a:t></p:sld>");
+    let dir = tmp();
+    let store = UploadStore::new(Some(dir.path().join("up")));
+
+    let mut deck = zip_with(&[
+        ("ppt/slides/slide1.xml", &slide("first"), Stored),
+        ("ppt/slides/slide2.xml", &slide("second").repeat(3), Deflated),
+    ]);
+    let at = data_start(&deck, "ppt/slides/slide2.xml");
+    deck[at..at + 6].copy_from_slice(&[0xff; 6]);
+    let up = store.save(&deck, "corrupt.pptx").unwrap();
+    let err = office_text(&up).unwrap_err();
+    assert_eq!(office::error_name(&err), "error");
+    // and brain_parts reads it as no words, never fatal
+    let parts = text_of(&brain_parts_in(&up, &lite_env()).unwrap());
+    assert!(parts.contains("eve could not read any text out of it here"));
+
+    let mut deck = zip_with(&[
+        ("ppt/slides/slide1.xml", &slide("first"), Stored),
+        ("ppt/slides/slide2.xml", &slide("second"), Stored),
+    ]);
+    let at = deck.windows(6).position(|w| w == b"second").unwrap();
+    deck[at] = b'S';
+    let up = store.save(&deck, "crc.pptx").unwrap();
+    assert_eq!(office_text(&up).unwrap(), "first");
+}
+
+#[test]
+fn xml_text_is_elementtree_text_and_numbers_read_as_int_does() {
+    // Python (checked against the bridge venv): 'Sheet 1:\n0:Food\tB:12'. ElementTree drops comments and
+    // processing instructions and joins the text around them; "Ⅻ" is not isalpha(); int("١") is 1.
+    let shared = format!("<sst xmlns=\"{SHEET}\"><si><t>Rent</t></si><si><t>Fo<!--x-->od</t></si></sst>");
+    let sheet = format!(
+        "<worksheet xmlns=\"{SHEET}\"><sheetData><row><c r=\"\u{216B}1\" t=\"s\"><v>\u{661}</v></c>\
+         <c r=\"B1\"><v>1<?pi?>2</v></c></row></sheetData></worksheet>"
+    );
+    let book = zip_of(&[("xl/sharedStrings.xml", &shared), ("xl/worksheets/sheet1.xml", &sheet)]);
+    let dir = tmp();
+    let store = UploadStore::new(Some(dir.path().join("up")));
+    let up = store.save(&book, "misc.xlsx").unwrap();
+    assert_eq!(office_text(&up).unwrap(), "Sheet 1:\n0:Food\tB:12");
+    assert_eq!(py::parse_int(" \u{1D7D9}_\u{1D7CE} ", 10), Some(10)); // mathematical digits 1 and 0
+    assert_eq!(py::parse_int("\u{661}f", 16), Some(31));
+    assert_eq!(py::parse_int("\u{216B}", 10), None);
+}

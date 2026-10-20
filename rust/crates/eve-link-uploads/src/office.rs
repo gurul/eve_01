@@ -7,19 +7,22 @@
 
 use std::collections::HashMap;
 use std::fs;
-use std::io::Read;
+use std::io::{ErrorKind, Read};
 use std::path::Path;
 use std::sync::LazyLock;
 
 use regex::bytes::Regex;
 use roxmltree::{Document, Node};
+use zip::result::ZipError;
+use zip::CompressionMethod;
 
 use crate::{py, Upload, MAX_TEXT_CHARS};
 
 /// Across all the parts read from one document.
 pub const OFFICE_MAX_UNZIPPED: u64 = 64 * 1024 * 1024;
+// ASCII case-insensitive, as Python's bytes pattern with IGNORECASE
 static XML_UNSAFE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?i)<!(?:DOCTYPE|ENTITY)").expect("unsafe xml pattern"));
+    LazyLock::new(|| Regex::new(r"(?i-u)<!(?:DOCTYPE|ENTITY)").expect("unsafe xml pattern"));
 const WORD_NS: &str = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 const DRAW_NS: &str = "http://schemas.openxmlformats.org/drawingml/2006/main";
 const SHEET_NS: &str = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
@@ -45,12 +48,37 @@ pub fn office_text(upload: &Upload) -> anyhow::Result<String> {
     zip_xml_text(&upload.path, extract)
 }
 
+/// An exception Python's `office_text` lets out of a member read (`zf.read` raises it and `read` does not catch
+/// it): its class name, for the log line.
+#[derive(Debug, thiserror::Error)]
+#[error("{name}: {detail}")]
+pub(crate) struct PyException {
+    pub(crate) name: &'static str,
+    pub(crate) detail: String,
+}
+
+/// The `OSError` subclass Python raises for an I/O error of this kind.
+fn os_error_name(e: &std::io::Error) -> &'static str {
+    match e.kind() {
+        ErrorKind::NotFound => "FileNotFoundError",
+        ErrorKind::PermissionDenied => "PermissionError",
+        ErrorKind::IsADirectory => "IsADirectoryError",
+        ErrorKind::NotADirectory => "NotADirectoryError",
+        _ => "OSError",
+    }
+}
+
 /// The Python exception class a failure in `office_text` corresponds to, for the log line.
 pub(crate) fn error_name(e: &anyhow::Error) -> &'static str {
-    if e.downcast_ref::<zip::result::ZipError>().is_some() {
-        "BadZipFile"
-    } else if e.downcast_ref::<std::io::Error>().is_some() {
-        "OSError"
+    if let Some(exc) = e.downcast_ref::<PyException>() {
+        exc.name
+    } else if let Some(zip_err) = e.downcast_ref::<ZipError>() {
+        match zip_err {
+            ZipError::Io(io_err) => os_error_name(io_err),
+            _ => "BadZipFile",
+        }
+    } else if let Some(io_err) = e.downcast_ref::<std::io::Error>() {
+        os_error_name(io_err)
     } else {
         "Exception"
     }
@@ -84,41 +112,102 @@ fn parse(text: &str) -> Option<Document<'_>> {
 
 /// Open the upload as a zip and hand `extract` a reader that returns one member's XML (bounded by
 /// [`OFFICE_MAX_UNZIPPED`] across the call), so a zip bomb cannot be read whole.
+///
+/// A member read fails as Python's `read` does: absent (None) for what it catches (`KeyError`, `BadZipFile` such
+/// as a bad local header or a CRC mismatch, `OSError`), and the whole document fails for what it lets out (an
+/// encrypted member's `RuntimeError`, an unsupported method's `NotImplementedError`, a corrupt deflate or LZMA
+/// stream's `zlib.error` / `LZMAError`); Python's exception stops `extract` there, so every read after it is None.
 fn zip_xml_text(path: &Path, extract: Extract) -> anyhow::Result<String> {
     let mut zf = zip::ZipArchive::new(fs::File::open(path)?)?;
-    let mut sizes: HashMap<String, u64> = HashMap::new();
-    for i in 0..zf.len() {
-        let info = zf.by_index_raw(i)?;
-        sizes.insert(info.name().to_string(), info.size());
-    }
     let mut left = OFFICE_MAX_UNZIPPED;
-    let mut read = |name: &str| -> Option<String> {
-        let size = *sizes.get(name)?;
-        if size > left {
-            return None;
-        }
-        left -= size;
-        let member = zf.by_name(name).ok()?;
-        let mut data = Vec::new();
-        member.take(size + 1).read_to_end(&mut data).ok()?;
-        if data.len() as u64 > size {
-            return None; // more than the directory declared: a damaged or hostile part
-        }
-        xml_text(&data)
+    let mut fatal: Option<PyException> = None;
+    let text = {
+        let mut read = |name: &str| -> Option<String> {
+            if fatal.is_some() {
+                return None;
+            }
+            let index = zf.index_for_name(name)?;
+            // the size the directory declares; a member whose local header is damaged is BadZipFile on read
+            let (size, method) = {
+                let raw = zf.by_index_raw(index).ok()?;
+                (raw.size(), raw.compression())
+            };
+            if size > left {
+                return None;
+            }
+            left -= size;
+            let member = match zf.by_index(index) {
+                Ok(member) => member,
+                Err(ZipError::UnsupportedArchive(why)) => {
+                    let name = if why == ZipError::PASSWORD_REQUIRED { "RuntimeError" } else { "NotImplementedError" };
+                    fatal = Some(PyException { name, detail: why.to_string() });
+                    return None;
+                }
+                Err(ZipError::InvalidPassword) => {
+                    fatal = Some(PyException { name: "RuntimeError", detail: "encrypted member".into() });
+                    return None;
+                }
+                Err(_) => return None,
+            };
+            let mut data = Vec::new();
+            if let Err(e) = member.take(size + 1).read_to_end(&mut data) {
+                if let Some(name) = stream_error_name(&e, method) {
+                    fatal = Some(PyException { name, detail: e.to_string() });
+                }
+                return None;
+            }
+            if data.len() as u64 > size {
+                return None; // more than the directory declared: a damaged or hostile part
+            }
+            xml_text(&data)
+        };
+        extract(&mut read)
     };
-    Ok(py::strip(&extract(&mut read)).to_string())
+    if let Some(exc) = fatal {
+        return Err(exc.into());
+    }
+    Ok(py::strip(&text).to_string())
+}
+
+/// The exception Python's decompressor raises past `read` for a member read error, or None when Python's `read`
+/// catches it (a CRC mismatch is `BadZipFile`, a stream cut short ends at its CRC check, bzip2's is `OSError`).
+fn stream_error_name(e: &std::io::Error, method: CompressionMethod) -> Option<&'static str> {
+    if e.to_string() == "Invalid checksum" {
+        return None;
+    }
+    match method {
+        CompressionMethod::Deflated if e.kind() == ErrorKind::InvalidInput => Some("error"),
+        CompressionMethod::Lzma
+            if matches!(e.kind(), ErrorKind::InvalidData | ErrorKind::InvalidInput | ErrorKind::Other) =>
+        {
+            Some("LZMAError")
+        }
+        _ => None,
+    }
 }
 
 fn is(node: &Node, ns: &str, name: &str) -> bool {
     node.is_element() && node.tag_name().name() == name && node.tag_name().namespace() == Some(ns)
 }
 
-/// `"".join(t.text for t in node.iter(tag) if t.text)`.
+/// ElementTree's `.text`: the character data before the element's first child element. ElementTree drops
+/// comments and processing instructions, so text on both sides of one is joined; roxmltree keeps them as nodes.
+fn et_text(node: Node) -> String {
+    let mut out = String::new();
+    for child in node.children() {
+        if child.is_element() {
+            break;
+        }
+        if child.is_text() {
+            out.push_str(child.text().unwrap_or(""));
+        }
+    }
+    out
+}
+
+/// `[t.text for t in node.iter(tag) if t.text]`.
 fn runs(node: Node, ns: &str, name: &str) -> Vec<String> {
-    node.descendants()
-        .filter(|n| is(n, ns, name))
-        .filter_map(|n| n.text().filter(|t| !t.is_empty()).map(str::to_string))
-        .collect()
+    node.descendants().filter(|n| is(n, ns, name)).map(et_text).filter(|t| !t.is_empty()).collect()
 }
 
 /// A Word document's paragraphs: the <w:t> runs, joined, one line per <w:p>.
@@ -151,7 +240,7 @@ pub(crate) fn pptx_from(read: &mut ReadPart<'_>) -> String {
 
 /// The column letters of a cell reference ("B" from "B12"), or "" when there is none.
 fn col(cell_ref: Option<&str>) -> String {
-    cell_ref.unwrap_or("").chars().filter(|c| c.is_alphabetic()).collect()
+    cell_ref.unwrap_or("").chars().filter(|c| py::is_alpha(*c)).collect()
 }
 
 /// An Excel book's sheets as tab-separated rows, each sheet under its number. Shared strings are resolved; a cell
@@ -209,7 +298,7 @@ fn cell_value(cell: Node, shared: &[String]) -> String {
     let text = cell
         .children()
         .find(|n| is(n, SHEET_NS, "v"))
-        .map(|v| py::strip(v.text().unwrap_or("")).to_string())
+        .map(|v| py::strip(&et_text(v)).to_string())
         .unwrap_or_default();
     if kind == Some("s") {
         // shared[int(text)]: Python's int() and list indexing, a negative index counting from the end

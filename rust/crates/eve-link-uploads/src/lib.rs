@@ -453,8 +453,9 @@ impl UploadStore {
 
     fn folder(&self) -> Result<&Path, StoreError> {
         if let Err(err) = fs::DirBuilder::new().mode(0o700).create(&self.root) {
-            // Path.mkdir(exist_ok=True): an existing directory (a link to one included) is fine
-            if err.kind() != ErrorKind::AlreadyExists || !self.root.is_dir() {
+            // Path.mkdir(exist_ok=True): any error but a missing parent is fine when a directory (a link to one
+            // included) is there
+            if err.kind() == ErrorKind::NotFound || !self.root.is_dir() {
                 return Err(err.into());
             }
         }

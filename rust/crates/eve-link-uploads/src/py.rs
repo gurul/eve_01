@@ -12,6 +12,34 @@ pub(crate) fn is_other(c: char) -> bool {
     matches!(get_general_category(c), G::Control | G::Format | G::Surrogate | G::PrivateUse | G::Unassigned)
 }
 
+/// `str.isalpha()` for one character: a letter (general category Lu, Ll, Lt, Lm or Lo). Not Rust's
+/// `is_alphabetic`, which also takes letter numbers (Ⅻ) and combining marks.
+pub(crate) fn is_alpha(c: char) -> bool {
+    matches!(
+        get_general_category(c),
+        G::UppercaseLetter | G::LowercaseLetter | G::TitlecaseLetter | G::ModifierLetter | G::OtherLetter
+    )
+}
+
+/// The value of a decimal digit as `int()` reads one: ASCII or any Unicode decimal digit (category Nd, which
+/// Unicode always encodes in runs of ten from 0 to 9).
+fn decimal_value(c: char) -> Option<u32> {
+    if c.is_ascii_digit() {
+        return c.to_digit(10);
+    }
+    if get_general_category(c) != G::DecimalNumber {
+        return None;
+    }
+    let mut start = c as u32;
+    while let Some(prev) = start.checked_sub(1).and_then(char::from_u32) {
+        if get_general_category(prev) != G::DecimalNumber {
+            break;
+        }
+        start -= 1;
+    }
+    Some((c as u32 - start) % 10)
+}
+
 /// `str.isspace()`.
 pub(crate) fn is_space(c: char) -> bool {
     c.is_whitespace() || ('\u{1c}'..='\u{1f}').contains(&c)
@@ -81,7 +109,7 @@ pub(crate) fn int_or_zero(v: Option<&Value>) -> Option<i64> {
 }
 
 /// `int(text, base)` for base 10 or 16: surrounding whitespace, a sign, digits with single underscores between
-/// them (and a `0x` prefix in base 16).
+/// them (and a `0x` prefix in base 16). Any Unicode decimal digit reads as its ASCII digit, as Python's does.
 pub(crate) fn parse_int(text: &str, base: u32) -> Option<i64> {
     let s = strip(text);
     let (negative, s) = match s.as_bytes().first() {
@@ -102,7 +130,7 @@ pub(crate) fn parse_int(text: &str, base: u32) -> Option<i64> {
         if c == '_' {
             continue;
         }
-        let d = c.to_digit(base)?;
+        let d = decimal_value(c).or_else(|| c.to_digit(base)).filter(|d| *d < base)?;
         value = value.checked_mul(i64::from(base))?.checked_add(i64::from(d))?;
     }
     Some(if negative { -value } else { value })
