@@ -45,6 +45,9 @@ use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, ReadBuf};
 use tokio::sync::{mpsc, watch};
 use tokio::task::JoinHandle;
 
+pub mod pyjson;
+pub use pyjson::LoadsError;
+
 // Platform defaults.
 pub const DEFAULT_UNIX_PATH: &str = "/tmp/eve-bridge.sock";
 pub const DEFAULT_TCP_HOST: &str = "127.0.0.1";
@@ -134,16 +137,20 @@ impl UnixTransport {
 
     #[cfg(unix)]
     async fn bind(&self) -> io::Result<Vec<Listener>> {
+        use std::os::unix::fs::MetadataExt;
         let p = Path::new(&self.path);
         if p.exists() {
             let _ = std::fs::remove_file(p);
         }
         let listener = bind_unix(&self.path)?;
+        // asyncio (3.13, `cleanup_socket=True`) notes the socket file's inode
+        // so closing the server removes the file only if it is still this one.
+        let inode = std::fs::metadata(&self.path).ok().map(|m| m.ino());
         {
             use std::os::unix::fs::PermissionsExt;
             let _ = std::fs::set_permissions(&self.path, std::fs::Permissions::from_mode(0o600));
         }
-        Ok(vec![Listener::Unix(listener)])
+        Ok(vec![Listener::Unix(listener, inode.map(|ino| (self.path.clone(), ino)))])
     }
 
     #[cfg(not(unix))]
@@ -233,24 +240,34 @@ impl TcpLoopbackTransport {
             }
         }
         let mut out = Vec::new();
-        for addr in addrs {
-            match bind_tcp(addr) {
+        for addr in &addrs {
+            match bind_tcp(*addr) {
                 Ok(l) => out.push(Listener::Tcp(l)),
-                Err(e) if e.raw_os_error() == Some(libc::EADDRNOTAVAIL) => {
-                    tracing::debug!("error while attempting to bind on address {}: {e}", py_sockaddr_repr(&addr));
-                }
                 Err(e) => {
-                    return Err(io::Error::new(
-                        e.kind(),
-                        format!("error while attempting to bind on address {}: {e}", py_sockaddr_repr(&addr)),
-                    ))
+                    let msg = format!(
+                        "error while attempting to bind on address {}: {}",
+                        py_sockaddr_repr(addr),
+                        py_os_error_str(&e).to_lowercase()
+                    );
+                    if e.raw_os_error() == Some(libc::EADDRNOTAVAIL) {
+                        // Assume the family is not enabled (bpo-30945).
+                        tracing::debug!("{msg}");
+                        continue;
+                    }
+                    // `OSError(err.errno, msg)`: str() puts the errno in front.
+                    let text = match e.raw_os_error() {
+                        Some(n) => format!("[Errno {n}] {msg}"),
+                        None => msg,
+                    };
+                    return Err(io::Error::new(e.kind(), text));
                 }
             }
         }
         if out.is_empty() {
+            let all: Vec<String> = addrs.iter().map(py_sockaddr_repr).collect();
             return Err(io::Error::new(
                 io::ErrorKind::AddrNotAvailable,
-                format!("could not bind on any address out of {}", self.address()),
+                format!("could not bind on any address out of [{}]", all.join(", ")),
             ));
         }
         Ok(out)
@@ -260,7 +277,7 @@ impl TcpLoopbackTransport {
     /// addresses of the host are tried, the first one only.
     pub fn sync_connect(&self, timeout: Duration) -> io::Result<SyncStream> {
         let addr = self.ipv4_addr()?;
-        let stream = TcpStream::connect_timeout(&addr, timeout)?;
+        let stream: TcpStream = connect_socket(socket2::Domain::IPV4, &addr.into(), timeout)?.into();
         let stream = SyncStream::Tcp(stream);
         stream.set_timeout(timeout)?;
         Ok(stream)
@@ -275,7 +292,7 @@ impl TcpLoopbackTransport {
 
     pub fn is_in_use(&self) -> bool {
         match self.ipv4_addr() {
-            Ok(addr) => TcpStream::connect_timeout(&addr, Duration::from_millis(500)).is_ok(),
+            Ok(addr) => connect_socket(socket2::Domain::IPV4, &addr.into(), Duration::from_millis(500)).is_ok(),
             Err(_) => false,
         }
     }
@@ -417,13 +434,24 @@ pub fn make_transport_from(spec: Option<&str>, env: Option<&str>, platform: Plat
 // ---------------------------------------------------------------------------
 // Sockets
 
+/// `settimeout(timeout)` then `connect(addr)`: a zero timeout is a
+/// non-blocking connect, which may fail with `EINPROGRESS` / `EAGAIN`.
+fn connect_socket(domain: socket2::Domain, addr: &socket2::SockAddr, timeout: Duration) -> io::Result<socket2::Socket> {
+    use socket2::{Socket, Type};
+    let socket = Socket::new(domain, Type::STREAM, None)?;
+    if timeout.is_zero() {
+        socket.set_nonblocking(true)?;
+        socket.connect(addr)?;
+    } else {
+        socket.connect_timeout(addr, timeout)?;
+    }
+    Ok(socket)
+}
+
 #[cfg(unix)]
 fn connect_unix(path: &str, timeout: Duration) -> io::Result<std::os::unix::net::UnixStream> {
-    use socket2::{Domain, SockAddr, Socket, Type};
-    let addr = SockAddr::unix(path)?;
-    let socket = Socket::new(Domain::UNIX, Type::STREAM, None)?;
-    socket.connect_timeout(&addr, timeout)?;
-    Ok(socket.into())
+    let addr = socket2::SockAddr::unix(path)?;
+    Ok(connect_socket(socket2::Domain::UNIX, &addr, timeout)?.into())
 }
 
 #[cfg(unix)]
@@ -433,7 +461,11 @@ fn bind_unix(path: &str) -> io::Result<tokio::net::UnixListener> {
     let socket = Socket::new(Domain::UNIX, Type::STREAM, None)?;
     if let Err(e) = socket.bind(&addr) {
         if e.kind() == io::ErrorKind::AddrInUse {
-            return Err(io::Error::new(e.kind(), format!("Address {} is already in use", py_str_repr(path))));
+            // asyncio's `OSError(errno.EADDRINUSE, f"Address {path!r} is already in use")`.
+            return Err(io::Error::new(
+                e.kind(),
+                format!("[Errno {}] Address {} is already in use", libc::EADDRINUSE, py_str_repr(path)),
+            ));
         }
         return Err(e);
     }
@@ -475,16 +507,20 @@ pub enum SyncStream {
 }
 
 impl SyncStream {
-    /// Python's `settimeout`: one deadline for every read and write.
+    /// Python's `settimeout`: one deadline for every read and write. Zero
+    /// means non-blocking, as `settimeout(0.0)` does.
     pub fn set_timeout(&self, timeout: Duration) -> io::Result<()> {
-        let t = if timeout.is_zero() { None } else { Some(timeout) };
+        let nonblocking = timeout.is_zero();
+        let t = if nonblocking { None } else { Some(timeout) };
         match self {
             #[cfg(unix)]
             SyncStream::Unix(s) => {
+                s.set_nonblocking(nonblocking)?;
                 s.set_read_timeout(t)?;
                 s.set_write_timeout(t)
             }
             SyncStream::Tcp(s) => {
+                s.set_nonblocking(nonblocking)?;
                 s.set_read_timeout(t)?;
                 s.set_write_timeout(t)
             }
@@ -574,8 +610,9 @@ impl AsyncWrite for IpcStream {
 }
 
 enum Listener {
+    /// The listener, and the socket path with the inode it was bound with.
     #[cfg(unix)]
-    Unix(tokio::net::UnixListener),
+    Unix(tokio::net::UnixListener, Option<(String, u64)>),
     Tcp(tokio::net::TcpListener),
 }
 
@@ -583,7 +620,7 @@ impl Listener {
     async fn accept(&self) -> io::Result<IpcStream> {
         match self {
             #[cfg(unix)]
-            Listener::Unix(l) => l.accept().await.map(|(s, _)| IpcStream::Unix(s)),
+            Listener::Unix(l, _) => l.accept().await.map(|(s, _)| IpcStream::Unix(s)),
             Listener::Tcp(l) => l.accept().await.map(|(s, _)| IpcStream::Tcp(s)),
         }
     }
@@ -591,12 +628,20 @@ impl Listener {
     fn local_address(&self) -> String {
         match self {
             #[cfg(unix)]
-            Listener::Unix(l) => l
+            Listener::Unix(l, _) => l
                 .local_addr()
                 .ok()
                 .and_then(|a| a.as_pathname().map(|p| p.display().to_string()))
                 .unwrap_or_default(),
             Listener::Tcp(l) => l.local_addr().map(|a| a.to_string()).unwrap_or_default(),
+        }
+    }
+
+    fn cleanup(&self) -> Option<(String, u64)> {
+        match self {
+            #[cfg(unix)]
+            Listener::Unix(_, c) => c.clone(),
+            Listener::Tcp(_) => None,
         }
     }
 }
@@ -611,6 +656,9 @@ pub struct Server {
     conns_tx: parking_lot::Mutex<Option<mpsc::Sender<()>>>,
     conns_rx: tokio::sync::Mutex<mpsc::Receiver<()>>,
     addresses: Vec<String>,
+    /// Unix socket files to remove on close, if still the ones bound.
+    unix_cleanup: parking_lot::Mutex<Vec<(String, u64)>>,
+    serving_forever: std::sync::atomic::AtomicBool,
 }
 
 impl Server {
@@ -620,6 +668,7 @@ impl Server {
         // reports closed once the server's copy and all of theirs are gone.
         let (conns_tx, conns_rx) = mpsc::channel(1);
         let addresses = listeners.iter().map(Listener::local_address).collect();
+        let unix_cleanup = listeners.iter().filter_map(Listener::cleanup).collect();
         let tasks = listeners
             .into_iter()
             .map(|l| tokio::spawn(accept_loop(l, on_conn.clone(), conns_tx.clone(), closed.subscribe())))
@@ -630,6 +679,8 @@ impl Server {
             conns_tx: parking_lot::Mutex::new(Some(conns_tx)),
             conns_rx: tokio::sync::Mutex::new(conns_rx),
             addresses,
+            unix_cleanup: parking_lot::Mutex::new(unix_cleanup),
+            serving_forever: std::sync::atomic::AtomicBool::new(false),
         }
     }
 
@@ -642,13 +693,20 @@ impl Server {
         !*self.closed.borrow()
     }
 
-    /// Stop accepting. Connections already accepted run to the end.
+    /// Stop accepting. Connections already accepted run to the end. A Unix
+    /// socket file is removed if it is still the one this server bound
+    /// (asyncio 3.13's `cleanup_socket`).
     pub fn close(&self) {
-        self.closed.send_replace(true);
+        if self.closed.send_replace(true) {
+            return;
+        }
         for t in self.accept_tasks.lock().iter() {
             t.abort();
         }
         self.conns_tx.lock().take();
+        for (path, inode) in std::mem::take(&mut *self.unix_cleanup.lock()) {
+            remove_if_same_inode(&path, inode);
+        }
     }
 
     /// Wait until the server is closed and every accepted connection is done
@@ -664,12 +722,43 @@ impl Server {
         while conns.recv().await.is_some() {}
     }
 
-    /// Run until [`Server::close`] is called.
-    pub async fn serve_forever(&self) {
+    /// Run until [`Server::close`] is called. Like asyncio, refuses a server
+    /// that is closed or already being served forever.
+    pub async fn serve_forever(&self) -> anyhow::Result<()> {
+        use std::sync::atomic::Ordering;
+        if self.serving_forever.swap(true, Ordering::SeqCst) {
+            anyhow::bail!(NamedError::new("RuntimeError", "server is already being awaited on serve_forever()"));
+        }
+        if !self.is_serving() {
+            self.serving_forever.store(false, Ordering::SeqCst);
+            anyhow::bail!(NamedError::new("RuntimeError", "server is closed"));
+        }
         let mut rx = self.closed.subscribe();
         let _ = rx.wait_for(|c| *c).await;
+        self.serving_forever.store(false, Ordering::SeqCst);
+        Ok(())
     }
 }
+
+#[cfg(unix)]
+fn remove_if_same_inode(path: &str, inode: u64) {
+    use std::os::unix::fs::MetadataExt;
+    match std::fs::metadata(path) {
+        Ok(m) if m.ino() == inode => {
+            if let Err(e) = std::fs::remove_file(path) {
+                if e.kind() != io::ErrorKind::NotFound {
+                    tracing::error!("Unable to clean up listening UNIX socket {}: {}", py_str_repr(path), e);
+                }
+            }
+        }
+        Ok(_) => {}
+        Err(e) if e.kind() == io::ErrorKind::NotFound => {}
+        Err(e) => tracing::error!("Unable to clean up listening UNIX socket {}: {}", py_str_repr(path), e),
+    }
+}
+
+#[cfg(not(unix))]
+fn remove_if_same_inode(_path: &str, _inode: u64) {}
 
 impl Drop for Server {
     fn drop(&mut self) {
@@ -745,22 +834,80 @@ pub fn error_type_name(e: &anyhow::Error) -> String {
     if let Some(s) = e.downcast_ref::<SpecError>() {
         return s.python_type().to_string();
     }
+    if let Some(l) = e.downcast_ref::<LoadsError>() {
+        return l.python_type().to_string();
+    }
     if let Some(io) = e.downcast_ref::<io::Error>() {
-        return match io.kind() {
-            io::ErrorKind::NotFound => "FileNotFoundError",
-            io::ErrorKind::PermissionDenied => "PermissionError",
-            io::ErrorKind::ConnectionRefused => "ConnectionRefusedError",
-            io::ErrorKind::ConnectionReset => "ConnectionResetError",
-            io::ErrorKind::BrokenPipe => "BrokenPipeError",
-            io::ErrorKind::TimedOut => "TimeoutError",
-            _ => "OSError",
+        return io_error_type_name(io).to_string();
+    }
+    if let Some(j) = e.downcast_ref::<serde_json::Error>() {
+        return match j.classify() {
+            serde_json::error::Category::Syntax | serde_json::error::Category::Eof => "JSONDecodeError",
+            _ => "ValueError",
         }
         .to_string();
     }
-    if e.downcast_ref::<serde_json::Error>().is_some() {
-        return "ValueError".to_string();
-    }
     "Exception".to_string()
+}
+
+/// The `OSError` subclass Python raises for an I/O error: by errno, as
+/// `OSError(errno, ...)` picks it, or by kind for errors with no errno.
+pub fn io_error_type_name(e: &io::Error) -> &'static str {
+    if let Some(n) = e.raw_os_error() {
+        return match n {
+            libc::EAGAIN | libc::EALREADY | libc::EINPROGRESS => "BlockingIOError",
+            libc::ECHILD => "ChildProcessError",
+            libc::EPIPE | libc::ESHUTDOWN => "BrokenPipeError",
+            libc::ECONNABORTED => "ConnectionAbortedError",
+            libc::ECONNREFUSED => "ConnectionRefusedError",
+            libc::ECONNRESET => "ConnectionResetError",
+            libc::EEXIST => "FileExistsError",
+            libc::ENOENT => "FileNotFoundError",
+            libc::EISDIR => "IsADirectoryError",
+            libc::ENOTDIR => "NotADirectoryError",
+            libc::EINTR => "InterruptedError",
+            libc::EACCES | libc::EPERM => "PermissionError",
+            libc::ESRCH => "ProcessLookupError",
+            libc::ETIMEDOUT => "TimeoutError",
+            _ => "OSError",
+        };
+    }
+    match e.kind() {
+        io::ErrorKind::WouldBlock => "BlockingIOError",
+        io::ErrorKind::BrokenPipe => "BrokenPipeError",
+        io::ErrorKind::ConnectionAborted => "ConnectionAbortedError",
+        io::ErrorKind::ConnectionRefused => "ConnectionRefusedError",
+        io::ErrorKind::ConnectionReset => "ConnectionResetError",
+        io::ErrorKind::AlreadyExists => "FileExistsError",
+        io::ErrorKind::NotFound => "FileNotFoundError",
+        io::ErrorKind::IsADirectory => "IsADirectoryError",
+        io::ErrorKind::NotADirectory => "NotADirectoryError",
+        io::ErrorKind::Interrupted => "InterruptedError",
+        io::ErrorKind::PermissionDenied => "PermissionError",
+        io::ErrorKind::TimedOut => "TimeoutError",
+        _ => "OSError",
+    }
+}
+
+/// `str(OSError)`: `[Errno N] <strerror>` for an error from the OS, else the
+/// error's own text.
+pub fn py_os_error_str(e: &io::Error) -> String {
+    match e.raw_os_error() {
+        Some(n) if e.get_ref().is_none() => {
+            let text = e.to_string();
+            let strerror = text.strip_suffix(&format!(" (os error {n})")).unwrap_or(&text);
+            format!("[Errno {n}] {strerror}")
+        }
+        _ => e.to_string(),
+    }
+}
+
+/// The text after `"<Type>: "` in an error reply: `str(e)`.
+pub fn error_message(e: &anyhow::Error) -> String {
+    match e.downcast_ref::<io::Error>() {
+        Some(io) => py_os_error_str(io),
+        None => e.to_string(),
+    }
 }
 
 /// Listens on a transport, dispatches one request per connection.
@@ -811,10 +958,12 @@ impl IpcServer {
         let Some(server) = self.server() else {
             anyhow::bail!("ipc server not started");
         };
-        server.serve_forever().await;
-        server.close();
-        server.wait_closed().await;
-        Ok(())
+        let res = server.serve_forever().await;
+        if res.is_ok() {
+            server.close();
+            server.wait_closed().await;
+        }
+        res
     }
 
     pub async fn stop(&self) {
@@ -844,7 +993,10 @@ where
     let line = match read_line(stream).await {
         Ok(line) => line,
         Err(e) => {
-            tracing::error!("ipc: could not read the request: {e}");
+            // Python's readline raises here, outside the handler's try: asyncio
+            // logs it and the connection closes with no reply.
+            let kind = if e.kind() == io::ErrorKind::InvalidData { "ValueError" } else { io_error_type_name(&e) };
+            tracing::error!("Unhandled exception in client_connected_cb: {kind}: {}", py_os_error_str(&e));
             return;
         }
     };
@@ -853,18 +1005,26 @@ where
     }
     let req = match decode_request(&line) {
         Ok(v) => v,
-        Err(msg) => {
+        Err(BadRequest::Reply(msg)) => {
             reply(stream, &serde_json::json!({"ok": false, "error": format!("bad json: {msg}")})).await;
+            return;
+        }
+        Err(BadRequest::Unhandled(e)) => {
+            tracing::error!("Unhandled exception in client_connected_cb: {}: {e}", e.python_type());
             return;
         }
     };
     // Handler faults shouldn't kill the server.
-    let outcome = std::panic::AssertUnwindSafe(handler(req.clone())).catch_unwind().await;
+    let call = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| handler(req.clone())));
+    let outcome = match call {
+        Ok(fut) => std::panic::AssertUnwindSafe(fut).catch_unwind().await,
+        Err(panic) => Err(panic),
+    };
     let resp = match outcome {
         Ok(Ok(resp)) => resp,
         Ok(Err(e)) => {
             tracing::error!("handler error for req={}: {e:?}", py_repr(&req));
-            serde_json::json!({"ok": false, "error": format!("{}: {e}", error_type_name(&e))})
+            serde_json::json!({"ok": false, "error": format!("{}: {}", error_type_name(&e), error_message(&e))})
         }
         Err(panic) => {
             let msg = panic
@@ -910,10 +1070,22 @@ async fn read_line<S: AsyncRead + Unpin>(stream: &mut S) -> io::Result<Vec<u8>> 
     }
 }
 
+/// A request line Python's `json.loads(line.decode("utf-8"))` refuses.
+#[derive(Debug)]
+enum BadRequest {
+    /// A `ValueError` / `UnicodeDecodeError`: answered `bad json: <text>`.
+    Reply(String),
+    /// Anything else (a `RecursionError`): no reply.
+    Unhandled(LoadsError),
+}
+
 /// `json.loads(line.decode("utf-8"))`, with the error text the reply carries.
-fn decode_request(line: &[u8]) -> Result<Value, String> {
-    let text = std::str::from_utf8(line).map_err(|e| utf8_error_message(line, &e))?;
-    serde_json::from_str(text).map_err(|e| e.to_string())
+fn decode_request(line: &[u8]) -> Result<Value, BadRequest> {
+    let text = std::str::from_utf8(line).map_err(|e| BadRequest::Reply(utf8_error_message(line, &e)))?;
+    pyjson::loads(text).map_err(|e| match e {
+        LoadsError::Value(msg) => BadRequest::Reply(msg),
+        e @ LoadsError::Recursion(_) => BadRequest::Unhandled(e),
+    })
 }
 
 /// Python's `UnicodeDecodeError` text for a strict UTF-8 decode.
@@ -948,7 +1120,11 @@ async fn reply<S: AsyncWrite + Unpin>(stream: &mut S, obj: &Value) {
             // loss — must not become an unhandled connection error.
             tracing::debug!("ipc: client hung up before reply was flushed");
         }
-        Err(e) => tracing::error!("ipc: could not write the reply: {e}"),
+        Err(e) => tracing::error!(
+            "Unhandled exception in client_connected_cb: {}: {}",
+            io_error_type_name(&e),
+            py_os_error_str(&e)
+        ),
     }
 }
 

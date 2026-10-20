@@ -150,7 +150,10 @@ fn test_py_repr() {
 
 #[test]
 fn test_utf8_errors_read_like_python() {
-    let msg = |b: &[u8]| decode_request(b).unwrap_err();
+    let msg = |b: &[u8]| match decode_request(b) {
+        Err(BadRequest::Reply(m)) => m,
+        _ => panic!("{b:?} was not refused with a reply"),
+    };
     assert_eq!(msg(b"\xff\n"), "'utf-8' codec can't decode byte 0xff in position 0: invalid start byte");
     assert_eq!(msg(b"{\xe2\x41}\n"), "'utf-8' codec can't decode byte 0xe2 in position 1: invalid continuation byte");
     assert_eq!(msg(b"\xe2\x82\x41\n"), "'utf-8' codec can't decode bytes in position 0-1: invalid continuation byte");
@@ -416,4 +419,140 @@ async fn test_serve_forever_needs_start_and_ends_on_stop() {
     assert!(!forever.is_finished());
     server.stop().await;
     tokio::time::timeout(Duration::from_secs(2), forever).await.unwrap().unwrap().unwrap();
+}
+
+// ---------------------------------------------------------------------------
+// json.loads: differential cases recorded from CPython 3.13
+// (tests/data/gen_pyjson_cases.py writes them)
+
+#[test]
+fn test_loads_matches_cpython_on_recorded_cases() {
+    let data = include_str!("../tests/data/pyjson_cases.jsonl");
+    let mut checked = 0;
+    for line in data.lines() {
+        let case: Value = serde_json::from_str(line).unwrap();
+        let input = case["in"].as_str().unwrap();
+        let got = pyjson::loads(input);
+        if let Some(want) = case.get("ok") {
+            let v = got.unwrap_or_else(|e| panic!("{input:?}: Python parsed it, Rust said {e}"));
+            assert_eq!(dumps(&v), want.as_str().unwrap(), "{input:?}");
+        } else if let Some(want) = case.get("err") {
+            match got {
+                Err(LoadsError::Value(msg)) => assert_eq!(msg, want.as_str().unwrap(), "{input:?}"),
+                other => panic!("{input:?}: want {want}, got {other:?}"),
+            }
+        } else {
+            assert!(matches!(got, Err(LoadsError::Recursion(_))), "{input:?}");
+        }
+        checked += 1;
+    }
+    assert!(checked > 4000, "{checked}");
+}
+
+#[test]
+fn test_bad_json_reply_reads_like_python() {
+    let msg = |b: &[u8]| match decode_request(b) {
+        Err(BadRequest::Reply(m)) => m,
+        _ => panic!("{b:?} was not refused with a reply"),
+    };
+    assert_eq!(msg(b"{\"ok\": tr\n"), "Expecting value: line 1 column 8 (char 7)");
+    assert_eq!(msg(b"{\"a\":1,}\n"), "Illegal trailing comma before end of object: line 1 column 7 (char 6)");
+    assert_eq!(msg("{\"é\" 1}\n".as_bytes()), "Expecting ':' delimiter: line 1 column 6 (char 5)");
+    assert_eq!(msg(b"{}\n{}\n"), "Extra data: line 2 column 1 (char 3)");
+    assert_eq!(msg(b"[NaN]\n"), "Out of range float values are not JSON compliant: nan");
+}
+
+#[test]
+fn test_loads_keeps_what_python_keeps() {
+    // Duplicate keys: the last value wins, in the first key's place.
+    assert_eq!(dumps(&pyjson::loads(r#"{"a":1,"b":2,"a":3}"#).unwrap()), r#"{"a": 3, "b": 2}"#);
+    // A surrogate pair is one character; a lone surrogate becomes U+FFFD.
+    assert_eq!(pyjson::loads(r#""😀""#).unwrap(), json!("😀"));
+    assert_eq!(pyjson::loads(r#""\ud800x\udc00""#).unwrap(), json!("\u{fffd}x\u{fffd}"));
+    assert_eq!(pyjson::loads("-0").unwrap(), json!(0));
+    assert_eq!(pyjson::loads("18446744073709551615").unwrap(), json!(18446744073709551615u64));
+    assert_eq!(pyjson::loads("18446744073709551616").unwrap(), json!(18446744073709551616.0));
+    // The int-digits limit is a ValueError of its own.
+    let long = "9".repeat(4301);
+    assert_eq!(
+        pyjson::loads(&long).unwrap_err().to_string(),
+        "Exceeds the limit (4300 digits) for integer string conversion: value has 4301 digits; use sys.set_int_max_str_digits() to increase the limit"
+    );
+}
+
+#[test]
+fn test_deep_nesting_is_a_recursion_error_with_no_reply() {
+    let ok = format!("{}{}", "[".repeat(pyjson::MAX_DEPTH), "]".repeat(pyjson::MAX_DEPTH));
+    let v = pyjson::loads(&ok).unwrap();
+    // A value this deep is cloned, printed, written and dropped on a test
+    // thread's 2 MiB stack without trouble.
+    let copy = v.clone();
+    assert_eq!(py_repr(&copy).len(), 2 * pyjson::MAX_DEPTH);
+    assert_eq!(dumps(&copy), ok);
+    drop(copy);
+    let deep = format!("{}{}", "[".repeat(pyjson::MAX_DEPTH + 1), "]".repeat(pyjson::MAX_DEPTH + 1));
+    assert_eq!(
+        pyjson::loads(&deep).unwrap_err(),
+        LoadsError::Recursion("maximum recursion depth exceeded while decoding a JSON array from a unicode string".into())
+    );
+    // Recursion is checked as each container opens, before what follows it.
+    let deep_obj = format!("{}x", "{\"a\":".repeat(pyjson::MAX_DEPTH + 1));
+    assert!(matches!(pyjson::loads(&deep_obj), Err(LoadsError::Recursion(m)) if m.contains("JSON object")));
+}
+
+#[tokio::test]
+async fn test_a_request_nested_too_deep_gets_no_reply() {
+    let deep = format!("{}{}\n", "[".repeat(pyjson::MAX_DEPTH + 1), "]".repeat(pyjson::MAX_DEPTH + 1));
+    assert!(exchange(echo(), deep.as_bytes()).await.is_empty());
+}
+
+#[test]
+fn test_error_type_and_text_follow_python() {
+    let enoent: anyhow::Error = io::Error::from_raw_os_error(libc::ENOENT).into();
+    assert_eq!(error_type_name(&enoent), "FileNotFoundError");
+    assert_eq!(error_message(&enoent), "[Errno 2] No such file or directory");
+    let inuse = io::Error::from_raw_os_error(libc::EADDRINUSE);
+    assert_eq!(io_error_type_name(&inuse), "OSError");
+    let json_err: anyhow::Error = serde_json::from_str::<Value>("{").unwrap_err().into();
+    assert_eq!(error_type_name(&json_err), "JSONDecodeError");
+    let recursion: anyhow::Error = pyjson::loads(&"[".repeat(2000)).unwrap_err().into();
+    assert_eq!(error_type_name(&recursion), "RecursionError");
+}
+
+#[cfg(unix)]
+#[tokio::test]
+async fn test_close_removes_only_the_socket_it_bound() {
+    let dir = short_dir();
+    let path = dir.path().join("s.sock").display().to_string();
+    let t = parse_spec(&path).unwrap();
+    let server = t.start_server(Arc::new(|_s| async {}.boxed())).await.unwrap();
+    // Another process took the path over: closing must leave its socket alone.
+    std::fs::remove_file(&path).unwrap();
+    let other = std::os::unix::net::UnixListener::bind(&path).unwrap();
+    server.close();
+    server.wait_closed().await;
+    assert!(Path::new(&path).exists());
+    drop(other);
+    std::fs::remove_file(&path).unwrap();
+    // Its own socket goes when it closes (asyncio 3.13 `cleanup_socket`).
+    let server = t.start_server(Arc::new(|_s| async {}.boxed())).await.unwrap();
+    assert!(Path::new(&path).exists());
+    server.close();
+    assert!(!Path::new(&path).exists());
+    server.wait_closed().await;
+    assert!(server.serve_forever().await.is_err());
+}
+
+#[tokio::test]
+async fn test_tcp_bind_conflict_reads_like_asyncio() {
+    let taken = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = taken.local_addr().unwrap().port();
+    let t = Transport::Tcp(TcpLoopbackTransport::new("127.0.0.1", port).unwrap());
+    let err = t.start_server(Arc::new(|_s| async {}.boxed())).await.err().unwrap();
+    assert_eq!(err.kind(), io::ErrorKind::AddrInUse);
+    let n = libc::EADDRINUSE;
+    assert_eq!(
+        err.to_string(),
+        format!("[Errno {n}] error while attempting to bind on address ('127.0.0.1', {port}): [errno {n}] address already in use")
+    );
 }
