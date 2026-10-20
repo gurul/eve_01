@@ -4,6 +4,7 @@
 
 pub mod call;
 pub mod chief;
+pub mod door;
 pub mod handle;
 pub mod history;
 pub mod media;
