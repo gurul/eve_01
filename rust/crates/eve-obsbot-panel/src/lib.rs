@@ -273,6 +273,35 @@ const AMOUNT_NAMED: &str = r"(?:\s+(?:by\s+)?(?:(?P<bit>a\s+(?:bit|little|touch|
 const DIR_NAMED: &str = r"(?:to\s+the\s+)?(?P<dir>left|right|up|down)";
 const ZOOM_AMOUNT: &str = r"(?:\s+(?:(?P<bit>a\s+(?:bit|little|touch))|(?P<all>all\s+the\s+way)))?";
 
+/// Python's `int()` of what `\d{1,3}` matched: `\d` is any Unicode decimal digit, and int() reads them all ("٣٠"
+/// is 30). Unicode keeps every run of decimal digits contiguous and in order from 0, so a digit's value is how many
+/// decimal digits come right before it, modulo 10.
+fn digits(s: &str) -> Option<i64> {
+    use unicode_general_category::{get_general_category, GeneralCategory as G};
+    let decimal = |c: char| get_general_category(c) == G::DecimalNumber;
+    let mut n: i64 = 0;
+    for c in s.chars() {
+        let value = match c.to_digit(10) {
+            Some(v) => i64::from(v),
+            None if decimal(c) => {
+                let mut before = 0;
+                let mut cp = c as u32;
+                while let Some(prev) = cp.checked_sub(1).and_then(char::from_u32) {
+                    if !decimal(prev) {
+                        break;
+                    }
+                    before += 1;
+                    cp -= 1;
+                }
+                before % 10
+            }
+            None => return None,
+        };
+        n = n.checked_mul(10)?.checked_add(value)?;
+    }
+    Some(n)
+}
+
 fn group<'t>(m: &Captures<'t>, name: &str) -> Option<&'t str> {
     m.name(name).map(|g| g.as_str()).filter(|s| !s.is_empty())
 }
@@ -283,7 +312,7 @@ fn turn_of(m: &Captures) -> Option<Command> {
     } else if group(m, "lot").is_some() {
         LOT_DEGREES
     } else if let Some(d) = group(m, "deg") {
-        d.parse::<i64>().ok()? // `\d` is Unicode, as Python's; a digit Rust can't read leaves it to the model
+        digits(d)?
     } else {
         TURN_DEGREES
     };
@@ -336,7 +365,7 @@ static PATTERNS: LazyLock<Vec<(Regex, Make)>> = LazyLock::new(|| {
             sub(r"(?:set\s+)?{cam}\s+zoom\s+(?:to\s+)?(?P<z>\d{1,3})\s*%?|zoom\s+{cam}\s+to\s+(?P<z2>\d{1,3})\s*%?"),
             |m| {
                 let z = group(m, "z").or_else(|| group(m, "z2"))?;
-                Some(Command::zoom_to(z.parse().ok()?))
+                Some(Command::zoom_to(digits(z)?))
             },
         ),
         // "wake the camera", "camera on" (it wakes: OBSBOT's sleep is its off), "camera off", "put the camera to sleep"
@@ -377,13 +406,42 @@ static PATTERNS: LazyLock<Vec<(Regex, Make)>> = LazyLock::new(|| {
         .collect()
 });
 
-static NOT_WORD: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[^\w%°'\s\x1c-\x1f-]").expect("NOT_WORD"));
-static SPACES: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[\s\x1c-\x1f]+").expect("SPACES"));
+/// Python's `\w` in a str pattern: `str.isalnum()` (a letter or a number, by general category) or `_`. Rust's
+/// `\w` differs (it takes combining marks and connector punctuation, and leaves out numbers such as `²`).
+fn py_word(c: char) -> bool {
+    use unicode_general_category::{get_general_category, GeneralCategory as G};
+    c == '_'
+        || matches!(
+            get_general_category(c),
+            G::UppercaseLetter
+                | G::LowercaseLetter
+                | G::TitlecaseLetter
+                | G::ModifierLetter
+                | G::OtherLetter
+                | G::DecimalNumber
+                | G::LetterNumber
+                | G::OtherNumber
+        )
+}
 
+/// Python's `_norm`: lower, `’` to `'`, `re.sub(r"[^\w%°'\s-]", " ")`, `re.sub(r"\s+", " ")`, `strip()`.
 fn norm(text: &str) -> String {
     let t = text.to_lowercase().replace('’', "'");
-    let t = NOT_WORD.replace_all(&t, " ");
-    SPACES.replace_all(&t, " ").trim_matches(' ').to_string()
+    let mut out = String::with_capacity(t.len());
+    let mut space = false;
+    for c in t.chars() {
+        let c = if py_word(c) || matches!(c, '%' | '°' | '\'' | '-') || py::is_space(c) { c } else { ' ' };
+        if py::is_space(c) {
+            space = true;
+            continue;
+        }
+        if space && !out.is_empty() {
+            out.push(' ');
+        }
+        space = false;
+        out.push(c);
+    }
+    out
 }
 
 /// A Command when the whole message is a camera command that names the camera, else None (the model answers).

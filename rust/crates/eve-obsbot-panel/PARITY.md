@@ -16,11 +16,11 @@ Status: complete
 | `INSTRUCTIONS` | `INSTRUCTIONS: LazyLock<String>` | byte-identical (tested) |
 | `where` | `where_(Option<i64>, Option<i64>)` (+ crate `where_value` over reply values) | `where` is a Rust keyword; ints and floats format as Python's `str` |
 | `Command` | `Command` (+ `new`, `turn`, `zoom_to`, `zoom_by`, `preset` constructors) | same fields and defaults; `PartialEq` as the frozen dataclass |
-| `_turn` | `turn_of` (private) | 1-120 or None |
+| `_turn` | `turn_of` (private) | 1-120 or None; the amount through `digits` (Python's `int()` of Unicode decimal digits) |
 | `_zoom_step` | `zoom_step` (private) | |
 | `_LEAD`, `_TAIL`, `_CAM`, `_TURN_VERB`, `_AMOUNT_NAMED`, `_DIR_NAMED`, `_ZOOM_AMOUNT`, `_PATTERNS` | `LEAD` ... `ZOOM_AMOUNT`, `PATTERNS` (private) | same patterns in the same order, compiled once as `^(?:LEAD(?:p)TAIL)$` (Python's `re.fullmatch`) |
-| `_norm` | `norm` (private) | lower, `’` to `'`, Python's whitespace set (`\s` plus `\x1c-\x1f`) |
-| `match` | `r#match(text)` | `match` is a Rust keyword |
+| `_norm` | `norm` (private) | lower, `’` to `'`, Python's `\w` (letters and numbers by general category, and `_`) and whitespace (`\s` plus `\x1c-\x1f`) |
+| `match` | `r#match(text)` | `match` is a Rust keyword; checked against Python on 52,000 phrases, `_norm` on 30,000 random Unicode strings, and the digit reader on all 650 Unicode decimal digits (2026-10-19) |
 | `enabled` | `enabled(Option<&HashMap>)` | None reads the process env; `strip()` with Python's whitespace; `APP_PATH` exists or `eve_obsbot_usb::present` (ioreg) |
 | `find_ffmpeg` | `find_ffmpeg()` | `which ffmpeg`, then the two Homebrew paths |
 | `ObsbotPanel` | `ObsbotPanel` (clones share one panel), `PanelOptions` | `make`, `ffmpeg`, `environ`, `clock` as Python; plus `linger_secs` (the tests patched `LINGER_SECS`), `stun` and `udp_addrs` (where WebRTC peers bind) |
@@ -80,7 +80,6 @@ Status: complete
 - Hold-to-turn uses its own `UsbCamera` handles (`UsbTurner`: one for the wake, one for turns) instead of sharing the reading camera's `usb` object across threads, so a stop never waits behind a move's read-back or a wake. Both run the same helper binary; `why` after a failed wake is the waking handle's.
 - Where Python would raise out of the panel, Rust answers: a camera that can't be made (Obsbot's socket bind) is the not-ready line with the error text; `zoom` with a level of inf or nan is "Zoom is 0 to 100." (Python: `OverflowError`/`ValueError`); `preset` with inf or nan sends 0, which the camera refuses with its own line; `control` called before the camera was made asks for it first (Python: `AssertionError`); a `track` reply without a line gets one appended rather than a `KeyError`.
 - ffmpeg that can't be started (listing or capture) logs and reads as `VIDEO_OFF_LINE`; Python raised `OSError` out of `frames()`, which the shared capture also turned into `VIDEO_OFF_LINE`. A failed read of ffmpeg's stdout is treated as its end.
-- `match`: Rust's `\w` is Unicode's word class, Python's is `isalnum()` plus `_` (they differ on combining marks, connector punctuation and No-category numerals like `²`), so a few non-Latin characters normalize differently. A degree amount in non-ASCII digits matches as in Python but is left to the model (Rust can't read it as a number).
 - `find_ffmpeg` uses the `which` crate; with PATH unset Python's `shutil.which` falls back to the system default path, `which` finds nothing and the Homebrew paths are tried.
 - The WebRTC error's log line names the webrtc-rs error variant (aiortc's exception class in Python); the peers bind every IPv4 interface (`0.0.0.0:0`), aiortc also gathered IPv6 host candidates (as eve-pika records).
 - `close()` waits for an in-flight camera read before closing the camera; Python closed it at once from the event loop.

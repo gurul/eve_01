@@ -945,6 +945,17 @@ fn test_match() {
         ("camera to preset 1", Command::preset(1)),
         ("camera right by 120°", Command::turn("right", 120)),
         ("where’s the camera aimed", Command::new("status")),
+        // Python's `\w` drops a combining mark and connector punctuation and keeps numbers such as `²`
+        ("camera left \u{301}", Command::turn("left", 20)),
+        ("camera\u{203f}left", Command::turn("left", 20)),
+        ("camera left\u{a0}please", Command::turn("left", 20)),
+        // int() reads any Unicode decimal digit
+        ("camera left ٣٠ degrees", Command::turn("left", 30)),
+        ("camera zoom ٥٠%", Command::zoom_to(50)),
+        ("camera right 𝟗𝟗°", Command::turn("right", 99)),
+        ("camera left ０７ deg", Command::turn("left", 7)),
+        ("camera zoom to ᠑", Command::zoom_to(1)),
+        ("camera left ꘩ deg", Command::turn("left", 9)),
     ];
     for (text, cmd) in cases {
         assert_eq!(r#match(text), Some(cmd), "{text}");
@@ -965,6 +976,9 @@ fn test_match_leaves_the_rest_to_the_model() {
         "lights off",
         "what's the best camera for vlogging",
         "camera left 0 degrees",
+        "² webcam wake",
+        "camera left ²",
+        "camera \u{216b} left",
         "",
     ] {
         assert_eq!(r#match(text), None, "{text}");
@@ -1075,3 +1089,5 @@ fn test_num_reads_like_pythons_float() {
     assert_eq!(num(None), None);
     assert!(num(Some(&json!("nan"))).is_some_and(f64::is_nan));
 }
+
+
