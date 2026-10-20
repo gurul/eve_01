@@ -17,6 +17,8 @@ use std::time::Duration;
 
 use serde_json::{Map, Value};
 
+use crate::HookError;
+
 /// How long a hook is willing to wait for the daemon before giving up.
 /// PreToolUse overrides this to a much larger value for the BLE round-trip.
 pub const DEFAULT_TIMEOUT_SECS: f64 = 3.0;
@@ -90,28 +92,35 @@ fn hex4(b: &[u8], at: usize) -> Option<u32> {
     u32::from_str_radix(s, 16).ok()
 }
 
-/// `json.loads(text)`, with lone surrogate escapes read as `?`.
-pub fn loads(text: &str) -> Result<Value, serde_json::Error> {
-    serde_json::from_str(&replace_lone_surrogates(text))
+/// `json.loads(text)` (CPython's scanner, via [`eve_ipc::pyjson::loads`]),
+/// with lone surrogate escapes read as `?`.
+pub fn loads(text: &str) -> Result<Value, eve_ipc::LoadsError> {
+    eve_ipc::pyjson::loads(&replace_lone_surrogates(text))
 }
 
 /// `read_hook_input` on bytes already read: empty → `{}`; decoded as UTF-8
-/// with errors replaced; JSON that does not parse → `{}`. The parsed value is
-/// returned whatever its type, as `json.loads` gives it.
-pub fn read_hook_input_from(raw: &[u8]) -> Value {
+/// with errors replaced; JSON that does not parse (a `ValueError`) → `{}`. The
+/// parsed value is returned whatever its type, as `json.loads` gives it.
+/// Nesting too deep is Python's `RecursionError`, which `except ValueError`
+/// does not catch: it is returned as the hook's uncaught error.
+pub fn read_hook_input_from(raw: &[u8]) -> Result<Value, HookError> {
     if raw.is_empty() {
-        return Value::Object(Map::new());
+        return Ok(Value::Object(Map::new()));
     }
     // Force UTF-8 regardless of the console encoding: Claude Code writes UTF-8 JSON.
     let data = String::from_utf8_lossy(raw);
-    loads(&data).unwrap_or_else(|_| Value::Object(Map::new()))
+    match loads(&data) {
+        Ok(v) => Ok(v),
+        Err(eve_ipc::LoadsError::Recursion(msg)) => Err(HookError::new("RecursionError", msg)),
+        Err(eve_ipc::LoadsError::Value(_)) => Ok(Value::Object(Map::new())),
+    }
 }
 
 /// Read Claude Code's JSON hook payload from stdin.
-pub fn read_hook_input() -> io::Result<Value> {
+pub fn read_hook_input() -> Result<Value, HookError> {
     let mut raw = Vec::new();
-    io::stdin().lock().read_to_end(&mut raw)?;
-    Ok(read_hook_input_from(&raw))
+    io::stdin().lock().read_to_end(&mut raw).map_err(HookError::os)?;
+    read_hook_input_from(&raw)
 }
 
 /// Send one JSON event, read one JSON response, close. Returns `None` on any error.

@@ -26,7 +26,7 @@ fn notification_type(payload: &Value) -> Result<Value, HookError> {
 
 /// `main()` with stdin and the daemon client passed in.
 pub fn run(raw: &[u8], post: &mut Poster<'_>, _out: &mut dyn Write) -> Result<i32, HookError> {
-    let payload = client::read_hook_input_from(raw);
+    let payload = client::read_hook_input_from(raw)?;
     post(
         json!({
             "evt": "notification",

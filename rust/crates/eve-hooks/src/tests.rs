@@ -79,26 +79,26 @@ fn test_hook_post_returns_none_for_invalid_transport_spec() {
 
 #[test]
 fn test_read_hook_input_empty_and_garbage_give_an_empty_dict() {
-    assert_eq!(read_hook_input_from(b""), json!({}));
-    assert_eq!(read_hook_input_from(b"not json"), json!({}));
-    assert_eq!(read_hook_input_from(b"{\"a\": 1"), json!({}));
+    assert_eq!(read_hook_input_from(b"").unwrap(), json!({}));
+    assert_eq!(read_hook_input_from(b"not json").unwrap(), json!({}));
+    assert_eq!(read_hook_input_from(b"{\"a\": 1").unwrap(), json!({}));
     // A BOM is refused by json.loads too.
-    assert_eq!(read_hook_input_from("\u{feff}{\"a\": 1}".as_bytes()), json!({}));
+    assert_eq!(read_hook_input_from("\u{feff}{\"a\": 1}".as_bytes()).unwrap(), json!({}));
     // Any JSON value comes back as is.
-    assert_eq!(read_hook_input_from(b"[1, 2]"), json!([1, 2]));
-    assert_eq!(read_hook_input_from(b" {\"a\": 1}\n"), json!({"a": 1}));
+    assert_eq!(read_hook_input_from(b"[1, 2]").unwrap(), json!([1, 2]));
+    assert_eq!(read_hook_input_from(b" {\"a\": 1}\n").unwrap(), json!({"a": 1}));
 }
 
 #[test]
 fn test_read_hook_input_replaces_bad_utf8_and_lone_surrogates() {
     let raw = b"{\"prompt\": \"caf\xff\"}";
-    assert_eq!(read_hook_input_from(raw), json!({"prompt": "caf\u{fffd}"}));
-    assert_eq!(read_hook_input_from(br#"{"p": "a\ud800b"}"#), json!({"p": "a?b"}));
-    assert_eq!(read_hook_input_from(br#"{"p": "\udc00"}"#), json!({"p": "?"}));
-    assert_eq!(read_hook_input_from(br#"{"p": "\ud800\ud800x"}"#), json!({"p": "??x"}));
+    assert_eq!(read_hook_input_from(raw).unwrap(), json!({"prompt": "caf\u{fffd}"}));
+    assert_eq!(read_hook_input_from(br#"{"p": "a\ud800b"}"#).unwrap(), json!({"p": "a?b"}));
+    assert_eq!(read_hook_input_from(br#"{"p": "\udc00"}"#).unwrap(), json!({"p": "?"}));
+    assert_eq!(read_hook_input_from(br#"{"p": "\ud800\ud800x"}"#).unwrap(), json!({"p": "??x"}));
     // A real pair is joined, other escapes stay escapes.
-    assert_eq!(read_hook_input_from(br#"{"p": "\ud83d\ude00"}"#), json!({"p": "\u{1F600}"}));
-    assert_eq!(read_hook_input_from(br#"{"p": "\\ud800 \"q\" \u00e9"}"#), json!({"p": "\\ud800 \"q\" \u{e9}"}));
+    assert_eq!(read_hook_input_from(br#"{"p": "\ud83d\ude00"}"#).unwrap(), json!({"p": "\u{1F600}"}));
+    assert_eq!(read_hook_input_from(br#"{"p": "\\ud800 \"q\" \u00e9"}"#).unwrap(), json!({"p": "\\ud800 \"q\" \u{e9}"}));
     // Outside a string nothing is touched.
     assert_eq!(replace_lone_surrogates(r#"{"k": 1}"#), r#"{"k": 1}"#);
 }
@@ -386,4 +386,33 @@ fn test_a_payload_that_is_not_a_dict_fails_like_python() {
 fn test_client_module_constants() {
     assert_eq!(client::DEFAULT_TIMEOUT_SECS, 3.0);
     assert_eq!(BLOCK_TIMEOUT_SECS, 320.0);
+}
+
+#[test]
+fn test_read_hook_input_parses_like_cpython_json_loads() {
+    // Deeper than serde_json's default limit of 128, well inside CPython's: still parsed.
+    let deep = format!("{{\"session_id\": \"s\", \"tool_input\": {}1{}}}", "[".repeat(300), "]".repeat(300));
+    let payload = read_hook_input_from(deep.as_bytes()).unwrap();
+    assert_eq!(payload["session_id"], "s");
+    assert_eq!(sent_line(session_end::run, &deep), r#"{"evt": "session_end", "session_id": "s"}"#);
+    // Past the recursion limit json.loads raises RecursionError, which `except ValueError` lets through.
+    let too_deep = format!("{}{}", "[".repeat(eve_ipc::pyjson::MAX_DEPTH + 1), "]".repeat(eve_ipc::pyjson::MAX_DEPTH + 1));
+    assert_eq!(read_hook_input_from(too_deep.as_bytes()).unwrap_err().kind, "RecursionError");
+    let (code, _, sent) = run_hook(session_start::run, &too_deep, None);
+    assert_eq!(code.unwrap_err().kind, "RecursionError");
+    assert!(sent.is_empty());
+    // CPython's ValueErrors: the int-digit limit, trailing data.
+    let huge = format!("{{\"n\": {}}}", "9".repeat(4301));
+    assert_eq!(read_hook_input_from(huge.as_bytes()).unwrap(), json!({}));
+    assert_eq!(read_hook_input_from(b"{} {}").unwrap(), json!({}));
+}
+
+#[test]
+fn test_post_with_a_zero_timeout_does_not_block() {
+    // settimeout(0.0) is non-blocking: the first recv finds nothing and post gives up.
+    let dir = tempfile::tempdir().unwrap();
+    let (path, _rx) = one_shot_server(&dir, b"{\"ok\": true}\n", Duration::from_millis(1500));
+    let started = Instant::now();
+    assert_eq!(post(&json!({"evt": "x"}), Some(&path), 0.0, 3.0), None);
+    assert!(started.elapsed() < Duration::from_millis(1400));
 }

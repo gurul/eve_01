@@ -23,7 +23,7 @@ pub const DENY_MESSAGE: &str = "The owner denied this from their phone. Do not r
 
 /// `main()` with stdin, the daemon client and stdout passed in.
 pub fn run(raw: &[u8], post: &mut Poster<'_>, out: &mut dyn Write) -> Result<i32, HookError> {
-    let payload = client::read_hook_input_from(raw);
+    let payload = client::read_hook_input_from(raw)?;
     let event = json!({
         "evt": "permissionrequest",
         "session_id": payload_str(&payload, "session_id")?,

@@ -59,7 +59,7 @@ impl HookError {
         HookError::new("TypeError", format!("'{}' object is not iterable", py_type_name(v)))
     }
 
-    fn os(e: std::io::Error) -> Self {
+    pub(crate) fn os(e: std::io::Error) -> Self {
         let kind = if e.kind() == std::io::ErrorKind::BrokenPipe { "BrokenPipeError" } else { "OSError" };
         HookError::new(kind, e.to_string())
     }
