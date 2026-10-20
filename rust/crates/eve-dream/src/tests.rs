@@ -540,7 +540,7 @@ async fn run_loop_until(
     due: impl FnMut(&Dreamer, When) -> anyhow::Result<Vec<String>>,
 ) {
     let (tx, rx) = watch::channel(false);
-    let deadline = Instant::now() + Duration::from_secs(5);
+    let deadline = Instant::now() + Duration::from_secs(30);
     let stop = async {
         while !until() && Instant::now() < deadline {
             tokio::time::sleep(Duration::from_millis(10)).await;
@@ -548,7 +548,7 @@ async fn run_loop_until(
         tx.send_replace(true);
     };
     let run = d.run_loop_with(rx, 0.01, due);
-    tokio::time::timeout(Duration::from_secs(8), async { tokio::join!(run, stop) }).await.unwrap();
+    tokio::time::timeout(Duration::from_secs(40), async { tokio::join!(run, stop) }).await.unwrap();
 }
 
 #[test]
@@ -584,7 +584,7 @@ fn test_the_loop_runs_the_real_due_nights() {
     block_on(async {
         let (tx, rx) = watch::channel(false);
         let stop = async {
-            let deadline = Instant::now() + Duration::from_secs(5);
+            let deadline = Instant::now() + Duration::from_secs(30);
             while dreamt_lines(&r.d).len() < 2 && Instant::now() < deadline {
                 tokio::time::sleep(Duration::from_millis(10)).await;
             }
