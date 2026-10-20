@@ -1,0 +1,11 @@
+[package]
+name = "eve-claude-home"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+libc.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
