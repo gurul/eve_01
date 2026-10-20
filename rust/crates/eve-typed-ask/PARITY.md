@@ -25,7 +25,7 @@ Status: complete
 | `make_jev_head_asker` | `make_jev_head_asker` | returns `impl Fn(&str) -> String` |
 | `GATE_GRID`, `DIRECTION_GRID` | same | |
 | `fit_gates` | `fit_gates` | tuple-key maximum, ties to the stricter gate; `max_false_moves` is explicit |
-| `describe` | `describe` | `anyhow::Result<String>`: a question without `type` is the KeyError |
+| `describe` | `describe` | `anyhow::Result<String>`: raises in Python's order with its messages (a non-dict question, a non-dict `criteria`, then the missing `type` KeyError); a non-str value is rendered with Python `str()`/`repr()`, floats included |
 | `jev_request_questions` | `jev_request_questions` | byte-identical |
 | `RequestAnswer` | `RequestAnswer` (+ `new`) | |
 | `RequestGates` | `RequestGates` (`Default` = 0.8/0.8/0.8/0.2) | |
@@ -51,9 +51,9 @@ Status: complete
 | `jev_step_questions` | `jev_step_questions` | takes `&IndexMap<String, String>` (menu order) |
 | `StepAnswer` | `StepAnswer` (+ `new`) | `k`, `requests` as `usize`; `requests` defaults to 1 |
 | `StepGates` | `StepGates` (`Default` = 0.5/0.5/0.1/0.7/0.3) | `decide` returns `String` |
-| `ask_jev_step` | `ask_jev_step` | keyword arguments become positional: step, app, context, options, recent, clock; error quotes the key with Python `repr` |
+| `ask_jev_step` | `ask_jev_step` | keyword arguments become positional: step, app, context, options, recent, clock; error quotes the key with Python `repr` (`py_repr_str`: exact `str.isprintable` via `unicode-general-category`, `\x`/`\u`/`\U` escapes) |
 | `STEP_GROUP`, `STEP_SHORTLIST`, `GROUPED_MAX_OPTIONS`, `GROUPS_ENV`, `GROUPS_DEFAULT`, `STEP_PART_NONE` | same | 25 / 3 / 100 / `EVE_JEV_GROUPS` / false |
-| `ask_jev_step_grouped` | `ask_jev_step_grouped` | `group` is explicit (pass `STEP_GROUP`); same two-round body, finalists in menu order, risk the higher of the rounds |
+| `ask_jev_step_grouped` | `ask_jev_step_grouped` | `group` is explicit (pass `STEP_GROUP`); same two-round body, finalists in menu order, risk the higher of the rounds; `group == 0` on a long menu panics with Python's `range()` ValueError |
 | `groups_on` | `groups_on` | `Option<&HashMap>`; `None` reads the process env |
 | `make_step_asker` | `make_step_asker` → `StepAsker` | `partial` + `.max_options` becomes a struct with `grouped` (Python's `.func`), `max_options` and `ask(...)` |
 | `STEP_GRID`, `STEP_MARGIN_GRID` | same | |
@@ -86,7 +86,7 @@ Status: complete
 | `bridge/tests/test_task_router.py` (ref) | `test_jev_is_asked_in_its_own_idiom_and_gated_by_absolute_answers`, `test_each_model_is_asked_differently_for_a_head_pose` | same names, plus `test_describe_counts_options_and_their_longest_wording`, `test_fit_request_gates_fires_no_unsafe_reflex`, `test_laya_head_reads_the_head_kind_as_its_gate` | the router tests belong to task_router |
 | `bridge/tests/test_voice_fast_head.py` (ref) | the typed_ask assertions of the fast-head test | `test_the_jev_head_asker_answers_a_pose_under_the_shipped_gates` | voice_agent / head parts belong there |
 | `bridge/tests/test_america_browser.py`, `test_computer_protocol_eval.py`, `test_jev_verify.py` (ref) | use `StepAnswer` as a fake's return value only | covered by the `StepAnswer` tests | nothing typed_ask-specific to port |
-| (unit, `src/lib.rs`) | | `sequence_ratio_matches_difflib`, `shortlist_and_redaction_match_cpython`, `normpath_and_basename_follow_posixpath`, `python_repr_and_spaces`, `choice_admits_bools_and_noul_does_not`, `a_result_that_is_not_a_dict_abstains_with_pythons_error` | reference values taken from CPython 3.12 |
+| (unit, `src/lib.rs`) | | `sequence_ratio_matches_difflib`, `shortlist_and_redaction_match_cpython`, `normpath_and_basename_follow_posixpath`, `python_repr_and_spaces`, `choice_admits_bools_and_noul_does_not`, `a_result_that_is_not_a_dict_abstains_with_pythons_error`, `describe_raises_in_pythons_order`, `a_zero_group_raises_like_pythons_range` | reference values taken from CPython 3.12 |
 
 ## Boundaries
 None

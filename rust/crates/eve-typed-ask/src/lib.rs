@@ -182,14 +182,65 @@ pub fn py_repr_str(s: &str) -> String {
                 out.push('\\');
                 out.push(c);
             }
-            c if (c as u32) < 0x20 || (0x7f..0xa0).contains(&(c as u32)) => {
-                out.push_str(&format!("\\x{:02x}", c as u32));
+            c if is_printable(c) => out.push(c),
+            c => {
+                let cp = c as u32;
+                if cp < 0x100 {
+                    out.push_str(&format!("\\x{cp:02x}"));
+                } else if cp < 0x10000 {
+                    out.push_str(&format!("\\u{cp:04x}"));
+                } else {
+                    out.push_str(&format!("\\U{cp:08x}"));
+                }
             }
-            c => out.push(c),
         }
     }
     out.push(quote);
     out
+}
+
+/// Python's `str.isprintable()` for one char: every general category is printable except
+/// Cc, Cf, Cs, Co, Cn, Zl, Zp and Zs, and the ASCII space is printable.
+fn is_printable(c: char) -> bool {
+    use unicode_general_category::{get_general_category, GeneralCategory as G};
+    if c == ' ' {
+        return true;
+    }
+    !matches!(
+        get_general_category(c),
+        G::Control
+            | G::Format
+            | G::Surrogate
+            | G::PrivateUse
+            | G::Unassigned
+            | G::LineSeparator
+            | G::ParagraphSeparator
+            | G::SpaceSeparator
+    )
+}
+
+/// Python's `repr()` of a float.
+fn py_float_repr(f: f64) -> String {
+    if f.is_nan() {
+        return "nan".into();
+    }
+    if f.is_infinite() {
+        return if f > 0.0 { "inf".into() } else { "-inf".into() };
+    }
+    let sci = format!("{f:e}");
+    let (mantissa, exp) = sci.split_once('e').unwrap_or((&sci, "0"));
+    let exp: i32 = exp.parse().unwrap_or(0);
+    if (-4..16).contains(&exp) {
+        let fixed = format!("{f}");
+        if fixed.contains('.') {
+            fixed
+        } else {
+            format!("{fixed}.0")
+        }
+    } else {
+        let sign = if exp < 0 { '-' } else { '+' };
+        format!("{mantissa}e{sign}{:02}", exp.abs())
+    }
 }
 
 /// Python `str()` of a JSON value (for `describe`).
@@ -209,12 +260,7 @@ fn py_repr(v: &Value) -> String {
             if n.is_i64() || n.is_u64() {
                 n.to_string()
             } else {
-                let f = n.as_f64().unwrap_or(0.0);
-                if f.fract() == 0.0 && f.abs() < 1e16 {
-                    format!("{f:.1}")
-                } else {
-                    format!("{f}")
-                }
+                py_float_repr(n.as_f64().unwrap_or(0.0))
             }
         }
         Value::String(s) => py_repr_str(s),
@@ -498,8 +544,15 @@ pub fn describe(questions: &Value) -> anyhow::Result<String> {
     };
     let mut parts = Vec::new();
     for (name, q) in questions {
+        // crit = q.get("criteria") or {}; then crit.values(); then q['type'] — raised in that order.
+        let Value::Object(q) = q else {
+            anyhow::bail!("{}", no_get(q));
+        };
         let crit = match q.get("criteria") {
             Some(Value::Object(c)) if !c.is_empty() => Some(c),
+            Some(v) if truthy(v) => {
+                anyhow::bail!("AttributeError: '{}' object has no attribute 'values'", py_type_name(v))
+            }
             _ => None,
         };
         let Some(kind) = q.get("type") else {
@@ -1262,7 +1315,9 @@ pub fn ask_jev_step_grouped<S: AsRef<str>>(
     }
     let t0 = clock();
     let items: Vec<(&String, &String)> = options.iter().collect();
-    let parts: Vec<&[(&String, &String)]> = items.chunks(group.max(1)).collect();
+    // range(0, len(items), 0) raises ValueError before anything is asked.
+    assert!(group != 0, "ValueError: range() arg 3 must not be zero");
+    let parts: Vec<&[(&String, &String)]> = items.chunks(group).collect();
     let one = jev_step_questions(&IndexMap::new());
     let mut questions = Map::new();
     if let Value::Object(one) = &one {
@@ -1792,6 +1847,29 @@ mod unit {
         assert_eq!(py_repr_str("it's"), "\"it's\"");
         assert_eq!(py_repr_str(""), "''");
         assert_eq!(fold_spaces("  a\u{1c}b \n c  "), "a b c");
+        // CPython: repr('a​b\xad😀 ') escapes the format and separator chars only
+        assert_eq!(py_repr_str("a\u{200b}b\u{ad}😀\u{2028}"), "'a\\u200bb\\xad😀\\u2028'");
+        assert_eq!(py_repr(&json!(1e16)), "1e+16");
+        assert_eq!(py_repr(&json!(1e-05)), "1e-05");
+        assert_eq!(py_repr(&json!(2.5)), "2.5");
+        assert_eq!(py_repr(&json!(123.0)), "123.0");
+    }
+
+    #[test]
+    fn describe_raises_in_pythons_order() {
+        let err = |q: Value| describe(&q).unwrap_err().to_string();
+        assert_eq!(err(json!({"x": [1]})), "AttributeError: 'list' object has no attribute 'get'");
+        assert_eq!(err(json!({"x": {"criteria": [1]}})), "AttributeError: 'list' object has no attribute 'values'");
+        assert_eq!(err(json!({"x": {"criteria": {"a": "b"}}})), "KeyError: 'type'");
+        assert_eq!(describe(&json!({"x": {"type": 1e16, "criteria": {"a": 2.0}}})).unwrap(), "x: 1e+16 of 1 (≤1 words each)");
+    }
+
+    #[test]
+    #[should_panic(expected = "range() arg 3 must not be zero")]
+    fn a_zero_group_raises_like_pythons_range() {
+        let options: IndexMap<String, String> = [("1".to_string(), "One".to_string())].into_iter().collect();
+        let none: &[&str] = &[];
+        ask_jev_step_grouped(&|_s: &Value, _q: &Value| Ok(json!({})), "x", "A", "", &options, none, &|| 0.0, 0);
     }
 
     #[test]
