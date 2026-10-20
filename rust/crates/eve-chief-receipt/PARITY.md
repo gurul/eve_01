@@ -25,7 +25,7 @@ pass (24 integration, 3 unit).
 | _results | private results | |
 | read_set | read_set -> BTreeSet<String> | sorted, as chief.py sorts it |
 | _gate | private gate | |
-| check | check(check, card, &CheckOptions) -> Result<Verdict, ValueError> | CheckOptions carries owner_done, live_watches (`Option<&HashSet<String>>`), home with Python's defaults; Err is the ValueError Python lets out |
+| check | check(check, card, &CheckOptions) -> Result<Verdict, ValueError> | CheckOptions carries owner_done, live_watches (`Option<&HashSet<String>>`), home with Python's defaults; Err is the ValueError Python lets out. The read_links count is read as `int()` reads a str: it strips ASCII C whitespace and non-ASCII str whitespace, never FS..US |
 | verify | verify(card, &CheckOptions) -> Result<Vec<Verdict>, ValueError> | |
 | status_of | status_of -> &'static str | |
 | steps_not_run | steps_not_run -> Vec<(usize, String, String)> | |
@@ -33,7 +33,7 @@ pass (24 integration, 3 unit).
 | close | close(card, &CheckOptions) -> Result<&'static str, ValueError> | |
 | _minutes | private minutes | `round` half to even, as Python's |
 | receipt | receipt -> String | |
-| _cap | private cap | `str(text or "")[:limit]` in code points |
+| _cap | private cap | `str(text or "")[:limit]` in code points; `str()` of a float is `repr`, shortest digits with ties half to even as CPython's dtoa |
 | _usd | private usd | |
 | from_search | from_search(out: &Value, secs) -> PhaseResult | |
 | from_agent | from_agent(final_text, ui_evidence: &[Value], &AgentRun) -> PhaseResult | AgentRun carries ok (default true), usd, secs, act |

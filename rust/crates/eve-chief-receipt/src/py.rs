@@ -88,13 +88,20 @@ fn decimal_value(c: char) -> Option<u32> {
     Some((c as u32 - start) % 10)
 }
 
+/// The whitespace `int()` strips around a str: CPython copies ASCII through as it is and turns only non-ASCII
+/// whitespace into a space (`_PyUnicode_TransformDecimalAndSpaceToASCII`), then strips C's `isspace`. So FS, GS,
+/// RS and US, whitespace to `str.strip`, are not whitespace here: `int("1\x1c")` raises.
+fn is_int_space(c: char) -> bool {
+    matches!(c, ' ' | '\t' | '\n' | '\x0b' | '\x0c' | '\r') || (c as u32 >= 127 && is_space(c))
+}
+
 /// `int(s)` for a str, base 10: surrounding whitespace, one sign, decimal digits of any script with single
 /// underscores between them. Err is Python's ValueError text. The value saturates at i128's range, far past any
 /// count a check can hold.
 pub fn int(s: &str) -> Result<i128, String> {
     // CPython: "invalid literal for int() with base %d: %.200R"
     let invalid = || format!("invalid literal for int() with base 10: {}", take_chars(&repr_str(s), 200));
-    let body = strip(s);
+    let body = s.trim_matches(is_int_space);
     let (neg, digits) = match body.chars().next() {
         Some('+') => (false, &body[1..]),
         Some('-') => (true, &body[1..]),
@@ -153,7 +160,12 @@ pub fn float_repr(x: f64) -> String {
     if x == 0.0 {
         return if x.is_sign_negative() { "-0.0".into() } else { "0.0".into() };
     }
-    let sci = format!("{x:e}");
+    // Rust's shortest digits break a tie between two shortest candidates away from Python's (`repr(-1929377421321310.25)`
+    // is "...310.2", Rust's shortest gives "...310.3"). The count of digits is right, so take that many digits
+    // correctly rounded from the exact value, half to even, as CPython's dtoa does.
+    let shortest = format!("{x:e}");
+    let count = shortest.split_once('e').map_or(shortest.as_str(), |(m, _)| m).chars().filter(char::is_ascii_digit).count();
+    let sci = format!("{x:.prec$e}", prec = count.saturating_sub(1));
     let (mant, exp) = sci.split_once('e').unwrap_or((&sci, "0"));
     let exp: i32 = exp.parse().unwrap_or(0);
     let neg = mant.starts_with('-');
@@ -263,11 +275,14 @@ mod tests {
             assert!(int(bad).is_err(), "{bad:?}");
         }
         assert_eq!(int("abc"), Err("invalid literal for int() with base 10: 'abc'".into()));
+        assert!(int("1\u{1c}").is_err() && int("\u{1f}7").is_err()); // FS..US: whitespace to strip, not to int
+        assert_eq!(int("\u{85}4\u{3000}"), Ok(4));
         assert_eq!(int("it's"), Err("invalid literal for int() with base 10: \"it's\"".into()));
         assert_eq!(int(&"9".repeat(60)), Ok(i128::MAX));
     }
 
     #[test]
+    #[allow(clippy::excessive_precision)] // the exact ties are the point
     fn str_of_a_json_value_is_pythons() {
         assert_eq!(str_or_empty(None), "");
         assert_eq!(str_or_empty(Some(&json!(0))), "");
@@ -277,6 +292,8 @@ mod tests {
         assert_eq!(str_or_empty(Some(&json!(true))), "True");
         assert_eq!(str_or_empty(Some(&json!(1e16))), "1e+16");
         assert_eq!(str_or_empty(Some(&json!(0.5))), "0.5");
+        assert_eq!(float_repr(-1929377421321310.25), "-1929377421321310.2"); // a tie: half to even, as CPython
+        assert_eq!(float_repr(2044818889941875.25), "2044818889941875.2");
         assert_eq!(str_or_empty(Some(&json!(["a", 1, null]))), "['a', 1, None]");
         assert_eq!(str_or_empty(Some(&json!({"k": "v"}))), "{'k': 'v'}");
     }
