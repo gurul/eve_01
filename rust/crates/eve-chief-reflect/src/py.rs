@@ -361,8 +361,9 @@ pub fn expanduser(p: &str) -> PathBuf {
     };
     match user_home(if user.is_empty() { None } else { Some(user) }) {
         Some(home) => {
-            let home = home.trim_end_matches('/');
-            PathBuf::from(format!("{home}{tail}"))
+            // os.path.expanduser: `(userhome.rstrip("/") + path[i:]) or root`
+            let joined = format!("{}{tail}", home.trim_end_matches('/'));
+            PathBuf::from(if joined.is_empty() { "/".to_string() } else { joined })
         }
         None => PathBuf::from(p),
     }

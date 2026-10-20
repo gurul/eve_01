@@ -328,19 +328,27 @@ fn row_line(t: f64, executor: &str, r#do: &str, card_id: &str, n: i64, trial: i6
     )
 }
 
-/// `isinstance(v, int) and not isinstance(v, bool)` for a JSON value, as an i64.
-fn json_int(v: &Value) -> Option<i64> {
-    match v {
-        Value::Number(n) => n.as_i64(),
-        _ => None,
+/// `isinstance(r[key], int) and not isinstance(r[key], bool)` for a JSON member, as an i64. serde_json reads the
+/// token `-0` as the float -0.0, which Python's json reads as the int 0: the raw token decides that one case.
+fn json_int(v: &Value, line: &str, key: &str) -> Option<i64> {
+    let Value::Number(n) = v else { return None };
+    if let Some(i) = n.as_i64() {
+        return Some(i);
     }
+    if n.as_f64().is_some_and(|x| x == 0.0 && x.is_sign_negative()) {
+        let raw: HashMap<String, Box<serde_json::value::RawValue>> = serde_json::from_str(line).ok()?;
+        if raw.get(key).is_some_and(|t| t.get() == "-0") {
+            return Some(0);
+        }
+    }
+    None
 }
 
 fn parse_row(line: &str) -> Option<Lesson> {
     let r: Value = serde_json::from_str(line).ok()?;
     let r = r.as_object()?;
-    let n = json_int(r.get("n")?)?;
-    let trial = json_int(r.get("trial")?)?;
+    let n = json_int(r.get("n")?, line, "n")?;
+    let trial = json_int(r.get("trial")?, line, "trial")?;
     let lesson = clean_value(Some(r.get("lesson")?));
     if lesson.is_empty() {
         return None;
@@ -357,6 +365,28 @@ fn parse_row(line: &str) -> Option<Lesson> {
         lesson,
         t,
     })
+}
+
+/// pathlib's `Path.mkdir(mode, parents=True, exist_ok=True)`.
+fn py_mkdir(dir: &Path, mode: u32) -> io::Result<()> {
+    let path = if dir.as_os_str().is_empty() { Path::new(".") } else { dir };
+    match fs::DirBuilder::new().mode(mode).create(path) {
+        Ok(()) => Ok(()),
+        Err(e) if e.kind() == io::ErrorKind::NotFound => {
+            let parent = match path.parent() {
+                Some(p) if p != path => p,
+                _ => return Err(e),
+            };
+            py_mkdir(parent, 0o777)?;
+            match fs::DirBuilder::new().mode(mode).create(path) {
+                Ok(()) => Ok(()),
+                Err(_) if path.is_dir() => Ok(()),
+                Err(e) => Err(e),
+            }
+        }
+        Err(_) if path.is_dir() => Ok(()),
+        Err(e) => Err(e),
+    }
 }
 
 /// lessons.jsonl: appended, fsynced, mode 600; read back as the last OMEGA per key. Thread-safe.
@@ -400,19 +430,11 @@ impl Memory {
         py::splitlines(&text).into_iter().filter_map(parse_row).collect()
     }
 
-    /// `self.dir.mkdir(mode=0o700, parents=True, exist_ok=True)`: the parents with the default mode, the folder
-    /// itself 0o700; an existing folder is fine, an existing file is FileExistsError.
+    /// `self.dir.mkdir(mode=0o700, parents=True, exist_ok=True)`, as pathlib does it: `os.mkdir(dir, 0o700)`; on
+    /// FileNotFoundError the parents first (default mode, `exist_ok`), then the folder again; any other OSError is
+    /// fine when the folder is a directory, else it is raised (FileExistsError for a file in its place).
     fn make_dir(&self) -> io::Result<()> {
-        if let Some(parent) = self.dir.parent() {
-            if !parent.as_os_str().is_empty() && !parent.is_dir() {
-                fs::create_dir_all(parent)?;
-            }
-        }
-        match fs::DirBuilder::new().mode(0o700).create(&self.dir) {
-            Ok(()) => Ok(()),
-            Err(e) if e.kind() == io::ErrorKind::AlreadyExists && self.dir.is_dir() => Ok(()),
-            Err(e) => Err(e),
-        }
+        py_mkdir(&self.dir, 0o700)
     }
 
     fn append(&self, line: &str) -> io::Result<()> {

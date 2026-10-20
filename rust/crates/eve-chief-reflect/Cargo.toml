@@ -22,7 +22,8 @@ parking_lot.workspace = true
 regex.workspace = true
 serde.workspace = true
 # float_roundtrip: a lesson's `t` read back from lessons.jsonl is the float Python wrote, to the bit.
-serde_json = { workspace = true, features = ["float_roundtrip"] }
+# raw_value: an `n` or `trial` written `-0` is the int 0 to Python (serde_json reads it as the float -0.0).
+serde_json = { workspace = true, features = ["float_roundtrip", "raw_value"] }
 tempfile.workspace = true
 thiserror.workspace = true
 tokio.workspace = true

@@ -7,7 +7,7 @@ one model call (`request`, `parse`, `Reflector`). One Python module, ported into
 semantics the file and the prompt depend on (`str.split`/`splitlines`/`isspace`, `casefold`, the `\w` and `\b` of
 a str pattern, `str()`/`repr()` of a JSON value, float repr, `float()` of a str, `round(x, 3)`, `json.dumps`'
 default separators, pathlib `expanduser`, OSError subclass names) are in the private `src/py.rs`.
-`cargo test -p eve-chief-reflect`: 22 tests pass (17 module tests in src/tests.rs, 5 py helpers).
+`cargo test -p eve-chief-reflect`: 26 tests pass (21 module tests in src/tests.rs, 5 py helpers).
 
 ## Modules
 | Python | Rust |
@@ -34,8 +34,8 @@ default separators, pathlib `expanduser`, OSError subclass names) are in the pri
 | with_notes | with_notes(goal, lessons, scope: Option<&str>) | |
 | class Memory | struct Memory { pub dir } | Memory::new(folder, clock) (None: chief_ledger::chief_dir, EVE_CHIEF_DIR), Memory::at(folder); ReentrantMutex for RLock |
 | Memory.path | Memory::path | |
-| Memory._rows | private Memory::rows | invalid UTF-8 replaced; Python splitlines; torn/non-dict/bool-int/missing-key lines skipped; `float(t or 0.0)` incl. str t |
-| Memory.add | Memory::add(&Lesson) -> bool | mkdir 0o700 (parents default mode), O_APPEND/O_CREAT 0o600, fsync; same line bytes; warning "chief: a lesson was not written (<OSError name>)" |
+| Memory._rows | private Memory::rows | invalid UTF-8 replaced; Python splitlines; torn/non-dict/bool-int/missing-key lines skipped; an `n`/`trial` token `-0` is the int 0 (raw token checked); `float(t or 0.0)` incl. str t |
+| Memory.add | Memory::add(&Lesson) -> bool | mkdir as pathlib's `mkdir(mode=0o700, parents=True, exist_ok=True)` (private py_mkdir: parents on FileNotFoundError with the default mode, any OSError fine on an existing directory), O_APPEND/O_CREAT 0o600, fsync; same line bytes; warning "chief: a lesson was not written (<OSError name>)" |
 | Memory._compact | private Memory::compact | last OMEGA per key, stable sort by t, temp `.lessons-*.jsonl` in the folder, chmod 600, rename; warning "chief: lessons were not compacted (...)" |
 | Memory.for_key, for_phase, for_attempt, latest, count | same names | count returns IndexMap<(executor, do), usize> |
 | _strip | private strip | |
@@ -52,11 +52,11 @@ default separators, pathlib `expanduser`, OSError subclass names) are in the pri
 | test_chief_reflect.py | test_a_reflection_error_means_no_lesson_and_no_retry | test_a_reflection_error_means_no_lesson_and_no_retry | the chief's no-retry / ledger status half: eve-chief |
 | test_chief_reflect.py | test_injection_in_executor_output_cannot_change_the_next_goal_beyond_the_notes | same name | the chief's revise/research_calls half: eve-chief |
 | test_chief_reflect.py | test_the_heuristics_repeated_step_and_too_many_steps | same name | |
-| test_chief_reflect.py | test_clean_strips_links_markup_delimiters_and_caps | same name, + test_clean_matches_python_on_edges | |
+| test_chief_reflect.py | test_clean_strips_links_markup_delimiters_and_caps | same name, + test_clean_matches_python_on_edges, test_clean_matches_python_on_a_differential_set (outputs python3 printed) | |
 | test_chief_reflect.py | test_a_lesson_that_widens_the_step_is_not_carried | same name | chief.ACT_GUARD copied verbatim into the test (eve-chief is downstream) |
-| test_chief_reflect.py | test_the_reflection_request_marks_the_attempt_untrusted_and_carries_card_fields_only | same name, + test_the_request_shows_the_last_twelve_steps_and_counts_them_all | |
+| test_chief_reflect.py | test_the_reflection_request_marks_the_attempt_untrusted_and_carries_card_fields_only | same name, + test_the_request_shows_the_last_twelve_steps_and_counts_them_all, test_the_request_is_the_body_python_builds (body python3 printed) | |
 | test_chief_reflect.py | test_the_reply_must_be_exactly_lesson_and_retry | same name | |
-| test_chief_reflect.py | test_the_memory_file_is_private_compacts_and_skips_torn_lines | same name, + test_the_lessons_file_is_the_bytes_python_writes_and_reads | |
+| test_chief_reflect.py | test_the_memory_file_is_private_compacts_and_skips_torn_lines | same name, + test_the_lessons_file_is_the_bytes_python_writes_and_reads, test_a_negative_zero_n_is_the_int_python_reads, test_the_folder_is_made_as_pathlib_makes_it | |
 | test_chief_reflect.py | test_a_reflector_lesson_that_cannot_be_kept_is_not_returned | same name | |
 | test_chief_reflect.py | test_a_retry_carries_the_lessons | test_a_retry_carries_its_own_lessons_first_then_the_keys (Memory.for_attempt) | the retry loop is chief.py's: eve-chief |
 | test_chief_reflect.py | test_a_one_way_act_never_retries_by_itself_and_its_next_go_shows_the_lesson, test_a_looping_but_confirmed_phase_keeps_a_lesson_and_retries_nothing, test_a_two_way_phase_retries_at_most_twice | test_needs_retry_and_may_retry (the rules) | the chief's dispatch, Go and ledger: eve-chief |
@@ -76,3 +76,6 @@ None
   ints past i64, lone-surrogate escapes) are skipped as torn. Neither daemon writes them.
 - `float()` of a str `t` with non-ASCII digits is skipped (Python converts them). Neither daemon writes one.
 - `~user` in a given folder that names no user is left unexpanded (pathlib raises RuntimeError).
+- A reply whose lesson holds a lone-surrogate escape (`\ud800`): Python parses it, then `Memory.add` raises
+  UnicodeEncodeError out of `reflect` (the chief logs it as a failed reflection: no lesson); Rust's `parse` returns
+  None (no lesson, no retry).
