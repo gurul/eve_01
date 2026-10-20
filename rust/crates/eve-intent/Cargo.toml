@@ -1,0 +1,21 @@
+[package]
+name = "eve-intent"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+eve-openrouter = { path = "../eve-openrouter" }
+eve-spend = { path = "../eve-spend" }
+anyhow.workspace = true
+thiserror.workspace = true
+regex.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+sha2.workspace = true
+hex.workspace = true
+tempfile.workspace = true
