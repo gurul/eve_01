@@ -124,6 +124,7 @@ async fn test_codex_browser_picture_uses_task_bytes_not_desktop_and_cleans_up() 
         })),
         document: None,
         react: None,
+        before_inline: None,
     });
     let desktop = Arc::new(AtomicBool::new(false));
     let d = desktop.clone();
@@ -169,6 +170,7 @@ async fn test_browser_picture_delivery_failure_is_reported_and_temp_file_removed
         })),
         document: None,
         react: None,
+        before_inline: None,
     });
     let rig = rig_over(api, FakeCreate::new(vec![]), |_| {});
     rig.inlet.tt_set_agent(Some(Arc::new(CodexAgent { browser_used: true, screenshot: Mutex::new(Some(validated(&blue_png()))) })));
@@ -273,6 +275,7 @@ async fn test_send_file_sends_a_document_and_refuses_folders_and_big_files() {
             inner: FakeApi::new(vec![batch]),
             photo: None,
             react: None,
+        before_inline: None,
             document: Some(Box::new(move |chat, path, caption| {
                 s.lock().push((chat, path.to_string_lossy().into_owned(), caption.to_string()));
                 Ok(())

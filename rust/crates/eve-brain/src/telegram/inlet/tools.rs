@@ -1227,6 +1227,54 @@ impl TelegramInlet {
             st.claude_on_job = Some(crate::seams::Job::spawn("claude-on", futures::future::pending::<()>()));
         }
     }
+    /// `await inlet._app_tool(name, args, chat_id)`.
+    pub async fn tt_app_tool(self: &Arc<Self>, name: &str, args: &Obj, chat_id: i64) -> Obj {
+        self.app_tool(name, args, chat_id).await
+    }
+    /// `inlet._keep_typing(chat_id, reason, secs)`.
+    pub fn tt_keep_typing(self: &Arc<Self>, chat_id: i64, reason: &str, secs: f64) {
+        self.keep_typing(Some(chat_id), reason, secs);
+    }
+    /// `inlet._stop_typing(chat_id, reason)`.
+    pub fn tt_stop_typing(self: &Arc<Self>, chat_id: i64, reason: &str) {
+        self.stop_typing(Some(chat_id), reason);
+    }
+    /// `inlet._typing.get(chat_id)`: its reasons, None when the chat is not in it.
+    pub fn tt_typing(&self, chat_id: i64) -> Option<Vec<String>> {
+        self.st.lock().typing.get(&chat_id).map(|reasons| {
+            let mut out: Vec<String> = reasons.keys().cloned().collect();
+            out.sort();
+            out
+        })
+    }
+    /// `chat_id in inlet._typing_tasks`.
+    pub fn tt_typing_task(&self, chat_id: i64) -> bool {
+        self.st.lock().typing_tasks.contains_key(&chat_id)
+    }
+    /// `inlet._start_thinking(chat_id)`.
+    pub fn tt_start_thinking(self: &Arc<Self>, chat_id: i64) {
+        self.start_thinking(Some(chat_id));
+    }
+    /// `inlet._draft_task is not None`.
+    pub fn tt_draft_task(&self) -> bool {
+        self.st.lock().draft_task.is_some()
+    }
+    /// `inlet._drafts_ok`.
+    pub fn tt_drafts_ok(&self) -> bool {
+        self.st.lock().drafts_ok
+    }
+    /// `await inlet._think_hard(question, chat_id)`.
+    pub async fn tt_think_hard(self: &Arc<Self>, question: &str, chat_id: i64) -> Obj {
+        self.think_hard(question, Some(chat_id)).await
+    }
+    /// `inlet._pending_answer`.
+    pub fn tt_pending_answer(&self) -> Option<Pending> {
+        self.st.lock().pending_answer.clone()
+    }
+    /// `inlet._pending_answer_chat`.
+    pub fn tt_pending_answer_chat(&self) -> Option<i64> {
+        self.st.lock().pending_answer_chat
+    }
     /// `monkeypatch.setattr(websearch, "search", search)` for this inlet.
     pub fn tt_set_web_search(&self, search: Option<WebSearchFn>) {
         self.st.lock().web_search = search;

@@ -75,7 +75,12 @@ pub async fn run_plain(rig: &Rig) {
 /// `Rig(Api(...), create, **kw)` over an API that is not a FakeApi: the same lent fakes as `Rig::new`, `tweak` sets
 /// the rest of the keyword arguments, and `rig.api` is an unused FakeApi.
 pub fn rig_over(other: Arc<dyn TelegramApi>, create: Arc<FakeCreate>, tweak: impl FnOnce(&mut InletOptions)) -> Rig {
-    let made = Rig::new(FakeApi::new(vec![]), create.clone(), config(), |_| {});
+    rig_over_config(other, create, config(), tweak)
+}
+
+/// The same with a config of its own.
+pub fn rig_over_config(other: Arc<dyn TelegramApi>, create: Arc<FakeCreate>, cfg: eve_brain::telegram::TelegramConfig, tweak: impl FnOnce(&mut InletOptions)) -> Rig {
+    let made = Rig::new(FakeApi::new(vec![]), create.clone(), cfg.clone(), |_| {});
     let s = made.states.clone();
     let mut options = InletOptions {
         agent_factory: Some(made.agents.factory()),
@@ -92,7 +97,7 @@ pub fn rig_over(other: Arc<dyn TelegramApi>, create: Arc<FakeCreate>, tweak: imp
         ..InletOptions::default()
     };
     tweak(&mut options);
-    let inlet = TelegramInlet::new(config(), other, create.create(), options);
+    let inlet = TelegramInlet::new(cfg, other, create.create(), options);
     Rig { inlet, ..made }
 }
 
@@ -115,12 +120,14 @@ pub struct Hooked {
     pub photo: Option<FileHook>,
     pub document: Option<FileHook>,
     pub react: Option<ReactHook>,
+    /// awaited before each `send_inline` goes on to the FakeApi
+    pub before_inline: Option<Box<dyn Fn() -> futures::future::BoxFuture<'static, ()> + Send + Sync>>,
 }
 
 impl Hooked {
     /// `class Api(FakeApi)` with nothing of its own yet.
     pub fn new(inner: Arc<FakeApi>) -> Self {
-        Self { inner, photo: None, document: None, react: None }
+        Self { inner, photo: None, document: None, react: None, before_inline: None }
     }
 }
 
@@ -139,6 +146,9 @@ impl TelegramApi for Hooked {
         self.inner.send_message(chat_id, text, title, subtitle, buttons, reply_to, force_reply).await
     }
     async fn send_inline(&self, chat_id: i64, text: &str, keyboard: &[Vec<(String, String, String)>], title: Option<&str>, subtitle: Option<&str>) -> Result<i64, BotApiError> {
+        if let Some(wait) = &self.before_inline {
+            wait().await;
+        }
         self.inner.send_inline(chat_id, text, keyboard, title, subtitle).await
     }
     async fn edit_message(&self, chat_id: i64, message_id: i64, text: &str, title: Option<&str>, subtitle: Option<&str>, keyboard: Option<&[Vec<(String, String, String)>]>) -> Result<(), BotApiError> {
