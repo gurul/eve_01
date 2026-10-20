@@ -1,7 +1,11 @@
 //! A port of `voice_agent.py`, lines 1-743: prompts, tools, config, the session request, the speaker, transcript turns.
 //!
-//! Skeleton: constants and prompts are verbatim (generated from the Python values); bodies are
-//! `todo!()` until this file's unit fills them.
+//! Voice: after "hey eve", a spoken conversation that can run the computer. One [`VoiceSession`] is one
+//! conversation: a Live API session (gpt-live-1, full duplex) fed by the daemon's microphone, delegating every
+//! decision that needs tools to a Responses backend. See `voice_agent.py`'s module docstring for the whole design;
+//! the parts are here (prompts, config, the speaker, turn boundaries), in `session` (the session's state, run,
+//! billing, memory, think out loud), `events` and `tools` (what the session does with each event and tool call),
+//! and `live` (the real Live connection).
 
 pub mod events;
 pub mod live;
@@ -15,9 +19,12 @@ pub use tools::*;
 #[allow(unused_imports)]
 use crate::prelude::*;
 
-// py: voice_agent.py:113: a top-level `If`, ported by this file's unit.
+use eve_computer_agent::py::{py_float_parse, py_repr, py_strip};
 
-// py: voice_agent.py:116 `log` (Logger): ported by this file's unit.
+// py: voice_agent.py:113: `if TYPE_CHECKING: from .memory import Memory`: the memory is the
+// [`BrainMemory`] seam here.
+
+// py: voice_agent.py:116 `log`: `tracing`, with the Python's messages.
 
 /// py: voice_agent.py:118 `DEFAULT_MODEL`
 pub const DEFAULT_MODEL: &str = "gpt-live-1";
@@ -281,28 +288,48 @@ pub const BACKEND_MEMORY_RULES: &str = "
 ///
 /// The profile paragraph for the session prompt, or "" when there is none.
 pub fn profile_block(profile: &str) -> String {
-    todo!("voice_agent.py:342 profile_block")
+    let text = py_strip(profile);
+    if text.is_empty() {
+        String::new()
+    } else {
+        format!("{PROFILE_HEADER}\n{text}")
+    }
 }
 
 /// py: voice_agent.py:348 `def backend_profile_block(profile: str) -> str:`
 ///
 /// The profile for the backend's instructions, or "" when there is none.
 pub fn backend_profile_block(profile: &str) -> String {
-    todo!("voice_agent.py:348 backend_profile_block")
+    let text = py_strip(profile);
+    if text.is_empty() {
+        String::new()
+    } else {
+        format!("{BACKEND_PROFILE_HEADER}\n{text}")
+    }
 }
 
 /// py: voice_agent.py:354 `def today_block(today: str, header: str = VOICE_TODAY_HEADER) -> str:`
 ///
-/// Today's talk under `header`, or "" when nothing was said today.
+/// Today's talk under `header`, or "" when nothing was said today. (Python's default header is
+/// [`VOICE_TODAY_HEADER`].)
 pub fn today_block(today: &str, header: &str) -> String {
-    todo!("voice_agent.py:354 today_block")
+    let text = py_strip(today);
+    if text.is_empty() {
+        String::new()
+    } else {
+        format!("{header}\n{text}")
+    }
 }
 
 /// py: voice_agent.py:360 `def memory_block(memory: str) -> str:`
 ///
 /// The memory paragraph for the session prompt, or "" when there is none.
 pub fn memory_block(memory: &str) -> String {
-    todo!("voice_agent.py:360 memory_block")
+    let text = py_strip(memory);
+    if text.is_empty() {
+        return String::new();
+    }
+    format!("{MEMORY_HEADER}\n{text}{MEMORY_RULES}")
 }
 
 /// py: voice_agent.py:368 `TOOLS`
@@ -319,8 +346,6 @@ pub static MEET_TOOLS: LazyLock<Value> =
 /// A Python set: sorted here; membership is what matters.
 pub const MEET_TOOL_NAMES: &[&str] = &["join_meeting", "leave_meeting"];
 
-// py: voice_agent.py:465 `_FIRETV_APP` (App): ported by this file's unit.
-
 /// py: voice_agent.py:466 `VOICE_FIRETV_TOOLS`
 /// A Python set: sorted here; membership is what matters.
 pub const VOICE_FIRETV_TOOLS: &[&str] = &["firetv_control", "firetv_status"];
@@ -331,21 +356,53 @@ pub const VOICE_FIRETV_NOTE: &str = "Out loud you can't see the TV's screen: whe
 /// py: voice_agent.py:468 `VOICE_OBSBOT_TOOLS`
 pub const VOICE_OBSBOT_TOOLS: &[&str] = &["camera_status", "camera_control"];
 
+/// py: voice_agent.py:465 `_FIRETV_APP`: the TV's registry entry, which VOICE_FIRETV_TOOLS and VOICE_FIRETV_NOTE are
+/// read from (they are its tools but its voice_omit ones, and its voice_note).
+pub(crate) static FIRETV_APP: LazyLock<Option<&'static eve_app_registry::App>> =
+    LazyLock::new(|| eve_app_registry::get("firetv"));
+
 /// py: voice_agent.py:471 `def _app_voice(listening: bool, hubs: dict[str, Any]) -> tuple[list[dict[str, Any]], str]:`
 ///
-/// The apps' tools and blocks out loud, in tool order; none in a lesson. Each block is "
-///
-/// " + its instructions
-///     (with the app's voice_kwargs) + "
-/// " + its voice_note when it has one, and only when the app offers a tool.
-pub(crate) fn app_voice(listening: bool, hubs: &Obj) -> (Vec<Obj>, String) {
-    todo!("voice_agent.py:471 _app_voice")
+/// The apps' tools and blocks out loud, in tool order; none in a lesson. Each block is "\n\n" + its instructions
+/// (with the app's voice_kwargs) + "\n" + its voice_note when it has one, and only when the app offers a tool.
+/// (Rust: the hubs are the session's [`AppHubs`]; a slot with no hub is an app that is not here.)
+pub(crate) fn app_voice(listening: bool, hubs: &AppHubs) -> (Vec<Obj>, String) {
+    let mut tools: Vec<Obj> = Vec::new();
+    let mut block = String::new();
+    if listening {
+        return (tools, block);
+    }
+    for app in eve_app_registry::with_tools() {
+        let Some(hub) = hubs.get(&app.slot) else {
+            continue;
+        };
+        let mine: Vec<Obj> = hub
+            .tools()
+            .into_iter()
+            .filter_map(|t| t.as_object().cloned())
+            .filter(|t| !t.get("name").and_then(Value::as_str).is_some_and(|n| app.voice_omit.contains(n)))
+            .collect();
+        if mine.is_empty() {
+            continue;
+        }
+        tools.extend(mine);
+        block.push_str("\n\n");
+        block.push_str(&hub.instructions(&app.voice_kwargs));
+        if !app.voice_note.is_empty() {
+            block.push('\n');
+            block.push_str(&app.voice_note);
+        }
+    }
+    (tools, block)
 }
 
 /// py: voice_agent.py:489 `DEFAULT_CAPTION_CPS`
 pub const DEFAULT_CAPTION_CPS: f64 = 12.0;
 
 /// py: voice_agent.py:493 `class VoiceConfig:`
+///
+/// `Default` is Python's `VoiceConfig()`. Equality leaves out `about`, as the dataclass's `compare=False` does.
+#[derive(Debug, Clone)]
 pub struct VoiceConfig {
     pub model: String,
     pub backend_model: String,
@@ -359,13 +416,139 @@ pub struct VoiceConfig {
     pub caption_cps: f64,
     /// the backend may search the web
     pub web_search: bool,
+    /// websearch.configured's engine
     pub search: eve_web::websearch::SearchConfig,
+    /// What eve runs on (self_context.py), filled by configured() at boot; "" in a hand-built config
     pub about: String,
+}
+
+impl Default for VoiceConfig {
+    fn default() -> Self {
+        Self {
+            model: DEFAULT_MODEL.into(),
+            backend_model: DEFAULT_BACKEND_MODEL.into(),
+            backend_effort: DEFAULT_BACKEND_EFFORT.into(),
+            voice: DEFAULT_VOICE.into(),
+            idle_timeout_secs: DEFAULT_IDLE_TIMEOUT_SECS,
+            max_session_secs: DEFAULT_MAX_SESSION_SECS,
+            output: "captions".into(),
+            caption_cps: DEFAULT_CAPTION_CPS,
+            web_search: true,
+            search: eve_web::websearch::SearchConfig::default(),
+            about: String::new(),
+        }
+    }
+}
+
+impl PartialEq for VoiceConfig {
+    fn eq(&self, other: &Self) -> bool {
+        self.model == other.model
+            && self.backend_model == other.backend_model
+            && self.backend_effort == other.backend_effort
+            && self.voice == other.voice
+            && self.idle_timeout_secs == other.idle_timeout_secs
+            && self.max_session_secs == other.max_session_secs
+            && self.output == other.output
+            && self.caption_cps == other.caption_cps
+            && self.web_search == other.web_search
+            && self.search == other.search
+    }
+}
+
+/// `(env.get(name) or default).strip()`.
+fn env_stripped(environ: Option<&Environ>, name: &str, default: &str) -> String {
+    let raw = env_get(environ, name).unwrap_or_default();
+    py_strip(if raw.is_empty() { default } else { &raw }).to_string()
+}
+
+/// Python's `max(a, b)` of floats: the first argument unless the second is larger (a NaN never is).
+fn py_max(a: f64, b: f64) -> f64 {
+    if b > a {
+        b
+    } else {
+        a
+    }
+}
+
+/// Python's `min(a, b)` of floats: the first argument unless the second is smaller.
+fn py_min(a: f64, b: f64) -> f64 {
+    if b < a {
+        b
+    } else {
+        a
+    }
 }
 
 /// py: voice_agent.py:508 `def configured(environ: Any = None) -> VoiceConfig:`
 pub fn configured(environ: Option<&Environ>) -> VoiceConfig {
-    todo!("voice_agent.py:508 configured")
+    let web = !matches!(env_stripped(environ, "EVE_LIVE_WEB_SEARCH", "1").to_lowercase().as_str(), "0" | "false" | "no" | "off");
+    let mut model = env_stripped(environ, "EVE_LIVE_MODEL", DEFAULT_MODEL);
+    if model.is_empty() {
+        model = DEFAULT_MODEL.into();
+    }
+    let mut backend = env_stripped(environ, "EVE_LIVE_BACKEND_MODEL", DEFAULT_BACKEND_MODEL);
+    if backend.is_empty() {
+        backend = DEFAULT_BACKEND_MODEL.into();
+    }
+    let mut effort = env_stripped(environ, "EVE_LIVE_BACKEND_EFFORT", DEFAULT_BACKEND_EFFORT).to_lowercase();
+    if !["none", "minimal", "low", "medium", "high", "xhigh"].contains(&effort.as_str()) {
+        tracing::warn!(
+            "voice: EVE_LIVE_BACKEND_EFFORT={} is not a reasoning effort; using {}",
+            py_repr(&effort),
+            DEFAULT_BACKEND_EFFORT
+        );
+        effort = DEFAULT_BACKEND_EFFORT.into();
+    }
+    let mut voice = env_stripped(environ, "EVE_VOICE_NAME", DEFAULT_VOICE);
+    if voice.is_empty() {
+        voice = DEFAULT_VOICE.into();
+    }
+    let mut idle = DEFAULT_IDLE_TIMEOUT_SECS;
+    let raw = env_stripped(environ, "EVE_VOICE_IDLE_SECS", "");
+    if !raw.is_empty() {
+        match py_float_parse(&raw) {
+            Some(x) => idle = py_max(5.0, x),
+            None => tracing::warn!(
+                "voice: EVE_VOICE_IDLE_SECS={} is not a number; using {}",
+                py_repr(&raw),
+                eve_spend::py_float_repr(idle)
+            ),
+        }
+    }
+    let mut out = env_stripped(environ, "EVE_VOICE_OUTPUT", "captions").to_lowercase();
+    if out != "captions" && out != "audio" {
+        tracing::warn!("voice: EVE_VOICE_OUTPUT={} is not captions|audio; using captions", py_repr(&out));
+        out = "captions".into();
+    }
+    let mut cps = DEFAULT_CAPTION_CPS;
+    let raw = env_stripped(environ, "EVE_CAPTION_CPS", "");
+    if !raw.is_empty() {
+        match py_float_parse(&raw) {
+            Some(x) => cps = py_min(30.0, py_max(5.0, x)),
+            None => tracing::warn!(
+                "voice: EVE_CAPTION_CPS={} is not a number; using {}",
+                py_repr(&raw),
+                eve_spend::py_float_repr(cps)
+            ),
+        }
+    }
+    let ctx = match environ {
+        Some(env) => eve_web::Ctx::global().clone().with_env(env.clone()),
+        None => eve_web::Ctx::global().clone(),
+    };
+    VoiceConfig {
+        model,
+        backend_model: backend,
+        backend_effort: effort,
+        voice,
+        idle_timeout_secs: idle,
+        max_session_secs: DEFAULT_MAX_SESSION_SECS,
+        output: out,
+        caption_cps: cps,
+        web_search: web,
+        search: eve_web::websearch::configured(&ctx),
+        about: crate::self_context::block(environ, None, None),
+    }
 }
 
 /// py: voice_agent.py:542 `def session_config(config: VoiceConfig, brief: str = "", think_aloud: Optional[dict[str, Any]] = None, profile: str = "", *, backend_profile: str = "", today: str = "", backend_today: str = "", memory_tools: Optional[list[dict[str, Any]]] = None, meet_tools: Optional[list[dict[str, Any]]] = None, **app_hubs: Any) -> dict[str, Any]:`
@@ -389,86 +572,342 @@ pub fn configured(environ: Option<&Environ>) -> VoiceConfig {
 /// What eve runs on (``config.about``, self_context.py; owner, 2026-09-29) goes right after the fixed
 /// instructions of both halves, so "what do you use for search" is answered from the live wiring, never from a
 /// memory. It is not memory, so a lesson keeps it; "" in a hand-built config.
-/// (Python also takes **app_hubs.)
+///
+/// Rust: no app hubs and the clock read now; [`session_config_with`] takes both (`**app_hubs`, and the
+/// `system_context.context()` the tests pin).
 pub fn session_config(config: &VoiceConfig, brief: &str, think_aloud: Option<&Obj>, profile: &str, backend_profile: &str, today: &str, backend_today: &str, memory_tools: Option<&[Obj]>, meet_tools: Option<&[Obj]>) -> Obj {
-    todo!("voice_agent.py:542 session_config")
+    session_config_with(
+        config,
+        brief,
+        think_aloud,
+        profile,
+        backend_profile,
+        today,
+        backend_today,
+        memory_tools,
+        meet_tools,
+        &AppHubs::default(),
+        &eve_system_context::context(None, None),
+        None,
+    )
 }
+
+/// [`session_config`] with eve's apps' hubs (`**app_hubs`), the system context block (`system_context.context()`)
+/// and the environment the switchable tools read (the phone's location, science search, the NYT; None: the
+/// process's, as Python's `os.environ`).
+#[allow(clippy::too_many_arguments)]
+pub fn session_config_with(
+    config: &VoiceConfig,
+    brief: &str,
+    think_aloud: Option<&Obj>,
+    profile: &str,
+    backend_profile: &str,
+    today: &str,
+    backend_today: &str,
+    memory_tools: Option<&[Obj]>,
+    meet_tools: Option<&[Obj]>,
+    app_hubs: &AppHubs,
+    context: &str,
+    environ: Option<&Environ>,
+) -> Obj {
+    let captions = config.output == "captions";
+    let listening = think_aloud.is_some();
+    let (brief, profile, backend_profile, today, backend_today, memory_tools) = if listening {
+        ("", "", "", "", "", None)
+    } else {
+        (brief, profile, backend_profile, today, backend_today, memory_tools)
+    };
+    let extra: Vec<Value> = memory_tools.unwrap_or_default().iter().cloned().map(Value::Object).collect();
+    // a lesson never sends eve into a call
+    let meeting: Vec<Value> =
+        if listening { Vec::new() } else { meet_tools.unwrap_or_default().iter().cloned().map(Value::Object).collect() };
+    // eve's apps (app_registry.APPS: the lights, Spotify, the Fire TV, the webcam, ...), each when its hub is here:
+    // the backend gets their tools and blocks in tool order, never in a lesson (AppHubs was checked when it was made)
+    let (app_tools, apps_block) = app_voice(listening, app_hubs);
+    // the phone's latest location (phone_location.py), once the Eve Link app has shared one: never in a lesson
+    let loc_tools = if listening { Vec::new() } else { eve_places::phone_location::tools(environ) };
+    // papers' titles and abstracts (science_search.py), while EVE_SCIENCE_SEARCH is on: never in a lesson
+    let mut sci_tools = if listening { Vec::new() } else { eve_science_search::tools(environ) };
+    // The New York Times (nyt.py), while EVE_NYT is on: never in a lesson
+    if !listening {
+        sci_tools.extend(eve_nyt::tools(environ));
+    }
+    let mut front = String::new();
+    front.push_str(INSTRUCTIONS);
+    front.push_str(&config.about);
+    front.push_str(&profile_block(profile));
+    front.push_str(&today_block(today, VOICE_TODAY_HEADER));
+    front.push_str(context);
+    front.push_str(&memory_block(brief));
+    if captions {
+        front.push_str(&eve_caption_pager::caption_instructions(&eve_caption_pager::PagerConfig::with_read_cps(
+            config.caption_cps,
+        )));
+    }
+    if listening {
+        front.push_str(&eve_learning::think_aloud::voice_instructions(think_aloud));
+    }
+    let mut back = String::new();
+    back.push_str(BACKEND_INSTRUCTIONS);
+    if !extra.is_empty() {
+        back.push_str(BACKEND_MEMORY_RULES);
+    }
+    back.push_str(&config.about);
+    back.push_str(&backend_profile_block(backend_profile));
+    back.push_str(&today_block(backend_today, BACKEND_TODAY_HEADER));
+    back.push_str(context);
+    if listening {
+        back.push_str(&eve_learning::think_aloud::backend_instructions(think_aloud));
+    }
+    back.push_str(&apps_block);
+    let mut tools: Vec<Value> = TOOLS.as_array().cloned().unwrap_or_default();
+    if config.web_search {
+        tools.extend(eve_web::websearch::tools_for(&config.search));
+    }
+    tools.extend(extra);
+    tools.extend(meeting);
+    tools.extend(app_tools.into_iter().map(Value::Object));
+    tools.extend(loc_tools);
+    tools.extend(sci_tools);
+    let session = json!({
+        "model": config.model,
+        "instructions": front,
+        "audio": {
+            "format": {"type": "audio/pcm", "rate": SAMPLE_RATE},
+            "output": {"voice": config.voice},
+        },
+        "delegation": {
+            "type": "responses",
+            "responses": {
+                "model": config.backend_model,
+                "instructions": back,
+                "tools": tools,
+                "tool_choice": "auto",
+                "reasoning": {"effort": config.backend_effort},
+                "parallel_tool_calls": false,
+            },
+        },
+    });
+    match session {
+        Value::Object(m) => m,
+        _ => Obj::new(),
+    }
+}
+
+// ---- speaker (seam) ----------------------------------------------------------------------
 
 /// py: voice_agent.py:618 `class Speaker:`
 ///
 /// 24 kHz int16 mono out through sounddevice; stop() drops what is queued (barge-in).
+///
+/// Rust: through cpal. CoreAudio is not asked for 24 kHz (that would change the device's nominal rate under
+/// every other app, as eve-desk-call's speaker explains): the stream opens at the device's default format and the
+/// callback resamples the queue linearly, copying the one channel to every channel. The cpal stream is not `Send`
+/// everywhere, so it lives on its own thread; `stream` is that thread's stop signal.
 pub struct Speaker {
-    /// the output stream's running flag (the cpal stream itself lives on its own thread: it is not Send)
+    /// the output stream's thread, told to stop when this is sent to or dropped
     pub(crate) stream: Mutex<Option<std::sync::mpsc::Sender<()>>>,
-    /// what is queued to play (int16 mono, 24 kHz)
+    /// what is queued to play (int16 mono, 24 kHz), behind Python's `_lock`
     pub(crate) buf: Arc<Mutex<VecDeque<u8>>>,
-    pub(crate) lock: Mutex<()>,
+}
+
+impl Default for Speaker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// The callback's read position in the 24 kHz queue: linear interpolation between `last` and `next`.
+struct PullResampler {
+    step: f64,
+    t: f64,
+    last: f32,
+    next: f32,
+}
+
+impl PullResampler {
+    fn new(out_rate: u32) -> Self {
+        Self { step: SAMPLE_RATE as f64 / f64::from(out_rate.max(1)), t: 0.0, last: 0.0, next: 0.0 }
+    }
+
+    /// How many queued samples `frames` output frames will read.
+    fn needs(&self, frames: usize) -> usize {
+        (self.t + frames as f64 * self.step).floor().max(0.0) as usize
+    }
+
+    /// One output sample, reading the next input samples from `input` as the position passes them.
+    fn sample(&mut self, input: &mut std::slice::Iter<'_, i16>) -> f32 {
+        let x = self.last + (self.next - self.last) * self.t as f32;
+        self.t += self.step;
+        while self.t >= 1.0 {
+            self.last = self.next;
+            // PortAudio's Int16_To_Float32
+            self.next = input.next().map(|s| f32::from(*s) * (1.0 / 32768.0)).unwrap_or(0.0);
+            self.t -= 1.0;
+        }
+        x
+    }
+}
+
+fn build_output<T>(
+    device: &cpal::Device,
+    config: &cpal::StreamConfig,
+    buf: Arc<Mutex<VecDeque<u8>>>,
+) -> Result<cpal::Stream, String>
+where
+    T: cpal::SizedSample + cpal::FromSample<f32> + Send + 'static,
+{
+    use cpal::traits::DeviceTrait;
+    let channels = usize::from(config.channels).max(1);
+    let mut pos = PullResampler::new(config.sample_rate);
+    device
+        .build_output_stream::<T, _, _>(
+            *config,
+            move |data: &mut [T], _info| {
+                let frames = data.len() / channels;
+                let need = pos.needs(frames) * 2;
+                let chunk: Vec<u8> = {
+                    let mut queued = buf.lock();
+                    let take = need.min(queued.len());
+                    let mut chunk: Vec<u8> = queued.drain(..take).collect();
+                    chunk.resize(need, 0);
+                    chunk
+                };
+                let samples = to_frames(&chunk, (need / 2) as i64);
+                let mut input = samples.iter();
+                for frame in data.chunks_mut(channels) {
+                    let x = pos.sample(&mut input);
+                    for s in frame.iter_mut() {
+                        *s = T::from_sample(x);
+                    }
+                }
+            },
+            |e| tracing::debug!("voice: speaker stream status {}", e),
+            None,
+        )
+        .map_err(|e| e.to_string())
+}
+
+/// The default output device, opened and started on the calling thread.
+fn open_output(buf: Arc<Mutex<VecDeque<u8>>>) -> Result<cpal::Stream, String> {
+    use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
+    use cpal::SampleFormat;
+    let device = cpal::default_host().default_output_device().ok_or_else(|| "Error querying device -1".to_string())?;
+    let supported = device.default_output_config().map_err(|e| e.to_string())?;
+    let config = supported.config();
+    let stream = match supported.sample_format() {
+        SampleFormat::F32 => build_output::<f32>(&device, &config, buf),
+        SampleFormat::F64 => build_output::<f64>(&device, &config, buf),
+        SampleFormat::I8 => build_output::<i8>(&device, &config, buf),
+        SampleFormat::I16 => build_output::<i16>(&device, &config, buf),
+        SampleFormat::I32 => build_output::<i32>(&device, &config, buf),
+        SampleFormat::U8 => build_output::<u8>(&device, &config, buf),
+        SampleFormat::U16 => build_output::<u16>(&device, &config, buf),
+        other => Err(format!("Invalid sample format {other}")),
+    }?;
+    stream.play().map_err(|e| e.to_string())?;
+    Ok(stream)
 }
 
 impl Speaker {
     /// py: voice_agent.py:621 `def __init__(self) -> None:`
     pub fn new() -> Self {
-        todo!("voice_agent.py:621 Speaker.__init__")
+        Self { stream: Mutex::new(None), buf: Arc::new(Mutex::new(VecDeque::new())) }
     }
 
     /// py: voice_agent.py:626 `def start(self) -> bool:`
     pub fn start(&self) -> bool {
-        todo!("voice_agent.py:626 Speaker.start")
+        let (ready_tx, ready_rx) = std::sync::mpsc::channel::<Result<(), String>>();
+        let (stop_tx, stop_rx) = std::sync::mpsc::channel::<()>();
+        let buf = self.buf.clone();
+        let spawned = std::thread::Builder::new().name("voice-speaker".into()).spawn(move || {
+            match open_output(buf) {
+                Ok(stream) => {
+                    let _ = ready_tx.send(Ok(()));
+                    // until close(): a send, or the sender dropped
+                    let _ = stop_rx.recv();
+                    use cpal::traits::StreamTrait;
+                    let _ = stream.pause();
+                    drop(stream);
+                }
+                Err(e) => {
+                    let _ = ready_tx.send(Err(e));
+                }
+            }
+        });
+        if let Err(e) = spawned {
+            tracing::warn!("voice: could not open the speaker ({})", e);
+            *self.stream.lock() = None;
+            return false;
+        }
+        match ready_rx.recv() {
+            Ok(Ok(())) => {
+                *self.stream.lock() = Some(stop_tx);
+                true
+            }
+            Ok(Err(e)) => {
+                tracing::warn!("voice: could not open the speaker ({})", e);
+                *self.stream.lock() = None;
+                false
+            }
+            Err(e) => {
+                tracing::warn!("voice: could not open the speaker ({})", e);
+                *self.stream.lock() = None;
+                false
+            }
+        }
     }
 
     /// py: voice_agent.py:651 `def play(self, pcm: bytes) -> None:`
     pub fn play(&self, pcm: &[u8]) {
-        todo!("voice_agent.py:651 Speaker.play")
+        self.buf.lock().extend(pcm.iter().copied());
     }
 
     /// py: voice_agent.py:655 `def stop(self) -> None:`
     pub fn stop(&self) {
-        todo!("voice_agent.py:655 Speaker.stop")
+        self.buf.lock().clear();
     }
 
     /// py: voice_agent.py:660 `def busy(self) -> bool:`
     pub fn busy(&self) -> bool {
-        todo!("voice_agent.py:660 Speaker.busy")
+        !self.buf.lock().is_empty()
     }
 
     /// py: voice_agent.py:664 `def close(self) -> None:`
     pub fn close(&self) {
-        todo!("voice_agent.py:664 Speaker.close")
+        self.stop();
+        if let Some(stop) = self.stream.lock().take() {
+            let _ = stop.send(());
+        }
     }
 }
 
 /// py: voice_agent.py:675 `class NullSpeaker:`
 ///
 /// Captions mode: nothing is played on the Mac; the robot beeps instead.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct NullSpeaker {
 }
 
 impl NullSpeaker {
     /// py: voice_agent.py:678 `def start(self) -> bool:`
     pub fn start(&self) -> bool {
-        todo!("voice_agent.py:678 NullSpeaker.start")
+        true
     }
 
-    /// py: voice_agent.py:681 `def play(self, pcm: bytes) -> None:`
-    pub fn play(&self, pcm: &[u8]) {
-        todo!("voice_agent.py:681 NullSpeaker.play")
-    }
+    /// py: voice_agent.py:681 `def play(self, pcm: bytes) -> None:`: captions mode drops the audio.
+    pub fn play(&self, _pcm: &[u8]) {}
 
-    /// py: voice_agent.py:684 `def stop(self) -> None:`
-    pub fn stop(&self) {
-        todo!("voice_agent.py:684 NullSpeaker.stop")
-    }
+    /// py: voice_agent.py:684 `def stop(self) -> None:`: nothing is queued to drop.
+    pub fn stop(&self) {}
 
     /// py: voice_agent.py:688 `def busy(self) -> bool:`
     pub fn busy(&self) -> bool {
-        todo!("voice_agent.py:688 NullSpeaker.busy")
+        false
     }
 
-    /// py: voice_agent.py:691 `def close(self) -> None:`
-    pub fn close(&self) {
-        todo!("voice_agent.py:691 NullSpeaker.close")
-    }
+    /// py: voice_agent.py:691 `def close(self) -> None:`: no stream to close.
+    pub fn close(&self) {}
 }
 
 impl crate::seams::VoiceSpeaker for Speaker {
@@ -508,8 +947,15 @@ impl crate::seams::VoiceSpeaker for NullSpeaker {
 }
 
 /// py: voice_agent.py:695 `def _to_frames(chunk: bytes, frames: int) -> Any:`
-pub(crate) fn to_frames(chunk: &[u8], frames: i64) -> Value {
-    todo!("voice_agent.py:695 _to_frames")
+///
+/// `np.frombuffer(chunk, dtype=np.int16).reshape(frames, 1)`: the chunk's int16 samples, native byte order, one
+/// channel (a mono frame is one sample, so the shape is the sample list). A chunk shorter than `frames` is padded
+/// with silence; numpy would raise, and the speaker's callback always pads first.
+pub(crate) fn to_frames(chunk: &[u8], frames: i64) -> Vec<i16> {
+    let n = usize::try_from(frames).unwrap_or(0);
+    let mut out: Vec<i16> = chunk.chunks_exact(2).take(n).map(|b| i16::from_ne_bytes([b[0], b[1]])).collect();
+    out.resize(n, 0);
+    out
 }
 
 /// py: voice_agent.py:701 `class _Turns:`
@@ -527,28 +973,113 @@ pub struct _Turns {
     pub(crate) last: f64,
 }
 
+impl Default for _Turns {
+    fn default() -> Self {
+        Self::new(TURN_GAP_SECS)
+    }
+}
+
 impl _Turns {
     /// py: voice_agent.py:709 `def __init__(self, gap: float = TURN_GAP_SECS) -> None:`
     pub fn new(gap: f64) -> Self {
-        todo!("voice_agent.py:709 _Turns.__init__")
+        Self { gap, speaker: None, text: String::new(), last: f64::NEG_INFINITY }
     }
 
     /// py: voice_agent.py:715 `def delta(self, who: str, text: str, now: float) -> Optional[tuple[str, str]]:`
     ///
     /// Add a fragment. Returns the turn it displaced, as (speaker, text).
     pub fn delta(&mut self, who: &str, text: &str, now: f64) -> Option<(String, String)> {
-        todo!("voice_agent.py:715 _Turns.delta")
+        let mut closed = None;
+        if let Some(speaker) = &self.speaker {
+            if !self.text.is_empty() && (who != speaker || now - self.last > self.gap) {
+                closed = Some((speaker.clone(), std::mem::take(&mut self.text)));
+            }
+        }
+        self.speaker = Some(who.to_string());
+        self.text.push_str(text);
+        self.last = now;
+        closed
     }
 
     /// py: voice_agent.py:726 `def due(self, now: float) -> Optional[tuple[str, str]]:`
     ///
     /// Close the open turn once it has gone quiet for `gap`.
     pub fn due(&mut self, now: f64) -> Option<(String, String)> {
-        todo!("voice_agent.py:726 _Turns.due")
+        if self.speaker.is_some() && !self.text.is_empty() && now - self.last > self.gap {
+            let speaker = self.speaker.take().unwrap_or_default();
+            return Some((speaker, std::mem::take(&mut self.text)));
+        }
+        None
     }
 
     /// py: voice_agent.py:734 `def flush(self) -> Optional[tuple[str, str]]:`
     pub fn flush(&mut self) -> Option<(String, String)> {
-        todo!("voice_agent.py:734 _Turns.flush")
+        if self.speaker.is_some() && !self.text.is_empty() {
+            let speaker = self.speaker.take().unwrap_or_default();
+            return Some((speaker, std::mem::take(&mut self.text)));
+        }
+        None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn to_frames_reads_native_int16_and_pads_with_silence() {
+        let chunk: Vec<u8> = [1i16, -2, 300].iter().flat_map(|s| s.to_ne_bytes()).collect();
+        assert_eq!(to_frames(&chunk, 3), vec![1, -2, 300]);
+        assert_eq!(to_frames(&chunk, 5), vec![1, -2, 300, 0, 0]);
+        assert_eq!(to_frames(&chunk, 2), vec![1, -2]);
+        assert_eq!(to_frames(&chunk, -1), Vec::<i16>::new());
+    }
+
+    #[test]
+    fn the_resampler_reads_what_it_says_it_needs() {
+        for rate in [24_000u32, 44_100, 48_000, 16_000] {
+            let mut pos = PullResampler::new(rate);
+            let mut total_needed = 0usize;
+            let mut total_read = 0usize;
+            for frames in [512usize, 480, 1024, 7] {
+                let need = pos.needs(frames);
+                let input: Vec<i16> = (0..need).map(|i| i as i16).collect();
+                let mut it = input.iter();
+                for _ in 0..frames {
+                    pos.sample(&mut it);
+                }
+                total_needed += need;
+                total_read += need - it.len();
+            }
+            assert_eq!(total_needed, total_read, "rate {rate}");
+        }
+    }
+
+    #[test]
+    fn the_resampler_passes_a_same_rate_signal_through() {
+        let mut pos = PullResampler::new(24_000);
+        let input: Vec<i16> = vec![16384, -16384, 8192, 0, 0, 0];
+        let need = pos.needs(input.len());
+        assert_eq!(need, input.len());
+        let mut it = input.iter();
+        let out: Vec<f32> = (0..input.len()).map(|_| pos.sample(&mut it)).collect();
+        // a fixed two-sample lead-in of silence, then the samples as PortAudio's Int16_To_Float32 has them
+        assert_eq!(out, vec![0.0, 0.0, 0.5, -0.5, 0.25, 0.0]);
+    }
+
+    #[test]
+    fn app_voice_offers_nothing_without_hubs_or_in_a_lesson() {
+        assert_eq!(app_voice(false, &AppHubs::default()), (Vec::new(), String::new()));
+        assert_eq!(app_voice(true, &AppHubs::default()), (Vec::new(), String::new()));
+    }
+
+    #[test]
+    fn null_speaker_is_never_busy() {
+        let s = NullSpeaker::default();
+        assert!(s.start());
+        s.play(&[0, 1]);
+        s.stop();
+        assert!(!s.busy());
+        s.close();
     }
 }
