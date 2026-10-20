@@ -1533,3 +1533,54 @@ fn test_python_written_lines_load_and_a_naive_time_is_local() {
     assert_eq!(ts.format("%H:%M").to_string(), "09:00");
     assert_eq!(render_line(&lines[0], "text"), "09:00 (spoken) Owner: café");
 }
+
+#[test]
+fn test_odd_bytes_on_disk_are_read_as_python_reads_them() {
+    let d = tmp();
+    let (t, _) = store(d.path(), at(21, 12, 0, 0));
+    put(&t, "voice", "v-1", "owner", "say", SENTINEL, at(21, 9, 0, 0));
+    let mut f = fs::OpenOptions::new()
+        .append(true)
+        .open(t.path_of("2026-09-21"))
+        .unwrap();
+    // a vertical-tab-only chunk (bytes.strip() drops it on a rewrite) and a stamp with a letter where a digit
+    // belongs (fromisoformat's ValueError: skipped, never a panic)
+    f.write_all(b"\x0b\n").unwrap();
+    writeln!(f, "{{\"ts\": \"2026-09-0\u{e9}\", \"ch\": \"voice\", \"conv\": \"v-1\", \"who\": \"owner\", \"kind\": \"say\", \"text\": \"odd\"}}").unwrap();
+    drop(f);
+    assert_eq!(texts(&t.lines("2026-09-21")), [SENTINEL]);
+    assert_eq!(t.redact(SENTINEL, false), 1);
+    let raw = fs::read(t.path_of("2026-09-21")).unwrap();
+    assert!(!raw.contains(&0x0b));
+    assert_eq!(texts(&t.lines("2026-09-21")), [FORGOTTEN]);
+}
+
+#[test]
+fn test_conversation_ids_and_days_read_as_python_reads_them() {
+    // a 16-digit id is past year 9999: fromtimestamp raises, so no birth time
+    assert!(conv_epoch("v-9999999999999999-abcd").is_none());
+    assert!(conv_epoch("v-1758450000000-abcd").is_some());
+    // strptime and int() read any decimal digit
+    assert_eq!(
+        next_day("\u{662}\u{660}\u{662}\u{666}-\u{660}\u{669}-\u{663}\u{660}").as_deref(),
+        Some("2026-10-01")
+    );
+    assert_eq!(next_day("2026-02-30"), None);
+    assert_eq!(next_day("9999-12-31"), None);
+}
+
+#[test]
+fn test_a_day_file_name_never_spans_a_newline() {
+    // `.` in `_DAY_NOTE` stops at a newline, as Python's does without re.S
+    let d = tmp();
+    let archive = d.path().join("debrief");
+    fs::create_dir_all(&archive).unwrap();
+    fs::write(archive.join("2026-09-18-a\nb.md"), "- heron sighting\n").unwrap();
+    fs::write(archive.join("2026-09-19-plain.md"), "- heron again\n").unwrap();
+    let (t, _) = store_with(d.path(), at(21, 12, 0, 0), Some(archive));
+    let got: Vec<String> = hits(&t.search("heron"))
+        .iter()
+        .map(|h| h["day"].as_str().unwrap().to_string())
+        .collect();
+    assert_eq!(got, ["2026-09-19"]);
+}

@@ -53,6 +53,50 @@ pub fn clip(text: &str, cap: usize) -> String {
     format!("{}…", rstrip(head(text, cap.saturating_sub(1))))
 }
 
+/// `int(s)` for a run of decimal digits (what a `\d+` match holds): any Unicode `Nd` digit counts, as in Python.
+/// None for anything else or a value past i64.
+pub fn int(s: &str) -> Option<i64> {
+    if s.is_empty() {
+        return None;
+    }
+    let mut n: i64 = 0;
+    for c in s.chars() {
+        n = n.checked_mul(10)?.checked_add(digit_value(c)? as i64)?;
+    }
+    Some(n)
+}
+
+static ND: std::sync::LazyLock<regex::Regex> =
+    std::sync::LazyLock::new(|| regex::Regex::new(r"^\p{Nd}$").expect("the Nd pattern"));
+
+fn is_nd(c: char) -> bool {
+    let mut buf = [0u8; 4];
+    ND.is_match(c.encode_utf8(&mut buf))
+}
+
+/// The value of one decimal digit. Unicode lays every `Nd` set out as ten consecutive code points from 0 to 9, so
+/// the value is the count of `Nd` code points just before it, modulo ten.
+fn digit_value(c: char) -> Option<u32> {
+    if c.is_ascii_digit() {
+        return Some(c as u32 - '0' as u32);
+    }
+    if !is_nd(c) {
+        return None;
+    }
+    let mut run = 0u32;
+    let mut cp = c as u32;
+    while cp > 0 {
+        match char::from_u32(cp - 1) {
+            Some(p) if is_nd(p) => {
+                run += 1;
+                cp -= 1;
+            }
+            _ => break,
+        }
+    }
+    Some(run % 10)
+}
+
 /// `str.casefold()`.
 pub fn casefold(text: &str) -> String {
     caseless::default_case_fold_str(text)
@@ -282,8 +326,13 @@ fn replace_nonfinite(s: &str) -> Option<String> {
 /// `±HH[:MM[:SS[.ffffff]]]` or `±HHMM[SS]`.
 pub fn fromisoformat(s: &str) -> Option<(NaiveDateTime, Option<FixedOffset>)> {
     let b = s.as_bytes();
+    // Every slice below is taken with `get`: a non-ASCII character where a digit belongs is a ValueError in
+    // Python, never a panic here.
     let (date, rest) = if b.len() >= 10 && b[4] == b'-' && b[7] == b'-' {
-        (date_of(&s[0..4], &s[5..7], &s[8..10])?, &s[10..])
+        (
+            date_of(s.get(0..4)?, s.get(5..7)?, s.get(8..10)?)?,
+            s.get(10..)?,
+        )
     } else if b.len() >= 8 && b[..8].iter().all(u8::is_ascii_digit) {
         (date_of(&s[0..4], &s[4..6], &s[6..8])?, &s[8..])
     } else {
@@ -331,7 +380,7 @@ fn time_of(clock: &str) -> Option<NaiveTime> {
     let parts: Vec<&str> = if hms.contains(':') {
         hms.split(':').collect()
     } else {
-        if hms.len() % 2 != 0 || hms.len() > 6 || hms.is_empty() {
+        if !hms.is_ascii() || hms.len() % 2 != 0 || hms.len() > 6 || hms.is_empty() {
             return None;
         }
         (0..hms.len()).step_by(2).map(|i| &hms[i..i + 2]).collect()
@@ -369,7 +418,7 @@ fn offset_of(t: &str) -> Option<FixedOffset> {
     let parts: Vec<&str> = if body.contains(':') {
         body.split(':').collect()
     } else {
-        if body.is_empty() || body.len() % 2 != 0 || body.len() > 6 {
+        if !body.is_ascii() || body.is_empty() || body.len() % 2 != 0 || body.len() > 6 {
             return None;
         }
         (0..body.len())
@@ -549,6 +598,26 @@ mod tests {
         assert!(fromisoformat("2026-02-30").is_none());
         assert!(fromisoformat("nonsense").is_none());
         assert!(fromisoformat("").is_none());
+    }
+
+    #[test]
+    fn int_reads_every_decimal_digit_as_python_does() {
+        assert_eq!(int("2026"), Some(2026));
+        assert_eq!(int("\u{663}"), Some(3)); // Arabic-Indic three
+        assert_eq!(int("\u{966}\u{969}"), Some(3)); // Devanagari zero three
+        assert_eq!(int("\u{1D7D7}"), Some(9)); // mathematical bold nine
+        assert_eq!(int("\u{FF11}\u{FF12}"), Some(12)); // fullwidth
+        assert_eq!(int("\u{b2}"), None); // superscript two: isdigit, but int() refuses it
+        assert_eq!(int(""), None);
+        assert_eq!(int("12a"), None);
+    }
+
+    #[test]
+    fn fromisoformat_never_panics_on_a_character_where_a_digit_belongs() {
+        assert!(fromisoformat("2026-09-0\u{e9}").is_none());
+        assert!(fromisoformat("2026-09-21Ta\u{e9}1").is_none());
+        assert!(fromisoformat("2026-09-21T09:05+0\u{e9}").is_none());
+        assert!(fromisoformat("2026-09-21T0\u{e9}").is_none());
     }
 
     #[test]

@@ -116,7 +116,8 @@ where which while who whom why will with would you your yours yourself did say s
 pub static STOPWORDS: LazyLock<HashSet<&'static str>> =
     LazyLock::new(|| STOPWORDS_TEXT.split_whitespace().collect());
 
-static WORD: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\w+").unwrap());
+// Python's `\w` on str: letters, numbers (any `N`) and `_`; never a combining mark, which Rust's `\w` takes.
+static WORD: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[\p{L}\p{N}_]+").unwrap());
 
 /// One of the three search switches (`SWITCHES`: a key or the variable's name). On when set to 1/true/yes/on, off
 /// when set to anything else, and `DEFAULTS` when not set (or empty). `None` reads the process environment.
@@ -244,8 +245,8 @@ pub fn owner_day(now: Dt) -> NaiveDate {
 
 fn num(word: &str) -> Option<i64> {
     let w = py::strip(word).to_lowercase();
-    if !w.is_empty() && w.bytes().all(|b| b.is_ascii_digit()) {
-        return w.parse().ok();
+    if !w.is_empty() && w.chars().all(|c| py::int(&c.to_string()).is_some()) {
+        return py::int(&w);
     }
     Some(match w.as_str() {
         "a" | "an" | "one" => 1,
@@ -347,7 +348,11 @@ pub fn resolve_when(text: &str, now: Dt) -> Option<(NaiveDate, NaiveDate)> {
 fn resolve_core(s: &str, today: NaiveDate) -> Option<(NaiveDate, NaiveDate)> {
     let wd = today.weekday().num_days_from_monday() as i64;
     if let Some(m) = ISO_DAY.captures(s) {
-        let d = date(m[1].parse().ok()?, m[2].parse().ok()?, m[3].parse().ok()?)?;
+        let d = date(
+            py::int(&m[1])?,
+            u32::try_from(py::int(&m[2])?).ok()?,
+            u32::try_from(py::int(&m[3])?).ok()?,
+        )?;
         return Some((d, d));
     }
     if [
@@ -455,25 +460,27 @@ fn resolve_core(s: &str, today: NaiveDate) -> Option<(NaiveDate, NaiveDate)> {
     if let Some(m) = MONTH_DAY.captures(s) {
         let year = m
             .get(3)
-            .map(|y| y.as_str().parse::<i64>())
+            .map(|y| py::int(y.as_str()))
+            .map(|y| y.ok_or(()))
             .transpose()
             .ok()?;
-        let d = past_date(today, month_of(&m[1])?, m[2].parse().ok()?, year)?;
+        let d = past_date(today, month_of(&m[1])?, u32::try_from(py::int(&m[2])?).ok()?, year)?;
         return Some((d, d));
     }
     if let Some(m) = DAY_MONTH.captures(s) {
         let year = m
             .get(3)
-            .map(|y| y.as_str().parse::<i64>())
+            .map(|y| py::int(y.as_str()))
+            .map(|y| y.ok_or(()))
             .transpose()
             .ok()?;
-        let d = past_date(today, month_of(&m[2])?, m[1].parse().ok()?, year)?;
+        let d = past_date(today, month_of(&m[2])?, u32::try_from(py::int(&m[1])?).ok()?, year)?;
         return Some((d, d));
     }
     if let Some(m) = MONTH_PART.captures(s) {
         let month = month_of(&m[2])?;
         let year = match m.get(3) {
-            Some(y) => y.as_str().parse::<i64>().ok()?,
+            Some(y) => py::int(y.as_str())?,
             None if month <= today.month() => today.year() as i64,
             None => today.year() as i64 - 1,
         };

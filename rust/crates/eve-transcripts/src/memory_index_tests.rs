@@ -943,3 +943,22 @@ fn test_an_unset_switch_reads_its_default_and_a_set_one_reads_its_value() {
         assert!(!mi::switch(key, Some(&env("0"))));
     }
 }
+
+#[test]
+fn test_words_and_numbers_are_read_as_python_reads_them() {
+    // Python's `\w` takes letters, numbers and `_`, never a combining mark; `\d` and int() take any decimal digit.
+    assert_eq!(mi::terms("cafe\u{301} \u{915}\u{93e} x_y"), ["cafe", "x_y"]);
+    let now = tz().with_ymd_and_hms(2026, 9, 10, 12, 0, 0).unwrap();
+    assert_eq!(
+        mi::resolve_when("\u{663} days ago", now),
+        Some((d("2026-09-07"), d("2026-09-07")))
+    );
+    assert_eq!(
+        mi::resolve_when("\u{662}\u{660}\u{662}\u{666}-\u{660}\u{669}-\u{660}\u{663}", now),
+        Some((d("2026-09-03"), d("2026-09-03")))
+    );
+    assert_eq!(
+        mi::resolve_when("september \u{665}", now),
+        Some((d("2026-09-05"), d("2026-09-05")))
+    );
+}

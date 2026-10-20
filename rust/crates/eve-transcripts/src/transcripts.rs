@@ -122,7 +122,7 @@ static DAY_FILE: LazyLock<Regex> =
 pub(crate) static DAY: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^\d{4}-\d{2}-\d{2}\n?\z").unwrap());
 static DAY_NOTE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?s)^(\d{4}-\d{2}-\d{2})-.+\.md\n?\z").unwrap());
+    LazyLock::new(|| Regex::new(r"^(\d{4}-\d{2}-\d{2})-.+\.md\n?\z").unwrap());
 static HHMM: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^(\d{1,2}):(\d{2})\n?\z").unwrap());
 pub(crate) static CONV: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[a-z]-(\d{10,16})-[0-9a-f]{4}\n?\z").unwrap());
@@ -246,48 +246,78 @@ pub fn refusal(root: &Path) -> String {
     refusal_in(root, &py::home())
 }
 
-/// [`refusal`] against an explicit home folder.
+/// [`refusal`] against an explicit home folder. Where Python's `refusal` raises (a parent it cannot even lstat),
+/// this names the failure as `_prepare` does, so the folder is refused either way.
 pub fn refusal_in(root: &Path, home: &Path) -> String {
+    refusal_checked(root, home).unwrap_or_else(|e| unchecked(&e))
+}
+
+fn unchecked(e: &io::Error) -> String {
+    format!("the folder could not be checked ({})", py::os_error_name(e))
+}
+
+/// pathlib's `_ignore_error`: the errors `exists()` and `is_symlink()` read as "not there".
+fn ignored(e: &io::Error) -> bool {
+    matches!(
+        e.raw_os_error(),
+        Some(libc::ENOENT) | Some(libc::ENOTDIR) | Some(libc::EBADF) | Some(libc::ELOOP)
+    )
+}
+
+/// `Path.is_symlink()`: false when missing, an error it does not ignore raised.
+fn is_symlink(p: &Path) -> io::Result<bool> {
+    match fs::symlink_metadata(p) {
+        Ok(m) => Ok(m.file_type().is_symlink()),
+        Err(e) if ignored(&e) => Ok(false),
+        Err(e) => Err(e),
+    }
+}
+
+/// `Path.exists()`: false when missing, an error it does not ignore raised.
+fn exists(p: &Path) -> io::Result<bool> {
+    match fs::metadata(p) {
+        Ok(_) => Ok(true),
+        Err(e) if ignored(&e) => Ok(false),
+        Err(e) => Err(e),
+    }
+}
+
+/// `refusal` with Python's raises as errors.
+fn refusal_checked(root: &Path, home: &Path) -> io::Result<String> {
     let root = py::abspath(&py::expand_user_in(root, home));
-    if fs::symlink_metadata(&root)
-        .map(|m| m.file_type().is_symlink())
-        .unwrap_or(false)
-    {
-        return "the folder is a symlink".into();
+    if is_symlink(&root)? {
+        return Ok("the folder is a symlink".into());
     }
     let real = py::resolve(&root).unwrap_or_else(|_| root.clone());
     for rel in SYNCED_UNDER_HOME {
         let plain = home.join(rel);
         let mut bases = vec![plain.clone()];
-        if fs::metadata(&plain).is_ok() {
+        if exists(&plain)? {
             if let Ok(r) = py::resolve(&plain) {
                 bases.push(r);
             }
         }
         for base in bases {
             if real.starts_with(&base) || root.starts_with(&base) {
-                return format!(
+                return Ok(format!(
                     "the folder is under ~/{rel}, which syncs or backs up off this computer"
-                );
+                ));
             }
         }
     }
     for p in real.ancestors() {
-        match fs::metadata(p.join(".git")) {
-            Ok(_) => return "the folder is inside a git work tree, and a word must never reach a git object".into(),
-            Err(e) => {
-                let benign = matches!(
-                    e.raw_os_error(),
-                    Some(libc::ENOENT) | Some(libc::ENOTDIR) | Some(libc::EBADF) | Some(libc::ELOOP)
-                );
-                if !benign {
-                    // an unreadable parent: it cannot be vouched for
-                    return "a parent folder cannot be checked for a git work tree".into();
-                }
+        match exists(&p.join(".git")) {
+            Ok(true) => {
+                return Ok(
+                    "the folder is inside a git work tree, and a word must never reach a git object".into(),
+                )
             }
+            Ok(false) => {}
+            // an unreadable parent: it cannot be vouched for
+            Err(_) => return Ok("a parent folder cannot be checked for a git work tree".into()),
         }
     }
-    String::new()
+    Ok(String::new())
 }
 
 /// Create the folder private and Spotlight-proof. → the rule that failed, or "".
@@ -297,7 +327,10 @@ pub fn prepare(root: &Path) -> String {
 
 /// [`prepare`] against an explicit home folder.
 pub fn prepare_in(root: &Path, home: &Path) -> String {
-    let why = refusal_in(root, home);
+    let why = match refusal_checked(root, home) {
+        Ok(why) => why,
+        Err(e) => return unchecked(&e),
+    };
     if !why.is_empty() {
         return why;
     }
@@ -413,18 +446,32 @@ pub fn clip(text: &str, cap: usize) -> String {
 /// `_conv_epoch`: the local moment a conversation id was minted, or None for an id of another shape.
 pub fn conv_epoch(conv: &str) -> Option<Dt> {
     let m = CONV.captures(conv)?;
-    let ms: i64 = m[1].parse().ok()?;
+    let ms: i64 = py::int(&m[1])?;
     let utc = DateTime::from_timestamp(
         ms.div_euclid(1000),
         (ms.rem_euclid(1000) * 1_000_000) as u32,
     )?;
-    Some(utc.with_timezone(&chrono::Local).fixed_offset())
+    let local = utc.with_timezone(&chrono::Local).fixed_offset();
+    // datetime.fromtimestamp raises past year 9999 (a 16-digit id): Python answers None
+    (1..=9999).contains(&chrono::Datelike::year(&local)).then_some(local)
 }
 
 /// `_next_day`: the calendar day after a `YYYY-MM-DD` day (None for an impossible date).
 pub fn next_day(day: &str) -> Option<String> {
-    let d = NaiveDate::parse_from_str(day.trim_end_matches('\n'), "%Y-%m-%d").ok()?;
-    Some((d + Duration::days(1)).format("%Y-%m-%d").to_string())
+    // strptime("%Y-%m-%d") reads any decimal digit, as int() does
+    let mut parts = day.trim_end_matches('\n').splitn(3, '-');
+    let (y, m, d) = (parts.next()?, parts.next()?, parts.next()?);
+    let year = py::int(y)?;
+    if !(1..=9999).contains(&year) {
+        return None;
+    }
+    let d = NaiveDate::from_ymd_opt(
+        year as i32,
+        u32::try_from(py::int(m)?).ok()?,
+        u32::try_from(py::int(d)?).ok()?,
+    )?;
+    let next = d + Duration::days(1);
+    (chrono::Datelike::year(&next) <= 9999).then(|| next.format("%Y-%m-%d").to_string())
 }
 
 /// A line's speaker as a prompt names it: "Owner", "eve (web search)", "Owner (photo)", "Owner (to Claude)".
@@ -1824,7 +1871,8 @@ impl Transcripts {
         let mut out: Vec<Vec<u8>> = Vec::new();
         let mut reply_to = String::new(); // the conversation whose owner line was just forgotten: eve's answer
         for chunk in raw.split(|b| *b == b'\n') {
-            if chunk.trim_ascii().is_empty() {
+            // bytes.strip(): ASCII whitespace, vertical tab included
+            if chunk.iter().all(|b| b" \t\n\r\x0b\x0c".contains(b)) {
                 continue;
             }
             let text = String::from_utf8_lossy(chunk);
@@ -1909,8 +1957,8 @@ fn minute(hhmm: &str, default: i64) -> i64 {
     let Some(m) = HHMM.captures(py::strip(hhmm)) else {
         return default;
     };
-    let h: i64 = m[1].parse::<i64>().unwrap_or(0) % 24;
-    let mi: i64 = m[2].parse::<i64>().unwrap_or(0).min(59);
+    let h: i64 = py::int(&m[1]).unwrap_or(0) % 24;
+    let mi: i64 = py::int(&m[2]).unwrap_or(0).min(59);
     (h - DAY_START_HOUR).rem_euclid(24) * 60 + mi
 }
 
