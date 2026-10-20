@@ -237,12 +237,35 @@ fn py_printable(c: char) -> bool {
         | 0x1d173..=0x1d17a | 0xe0001 | 0xe0020..=0xe007f | 0xf0000..=0x10ffff)
 }
 
-/// Python's `float(str)`: surrounding whitespace, `_` between digits, `inf`/`infinity`/`nan` in any case.
+/// The zero of every run of ten Unicode decimal digits (category Nd), as Python 3.13's unicodedata (15.1) has them.
+const ND_ZEROS: [u32; 68] = [
+    0x30, 0x660, 0x6f0, 0x7c0, 0x966, 0x9e6, 0xa66, 0xae6, 0xb66, 0xbe6, 0xc66, 0xce6, 0xd66, 0xde6, 0xe50, 0xed0,
+    0xf20, 0x1040, 0x1090, 0x17e0, 0x1810, 0x1946, 0x19d0, 0x1a80, 0x1a90, 0x1b50, 0x1bb0, 0x1c40, 0x1c50, 0xa620,
+    0xa8d0, 0xa900, 0xa9d0, 0xa9f0, 0xaa50, 0xabf0, 0xff10, 0x104a0, 0x10d30, 0x11066, 0x110f0, 0x11136, 0x111d0,
+    0x112f0, 0x11450, 0x114d0, 0x11650, 0x116c0, 0x11730, 0x118e0, 0x11950, 0x11c50, 0x11d50, 0x11da0, 0x11f50,
+    0x16a60, 0x16ac0, 0x16b50, 0x1d7ce, 0x1d7d8, 0x1d7e2, 0x1d7ec, 0x1d7f6, 0x1e140, 0x1e2f0, 0x1e4f0, 0x1e950,
+    0x1fbf0,
+];
+
+/// The ASCII digit for a Unicode decimal digit, as `float()` reads it (Arabic-Indic "one point five" is 1.5).
+fn py_decimal(c: char) -> Option<char> {
+    let n = c as u32;
+    ND_ZEROS.iter().find(|z| (**z..**z + 10).contains(&n)).and_then(|z| char::from_digit(n - z, 10))
+}
+
+/// Python's `float(str)`: surrounding whitespace, Unicode decimal digits, `_` between digits,
+/// `inf`/`infinity`/`nan` in any case.
 fn py_float_str(s: &str) -> Option<f64> {
-    let t = py_strip(s);
-    if t.is_empty() {
+    let stripped = py_strip(s);
+    if stripped.is_empty() {
         return None;
     }
+    // Python folds every decimal digit to ASCII first; any other non-ASCII character makes the string invalid.
+    let mut folded = String::with_capacity(stripped.len());
+    for c in stripped.chars() {
+        folded.push(if c.is_ascii() { c } else { py_decimal(c)? });
+    }
+    let t = folded.as_str();
     let cleaned: String = if t.contains('_') {
         let chars: Vec<char> = t.chars().collect();
         for (i, c) in chars.iter().enumerate() {
@@ -420,6 +443,14 @@ pub enum ParseError {
     Json(#[from] serde_json::Error),
     #[error("'{0}' object has no attribute 'get'")]
     NotObject(&'static str),
+    /// `float()` of an integer literal beyond f64 (as the confidence), which `parse_intent` does not catch.
+    #[error("int too large to convert to float")]
+    Overflow,
+    /// `json.loads` of an integer literal over Python's 4300-digit limit.
+    #[error(
+        "Exceeds the limit (4300 digits) for integer string conversion: value has {0} digits; use sys.set_int_max_str_digits() to increase the limit"
+    )]
+    IntDigits(usize),
 }
 
 impl ParseError {
@@ -428,14 +459,153 @@ impl ParseError {
         match self {
             ParseError::Json(_) => "JSONDecodeError",
             ParseError::NotObject(_) => "AttributeError",
+            ParseError::Overflow => "OverflowError",
+            ParseError::IntDigits(_) => "ValueError",
         }
     }
+}
+
+/// Python's int-to-str limit (`sys.get_int_max_str_digits()`), which `json.loads` applies to integer literals.
+const INT_MAX_STR_DIGITS: usize = 4300;
+/// What an integer literal beyond f64 reads as after [`py_loads`]'s rewrite: Python holds it as an int, and only
+/// `float()` of it fails.
+const INT_OVERFLOW: &str = "\u{0}eve-intent:int-overflow";
+
+/// Python's `json.loads` for the model's reply. serde_json is stricter: Python also reads the bare `NaN`,
+/// `Infinity` and `-Infinity` literals, a float literal beyond f64 (as an infinity), an integer literal of any size
+/// and an unpaired surrogate escape. When serde refuses the text, those are rewritten to values that give
+/// `parse_intent` Python's answer (a non-finite number becomes the string `float()` reads back the same way; a lone
+/// surrogate, which can neither name a label nor be a digit, becomes U+FFFD) and the text is parsed again. If that
+/// fails too, serde's first error stands.
+fn py_loads(raw: &str) -> Result<Value, ParseError> {
+    let first = match serde_json::from_str(raw) {
+        Ok(v) => return Ok(v),
+        Err(e) => e,
+    };
+    let Some((fixed, long_int)) = rewrite_py_json(raw) else {
+        return Err(ParseError::Json(first));
+    };
+    match (serde_json::from_str::<Value>(&fixed), long_int) {
+        (Ok(_), Some((digits, _))) => Err(ParseError::IntDigits(digits)),
+        (Ok(v), None) => Ok(v),
+        // Python reads left to right: an over-long integer before the first syntax error raises first.
+        (Err(e), Some((digits, end))) if error_offset(&fixed, &e) >= end => Err(ParseError::IntDigits(digits)),
+        (Err(_), _) => Err(ParseError::Json(first)),
+    }
+}
+
+/// The byte offset in `text` where serde stopped, from its 1-based line and column.
+fn error_offset(text: &str, e: &serde_json::Error) -> usize {
+    let line_start: usize = text.split_inclusive('\n').take(e.line().saturating_sub(1)).map(str::len).sum();
+    line_start + e.column().saturating_sub(1)
+}
+
+/// Python's JSON number grammar.
+static JSON_NUMBER: LazyLock<Regex> =
+    LazyLock::new(|| re(r"^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][-+]?[0-9]+)?$"));
+
+/// The 4 hex digits of a `\uXXXX` escape at the start of `s`.
+fn hex4(s: &str) -> Option<u32> {
+    let h = s.get(..4)?;
+    if h.chars().all(|c| c.is_ascii_hexdigit()) {
+        u32::from_str_radix(h, 16).ok()
+    } else {
+        None
+    }
+}
+
+/// The text with Python-only JSON rewritten (see [`py_loads`]), and the digit count of the first integer literal
+/// over the digit limit with where it ends in the rewritten text; None when there was nothing to rewrite.
+fn rewrite_py_json(s: &str) -> Option<(String, Option<(usize, usize)>)> {
+    let mut out = String::with_capacity(s.len() + 16);
+    let mut changed = false;
+    let mut long_int = None;
+    let mut in_str = false;
+    let mut i = 0;
+    while let Some(c) = s[i..].chars().next() {
+        let rest = &s[i..];
+        if in_str {
+            if c == '\\' {
+                if let Some(hi) = rest.strip_prefix("\\u").and_then(hex4) {
+                    let paired = (0xd800..0xdc00).contains(&hi)
+                        && rest[6..].strip_prefix("\\u").and_then(hex4).is_some_and(|lo| (0xdc00..0xe000).contains(&lo));
+                    let take = if paired { 12 } else { 6 };
+                    if !paired && (0xd800..0xe000).contains(&hi) {
+                        out.push_str("\\ufffd");
+                        changed = true;
+                    } else {
+                        out.push_str(&rest[..take]);
+                    }
+                    i += take;
+                    continue;
+                }
+                // Any other escape: the backslash and the character it escapes.
+                out.push('\\');
+                i += 1;
+                if let Some(n) = s[i..].chars().next() {
+                    out.push(n);
+                    i += n.len_utf8();
+                }
+                continue;
+            }
+            if c == '"' {
+                in_str = false;
+            }
+            out.push(c);
+            i += c.len_utf8();
+            continue;
+        }
+        let literal = [("-Infinity", "\"-inf\""), ("Infinity", "\"inf\""), ("NaN", "\"nan\"")]
+            .into_iter()
+            .find(|(t, _)| rest.starts_with(t));
+        if let Some((token, as_str)) = literal {
+            out.push_str(as_str);
+            changed = true;
+            i += token.len();
+            continue;
+        }
+        if c == '-' || c.is_ascii_digit() {
+            let len = rest
+                .find(|ch: char| !(ch.is_ascii_digit() || matches!(ch, '.' | 'e' | 'E' | '+' | '-')))
+                .unwrap_or(rest.len());
+            let lit = &rest[..len];
+            i += len;
+            if !JSON_NUMBER.is_match(lit) {
+                out.push_str(lit);
+                continue;
+            }
+            let is_int = !lit.contains(['.', 'e', 'E']);
+            let digits = lit.trim_start_matches('-').len();
+            match lit.parse::<f64>() {
+                Ok(x) if x.is_infinite() => {
+                    changed = true;
+                    if is_int {
+                        out.push_str(&Value::from(INT_OVERFLOW).to_string());
+                    } else {
+                        out.push_str(if x > 0.0 { "\"inf\"" } else { "\"-inf\"" });
+                    }
+                }
+                _ => out.push_str(lit),
+            }
+            if is_int && digits > INT_MAX_STR_DIGITS && long_int.is_none() {
+                long_int = Some((digits, out.len()));
+                changed = true;
+            }
+            continue;
+        }
+        if c == '"' {
+            in_str = true;
+        }
+        out.push(c);
+        i += c.len_utf8();
+    }
+    changed.then_some((out, long_int))
 }
 
 /// `(label, confidence)` from the model's JSON. An unknown or missing label is none; the confidence is clamped to
 /// 0..1 and anything that is not a number is 0.
 pub fn parse_intent(raw: &str) -> Result<(&'static str, f64), ParseError> {
-    let obj: Value = serde_json::from_str(raw)?;
+    let obj: Value = py_loads(raw)?;
     let Value::Object(map) = &obj else {
         return Err(ParseError::NotObject(py_type_name(&obj)));
     };
@@ -448,6 +618,7 @@ pub fn parse_intent(raw: &str) -> Result<(&'static str, f64), ParseError> {
         None => Some(0.0),
         Some(Value::Number(n)) => n.as_f64(),
         Some(Value::Bool(b)) => Some(if *b { 1.0 } else { 0.0 }),
+        Some(Value::String(s)) if s == INT_OVERFLOW => return Err(ParseError::Overflow),
         Some(Value::String(s)) => py_float_str(s),
         Some(_) => None,
     };
@@ -535,7 +706,7 @@ pub trait Responses: Send + Sync {
 
 impl Responses for eve_openrouter::Client {
     /// Blocking: runs the request on the current runtime from a worker thread (where `classify` runs), or on a
-    /// private one when there is none (the intent-test command). Never call it on an async worker thread.
+    /// one-off runtime when there is none. Never call it on an async worker thread.
     fn create(&self, body: Value) -> anyhow::Result<Value> {
         let fut = self.responses_create(body);
         let out = match tokio::runtime::Handle::try_current() {
@@ -543,6 +714,43 @@ impl Responses for eve_openrouter::Client {
             Err(_) => tokio::runtime::Builder::new_current_thread().enable_all().build()?.block_on(fut),
         };
         Ok(out?)
+    }
+}
+
+/// The real client's blocking `responses.create`: like the impl on [`eve_openrouter::Client`], but a call made
+/// with no runtime current (the intent-test command) runs on one private runtime kept for the client's life, so
+/// the connection pool outlives each request the way the SDK's does.
+struct OpenRouterResponses {
+    client: eve_openrouter::Client,
+    own: std::sync::Mutex<Option<tokio::runtime::Runtime>>,
+}
+
+impl Responses for OpenRouterResponses {
+    fn create(&self, body: Value) -> anyhow::Result<Value> {
+        let fut = self.client.responses_create(body);
+        let out = match tokio::runtime::Handle::try_current() {
+            Ok(handle) => handle.block_on(fut),
+            Err(_) => {
+                let mut own = self.own.lock().unwrap_or_else(|p| p.into_inner());
+                let rt = match own.take() {
+                    Some(rt) => rt,
+                    None => tokio::runtime::Builder::new_current_thread().enable_all().build()?,
+                };
+                let out = rt.block_on(fut);
+                *own = Some(rt);
+                out
+            }
+        };
+        Ok(out?)
+    }
+}
+
+impl Drop for OpenRouterResponses {
+    fn drop(&mut self) {
+        // Dropping a runtime inside another one panics; shutting it down in the background never does.
+        if let Some(rt) = self.own.get_mut().unwrap_or_else(|p| p.into_inner()).take() {
+            rt.shutdown_background();
+        }
     }
 }
 
@@ -558,7 +766,7 @@ impl OpenAIIntentClient {
     pub fn new(model: &str, api_key: Option<&str>, timeout: Duration) -> anyhow::Result<Self> {
         let opts = eve_openrouter::ClientOptions::default().timeout(timeout).max_retries(0);
         let client = eve_openrouter::async_client(api_key, opts)?;
-        Ok(Self::with_client(model, Box::new(client)))
+        Ok(Self::with_client(model, Box::new(OpenRouterResponses { client, own: std::sync::Mutex::new(None) })))
     }
 
     /// Over any `responses.create` (tests).
@@ -672,6 +880,17 @@ pub fn make_intent_classifier(environ: Option<&HashMap<String, String>>) -> Opti
     }
 }
 
+/// A blocking classify from synchronous code, as Python's `run_intent_test` makes it. Called on a thread inside a
+/// tokio runtime (an async `main` running the intent-test command), the call moves to a plain scoped thread, where
+/// the real client can block on its own runtime instead of panicking.
+fn classify_blocking(client: &dyn IntentClient, text: &str) -> anyhow::Result<(String, f64)> {
+    if tokio::runtime::Handle::try_current().is_err() {
+        return client.classify(text);
+    }
+    std::thread::scope(|s| s.spawn(|| client.classify(text)).join())
+        .unwrap_or_else(|_| Err(anyhow::anyhow!("classify panicked")))
+}
+
 /// `eve-bridge intent-test --expect leave "..." ...`: the real classifier on each phrase (the phrase table is
 /// bypassed, so this measures the model). Prints `intent-test ok`. Pairs are `(want, text)`; `stay` means none.
 pub fn run_intent_test(pairs: &[(String, String)]) -> i32 {
@@ -710,7 +929,7 @@ pub fn run_intent_test_with(
     let mut bad = 0usize;
     for (want, text) in pairs {
         let want_label = if want == "stay" { NONE } else { want.as_str() };
-        let (label, conf) = match client.classify(text) {
+        let (label, conf) = match classify_blocking(client, text) {
             Ok(answer) => answer,
             Err(e) => {
                 let _ = writeln!(out, "  ERROR {}: {}: {}", py_repr(text), error_name(&e), error_text(&e));

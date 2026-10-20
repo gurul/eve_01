@@ -480,3 +480,142 @@ async fn a_classify_through_the_real_client_reaches_a_local_server() {
     assert!(request.contains(r#""model":"openai/gpt-5.4-nano""#), "{request}");
     assert!(request.contains(r#""store":false"#));
 }
+
+// ---- json.loads and float() as Python reads the model's reply ----------------------------------------------------
+
+#[test]
+fn parse_intent_reads_json_as_python_does() {
+    // The bare literals and out-of-range floats Python's json.loads accepts.
+    assert_eq!(parse_intent(r#"{"intent":"leave","confidence":NaN}"#).unwrap(), ("leave", 1.0));
+    assert_eq!(parse_intent(r#"{"intent":"leave","confidence":Infinity}"#).unwrap(), ("leave", 1.0));
+    assert_eq!(parse_intent(r#"{"intent":"leave","confidence":-Infinity}"#).unwrap(), ("leave", 0.0));
+    assert_eq!(parse_intent(r#"{"intent":"leave","confidence":1e400}"#).unwrap(), ("leave", 1.0));
+    assert_eq!(parse_intent(r#"{"intent":"leave","confidence":-1e400}"#).unwrap(), ("leave", 0.0));
+    assert_eq!(parse_intent(r#"{"intent":NaN,"confidence":0.9}"#).unwrap(), ("none", 0.9));
+    assert_eq!(parse_intent(r#"{"intent":"leave","confidence":-NaN}"#).unwrap_err().py_name(), "JSONDecodeError");
+    // An integer beyond f64 is an int to Python: float() of it raises, uncaught.
+    let big = format!("1{}", "0".repeat(400));
+    let e = parse_intent(&format!(r#"{{"intent":"leave","confidence":{big}}}"#)).unwrap_err();
+    assert_eq!((e.py_name(), e.to_string().as_str()), ("OverflowError", "int too large to convert to float"));
+    assert_eq!(parse_intent(&format!(r#"{{"intent":{big},"confidence":0.7}}"#)).unwrap(), ("none", 0.7));
+    // Python's 4300-digit limit on integer literals, raised where the scan reaches it.
+    let long = "1".repeat(4301);
+    let e = parse_intent(&format!(r#"{{"intent":"leave","confidence":{long}}}"#)).unwrap_err();
+    assert_eq!(e.py_name(), "ValueError");
+    assert!(e.to_string().contains("value has 4301 digits"), "{e}");
+    assert_eq!(parse_intent(&format!(r#"{{"intent":"leave","confidence":{long}, "x": tru}}"#)).unwrap_err().py_name(), "ValueError");
+    assert_eq!(parse_intent(&format!(r#"{{"intent" "leave","confidence":{long}}}"#)).unwrap_err().py_name(), "JSONDecodeError");
+    // At the limit it is read, and then is too large for float().
+    assert_eq!(parse_intent(&format!(r#"{{"intent":"leave","confidence":{}}}"#, "1".repeat(4300))).unwrap_err().py_name(), "OverflowError");
+    assert_eq!(parse_intent(&format!(r#"{{"intent":"leave","confidence":{}}}"#, "9".repeat(300))).unwrap(), ("leave", 1.0));
+    // Lone surrogates: Python keeps them; they never name a label or a digit.
+    assert_eq!(parse_intent(r#"{"intent":"\ud800","confidence":0.8}"#).unwrap(), ("none", 0.8));
+    assert_eq!(parse_intent(r#"{"a":"\ud800A","intent":"mute","confidence":"\udc00"}"#).unwrap(), ("mute", 0.0));
+    assert_eq!(parse_intent(r#"{"intent":"leave","confidence":"𐀀"}"#).unwrap(), ("leave", 0.0));
+    // A string "NaN" inside a string stays a string.
+    assert_eq!(parse_intent(r#"{"a":"NaN \"Infinity\"","intent":"mute","confidence":0.6}"#).unwrap(), ("mute", 0.6));
+    // Still invalid JSON is still the first error.
+    assert_eq!(parse_intent(r#"{"intent":"leave","confidence":0.9,}"#).unwrap_err().py_name(), "JSONDecodeError");
+}
+
+#[test]
+fn float_reads_unicode_digits_as_python_does() {
+    assert_eq!(parse_intent(r#"{"intent":"look","confidence":"١"}"#).unwrap(), ("look", 1.0));
+    assert_eq!(parse_intent(r#"{"intent":"look","confidence":"٠.٥"}"#).unwrap(), ("look", 0.5));
+    assert_eq!(parse_intent(r#"{"intent":"look","confidence":"０.７"}"#).unwrap(), ("look", 0.7));
+    assert_eq!(parse_intent(r#"{"intent":"look","confidence":"　 0.25 "}"#).unwrap(), ("look", 0.25));
+    // Superscript two is a digit but not a decimal: float() refuses it.
+    assert_eq!(parse_intent(r#"{"intent":"look","confidence":"²"}"#).unwrap(), ("look", 0.0));
+    assert_eq!(parse_intent(r#"{"intent":"look","confidence":"0.e0"}"#).unwrap(), ("look", 0.0));
+    assert_eq!(parse_intent(r#"{"intent":"look","confidence":"1.e-1"}"#).unwrap(), ("look", 0.1));
+}
+
+// ---- the real client end to end, from sync code and from inside a runtime -----------------------------------------
+
+/// A local Responses endpoint answering `answers` in order on kept-alive connections; returns each request's text.
+async fn serve(answers: Vec<&'static str>) -> (std::net::SocketAddr, tokio::task::JoinHandle<Vec<String>>) {
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    let handle = tokio::spawn(async move {
+        let mut requests = Vec::new();
+        let mut answers = answers.into_iter();
+        'conns: while let Ok((mut sock, _)) = listener.accept().await {
+            let mut got: Vec<u8> = Vec::new();
+            let mut buf = vec![0u8; 65536];
+            loop {
+                let text = String::from_utf8_lossy(&got).to_string();
+                if let Some(head_end) = text.find("\r\n\r\n") {
+                    let len = text[..head_end]
+                        .lines()
+                        .find_map(|l| l.to_ascii_lowercase().strip_prefix("content-length:").map(|v| v.trim().parse::<usize>().unwrap()))
+                        .unwrap_or(0);
+                    if got.len() >= head_end + 4 + len {
+                        requests.push(String::from_utf8_lossy(&got[..head_end + 4 + len]).to_string());
+                        got.drain(..head_end + 4 + len);
+                        let Some(answer) = answers.next() else { break 'conns };
+                        let body = json!({"output": [{"type": "message", "content": [{"type": "output_text", "text": answer}]}],
+                                          "usage": {"input_tokens": 10, "output_tokens": 2}})
+                        .to_string();
+                        let resp = format!("HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\n\r\n{body}", body.len());
+                        sock.write_all(resp.as_bytes()).await.unwrap();
+                        if answers.len() == 0 {
+                            break 'conns;
+                        }
+                        continue;
+                    }
+                }
+                let n = sock.read(&mut buf).await.unwrap_or(0);
+                if n == 0 {
+                    continue 'conns;
+                }
+                got.extend_from_slice(&buf[..n]);
+            }
+        }
+        requests
+    });
+    (addr, handle)
+}
+
+fn real_client(addr: std::net::SocketAddr, ledger: &std::path::Path) -> OpenAIIntentClient {
+    let opts = eve_openrouter::ClientOptions::default().timeout(timeout()).max_retries(0).base_url(format!("http://{addr}"));
+    let client = eve_openrouter::async_client(Some("sk-test"), opts).unwrap();
+    OpenAIIntentClient::with_client("gpt-5.4-nano", Box::new(OpenRouterResponses { client, own: std::sync::Mutex::new(None) }))
+        .with_ledger(eve_spend::Ledger::at(ledger))
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn run_intent_test_from_inside_a_runtime_does_not_panic() {
+    // An async main running the intent-test command: the blocking calls leave the runtime thread.
+    let (addr, server) = serve(vec![r#"{"intent":"leave","confidence":0.9}"#, r#"{"intent":"none","confidence":0.8}"#]).await;
+    let dir = tempfile::tempdir().unwrap();
+    let client = real_client(addr, dir.path());
+    let (mut out, mut err) = (Vec::new(), Vec::new());
+    let e = env(&[("OPENROUTER_API_KEY", "k")]);
+    let code = run_intent_test_with(&pairs(&[("leave", "bye"), ("stay", "mute Spotify")]), Some(&e), Some(&client),
+                                    &mut out, &mut err);
+    assert_eq!(code, 0, "{}", String::from_utf8_lossy(&err));
+    assert!(String::from_utf8(out).unwrap().ends_with("intent-test ok (gpt-5.4-nano, 2 phrase(s))\n"));
+    drop(client);
+    assert_eq!(server.await.unwrap().len(), 2);
+}
+
+#[test]
+fn the_real_client_keeps_its_runtime_between_sync_calls() {
+    // The intent-test command with no runtime: one private runtime serves every call, and the pool survives.
+    let server_rt = tokio::runtime::Runtime::new().unwrap();
+    let (addr, server) = server_rt.block_on(serve(vec![
+        r#"{"intent":"leave","confidence":0.9}"#,
+        r#"{"intent":"mute","confidence":0.7}"#,
+        r#"{"intent":"look","confidence":0.65}"#,
+    ]));
+    let dir = tempfile::tempdir().unwrap();
+    let client = real_client(addr, dir.path());
+    assert_eq!(client.classify("bye").unwrap(), (LEAVE, 0.9));
+    assert_eq!(client.classify("hush").unwrap(), (MUTE, 0.7));
+    assert_eq!(client.classify("look left").unwrap(), (LOOK, 0.65));
+    drop(client);
+    let requests = server_rt.block_on(server).unwrap();
+    assert_eq!(requests.len(), 3);
+    assert!(requests.iter().all(|r| r.starts_with("POST /responses")));
+}
