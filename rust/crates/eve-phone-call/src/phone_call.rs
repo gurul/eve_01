@@ -453,9 +453,11 @@ impl CallSocket for WebSocket {
 
 static MARKS: std::sync::LazyLock<Regex> =
     std::sync::LazyLock::new(|| Regex::new(r"[*_`#>|~]+|\[([^\]]*)\]\([^)]*\)").expect("marks"));
-static URL: std::sync::LazyLock<Regex> = std::sync::LazyLock::new(|| Regex::new(r"https?://\S+").expect("url"));
+// Python's `\s` is `str.isspace`, which also takes U+001C..U+001F; Rust's `\s` (White_Space) does not.
+static URL: std::sync::LazyLock<Regex> =
+    std::sync::LazyLock::new(|| Regex::new(r"https?://[^\s\x1c-\x1f]+").expect("url"));
 static BULLET: std::sync::LazyLock<Regex> =
-    std::sync::LazyLock::new(|| Regex::new(r"(?m)^\s*[-•]\s+").expect("bullet"));
+    std::sync::LazyLock::new(|| Regex::new(r"(?m)^[\s\x1c-\x1f]*[-•][\s\x1c-\x1f]+").expect("bullet"));
 
 /// A chat message as words to read out: no Markdown marks, a link read as its words, a bare URL as "a link", and a
 /// long message cut at a sentence with a pointer to the chat.
@@ -487,8 +489,8 @@ fn split_sentences(text: &str) -> Vec<String> {
     let mut prev: Option<char> = None;
     let mut chars = text.chars().peekable();
     while let Some(c) = chars.next() {
-        if c.is_whitespace() && matches!(prev, Some('.' | '!' | '?')) {
-            while chars.peek().is_some_and(|n| n.is_whitespace()) {
+        if py::is_space(c) && matches!(prev, Some('.' | '!' | '?')) {
+            while chars.peek().is_some_and(|n| py::is_space(*n)) {
                 chars.next();
             }
             out.push(std::mem::take(&mut current));
@@ -1488,6 +1490,12 @@ impl Call {
 
     pub fn with_clock(ws: Arc<dyn CallSocket>, brain: Arc<dyn Brain>, voice: Arc<dyn Voice>, clock: Clock) -> Arc<Self> {
         Self::build(ws, brain, voice, clock, Arc::new(Limits::default()))
+    }
+
+    /// A call whose waits (`QUIET_SECS`, the hour) are read from `limits`: desk_call.py's calls read this module's
+    /// constants, which its tests patch.
+    pub fn with_limits(ws: Arc<dyn CallSocket>, brain: Arc<dyn Brain>, voice: Arc<dyn Voice>, limits: Arc<Limits>) -> Arc<Self> {
+        Self::build(ws, brain, voice, default_clock(), limits)
     }
 
     fn build(

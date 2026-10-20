@@ -181,6 +181,10 @@ fn speakable_and_sentences_match_python_on_the_edges() {
     assert_eq!(sentences(&format!("Hi. Yes. ok. {}.", "z".repeat(95)), 220), vec!["Hi. Yes. ok.".to_string(), format!("{}.", "z".repeat(95))]);
     assert_eq!(sentences(&"y".repeat(1000), 220), vec!["y".repeat(880)]);
     assert_eq!(sentences("e.g.x and 3.5", 220), vec!["e.g.x and 3.5"]);
+    // Python's `\s` is str.isspace, which takes U+001C..U+001F too
+    assert_eq!(sentences("One.\u{1f}Two.", 220), vec!["One. Two."]);
+    assert_eq!(speakable("see http://x.y\u{1f}z"), "see a link z");
+    assert_eq!(speakable("\u{1f}- one\n\u{1c}-\u{1d}two"), "one two");
 }
 
 #[tokio::test]
