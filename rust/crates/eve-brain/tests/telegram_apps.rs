@@ -1231,3 +1231,375 @@ async fn test_a_sentence_that_starts_with_ok_never_approves_a_composio_write() {
     .await;
     assert!(apps.executed.lock().is_empty());
 }
+
+// ---- test_telegram_toolsets.py: the toolset router wired into the turn ------------------------------------------
+
+const HAND_OFF: &str = "get my resume over to ana before her interview"; // share, with no share word
+
+/// `FakeRouter(*answers, wait=...)`: Jev's stand-in; answers each turn with the toolsets it was given, and records
+/// what it was asked.
+struct FakeRouter {
+    answers: Mutex<Vec<Vec<String>>>,
+    asked: Mutex<Vec<(String, String)>>,
+    wait: f64,
+}
+
+impl FakeRouter {
+    fn new(answers: &[&[&str]], wait: f64) -> Arc<Self> {
+        Arc::new(Self {
+            answers: Mutex::new(answers.iter().map(|a| a.iter().map(|s| s.to_string()).collect()).collect()),
+            asked: Mutex::default(),
+            wait,
+        })
+    }
+
+    fn router(self: &Arc<Self>) -> eve_toolset_router::Router {
+        let me = self.clone();
+        Arc::new(move |text: &str, previous: &str| {
+            me.asked.lock().push((text.to_string(), previous.to_string()));
+            if me.wait > 0.0 {
+                std::thread::sleep(std::time::Duration::from_secs_f64(me.wait));
+            }
+            let mut answers = me.answers.lock();
+            let found = if answers.is_empty() { Vec::new() } else { answers.remove(0) };
+            Ok(eve_toolset_router::Route::new(found, 180.0, ""))
+        })
+    }
+
+    fn asked(&self) -> Vec<(String, String)> {
+        self.asked.lock().clone()
+    }
+}
+
+fn pair(a: &str, b: &str) -> (String, String) {
+    (a.to_string(), b.to_string())
+}
+
+/// `run_until(rig, requests, sent)`: run_rig, waiting in real time (the router answers on a thread) until the model
+/// calls and replies are in.
+async fn run_until(rig: &Rig, api: &FakeApi, requests: usize, sent_n: usize) {
+    run_rig(rig, || async {
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+        while (rig.create.requests.lock().len() < requests || api.log.lock().sent.len() < sent_n) && std::time::Instant::now() < deadline {
+            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+        }
+    })
+    .await;
+}
+
+/// `open_enum(body)`: the toolsets open_app can open.
+fn open_enum(body: &Value) -> Vec<String> {
+    let tool = body["tools"].as_array().unwrap().iter().find(|t| t.get("name") == Some(&json!(OPEN_TOOL))).cloned().unwrap();
+    tool["parameters"]["properties"]["apps"]["items"]["enum"].as_array().unwrap().iter().map(|v| v.as_str().unwrap().to_string()).collect()
+}
+
+fn has_open(body: &Value) -> bool {
+    names(body).iter().any(|n| n == OPEN_TOOL)
+}
+
+/// test_share.py's `FakeRunner([ANA])`: the contacts lookup finds Ana; a send says Messages took it.
+fn contacts_runner() -> (eve_brain::share::Runner, Arc<Mutex<Vec<Vec<String>>>>) {
+    let calls: Arc<Mutex<Vec<Vec<String>>>> = Arc::new(Mutex::new(Vec::new()));
+    let c = calls.clone();
+    let runner: eve_brain::share::Runner = Arc::new(move |argv: Vec<String>, _stdin: Vec<u8>, _timeout: f64| {
+        let javascript = argv.iter().any(|a| a == "JavaScript");
+        c.lock().push(argv);
+        async move {
+            if javascript {
+                let ana = json!({"name": "Ana Lee", "phones": [{"label": "_$!<Mobile>!$_", "value": "+1 (555) 010-0199"}],
+                                 "emails": [{"label": "_$!<Home>!$_", "value": "ana@example.com"}]});
+                (0, format!("{}\n", json!({"count": 1, "people": [ana]})), String::new())
+            } else {
+                (0, String::new(), String::new())
+            }
+        }
+        .boxed()
+    });
+    (runner, calls)
+}
+
+/// `a_share(tmp_path, runner)`: Share over a home with a résumé in Documents.
+fn a_share(dir: &Path, runner: Option<eve_brain::share::Runner>) -> Arc<eve_brain::share::Share> {
+    let home = dir.join("home");
+    std::fs::create_dir_all(home.join("Documents")).unwrap();
+    let mut pdf = b"%PDF-1.4 ".to_vec();
+    pdf.extend(std::iter::repeat_n(b'x', 2000));
+    std::fs::write(home.join("Documents").join("resume.pdf"), pdf).unwrap();
+    let runner = runner.unwrap_or_else(|| contacts_runner().0);
+    Arc::new(
+        eve_brain::share::Share::new(eve_brain::share::ShareConfig { enabled: true, imessage: true })
+            .with_runner(runner)
+            .with_home(&home)
+            .with_outbox(home.join("Pictures").join("eve-outbox")),
+    )
+}
+
+/// `routed(api, create, router, **kw)`: toolset_mode "auto" with this router (None: keywords only).
+fn routed(router: Option<eve_toolset_router::Router>, tweak: impl FnOnce(&mut InletOptions)) -> impl FnOnce(&mut InletOptions) {
+    move |o: &mut InletOptions| {
+        o.toolset_mode = Some("auto".into());
+        o.toolset_route = eve_brain::prelude::Lent::Given(router);
+        tweak(o);
+    }
+}
+
+fn share_names() -> Vec<String> {
+    eve_brain::share::TOOL_NAMES.iter().map(|s| s.to_string()).collect()
+}
+
+fn offers_all(have: &[String], want: &[String]) -> bool {
+    want.iter().all(|w| have.contains(w))
+}
+
+fn offers_none(have: &[String], want: &[String]) -> bool {
+    !want.iter().any(|w| have.contains(w))
+}
+
+#[tokio::test]
+async fn test_a_hand_off_with_no_keyword_offers_share_from_round_one_when_jev_says_so() {
+    let _iso = isolated();
+    assert!(eve_toolset_router::keyword_toolsets(HAND_OFF, "").is_empty()); // the words alone open nothing
+    let dir = tmp();
+    let router = FakeRouter::new(&[&[eve_toolset_router::SHARE]], 0.0);
+    let api = FakeApi::new(vec![vec![said(HAND_OFF, 1)]]);
+    let sh = a_share(&dir.path().join("on"), None);
+    let rig = Rig::new(api.clone(), FakeCreate::new(vec![reply("By text or email?")]), config(), routed(Some(router.router()), move |o| o.share = Some(sh)));
+    run_until(&rig, &api, 1, 1).await;
+    let first = request(&rig, 0);
+    assert!(offers_all(&names(&first), &share_names()));
+    assert!(first["instructions"].as_str().unwrap().contains(eve_brain::share::INSTRUCTIONS));
+    assert_eq!(router.asked(), vec![pair(HAND_OFF, "")]);
+    assert_eq!(sent(&api), vec![line("By text or email?")]);
+    // control: Jev says nothing, so Share stays closed, its instructions out, and open_app can open it
+    let router = FakeRouter::new(&[&[]], 0.0);
+    let api = FakeApi::new(vec![vec![said(HAND_OFF, 1)]]);
+    let sh = a_share(&dir.path().join("off"), None);
+    let rig = Rig::new(api.clone(), FakeCreate::new(vec![reply("By text or email?")]), config(), routed(Some(router.router()), move |o| o.share = Some(sh)));
+    run_until(&rig, &api, 1, 1).await;
+    let first = request(&rig, 0);
+    assert!(offers_none(&names(&first), &share_names()) && !first["instructions"].as_str().unwrap().contains(eve_brain::share::INSTRUCTIONS));
+    assert_eq!(open_enum(&first), vec![eve_toolset_router::SHARE]);
+}
+
+#[tokio::test]
+async fn test_a_router_that_misses_its_budget_leaves_the_keywords_and_the_turn_still_answers() {
+    // Rust: TIMEOUT_S is not patched (Python set it to 0.05 s for speed); the router sleeps past the real budget.
+    let _iso = isolated();
+    let dir = tmp();
+    let apps = FakeApps::new(true).await;
+    let slow = FakeRouter::new(&[&[eve_toolset_router::SHARE]], eve_toolset_router::TIMEOUT_S + 1.2);
+    let api = FakeApi::new(vec![vec![said("any slack dms", 1)]]);
+    let (bridge, sh) = (apps.bridge.clone(), a_share(dir.path(), None));
+    let rig = Rig::new(
+        api.clone(),
+        FakeCreate::new(vec![reply("Two from Priya.")]),
+        config(),
+        routed(Some(slow.router()), move |o| {
+            o.apps = Some(bridge);
+            o.share = Some(sh);
+        }),
+    );
+    run_until(&rig, &api, 1, 1).await;
+    let first = request(&rig, 0);
+    assert!(names(&first).contains(&"COMPOSIO_SEARCH_TOOLS".to_string())); // the keywords' workspace
+    assert!(offers_none(&names(&first), &share_names())); // the late answer added nothing
+    assert_eq!(sent(&api), vec![line("Two from Priya.")]);
+}
+
+#[tokio::test]
+async fn test_the_off_switch_reads_from_the_environment() {
+    let _iso = isolated();
+    for (mode, want) in [("off", "off"), ("auto", "auto")] {
+        // "auto": no Jev key here (conftest): keywords
+        let mut env = conftest_env();
+        env.insert("EVE_TOOLSET_ROUTER".into(), mode.into());
+        let rig = Rig::new(FakeApi::new(vec![]), FakeCreate::new(vec![]), config(), move |o| {
+            o.toolset_route = eve_brain::prelude::Lent::FromEnv;
+            o.environ = Some(env);
+        });
+        assert_eq!(rig.inlet.tt_toolset(), (want.to_string(), false));
+    }
+}
+
+#[tokio::test]
+async fn test_a_share_tool_called_while_closed_opens_share_and_runs() {
+    let _iso = isolated();
+    let dir = tmp();
+    let (runner, calls) = contacts_runner();
+    let api = FakeApi::new(vec![vec![said("hi there", 1)]]);
+    let sh = a_share(dir.path(), Some(runner));
+    let rig = Rig::new(
+        api.clone(),
+        FakeCreate::new(vec![call("find_contact", json!({"name": "Ana"}), "call_1"), reply("Ana Lee, +1 (555) 010-0199.")]),
+        config(),
+        routed(None, move |o| o.share = Some(sh)),
+    );
+    run_until(&rig, &api, 2, 1).await;
+    let (first, second) = (request(&rig, 0), request(&rig, 1));
+    assert!(!names(&first).contains(&"find_contact".to_string()));
+    assert!(!calls.lock().is_empty()); // it ran
+    assert_ne!(output_of(&rig, 1).get("ok"), Some(&json!(false)));
+    assert!(offers_all(&names(&second), &share_names()) && second["instructions"].as_str().unwrap().contains(eve_brain::share::INSTRUCTIONS));
+    if has_open(&second) {
+        assert!(!open_enum(&second).contains(&eve_toolset_router::SHARE.to_string()));
+    }
+    assert!(!sent(&api).iter().any(|(_, t)| t == telegram::FAILED_LINE));
+    assert_eq!(sent(&api), vec![line("Ana Lee, +1 (555) 010-0199.")]);
+}
+
+#[tokio::test]
+async fn test_a_composio_tool_called_while_the_workspace_is_closed_runs_and_brings_its_block() {
+    let _iso = isolated();
+    let apps = FakeApps::new(true).await;
+    let api = FakeApi::new(vec![vec![said("hi there", 1)]]);
+    let bridge = apps.bridge.clone();
+    let rig = Rig::new(
+        api.clone(),
+        FakeCreate::new(vec![call("COMPOSIO_MULTI_EXECUTE_TOOL", multi(&["SLACK_FETCH_CONVERSATION_HISTORY"], None), "call_1"), reply("Nothing new.")]),
+        config(),
+        routed(None, move |o| o.apps = Some(bridge)),
+    );
+    run_until(&rig, &api, 2, 1).await;
+    let (first, second) = (request(&rig, 0), request(&rig, 1));
+    assert!(!names(&first).iter().any(|n| n.starts_with("COMPOSIO")));
+    assert!(!first["instructions"].as_str().unwrap().contains(telegram::APPS_BLOCK)); // its block rides only with its tools
+    assert_eq!(open_enum(&first), vec![eve_toolset_router::WORKSPACE]);
+    assert_eq!(apps.executed_names(), vec!["COMPOSIO_MULTI_EXECUTE_TOOL"]);
+    assert!(names(&second).contains(&"COMPOSIO_SEARCH_TOOLS".to_string()) && second["instructions"].as_str().unwrap().contains(telegram::APPS_BLOCK));
+    assert_eq!(sent(&api), vec![line("Nothing new.")]);
+}
+
+#[tokio::test]
+async fn test_open_app_share_offers_the_share_tools_on_the_next_round() {
+    let _iso = isolated();
+    let dir = tmp();
+    let apps = scenario_apps().await;
+    let api = FakeApi::new(vec![vec![said("hi there", 1)]]);
+    let (sh, bridge) = (a_share(dir.path(), None), apps.bridge.clone());
+    let rig = Rig::new(
+        api.clone(),
+        FakeCreate::new(vec![call(OPEN_TOOL, json!({"apps": ["share"]}), "call_1"), reply("Ready.")]),
+        config(),
+        routed(None, move |o| {
+            o.share = Some(sh);
+            o.direct = Some(bridge);
+        }),
+    );
+    run_until(&rig, &api, 2, 1).await;
+    let (first, second) = (request(&rig, 0), request(&rig, 1));
+    let opens = open_enum(&first);
+    assert!(opens.contains(&eve_toolset_router::SHARE.to_string()) && opens.contains(&"calendar".to_string()));
+    assert!(offers_none(&names(&first), &share_names()));
+    let opened = output_of(&rig, 1);
+    let mut tools: Vec<String> = opened["tools"].as_array().unwrap().iter().map(|t| t.as_str().unwrap().to_string()).collect();
+    tools.sort();
+    let mut want = share_names();
+    want.sort();
+    assert!(opened["ok"] == json!(true) && opened["opened"] == json!(["share"]) && tools == want, "{opened}");
+    assert!(offers_all(&names(&second), &share_names()) && !open_enum(&second).contains(&eve_toolset_router::SHARE.to_string()));
+    assert_eq!(sent(&api), vec![line("Ready.")]);
+}
+
+#[tokio::test]
+async fn test_the_routed_toolsets_sit_last_and_open_app_is_the_very_last() {
+    let _iso = isolated();
+    let dir = tmp();
+    let router = FakeRouter::new(&[&[eve_toolset_router::SHARE, "calendar"]], 0.0);
+    let apps = scenario_apps().await;
+    let api = FakeApi::new(vec![vec![said(HAND_OFF, 1)]]);
+    let (sh, bridge) = (a_share(dir.path(), None), apps.bridge.clone());
+    let rig = Rig::new(
+        api.clone(),
+        FakeCreate::new(vec![reply("ok")]),
+        config(),
+        routed(Some(router.router()), move |o| {
+            o.share = Some(sh);
+            o.direct = Some(bridge);
+        }),
+    );
+    run_until(&rig, &api, 1, 1).await;
+    let have = names(&request(&rig, 0));
+    assert_eq!(have.last().unwrap(), OPEN_TOOL);
+    let at = |n: &str| have.iter().position(|h| h == n).unwrap();
+    let first_lent = share_names().iter().map(|n| at(n)).min().unwrap();
+    let stable = telegram::offered_names(&telegram::own_tools_in(Some(&conftest_env())));
+    assert!(stable.iter().all(|n| at(n) < first_lent));
+    assert!(have[..first_lent].iter().all(|n| !share_names().contains(n)));
+    assert!(at("calendar__list_events") < first_lent); // the direct apps, then the lent ones
+}
+
+#[tokio::test]
+async fn test_my_next_class_and_a_maps_link_is_still_two_model_calls_with_the_router_on() {
+    let _iso = isolated();
+    let apps = scenario_apps().await;
+    let text = "look for my next class on my calendar and give me a maps link";
+    let router = FakeRouter::new(&[&["calendar", "maps"]], 0.0);
+    let api = FakeApi::new(vec![vec![said(text, 1)]]);
+    let bridge = apps.bridge.clone();
+    let answer = format!("CS 101, Room 101: {MAPS_URL}");
+    let rig = Rig::new(
+        api.clone(),
+        FakeCreate::new(vec![call("calendar__list_events", json!({"startTime": "now"}), "call_1"), reply(&answer)]),
+        config(),
+        routed(Some(router.router()), move |o| o.direct = Some(bridge)),
+    );
+    run_until(&rig, &api, 2, 1).await;
+    let first = names(&request(&rig, 0));
+    assert!(first.contains(&"calendar__list_events".to_string()) && first.contains(&"maps__compute_routes".to_string()));
+    assert!(rig.create.requests.lock().len() == 2 && router.asked() == vec![pair(text, "")]);
+    assert_eq!(sent(&api), vec![line(&answer)]);
+}
+
+#[tokio::test]
+async fn test_and_send_it_to_ana_after_find_my_resume_in_drive_opens_drive_and_share() {
+    let _iso = isolated();
+    let dir = tmp();
+    let apps = scenario_apps().await;
+    let router = FakeRouter::new(&[&["drive"], &[]], 0.0); // Jev adds nothing on the follow-up
+    let api = FakeApi::new(vec![vec![said("find my resume in drive", 1)], vec![said("and send it to ana", 2)]]);
+    let (sh, bridge) = (a_share(dir.path(), None), apps.bridge.clone());
+    let rig = Rig::new(
+        api.clone(),
+        FakeCreate::new(vec![reply("Found Resume.pdf."), reply("Sending it to Ana?")]),
+        config(),
+        routed(Some(router.router()), move |o| {
+            o.direct = Some(bridge);
+            o.share = Some(sh);
+        }),
+    );
+    run_until(&rig, &api, 2, 2).await;
+    assert_eq!(router.asked(), vec![pair("find my resume in drive", ""), pair("and send it to ana", "find my resume in drive")]);
+    let second = request(&rig, 1);
+    assert!(offers_all(&names(&second), &share_names()));
+    let opens = open_enum(&second);
+    assert!(!opens.contains(&"drive".to_string()) && !opens.contains(&eve_toolset_router::SHARE.to_string()));
+    assert_eq!(rig.inlet.tt_open_toolsets(), (vec!["drive".to_string()], vec![eve_toolset_router::SHARE.to_string()]));
+}
+
+#[tokio::test]
+async fn test_a_rundown_carries_no_share_block_since_it_offers_no_share_tool() {
+    let _iso = isolated();
+    for mode in ["off", "auto"] {
+        let dir = tmp();
+        let api = FakeApi::new(vec![vec![said("/rundown", 1)]]);
+        let sh = a_share(dir.path(), None);
+        let rig = Rig::new(api.clone(), FakeCreate::new(vec![reply("Quiet day.")]), config(), move |o| {
+            o.toolset_mode = Some(mode.into());
+            o.share = Some(sh);
+        });
+        run_plain(&rig).await;
+        let body = request(&rig, 0);
+        assert!(offers_none(&names(&body), &share_names()), "{mode}");
+        assert!(!body["instructions"].as_str().unwrap().contains("share_file"), "{mode}");
+        // control: an ordinary turn in off mode still lends it, block and tools
+        let api = FakeApi::new(vec![vec![said("hi", 1)]]);
+        let sh = a_share(&dir.path().join("again"), None);
+        let rig = Rig::new(api.clone(), FakeCreate::new(vec![reply("Hi.")]), config(), move |o| {
+            o.toolset_mode = Some("off".into());
+            o.share = Some(sh);
+        });
+        run_plain(&rig).await;
+        let body = request(&rig, 0);
+        assert!(body["instructions"].as_str().unwrap().contains("share_file") && offers_all(&names(&body), &share_names()), "{mode}");
+    }
+}

@@ -1227,6 +1227,19 @@ impl TelegramInlet {
             st.claude_on_job = Some(crate::seams::Job::spawn("claude-on", futures::future::pending::<()>()));
         }
     }
+    /// `(inlet._toolset_mode, inlet._toolset_route is not None)`.
+    pub fn tt_toolset(&self) -> (String, bool) {
+        (self.toolset_mode.clone(), self.toolset_route.is_some())
+    }
+    /// `(sorted(inlet._direct_open), sorted(inlet._lent))`.
+    pub fn tt_open_toolsets(&self) -> (Vec<String>, Vec<String>) {
+        let st = self.st.lock();
+        let mut direct: Vec<String> = st.direct_open.iter().cloned().collect();
+        let mut lent: Vec<String> = st.lent.iter().cloned().collect();
+        direct.sort();
+        lent.sort();
+        (direct, lent)
+    }
     /// `await inlet._send_file(chat_id, raw, caption)`.
     pub async fn tt_send_file(self: &Arc<Self>, chat_id: i64, raw: &str, caption: &str) -> Obj {
         self.send_file(chat_id, raw, caption).await
