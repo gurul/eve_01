@@ -380,9 +380,16 @@ impl TelegramInlet {
         }
     }
 
+    /// `Path.home()` as this inlet sees it: HOME in the environment lent at construction, else the process's
+    /// (the tests' `monkeypatch.setattr(Path, "home", ...)` is a lent HOME; the daemon lends none).
+    pub(crate) fn owner_home(&self) -> Option<PathBuf> {
+        self.environ.as_ref().and_then(|e| e.get("HOME")).filter(|h| !h.is_empty()).map(PathBuf::from)
+    }
+
     /// py: telegram.py:7517 `async def _send_file(self, chat_id: int, raw: str, caption: str) -> dict[str, Any]:`
     pub(crate) async fn send_file(self: &Arc<Self>, chat_id: i64, raw: &str, caption: &str) -> Obj {
-        let (real, why) = resolve_owner_path(raw, None);
+        let home = self.owner_home();
+        let (real, why) = resolve_owner_path(raw, home.as_deref());
         let Some(real) = real else {
             return refused(&why);
         };

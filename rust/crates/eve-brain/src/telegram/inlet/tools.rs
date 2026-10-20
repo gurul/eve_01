@@ -1035,7 +1035,8 @@ impl TelegramInlet {
     /// py: telegram.py:6272 `async def _tool_list_files(self, name: str, args: dict[str, Any], chat_id: int) -> dict[str, Any]:`
     pub(crate) async fn tool_list_files(self: &Arc<Self>, name: &str, args: &Obj, _chat_id: i64) -> Obj {
         let raw = itl_str(args, "path");
-        match tokio::task::spawn_blocking(move || list_files(&raw, None)).await {
+        let home = self.owner_home();
+        match tokio::task::spawn_blocking(move || list_files(&raw, home.as_deref())).await {
             Ok(out) => out,
             Err(e) if e.is_panic() => std::panic::resume_unwind(e.into_panic()),
             Err(_) => itl_failed(name),
