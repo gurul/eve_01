@@ -49,7 +49,7 @@ Status: complete
 | `_shared`, `_shared_lock` | private `SHARED: LazyLock<Mutex<HashMap<String, Arc<OwnerMemory>>>>` | Keyed by `str(cfg.home)`. |
 | `shared(recall_cfg, environ=None)` | `shared(&RecallConfig, Option<&HashMap>) -> Option<Arc<OwnerMemory>>`, `shared_with(…, available)` | `shared_with` takes the installed-check as a seam (Python's tests patch `available`). |
 | — | `trait Mem0Backend` (`search`, `get_all`, `add`, `delete`, `embed`), `struct Mem0Error { kind, message }`, `error_name(&anyhow::Error)`, `type Factory`, `type Clock` | The mem0 `Memory` calls eve makes, an exception from the mem0 side by class name, and the `type(e).__name__` a log line prints. |
-| — | `python::PythonMem0` (`open`, `init`, `call`, `impl Mem0Backend`), `python::default_python()`, `PYTHON_ENV`, `HELPER` | The boundary (below). |
+| — | `python::PythonMem0` (`open`, `open_at`, `init`, `call`, `impl Mem0Backend`), `python::default_python()`, `PYTHON_ENV`, `HELPER` | The boundary (below). `open_at` takes the OpenRouter base URL (the live test's local server); `open` is `eve_openrouter::BASE_URL`. |
 
 ## Tests
 | Python file | Python tests | Rust tests | Not ported (why) |
@@ -61,9 +61,9 @@ Status: complete
 | `bridge/tests/test_records.py` | `test_keyword_hits_still_return_when_the_meaning_search_times_out` | same name | the rest test eve-records |
 | `bridge/tests/test_forget_lean.py` | `test_a_forget_between_the_indexs_read_and_its_add_is_not_undone` | same name (the forget is `forget_matching` on the index; the Memory facade is eve-memory's) | the rest test other layers |
 | `bridge/tests/test_memory.py` | `test_forget_apply_is_not_ok_when_mem0_could_not_be_opened` | its mem0 half is `test_a_forget_mem0_cannot_open_for_is_a_failure_never_a_done_zero` | `forget_apply` is eve-memory's; the migration tests move mem0's folder (eve-memory) |
-| `bridge/tests/test_model_memory_roles.py` | `test_real_mem0_sends_low_effort_and_budget_without_changing_embeddings`, `test_local_embeddings_keep_the_same_extraction_settings` | `test_local_embeddings_keep_the_same_extraction_settings`; the request half of the first is `test_extraction_and_embeddings_go_to_openrouter_metered_with_the_extraction_budget` | Its `temperature`/`top_p` positive control is mem0ai's own sampling code, which runs unchanged in the helper |
+| `bridge/tests/test_model_memory_roles.py` | `test_real_mem0_sends_low_effort_and_budget_without_changing_embeddings`, `test_local_embeddings_keep_the_same_extraction_settings` | both, same names. The first is live (`#[ignore]`): the real mem0ai in the helper against a local OpenRouter stand-in, both parametrized models, with its `temperature`/`top_p` positive control (the helper's test op `unflag_reasoning`); run and passing against mem0ai 2.2.1. Its fake-package twin is `test_extraction_and_embeddings_go_to_openrouter_metered_with_the_extraction_budget` | — |
 | `bridge/tests/test_daemon_transcripts.py`, `bridge/tests/test_privacy_guards.py` | (they patch `mem0_memory.shared`/`open_mem0` to test the daemon and the dream) | — | They test eve-daemon and eve-dream; this crate's seams (`shared_with`, `Factory`) are what those ports use |
-| (new) | — | `test_a_score_is_read_as_pythons_float_and_odd_rows_are_skipped`, `test_make_private_never_follows_a_symlink`, `test_warm_opens_the_store_and_embeds_once_and_never_raises`, `test_messages_keep_only_said_lines_of_the_owner_and_eve`, `test_line_units_stamp_each_line_with_its_own_wall_time`, `test_a_history_database_that_is_not_one_is_logged_and_the_forget_still_counts`, `test_embedder_of_reads_the_switch`, `test_the_helper_is_this_crates_source`, `test_a_mem0_whose_telemetry_stays_on_is_refused`, `test_no_openrouter_key_is_no_mem0`, `test_the_index_over_the_helper_ingests_searches_and_forgets` | — |
+| (new) | — | `test_a_score_is_read_as_pythons_float_and_odd_rows_are_skipped`, `test_make_private_never_follows_a_symlink`, `test_warm_opens_the_store_and_embeds_once_and_never_raises`, `test_messages_keep_only_said_lines_of_the_owner_and_eve`, `test_line_units_stamp_each_line_with_its_own_wall_time`, `test_a_history_database_that_is_not_one_is_logged_and_the_forget_still_counts`, `test_embedder_of_reads_the_switch`, `test_the_helper_is_this_crates_source`, `test_a_mem0_whose_telemetry_stays_on_is_refused`, `test_no_openrouter_key_is_no_mem0`, `test_the_index_over_the_helper_ingests_searches_and_forgets`, `test_the_owners_words_cross_the_helper_in_utf8_whatever_the_locale` | — |
 
 ## Boundaries
 - **mem0 (mem0ai, Python only).** mem0's `Memory` — its extraction and update prompts, Qdrant's local mode (pickled
@@ -73,9 +73,9 @@ Status: complete
   `MEM0_DIR`, the embedder, the OpenRouter base URL, headers, key variable name and model ids, and the extraction
   budget). Spawning it is `open_mem0`; its first line is `{"status": "ready"}` or the exception by class and text.
   Each request is one JSON line (`search`, `get_all`, `add`, `delete`, `embed`; `generate` and `probe` for the
-  tests) answered by `{"result": …}` or `{"kind", "error"}`; `{"log"}` and `{"spend"}` lines may come first and are
+  tests) answered by `{"result": …}` or `{"kind", "error"}` (`unflag_reasoning` is a third test-only op); `{"log"}` and `{"spend"}` lines may come first and are
   logged / recorded in the spend ledger by Rust. Library output on stdout goes to stderr so it cannot corrupt the
-  protocol. Dropping the Memory closes stdin (mem0 closes its store and the helper exits; killed after 5 s).
+  protocol. Both pipes are UTF-8 whatever the locale (under `LC_ALL=C` Python would read the pipe as ASCII). Dropping the Memory closes stdin (mem0 closes its store and the helper exits; killed after 5 s).
   Everything around mem0 — which conversations go in, the search's cap, filters and timeout, tidy, forget, the
   history scrub, the meter's ledger lines — is Rust.
 - **Which Python.** `EVE_MEM0_PYTHON` (new; the interpreter that has mem0ai), else the bridge checkout's venv

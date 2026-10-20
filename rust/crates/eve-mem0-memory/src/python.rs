@@ -174,6 +174,7 @@ pub struct PythonMem0 {
     python: PathBuf,
     env: Vec<(OsString, OsString)>,
     ledger: Ledger,
+    base_url: String,
     helper: Option<Helper>,
 }
 
@@ -192,7 +193,19 @@ impl PythonMem0 {
         env: Vec<(OsString, OsString)>,
         ledger: Ledger,
     ) -> anyhow::Result<Self> {
-        let mut mem = PythonMem0 { cfg, python: python.into(), env, ledger, helper: None };
+        Self::open_at(cfg, python, env, ledger, eve_openrouter::BASE_URL)
+    }
+
+    /// [`PythonMem0::open`] with the OpenRouter endpoint at `base_url` (the live test points it at a local server;
+    /// the daemon always uses `eve_openrouter::BASE_URL`).
+    pub fn open_at(
+        cfg: Mem0Config,
+        python: impl Into<PathBuf>,
+        env: Vec<(OsString, OsString)>,
+        ledger: Ledger,
+        base_url: impl Into<String>,
+    ) -> anyhow::Result<Self> {
+        let mut mem = PythonMem0 { cfg, python: python.into(), env, ledger, base_url: base_url.into(), helper: None };
         mem.helper = Some(mem.spawn()?);
         Ok(mem)
     }
@@ -212,7 +225,7 @@ impl PythonMem0 {
             "mem0_dir": path_str(&cfg.home.join("home")),
             "embedder": cfg.embedder,
             "key_env": eve_openrouter::KEY_ENV,
-            "base_url": eve_openrouter::BASE_URL,
+            "base_url": self.base_url,
             "headers": headers,
             "models": models,
             "extract_max_output_tokens": EXTRACT_MAX_OUTPUT_TOKENS,

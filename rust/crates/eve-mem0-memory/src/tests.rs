@@ -1282,6 +1282,137 @@ fn test_the_index_over_the_helper_ingests_searches_and_forgets() {
     assert_eq!(mode(&tmp.path().join("m")), 0o700);
 }
 
+#[test]
+fn test_the_owners_words_cross_the_helper_in_utf8_whatever_the_locale() {
+    // A launchd job may have no LANG: Python then reads a pipe as ASCII. The owner's words are not.
+    let fake = FakePython::new(false);
+    let tmp = TempDir::new().unwrap();
+    let mut env = fake.env("or-test-not-real");
+    for (k, v) in [("LC_ALL", "C"), ("LANG", "C"), ("PYTHONCOERCECLOCALE", "0"), ("PYTHONUTF8", "0")] {
+        env.push((k.into(), v.into()));
+    }
+    let mut real =
+        PythonMem0::open(Mem0Config::new(true, tmp.path().join("m")), "python3", env, eve_spend::Ledger::at(tmp.path()))
+            .unwrap();
+    let said = "my sister moved to Brémen ☕ 東京";
+    real.add(&json!([{"role": "user", "content": said}]), OWNER, &json!({"day": DAY, "channel": "voice"})).unwrap();
+    let all = real.get_all(&json!({"user_id": OWNER}), GET_ALL_CAP).unwrap();
+    assert_eq!(all["results"][0]["memory"], said);
+    assert_eq!(all["results"][0]["metadata"]["channel"], "voice");
+}
+
+/// A local stand-in for OpenRouter's two endpoints: each request body it is sent, in order.
+struct LocalOpenRouter {
+    url: String,
+    bodies: Arc<Mutex<Vec<Value>>>,
+}
+
+impl LocalOpenRouter {
+    fn start() -> Self {
+        use std::io::{BufRead, BufReader, Read, Write};
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let url = format!("http://{}/api/v1", listener.local_addr().unwrap());
+        let bodies = Arc::new(Mutex::new(Vec::new()));
+        let seen = bodies.clone();
+        std::thread::spawn(move || {
+            for stream in listener.incoming().flatten() {
+                let seen = seen.clone();
+                std::thread::spawn(move || {
+                    let mut reader = BufReader::new(stream.try_clone().unwrap());
+                    let mut stream = stream;
+                    loop {
+                        let mut request_line = String::new();
+                        if reader.read_line(&mut request_line).unwrap_or(0) == 0 {
+                            return;
+                        }
+                        let mut length = 0usize;
+                        loop {
+                            let mut h = String::new();
+                            if reader.read_line(&mut h).unwrap_or(0) == 0 {
+                                return;
+                            }
+                            if h.trim().is_empty() {
+                                break;
+                            }
+                            if let Some((k, v)) = h.split_once(':') {
+                                if k.eq_ignore_ascii_case("content-length") {
+                                    length = v.trim().parse().unwrap_or(0);
+                                }
+                            }
+                        }
+                        let mut body = vec![0u8; length];
+                        if reader.read_exact(&mut body).is_err() {
+                            return;
+                        }
+                        let body: Value = serde_json::from_slice(&body).unwrap_or(Value::Null);
+                        let reply = if request_line.contains("/embeddings") {
+                            json!({"object": "list", "model": "x", "usage": {"prompt_tokens": 2, "total_tokens": 2},
+                                   "data": [{"object": "embedding", "index": 0, "embedding": vec![0.01; 1536]}]})
+                        } else {
+                            json!({"id": "x", "object": "chat.completion", "created": 0, "model": "x",
+                                   "choices": [{"index": 0, "finish_reason": "stop",
+                                                "message": {"role": "assistant", "content": "{}"}}],
+                                   "usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15}})
+                        };
+                        seen.lock().push(body);
+                        let out = reply.to_string();
+                        let head = format!(
+                            "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\n\r\n",
+                            out.len()
+                        );
+                        if stream.write_all(head.as_bytes()).and_then(|_| stream.write_all(out.as_bytes())).is_err() {
+                            return;
+                        }
+                    }
+                });
+            }
+        });
+        LocalOpenRouter { url, bodies }
+    }
+}
+
+/// test_model_memory_roles.py: the real mem0ai, through the helper, sends low effort and the extraction budget, no
+/// sampling settings (with a positive control), and its embeddings unchanged; both on OpenRouter ids.
+#[test]
+#[ignore = "live: needs mem0ai (EVE_MEM0_PYTHON or the bridge venv)"]
+fn test_real_mem0_sends_low_effort_and_budget_without_changing_embeddings() {
+    let python = crate::python::default_python();
+    assert!(crate::python::available_with(&python), "mem0ai is not installed for {}", python.display());
+    for model in [DEFAULT_MODEL, "openai/gpt-6.1-sol"] {
+        let server = LocalOpenRouter::start();
+        let tmp = TempDir::new().unwrap();
+        let cfg = Mem0Config { model: model.into(), ..Mem0Config::new(true, tmp.path().join("mem0")) };
+        let env: Vec<(OsString, OsString)> = vec![
+            ("OPENROUTER_API_KEY".into(), "test-provider-key".into()),
+            ("OPENAI_API_KEY".into(), "".into()),
+            ("HOME".into(), tmp.path().as_os_str().to_owned()),
+        ];
+        let spend = tmp.path().join("spend");
+        let mut real =
+            PythonMem0::open_at(cfg.clone(), &python, env, eve_spend::Ledger::at(&spend), server.url.clone()).unwrap();
+        real.call(json!({"op": "generate", "messages": [{"role": "user", "content": "remember a fact"}]})).unwrap();
+        assert!(real.embed("a fact", "add").unwrap());
+        let sent = server.bodies.lock().clone();
+        let (extraction, embedding) = (&sent[0], &sent[1]);
+        assert_eq!(extraction["model"], eve_openrouter::model(model));
+        assert_eq!(extraction["reasoning_effort"], "low");
+        assert_eq!(extraction["max_completion_tokens"], EXTRACT_MAX_OUTPUT_TOKENS);
+        assert!(extraction.get("temperature").is_none() && extraction.get("top_p").is_none());
+        assert_eq!(embedding["model"], "openai/text-embedding-3-small");
+        assert_eq!(mem0_config(&cfg)["vector_store"]["config"]["embedding_model_dims"], 1536);
+        // both calls metered, the extraction under the config's own name
+        let rows = ledger_lines(&spend);
+        assert_eq!(rows.len(), 2);
+        assert_eq!((rows[0]["f"].as_str(), rows[0]["m"].as_str()), (Some("memory"), Some(model)));
+        // Positive control for the absence check: without the explicit flag the very same transport sees mem0's
+        // default sampling parameters.
+        real.call(json!({"op": "unflag_reasoning"})).unwrap();
+        real.call(json!({"op": "generate", "messages": [{"role": "user", "content": "a second fact"}]})).unwrap();
+        let last = server.bodies.lock().last().cloned().unwrap();
+        assert!(last.get("temperature").is_some() && last.get("top_p").is_some());
+    }
+}
+
 /// The real mem0ai, opened offline with a fake key: telemetry off, its home ours, its clients OpenRouter's, and a
 /// forget that scrubs mem0's own history database. Needs an interpreter with mem0ai (EVE_MEM0_PYTHON, or the
 /// bridge venv when it has it).

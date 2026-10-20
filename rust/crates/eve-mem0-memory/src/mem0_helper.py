@@ -11,6 +11,7 @@
 # Protocol (one JSON object per line on stdout; nothing else is written there):
 #   first line   {"status": "ready"} | {"status": "failed", "kind": str, "error": str}
 #   then         stdin {"op": ..., ...} -> {"result": ...} | {"kind": str, "error": str}  (class name and str())
+#                ops: search, get_all, add, delete, embed; generate, probe and unflag_reasoning for the tests
 #   any time     {"log": "warning", "message": str}          a line for the daemon's log
 #                {"spend": "chat" | "embedding", "model": str, "reply": {...}}   one model call, for the spend meter
 # The process exits when stdin closes.
@@ -204,6 +205,9 @@ def handle(mem, req):
         return {"embedded": True}
     if op == "generate":
         return mem.llm.generate_response(messages=req["messages"])
+    if op == "unflag_reasoning":                    # tests: the positive control for the sampling settings
+        mem.llm.config.is_reasoning_model = False
+        return None
     if op == "probe":
         from mem0.memory import telemetry
 
@@ -217,7 +221,7 @@ def handle(mem, req):
 def main():
     global _out
     # Libraries print progress and warnings to stdout; the protocol owns the real stdout, all else goes to stderr.
-    _out = os.fdopen(os.dup(1), "w", buffering=1)
+    _out = os.fdopen(os.dup(1), "w", buffering=1, encoding="utf-8")
     os.dup2(2, 1)
     init = json.loads(sys.argv[1])
     try:
@@ -226,7 +230,9 @@ def main():
         send({"status": "failed", **failure(exc)})
         return
     send({"status": "ready"})
-    for line in sys.stdin:
+    # Requests are UTF-8 whatever the locale (the owner's words are not ASCII; a launchd job has no LANG).
+    for raw in sys.stdin.buffer:
+        line = raw.decode("utf-8")
         if not line.strip():
             continue
         try:
