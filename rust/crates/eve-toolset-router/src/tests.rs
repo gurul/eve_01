@@ -419,6 +419,8 @@ fn test_a_follow_up_that_points_back_adds_the_previous_messages_keywords_and_a_p
     assert_eq!(keyword_toolsets("and send it to ana", "find my resume in drive"), set(&[DRIVE, SHARE]));
     assert_eq!(keyword_toolsets("dimmer", "lights blue"), set(&[]));
     assert!(!keyword_toolsets("and send it to ana", "").contains(DRIVE));
+    // test_telegram_toolsets.py's hand-off: a share with no share word, so the words alone open nothing
+    assert_eq!(keyword_toolsets("get my resume over to ana before her interview", ""), set(&[]));
 }
 
 #[test]
