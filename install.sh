@@ -5,8 +5,12 @@
 #
 # It does README.md's "Get started → 1. The Mac" for you:
 #   - clones github.com/gurul/eve_01 to ~/eve (or pulls it when it is already there),
-#   - builds bridge/.venv on Python 3.12 and installs eve-bridge into it, editable,
-#     so `eve-bridge update` and the "code: … @ <commit>" log line keep working,
+#   - builds eve's daemon from rust/ (the Rust eve-bridge, the default) and signs it
+#     with your Apple Development identity when you have one, so macOS keeps its
+#     permissions across updates,
+#   - builds bridge/.venv on Python 3.12 and installs eve-bridge into it, editable:
+#     the Python version (--python), and the Python libraries the Rust daemon still
+#     calls (mem0, the local Laya model, the desktop worker),
 #   - installs cloudflared and qrencode with Homebrew,
 #   - creates ~/.config/eve-bridge/env (mode 600) and asks for the keys it is missing,
 #   - installs the Claude Code hooks and the login service.
@@ -17,6 +21,7 @@
 #   --dir PATH     clone to PATH instead of ~/eve (or set EVE_DIR)
 #   --no-service   skip the hooks and the login service (install the code only)
 #   --yes          do not ask for keys; leave the missing ones for you to fill in
+#   --python       run the Python daemon instead of the Rust one
 #
 # Everything is inside main(), so a download cut short runs nothing.
 
@@ -49,6 +54,12 @@ has_key() {  # has_key NAME → true when the env file sets NAME to a non-empty 
   grep -qE "^$1=.+" "$ENV_FILE" 2>/dev/null
 }
 
+find_signing_identity() {  # EVE_CODESIGN_IDENTITY, else the first Apple Development identity, else nothing
+  if [ -n "${EVE_CODESIGN_IDENTITY:-}" ]; then printf '%s\n' "$EVE_CODESIGN_IDENTITY"; return; fi
+  security find-identity -v -p codesigning 2>/dev/null \
+    | sed -nE 's/.*"(Apple Development: [^"]+)".*/\1/p' | head -n 1
+}
+
 find_python() {
   local candidate
   for candidate in python3.12 /opt/homebrew/bin/python3.12 /usr/local/bin/python3.12; do
@@ -61,13 +72,14 @@ find_python() {
 }
 
 main() {
-  local eve_dir="${EVE_DIR:-$HOME/eve}" service=1 ask=1
+  local eve_dir="${EVE_DIR:-$HOME/eve}" service=1 ask=1 rust=1
   while [ $# -gt 0 ]; do
     case "$1" in
       --dir) [ $# -ge 2 ] || die "--dir needs a path"; eve_dir="$2"; shift 2 ;;
       --no-service) service=0; shift ;;
       --yes|-y) ask=0; shift ;;
-      -h|--help) sed -n '2,22p' "$0" 2>/dev/null || true; return 0 ;;
+      --python) rust=0; shift ;;
+      -h|--help) sed -n '2,27p' "$0" 2>/dev/null || true; return 0 ;;
       *) die "unknown option: $1 (see --help)" ;;
     esac
   done
@@ -92,8 +104,12 @@ main() {
   fi
   say "Python: $python ($("$python" -c 'import sys; print(sys.version.split()[0])'))"
 
+  if [ "$rust" = 1 ] && ! command -v cargo >/dev/null 2>&1; then
+    [ -x "$HOME/.cargo/bin/cargo" ] && PATH="$HOME/.cargo/bin:$PATH"
+  fi
   local tools=() t
   for t in cloudflared qrencode; do command -v "$t" >/dev/null 2>&1 || tools+=("$t"); done
+  [ "$rust" = 1 ] && ! command -v cargo >/dev/null 2>&1 && tools+=(rust)
   if [ ${#tools[@]} -gt 0 ]; then
     say "Installing ${tools[*]} (Homebrew)"
     brew install "${tools[@]}"
@@ -129,6 +145,23 @@ main() {
   (cd "$eve_dir/bridge" && "$venv/bin/python" -m pip install --quiet -e ".[$extras]")
   local eve="$venv/bin/eve-bridge"
   [ -x "$eve" ] || die "the install finished but $eve is missing"
+
+  # 3b. The Rust daemon and its hook binaries, built in the checkout: the binary reads eve's
+  # pages and prompts from the checkout, and `eve-bridge update` rebuilds it in place.
+  local signed=""
+  if [ "$rust" = 1 ]; then
+    say "Building the Rust eve-bridge (about 5 minutes the first time)"
+    (cd "$eve_dir/rust" && cargo build --release --locked --quiet -p eve-bridge -p eve-hooks)
+    eve="$eve_dir/rust/target/release/eve-bridge"
+    [ -x "$eve" ] || die "the build finished but $eve is missing"
+    signed="$(find_signing_identity)"
+    if [ -n "$signed" ]; then
+      say "Signing it as $signed"
+      codesign --force --sign "$signed" --identifier com.github.eve-bridge "$eve"
+    else
+      warn "no Apple Development identity: macOS will ask for its permissions again after each update."
+    fi
+  fi
 
   # 4. The env file: keys stay on this Mac, mode 600, never printed.
   mkdir -p "$ENV_DIR"
@@ -170,6 +203,7 @@ main() {
   # 6. What is left for the person.
   local real_python
   real_python="$("$venv/bin/python" -c 'import os, sys; print(os.path.realpath(sys.executable))')"
+  [ "$rust" = 1 ] && real_python="$eve"
   cat <<EOF
 
 eve is installed in $eve_dir.
@@ -193,7 +227,7 @@ EOF
     printf "       %s install --service --serial-port '/dev/cu.usbmodem*'\n" "$eve"
     n=$((n + 1))
   fi
-  printf '  %d. System Settings → Privacy & Security: add this Python to\n' "$n"
+  printf '  %d. System Settings → Privacy & Security: add this program to\n' "$n"
   printf '     Microphone, Accessibility and Screen Recording:\n'
   printf '       %s\n' "$real_python"
   n=$((n + 1))

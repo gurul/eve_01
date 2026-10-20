@@ -10,7 +10,9 @@ directives, no `era-code`.
 
 ## What eve is, in one paragraph
 
-A Python daemon on a Mac (`bridge/`) is the host. It runs one chat brain for every
+A daemon on a Mac is the host. It is written twice, as drop-in replacements for
+each other: in Rust (`rust/`, the default, what `install.sh` builds) and in Python
+(`bridge/`, the alternative; [eve in Rust](docs/rust.md)). It It runs one chat brain for every
 door: the **Eve Link** iPhone app (`ios/EveLink/`, chat, photos, voice on the
 Action Button, the owner's apps (lights, music, a camera, a TV, a car) and the chief's
 jobs; the apps are examples, not a fixed set, and yours can be different), Telegram (optional, muted by
@@ -36,7 +38,8 @@ same Mac are watched through hooks, so eve can relay their questions to the phon
 4. **Keep `/docs` and `README.md` current in the same change** as the code. A
    behaviour, switch, command or API that changed without its doc is a defect.
 5. **Work in a worktree, not in the main checkout.** The daemon runs from the main
-   checkout's `bridge/.venv`; `uv sync` or `pip install` there rebuilds the venv under
+   checkout (`rust/target/release/eve-bridge`, or `bridge/.venv` for the Python
+   version); `cargo build --release`, `uv sync` or `pip install` there rebuilds it under
    the running daemon. Use `git worktree add -b <branch> ../eve-<name> origin/main`,
    do everything there, then merge into the live branch and restart the daemon.
 6. **Anything a model reads is a prompt, and prompt changes need a blind eval.**
@@ -70,6 +73,11 @@ same Mac are watched through hooks, so eve can relay their questions to the phon
     goes into `profile.EXEC_ALLOW`, or its process firewall refuses it. eve lite's work
     leaves `daemon.py`, `miniapp.py`, `link_chat.py`, `install.sh` and `ios/EveLink/App/`
     alone ([eve lite](docs/lite.md#why-full-eve-does-not-change)).
+12. **A behaviour change lands in Rust and Python together.** Both daemons are
+    supported, so one commit changes the crate under `rust/crates`, the module under
+    `bridge/src/eve_bridge`, both tests and the crate's `PARITY.md`. `cd rust &&
+    python3 tools/check_port.py && cargo test -p eve-<crate>` must pass alongside the
+    Python suite ([changing eve](docs/rust.md#changing-eve)).
 
 ## Set eve up on a Mac and an iPhone
 
@@ -102,7 +110,10 @@ latest release, lite-v0.1.3, is published). Everything below is full eve.
 `install.sh` at the repo root does this section up to the permissions, without
 prompts when given `--yes`:
 `curl -fsSL https://raw.githubusercontent.com/gurul/eve_01/main/install.sh | bash -s -- --yes`.
-It leaves empty `KEY=` lines for the keys it did not get. The manual steps:
+It leaves empty `KEY=` lines for the keys it did not get. It builds the Rust daemon
+(`--python` for the Python one), and every later `bridge/.venv/bin/eve-bridge` in this
+file is then `rust/target/release/eve-bridge`: the commands are the same. The manual
+steps below are the Python version's; the Rust build is in [eve in Rust](docs/rust.md#install):
 
 ```bash
 git clone https://github.com/gurul/eve_01 eve && cd eve

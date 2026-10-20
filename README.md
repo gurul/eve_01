@@ -347,14 +347,22 @@ else, from the sign-ins to uninstalling, is in [eve lite](docs/lite.md).
 curl -fsSL https://raw.githubusercontent.com/gurul/eve_01/main/install.sh | bash
 ```
 
-[`install.sh`](install.sh) clones eve to `~/eve`, builds the venv, installs
-`cloudflared` and `qrencode`, asks for the three keys below, and installs the
-hooks and the login service. It never overwrites a key you already set. Run it
-again to update. Options go after `bash -s --`: `--dir PATH`, `--no-service`,
-`--yes` (ask nothing). It ends with the steps it cannot do for you: the macOS
-permissions and the check. Then go to [2. The iPhone](#2-the-iphone).
+[`install.sh`](install.sh) clones eve to `~/eve`, builds eve's daemon in Rust
+(and signs it with your Apple Development identity, when you have one, so macOS keeps
+its permissions across updates), builds the venv for the Python helpers, installs
+`cloudflared` and `qrencode`, asks for the three keys below, and installs the hooks
+and the login service. It never overwrites a key you already set. Run it again to
+update. Options go after `bash -s --`: `--dir PATH`, `--no-service`, `--yes` (ask
+nothing), `--python` (run the Python daemon instead). It ends with the steps it cannot
+do for you: the macOS permissions and the check. Then go to [2. The iPhone](#2-the-iphone).
 
-**By hand**, the same steps:
+**Rust or Python.** The daemon is written twice, and the two are drop-in replacements
+for each other: the same files, settings, routes and prompts. Rust (`rust/`) is the
+default: it starts in about a second and uses less memory. Python (`bridge/`) works the
+same and stays supported. Both are in [eve in Rust](docs/rust.md), with switching
+between them.
+
+**By hand**, the same steps (Python shown; the Rust build is in [eve in Rust](docs/rust.md#install)):
 
 You need macOS 14 or later, Python 3.12, Homebrew, and these keys in
 `~/.config/eve-bridge/env` (mode 600, one `KEY=VALUE` per line):
@@ -724,7 +732,8 @@ Persistent data lives under `~/.config/eve-bridge/`:
 |---|---|---|
 | `firmware/claude_pet_stackchan/` | Active StackChan firmware and C++ host tests | [Build and protocol](docs/stackchan/build.md), [design](DESIGN.md) |
 | `firmware/eve_voice_pe/` | Voice PE button, dial, ring and speaker firmware | [Voice PE build and controller setup](docs/voice-pe.md) |
-| `bridge/src/eve_bridge/` | Daemon, CLI, voice, desktop control, vision and memory | [Bridge reference](bridge/README.md), [voice](docs/stackchan/voice.md), [routing](docs/stackchan/routing.md), [Telegram](docs/stackchan/telegram.md) |
+| `rust/` | The daemon in Rust, the default: 158 crates, one per Python module, each with a `PARITY.md` | [eve in Rust](docs/rust.md), [porting rules](rust/PORTING.md) |
+| `bridge/src/eve_bridge/` | The daemon in Python, the alternative: daemon, CLI, voice, desktop control, vision and memory | [Bridge reference](bridge/README.md), [voice](docs/stackchan/voice.md), [routing](docs/stackchan/routing.md), [Telegram](docs/stackchan/telegram.md) |
 | `install-lite.sh` | eve lite's one-line installer: uv, its own Python and hash-pinned wheels into `~/.eve-lite`, with no developer tools | [Install eve lite](docs/lite.md#install) |
 | `bridge/src/eve_bridge/profile.py`, `bridge/src/eve_bridge/lite*.py` | eve lite: `profile.py` (the `EVE_PROFILE` switch, what it turns off, the process firewall), `lite.py` (its daemon), `lite_web.py` (its two web doors), `lite_rtc.py` (WebRTC), `lite_tls.py` (its local certificate) | [How eve lite is built](docs/lite.md#how-it-is-built) |
 | `bridge/tests/`, `bridge/tools/` | Python tests, fixtures and routing/desktop evaluation tools | [Routing evaluations](docs/stackchan/routing.md) |
@@ -758,6 +767,16 @@ bridge/.venv/bin/python -m pip install -e './bridge[dev]'
   `sh widget/Tests/benchmark.sh` measures a synthetic history and meeting transcript.
   The [optimization review](docs/optimization-review.md) records the repository
   review scope, transcription fixes, primary sources, and reproducible benchmarks.
+
+The Rust daemon's checks run from `rust/`:
+
+```bash
+(cd rust && cargo test --workspace)
+(cd rust && python3 tools/check_port.py && python3 tools/check_cli.py)   # parity with the Python version
+```
+
+A change in behavior lands in both versions in the same commit, with the crate's
+`PARITY.md` ([changing eve](docs/rust.md#changing-eve)).
 
 Hardware, live APIs and macOS-specific integrations need their own setup.
 
