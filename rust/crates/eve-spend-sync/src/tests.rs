@@ -492,3 +492,56 @@ async fn the_loop_logs_a_failed_sync_and_keeps_going() {
     tokio::time::timeout(Duration::from_secs(2), task).await.unwrap().unwrap();
     assert!(*calls.lock() >= 3);
 }
+
+/// A one-shot server on loopback that reads the request and answers `reply` (or just hangs up).
+fn serve_once(reply: Option<&'static [u8]>) -> u16 {
+    use std::io::Read;
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = listener.local_addr().unwrap().port();
+    std::thread::spawn(move || {
+        let (mut conn, _) = listener.accept().unwrap();
+        let mut buf = [0u8; 65536];
+        let _ = conn.read(&mut buf);
+        if let Some(reply) = reply {
+            let _ = conn.write_all(reply);
+        }
+    });
+    port
+}
+
+#[test]
+fn the_default_opener_fails_after_connecting_as_urllib_does() {
+    // what CPython's get_json gives against the same servers
+    let cases: [(Option<&'static [u8]>, ProviderError); 5] = [
+        (Some(b"HELLO\r\n\r\n"), ProviderError::Other(PyError("BadStatusLine".into()))),
+        (None, ProviderError::Sync(SyncError("timed out".into()))),
+        (
+            Some(b"HTTP/1.1 200 OK\r\nContent-Length: 100\r\n\r\n{\"a\":"),
+            ProviderError::Other(PyError("IncompleteRead".into())),
+        ),
+        (Some(b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\n{]"), ProviderError::Sync(SyncError("unreadable reply".into()))),
+        (Some(b"HTTP/1.1 500 X\r\nContent-Length: 0\r\n\r\n"), ProviderError::Sync(SyncError("HTTP 500".into()))),
+    ];
+    for (reply, want) in cases {
+        let port = serve_once(reply);
+        let got = get_json(&format!("http://127.0.0.1:{port}/x"), &[], None, Some(Duration::from_secs(5)));
+        assert_eq!(got.unwrap_err(), want, "reply {:?}", reply.map(String::from_utf8_lossy));
+    }
+}
+
+#[test]
+fn a_local_day_is_read_where_python_reads_it() {
+    // 10000-01-01T00:00:00Z: Python's UTC datetime refuses it; the local one is fine west of Greenwich
+    let ts = 253_402_300_800.0;
+    assert_eq!(py::utc_date(ts), Err(PyError("ValueError".into())));
+    let west = chrono::Local.timestamp_opt(253_402_300_800 - 1, 0).single().is_some_and(|d| {
+        chrono::Datelike::year(&d.date_naive()) == 9999 && d.offset().local_minus_utc() < 0
+    });
+    if west {
+        assert_eq!(py::local_date(ts).map(|d| d.format("%Y-%m-%d").to_string()), Ok("9999-12-31".to_string()));
+    } else {
+        assert!(py::local_date(ts).is_err());
+    }
+    assert_eq!(py::local_date(1e12), Err(PyError("ValueError".into())));
+    assert_eq!(py::local_date(1e17), Err(PyError("OSError".into())));
+}

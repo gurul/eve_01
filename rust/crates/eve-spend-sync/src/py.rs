@@ -125,9 +125,14 @@ pub fn urlencode(params: &[(String, Value)]) -> String {
         .join("&")
 }
 
+/// Python's `str.strip()`: Unicode whitespace plus the four separators (`\x1c`..`\x1f`) Python counts as space.
+pub(crate) fn py_strip(s: &str) -> &str {
+    s.trim_matches(|c: char| c.is_whitespace() || ('\u{1c}'..='\u{1f}').contains(&c))
+}
+
 /// Python's `float(str)`: surrounding whitespace allowed, `_` only between digits, `inf`/`nan` spelled out.
 pub(crate) fn py_float_from_str(s: &str) -> Option<f64> {
-    let t = s.trim_matches(|c: char| c.is_whitespace() || ('\u{1c}'..='\u{1f}').contains(&c));
+    let t = py_strip(s);
     let chars: Vec<char> = t.chars().collect();
     let mut clean = String::with_capacity(t.len());
     for (i, c) in chars.iter().enumerate() {
@@ -197,9 +202,10 @@ fn year_of_days(days: i64) -> i64 {
 }
 
 /// `datetime.fromtimestamp(ts)`'s split into seconds and microseconds (ties to even), or the exception it raises:
-/// `ValueError` for NaN and for a year outside 1..9999, `OverflowError` past `time_t`, `OSError` where the C
-/// library cannot hold the year.
-fn split_timestamp(ts: f64) -> Result<(i64, u32), PyError> {
+/// `ValueError` for NaN and (with `utc_year`) for a UTC year outside 1..9999, `OverflowError` past `time_t`,
+/// `OSError` where the C library cannot hold the year. The local-zone caller checks the local year itself, since
+/// Python accepts a local 9999-12-31 whose UTC day is already in year 10000.
+fn split_timestamp(ts: f64, utc_year: bool) -> Result<(i64, u32), PyError> {
     if ts.is_nan() {
         return Err(PyError::new("ValueError"));
     }
@@ -219,7 +225,7 @@ fn split_timestamp(ts: f64) -> Result<(i64, u32), PyError> {
     if year - 1900 > i64::from(i32::MAX) || year - 1900 < i64::from(i32::MIN) {
         return Err(PyError::new("OSError"));
     }
-    if !(1..=9999).contains(&year) {
+    if utc_year && !(1..=9999).contains(&year) {
         return Err(PyError::new("ValueError"));
     }
     Ok((secs, us as u32))
@@ -227,7 +233,7 @@ fn split_timestamp(ts: f64) -> Result<(i64, u32), PyError> {
 
 /// `datetime.fromtimestamp(ts, timezone.utc).date()`.
 pub(crate) fn utc_date(ts: f64) -> Result<NaiveDate, PyError> {
-    let (secs, us) = split_timestamp(ts)?;
+    let (secs, us) = split_timestamp(ts, true)?;
     chrono::DateTime::from_timestamp(secs, us * 1000)
         .map(|d| d.date_naive())
         .ok_or_else(|| PyError::new("ValueError"))
@@ -235,7 +241,7 @@ pub(crate) fn utc_date(ts: f64) -> Result<NaiveDate, PyError> {
 
 /// `datetime.fromtimestamp(ts).date()`, in the local zone.
 pub(crate) fn local_date(ts: f64) -> Result<NaiveDate, PyError> {
-    let (secs, us) = split_timestamp(ts)?;
+    let (secs, us) = split_timestamp(ts, false)?;
     let date = Local
         .timestamp_opt(secs, us * 1000)
         .earliest()

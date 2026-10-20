@@ -40,7 +40,7 @@ use serde_json::{json, Map, Value};
 use tokio::sync::watch;
 
 pub use py::{py_dumps_sorted, py_loads, py_round, urlencode};
-use py::{iter_items, local_date, os_error_name, py_float_from_str, py_str, truthy, utc_date, Neumaier};
+use py::{iter_items, local_date, os_error_name, py_float_from_str, py_str, py_strip, truthy, utc_date, Neumaier};
 
 pub const STATE_FILE: &str = "providers.json";
 pub const SYNC_SECS: f64 = 3600.0;
@@ -157,6 +157,36 @@ fn connect_reason(e: &reqwest::Error) -> String {
     }
 }
 
+/// The lower-cased text of an error's whole source chain.
+fn chain_text(e: &reqwest::Error) -> String {
+    let mut text = e.to_string().to_lowercase();
+    let mut source: Option<&dyn std::error::Error> = std::error::Error::source(e);
+    while let Some(err) = source {
+        text.push(' ');
+        text.push_str(&err.to_string().to_lowercase());
+        source = err.source();
+    }
+    text
+}
+
+/// A failure after the connection was made, as urllib lets it through unwrapped: `getresponse()` and `read()`
+/// sit outside urllib's `URLError` wrapping, so a reset or a timeout there is a bare `OSError` ("timed out"),
+/// a garbled status line is http.client's `BadStatusLine` and a short body its `IncompleteRead` (neither is an
+/// `OSError`, so Python records the type name).
+fn after_connect(e: &reqwest::Error, reading_body: bool) -> OpenError {
+    if e.is_timeout() {
+        return OpenError::TimedOut;
+    }
+    let text = chain_text(e);
+    if !reading_body && text.contains("parse") {
+        OpenError::Raised("BadStatusLine".into())
+    } else if reading_body && (text.contains("end of file") || text.contains("incomplete")) {
+        OpenError::Raised("IncompleteRead".into())
+    } else {
+        OpenError::TimedOut
+    }
+}
+
 fn fetch(url: &str, headers: &[(String, String)], timeout: Duration) -> Result<Vec<u8>, OpenError> {
     let mut req = http_client().get(url).timeout(timeout);
     for (name, value) in headers {
@@ -170,14 +200,14 @@ fn fetch(url: &str, headers: &[(String, String)], timeout: Duration) -> Result<V
         // urllib gives up on a redirect loop with an HTTPError carrying the redirect's code
         Err(e) if e.is_redirect() => return Err(OpenError::Http(e.status().map(|s| s.as_u16()).unwrap_or(302))),
         Err(e) if e.is_connect() => return Err(OpenError::Unreachable(connect_reason(&e))),
-        Err(e) if e.is_request() => return Err(OpenError::Unreachable(connect_reason(&e))),
-        Err(_) => return Err(OpenError::TimedOut),
+        // connected, then the exchange failed: past urllib's URLError wrapping
+        Err(e) => return Err(after_connect(&e, false)),
     };
     let status = response.status().as_u16();
     if !(200..300).contains(&status) {
         return Err(OpenError::Http(status));
     }
-    response.bytes().map(|b| b.to_vec()).map_err(|_| OpenError::TimedOut)
+    response.bytes().map(|b| b.to_vec()).map_err(|e| after_connect(&e, true))
 }
 
 impl Opener for HttpOpener {
@@ -567,7 +597,7 @@ pub fn sync_once_in(
     let mut state = load_state_from(&path);
     for (name, key_name, job) in JOBS {
         let key = env_get(env, key_name);
-        let key = key.trim();
+        let key = py_strip(&key);
         if key.is_empty() {
             continue;
         }
@@ -674,7 +704,7 @@ pub fn reported(state: Option<&State>, now: Option<f64>, env: Option<&Env>) -> M
     let mut out = Map::new();
 
     let row = obj(state.get("openrouter"), &empty);
-    if env_get(env, "OPENROUTER_API_KEY").trim().is_empty() && row.is_empty() {
+    if py_strip(&env_get(env, "OPENROUTER_API_KEY")).is_empty() && row.is_empty() {
         out.insert("openrouter".into(), json!({"status": "no_key"}));
     } else {
         let key_days = obj(row.get("key_days"), &empty);
@@ -697,7 +727,7 @@ pub fn reported(state: Option<&State>, now: Option<f64>, env: Option<&Env>) -> M
     }
     for (name, key_name) in [("openai", "EVE_OPENAI_ADMIN_KEY"), ("anthropic", "EVE_ANTHROPIC_ADMIN_KEY")] {
         let row = obj(state.get(name), &empty);
-        if env_get(env, key_name).trim().is_empty() {
+        if py_strip(&env_get(env, key_name)).is_empty() {
             out.insert(name.into(), json!({"status": "no_key", "key_name": key_name}));
             continue;
         }
