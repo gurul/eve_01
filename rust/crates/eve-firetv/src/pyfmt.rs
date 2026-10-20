@@ -48,6 +48,16 @@ pub fn py_repr(v: &Value) -> String {
     }
 }
 
+static NOT_PRINTABLE: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(|| {
+    regex::Regex::new(r"^[\p{Cc}\p{Cf}\p{Co}\p{Cn}\p{Zl}\p{Zp}\p{Zs}]$").expect("printable regex")
+});
+
+/// `str.isprintable()` for one character: not a control, format, private-use, unassigned or separator character.
+fn is_printable(c: char) -> bool {
+    let mut buf = [0u8; 4];
+    !NOT_PRINTABLE.is_match(c.encode_utf8(&mut buf))
+}
+
 /// `repr(s)` for a string: single quotes unless the string has a single quote and no double one.
 pub fn py_repr_str(s: &str) -> String {
     let quote = if s.contains('\'') && !s.contains('"') { '"' } else { '\'' };
@@ -63,8 +73,15 @@ pub fn py_repr_str(s: &str) -> String {
                 out.push('\\');
                 out.push(c);
             }
-            c if (c as u32) < 0x20 || (0x7f..0xa0).contains(&(c as u32)) => {
-                out.push_str(&format!("\\x{:02x}", c as u32));
+            c if c != ' ' && !is_printable(c) => {
+                let n = c as u32;
+                if n < 0x100 {
+                    out.push_str(&format!("\\x{n:02x}"));
+                } else if n < 0x10000 {
+                    out.push_str(&format!("\\u{n:04x}"));
+                } else {
+                    out.push_str(&format!("\\U{n:08x}"));
+                }
             }
             c => out.push(c),
         }
@@ -341,6 +358,8 @@ mod tests {
         assert_eq!(py_int(&json!("\u{b2}")), None);
         assert_eq!(py_repr_str("power"), "'power'");
         assert_eq!(py_repr_str("it's"), "\"it's\"");
+        // what `str.isprintable()` rejects is escaped the way repr() does
+        assert_eq!(py_repr_str("a\u{ad}b\u{a0}c\u{2060}d\u{e0001} \u{1b}"), "'a\\xadb\\xa0c\\u2060d\\U000e0001 \\x1b'");
         assert_eq!(splitlines("a\r\nb\nc\n"), vec!["a", "b", "c"]);
         assert_eq!(splitlines(""), Vec::<&str>::new());
         assert_eq!(py_round(2.5), 2);
