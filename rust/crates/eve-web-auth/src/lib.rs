@@ -547,7 +547,7 @@ impl Devices {
         let Ok(text) = String::from_utf8(bytes) else {
             return unreadable("UnicodeDecodeError");
         };
-        let data: Value = match serde_json::from_str(&text) {
+        let data: Value = match serde_json::from_str(&python_json_compat(&text)) {
             Ok(v) => v,
             Err(_) => return unreadable("JSONDecodeError"),
         };
@@ -584,6 +584,89 @@ impl Devices {
         st.read_once = true;
         Ok(())
     }
+}
+
+fn hex4(b: &[u8], at: usize) -> Option<u32> {
+    let digits = b.get(at..at + 4)?;
+    if !digits.iter().all(u8::is_ascii_hexdigit) {
+        return None;
+    }
+    u32::from_str_radix(std::str::from_utf8(digits).ok()?, 16).ok()
+}
+
+/// What Python's `json.loads` reads and serde_json refuses, rewritten so the file reads to `row` as it does in
+/// Python, instead of one odd value costing every device:
+/// * `NaN`, `Infinity`, `-Infinity` are floats in Python: never a stamp, a string, a row or a list, as null is not.
+/// * A lone surrogate escape is a str in Python, whose character `_text` drops (category Cs) and no id, hash or
+///   door matches: `￿` (category Cn) does the same.
+/// * The integer `-0` is Python's int 0, a valid stamp; serde_json reads it as the float -0.0.
+fn python_json_compat(text: &str) -> std::borrow::Cow<'_, str> {
+    let b = text.as_bytes();
+    let mut out = String::new();
+    let mut last = 0; // text[last..] is not copied yet
+    let mut in_str = false;
+    let mut i = 0;
+    let swap = |out: &mut String, last: &mut usize, from: usize, to: usize, with: &str| {
+        out.push_str(&text[*last..from]);
+        out.push_str(with);
+        *last = to;
+    };
+    while i < b.len() {
+        if in_str {
+            match b[i] {
+                b'"' => in_str = false,
+                b'\\' if b.get(i + 1) == Some(&b'u') => {
+                    if let Some(unit) = hex4(b, i + 2) {
+                        if (0xD800..0xDC00).contains(&unit) {
+                            let low = (b.get(i + 6) == Some(&b'\\') && b.get(i + 7) == Some(&b'u'))
+                                .then(|| hex4(b, i + 8))
+                                .flatten()
+                                .filter(|l| (0xDC00..0xE000).contains(l));
+                            if low.is_some() {
+                                i += 12;
+                                continue;
+                            }
+                            swap(&mut out, &mut last, i, i + 6, "\\uffff");
+                        } else if (0xDC00..0xE000).contains(&unit) {
+                            swap(&mut out, &mut last, i, i + 6, "\\uffff");
+                        }
+                        i += 6;
+                        continue;
+                    }
+                    i += 2;
+                    continue;
+                }
+                b'\\' => {
+                    i += 2;
+                    continue;
+                }
+                _ => {}
+            }
+            i += 1;
+            continue;
+        }
+        let rest = &b[i..];
+        if b[i] == b'"' {
+            in_str = true;
+        } else if let Some(word) = [&b"-Infinity"[..], b"Infinity", b"NaN"].into_iter().find(|w| rest.starts_with(w)) {
+            swap(&mut out, &mut last, i, i + word.len(), "null");
+            i += word.len();
+            continue;
+        } else if rest.starts_with(b"-0")
+            && (i == 0 || !matches!(b[i - 1], b'e' | b'E'))
+            && !rest.get(2).is_some_and(|c| c.is_ascii_digit() || matches!(c, b'.' | b'e' | b'E'))
+        {
+            swap(&mut out, &mut last, i, i + 2, "0");
+            i += 2;
+            continue;
+        }
+        i += 1;
+    }
+    if last == 0 {
+        return std::borrow::Cow::Borrowed(text);
+    }
+    out.push_str(&text[last..]);
+    std::borrow::Cow::Owned(out)
 }
 
 fn unreadable(kind: &str) -> Vec<Row> {

@@ -672,3 +672,30 @@ fn test_mac_login_codes_are_held_only_as_hashes() {
     let held = format!("{login:?}");
     assert!(!held.contains(&code) && held.contains(&sha_hex(&code)), "{held}"); // control: the hash is
 }
+
+#[test]
+fn test_what_python_json_reads_costs_one_row_not_the_file() {
+    // json.loads takes NaN, Infinity, lone surrogate escapes and the integer -0; serde_json refuses or changes
+    // them. Python reads this file as one device labelled "iPhone🍎", created 0, on the lan door.
+    let tmp = tempfile::tempdir().unwrap();
+    let path = tmp.path().join("web-devices.json");
+    let h = sha_hex(CANARY);
+    let body = format!(
+        r#"{{"version": 1, "devices": [{{"id": "0a1b2c3d", "label": "i\ud800Ph\udc00one🍎", "host": "h", "door": "lan\udfff", "sha256": "{h}", "created": -0, "last_seen": 1800000000, "x": [NaN, Infinity, -Infinity, 1e-0]}}, {{"id": "1a1b2c3d", "label": "n", "host": "h", "sha256": "{h}", "created": NaN, "last_seen": 1800000000}}]}}"#
+    );
+    fs::write(&path, body).unwrap();
+    let devices = Devices::with_clock(&path, FakeClock::new().clock());
+    let want = Device {
+        id: "0a1b2c3d".into(),
+        label: "iPhone🍎".into(),
+        host: "h".into(),
+        created: 0,
+        last_seen: 1_800_000_000,
+    };
+    assert_eq!(devices.list(), [want.clone()]);
+    assert_eq!(devices.check(CANARY, Some("lan")), Some(want));
+    assert!(devices.check(CANARY, Some("local")).is_none());
+    // a string's own text is never rewritten, and plain JSON passes through untouched
+    assert_eq!(python_json_compat(r#"["NaN", "-0", "\\ud800", -0.5, -01]"#), r#"["NaN", "-0", "\\ud800", -0.5, -01]"#);
+    assert!(matches!(python_json_compat("{\"a\": 1}"), std::borrow::Cow::Borrowed(_)));
+}
