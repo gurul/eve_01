@@ -261,3 +261,56 @@ fn strip_200_counts_characters() {
     let s = format!("  {}  ", "é".repeat(300));
     assert_eq!(strip_200(&s).chars().count(), 200);
 }
+
+#[test]
+fn py_repr_escapes_what_python_does_not_print() {
+    assert_eq!(
+        py_repr("a\u{85}\u{a0}\u{200b}\u{2028}\u{e000}\u{e0001}\u{fffe}\u{1fffe}\u{e9}"),
+        "'a\\x85\\xa0\\u200b\\u2028\\ue000\\U000e0001\\ufffe\\U0001fffe\u{e9}'"
+    );
+    assert_eq!(py_repr("\x1b[A"), "'\\x1b[A'");
+}
+
+#[test]
+fn py_text_matches_python_decode_errors() {
+    let cases: [(&[u8], &str); 7] = [
+        (b"\xff", "'utf-8' codec can't decode byte 0xff in position 0: invalid start byte"),
+        (b"a\xe2\x82", "'utf-8' codec can't decode bytes in position 1-2: unexpected end of data"),
+        (b"\xe0A", "'utf-8' codec can't decode byte 0xe0 in position 0: invalid continuation byte"),
+        (b"\xed\xa0\x80", "'utf-8' codec can't decode byte 0xed in position 0: invalid continuation byte"),
+        (b"\xc0\x80", "'utf-8' codec can't decode byte 0xc0 in position 0: invalid start byte"),
+        (b"ok\xf0\x9f", "'utf-8' codec can't decode bytes in position 2-3: unexpected end of data"),
+        (b"\xe2\x82A", "'utf-8' codec can't decode bytes in position 0-1: invalid continuation byte"),
+    ];
+    for (bytes, want) in cases {
+        assert_eq!(py_text(bytes).unwrap_err(), want);
+    }
+    assert_eq!(py_text(b"a\r\nb\rc").unwrap(), "a\nb\nc");
+}
+
+#[test]
+fn os_error_text_matches_python() {
+    let argv = vec!["osascript".to_string()];
+    let e = RunError::Spawn(std::io::Error::from_raw_os_error(13));
+    assert_eq!(
+        run_error_text(&argv, Duration::from_secs(5), &e),
+        "[Errno 13] Permission denied: 'osascript'"
+    );
+}
+
+#[test]
+fn strip_200_uses_python_whitespace() {
+    assert_eq!(strip_200("\u{1c} x \u{1f}\n"), "x");
+}
+
+/// Python's `communicate` timeout also covers pipes a grandchild holds open.
+#[test]
+fn run_with_timeout_covers_held_pipes() {
+    let t = Instant::now();
+    let r = run_with_timeout(
+        &["sh".into(), "-c".into(), "sleep 5 & exit 0".into()],
+        Duration::from_millis(200),
+    );
+    assert!(matches!(r, Err(RunError::Timeout)));
+    assert!(t.elapsed() < Duration::from_secs(3));
+}
