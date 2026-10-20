@@ -155,18 +155,23 @@ impl Store {
             .query_row("SELECT json_extract(data, '$.revision') FROM lessons WHERE id=?", [&id], |r| r.get(0))
             .optional()
             .map_err(sql)?;
+        // Python compares with `expected` first and only then adds one, so a stored revision that is not a number
+        // is "changed in another window" for a checked save and a TypeError for an unchecked one.
         let revision = match row {
-            None => 0,
-            Some(rusqlite::types::Value::Integer(i)) => i,
-            Some(_) => return Err(LearningError::Type("unsupported operand type(s) for +: 'NoneType' and 'int'".into())),
+            None => Some(0),
+            Some(rusqlite::types::Value::Integer(i)) => Some(i),
+            Some(_) => None,
         };
         if let Some(expected) = expected {
-            if revision != expected {
+            if revision != Some(expected) {
                 return Err(LearningError::Value(
                     "This lesson changed in another window. Reload it before continuing.".into(),
                 ));
             }
         }
+        let Some(revision) = revision else {
+            return Err(LearningError::Type("unsupported operand type(s) for +: 'NoneType' and 'int'".into()));
+        };
         lesson.insert("revision".into(), json!(revision + 1));
         let updated = now();
         lesson.insert("updated".into(), json!(updated));

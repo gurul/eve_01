@@ -1049,9 +1049,10 @@ impl Shared {
             tracing::info!("learning: {action} from the browser -> ok={ok}");
             if !result.get("ok").is_some_and(truthy) {
                 let status = if !result.get("available").is_some_and(truthy) { 503 } else { 409 };
-                let reason = result.get("reason").filter(|r| truthy(r)).map(py_str);
+                // `result.get("reason") or "eve cannot listen now."`: the reason as it is, when it is truthy.
+                let reason = result.get("reason").filter(|r| truthy(r)).cloned();
                 let mut out = result.clone();
-                out.insert("error".into(), json!(reason.unwrap_or_else(|| "eve cannot listen now.".into())));
+                out.insert("error".into(), reason.unwrap_or_else(|| json!("eve cannot listen now.")));
                 return Reply::json(status, &Value::Object(out));
             }
             return Reply::json(200, &Value::Object(result));
@@ -1125,7 +1126,7 @@ pub struct LearningServer {
     pub app: Arc<LearningApp>,
     pub token: String,
     pub port: u16,
-    stop: Mutex<Option<tokio::sync::oneshot::Sender<()>>>,
+    stop: Mutex<Option<tokio::sync::watch::Sender<bool>>>,
     thread: Mutex<Option<JoinHandle<()>>>,
 }
 
@@ -1133,7 +1134,7 @@ impl LearningServer {
     /// Stop serving and wait for the server thread.
     pub fn shutdown(&self) {
         if let Some(tx) = self.stop.lock().take() {
-            let _ = tx.send(());
+            let _ = tx.send(true);
         }
         if let Some(t) = self.thread.lock().take() {
             let _ = t.join();
@@ -1163,7 +1164,7 @@ pub fn start(opts: StartOptions) -> io::Result<LearningServer> {
     let token = token_urlsafe(32);
     app.set_url(&format!("http://127.0.0.1:{port}/"));
     let shared = Arc::new(Shared { app: app.clone(), token: token.clone() });
-    let (tx, rx) = tokio::sync::oneshot::channel::<()>();
+    let (tx, rx) = tokio::sync::watch::channel(false);
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .worker_threads(2)
         .thread_name("eve-learning")
@@ -1179,11 +1180,23 @@ pub fn start(opts: StartOptions) -> io::Result<LearningServer> {
                 }
             };
             let router = axum::Router::new().fallback(handle).with_state(shared);
+            let (mut graceful, mut deadline) = (rx.clone(), rx);
             let serve = axum::serve(listener, router).with_graceful_shutdown(async move {
-                let _ = rx.await;
+                let _ = graceful.wait_for(|stop| *stop).await;
             });
-            if let Err(e) = serve.await {
-                tracing::error!("learning: server stopped: {e}");
+            // Python's shutdown() stops accepting at once and leaves running requests to their daemon threads. A
+            // graceful stop waits for open connections, and one tutor call can hold its connection for 90 s, so the
+            // wait is cut off after a second.
+            tokio::select! {
+                served = serve => {
+                    if let Err(e) = served {
+                        tracing::error!("learning: server stopped: {e}");
+                    }
+                }
+                _ = async move {
+                    let _ = deadline.wait_for(|stop| *stop).await;
+                    tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+                } => {}
             }
         });
         // A tutor call still running finishes on its own thread; the server does not wait for it.

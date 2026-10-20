@@ -769,3 +769,107 @@ fn a_python_written_lesson_reads_back() {
     assert!(text.starts_with(r#"{"id": "abc", "mode": "help", "topic": "Résumé", "#), "{text}");
     assert!(store.save(&s, Some(1)).unwrap_err().to_string().contains("another window"));
 }
+
+#[test]
+fn a_stored_lesson_without_a_revision_is_a_conflict_for_a_checked_save() {
+    // Python compares the stored revision (None) with `expected` before adding one to it.
+    let tmp = tempfile::tempdir().unwrap();
+    let store = Store::new(tmp.path()).unwrap();
+    let db = rusqlite::Connection::open(&store.path).unwrap();
+    db.execute("INSERT INTO lessons VALUES ('r', 1.0, '{\"id\": \"r\"}')", []).unwrap();
+    let s = store.get("r").unwrap();
+    assert!(matches!(store.save(&s, Some(0)), Err(LearningError::Value(m)) if m.contains("another window")));
+    assert!(matches!(store.save(&s, None), Err(LearningError::Type(_))));
+}
+
+/// One raw HTTP answer on a local port, for the real tutor POST.
+fn answer_once(status_line: &'static str, body: &'static str) -> u16 {
+    use std::io::{Read, Write};
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = listener.local_addr().unwrap().port();
+    std::thread::spawn(move || {
+        let (mut conn, _) = listener.accept().unwrap();
+        let mut buf = vec![0u8; 65536];
+        let mut got = Vec::new();
+        // Read the head and the body the client announced.
+        loop {
+            let n = conn.read(&mut buf).unwrap();
+            got.extend_from_slice(&buf[..n]);
+            if let Some(end) = got.windows(4).position(|w| w == b"\r\n\r\n") {
+                let head = String::from_utf8_lossy(&got[..end]).to_ascii_lowercase();
+                let len = head.lines().find_map(|l| l.strip_prefix("content-length:")).map(|v| v.trim().parse::<usize>().unwrap()).unwrap_or(0);
+                if got.len() >= end + 4 + len {
+                    break;
+                }
+            }
+            if n == 0 {
+                break;
+            }
+        }
+        let reply = format!("{status_line}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}", body.len());
+        conn.write_all(reply.as_bytes()).unwrap();
+    });
+    port
+}
+
+#[test]
+fn the_real_post_answers_from_a_worker_thread_of_a_runtime() {
+    // The server runs each tutor call on a blocking thread of its tokio runtime; the blocking client must work
+    // there, and report an HTTP error status with its body, a refused connection as a network failure.
+    use eve_learning::tutor::{ReqwestPost, TutorHttp};
+    use std::time::Duration;
+    let rt = tokio::runtime::Builder::new_multi_thread().worker_threads(1).enable_all().build().unwrap();
+    let ok_port = answer_once("HTTP/1.1 200 OK", "{\"choices\": []}");
+    let err_port = answer_once("HTTP/1.1 402 Payment Required", "{\"error\": {\"message\": \"credits\"}}");
+    let closed = std::net::TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap().port();
+    let results = rt.block_on(async move {
+        tokio::task::spawn_blocking(move || {
+            let post = |port: u16| {
+                ReqwestPost.post(
+                    &format!("http://127.0.0.1:{port}/api/v1/chat/completions"),
+                    &[("Content-Type".to_string(), "application/json".to_string())],
+                    b"{}".to_vec(),
+                    Duration::from_secs(10),
+                )
+            };
+            (post(ok_port), post(err_port), post(closed))
+        })
+        .await
+        .unwrap()
+    });
+    assert_eq!(results.0, Ok(b"{\"choices\": []}".to_vec()));
+    assert_eq!(results.1, Err(PostError::Status { code: 402, body: b"{\"error\": {\"message\": \"credits\"}}".to_vec() }));
+    assert!(matches!(results.2, Err(PostError::Io(_))));
+}
+
+#[test]
+fn shutdown_does_not_wait_for_a_tutor_call_in_flight() {
+    // Python's shutdown() returns while a request thread is still asking the tutor; so does this one.
+    let tmp = tempfile::tempdir().unwrap();
+    let (entered_tx, entered_rx) = std::sync::mpsc::sync_channel(1);
+    let (release_tx, release_rx) = std::sync::mpsc::channel();
+    let tutor = SlowTutor { entered: entered_tx, release: parking_lot::Mutex::new(release_rx) };
+    let server = start(StartOptions { tutor: Some(Arc::new(tutor)), ..opts(tmp.path(), false) }).unwrap();
+    let token = get_json(&server, "/api/config")["token"].as_str().unwrap().to_string();
+    let lesson = post_ok(&server, &token, &json!({"action": "create", "mode": "learn", "topic": "Algebra"}));
+    post_ok(&server, &token, &json!({"action": "generate", "id": lesson["id"]}));
+    let port = server.port;
+    let asker = std::thread::spawn(move || {
+        let body = json!({"action": "hint", "id": lesson["id"]}).to_string();
+        let mut stream = std::net::TcpStream::connect(("127.0.0.1", port)).unwrap();
+        let head = format!(
+            "POST /api/action HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\nX-Eve-Token: {token}\r\nContent-Length: {}\r\n\r\n{body}",
+            body.len()
+        );
+        std::io::Write::write_all(&mut stream, head.as_bytes()).unwrap();
+        let mut sink = Vec::new();
+        let _ = std::io::Read::read_to_end(&mut stream, &mut sink);
+    });
+    entered_rx.recv_timeout(std::time::Duration::from_secs(5)).unwrap();
+    let began = std::time::Instant::now();
+    server.shutdown();
+    assert!(began.elapsed() < std::time::Duration::from_secs(4), "shutdown waited {:?}", began.elapsed());
+    assert!(std::net::TcpStream::connect(("127.0.0.1", port)).is_err(), "the port is closed");
+    release_tx.send(()).unwrap();
+    asker.join().unwrap();
+}
