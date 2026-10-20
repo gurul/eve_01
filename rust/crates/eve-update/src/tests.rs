@@ -594,5 +594,136 @@ fn run_update_failed_restart_is_exit_2() {
 #[test]
 fn system_host_defaults_to_python3() {
     assert_eq!(System::default().python(), "python3");
-    assert_eq!(System { python: "/v/bin/python".into() }.python(), "/v/bin/python");
+    assert_eq!(System { python: "/v/bin/python".into(), native: false }.python(), "/v/bin/python");
+}
+
+// ---- the native (Rust) update ----
+
+/// A fake for the Rust daemon's own update: `native` on, a signing identity
+/// from the environment, and a venv that exists.
+struct Native {
+    inner: Fake,
+    identity: Option<String>,
+    venv: bool,
+}
+
+impl Host for Native {
+    fn check(&self, force: bool) -> UpdateInfo {
+        self.inner.check(force)
+    }
+    fn package_repo_root(&self) -> Option<PathBuf> {
+        self.inner.package_repo_root()
+    }
+    fn run(&self, cmd: &[String], cwd: Option<&Path>) -> RunResult {
+        self.inner.run(cmd, cwd)
+    }
+    fn git_status_clean(&self, repo: &Path) -> bool {
+        self.inner.git_status_clean(repo)
+    }
+    fn current_branch(&self, repo: &Path) -> String {
+        self.inner.current_branch(repo)
+    }
+    fn detect_service_backend(&self) -> Option<String> {
+        self.inner.detect_service_backend()
+    }
+    fn restart_service(&self, backend: &str) -> (bool, String) {
+        self.inner.restart_service(backend)
+    }
+    fn python(&self) -> String {
+        self.inner.python()
+    }
+    fn native(&self) -> bool {
+        true
+    }
+    fn env(&self, key: &str) -> Option<String> {
+        (key == "EVE_CODESIGN_IDENTITY").then(|| self.identity.clone()).flatten()
+    }
+    fn exists(&self, path: &Path) -> bool {
+        self.venv && path.ends_with("bridge/.venv/bin/python")
+    }
+}
+
+fn native_update(host: &Native) -> (i32, String, String) {
+    let mut out = Vec::new();
+    let mut err = Vec::new();
+    let rc = run_update_with(host, true, &mut out, &mut err);
+    (rc, String::from_utf8(out).unwrap(), String::from_utf8(err).unwrap())
+}
+
+#[test]
+fn native_update_builds_signs_refreshes_the_venv_and_restarts() {
+    let repo = PathBuf::from("/repo");
+    let mut inner = Fake::ready(fake_info("0.1.0", Some("0.2.0")), &repo, Some("launchd"));
+    inner.restart = Some((true, "Daemon restarted (launchctl kickstart).".to_string()));
+    let host = Native { inner, identity: Some("Apple Development: Test (TEAM)".to_string()), venv: true };
+    let (rc, out, err) = native_update(&host);
+    assert_eq!(rc, 0, "{err}");
+    assert!(out.contains("git pull → cargo build --release → sign → pip install"));
+    let calls = host.inner.calls.borrow();
+    let names: Vec<String> = calls.iter().map(|(c, _)| c[..2.min(c.len())].join(" ")).collect();
+    assert_eq!(names[0], "git pull");
+    assert!(calls[1].0.ends_with(&argv(&["build", "--release", "--locked", "-p", "eve-bridge", "-p", "eve-hooks"])));
+    assert_eq!(calls[1].1.as_deref(), Some(Path::new("/repo/rust")));
+    assert_eq!(
+        calls[2].0,
+        argv(&[
+            "codesign", "--force", "--sign", "Apple Development: Test (TEAM)", "--identifier",
+            SIGNING_IDENTIFIER, "/repo/rust/target/release/eve-bridge",
+        ])
+    );
+    assert_eq!(calls[3].0[0], "/repo/bridge/.venv/bin/python");
+    assert_eq!(calls[3].1.as_deref(), Some(Path::new("/repo/bridge")));
+    assert!(out.contains("Daemon restarted"));
+}
+
+#[test]
+fn native_update_stops_when_the_build_fails_and_never_restarts() {
+    let repo = PathBuf::from("/repo");
+    let inner = Fake::ready(fake_info("0.1.0", Some("0.2.0")), &repo, Some("launchd")).with_run(|cmd| {
+        if cmd.iter().any(|a| a == "build") { rr(101, "", "error[E0425]: cannot find value") } else { rr(0, "", "") }
+    });
+    let host = Native { inner, identity: None, venv: true };
+    let (rc, _, err) = native_update(&host);
+    assert_eq!(rc, 2);
+    assert!(err.contains("cargo build failed: error[E0425]"));
+    assert!(err.contains("only the build step failed"));
+    let calls = host.inner.calls.borrow();
+    assert!(!calls.iter().any(|(c, _)| c[0] == "codesign" || c[0] == "launchctl"));
+}
+
+#[test]
+fn native_update_without_an_identity_or_venv_still_restarts() {
+    let repo = PathBuf::from("/repo");
+    let mut inner = Fake::ready(fake_info("0.1.0", Some("0.2.0")), &repo, Some("launchd")).with_run(|cmd| {
+        if cmd[0] == "security" { rr(0, "     0 valid identities found\n", "") } else { rr(0, "", "") }
+    });
+    inner.restart = Some((true, "Daemon restarted (launchctl kickstart).".to_string()));
+    let host = Native { inner, identity: None, venv: false };
+    let (rc, out, _) = native_update(&host);
+    assert_eq!(rc, 0);
+    assert!(out.contains("no Apple Development identity"));
+    let calls = host.inner.calls.borrow();
+    assert!(!calls.iter().any(|(c, _)| c[0] == "codesign" || c[0].ends_with("python")));
+}
+
+#[test]
+fn signing_identity_reads_the_first_apple_development_line() {
+    let inner = Fake::new(fake_info("0.1.0", None)).with_run(|_| {
+        rr(
+            0,
+            "  1) ABCDEF \"Developer ID Application: X (T1)\"\n  2) 012345 \"Apple Development: Y (T2)\"\n     2 valid identities found\n",
+            "",
+        )
+    });
+    let host = Native { inner, identity: None, venv: false };
+    assert_eq!(signing_identity_with(&host).as_deref(), Some("Apple Development: Y (T2)"));
+    let host = Native { identity: Some("-".to_string()), ..host };
+    assert_eq!(signing_identity_with(&host).as_deref(), Some("-"));
+}
+
+#[test]
+fn native_install_target_matches_install_sh() {
+    assert_eq!(native_install_target("darwin", "arm64"), ".[miniapp,laya]");
+    assert_eq!(native_install_target("darwin", "x86_64"), ".[miniapp]");
+    assert_eq!(native_install_target("linux", "aarch64"), ".[miniapp]");
 }

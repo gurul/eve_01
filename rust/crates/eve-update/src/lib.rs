@@ -1,6 +1,9 @@
 //! Self-update via `git pull && pip install -e .` + service restart.
 //!
-//! Port of `eve_bridge/update.py`.
+//! Port of `eve_bridge/update.py`. The Rust daemon's own update (the
+//! `eve-bridge update` this binary runs) takes the native path instead:
+//! `git pull`, `cargo build --release` of the binaries in `rust/`, signing,
+//! a refresh of `bridge/.venv` for the Python helpers, then the restart.
 //!
 //! Designed for the common case: cloned from GitHub, running in an editable
 //! venv, daemon managed by the platform's service backend (launchd / systemd
@@ -131,6 +134,44 @@ pub fn install_target(platform: &str, machine: Option<&str>) -> &'static str {
 /// `install_target()` with its defaults: this platform and machine.
 pub fn default_install_target() -> &'static str {
     install_target(sys_platform(), None)
+}
+
+/// The extras the native update installs into `bridge/.venv`: the same as
+/// `install.sh` ("miniapp", plus "laya" on Apple silicon).
+pub fn native_install_target(platform: &str, machine: &str) -> &'static str {
+    if platform == "darwin" && machine == "arm64" {
+        ".[miniapp,laya]"
+    } else {
+        ".[miniapp]"
+    }
+}
+
+/// The identifier the native build is signed with, so macOS keeps its
+/// permissions (Microphone, Accessibility, Screen Recording) across rebuilds.
+pub const SIGNING_IDENTIFIER: &str = "com.github.eve-bridge";
+
+/// Who signs the native build: `EVE_CODESIGN_IDENTITY` when set (`-` is ad
+/// hoc), else the first Apple Development identity `security` lists, else
+/// nobody.
+pub fn signing_identity_with<H: Host + ?Sized>(host: &H) -> Option<String> {
+    if let Some(id) = host.env("EVE_CODESIGN_IDENTITY").filter(|v| !v.is_empty()) {
+        return Some(id);
+    }
+    let (rc, out, _) = host.run(&argv(&["security", "find-identity", "-v", "-p", "codesigning"]), None);
+    if rc != 0 {
+        return None;
+    }
+    out.lines().find_map(|line| {
+        let start = line.find("\"Apple Development: ")? + 1;
+        let end = start + line[start..].find('"')?;
+        Some(line[start..end].to_string())
+    })
+}
+
+/// The last `n` lines of a tool's stderr, for a failure message.
+fn tail_lines(text: &str, n: usize) -> String {
+    let lines: Vec<&str> = strip(text).lines().collect();
+    lines[lines.len().saturating_sub(n)..].join("\n")
 }
 
 /// Python's `str(OSError)`: `[Errno N] <strerror>: '<filename>'`.
@@ -363,6 +404,21 @@ pub trait Host {
     /// `sys.executable`: the interpreter that runs `-m pip install -e`.
     fn python(&self) -> String;
 
+    /// Whether this is the Rust daemon's own update (the native path).
+    fn native(&self) -> bool {
+        false
+    }
+
+    /// `os.environ.get(key)`.
+    fn env(&self, key: &str) -> Option<String> {
+        std::env::var(key).ok()
+    }
+
+    /// `Path.exists()`.
+    fn exists(&self, path: &Path) -> bool {
+        path.exists()
+    }
+
     /// `sys.stdin.isatty()`.
     fn stdin_isatty(&self) -> bool {
         std::io::stdin().is_terminal()
@@ -391,14 +447,18 @@ pub trait Host {
 /// no interpreter of its own, so the caller names the one whose environment
 /// holds eve (the daemon's venv `python`). The default is `python3` from
 /// `PATH`.
+///
+/// `native` is the Rust daemon's own update, which rebuilds `rust/` rather
+/// than reinstalling the Python package.
 #[derive(Debug, Clone)]
 pub struct System {
     pub python: String,
+    pub native: bool,
 }
 
 impl Default for System {
     fn default() -> Self {
-        Self { python: "python3".to_string() }
+        Self { python: "python3".to_string(), native: false }
     }
 }
 
@@ -406,13 +466,16 @@ impl Host for System {
     fn python(&self) -> String {
         self.python.clone()
     }
+    fn native(&self) -> bool {
+        self.native
+    }
 }
 
 // ---- entry point ----
 
 /// Entry point for `eve-bridge update`. Returns process exit code.
 pub fn run_update(yes: bool) -> i32 {
-    run_update_using(&System::default(), yes)
+    run_update_using(&System { native: true, ..System::default() }, yes)
 }
 
 /// [`run_update`] on a given host, printing to the real stdout and stderr.
@@ -473,7 +536,12 @@ pub fn run_update_with<H: Host + ?Sized>(host: &H, yes: bool, out: &mut dyn Writ
     say!(out, "Update plan for {repo_s}:");
     say!(out, "  Current:  {}  ({branch})", info.current);
     say!(out, "  Target:   {}", info.latest.as_deref().unwrap_or("None"));
-    let _ = write!(out, "  Steps:    git pull → pip install -e {}", host.install_target());
+    if host.native() {
+        let target = native_install_target(sys_platform(), &platform_machine());
+        let _ = write!(out, "  Steps:    git pull → cargo build --release → sign → pip install -e {target} (helpers)");
+    } else {
+        let _ = write!(out, "  Steps:    git pull → pip install -e {}", host.install_target());
+    }
     match &backend {
         Some(b) => say!(out, "  →  restart via {b}"),
         None => say!(out, "  →  (no service backend detected)"),
@@ -505,14 +573,62 @@ pub fn run_update_with<H: Host + ?Sized>(host: &H, yes: bool, out: &mut dyn Writ
         return 2;
     }
 
-    let target = host.install_target();
-    let python = host.python();
-    say!(out, "$ {python} -m pip install -e {target}");
-    let (rc, _, e) = host.run(&argv(&[&python, "-m", "pip", "install", "-e", &target]), Some(&repo));
-    if rc != 0 {
-        say!(err, "pip install failed: {}", failure_text(&e, "unknown"));
-        say!(err, "Repo is updated; only the install step failed. Re-run pip install manually.");
-        return 2;
+    if host.native() {
+        let rust_dir = repo.join("rust");
+        let home_cargo = home().join(".cargo").join("bin").join("cargo");
+        let cargo = if host.exists(&home_cargo) { home_cargo.to_string_lossy().into_owned() } else { "cargo".to_string() };
+        say!(out, "$ cargo build --release --locked -p eve-bridge -p eve-hooks");
+        let (rc, _, e) = host.run(
+            &argv(&[&cargo, "build", "--release", "--locked", "-p", "eve-bridge", "-p", "eve-hooks"]),
+            Some(&rust_dir),
+        );
+        if rc != 0 {
+            say!(err, "cargo build failed: {}", failure_text(&tail_lines(&e, 20), "unknown"));
+            say!(err, "Repo is updated; only the build step failed. Re-run the build in rust/ manually.");
+            return 2;
+        }
+
+        let bin = rust_dir.join("target").join("release").join("eve-bridge");
+        let bin_s = bin.to_string_lossy().into_owned();
+        match signing_identity_with(host) {
+            Some(id) => {
+                say!(out, "$ codesign --force --sign {} --identifier {SIGNING_IDENTIFIER} {bin_s}", str_repr(&id));
+                let (rc, _, e) = host.run(
+                    &argv(&["codesign", "--force", "--sign", &id, "--identifier", SIGNING_IDENTIFIER, &bin_s]),
+                    None,
+                );
+                if rc != 0 {
+                    say!(err, "codesign failed: {} (macOS may ask for its permissions again)", failure_text(&e, "unknown"));
+                }
+            }
+            None => say!(out, "(no Apple Development identity: macOS may ask for its permissions again)"),
+        }
+
+        let bridge = repo.join("bridge");
+        let venv_python = bridge.join(".venv").join("bin").join("python");
+        if host.exists(&venv_python) {
+            let py = venv_python.to_string_lossy().into_owned();
+            let target = native_install_target(sys_platform(), &platform_machine());
+            say!(out, "$ {py} -m pip install --quiet -e {target}");
+            let (rc, _, e) = host.run(&argv(&[&py, "-m", "pip", "install", "--quiet", "-e", target]), Some(&bridge));
+            if rc != 0 {
+                say!(
+                    err,
+                    "pip install failed: {} (the Python helpers keep their old libraries)",
+                    failure_text(&tail_lines(&e, 5), "unknown")
+                );
+            }
+        }
+    } else {
+        let target = host.install_target();
+        let python = host.python();
+        say!(out, "$ {python} -m pip install -e {target}");
+        let (rc, _, e) = host.run(&argv(&[&python, "-m", "pip", "install", "-e", &target]), Some(&repo));
+        if rc != 0 {
+            say!(err, "pip install failed: {}", failure_text(&e, "unknown"));
+            say!(err, "Repo is updated; only the install step failed. Re-run pip install manually.");
+            return 2;
+        }
     }
 
     let Some(backend) = backend else {

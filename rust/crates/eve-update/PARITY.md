@@ -36,3 +36,9 @@ Status: complete
 - `_run`: an `OSError` other than `FileNotFoundError` (e.g. permission denied) propagates out of Python and crashes the command with a traceback; Rust returns rc 126 with the same `[Errno N] <text>: '<name>'` shape, so `run_update` prints its usual "failed" line and exits 2. Output is decoded as lossy UTF-8 where Python's `text=True` could raise `UnicodeDecodeError`.
 - Ctrl-C at the confirmation prompt: Python catches `KeyboardInterrupt`, prints `\nAborted.` and exits 1; the Rust process takes the default SIGINT action and exits on the signal. End of input (`EOFError`) is handled identically (`\nAborted.`, exit 1).
 - `launchd` restart off Unix (unreachable: launchd is only detected on darwin): Python's `os.getuid` raises `AttributeError`; Rust returns `(false, "launchctl failed: os.getuid is unavailable on this platform")`.
+- **The Rust daemon's own update takes a native path** (`run_update`, `System { native: true }`): after
+  `git pull` it runs `cargo build --release --locked -p eve-bridge -p eve-hooks` in `rust/`, signs
+  `rust/target/release/eve-bridge` (`EVE_CODESIGN_IDENTITY`, else the first Apple Development identity, so
+  macOS keeps its permissions across rebuilds), refreshes `bridge/.venv` with `install.sh`'s extras for the
+  Python helpers (a failure there warns and goes on), then restarts. Python's `pip install -e` path is
+  unchanged behind `Host::native() == false` and keeps its ported tests; the native path has its own five.
