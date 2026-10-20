@@ -409,8 +409,10 @@ pub struct Session {
 }
 
 impl Session {
+    /// `seed`: the data the app starts with, written as Python's `json.dumps` writes it (JSON null is Python's
+    /// None: no seed).
     pub fn new(seed: Option<&Value>) -> Self {
-        let stored = seed.map(|s| serde_json::to_string(s).unwrap_or_else(|_| "null".into()));
+        let stored = seed.filter(|s| !s.is_null()).map(py_dumps);
         Session {
             st: Mutex::new(SessState {
                 richest: stored.clone(),
@@ -494,6 +496,118 @@ impl Session {
     fn crashed(&self) -> bool {
         self.st.lock().crashed
     }
+}
+
+/// Python's `json.dumps(value)`: `", "` and `": "` separators, non-ASCII escaped (`ensure_ascii`), floats in
+/// Python's repr. The seed is stored in these bytes, as Python stores it, so a save compared with it (the save
+/// after closing) compares the same strings.
+pub fn py_dumps(v: &Value) -> String {
+    let mut out = String::new();
+    dumps_into(&mut out, v);
+    out
+}
+
+fn dumps_into(out: &mut String, v: &Value) {
+    match v {
+        Value::Null => out.push_str("null"),
+        Value::Bool(b) => out.push_str(if *b { "true" } else { "false" }),
+        Value::Number(n) => match (n.is_f64(), n.as_f64()) {
+            (true, Some(f)) => out.push_str(&float_repr(f)),
+            _ => out.push_str(&n.to_string()),
+        },
+        Value::String(s) => dumps_str(out, s),
+        Value::Array(items) => {
+            out.push('[');
+            for (i, item) in items.iter().enumerate() {
+                if i > 0 {
+                    out.push_str(", ");
+                }
+                dumps_into(out, item);
+            }
+            out.push(']');
+        }
+        Value::Object(map) => {
+            out.push('{');
+            for (i, (k, item)) in map.iter().enumerate() {
+                if i > 0 {
+                    out.push_str(", ");
+                }
+                dumps_str(out, k);
+                out.push_str(": ");
+                dumps_into(out, item);
+            }
+            out.push('}');
+        }
+    }
+}
+
+fn dumps_str(out: &mut String, s: &str) {
+    out.push('"');
+    for c in s.chars() {
+        match c {
+            '\\' => out.push_str("\\\\"),
+            '"' => out.push_str("\\\""),
+            '\n' => out.push_str("\\n"),
+            '\r' => out.push_str("\\r"),
+            '\t' => out.push_str("\\t"),
+            '\u{08}' => out.push_str("\\b"),
+            '\u{0c}' => out.push_str("\\f"),
+            c if (' '..='~').contains(&c) => out.push(c),
+            c => {
+                let mut buf = [0u16; 2];
+                for unit in c.encode_utf16(&mut buf) {
+                    out.push_str(&format!("\\u{:04x}", unit));
+                }
+            }
+        }
+    }
+    out.push('"');
+}
+
+/// `repr(float)`: shortest round-trip digits, scientific below 1e-4 and from 1e16.
+fn float_repr(x: f64) -> String {
+    if x.is_nan() {
+        return "NaN".into();
+    }
+    if x.is_infinite() {
+        return if x > 0.0 { "Infinity".into() } else { "-Infinity".into() };
+    }
+    if x == 0.0 {
+        return if x.is_sign_negative() { "-0.0".into() } else { "0.0".into() };
+    }
+    let sci = format!("{:e}", x.abs());
+    let (mant, exp) = sci.split_once('e').unwrap_or((&sci, "0"));
+    let exp: i32 = exp.parse().unwrap_or(0);
+    let digits: String = mant.chars().filter(|c| c.is_ascii_digit()).collect();
+    let sign = if x < 0.0 { "-" } else { "" };
+    if (-4..16).contains(&exp) {
+        if exp >= 0 {
+            let int_len = exp as usize + 1;
+            if digits.len() <= int_len {
+                format!("{sign}{digits}{}.0", "0".repeat(int_len - digits.len()))
+            } else {
+                format!("{sign}{}.{}", &digits[..int_len], &digits[int_len..])
+            }
+        } else {
+            format!("{sign}0.{}{digits}", "0".repeat((-exp - 1) as usize))
+        }
+    } else {
+        let frac = if digits.len() > 1 { format!(".{}", &digits[1..]) } else { String::new() };
+        let esign = if exp < 0 { '-' } else { '+' };
+        format!("{sign}{}{frac}e{esign}{:02}", &digits[..1], exp.abs())
+    }
+}
+
+/// Python's `s.splitlines()[0]`: the text up to its first line boundary (Python knows more of them than `\n`);
+/// None for an empty string, where Python's `[0]` raises.
+fn py_first_line(s: &str) -> Option<&str> {
+    if s.is_empty() {
+        return None;
+    }
+    let end = s
+        .find(['\n', '\r', '\u{0b}', '\u{0c}', '\u{1c}', '\u{1d}', '\u{1e}', '\u{85}', '\u{2028}', '\u{2029}'])
+        .unwrap_or(s.len());
+    Some(&s[..end])
 }
 
 fn parse_or_null(raw: Option<&str>) -> Value {
@@ -815,10 +929,6 @@ fn kind_of(e: &anyhow::Error) -> String {
     "Error".into()
 }
 
-fn first_line(s: &str) -> &str {
-    s.lines().next().unwrap_or("")
-}
-
 enum Stop {
     /// the scripted pass did not finish within the check's time
     Timeout,
@@ -909,7 +1019,8 @@ pub async fn check_app(html: &str, opts: CheckOptions) -> CheckReport {
     if crashed_finding {
         // a dead tab saves nothing: the crash is the finding
     } else if saves == 0 && loads > 0 && report.taps > 0 && (report.fields > 0 || primary_taps > 0) {
-        sess.note(if opts.seed.is_some() {
+        // Python's `seed is not None` (JSON null is None)
+        sess.note(if opts.seed.as_ref().is_some_and(|s| !s.is_null()) {
             "Opened with the owner's saved data, the app never called eve.save after being used: most likely it \
              could not read that data (its migrate() does not convert this shape), so the owner cannot use their \
              data in this version."
@@ -925,11 +1036,12 @@ pub async fn check_app(html: &str, opts: CheckOptions) -> CheckReport {
     if report.photo_data.is_null() {
         report.photo_data = report.saved.clone();
     }
-    report.photo_from = if report.screenshot.is_some() { "the scripted check".into() } else { String::new() };
+    report.photo_from =
+        if report.screenshot.as_ref().is_some_and(|s| !s.is_empty()) { "the scripted check".into() } else { String::new() };
     let shot = report
         .journeys
         .as_ref()
-        .and_then(|j| j.results.iter().find(|r| r.passed() && r.screenshot.is_some()))
+        .and_then(|j| j.results.iter().find(|r| r.passed() && r.screenshot.as_ref().is_some_and(|s| !s.is_empty())))
         .map(|r| (r.screenshot.clone(), r.data.clone(), r.name.clone()));
     if let Some((screenshot, data, name)) = shot {
         // The owner's picture is the app doing what it is for: the end of a journey that passed (the splitter
@@ -1158,8 +1270,11 @@ async fn wire(
             "Runtime.exceptionThrown" => {
                 let details = p.get("exceptionDetails").cloned().unwrap_or(Value::Null);
                 let (message, stack) = cdp::page_error(&details);
-                let msg = first_chars(first_line(&message), 300);
-                sess.note(format!("Uncaught error while {}: {msg}{}", sess.action(), where_(&stack)));
+                // Python's handler takes `.splitlines()[0]`, which raises on an empty message: no finding then
+                if let Some(line) = py_first_line(&message) {
+                    let msg = first_chars(line, 300);
+                    sess.note(format!("Uncaught error while {}: {msg}{}", sess.action(), where_(&stack)));
+                }
             }
             "Runtime.consoleAPICalled" if p.get("type").and_then(Value::as_str) == Some("error") => {
                 let text = console_text(p.get("args"));
@@ -1497,7 +1612,7 @@ async fn one_journey(
             Err(e) if e.downcast_ref::<PageError>().is_some() => {
                 let n = at.load(Ordering::SeqCst).max(1);
                 let text = e.to_string();
-                let first = first_chars(first_line(&text), 160);
+                let first = first_chars(py_first_line(&text).unwrap_or(""), 160);
                 let mut r = JourneyResult::new(&j.name, "step");
                 r.steps = j.steps.len();
                 r.step = n;
@@ -1922,7 +2037,11 @@ async fn press(
         Err(e) => {
             // the app's handler threw: evaluate re-raises it as ours
             let text = e.to_string();
-            sess.note(format!("Uncaught error while {}: {}", sess.action(), first_chars(first_line(&text), 300)));
+            sess.note(format!(
+                "Uncaught error while {}: {}",
+                sess.action(),
+                first_chars(py_first_line(&text).unwrap_or(""), 300)
+            ));
             return Ok(true);
         }
     };

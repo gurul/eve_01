@@ -259,7 +259,7 @@ fn a_look_finding_is_formatted_as_python_formats_it() {
 #[test]
 fn saved_data_is_kept_outside_the_page_with_its_richest_version() {
     let s = Session::new(Some(&json!({"v": 1, "items": [1]})));
-    assert_eq!(s.load().as_deref(), Some(r#"{"v":1,"items":[1]}"#));
+    assert_eq!(s.load().as_deref(), Some(r#"{"v": 1, "items": [1]}"#)); // json.dumps(seed)
     assert!(s.save(r#"{"v":1,"items":[1,2]}"#.into()));
     assert!(s.save(r#"{"v":1,"items":[]}"#.into()));
     assert_eq!(s.data(), json!({"v": 1, "items": []}));
@@ -340,4 +340,29 @@ fn the_pages_calls_reach_the_session_in_the_order_it_made_them() {
     assert_eq!(answer(&sess, &json!({"name": "socket", "id": 1, "args": ["ws://127.0.0.1:9/x"]})).unwrap(), "window.__checkSocketClosed(1)");
     assert!(sess.issues()[0].starts_with("The app tried to open a WebSocket to ws://127.0.0.1:9/x while opening the app;"));
     assert_eq!(answer(&sess, &json!({"name": "other"})), None);
+}
+
+#[test]
+fn a_seed_is_stored_as_pythons_json_dumps_writes_it() {
+    assert_eq!(py_dumps(&json!({"a": [1, 2.5, "é", null, true]})), r#"{"a": [1, 2.5, "\u00e9", null, true]}"#);
+    assert_eq!(py_dumps(&json!(["\u{1F600}\u{7f}\n\"\\"])), r#"["\ud83d\ude00\u007f\n\"\\"]"#);
+    assert_eq!(py_dumps(&json!([1e16, 1e-5, 0.0001, 123.0, -0.0])), "[1e+16, 1e-05, 0.0001, 123.0, -0.0]");
+    // JSON null is Python's None: no seed, so nothing is stored
+    assert_eq!(Session::new(Some(&Value::Null)).load(), None);
+    // the same bytes Python writes, where python3 is here to ask
+    let seed = json!({"v": 1, "habits": [{"name": "Café ☕", "n": 2.5, "big": 1e20, "tiny": 3e-7, "s": "a\tb"}]});
+    let script = "import json,sys; sys.stdout.write(json.dumps(json.loads(sys.argv[1])))";
+    match std::process::Command::new("python3").arg("-I").arg("-c").arg(script).arg(seed.to_string()).output() {
+        Ok(out) if out.status.success() => assert_eq!(py_dumps(&seed), String::from_utf8(out.stdout).unwrap()),
+        _ => eprintln!("python3 not found: skipped"),
+    }
+}
+
+#[test]
+fn a_first_line_is_cut_where_python_splitlines_cuts_it() {
+    assert_eq!(py_first_line("boom\n    at x"), Some("boom"));
+    assert_eq!(py_first_line("a\u{2028}b"), Some("a"));
+    assert_eq!(py_first_line("a\r\nb"), Some("a"));
+    assert_eq!(py_first_line("\nb"), Some(""));
+    assert_eq!(py_first_line(""), None); // Python's [0] raises: the page error is not reported
 }
