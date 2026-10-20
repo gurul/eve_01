@@ -6,7 +6,7 @@ Status: complete
 |---|---|
 | `bridge/src/eve_bridge/recall.py` | `src/recall.rs` (tests in `src/recall_tests.rs`) |
 | `bridge/src/eve_bridge/records.py` | `src/records.rs` (tests in `src/records_tests.rs`) |
-| (Python builtins records.py leans on: `str()`/`repr()` of a reply value, truthiness, iteration, `re.escape`, `type(e).__name__`) | `src/py.rs` |
+| (Python builtins records.py leans on: `str()`/`repr()` of a reply value (`repr` escapes what `str.isprintable()` rejects, by Unicode general category), truthiness, iteration, `re.escape`, `type(e).__name__`, `os.environ`) | `src/py.rs` |
 | (test fixtures) | `src/testutil.rs` |
 
 ## API
@@ -17,7 +17,7 @@ Status: complete
 |---|---|---|
 | `DEFAULT_STORE`, `DEFAULT_NOTES`, `LEGACY_STORE`, `LEGACY_MEM0`, `MAX_BRIEF_CHARS`, `RECENT_SECS`, `FORGOTTEN` | same-named `pub const`s | Values verbatim. |
 | `class RecallConfig` (`store`, `notes`; `transcripts_dir`, `records_dir`, `mem0_dir`, `archive_dir` properties) | `struct RecallConfig { store, notes }` with `transcripts_dir()`, `records_dir()`, `mem0_dir()`, `archive_dir()` | Frozen dataclass → `Clone + Eq + Hash`. |
-| `configured(environ=None)` | `configured(Option<&HashMap>)` | `EVE_MEMORY_DIR` / `EVE_NOTES_DIR`, stripped, blank means default, `~` expanded. `None` reads the process environment. |
+| `configured(environ=None)` | `configured(Option<&HashMap>)` | `EVE_MEMORY_DIR` / `EVE_NOTES_DIR`, stripped, blank means default, `~` expanded. `None` reads the process environment (`py::environ`: `vars_os`, lossy, so a variable that is not UTF-8 never panics, as `os.environ` never raises; the records module reads it the same way). |
 | `legacy_store(environ=None)` | `legacy_store(Option<&HashMap>)` | `EVE_DEBRIEF_DIR` or `~/.config/eve-bridge/debrief`. |
 | `legacy_mem0()` | `legacy_mem0()` | |
 | `_local(when)` | private `local` | `when.astimezone()`: the instant in the local zone. |

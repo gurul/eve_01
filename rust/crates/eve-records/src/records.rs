@@ -239,7 +239,7 @@ fn seams() -> Seams {
 
 /// `os.environ` as this crate sees it.
 fn environ() -> HashMap<String, String> {
-    seams().env.unwrap_or_else(|| std::env::vars().collect())
+    seams().env.unwrap_or_else(py::environ)
 }
 
 /// On when set to 1/true/yes/on, off when set to anything else, and `DEFAULTS` when not set (or empty).

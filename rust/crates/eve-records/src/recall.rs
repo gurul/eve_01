@@ -92,7 +92,7 @@ impl RecallConfig {
 fn env_or_process(environ: Option<&HashMap<String, String>>) -> HashMap<String, String> {
     match environ {
         Some(e) => e.clone(),
-        None => std::env::vars().collect(),
+        None => crate::py::environ(),
     }
 }
 

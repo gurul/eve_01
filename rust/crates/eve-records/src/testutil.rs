@@ -63,7 +63,7 @@ pub fn rgit(cfg: &RecallConfig, args: &[&str]) -> String {
 
 /// The process environment less the two record switches (Python's autouse `switches_off`), plus `extra`.
 pub fn env_with(extra: &[(&str, &str)]) -> HashMap<String, String> {
-    let mut env: HashMap<String, String> = std::env::vars().collect();
+    let mut env: HashMap<String, String> = crate::py::environ();
     env.remove(records::VALIDITY_ENV);
     env.remove(records::SOURCES_ENV);
     env.remove("EVE_PROFILE");

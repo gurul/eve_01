@@ -4,6 +4,12 @@
 
 use serde_json::Value;
 
+/// `os.environ` as a map. `vars_os`, lossy: `std::env::vars` panics on a variable that is not UTF-8, where
+/// `os.environ` never raises.
+pub fn environ() -> std::collections::HashMap<String, String> {
+    std::env::vars_os().map(|(k, v)| (k.to_string_lossy().into_owned(), v.to_string_lossy().into_owned())).collect()
+}
+
 /// Python truthiness of a JSON value: null, false, 0, "", [] and {} are false.
 pub fn truthy(v: &Value) -> bool {
     match v {
@@ -16,7 +22,28 @@ pub fn truthy(v: &Value) -> bool {
     }
 }
 
-/// `repr(s)` of a Python `str`.
+/// `str.isprintable()` for one character: false for the categories Python counts as not printable (Cc, Cf, Cs,
+/// Co, Cn, Zl, Zp, and Zs other than the ASCII space).
+fn is_printable(c: char) -> bool {
+    use unicode_general_category::{get_general_category, GeneralCategory as G};
+    if c == ' ' {
+        return true;
+    }
+    !matches!(
+        get_general_category(c),
+        G::Control
+            | G::Format
+            | G::Surrogate
+            | G::PrivateUse
+            | G::Unassigned
+            | G::LineSeparator
+            | G::ParagraphSeparator
+            | G::SpaceSeparator
+    )
+}
+
+/// `repr(s)` of a Python `str`: single quotes unless the text holds a single quote and no double quote, and every
+/// character `str.isprintable()` rejects escaped (`\xNN`, `\uNNNN`, `\UNNNNNNNN`).
 pub fn repr_str(s: &str) -> String {
     let quote = if s.contains('\'') && !s.contains('"') { '"' } else { '\'' };
     let mut out = String::with_capacity(s.len() + 2);
@@ -31,9 +58,11 @@ pub fn repr_str(s: &str) -> String {
                 out.push('\\');
                 out.push(c);
             }
-            c if (c as u32) < 0x20 || c as u32 == 0x7f => out.push_str(&format!("\\x{:02x}", c as u32)),
-            c if (0x80..0xa0).contains(&(c as u32)) => out.push_str(&format!("\\x{:02x}", c as u32)),
-            c => out.push(c),
+            c if (0x20..0x7f).contains(&(c as u32)) => out.push(c),
+            c if is_printable(c) => out.push(c),
+            c if (c as u32) < 0x100 => out.push_str(&format!("\\x{:02x}", c as u32)),
+            c if (c as u32) < 0x10000 => out.push_str(&format!("\\u{:04x}", c as u32)),
+            c => out.push_str(&format!("\\U{:08x}", c as u32)),
         }
     }
     out.push(quote);
@@ -160,6 +189,14 @@ mod tests {
         assert_eq!(repr_str("it's"), "\"it's\"");
         assert_eq!(repr_str("a'b\"c"), "'a\\'b\"c'");
         assert_eq!(repr_str("a\nb\\"), "'a\\nb\\\\'");
+        // what str.isprintable() rejects is escaped (values from Python's repr)
+        assert_eq!(repr_str("a\u{ad}b"), "'a\\xadb'");
+        assert_eq!(repr_str("x\u{2028}y"), "'x\\u2028y'");
+        assert_eq!(repr_str("nb\u{a0}sp"), "'nb\\xa0sp'");
+        assert_eq!(repr_str("\u{200b}"), "'\\u200b'");
+        assert_eq!(repr_str("e\u{e0001}"), "'e\\U000e0001'");
+        assert_eq!(repr_str("caf\u{e9}"), "'caf\u{e9}'");
+        assert_eq!(repr_str("\u{7f}\u{85}"), "'\\x7f\\x85'");
         assert_eq!(str_of(&json!(null)), "None");
         assert_eq!(str_of(&json!(5)), "5");
         assert_eq!(str_of(&json!(1.5)), "1.5");
