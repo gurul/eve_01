@@ -497,6 +497,81 @@ async fn test_the_check_can_be_off() {
     assert!(made.ok && made.check.is_none() && made.rounds == 0);
 }
 
+/// apps_maker._test: `except Exception` around the check ("a broken checker never fails a build"): the version is
+/// kept with no report, as one the phone check could not run on.
+#[tokio::test]
+async fn test_a_broken_check_never_fails_the_build() {
+    for when in ["starting", "running"] {
+        let dir = support::tmp();
+        let gen = Script::new(vec![text(fenced(DOC))]);
+        let store = Arc::new(AppStore::new(&dir.path().join("apps")));
+        let broken: Check = if when == "starting" {
+            Arc::new(|_html: String, _opts: CheckOptions| -> BoxFuture<'static, CheckReport> { panic!("the checker broke") })
+        } else {
+            Arc::new(|_html: String, _opts: CheckOptions| async { panic!("the checker broke") }.boxed())
+        };
+        let maker = maker_with(store.clone(), gen.generate(), Some(broken), 2, Arc::new(Mutex::new(0.0)));
+        let made = maker.make("habit tracker", None).await;
+        assert!(made.ok && made.check.is_none() && made.rounds == 0 && made.issues.is_empty(), "{when}");
+        assert_eq!(store.html("habit-tracker").as_deref(), Some(DOC), "{when}");
+    }
+}
+
+/// The prompts byte for byte, as Python writes them (outputs of apps_maker.py's edit_prompt and repair_prompt).
+#[test]
+fn test_the_edit_and_repair_prompts_are_pythons_byte_for_byte() {
+    let app = AppInfo {
+        slug: "habit".into(),
+        title: "Habit Tracker".into(),
+        created: "a".into(),
+        updated: "b".into(),
+        icon: String::new(),
+        description: String::new(),
+        versions: 0,
+        undo_warning: false,
+    };
+    let requests: Vec<std::collections::HashMap<String, String>> = vec![
+        [("at".to_string(), "2026-09-20T10:11:12".to_string()), ("text".to_string(), "a habit tracker".to_string())]
+            .into_iter()
+            .collect(),
+        [("text".to_string(), "no time".to_string())].into_iter().collect(),
+    ];
+    let (journeys, _) = eve_jev_verify::parse_journeys(&json!([{"name": "Añadir", "steps": [{"do": "tap", "target": "Add"}],
+                                                                 "expect": ["1 hábito"]}]));
+    let got = edit_prompt(&app, "<html></html>", &json!({"v": 1, "habits": ["Stretch"]}), &requests, "  add a chart \n", "ctx", Some(&journeys));
+    let want = "<owner_context>\nctx\n</owner_context>\n\nYou are changing the owner's existing app \"Habit Tracker\".\n\n\
+What the owner has asked of it so far, oldest first:\n- 2026-09-20 10:11: a habit tracker\n- : no time\n\n\
+Its saved data right now (what eve.load() returns; long lists and strings shortened). The new version must open this as \
+it is, migrating it in code if the shape changes:\n```json\n{\"v\": 1, \"habits\": [\"Stretch\"]}\n```\n\n\
+The current file:\n```html\n<html></html>\n```\n\n\
+Its journeys now:\n```journeys\n[{\"name\": \"Añadir\", \"steps\": [{\"do\": \"tap\", \"target\": \"Add\"}], \"expect\": [\"1 hábito\"]}]\n```\n\n\
+The change the owner wants now: add a chart\n\n\
+Return the whole updated file, every line, in one ```html block, keeping everything they did not ask to change, then the \
+whole ```journeys block for the app as it now is, with made-up example values (the saved data above stays on the Mac).";
+    assert_eq!(got, want);
+    let bare = edit_prompt(&app, "x", &Value::Null, &[], "y", "", None);
+    assert!(bare.contains("oldest first:\n- (not recorded)\n\nIt has no saved data yet.\n\n"));
+    assert!(bare.contains("```\n\nIt has no journeys yet.\n\nThe change the owner wants now: y\n\n"));
+    let issues = vec!["one".to_string()];
+    assert_eq!(
+        repair_prompt(&issues, false, true),
+        format!(
+            "These problems came up:\n1. one\n\nFix the cause of each one and keep everything that works. Answer with \
+             edits to the file you wrote last, one block per change, in this form:\n\n<<<<<<< FIND\n(lines copied \
+             exactly from the file, enough of them to be found only once)\n=======\n(the lines that replace them)\n\
+             >>>>>>> REPLACE\n\nThe blocks apply in order. If the fixes change most of the file, return the whole fixed \
+             file, every line, in one ```html block instead.{JOURNEY_REPAIR}"
+        )
+    );
+    assert_eq!(
+        repair_prompt(&[], true, false),
+        "I opened that file on a phone-sized screen with a stand-in Telegram and eve, filled every field, tapped every \
+         button, pressed the MainButton, and reopened the app with the data it saved. These problems came up:\n\n\n\
+         Fix the cause of each one and return the whole fixed file, every line, in one ```html block, then its \
+         ```journeys block."
+    );
+}
+
 #[tokio::test]
 async fn test_changing_an_app_gives_claude_the_file_the_data_and_the_history() {
     let dir = support::tmp();

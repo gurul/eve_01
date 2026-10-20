@@ -484,7 +484,9 @@ pub fn apply_edits(html: &str, answer: &str) -> (Option<String>, String) {
             .map(|line| format!(r"[ \t]*{}[ \t]*", regex::escape(py_strip(line))))
             .collect::<Vec<_>>()
             .join("\n");
-        let spans: Vec<(usize, usize)> = match Regex::new(&pattern) {
+        // Python's re compiles a FIND of any length: lift the regex crate's default compiled-size cap, so a long
+        // FIND is matched rather than reported as found 0 times
+        let spans: Vec<(usize, usize)> = match regex::RegexBuilder::new(&pattern).size_limit(1 << 30).build() {
             Ok(loose) => loose.find_iter(&out).map(|m| (m.start(), m.end())).collect(),
             Err(_) => Vec::new(),
         };
@@ -782,7 +784,20 @@ impl AppMaker {
             journeys: journeys.filter(|j| !j.is_empty()).map(<[eve_jev_verify::Journey]>::to_vec),
             ..eve_app_check::CheckOptions::default()
         };
-        let report = check(html.to_string(), opts).await;
+        // a broken checker never fails a build: Python caught any exception here; a Rust check has no error
+        // path, so what stands for one is a panic, while starting the check or while it runs
+        let started = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| check(html.to_string(), opts)));
+        let ran = match started {
+            Ok(fut) => std::panic::AssertUnwindSafe(fut).catch_unwind().await,
+            Err(p) => Err(p),
+        };
+        let report = match ran {
+            Ok(report) => report,
+            Err(_) => {
+                tracing::warn!("apps: the check failed to run (panic)");
+                return (issues, None);
+            }
+        };
         let mut all = issues.clone();
         all.extend(report.issues.iter().filter(|i| !issues.contains(i)).cloned());
         (all, Some(report))
