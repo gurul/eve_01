@@ -498,7 +498,8 @@ fn a_takeover_scenario_matches_python_number_for_number() {
         json!({"mode": "on", "segments": 2, "accepted": 2, "rejected": 0, "secs_forwarded": 6.9,
                "secs_silenced": 2.4, "enrolled_secs": 6.8, "opened": ""})
     );
-    let got: Vec<(f64, f64, &str, Option<f64>, f64, bool, &str)> = g
+    type Row<'a> = (f64, f64, &'a str, Option<f64>, f64, bool, &'a str);
+    let got: Vec<Row> = g
         .stats
         .decisions
         .iter()
@@ -552,10 +553,16 @@ fn the_sherpa_embedder_embeds_two_seconds() {
         .collect();
     let v = e.embed(&tone).unwrap().expect("an embedding");
     assert_eq!(v.len(), 192);
-    // python: SherpaEmbedder(DEFAULT_MODEL).embed(<the same tone>)[:5] on sherpa-onnx 1.13.8
-    let python = [0.06485257297754288, 0.013026864267885685, -0.00543045112863183, 0.1379084587097168, 0.01016321498900652];
-    for (r, p) in v.iter().zip(python) {
-        assert!((r - p).abs() < 1e-5, "{r} vs {p}");
+    // python: SherpaEmbedder(DEFAULT_MODEL).embed(<the same tone>) on sherpa-onnx 1.13.8, all 192 numbers
+    // (tests/fixtures/sherpa_tone.json, written by tests/fixtures/gen_parity.py)
+    let fixture: Value =
+        serde_json::from_str(include_str!("../tests/fixtures/sherpa_tone.json")).unwrap();
+    let python: Vec<f64> =
+        fixture["tone"].as_array().unwrap().iter().map(|x| x.as_str().unwrap().parse().unwrap()).collect();
+    assert_eq!(python.len(), 192);
+    for (i, (r, p)) in v.iter().zip(&python).enumerate() {
+        assert!((r - p).abs() < 1e-5, "{i}: {r} vs {p}");
     }
+    assert!(fixture["short"].is_null());
     assert_eq!(e.embed(&tone[..4000]).unwrap(), None); // under 0.2 s
 }

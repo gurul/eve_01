@@ -43,12 +43,14 @@ Status: complete
 | `WakeRing` | `WakeRing` (`new(secs)`, `Default` = 3 s, `add`, `snapshot`, `clear`) | `maxlen = max(1, round(secs / BLOCK_SECS))`, ties to even |
 | (`time.monotonic`) | `monotonic()` | Seconds since first use; only differences are used |
 | (exceptions) | `GateError { kind, message }` | `kind` is the Python class name that reaches the log and `stats.opened` |
+| (`import sherpa_onnx`) | `pub use sherpa_onnx` | The linked binding, re-exported so the ears port (keyword spotter, also sherpa-onnx) links this same static build rather than a second copy of the C library |
 
 ## Tests
 | Python file | Python tests | Rust tests | Not ported (why) |
 |---|---|---|---|
 | `bridge/tests/test_voice_gate.py` | 21 | 20, same names | `test_the_session_appends_what_the_gate_lets_through` drives `voice_agent`'s session (`_pump_mic`, `FakeConnection` from `test_voice_agent.py`): it belongs to the crate that ports `voice_agent` (brain) |
-| (parity) | | 13 more: `configured_strips_lowers_and_falls_back_like_python`, `defaults_match_the_python_dataclass`, `rms_and_cosine_match_python`, `sums_are_compensated_like_python_3_12`, `rounding_and_slicing_match_python`, `repr_is_pythons`, `expanduser_reads_home`, `the_summary_has_pythons_keys_in_order`, `a_decision_records_rounded_numbers`, `a_takeover_scenario_matches_python_number_for_number`, `an_error_mid_hold_forwards_the_held_block_once`, `a_missing_model_means_no_gate`, `the_sherpa_embedder_embeds_two_seconds` (`#[ignore = "live: …"]`, needs the model file; checks 192 numbers against the Python wheel's output) | Expected values printed by Python 3.13 / sherpa-onnx 1.13.8 |
+| (differential) | | `tests/test_parity.rs`: `random_scenarios_match_the_python_gate_block_for_block` replays 800 random scenarios (five voices, mixed blocks, unknown loud audio, half blocks, lenient/bypass toggles, mode swaps, a failing embedder, resets, config tweaks) recorded from the Python gate by `tests/fixtures/gen_parity.py`, and checks every returned block, all 1336 decisions, every stat and the final centroid bit for bit; `arithmetic_matches_python` checks `rms`, `cosine`, `_unit`, `trim_to_speech`, `WakeRing` lengths and `configured` against Python on fixed random inputs | |
+| (parity) | | 13 more: `configured_strips_lowers_and_falls_back_like_python`, `defaults_match_the_python_dataclass`, `rms_and_cosine_match_python`, `sums_are_compensated_like_python_3_12`, `rounding_and_slicing_match_python`, `repr_is_pythons`, `expanduser_reads_home`, `the_summary_has_pythons_keys_in_order`, `a_decision_records_rounded_numbers`, `a_takeover_scenario_matches_python_number_for_number`, `an_error_mid_hold_forwards_the_held_block_once`, `a_missing_model_means_no_gate`, `the_sherpa_embedder_embeds_two_seconds` (`#[ignore = "live: …"]`, needs the model file; checks all 192 numbers against the Python wheel's output in `tests/fixtures/sherpa_tone.json`) | Expected values printed by Python 3.13 / sherpa-onnx 1.13.8 |
 
 ## Boundaries
 None. sherpa-onnx is linked natively through its official Rust crate (static; the build downloads k2-fsa's release archive, or uses `SHERPA_ONNX_LIB_DIR` / `SHERPA_ONNX_ARCHIVE_DIR`).
@@ -57,5 +59,7 @@ None. sherpa-onnx is linked natively through its official Rust crate (static; th
 - `sherpa-rs` 0.6.8 (sherpa-onnx 1.12.9) was tried and rejected: its NeMo feature normalisation computes the variance as E[x²]−E[x]², which goes negative and returns an all-NaN TitaNet embedding for 24 kHz input; 1.13.x (the Python wheel's release) fixed it. The official crate is used instead.
 - The Rust and Python embeddings of the same audio agree to about 1e-7 (onnxruntime builds differ), not bit for bit.
 - `WakeRing::new` with a NaN or infinite length makes a one-block ring where Python raises.
+- `trim_to_speech` (and a gate built `with_clock`) with `block_bytes` 0 treats each byte as a block where Python's `range()` raises `ValueError`; ears' block size is fixed at 4800, so only a hand-built gate can reach it.
+- An environment value that is not UTF-8 is read lossily (U+FFFD): a bad `EVE_VOICE_GATE` still warns and means `off`, as in Python, but a non-UTF-8 `EVE_VOICE_GATE_MODEL` path cannot be opened, where Python's surrogateescape would open it.
 - `py_repr` in the unknown-mode warning escapes ASCII control characters and C1 controls as Python does, but leaves other non-printable Unicode as is (log text only).
 - The Python `clock` and `embedder` are attributes; in Rust the clock is a `Box<dyn Fn() -> f64 + Send>` given at construction and the embedder is the pub `embedder` field.

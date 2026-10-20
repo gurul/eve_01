@@ -54,6 +54,10 @@ use std::sync::LazyLock;
 use std::time::Instant;
 
 use serde_json::{json, Value};
+
+/// The sherpa-onnx binding this crate links (statically). Re-exported so another eve crate that needs
+/// sherpa-onnx (the ears keyword spotter) links the same build instead of a second copy of its C library.
+pub use sherpa_onnx;
 use tracing::{info, warn};
 
 /// ears' capture rate; the extractor resamples to 16 kHz itself.
@@ -175,7 +179,9 @@ impl GateConfig {
 
 /// The configuration from the process environment: Python's `configured()`.
 pub fn configured() -> GateConfig {
-    configured_from(|k| std::env::var(k).ok())
+    // A value that is not UTF-8 is read lossily rather than as unset: Python sees it (surrogateescape), so an
+    // unreadable mode still warns and falls back to off.
+    configured_from(|k| std::env::var_os(k).map(|v| v.to_string_lossy().into_owned()))
 }
 
 /// The configuration from any environment lookup: Python's `configured(environ)`.
