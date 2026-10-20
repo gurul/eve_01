@@ -6,7 +6,7 @@ their instructions, the options sheet an assess step writes, and `Chief`, the lo
 step per tick (route, Go, dispatch, run, reflect, replan, close, receipt), reminds about commitments through the
 desk, and sends the evening close and the weekly sheet. `make_chief` wires eve's real research (the web reader
 and the shipped browser router). Ported from `bridge/src/eve_bridge/chief.py`.
-`cargo test -p eve-chief`: 100 tests pass (86 in `src/tests.rs`, 13 in `src/tests_lean.rs`, 1 in `src/py.rs`).
+`cargo test -p eve-chief`: 101 tests pass (87 in `src/tests.rs`, 13 in `src/tests_lean.rs`, 1 in `src/py.rs`).
 
 ## Modules
 | Python | Rust |
@@ -81,7 +81,7 @@ and the shipped browser router). Ported from `bridge/src/eve_bridge/chief.py`.
 | test_chief_lean.py | all 13 | same names in src/tests_lean.rs; the Lean constants are read from verification/Eve/Chief.lean | |
 | test_chief_record.py, test_chief_desk.py, test_chief_receipt.py | | | the card, ledger, desk and receipt modules: eve-chief-card, eve-chief-ledger, eve-chief-desk, eve-chief-receipt |
 | test_telegram_chief.py | | | the Telegram door: eve-telegram |
-| (new) | | test_parse_sheet_keeps_only_read_links_and_a_cited_pick, test_output_text_reads_messages_then_the_fallback, test_watch_args_are_the_watchers_search_kind, test_jobs_list_keeps_the_narrow_wording_while_menu_tools_is_off, sheet_from_reads_python_iterables, py::tests::formats_follow_python | |
+| (new) | | test_parse_sheet_keeps_only_read_links_and_a_cited_pick, test_output_text_reads_messages_then_the_fallback, test_watch_args_are_the_watchers_search_kind, test_jobs_list_keeps_the_narrow_wording_while_menu_tools_is_off, sheet_from_reads_python_iterables, test_a_research_that_raises_timeout_error_is_answered_as_its_ceiling, py::tests::formats_follow_python | |
 
 ## Boundaries
 - eve-chief-card, eve-chief-ledger, eve-chief-desk, eve-chief-receipt, eve-chief-reflect, eve-chief-replan: the
@@ -110,3 +110,6 @@ No upstream crate was edited.
   trace from Python's seed N; the count (240 seeds x 40 moves, desk 3 modes x 12 seeds) and the coverage gates are
   the same.
 - `_maybe` has no counterpart: every async callback is a BoxFuture.
+- `parse_sheet` and `sheet_from` read JSON with serde_json, which refuses the `NaN` / `Infinity` literals and
+  numbers past f64 that Python's `json.loads` accepts; such a reply is no sheet here (an assess step fails) where
+  Python would drop the non-finite price. The strict schema never asks for either.

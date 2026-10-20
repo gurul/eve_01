@@ -2341,3 +2341,22 @@ fn sheet_from_reads_python_iterables() {
     assert_eq!(one.picked().unwrap().link, "u");
     assert_eq!(one.change, "");
 }
+
+// ---- the verifier's additions -------------------------------------------------------------------------------
+
+async fn research_raising(name: &'static str) -> String {
+    let (d, f, clock) = (tmp(), Fakes::new(), TClock::new(at(10, 0, 29)));
+    let research: Research = Arc::new(move |_q: String| Box::pin(async move { Err(Raised::new(name, "boom")) }));
+    let c = make_with(d.path(), &f, &clock, Kw { research: Some(research), ..Kw::default() });
+    take(&c, read_job(), READ_SAID).await;
+    drain(&c).await;
+    phase_of(&c, "c1", 1).result.expect("a result").text
+}
+
+#[tokio::test]
+async fn test_a_research_that_raises_timeout_error_is_answered_as_its_ceiling() {
+    // Python 3.11: `except asyncio.TimeoutError` is the builtin TimeoutError, which a socket timeout raises too
+    assert_eq!(research_raising("TimeoutError").await, "no answer within 90 s");
+    // positive control: any other exception is a failed step named by its type
+    assert_eq!(research_raising("OSError").await, "the step failed (OSError)");
+}

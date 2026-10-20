@@ -2209,7 +2209,8 @@ impl Chief {
         }
         if route == "mac" {
             // a slot that cannot be read is busy
-            let free = self.start_task.is_some() && (self.mac_free)().unwrap_or(false);
+            // Python: `bool(self._mac_free()) and self._start_task is not None`: the slot is read first
+            let free = (self.mac_free)().unwrap_or(false) && self.start_task.is_some();
             if !free {
                 if card.waiting_for.as_deref() != Some("mac_slot") {
                     self.ledger.update(
@@ -2535,14 +2536,7 @@ impl Chief {
         let secs = t0.elapsed().as_secs_f64();
         let mut result = match work {
             Some(Ok(r)) => r,
-            None => PhaseResult {
-                status: "failed".into(),
-                evidence: Vec::new(),
-                text: format!("no answer within {} s", py::fixed(limit, 0)),
-                usd: 0.0,
-                secs,
-            },
-            Some(Err(e)) => {
+            Some(Err(e)) if e.name != "TimeoutError" => {
                 // an executor that raises is a failed phase, never a failed chief
                 warn!("chief: {cid} phase {n} raised ({})", e.name);
                 PhaseResult {
@@ -2553,6 +2547,15 @@ impl Chief {
                     secs,
                 }
             }
+            // the ceiling; and Python 3.11's `except asyncio.TimeoutError` is the builtin TimeoutError, so an
+            // executor that raises one (a socket timeout in the web read) is answered the same way, with no warning
+            _ => PhaseResult {
+                status: "failed".into(),
+                evidence: Vec::new(),
+                text: format!("no answer within {} s", py::fixed(limit, 0)),
+                usd: 0.0,
+                secs,
+            },
         };
         if result.secs <= 0.0 {
             result.secs = t0.elapsed().as_secs_f64();
@@ -2742,7 +2745,7 @@ impl Chief {
             )
         };
         let next_action = card.cue.as_ref().map(|c| c.next_action.clone()).unwrap_or_else(|| card.title.clone());
-        let due = card.deadline.as_ref().map(|d| format!(", due {d}")).unwrap_or_default();
+        let due = card.deadline.as_ref().filter(|d| !d.is_empty()).map(|d| format!(", due {d}")).unwrap_or_default();
         let text = format!("Reminder: {next_action} ({}{due}, {}).", card.title, card.id);
         let about = format!("(I reminded you about {}, {}.)", card.id, card.title);
         let route = self.desk.offer(&item, Some(now));
@@ -3076,21 +3079,14 @@ impl Chief {
     pub async fn drain(self: &Arc<Self>, rounds: usize) -> Res<()> {
         for _ in 0..rounds {
             self.tick().await?;
-            let pending = self.pending();
-            if pending.is_empty() {
+            if self.in_flight() == 0 {
                 self.tick().await?;
-                let again = self.pending();
-                if again.is_empty() {
+                if self.in_flight() == 0 {
                     return Ok(());
                 }
-                for t in again {
-                    let _ = t.await;
-                }
-                continue;
+                continue; // as Python: the next round ticks before it gathers what this tick started
             }
-            for t in pending {
-                let _ = t.await;
-            }
+            self.settle().await;
         }
         Ok(())
     }
