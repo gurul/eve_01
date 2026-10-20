@@ -38,7 +38,7 @@ use parking_lot::Mutex;
 use regex::Regex;
 use serde_json::{json, Map, Value};
 
-pub use casefold::casefold;
+pub use casefold::{casefold, lower};
 
 pub const PROTOCOL_VERSIONS: [&str; 3] = ["2025-06-18", "2025-03-26", "2024-11-05"];
 pub const SERVER_NAME: &str = "eve_vault";
@@ -54,10 +54,18 @@ pub fn server_info() -> Value {
     json!({"name": SERVER_NAME, "version": SERVER_VERSION})
 }
 
-/// What a field is called, per part, to tell a page's fields apart (`Field::words`). Python's `re.I`.
+/// Python's `\b` beside `pan`: Python's `\w` is exactly letters, numbers and `_` (`str.isalnum`), where the
+/// regex crate's also holds combining marks and leaves out `²` and `½`. Matching only asks whether there is a
+/// match, so the neighbouring character may be consumed.
+const PY_WORD_EDGE_BEFORE: &str = r"(?-i:(?:^|[^\p{L}\p{N}_]))";
+const PY_WORD_EDGE_AFTER: &str = r"(?-i:(?:[^\p{L}\p{N}_]|$))";
+
+/// What a field is called, per part, to tell a page's fields apart (`Field::words`). Python's `re.I`; match
+/// with [`words_fit`], which also gives `i` Python's case-insensitive partners.
 pub static PART_WORDS: LazyLock<Vec<(&'static str, Regex)>> = LazyLock::new(|| {
+    let number = format!(r"card.?num|card number|cc.?num|{PY_WORD_EDGE_BEFORE}pan{PY_WORD_EDGE_AFTER}");
     [
-        ("number", r"card.?num|card number|cc.?num|\bpan\b"),
+        ("number", number.as_str()),
         ("cvc", r"cvc|cvv|csc|security code|card code"),
         ("exp", r"expir|exp.?date|mm.?/.?yy"),
         ("name", r"name on card|card.?holder"),
@@ -72,6 +80,20 @@ pub static PART_WORDS: LazyLock<Vec<(&'static str, Regex)>> = LazyLock::new(|| {
 /// `PART_WORDS.get(part)`.
 pub fn part_words(part: &str) -> Option<&'static Regex> {
     PART_WORDS.iter().find(|(p, _)| *p == part).map(|(_, r)| r)
+}
+
+/// `PART_WORDS[part].search(words)`, as Python's `re` answers it. Under `re.I` a pattern's `i` also matches
+/// `İ` (U+0130) and `ı` (U+0131), which simple case folding (the regex crate's) leaves apart: both are letters,
+/// so reading them as `i` changes no word edge. A part with no pattern fits nothing.
+pub fn words_fit(part: &str, words: &str) -> bool {
+    let Some(pattern) = part_words(part) else {
+        return false;
+    };
+    if words.contains(['\u{130}', '\u{131}']) {
+        pattern.is_match(&words.replace(['\u{130}', '\u{131}'], "i"))
+    } else {
+        pattern.is_match(words)
+    }
 }
 
 pub const INSTRUCTIONS: &str = "eve's vault holds the owner's saved sign-ins, cards and 2FA secrets. vault_list shows them by id. \
@@ -469,8 +491,7 @@ pub fn pick_field(fields: &[Field], part: &str, label: &str) -> Result<Field, St
     if focused.len() == 1 {
         return Ok((**focused[0]).clone());
     }
-    let words = part_words(part);
-    let named: Vec<&Field> = plain.iter().copied().filter(|f| words.is_some_and(|w| w.is_match(&f.words))).collect();
+    let named: Vec<&Field> = plain.iter().copied().filter(|f| words_fit(part, &f.words)).collect();
     if named.len() == 1 {
         return Ok(named[0].clone());
     }
@@ -504,7 +525,7 @@ pub fn same_page(url: &str, page: &str) -> Result<bool, Raised> {
         let u = pystr::strip(u);
         let full = if u.contains("://") { u.to_string() } else { format!("https://{u}") };
         let s = pyurl::urlsplit(&full).map_err(|_| Raised::new("ValueError"))?;
-        Ok((s.scheme, s.netloc.to_lowercase(), s.path.trim_end_matches('/').to_string()))
+        Ok((s.scheme, casefold::lower(&s.netloc), s.path.trim_end_matches('/').to_string()))
     }
     Ok(split(url)? == split(page)?)
 }

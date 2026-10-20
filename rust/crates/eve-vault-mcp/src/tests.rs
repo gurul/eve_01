@@ -8,7 +8,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use eve_vault::{totp_default, MemKeychain, Values, Vault};
-use eve_vault_native::{Field, Native};
+use eve_vault_native::{Field, Native, NativeMac};
 use parking_lot::Mutex;
 use serde_json::{json, Value};
 
@@ -310,33 +310,323 @@ fn test_a_page_named_without_its_scheme_is_still_that_page() {
     assert!(!same("https://evil.com/checkout", "shop.com/checkout"));
 }
 
-#[test]
-#[ignore = "live: drives a headed Chromium (Playwright) and the real Accessibility API; run the Python test with EVE_LIVE=1"]
-fn test_live_native_fill_sets_the_right_fields_with_the_browser_behind_and_unfocused() {
-    // The Python test needs Playwright to open the page and read the fields back; this crate has no browser
-    // driver. It runs the server against the owner's real browsers: with no vault item, nothing is touched.
-    let tmp = tempfile::tempdir().unwrap();
-    let v = Arc::new(Vault::with_store(tmp.path().join("vault.json"), Box::new(MemKeychain::new())));
-    let server = Server::new(v, None, Box::new(io::sink()));
-    let r = server.call(Some(&json!("vault_fill")), Some(&json!({"id": "v_zzzzzzzz", "part": "password"})));
-    assert!(r["isError"].as_bool().unwrap());
+// ---- live: the real Mac ------------------------------------------------------------------------------------------
+
+/// What the Python live tests did with Playwright, done over the Chrome DevTools Protocol: a static file server
+/// (Python's `http.server`), a headed Chrome for Testing (Playwright's Chromium) in a fresh profile, a window per
+/// page, and `evaluate` in a page or in its out-of-process frame.
+mod live {
+    use std::io::{BufRead, BufReader, Read, Write};
+    use std::net::{TcpListener, TcpStream};
+    use std::path::{Path, PathBuf};
+    use std::process::{Child, Command, Stdio};
+    use std::time::{Duration, Instant};
+
+    use serde_json::{json, Value};
+    use tokio_tungstenite::tungstenite::{self, Message, WebSocket};
+
+    /// Serves `dir` on 127.0.0.1 at a free port; returns the port.
+    pub fn serve_dir(dir: PathBuf) -> u16 {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+        std::thread::spawn(move || {
+            for conn in listener.incoming().flatten() {
+                let dir = dir.clone();
+                std::thread::spawn(move || answer(conn, &dir));
+            }
+        });
+        port
+    }
+
+    fn answer(mut conn: TcpStream, dir: &Path) {
+        let Ok(clone) = conn.try_clone() else { return };
+        let mut reader = BufReader::new(clone);
+        let mut first = String::new();
+        if reader.read_line(&mut first).is_err() {
+            return;
+        }
+        loop {
+            let mut line = String::new();
+            if reader.read_line(&mut line).unwrap_or(0) == 0 || line.trim().is_empty() {
+                break;
+            }
+        }
+        let path = first.split_whitespace().nth(1).unwrap_or("/");
+        let path = path.split(['?', '#']).next().unwrap_or("").trim_start_matches('/');
+        let body = if path.is_empty() || path.contains("..") { None } else { std::fs::read(dir.join(path)).ok() };
+        let (status, body) = match body {
+            Some(b) => ("200 OK", b),
+            None => ("404 Not Found", b"not found".to_vec()),
+        };
+        let head = format!(
+            "HTTP/1.1 {status}\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+            body.len()
+        );
+        let _ = conn.write_all(head.as_bytes());
+        let _ = conn.write_all(&body);
+    }
+
+    /// `EVE_LIVE_CHROME`, else Playwright's newest Chrome for Testing, else the installed Google Chrome.
+    fn binary() -> PathBuf {
+        if let Ok(path) = std::env::var("EVE_LIVE_CHROME") {
+            return path.into();
+        }
+        let home = std::env::var("HOME").unwrap_or_default();
+        let cache = Path::new(&home).join("Library/Caches/ms-playwright");
+        let mut found: Vec<PathBuf> = std::fs::read_dir(&cache)
+            .into_iter()
+            .flatten()
+            .flatten()
+            .filter(|e| e.file_name().to_string_lossy().starts_with("chromium-"))
+            .flat_map(|e| {
+                ["chrome-mac-arm64", "chrome-mac"].map(|d| {
+                    e.path().join(d).join("Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing")
+                })
+            })
+            .filter(|p| p.exists())
+            .collect();
+        found.sort();
+        found.pop().unwrap_or_else(|| "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome".into())
+    }
+
+    pub struct Chrome {
+        child: Child,
+        port: u16,
+        _profile: tempfile::TempDir,
+    }
+
+    impl Drop for Chrome {
+        fn drop(&mut self) {
+            let _ = self.child.kill();
+            let _ = self.child.wait();
+        }
+    }
+
+    fn deadline_loop<T>(what: &str, mut attempt: impl FnMut() -> Option<T>) -> T {
+        let until = Instant::now() + Duration::from_secs(30);
+        loop {
+            if let Some(got) = attempt() {
+                return got;
+            }
+            assert!(Instant::now() < until, "timed out waiting for {what}");
+            std::thread::sleep(Duration::from_millis(100));
+        }
+    }
+
+    impl Chrome {
+        /// Chrome for Testing builds its web Accessibility tree only when forced; the owner's Chrome had it on
+        /// (eve-vault-native's docs).
+        pub fn launch(headless: bool) -> Chrome {
+            let profile = tempfile::tempdir().unwrap();
+            let mut cmd = Command::new(binary());
+            cmd.arg("--remote-debugging-port=0")
+                .arg(format!("--user-data-dir={}", profile.path().display()))
+                .args(["--no-first-run", "--no-default-browser-check", "--force-renderer-accessibility"]);
+            if headless {
+                cmd.arg("--headless=new");
+            }
+            cmd.arg("about:blank").stdout(Stdio::null()).stderr(Stdio::null());
+            let child = cmd.spawn().expect("start Chrome");
+            let file = profile.path().join("DevToolsActivePort");
+            let port = deadline_loop("DevToolsActivePort", || {
+                std::fs::read_to_string(&file).ok()?.lines().next()?.trim().parse::<u16>().ok()
+            });
+            Chrome { child, port, _profile: profile }
+        }
+
+        fn http_json(&self, path: &str) -> Option<Value> {
+            // DevTools keeps the connection open whatever the request says: read Content-Length bytes.
+            let mut conn = TcpStream::connect(("127.0.0.1", self.port)).ok()?;
+            conn.set_read_timeout(Some(Duration::from_secs(10))).ok()?;
+            write!(conn, "GET {path} HTTP/1.1\r\nHost: 127.0.0.1:{}\r\n\r\n", self.port).ok()?;
+            let mut reader = BufReader::new(conn);
+            let mut length = 0;
+            loop {
+                let mut line = String::new();
+                if reader.read_line(&mut line).ok()? == 0 {
+                    return None;
+                }
+                if line.trim().is_empty() {
+                    break;
+                }
+                if let Some((name, v)) = line.split_once(':') {
+                    if name.eq_ignore_ascii_case("content-length") {
+                        length = v.trim().parse().ok()?;
+                    }
+                }
+            }
+            let mut body = vec![0; length];
+            reader.read_exact(&mut body).ok()?;
+            serde_json::from_slice(&body).ok()
+        }
+
+        /// Playwright's `browser.new_page()` + `goto(url)`: a page in a window of its own.
+        pub fn new_window(&self, url: &str) {
+            let version = deadline_loop("/json/version", || self.http_json("/json/version"));
+            let mut browser = Cdp::connect(version["webSocketDebuggerUrl"].as_str().unwrap());
+            browser.call("Target.createTarget", json!({"url": url, "newWindow": true}));
+        }
+
+        /// The page or frame target whose URL is `url`, once it has loaded and `ready` holds in it.
+        pub fn target(&self, kind: &str, url: &str, ready: &str) -> Cdp {
+            deadline_loop(url, || {
+                let list = self.http_json("/json/list")?;
+                let t = list.as_array()?.iter().find(|t| t["type"] == kind && t["url"] == url)?.clone();
+                let mut cdp = Cdp::connect(t["webSocketDebuggerUrl"].as_str()?);
+                (cdp.eval(ready) == json!(true)).then_some(cdp)
+            })
+        }
+    }
+
+    pub struct Cdp {
+        ws: WebSocket<TcpStream>,
+        next: u64,
+    }
+
+    impl Cdp {
+        fn connect(url: &str) -> Cdp {
+            let host = url.trim_start_matches("ws://").split('/').next().unwrap();
+            let stream = TcpStream::connect(host).unwrap();
+            stream.set_read_timeout(Some(Duration::from_secs(30))).unwrap();
+            let (ws, _) = tungstenite::client(url, stream).expect("DevTools websocket");
+            Cdp { ws, next: 0 }
+        }
+
+        fn call(&mut self, method: &str, params: Value) -> Value {
+            self.next += 1;
+            let id = self.next;
+            self.ws.send(Message::text(json!({"id": id, "method": method, "params": params}).to_string())).unwrap();
+            loop {
+                let Message::Text(text) = self.ws.read().unwrap() else { continue };
+                let msg: Value = serde_json::from_str(text.as_str()).unwrap();
+                if msg["id"] == json!(id) {
+                    assert!(msg.get("error").is_none(), "{method}: {msg}");
+                    return msg["result"].clone();
+                }
+            }
+        }
+
+        /// `page.evaluate(expression)`.
+        pub fn eval(&mut self, expression: &str) -> Value {
+            let r = self.call("Runtime.evaluate", json!({"expression": expression, "returnByValue": true, "awaitPromise": true}));
+            r["result"]["value"].clone()
+        }
+    }
+
+    /// The bundle id of the app in front (Python's NSWorkspace frontmostApplication().bundleIdentifier()).
+    pub fn front_bundle() -> String {
+        let asn = Command::new("lsappinfo").arg("front").output().unwrap();
+        let asn = String::from_utf8_lossy(&asn.stdout).trim().to_string();
+        let info = Command::new("lsappinfo").args(["info", "-only", "bundleid", &asn]).output().unwrap();
+        let info = String::from_utf8_lossy(&info.stdout).to_string();
+        info.lines()
+            .find(|l| l.contains("bundleID=") || l.contains("\"CFBundleIdentifier\"="))
+            .and_then(|l| l.split_once('='))
+            .map(|(_, v)| v.trim().trim_matches('"').to_string())
+            .unwrap_or_default()
+    }
 }
 
+const PAGE: &str = r#"<!doctype html><html><head><title>Sign in</title></head><body style="margin:40px">
+<form><input id=user placeholder="Email" style="width:300px;height:30px"><br><br>
+<input id=pw type=password placeholder="Password" style="width:300px;height:30px"></form>
+<script>window.ev = []; for (const id of ['user', 'pw']) for (const t of ['input', 'change'])
+  document.getElementById(id).addEventListener(t, () => ev.push(id + ':' + t));</script></body></html>"#;
+
 #[test]
-#[ignore = "live: needs a headed Chromium with a payment frame (Playwright); run the Python test with EVE_LIVE=1"]
-fn test_live_a_card_fills_a_payment_frame_from_another_host_inside_the_named_page() {
-    // A real walk over the owner's browsers for a page nobody has open: refused as no page in front.
+#[ignore = "live: opens a headed Chrome for Testing with Finder in front and fills it through the Accessibility API (EVE_LIVE=1 in Python)"]
+fn test_live_native_fill_sets_the_right_fields_with_the_browser_behind_and_unfocused() {
     let tmp = tempfile::tempdir().unwrap();
+    std::fs::write(tmp.path().join("login.html"), PAGE).unwrap();
+    let port = live::serve_dir(tmp.path().to_path_buf());
+    let (here_url, there_url) =
+        (format!("http://127.0.0.1:{port}/login.html"), format!("http://localhost:{port}/login.html"));
+    let v = Arc::new(Vault::with_store(tmp.path().join("vault.json"), Box::new(MemKeychain::new())));
+    let login = |label: &str, user: &str, pw: &str, site: &str| {
+        v.add("login", label, &values(json!({"username": user, "password": pw})), site).unwrap().handle
+    };
+    let here = login("Local", "me@example.com", CANARY_PASSWORD, &format!("http://127.0.0.1:{port}"));
+    let other = login("Elsewhere", "x", "elsewhere-pw", "other.example");
+    let server = Server::new(v.clone(), Some(Arc::new(NativeMac::new().unwrap())), Box::new(io::sink()));
+    let fill = |h: &str, part: &str, label: &str| {
+        server.call(Some(&json!("vault_fill")), Some(&json!({"id": h, "part": part, "page": here_url, "field": label})))
+    };
+    let chrome = live::Chrome::launch(false);
+    // Two windows: the item's site, and the same page on another host.
+    chrome.new_window(&here_url);
+    chrome.new_window(&there_url);
+    let loaded = "document.readyState === 'complete' && !!document.getElementById('pw')";
+    let mut here_page = chrome.target("page", &here_url, loaded);
+    let mut there_page = chrome.target("page", &there_url, loaded);
+    // nothing focused, and another app in front, as a Codex task leaves the browser
+    for pg in [&mut here_page, &mut there_page] {
+        pg.eval("document.activeElement && document.activeElement.blur(), true");
+    }
+    // activation from here is ignored; LaunchServices is not
+    assert!(std::process::Command::new("open").args(["-a", "Finder"]).status().unwrap().success());
+    std::thread::sleep(std::time::Duration::from_secs(1));
+    let front = live::front_bundle();
+    let first = fill(&other, "password", ""); // another site's login: refused
+    let second = fill(&here, "password", "Email"); // a password into the Email field: refused
+    let third = fill(&here, "username", "");
+    let fourth = fill(&here, "password", "");
+    let value = |pg: &mut live::Cdp, id: &str| pg.eval(&format!("document.getElementById('{id}').value"));
+    let here_user = value(&mut here_page, "user");
+    let here_pw_ok = here_page.eval(&format!("document.getElementById('pw').value === {}", json!(CANARY_PASSWORD)));
+    let there = [value(&mut there_page, "user"), value(&mut there_page, "pw")];
+    let events = here_page.eval("ev");
+    let still = live::front_bundle();
+    drop(chrome);
+    let text = |r: &Value| r["content"][0]["text"].as_str().unwrap().to_string();
+    assert!(first["isError"].as_bool().unwrap() && text(&first).contains("No page on other.example"), "{first}");
+    assert!(second["isError"].as_bool().unwrap() && text(&second).contains("only into a password field"), "{second}");
+    assert!(!third["isError"].as_bool().unwrap() && !fourth["isError"].as_bool().unwrap(), "{third} {fourth}");
+    assert_eq!(here_user, json!("me@example.com"));
+    assert_eq!(here_pw_ok, json!(true));
+    assert_eq!(there, [json!(""), json!("")]); // the same form on another host: untouched
+    assert_eq!(events, json!(["user:input", "user:change", "pw:input", "pw:change"]));
+    // the browser never came to the front
+    assert_eq!((front.as_str(), still.as_str()), ("com.apple.finder", "com.apple.finder"));
+    for r in [&first, &second, &third, &fourth] {
+        assert!(!r.to_string().contains(CANARY_PASSWORD) && !r.to_string().contains("elsewhere-pw"), "{r}");
+    }
+}
+
+const CHECKOUT: &str = r#"<!doctype html><html><head><title>Checkout</title></head><body style="margin:40px">
+<label for=email>Email</label><input id=email style="width:300px;height:30px">
+<iframe id=pay src="FRAME" style="width:420px;height:120px;border:0"></iframe></body></html>"#;
+const CARD_FRAME: &str = r#"<!doctype html><html><body><label for=cc>Card number</label>
+<input id=cc style="width:300px;height:30px"></body></html>"#;
+
+#[test]
+#[ignore = "live: opens a headed Chrome for Testing with a payment frame from another host and fills it through the Accessibility API (EVE_LIVE=1 in Python)"]
+fn test_live_a_card_fills_a_payment_frame_from_another_host_inside_the_named_page() {
+    let tmp = tempfile::tempdir().unwrap();
+    let port = live::serve_dir(tmp.path().to_path_buf());
+    let frame = format!("http://localhost:{port}/frame.html");
+    std::fs::write(tmp.path().join("frame.html"), CARD_FRAME).unwrap();
+    std::fs::write(tmp.path().join("checkout.html"), CHECKOUT.replace("FRAME", &frame)).unwrap();
+    let checkout = format!("http://127.0.0.1:{port}/checkout.html");
     let v = Arc::new(Vault::with_store(tmp.path().join("vault.json"), Box::new(MemKeychain::new())));
     let card = v
         .add("card", "Visa", &values(json!({"number": CANARY_NUMBER, "exp_month": "7", "exp_year": "2031", "cvc": "713"})), "")
         .unwrap()
         .handle;
-    let mut server = Server::new(v, None, Box::new(io::sink()));
-    server.field_waits = vec![0.0];
-    let r = server.call(Some(&json!("vault_fill")), Some(&json!({"id": card, "part": "number", "page": "https://nowhere.invalid/x"})));
-    let text = r["content"][0]["text"].as_str().unwrap();
-    assert!(r["isError"].as_bool().unwrap() && !text.contains(CANARY_NUMBER), "{text}");
+    let server = Server::new(v, Some(Arc::new(NativeMac::new().unwrap())), Box::new(io::sink()));
+    let chrome = live::Chrome::launch(false);
+    chrome.new_window(&checkout);
+    let mut page = chrome.target("page", &checkout, "document.readyState === 'complete'");
+    // page.frame_locator("#pay").locator("#cc").wait_for(): the frame is another site, so its own target
+    let mut pay = chrome.target("iframe", &frame, "!!document.getElementById('cc')");
+    let result = server.call(Some(&json!("vault_fill")), Some(&json!({"id": card, "part": "number", "page": checkout})));
+    let in_frame = pay.eval(&format!("document.getElementById('cc').value === {}", json!(CANARY_NUMBER)));
+    let email = page.eval("document.getElementById('email').value");
+    drop(chrome);
+    let text = result["content"][0]["text"].as_str().unwrap();
+    assert!(!result["isError"].as_bool().unwrap() && !text.contains("shows"), "{result}");
+    assert_eq!(in_frame, json!(true));
+    assert_eq!(email, json!(""));
+    assert!(!result.to_string().contains(CANARY_NUMBER));
 }
 
 // ---- parity additions -----------------------------------------------------------------------------------------
@@ -563,4 +853,41 @@ fn tools_list_is_byte_for_byte_what_python_writes() {
     let server = Server::new(v, Some(Arc::new(FakeMac::new(vec![]))), Box::new(out.clone()));
     server.handle_line(r#"{"jsonrpc":"2.0","id":2,"method":"tools/list"}"#).unwrap();
     assert_eq!(out.text(), format!("{PYTHON}\n"));
+}
+
+#[test]
+fn part_words_match_as_pythons_re_does() {
+    // Python's `\b` beside "pan": `²` and `½` are numbers (word characters), a combining mark is not.
+    // Expected answers from CPython 3.13 `re.search(r"\bpan\b", s, re.I)`.
+    for (words, fits) in [
+        ("PAN", true),
+        ("Card PAN:", true),
+        ("pan\u{b2}", false),
+        ("\u{bd}pan", false),
+        ("pan\u{301}", true),
+        ("\u{300}pan", true),
+        ("pan_", false),
+        ("span", false),
+        ("pan-1", true),
+    ] {
+        assert_eq!(words_fit("number", words), fits, "{words:?}");
+    }
+    // `re.I` matches the pattern's `i` to `İ` and `ı` (Turkish), which simple case folding does not.
+    assert!(words_fit("username", "LOG\u{130}N"));
+    assert!(words_fit("code", "VER\u{130}F\u{130}CAT\u{130}ON"));
+    assert!(words_fit("exp", "EXP\u{130}R"));
+    assert!(words_fit("exp", "exp\u{131}r"));
+    assert!(!words_fit("password", "Password"));
+    assert!(!words_fit("exp_month", "Month"));
+}
+
+#[test]
+fn lower_is_pythons_and_keeps_what_python_does_not_know() {
+    assert_eq!(lower("Shop.COM"), "shop.com");
+    assert_eq!(lower("\u{391}\u{3a3} \u{391}\u{3a3}\u{391}"), "\u{3b1}\u{3c2} \u{3b1}\u{3c3}\u{3b1}"); // final sigma, as str.lower
+    assert_eq!(lower("\u{130}"), "i\u{307}");
+    // unassigned in Unicode 15.1 (CPython 3.13): lower() and casefold() keep them
+    assert_eq!(lower("A\u{a7cb}B"), "a\u{a7cb}b");
+    assert_eq!(casefold("\u{1c89}x"), "\u{1c89}x");
+    assert!(same_page("https://SHOP.example/x", "shop.example/x").unwrap());
 }

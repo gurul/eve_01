@@ -304,6 +304,23 @@ const FOLDS: [(char, &str); 297] = [
     ('\u{fb17}', "\u{574}\u{56d}"),
 ];
 
+/// Characters unassigned in Unicode 15.1 (CPython 3.13, where they lower and fold to themselves) that the Rust
+/// standard library's newer Unicode lowercases. Measured by comparing `str.lower()` of every character in
+/// CPython 3.13.14 with `char::to_lowercase` (Rust 1.9x, Unicode 16); sorted.
+const NEWER_THAN_PYTHON: [char; 55] = [
+    '\u{1c89}', '\u{a7cb}', '\u{a7cc}', '\u{a7ce}', '\u{a7d2}', '\u{a7d4}', '\u{a7da}', '\u{a7dc}', '\u{10d50}',
+    '\u{10d51}', '\u{10d52}', '\u{10d53}', '\u{10d54}', '\u{10d55}', '\u{10d56}', '\u{10d57}', '\u{10d58}',
+    '\u{10d59}', '\u{10d5a}', '\u{10d5b}', '\u{10d5c}', '\u{10d5d}', '\u{10d5e}', '\u{10d5f}', '\u{10d60}',
+    '\u{10d61}', '\u{10d62}', '\u{10d63}', '\u{10d64}', '\u{10d65}', '\u{16ea0}', '\u{16ea1}', '\u{16ea2}',
+    '\u{16ea3}', '\u{16ea4}', '\u{16ea5}', '\u{16ea6}', '\u{16ea7}', '\u{16ea8}', '\u{16ea9}', '\u{16eaa}',
+    '\u{16eab}', '\u{16eac}', '\u{16ead}', '\u{16eae}', '\u{16eaf}', '\u{16eb0}', '\u{16eb1}', '\u{16eb2}',
+    '\u{16eb3}', '\u{16eb4}', '\u{16eb5}', '\u{16eb6}', '\u{16eb7}', '\u{16eb8}',
+];
+
+fn newer_than_python(c: char) -> bool {
+    NEWER_THAN_PYTHON.binary_search(&c).is_ok()
+}
+
 /// `text.casefold()`: each character's full case folding (no context, unlike `str::to_lowercase`'s final
 /// sigma, which Python's casefold does not apply).
 pub fn casefold(text: &str) -> String {
@@ -311,8 +328,27 @@ pub fn casefold(text: &str) -> String {
     for c in text.chars() {
         match FOLDS.binary_search_by_key(&c, |&(k, _)| k) {
             Ok(i) => out.push_str(FOLDS[i].1),
+            Err(_) if newer_than_python(c) => out.push(c),
             Err(_) => out.extend(c.to_lowercase()),
         }
     }
+    out
+}
+
+/// `text.lower()`: full lowercase mapping with the final sigma, as CPython 3.13 does it. A character Python
+/// does not know is kept, and it is neither cased nor case-ignorable there, so it ends a word for the sigma
+/// rule as the end of the text does.
+pub fn lower(text: &str) -> String {
+    if !text.chars().any(newer_than_python) {
+        return text.to_lowercase();
+    }
+    let mut out = String::with_capacity(text.len());
+    let mut start = 0;
+    for (at, kept) in text.match_indices(newer_than_python) {
+        out.push_str(&text[start..at].to_lowercase());
+        out.push_str(kept);
+        start = at + kept.len();
+    }
+    out.push_str(&text[start..].to_lowercase());
     out
 }
