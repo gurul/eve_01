@@ -72,7 +72,7 @@ impl TelegramInlet {
         if lite(self.environ.as_ref()) && self.lite_code_word(inbound) {
             return;
         }
-        let stripped = inbound.text.trim();
+        let stripped = inbound.text.py_trim();
         if let Some(purchases) = &self.purchases {
             if purchases.active(Some(inbound.chat_id))
                 && inbound.image.is_none()
@@ -85,14 +85,14 @@ impl TelegramInlet {
             }
         }
         if let Some(request) = eve_opentable::command_request(stripped) {
-            let rest = request.unwrap_or("").trim().to_string();
+            let rest = request.unwrap_or("").py_trim().to_string();
             let me = self.clone();
             let inbound = inbound.clone();
             self.spawn(async move { me.opentable_command(&inbound, &rest).await }, "telegram-opentable");
             return;
         }
         if let Some(america) = AMERICA_COMMAND.captures(stripped) {
-            self.start_america_command(inbound, group(&america, 1).trim());
+            self.start_america_command(inbound, group(&america, 1).py_trim());
             return;
         }
         if self.answer_america_question(inbound) {
@@ -131,7 +131,7 @@ impl TelegramInlet {
                 (target, st.codex_epoch, st.claude_epoch)
             };
             let inbound = match &for_eve {
-                Some(caps) => with_text(inbound, group(caps, 2).trim()),
+                Some(caps) => with_text(inbound, group(caps, 2).py_trim()),
                 None => inbound.clone(),
             };
             let me = self.clone();
@@ -144,7 +144,7 @@ impl TelegramInlet {
         if let Some(meet_ask) = MEET_COMMAND.captures(stripped) {
             // eve's own command, from eve's own menu: by code, ahead of both relays and any open picker
             self.note_line("user", &inbound.text, "command");
-            let rest = group(&meet_ask, 1).trim().to_string();
+            let rest = group(&meet_ask, 1).py_trim().to_string();
             let me = self.clone();
             let chat = inbound.chat_id;
             self.spawn(async move { me.meet_command(chat, &rest).await }, "telegram-meet");
@@ -155,7 +155,7 @@ impl TelegramInlet {
         if WATCH_AT.is_match(&word) {
             word = word.split('@').next().unwrap_or("").to_string(); // "/watch@EveBot", as a menu in a group sends it
         }
-        let watch_ask = WATCH_COMMAND.captures(inbound.text.trim()).map(|caps| group(&caps, 1).trim().to_string());
+        let watch_ask = WATCH_COMMAND.captures(inbound.text.py_trim()).map(|caps| group(&caps, 1).py_trim().to_string());
         if let Some(watch) = &watch_ask {
             // a model turn, worded as the owner would say it, with the watch tools
             inbound = with_text(&inbound, &format!("Watch {watch}"));
@@ -172,8 +172,8 @@ impl TelegramInlet {
             self.spawn(async move { me.turn(&inbound, None, &[], false, false).await }, "telegram-rundown");
             return;
         }
-        if let Some(command) = CODEX_COMMAND.captures(inbound.text.trim()) {
-            let argument = group(&command, 1).trim().to_string();
+        if let Some(command) = CODEX_COMMAND.captures(inbound.text.py_trim()) {
+            let argument = group(&command, 1).py_trim().to_string();
             let (verb, remainder) = match argument.split_once(' ') {
                 Some((verb, rest)) => (verb.to_string(), rest.to_string()),
                 None => (argument.clone(), String::new()),
@@ -181,7 +181,7 @@ impl TelegramInlet {
             let verb_lower = verb.to_lowercase();
             let (action, selection): (String, Option<String>) =
                 if ["on", "off", "use", "status"].contains(&verb_lower.as_str()) {
-                    let rest = remainder.trim();
+                    let rest = remainder.py_trim();
                     (verb_lower, (!rest.is_empty()).then(|| rest.to_string()))
                 } else if !argument.is_empty() {
                     ("use".into(), Some(argument.clone()))
@@ -203,7 +203,7 @@ impl TelegramInlet {
             self.set_muse(among(MUSE_ON, &word), Some(inbound.chat_id), true);
             return;
         }
-        let claude_on_target = CLAUDE_ON_TARGET.captures(&word).map(|caps| group(&caps, 1).trim().to_string());
+        let claude_on_target = CLAUDE_ON_TARGET.captures(&word).map(|caps| group(&caps, 1).py_trim().to_string());
         if among(CLAUDE_ON, &word) || among(CLAUDE_OFF, &word) || claude_on_target.is_some() {
             let target = claude_on_target.unwrap_or_default();
             self.claude_switch(&inbound, !among(CLAUDE_OFF, &word), &target, true, true, false);
@@ -273,7 +273,7 @@ impl TelegramInlet {
                     return;
                 }
                 Some(for_eve) => {
-                    let text = group(&for_eve, 2).trim().to_string();
+                    let text = group(&for_eve, 2).py_trim().to_string();
                     inbound = with_text(&inbound, &text);
                     word = code_word(&inbound.text);
                     addressed_eve = true;
@@ -282,7 +282,7 @@ impl TelegramInlet {
         }
         if let Some(typed) = CLAUDE_PREFIX.captures(&inbound.text) {
             self.note_line("user", &inbound.text, "relay");
-            let text = group(&typed, 2).trim().to_string();
+            let text = group(&typed, 2).py_trim().to_string();
             let me = self.clone();
             let (chat, message_id) = (inbound.chat_id, inbound.message_id);
             self.spawn(
@@ -319,7 +319,7 @@ impl TelegramInlet {
                     return;
                 }
                 Some(for_eve) => {
-                    let text = group(&for_eve, 2).trim().to_string();
+                    let text = group(&for_eve, 2).py_trim().to_string();
                     inbound = with_text(&inbound, &text);
                     word = code_word(&inbound.text);
                     addressed_eve = true;
@@ -343,7 +343,7 @@ impl TelegramInlet {
                     return;
                 }
                 Some(for_eve) => {
-                    let text = group(&for_eve, 2).trim().to_string();
+                    let text = group(&for_eve, 2).py_trim().to_string();
                     inbound = with_text(&inbound, &text);
                     word = code_word(&inbound.text);
                     addressed_eve = true;
@@ -486,7 +486,7 @@ impl TelegramInlet {
         if inbound.image.is_some() {
             return false;
         }
-        let text = inbound.text.trim();
+        let text = inbound.text.py_trim();
         let word = code_word(&inbound.text);
         let said = text.trim_end_matches(['.', '!', ' ']);
         let missing = eve_opentable::command_request(text).is_some()

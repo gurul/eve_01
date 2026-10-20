@@ -134,7 +134,7 @@ impl VoiceSession {
             Value::Object(refusal("not while the learner is thinking out loud; listen and give a hint"))
         } else {
             match name {
-                "start_task" => Value::Object(self.start_task(arg_str(&args, "goal", "").trim())),
+                "start_task" => Value::Object(self.start_task(arg_str(&args, "goal", "").py_trim())),
                 "steer_task" => {
                     let agent = self.st.lock().agent.clone();
                     let ok = agent.is_some_and(|a| a.steer(&arg_str(&args, "text", "")));
@@ -170,7 +170,7 @@ impl VoiceSession {
                     }
                 }
                 "answer_question" => {
-                    let ans = arg_str(&args, "answer", "").trim().to_string();
+                    let ans = arg_str(&args, "answer", "").py_trim().to_string();
                     let pending = self.st.lock().pending_answer.clone();
                     match pending {
                         Some(p) if !p.done() => {
@@ -283,7 +283,7 @@ impl VoiceSession {
         self.close_open_owner_turn();
         let mut st = self.st.lock();
         let Some((turn, said, answers)) = st.decision.clone() else { return false };
-        let supplied = arg_str(args, "answer", "").trim().to_string();
+        let supplied = arg_str(args, "answer", "").py_trim().to_string();
         let matched = if !said.is_empty() {
             eve_consent::bare_decision(&supplied) == said
         } else {
@@ -558,7 +558,7 @@ impl VoiceSession {
 
     /// The lesson tool (`_slow_tool`'s `name == "lesson"` branch).
     async fn lesson_tool(self: &Arc<Self>, args: &Obj) -> anyhow::Result<Value> {
-        let action = arg_or_empty(args, "action").trim().to_lowercase();
+        let action = arg_or_empty(args, "action").py_trim().to_lowercase();
         if self.st.lock().think_aloud.is_some() {
             // The check, hint or step must see what the learner just said: close their open
             // turn and wait for its line to reach the lesson first.
@@ -609,7 +609,7 @@ impl VoiceSession {
         if name == "leave_meeting" {
             return obj_of(meeter.leave());
         }
-        let meeting = arg_or_empty(args, "meeting").trim().to_string();
+        let meeting = arg_or_empty(args, "meeting").py_trim().to_string();
         let meeting = if meeting.is_empty() { "now".to_string() } else { meeting };
         match meeter.join(&meeting).await {
             Ok(out) => obj_of(out),
@@ -667,7 +667,7 @@ impl VoiceSession {
 
     /// py: voice_agent.py:1895 `async def _think_hard(self, question: str) -> dict[str, Any]:`
     pub(crate) async fn think_hard(self: &Arc<Self>, question: &str) -> Obj {
-        let question = question.trim();
+        let question = question.py_trim();
         if question.is_empty() {
             return refusal("empty question");
         }
@@ -739,7 +739,7 @@ impl VoiceSession {
             st.owner_turns += 1;
             // the yes or no answers the question asked last (_owner_answered, _gate)
             st.decision = Some((st.owner_turns, bare.to_string(), st.asked_last.clone()));
-            st.answer_words = text.trim().to_string();
+            st.answer_words = text.py_trim().to_string();
             if st.held.is_some() {
                 // the gate's question is answered only by a bare spoken yes (tool_gate.py, _gate) said while it was
                 // the question asked last; anything else drops the held call, so a later yes to something else (a
@@ -836,10 +836,10 @@ impl VoiceSession {
     /// (owner, 2026-09-23: the old fallback to eve's last line laundered its
     /// replies into the permanent layer); with no owner turn, nothing is.
     pub(crate) fn last_substantive_turn(self: &Arc<Self>, said: &str) -> String {
-        let phrase = said.to_lowercase().split_whitespace().collect::<Vec<_>>().join(" ");
+        let phrase = said.to_lowercase().split(eve_envfile::is_py_space).filter(|w| !w.is_empty()).collect::<Vec<_>>().join(" ");
         let st = self.st.lock();
         for (turn_who, text) in st.turns.iter().rev() {
-            let body = text.split_whitespace().collect::<Vec<_>>().join(" ");
+            let body = text.split(eve_envfile::is_py_space).filter(|w| !w.is_empty()).collect::<Vec<_>>().join(" ");
             if turn_who != "user" || body.is_empty() {
                 continue;
             }

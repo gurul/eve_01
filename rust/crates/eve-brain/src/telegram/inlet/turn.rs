@@ -317,7 +317,7 @@ impl TelegramInlet {
         }
         if !handoff {
             let text = if attached {
-                format!("{} {}", inbound.text, attached_line(inbound)).trim().to_string()
+                format!("{} {}", inbound.text, attached_line(inbound)).py_trim().to_string()
             } else {
                 inbound.text.clone()
             };
@@ -671,7 +671,7 @@ impl TelegramInlet {
             }
             tracing::info!("telegram: round {}: {}", round_no, call_names(&calls));
             if call_say.is_some()
-                && text.trim().is_empty()
+                && text.py_trim().is_empty()
                 && !said_on_call
                 && calls.iter().any(|c| matches!(name_of(c), "start_task" | "opentable_search"))
             {
@@ -679,7 +679,7 @@ impl TelegramInlet {
                 // 2026-10-04, of "One sec, checking.": "i dont need one sec checking", "its annoying")
                 said_on_call = true;
                 self.to_call(chat_id, CALL_ON_IT, None);
-            } else if !text.trim().is_empty() {
+            } else if !text.py_trim().is_empty() {
                 said_on_call = true;
             }
             items.extend(carry);

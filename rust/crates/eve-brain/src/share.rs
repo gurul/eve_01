@@ -1031,7 +1031,7 @@ impl Share {
         let count = match body.get("count") {
             Some(v) if py::truthy(v) => match v {
                 Value::Number(n) => n.as_i64().or_else(|| n.as_f64().map(|f| f.trunc() as i64)),
-                Value::String(s) => s.trim().parse::<i64>().ok(),
+                Value::String(s) => s.py_trim().parse::<i64>().ok(),
                 Value::Bool(true) => Some(1),
                 _ => None,
             }
@@ -2111,7 +2111,7 @@ fn make_boundary(texts: &[&str]) -> String {
     let base = format!("==============={token:019}==");
     let mut boundary = base.clone();
     let mut counter = 0;
-    while texts.iter().any(|t| t.lines().any(|l| l.trim_end() == format!("--{boundary}") || l.trim_end() == format!("--{boundary}--"))) {
+    while texts.iter().any(|t| t.lines().any(|l| l.trim_end_matches(eve_envfile::is_py_space) == format!("--{boundary}") || l.trim_end_matches(eve_envfile::is_py_space) == format!("--{boundary}--"))) {
         boundary = format!("{base}.{counter}");
         counter += 1;
     }
@@ -2165,7 +2165,7 @@ pub fn gmail_can_send(environ: Option<&Environ>) -> bool {
         return false;
     }
     let granted = str_or_empty(eve_apps_mcp::read_json(&cfg.google_token_path()).get("scope"));
-    granted.split_whitespace().any(|s| s == GMAIL_SEND_SCOPE)
+    granted.split(eve_envfile::is_py_space).filter(|w| !w.is_empty()).any(|s| s == GMAIL_SEND_SCOPE)
 }
 
 /// py: share.py:762 `def _chunks(path: Path) -> Iterator[bytes]:`

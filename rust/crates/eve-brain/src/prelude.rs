@@ -78,3 +78,15 @@ pub type Sleep = Arc<dyn Fn(f64) -> futures::future::BoxFuture<'static, ()> + Se
 
 /// The brain's shared types (futures, tasks, the context, the daemon's callables and duck types).
 pub use crate::seams::*;
+
+/// Python's `str.strip()` as a method: whitespace as `str.isspace` reads it, U+001C..U+001F included (Rust's
+/// `trim` keeps those four).
+pub trait PyTrim {
+    fn py_trim(&self) -> &str;
+}
+
+impl PyTrim for str {
+    fn py_trim(&self) -> &str {
+        eve_envfile::py_strip(self)
+    }
+}

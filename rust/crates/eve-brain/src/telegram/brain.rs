@@ -15,8 +15,8 @@ use std::sync::atomic::{AtomicBool, Ordering};
 /// Built once per turn and sent in every round of it, never kept in the history.
 pub fn turn_context(brief: &str, clock: Option<&str>) -> String {
     let mut text = match clock {
-        Some(clock) => clock.trim().to_string(),
-        None => eve_system_context::context(None, None).trim().to_string(),
+        Some(clock) => clock.py_trim().to_string(),
+        None => eve_system_context::context(None, None).py_trim().to_string(),
     };
     let brief = wire_words(brief);
     if !brief.is_empty() {
@@ -81,7 +81,7 @@ pub fn split_for_call(text: &str) -> (String, String) {
         Some((head, written)) => (head, written),
         None => (text, ""),
     };
-    let (spoken, written) = (head.trim().to_string(), written.trim().to_string());
+    let (spoken, written) = (head.py_trim().to_string(), written.py_trim().to_string());
     let links: Vec<String> =
         LINK.find_iter(&spoken).map(|m| m.as_str().trim_end_matches([')', '.', ',', ';']).to_string()).collect();
     let mut parts: Vec<String> = Vec::new();
@@ -166,7 +166,7 @@ impl SentenceStream {
 
     /// py: telegram.py:1799 `def _emit(self, piece: str) -> None:`
     pub(crate) fn emit(&self, piece: &str) {
-        let piece = piece.trim();
+        let piece = piece.py_trim();
         if !piece.is_empty() {
             (self.say)(piece);
         }
@@ -614,7 +614,7 @@ pub fn parse_response_with(response: &Value, allowed: &AllowedNames, keep_unknow
             _ => {}
         }
     }
-    let text = texts.iter().map(|t| t.trim()).filter(|t| !t.is_empty()).collect::<Vec<_>>().join("\n");
+    let text = texts.iter().map(|t| t.py_trim()).filter(|t| !t.is_empty()).collect::<Vec<_>>().join("\n");
     Ok((calls, text, carry))
 }
 
@@ -626,7 +626,7 @@ pub fn parse_response_with(response: &Value, allowed: &AllowedNames, keep_unknow
 pub fn resolve_owner_path(raw: &str, home: Option<&Path>) -> (Option<PathBuf>, String) {
     let home_given = home.map(Path::to_path_buf).unwrap_or_else(crate::prelude::home);
     let home = eve_transcripts::py::resolve(&home_given).unwrap_or(home_given);
-    let text = raw.trim();
+    let text = raw.py_trim();
     if text.is_empty() {
         return (None, "no path given".into());
     }
@@ -714,7 +714,7 @@ pub(crate) fn task_path_candidates(text: &str) -> Vec<Vec<String>> {
         let ends: Vec<String> = TASK_BARE_END
             .find_iter(&rest)
             .filter_map(Result::ok)
-            .map(|e| rest[..e.end()].trim().to_string())
+            .map(|e| rest[..e.end()].py_trim().to_string())
             .collect();
         out.push(ends);
     }
@@ -741,7 +741,7 @@ pub fn task_files(result: &str, since: f64, home: Option<&Path>) -> Vec<PathBuf>
     for spellings in task_path_candidates(result) {
         for spelling in spellings {
             let decoded = urlencoding::decode_binary(spelling.as_bytes());
-            let mut raw = String::from_utf8_lossy(&decoded).trim().to_string();
+            let mut raw = String::from_utf8_lossy(&decoded).py_trim().to_string();
             if let Some(rest) = raw.strip_prefix("file://") {
                 raw = rest.to_string();
             }
@@ -920,7 +920,7 @@ pub fn capture_screen() -> Option<PathBuf> {
         if status.success() && size > 0 {
             return Ok(Some(path.clone()));
         }
-        let said = String::from_utf8_lossy(&stderr).trim().to_string();
+        let said = String::from_utf8_lossy(&stderr).py_trim().to_string();
         tracing::warn!("telegram: screencapture failed ({})", wire_cut(&said, 120));
         Ok(None)
     };

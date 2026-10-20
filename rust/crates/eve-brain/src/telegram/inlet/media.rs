@@ -123,7 +123,7 @@ impl TelegramInlet {
         if self.memory.is_none() {
             return false;
         }
-        let caption = head_chars(caption.trim(), MAX_CAPTION_CHARS);
+        let caption = head_chars(caption.py_trim(), MAX_CAPTION_CHARS);
         let bytes: Vec<u8> = match data {
             Some(d) => d.to_vec(),
             None => {
@@ -360,7 +360,7 @@ impl TelegramInlet {
             Some(v) if crate::telegram::inlet::turn::truthy(Some(v)) => v.to_string(),
             _ => String::new(),
         };
-        let claim = claim_raw.split_whitespace().collect::<Vec<_>>().join(" ");
+        let claim = claim_raw.split(eve_envfile::is_py_space).filter(|w| !w.is_empty()).collect::<Vec<_>>().join(" ");
         if claim.is_empty() {
             return refused("nothing to remember");
         }

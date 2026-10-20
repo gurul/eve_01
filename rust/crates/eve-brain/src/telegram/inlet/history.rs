@@ -551,11 +551,11 @@ impl TelegramInlet {
         let Some(memory) = self.memory.as_ref() else {
             return String::new();
         };
-        let profile = memory.profile_for_voice().trim().to_string();
+        let profile = memory.profile_for_voice().py_trim().to_string();
         let used = if profile.is_empty() { 0 } else { profile.chars().count() as i64 + 2 };
         let room = THINK_CONTEXT_CHARS as i64 - used;
         let today = if room > 200 {
-            memory.today(room, &eve_transcripts::Today::default()).trim().to_string()
+            memory.today(room, &eve_transcripts::Today::default()).py_trim().to_string()
         } else {
             String::new()
         };

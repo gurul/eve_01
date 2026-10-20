@@ -160,7 +160,7 @@ impl Accumulated {
             "content_block_stop" => {
                 if let Some(raw) = self.partial_json.remove(&index) {
                     if let Some(b) = self.content.get_mut(index).and_then(Value::as_object_mut) {
-                        let input = if raw.trim().is_empty() {
+                        let input = if raw.py_trim().is_empty() {
                             json!({})
                         } else {
                             serde_json::from_str(&raw).unwrap_or(Value::String(raw))

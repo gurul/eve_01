@@ -93,7 +93,7 @@ pub static RECENT_MESSAGES_TOOL: LazyLock<Value> =
 /// time is read in this computer's zone as `astimezone()` reads it (`local_aware`).
 pub(crate) fn local_time(raw: &Value) -> Option<f64> {
     let text = py_str_or_empty(raw);
-    let text = text.trim();
+    let text = text.py_trim();
     if text.is_empty() {
         return None;
     }
@@ -413,7 +413,7 @@ impl Default for TelegramConfig {
 pub(crate) fn owner_ids(raw: &str) -> Vec<i64> {
     let mut ids = std::collections::BTreeSet::new();
     for piece in raw.replace(';', ",").split(',') {
-        let piece = piece.trim();
+        let piece = piece.py_trim();
         if piece.is_empty() {
             continue;
         }
@@ -441,8 +441,8 @@ fn py_positive_int(piece: &str) -> Option<i64> {
 /// `(env.get(name) or default).strip()`.
 fn env_str(environ: Option<&Environ>, name: &str, default: &str) -> String {
     match env_get(environ, name) {
-        Some(v) if !v.is_empty() => v.trim().to_string(),
-        _ => default.trim().to_string(),
+        Some(v) if !v.is_empty() => v.py_trim().to_string(),
+        _ => default.py_trim().to_string(),
     }
 }
 

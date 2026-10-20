@@ -58,7 +58,7 @@ pub(crate) fn wire_cut(s: &str, n: usize) -> String {
 
 /// `" ".join(s.split())`.
 pub(crate) fn wire_words(s: &str) -> String {
-    s.split_whitespace().collect::<Vec<_>>().join(" ")
+    s.split(eve_envfile::is_py_space).filter(|w| !w.is_empty()).collect::<Vec<_>>().join(" ")
 }
 
 // py: telegram.py:1469 `_FROM_CALL` (ContextVar): `seams::TurnCtx::call` (`ctx()`, `set_ctx`, `in_ctx`).
@@ -227,12 +227,12 @@ pub fn accept(update: &Value, config: &TelegramConfig, now: f64) -> (String, Opt
     }
     let message = Value::Object(msg.clone());
     if let Some(image) = eve_telegram_images::attachment(&message) {
-        let caption = msg.get("caption").and_then(Value::as_str).map(|c| c.trim().to_string()).unwrap_or_default();
+        let caption = msg.get("caption").and_then(Value::as_str).map(|c| c.py_trim().to_string()).unwrap_or_default();
         return (OK.into(), Some(Inbound { chat_id, user_id, text: caption, image: Some(image), message_id, ..Inbound::default() }));
     }
     match msg.get("text").and_then(Value::as_str) {
-        Some(text) if !text.trim().is_empty() => {
-            (OK.into(), Some(Inbound { chat_id, user_id, text: text.trim().to_string(), message_id, ..Inbound::default() }))
+        Some(text) if !text.py_trim().is_empty() => {
+            (OK.into(), Some(Inbound { chat_id, user_id, text: text.py_trim().to_string(), message_id, ..Inbound::default() }))
         }
         _ => (NOT_TEXT.into(), Some(inbound)),
     }
@@ -377,7 +377,7 @@ static OPTION_CUT: LazyLock<Regex> = LazyLock::new(|| Regex::new(r" / \d+\. ").e
 /// The buttons a task's question gets, or none. Only a question whose answers are known is given
 /// buttons: a free question ("which account?") is answered in words, as before.
 pub fn answer_choices(question: &str) -> Vec<Choice> {
-    let text = question.trim();
+    let text = question.py_trim();
     if let Some(codex) = CODEX_REPLY.captures(text) {
         let mut chosen = Vec::new();
         for piece in codex["choices"].split(';').map(str::trim) {
@@ -424,7 +424,7 @@ pub fn question_options(hint: &str) -> Vec<(i64, String)> {
         let Some(rest) = piece.strip_prefix(&head) else {
             return Vec::new();
         };
-        let label = rest.trim();
+        let label = rest.py_trim();
         if label.is_empty() {
             return Vec::new();
         }

@@ -19,7 +19,7 @@ use crate::telegram::bot_api::wire;
 ///
 /// Rust: `asyncio.run(check())` is the caller's runtime; this is `check()` itself.
 pub async fn diagnose(environ: Option<&Environ>, api: Option<Arc<dyn TelegramApi>>) -> i64 {
-    let token = env_get(environ, "EVE_TELEGRAM_TOKEN").unwrap_or_default().trim().to_string();
+    let token = env_get(environ, "EVE_TELEGRAM_TOKEN").unwrap_or_default().py_trim().to_string();
     if token.is_empty() {
         println!(
             "EVE_TELEGRAM_TOKEN is not set. Create a bot with @BotFather, then add the token to ~/.config/eve-bridge/env."

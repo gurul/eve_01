@@ -137,7 +137,7 @@ pub(crate) fn code_match(module: Option<&dyn AppModule>, hub: Option<&dyn AppHub
 /// py: telegram.py:955 `def robot_enabled(environ: Any = None) -> bool:`
 pub fn robot_enabled(environ: Option<&Environ>) -> bool {
     let raw = env_get(environ, "EVE_ROBOT").unwrap_or_default();
-    matches!(raw.trim().to_lowercase().as_str(), "1" | "true" | "yes" | "on")
+    matches!(raw.py_trim().to_lowercase().as_str(), "1" | "true" | "yes" | "on")
 }
 
 /// TOOLS as definitions (each one a JSON object).

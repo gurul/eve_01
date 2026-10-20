@@ -703,5 +703,5 @@ impl TelegramInlet {
 
 /// `text.strip().lower().rstrip(".!")`: a typed answer as a button's word.
 fn typed_word(text: &str) -> String {
-    text.trim().to_lowercase().trim_end_matches(['.', '!']).to_string()
+    text.py_trim().to_lowercase().trim_end_matches(['.', '!']).to_string()
 }
