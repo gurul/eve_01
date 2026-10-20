@@ -628,3 +628,32 @@ fn paths_in_owner_text_are_written_as_python_writes_them() {
     let f = flow(&root);
     assert_eq!(f.label(Path::new("/elsewhere//x/")), "/elsewhere/x");
 }
+
+#[test]
+fn path_names_are_pathlib_names() {
+    // `Path(p).name`, printed by Python.
+    for (p, want) in [("/a/..", ".."), ("/a/.", "a"), ("/", ""), ("a/b/", "b"), ("/a/b/..", ".."), ("", "")] {
+        assert_eq!(py_name(Path::new(p)), want, "{p}");
+    }
+    assert!(warp_config(Path::new("/a/.."), "x").contains("title: \"..\"\n"));
+}
+
+#[test]
+fn harder_phrasings_match_python() {
+    // Expected values printed by the Python module (split_harness).
+    let cases: [(&str, &str, Option<&str>); 10] = [
+        ("open eve on claude code instead", "open eve", Some("claude")),
+        ("claude code instead of era-code", "claude code", Some("claude")),
+        ("eve, in Era-Code", "eve", Some("era-code")),
+        ("era maker using claude, thanks", "era maker, thanks", Some("claude")),
+        ("in claude", "", Some("claude")),
+        ("eve as era code instead of claude", "eve as era code", Some("era-code")),
+        ("work  era hub   with era code", "work  era hub", Some("era-code")),
+        ("eve\twith claude", "eve", Some("claude")),
+        ("eveinclaude", "eveinclaude", None),
+        ("eve with claude-code", "eve-code", Some("claude")),
+    ];
+    for (text, words, harness) in cases {
+        assert_eq!(split_harness(text), (words.to_string(), harness), "{text}");
+    }
+}

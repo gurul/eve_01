@@ -315,6 +315,15 @@ fn py_str(path: &Path) -> String {
     py_path(&path.to_string_lossy()).to_string_lossy().into_owned()
 }
 
+/// `Path.name`: the last part of pathlib's normal form (`..` included), `""` for a root or nothing.
+fn py_name(path: &Path) -> String {
+    let text = py_str(path);
+    if text == "." || text.trim_start_matches('/').is_empty() {
+        return String::new();
+    }
+    text.rsplit('/').next().unwrap_or_default().to_string()
+}
+
 /// `json.dumps(value)` with its default `ensure_ascii=True`: every character outside space..`~` written as
 /// `\uXXXX` (lower-case hex, surrogate pairs above the BMP). serde_json already escapes the control characters
 /// as Python does.
@@ -827,7 +836,7 @@ pub fn terminal_app<E: Environ + ?Sized>(env: &E) -> String {
 /// launch, so one fixed name is rewritten every time. JSON strings are valid YAML scalars, so a folder name
 /// with a colon or a quote cannot break the file.
 pub fn warp_config(folder: &Path, command: &str) -> String {
-    let name = folder.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+    let name = py_name(folder);
     format!(
         "---\nname: {}\nwindows:\n  - tabs:\n      - title: {}\n        layout:\n          cwd: {}\n          commands:\n            - exec: {}\n",
         json_str(WARP_CONFIG_NAME),
@@ -935,7 +944,7 @@ where
     }
     let recent_path = opts.recent_path.unwrap_or_else(|| RECENT_PATH.clone());
     remember(&folder, harness, &recent_path);
-    let name = folder.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+    let name = py_name(&folder);
     Ok(format!("{harness} is starting in {name} on the Mac. Say claude on to drive it from here."))
 }
 
