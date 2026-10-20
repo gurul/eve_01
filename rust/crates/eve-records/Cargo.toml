@@ -1,0 +1,26 @@
+[package]
+name = "eve-records"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+eve-openrouter = { path = "../eve-openrouter" }
+eve-spend = { path = "../eve-spend" }
+eve-toolchain = { path = "../eve-toolchain" }
+eve-transcripts = { path = "../eve-transcripts" }
+anyhow.workspace = true
+chrono.workspace = true
+indexmap.workspace = true
+libc.workspace = true
+parking_lot.workspace = true
+regex.workspace = true
+serde_json.workspace = true
+tempfile.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+sha2.workspace = true
+tracing-subscriber.workspace = true
