@@ -1224,6 +1224,22 @@ impl TelegramInlet {
             st.claude_on_job = Some(crate::seams::Job::spawn("claude-on", futures::future::pending::<()>()));
         }
     }
+    /// `inlet._agent = agent`.
+    pub fn tt_set_agent(&self, agent: Option<Arc<dyn TaskAgent>>) {
+        self.st.lock().agent = agent;
+    }
+    /// `await inlet._run_agent(goal, chat_id)`.
+    pub async fn tt_run_agent(self: &Arc<Self>, goal: &str, chat_id: i64) {
+        self.run_agent(goal, chat_id, None, None, &[], &[], None).await;
+    }
+    /// `await inlet._send_screen(chat_id, caption)`.
+    pub async fn tt_send_screen(self: &Arc<Self>, chat_id: i64, caption: &str) -> Obj {
+        self.send_screen(chat_id, caption, None).await
+    }
+    /// `await inlet._robot_tool(name, args)`.
+    pub async fn tt_robot_tool(self: &Arc<Self>, name: &str, args: &Obj) -> Obj {
+        self.robot_tool(name, args).await
+    }
     /// `await inlet._judge_answer(question, choices, said)`.
     pub async fn tt_judge_answer(self: &Arc<Self>, question: &str, choices: &[&str], said: &str) -> Option<String> {
         let choices: Vec<String> = choices.iter().map(|c| c.to_string()).collect();

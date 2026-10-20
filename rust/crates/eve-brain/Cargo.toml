@@ -184,3 +184,5 @@ cpal = "0.18.2"
 tempfile.workspace = true
 tokio.workspace = true
 tracing-subscriber.workspace = true
+# a real PNG for the task-browser picture tests
+image.workspace = true

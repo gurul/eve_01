@@ -1285,3 +1285,120 @@ async fn diagnose_says_whether_the_token_is_good_and_never_polls_with_an_offset(
     assert_eq!(diagnose(Some(&env), Some(refusing)).await, 1);
     assert_eq!(api.log.lock().polls, 1);
 }
+
+// ---- test_telegram.py G5 privacy and the real request path (483-628), as Python wrote them ----------------------
+
+/// Python's RuntimeError is an `anyhow` message here, whose kind the turn's log line names "Exception"; httpx's own
+/// "HTTP Request" line has no Rust counterpart (reqwest logs nothing), so the token's redaction is checked on the
+/// lines eve writes.
+#[tokio::test]
+async fn test_words_and_the_token_never_reach_the_log() {
+    let _iso = isolated();
+    let logs = Caplog::capture();
+    let secret = "my-bank-password-is-hunter2";
+    let polls = Arc::new(Mutex::new(0));
+    let p = polls.clone();
+    let transport = MockTransport::new(move |request| {
+        assert!(request.url.contains(TOKEN)); // the token really is in the URL: that is the danger
+        let method = request.url.rsplit('/').next().unwrap_or("").to_string();
+        if method == "getUpdates" {
+            let mut n = p.lock();
+            *n += 1;
+            return match *n {
+                1 => Ok(respond(200, &json!({"ok": true, "result": [
+                    said(secret, 1), update(2, &format!("psst {secret}"), 666, NOW, 2)]}))),
+                2 => Err(HttpError { kind: "ConnectError".into(), message: format!("cannot reach {}", request.url) }),
+                3 => Ok(respond(500, &json!({"ok": false, "error_code": 500, "description": format!("failed for bot{TOKEN}")}))),
+                _ => Ok(respond(409, &json!({"ok": false, "error_code": 409, "description": "Conflict"}))),
+            };
+        }
+        Ok(respond(200, &json!({"ok": true, "result": {}})))
+    });
+    let api: Arc<dyn TelegramApi> = Arc::new(bot(&transport));
+    let create = FakeCreate::new(vec![]);
+    create.push(Scripted::Fail(format!("the model choked on: {secret}")));
+    let cfg = TelegramConfig { token: TOKEN.into(), ..config() };
+    let inlet = TelegramInlet::new(cfg, api, create.create(), InletOptions {
+        wall: Some(Arc::new(|| NOW)),
+        sleep: Some(no_sleep()),
+        environ: Some(conftest_env()),
+        toolset_route: Lent::Given(None),
+        grader: Lent::Given(None),
+        small_talk_ask: Lent::Given(None),
+        ..InletOptions::default()
+    });
+    tokio::time::timeout(std::time::Duration::from_secs(5), inlet.run()).await.expect("ends by itself on the 409");
+    settle(200).await;
+    assert_eq!(create.requests.lock().len(), 1);
+    let text = logs.text();
+    assert!(text.contains("answered 409"), "{text}");
+    // The controls: the capture is live and the drop line is there.
+    assert!(text.contains("user id 666"));
+    assert!(text.contains("turn failed: Exception") && text.contains("ConnectError"), "{text}");
+    // The claims.
+    assert!(!text.contains(TOKEN));
+    assert!(!text.contains(secret) && !text.contains("hunter2"));
+}
+
+#[tokio::test]
+async fn test_a_bot_api_error_never_carries_the_url() {
+    let _iso = isolated();
+    let transport = MockTransport::new(|request| {
+        Err(HttpError { kind: "ReadTimeout".into(), message: format!("timed out: {}", request.url) })
+    });
+    let api = bot(&transport);
+    let caught = api.get_updates(None, 50).await.unwrap_err();
+    api.close().await;
+    // Python's `__cause__ is None` and `__suppress_context__`: a BotApiError carries no source error at all
+    assert!(!caught.to_string().contains(TOKEN) && std::error::Error::source(&caught).is_none());
+    assert!(caught.to_string().contains("ReadTimeout"));
+}
+
+#[tokio::test]
+async fn test_a_long_answer_is_sent_as_html_pieces_under_the_limit_and_nothing_is_lost() {
+    let _iso = isolated();
+    let paragraphs: Vec<String> = (0..20).map(|i| format!("Paragraph {i}: {}**end**", "word ".repeat(120))).collect();
+    let answer = paragraphs.join("\n\n");
+    let transport = MockTransport::ok(json!({}));
+    let api = bot(&transport);
+    api.send_message(OWNER, &answer, Some("Task done"), Some("the goal"), &[], 0, None).await.unwrap();
+    api.close().await;
+    let bodies: Vec<Value> = transport.calls().into_iter().map(|(_, b)| b).collect();
+    assert!(bodies.len() >= 3 && bodies.iter().all(|b| b["parse_mode"] == json!("HTML") && b["chat_id"] == json!(OWNER)));
+    assert!(bodies.iter().all(|b| b["text"].as_str().unwrap().chars().count() <= MAX_MESSAGE_CHARS));
+    assert!(bodies[0]["text"].as_str().unwrap().starts_with("<b>Task done</b>\n<i>the goal</i>\n\nParagraph 0: "));
+    for b in &bodies {
+        // cut on a paragraph: a piece starts at one
+        let t = b["text"].as_str().unwrap();
+        assert!((t.starts_with("<b>Task done</b>") || t.starts_with("Paragraph ")) && t.ends_with("<b>end</b>"));
+    }
+    let shown = bodies.iter().map(|b| eve_telegram_format::visible(b["text"].as_str().unwrap())).collect::<Vec<_>>().join("\n\n");
+    let want = paragraphs.iter().map(|p| p.replace("**", "").trim_end().to_string()).collect::<Vec<_>>().join("\n\n");
+    assert_eq!(shown, format!("Task done\nthe goal\n\n{want}"));
+}
+
+#[tokio::test]
+async fn test_a_message_telegram_cannot_parse_is_sent_again_as_plain_text() {
+    let _iso = isolated();
+    let transport = MockTransport::new(|request| {
+        let body: Value = serde_json::from_slice(&request.body).unwrap();
+        let text = body["text"].as_str().unwrap_or("");
+        if body.get("parse_mode") == Some(&json!("HTML")) && text.contains("odd") {
+            return Ok(respond(400, &json!({"ok": false, "error_code": 400,
+                                           "description": "Bad Request: can't parse entities: Unsupported start tag"})));
+        }
+        if text.contains("forbidden") {
+            return Ok(respond(403, &json!({"ok": false, "error_code": 403, "description": "Forbidden: bot was blocked"})));
+        }
+        Ok(respond(200, &json!({"ok": true, "result": {}})))
+    });
+    let api = bot(&transport);
+    api.send_message(OWNER, "an **odd** one <tag>", Some("Claude"), None, &[], 0, None).await.unwrap();
+    let caught = api.send_message(OWNER, "forbidden", None, None, &[], 0, None).await.unwrap_err();
+    assert_eq!(caught.code, 403);
+    let bodies: Vec<Value> = transport.calls().into_iter().map(|(_, b)| b).collect();
+    let modes: Vec<Option<&str>> = bodies.iter().map(|b| b.get("parse_mode").and_then(Value::as_str)).collect();
+    assert_eq!(modes, vec![Some("HTML"), None, Some("HTML")]);
+    assert_eq!(bodies[0]["text"], json!("<b>Claude</b>\n\nan <b>odd</b> one &lt;tag&gt;"));
+    assert_eq!(bodies[1]["text"], json!("Claude\n\nan odd one <tag>"));
+}
