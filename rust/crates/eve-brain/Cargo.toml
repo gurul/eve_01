@@ -182,6 +182,10 @@ cpal = "0.18.2"
 
 [dev-dependencies]
 tempfile.workspace = true
+# a real Chief on a temporary ledger (test_telegram_chief.py's Rig)
+eve-chief-ledger = { path = "../eve-chief-ledger" }
+eve-chief-desk = { path = "../eve-chief-desk" }
+eve-chief-reflect = { path = "../eve-chief-reflect" }
 tokio.workspace = true
 tracing-subscriber.workspace = true
 # a real PNG for the task-browser picture tests

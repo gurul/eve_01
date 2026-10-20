@@ -1168,6 +1168,10 @@ impl TelegramInlet {
     pub fn tt_held(&self) -> usize {
         self.st.lock().held.len()
     }
+    /// `inlet._app_filed == {}`.
+    pub fn tt_app_filed_is_empty(&self) -> bool {
+        self.st.lock().app_filed.is_empty()
+    }
     /// `inlet._chief_task`.
     pub fn tt_chief_task(&self) -> Option<(String, i64)> {
         self.st.lock().chief_task.clone()
