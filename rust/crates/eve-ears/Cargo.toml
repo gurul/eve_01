@@ -1,0 +1,23 @@
+[package]
+name = "eve-ears"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+eve-voice-gate = { path = "../eve-voice-gate" }
+anyhow.workspace = true
+libc.workspace = true
+parking_lot.workspace = true
+regex.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+# The k2-fsa crate at the Python wheel's release, as eve-voice-gate links it.
+sherpa-onnx = "1.13.8"
+# sounddevice's stand-in: CoreAudio input on the Mac.
+cpal = "0.18.2"
+
+[dev-dependencies]
+tempfile.workspace = true
+tracing-subscriber.workspace = true
