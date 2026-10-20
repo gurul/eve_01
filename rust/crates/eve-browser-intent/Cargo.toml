@@ -1,0 +1,17 @@
+[package]
+name = "eve-browser-intent"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+thiserror.workspace = true
+serde_json.workspace = true
+regex.workspace = true
+parking_lot.workspace = true
+tracing.workspace = true
+fancy-regex = "0.19.2"
+
+[dev-dependencies]
+tempfile.workspace = true
+url.workspace = true
