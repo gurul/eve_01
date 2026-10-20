@@ -1,0 +1,1515 @@
+[
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "QUJD"
+  },
+  "err": "frame: jpeg payload lacks SOI marker"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "QUJ="
+  },
+  "err": "frame: jpeg payload lacks SOI marker"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "QR=="
+  },
+  "err": "frame: jpeg payload lacks SOI marker"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "QUJD="
+  },
+  "err": "frame: bad base64: Excess padding not allowed"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "QUJD=="
+  },
+  "err": "frame: bad base64: Excess padding not allowed"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "QUI=="
+  },
+  "err": "frame: bad base64: Excess padding not allowed"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "QQ="
+  },
+  "err": "frame: bad base64: Incorrect padding"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "QQ"
+  },
+  "err": "frame: bad base64: Incorrect padding"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "QUJDQ="
+  },
+  "err": "frame: bad base64: Invalid base64-encoded string: number of data characters (5) cannot be 1 more than a multiple of 4"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "="
+  },
+  "err": "frame: bad base64: Leading padding not allowed"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "=="
+  },
+  "err": "frame: bad base64: Leading padding not allowed"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "QQ==QQ=="
+  },
+  "err": "frame: bad base64: Excess data after padding"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "QQ==\n"
+  },
+  "err": "frame: bad base64: Only base64 data is allowed"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "Q==="
+  },
+  "err": "frame: bad base64: Invalid base64-encoded string: number of data characters (1) cannot be 1 more than a multiple of 4"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "QUJD\n"
+  },
+  "err": "frame: bad base64: Only base64 data is allowed"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": " QUJD"
+  },
+  "err": "frame: bad base64: Only base64 data is allowed"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "QU JD"
+  },
+  "err": "frame: bad base64: Only base64 data is allowed"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "QUJD===="
+  },
+  "err": "frame: bad base64: Excess padding not allowed"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "Q"
+  },
+  "err": "frame: bad base64: Invalid base64-encoded string: number of data characters (1) cannot be 1 more than a multiple of 4"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "QU"
+  },
+  "err": "frame: bad base64: Incorrect padding"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "QUJ"
+  },
+  "err": "frame: bad base64: Incorrect padding"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "QUJDQ"
+  },
+  "err": "frame: bad base64: Invalid base64-encoded string: number of data characters (5) cannot be 1 more than a multiple of 4"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "QUJDQU"
+  },
+  "err": "frame: bad base64: Incorrect padding"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "QUJDQUI"
+  },
+  "err": "frame: bad base64: Incorrect padding"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "QUJDQUJD"
+  },
+  "err": "frame: jpeg payload lacks SOI marker"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "AA=A"
+  },
+  "err": "frame: bad base64: Discontinuous padding not allowed"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "A=AA"
+  },
+  "err": "frame: bad base64: Invalid base64-encoded string: number of data characters (1) cannot be 1 more than a multiple of 4"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "AA==AA"
+  },
+  "err": "frame: bad base64: Excess data after padding"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "é"
+  },
+  "err": "frame: bad base64: string argument should contain only ASCII characters"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "QUJDé"
+  },
+  "err": "frame: bad base64: string argument should contain only ASCII characters"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "-_-_"
+  },
+  "err": "frame: bad base64: Only base64 data is allowed"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "QQ=\n="
+  },
+  "err": "frame: bad base64: Only base64 data is allowed"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "QUJDQ=="
+  },
+  "err": "frame: bad base64: Invalid base64-encoded string: number of data characters (5) cannot be 1 more than a multiple of 4"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "////"
+  },
+  "err": "frame: jpeg payload lacks SOI marker"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "+++/"
+  },
+  "err": "frame: jpeg payload lacks SOI marker"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "QUJD=QUJD"
+  },
+  "err": "frame: bad base64: Excess padding not allowed"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "\u0000"
+  },
+  "err": "frame: bad base64: Only base64 data is allowed"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "A=AA"
+  },
+  "err": "frame: bad base64: Invalid base64-encoded string: number of data characters (1) cannot be 1 more than a multiple of 4"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "A=A"
+  },
+  "err": "frame: bad base64: Invalid base64-encoded string: number of data characters (1) cannot be 1 more than a multiple of 4"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "A="
+  },
+  "err": "frame: bad base64: Invalid base64-encoded string: number of data characters (1) cannot be 1 more than a multiple of 4"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "A=="
+  },
+  "err": "frame: bad base64: Invalid base64-encoded string: number of data characters (1) cannot be 1 more than a multiple of 4"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "A=AAA"
+  },
+  "err": "frame: bad base64: Invalid base64-encoded string: number of data characters (1) cannot be 1 more than a multiple of 4"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "AA=AA"
+  },
+  "err": "frame: bad base64: Discontinuous padding not allowed"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "AAA=A"
+  },
+  "err": "frame: bad base64: Excess data after padding"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "AA==A"
+  },
+  "err": "frame: bad base64: Excess data after padding"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "AAA=="
+  },
+  "err": "frame: bad base64: Excess padding not allowed"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "AAAA="
+  },
+  "err": "frame: bad base64: Excess padding not allowed"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "AB=C="
+  },
+  "err": "frame: bad base64: Discontinuous padding not allowed"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "A=B=C"
+  },
+  "err": "frame: bad base64: Invalid base64-encoded string: number of data characters (1) cannot be 1 more than a multiple of 4"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "A=\n"
+  },
+  "err": "frame: bad base64: Invalid base64-encoded string: number of data characters (1) cannot be 1 more than a multiple of 4"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "A\n="
+  },
+  "err": "frame: bad base64: Only base64 data is allowed"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "AA=\nA"
+  },
+  "err": "frame: bad base64: Only base64 data is allowed"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "AA==\n"
+  },
+  "err": "frame: bad base64: Only base64 data is allowed"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "\nAA=="
+  },
+  "err": "frame: bad base64: Only base64 data is allowed"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "AAA=\n"
+  },
+  "err": "frame: bad base64: Only base64 data is allowed"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "A=A="
+  },
+  "err": "frame: bad base64: Invalid base64-encoded string: number of data characters (1) cannot be 1 more than a multiple of 4"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "A==A"
+  },
+  "err": "frame: bad base64: Invalid base64-encoded string: number of data characters (1) cannot be 1 more than a multiple of 4"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "AA="
+  },
+  "err": "frame: bad base64: Incorrect padding"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "AAA="
+  },
+  "err": "frame: jpeg payload lacks SOI marker"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "AAAAA="
+  },
+  "err": "frame: bad base64: Invalid base64-encoded string: number of data characters (5) cannot be 1 more than a multiple of 4"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "AAAAA=="
+  },
+  "err": "frame: bad base64: Invalid base64-encoded string: number of data characters (5) cannot be 1 more than a multiple of 4"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "AA*="
+  },
+  "err": "frame: bad base64: Only base64 data is allowed"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "AA=*"
+  },
+  "err": "frame: bad base64: Only base64 data is allowed"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "AAAAA=AA"
+  },
+  "err": "frame: bad base64: Invalid base64-encoded string: number of data characters (5) cannot be 1 more than a multiple of 4"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "AAAAAA=A"
+  },
+  "err": "frame: bad base64: Discontinuous padding not allowed"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "AAAAAAA="
+  },
+  "err": "frame: jpeg payload lacks SOI marker"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "AAAAAAAA=="
+  },
+  "err": "frame: bad base64: Excess padding not allowed"
+ },
+ {
+  "in": {
+   "seq": "7",
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA=="
+  },
+  "ok": {
+   "seq": 7,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "data": "AAAAAA==",
+   "yaw": null,
+   "pitch": null,
+   "snap": false
+  }
+ },
+ {
+  "in": {
+   "seq": " 7 ",
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA=="
+  },
+  "ok": {
+   "seq": 7,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "data": "AAAAAA==",
+   "yaw": null,
+   "pitch": null,
+   "snap": false
+  }
+ },
+ {
+  "in": {
+   "seq": "+7",
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA=="
+  },
+  "ok": {
+   "seq": 7,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "data": "AAAAAA==",
+   "yaw": null,
+   "pitch": null,
+   "snap": false
+  }
+ },
+ {
+  "in": {
+   "seq": "-7",
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA=="
+  },
+  "ok": {
+   "seq": -7,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "data": "AAAAAA==",
+   "yaw": null,
+   "pitch": null,
+   "snap": false
+  }
+ },
+ {
+  "in": {
+   "seq": "1_000",
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA=="
+  },
+  "ok": {
+   "seq": 1000,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "data": "AAAAAA==",
+   "yaw": null,
+   "pitch": null,
+   "snap": false
+  }
+ },
+ {
+  "in": {
+   "seq": "1__0",
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA=="
+  },
+  "err": "frame: bad seq/w/h: invalid literal for int() with base 10: '1__0'"
+ },
+ {
+  "in": {
+   "seq": "_1",
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA=="
+  },
+  "err": "frame: bad seq/w/h: invalid literal for int() with base 10: '_1'"
+ },
+ {
+  "in": {
+   "seq": "1_",
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA=="
+  },
+  "err": "frame: bad seq/w/h: invalid literal for int() with base 10: '1_'"
+ },
+ {
+  "in": {
+   "seq": "7.0",
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA=="
+  },
+  "err": "frame: bad seq/w/h: invalid literal for int() with base 10: '7.0'"
+ },
+ {
+  "in": {
+   "seq": "",
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA=="
+  },
+  "err": "frame: bad seq/w/h: invalid literal for int() with base 10: ''"
+ },
+ {
+  "in": {
+   "seq": "  ",
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA=="
+  },
+  "err": "frame: bad seq/w/h: invalid literal for int() with base 10: '  '"
+ },
+ {
+  "in": {
+   "seq": 7.9,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA=="
+  },
+  "ok": {
+   "seq": 7,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "data": "AAAAAA==",
+   "yaw": null,
+   "pitch": null,
+   "snap": false
+  }
+ },
+ {
+  "in": {
+   "seq": -7.9,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA=="
+  },
+  "ok": {
+   "seq": -7,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "data": "AAAAAA==",
+   "yaw": null,
+   "pitch": null,
+   "snap": false
+  }
+ },
+ {
+  "in": {
+   "seq": true,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA=="
+  },
+  "ok": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "data": "AAAAAA==",
+   "yaw": null,
+   "pitch": null,
+   "snap": false
+  }
+ },
+ {
+  "in": {
+   "seq": false,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA=="
+  },
+  "ok": {
+   "seq": 0,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "data": "AAAAAA==",
+   "yaw": null,
+   "pitch": null,
+   "snap": false
+  }
+ },
+ {
+  "in": {
+   "seq": null,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA=="
+  },
+  "err": "frame: bad seq/w/h: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'"
+ },
+ {
+  "in": {
+   "seq": [
+    1
+   ],
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA=="
+  },
+  "err": "frame: bad seq/w/h: int() argument must be a string, a bytes-like object or a real number, not 'list'"
+ },
+ {
+  "in": {
+   "seq": {
+    "a": 1
+   },
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA=="
+  },
+  "err": "frame: bad seq/w/h: int() argument must be a string, a bytes-like object or a real number, not 'dict'"
+ },
+ {
+  "in": {
+   "seq": "0x10",
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA=="
+  },
+  "err": "frame: bad seq/w/h: invalid literal for int() with base 10: '0x10'"
+ },
+ {
+  "in": {
+   "seq": "\t8\n",
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA=="
+  },
+  "ok": {
+   "seq": 8,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "data": "AAAAAA==",
+   "yaw": null,
+   "pitch": null,
+   "snap": false
+  }
+ },
+ {
+  "in": {
+   "seq": 1e+300,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA=="
+  },
+  "ok": {
+   "seq": 1000000000000000052504760255204420248704468581108159154915854115511802457988908195786371375080447864043704443832883878176942523235360430575644792184786706982848387200926575803737830233794788090059368953234970799945081119038967640880074652742780142494579258788820056842838115669472196386865459400540160,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "data": "AAAAAA==",
+   "yaw": null,
+   "pitch": null,
+   "snap": false
+  }
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": "2",
+   "h": "2",
+   "fmt": "gray",
+   "b64": "AAAAAA=="
+  },
+  "ok": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "data": "AAAAAA==",
+   "yaw": null,
+   "pitch": null,
+   "snap": false
+  }
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 0,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA=="
+  },
+  "err": "frame: bad size 0x2"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": -1,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA=="
+  },
+  "err": "frame: bad size -1x2"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 2,
+   "h": 0,
+   "fmt": "gray",
+   "b64": "AAAAAA=="
+  },
+  "err": "frame: bad size 2x0"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 2.5,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA=="
+  },
+  "ok": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "data": "AAAAAA==",
+   "yaw": null,
+   "pitch": null,
+   "snap": false
+  }
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 3,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA=="
+  },
+  "err": "frame: gray payload is 4 bytes, expected 6"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 4,
+   "fmt": "gray",
+   "b64": "AAAAAA=="
+  },
+  "ok": {
+   "seq": 1,
+   "w": 1,
+   "h": 4,
+   "fmt": "gray",
+   "data": "AAAAAA==",
+   "yaw": null,
+   "pitch": null,
+   "snap": false
+  }
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": "rgb",
+   "b64": "AAAAAA=="
+  },
+  "err": "frame: unknown fmt 'rgb'"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": null,
+   "b64": "AAAAAA=="
+  },
+  "err": "frame: unknown fmt ''"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": "",
+   "b64": "AAAAAA=="
+  },
+  "err": "frame: unknown fmt ''"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": 0,
+   "b64": "AAAAAA=="
+  },
+  "err": "frame: unknown fmt ''"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": 1,
+   "b64": "AAAAAA=="
+  },
+  "err": "frame: unknown fmt '1'"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": 1.5,
+   "b64": "AAAAAA=="
+  },
+  "err": "frame: unknown fmt '1.5'"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": true,
+   "b64": "AAAAAA=="
+  },
+  "err": "frame: unknown fmt 'True'"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": false,
+   "b64": "AAAAAA=="
+  },
+  "err": "frame: unknown fmt ''"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": [],
+   "b64": "AAAAAA=="
+  },
+  "err": "frame: unknown fmt ''"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": [
+    "a"
+   ],
+   "b64": "AAAAAA=="
+  },
+  "err": "frame: unknown fmt \"['a']\""
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": {
+    "k": "v"
+   },
+   "b64": "AAAAAA=="
+  },
+  "err": "frame: unknown fmt \"{'k': 'v'}\""
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": "it's",
+   "b64": "AAAAAA=="
+  },
+  "err": "frame: unknown fmt \"it's\""
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": "say \"hi\"",
+   "b64": "AAAAAA=="
+  },
+  "err": "frame: unknown fmt 'say \"hi\"'"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": "a\nb",
+   "b64": "AAAAAA=="
+  },
+  "err": "frame: unknown fmt 'a\\nb'"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": "GRAY",
+   "b64": "AAAAAA=="
+  },
+  "err": "frame: unknown fmt 'GRAY'"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": null
+  },
+  "err": "frame: missing b64"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": ""
+  },
+  "err": "frame: missing b64"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": 5
+  },
+  "err": "frame: missing b64"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": [
+    "x"
+   ]
+  },
+  "err": "frame: missing b64"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA==",
+   "yaw": 1,
+   "pitch": 2.5
+  },
+  "ok": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "data": "AAAAAA==",
+   "yaw": 1.0,
+   "pitch": 2.5,
+   "snap": false
+  }
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA==",
+   "yaw": "1",
+   "pitch": null
+  },
+  "ok": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "data": "AAAAAA==",
+   "yaw": null,
+   "pitch": null,
+   "snap": false
+  }
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA==",
+   "yaw": true,
+   "pitch": false
+  },
+  "ok": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "data": "AAAAAA==",
+   "yaw": null,
+   "pitch": null,
+   "snap": false
+  }
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA==",
+   "snap": true
+  },
+  "ok": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "data": "AAAAAA==",
+   "yaw": null,
+   "pitch": null,
+   "snap": true
+  }
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA==",
+   "snap": 1
+  },
+  "ok": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "data": "AAAAAA==",
+   "yaw": null,
+   "pitch": null,
+   "snap": false
+  }
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA==",
+   "snap": "true"
+  },
+  "ok": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "data": "AAAAAA==",
+   "yaw": null,
+   "pitch": null,
+   "snap": false
+  }
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "b64": "AAAAAA==",
+   "snap": false
+  },
+  "ok": {
+   "seq": 1,
+   "w": 2,
+   "h": 2,
+   "fmt": "gray",
+   "data": "AAAAAA==",
+   "yaw": null,
+   "pitch": null,
+   "snap": false
+  }
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "/9j/2Q=="
+  },
+  "ok": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "data": "/9j/2Q==",
+   "yaw": null,
+   "pitch": null,
+   "snap": false
+  }
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "/w=="
+  },
+  "err": "frame: jpeg payload lacks SOI marker"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 1,
+   "h": 1,
+   "fmt": "jpeg",
+   "b64": "UE5H"
+  },
+  "err": "frame: jpeg payload lacks SOI marker"
+ },
+ {
+  "in": {
+   "w": 2,
+   "h": 2
+  },
+  "err": "frame: bad seq/w/h: 'seq'"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "h": 2
+  },
+  "err": "frame: bad seq/w/h: 'w'"
+ },
+ {
+  "in": {
+   "seq": 1,
+   "w": 2
+  },
+  "err": "frame: bad seq/w/h: 'h'"
+ },
+ {
+  "in": {},
+  "err": "frame: bad seq/w/h: 'seq'"
+ },
+ {
+  "in": [],
+  "err": "frame: bad seq/w/h: list indices must be integers or slices, not str"
+ },
+ {
+  "in": [
+   1
+  ],
+  "err": "frame: bad seq/w/h: list indices must be integers or slices, not str"
+ },
+ {
+  "in": "frame",
+  "err": "frame: bad seq/w/h: string indices must be integers, not 'str'"
+ },
+ {
+  "in": 5,
+  "err": "frame: bad seq/w/h: 'int' object is not subscriptable"
+ },
+ {
+  "in": null,
+  "err": "frame: bad seq/w/h: 'NoneType' object is not subscriptable"
+ },
+ {
+  "in": true,
+  "err": "frame: bad seq/w/h: 'bool' object is not subscriptable"
+ },
+ {
+  "in": 2.5,
+  "err": "frame: bad seq/w/h: 'float' object is not subscriptable"
+ }
+]

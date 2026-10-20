@@ -1,13 +1,13 @@
 //! Platform adapter, darwin: the macOS Vision framework through objc2.
 
-use objc2::rc::autoreleasepool;
+use objc2::rc::{autoreleasepool, Retained};
 use objc2::AnyThread as _;
 use objc2::runtime::{AnyClass, AnyObject};
 use objc2_core_foundation::{CFData, CFRetained};
 use objc2_core_graphics::{
     CGBitmapInfo, CGColorRenderingIntent, CGColorSpace, CGDataProvider, CGImage, CGImageAlphaInfo,
 };
-use objc2_foundation::{NSArray, NSDictionary};
+use objc2_foundation::{NSArray, NSDictionary, NSString};
 use objc2_image_io::CGImageSource;
 use objc2_vision::{VNDetectFaceRectanglesRequest, VNImageOption, VNImageRequestHandler, VNRequest};
 
@@ -81,7 +81,11 @@ pub(crate) fn vision_detect(frame: &Frame) -> anyhow::Result<Vec<Rect>> {
         let as_request: &VNRequest = &request;
         let requests = NSArray::from_slice(&[as_request]);
         if let Err(err) = handler.performRequests_error(&requests) {
-            anyhow::bail!("Vision request failed: {}", err.localizedDescription());
+            // Python formats the NSError with str(), which is its -description
+            // ("Error Domain=… Code=… \"…\" UserInfo={…}").
+            // SAFETY: -description on an NSError returns a non-null NSString.
+            let desc: Retained<NSString> = unsafe { objc2::msg_send![&*err, description] };
+            anyhow::bail!("Vision request failed: {}", desc);
         }
         let mut rects = Vec::new();
         // SAFETY: results of a request that has been performed.

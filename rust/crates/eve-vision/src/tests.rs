@@ -168,9 +168,14 @@ fn test_base64_validate_like_python() {
         "Invalid base64-encoded string: number of data characters (5) cannot be 1 more than a multiple of 4"
     );
     assert_eq!(err("="), "Leading padding not allowed");
-    assert_eq!(err("QQ==QQ=="), "Non-base64 digit found");
-    assert_eq!(err("QQ==\n"), "Non-base64 digit found");
-    assert_eq!(err("Q==="), "Non-base64 digit found");
+    assert_eq!(err("QQ==QQ=="), "Excess data after padding");
+    assert_eq!(err("QQ==\n"), "Only base64 data is allowed");
+    assert_eq!(
+        err("Q==="),
+        "Invalid base64-encoded string: number of data characters (1) cannot be 1 more than a multiple of 4"
+    );
+    assert_eq!(err("AA=A"), "Discontinuous padding not allowed");
+    assert_eq!(err("QUJD\u{e9}"), "string argument should contain only ASCII characters");
 }
 
 // ---- pick_face geometry -----------------------------------------------------
@@ -385,6 +390,33 @@ async fn test_tracker_drops_to_newest_while_detector_busy() {
     assert_eq!(*seen.lock(), vec![1, 4]); // 2 and 3 were never queued
     assert_eq!(sent.lock().iter().map(|o| o["seq"].as_i64().unwrap()).collect::<Vec<_>>(), vec![1, 4]);
     assert_eq!(t.governor().dropped, 2);
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn test_tracker_stop_mid_drain_still_answers_parked_frame() {
+    // Python: stop() lets the running detect finish; the parked frame then runs
+    // on the loop's default executor. Rust gives the drain a fresh worker.
+    let (gate_tx, gate_rx) = std::sync::mpsc::channel::<()>();
+    let gate_rx = std::sync::Mutex::new(gate_rx);
+    let slow: Detector = Arc::new(move |_f: &Frame| {
+        let _ = gate_rx.lock().unwrap().recv_timeout(Duration::from_secs(2));
+        Ok(vec![])
+    });
+    let (send, sent) = sender();
+    let t = FaceTracker::new(Some(slow), send);
+    t.on_frame(&gray_obj(1, json!({}))).await;
+    t.on_frame(&gray_obj(2, json!({}))).await;
+    sleep(0.05).await;
+    t.stop();
+    drop(gate_tx);
+    sleep(0.2).await;
+    assert_eq!(sent.lock().iter().map(|o| o["seq"].as_i64().unwrap()).collect::<Vec<_>>(), vec![1, 2]);
+    assert!(!t.governor().busy);
+    // And the tracker keeps working afterwards.
+    t.on_frame(&gray_obj(3, json!({}))).await;
+    sleep(0.1).await;
+    t.stop();
+    assert_eq!(sent.lock().len(), 3);
 }
 
 #[tokio::test]
@@ -603,6 +635,7 @@ fn test_configured_save_dir() {
 fn test_configured_save_dir_expands_user() {
     let home = std::env::var_os("HOME").map(PathBuf::from).unwrap();
     assert_eq!(configured_save_dir_from(Some("~/frames"), None), Some(home.join("frames")));
+    assert_eq!(configured_save_dir_from(Some("~//frames"), None), Some(home.join("frames")));
     assert_eq!(configured_save_dir_from(Some("~"), None), Some(home));
 }
 
@@ -656,4 +689,17 @@ fn test_native_vision_test_cli() {
     let junk = tmp.path().join("junk.bin");
     std::fs::write(&junk, b"junk").unwrap();
     assert_eq!(run_vision_test(junk.to_str().unwrap()), 2);
+}
+
+#[test]
+fn test_stats_number_format_rounds_like_python() {
+    // f"{12.5:.0f}", f"{2.5:.0f}", f"{0.5:.0f}", f"{0.25:.1f}", f"{0.35:.1f}" in CPython.
+    let got = [
+        format!("{:.0}", 12.5),
+        format!("{:.0}", 2.5),
+        format!("{:.0}", 0.5),
+        format!("{:.1}", 0.25),
+        format!("{:.1}", 0.35),
+    ];
+    assert_eq!(got, ["12", "2", "0", "0.2", "0.3"]);
 }

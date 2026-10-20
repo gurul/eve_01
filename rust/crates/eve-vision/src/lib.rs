@@ -52,7 +52,6 @@ use std::sync::mpsc as std_mpsc;
 use std::sync::{Arc, LazyLock};
 use std::time::Instant;
 
-use base64::Engine as _;
 use futures::future::BoxFuture;
 use parking_lot::{Mutex, RwLock};
 use serde_json::{Map, Value};
@@ -311,8 +310,12 @@ fn py_int_str(s: &str) -> Option<i64> {
 /// Python's `int(obj[key])`, with the message `str(e)` of the exception it raises.
 fn py_int_field(obj: &Value, key: &str) -> Result<i64, String> {
     let Value::Object(map) = obj else {
-        // Indexing a non-dict: TypeError.
-        return Err(format!("'{}' object is not subscriptable", py_type_name(obj)));
+        // Indexing a non-dict with a str key: TypeError.
+        return Err(match obj {
+            Value::Array(_) => "list indices must be integers or slices, not str".into(),
+            Value::String(_) => "string indices must be integers, not 'str'".into(),
+            other => format!("'{}' object is not subscriptable", py_type_name(other)),
+        });
     };
     let Some(v) = map.get(key) else {
         return Err(py_repr_str(key));
@@ -347,43 +350,89 @@ fn py_int_field(obj: &Value, key: &str) -> Result<i64, String> {
     }
 }
 
-/// `base64.b64decode(s, validate=True)` as CPython 3.13 runs it (the daemon's
-/// interpreter): the standard alphabet only, then binascii's strict padding
-/// rules with its messages; non-zero trailing bits are accepted.
+/// `base64.b64decode(s, validate=True)` as CPython 3.13 (the daemon's
+/// interpreter) runs it: the str must be ASCII, then
+/// `binascii.a2b_base64(s, strict_mode=True)`, character by character, with
+/// its messages. Non-zero trailing bits are accepted.
 fn b64decode_validate(s: &str) -> Result<Vec<u8>, String> {
-    let body = s.trim_end_matches('=');
-    let pad = s.len() - body.len();
-    if pad > 2 || !body.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'+' || b == b'/') {
-        return Err("Non-base64 digit found".into());
+    if !s.is_ascii() {
+        return Err("string argument should contain only ASCII characters".into());
     }
-    if body.is_empty() && pad > 0 {
+    let bytes = s.as_bytes();
+    let mut out = Vec::with_capacity(bytes.len() / 4 * 3 + 3);
+    if bytes.first() == Some(&b'=') {
         return Err("Leading padding not allowed".into());
     }
-    let needed = match body.len() % 4 {
-        0 => 0,
-        1 => {
-            return Err(format!(
-                "Invalid base64-encoded string: number of data characters ({}) cannot be 1 more than a multiple of 4",
-                body.len()
-            ))
-        }
-        r => 4 - r,
-    };
-    if pad > needed {
-        return Err("Excess padding not allowed".into());
-    }
-    if pad < needed {
-        return Err("Incorrect padding".into());
-    }
-    static ENGINE: LazyLock<base64::engine::GeneralPurpose> = LazyLock::new(|| {
-        base64::engine::GeneralPurpose::new(
-            &base64::alphabet::STANDARD,
-            base64::engine::GeneralPurposeConfig::new()
-                .with_decode_allow_trailing_bits(true)
-                .with_decode_padding_mode(base64::engine::DecodePaddingMode::RequireCanonical),
+    let one_more = |decoded: usize| {
+        format!(
+            "Invalid base64-encoded string: number of data characters ({}) cannot be 1 more than a multiple of 4",
+            decoded / 3 * 4 + 1
         )
-    });
-    ENGINE.decode(s).map_err(|e| e.to_string())
+    };
+    let mut quad_pos = 0u8;
+    let mut leftchar = 0u8;
+    let mut pads = 0u8;
+    let mut padding_started = false;
+    let mut padding_done = false;
+    for &c in bytes {
+        if c == b'=' {
+            padding_started = true;
+            if quad_pos == 0 {
+                return Err("Excess padding not allowed".into());
+            }
+            if quad_pos == 1 {
+                return Err(one_more(out.len()));
+            }
+            pads += 1;
+            if quad_pos + pads >= 4 {
+                // A complete pad sequence: anything after it is an error.
+                quad_pos = 0;
+                pads = 0;
+                padding_done = true;
+            }
+            continue;
+        }
+        let v = match c {
+            b'A'..=b'Z' => c - b'A',
+            b'a'..=b'z' => c - b'a' + 26,
+            b'0'..=b'9' => c - b'0' + 52,
+            b'+' => 62,
+            b'/' => 63,
+            _ => return Err("Only base64 data is allowed".into()),
+        };
+        if padding_done {
+            return Err("Excess data after padding".into());
+        }
+        if padding_started {
+            return Err("Discontinuous padding not allowed".into());
+        }
+        match quad_pos {
+            0 => {
+                quad_pos = 1;
+                leftchar = v;
+            }
+            1 => {
+                quad_pos = 2;
+                out.push((leftchar << 2) | (v >> 4));
+                leftchar = v & 0x0f;
+            }
+            2 => {
+                quad_pos = 3;
+                out.push((leftchar << 4) | (v >> 2));
+                leftchar = v & 0x03;
+            }
+            _ => {
+                quad_pos = 0;
+                out.push((leftchar << 6) | v);
+                leftchar = 0;
+            }
+        }
+    }
+    match quad_pos {
+        0 => Ok(out),
+        1 => Err(one_more(out.len())),
+        _ => Err("Incorrect padding".into()),
+    }
 }
 
 /// Turn the `frame` object off the wire into a Frame.
@@ -805,23 +854,27 @@ impl FaceTracker {
 
     /// Detect on the worker, reply, then drain the governor's parked frame.
     async fn run(&self, frame: Frame) {
-        {
-            let mut ex = self.inner.executor.lock();
-            if ex.is_none() {
-                match Executor::spawn() {
-                    Ok(e) => *ex = Some(e),
-                    Err(e) => {
-                        tracing::error!("vision: could not start the detector thread: {}", e);
-                        return;
+        let mut nxt = Some(frame);
+        while let Some(cur) = nxt {
+            // A worker per tracker, made lazily. After stop() a drain that is
+            // still going gets a fresh one, as Python's run_in_executor(None)
+            // falls back to the loop's default executor and keeps detecting.
+            {
+                let mut ex = self.inner.executor.lock();
+                if ex.is_none() {
+                    match Executor::spawn() {
+                        Ok(e) => *ex = Some(e),
+                        Err(e) => {
+                            tracing::error!("vision: could not start the detector thread: {}", e);
+                            return;
+                        }
                     }
                 }
             }
-        }
-        let mut nxt = Some(frame);
-        while let Some(cur) = nxt {
             let cur = Arc::new(cur);
             let t0 = (self.inner.clock)();
-            // Executor shut down under us (daemon stopping).
+            // Executor shut down under us (daemon stopping): a queued detect
+            // that stop() cancelled ends the drain, as Python's CancelledError does.
             let Some(rx) = self.submit(cur.clone()) else { return };
             let (rects, who) = match rx.await {
                 Err(_) => return,
@@ -1051,6 +1104,8 @@ pub fn expanduser(p: &str) -> PathBuf {
     } else {
         passwd_home(Some(user))
     };
+    // pathlib splits on runs of '/', so "~//x" is home/x, never "/x".
+    let tail = tail.trim_start_matches('/');
     match home {
         Some(h) if tail.is_empty() => h,
         Some(h) => h.join(tail),
