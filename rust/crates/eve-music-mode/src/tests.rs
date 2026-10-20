@@ -382,3 +382,32 @@ async fn the_real_timer_debounces_one_write() {
     assert_eq!(writes[0].1["volume"], json!(52));
     mode.close().await;
 }
+
+#[tokio::test]
+async fn a_boolean_volume_is_python_s_int() {
+    // `isinstance(True, int)` holds in Python, so a device reporting `"volume": true` moves from 1
+    struct BoolVolume;
+    #[async_trait]
+    impl SpotifyControl for BoolVolume {
+        async fn now_playing(&self) -> anyhow::Result<Value> {
+            Ok(json!({"ok": true, "playing": true, "device": {"volume": true}, "devices": []}))
+        }
+        async fn control(&self, _action: &str, _kw: Map<String, Value>) -> anyhow::Result<Value> {
+            Ok(json!({"ok": true}))
+        }
+    }
+    let sent: Arc<Mutex<Vec<Value>>> = Arc::default();
+    let send: SendFn = {
+        let sent = sent.clone();
+        Arc::new(move |obj: Value| -> BoxFuture<'static, anyhow::Result<()>> {
+            sent.lock().push(obj);
+            Box::pin(async { Ok(()) })
+        })
+    };
+    let mode = MusicMode::new(Arc::new(BoolVolume), send, None);
+    mode.set(true).await.unwrap();
+    assert_eq!(mode.volume(), Some(1));
+    mode.on_input(&json!({"cmd": "music", "dial": 1})).await.unwrap();
+    assert_eq!(sent.lock().last().unwrap(), &json!({"cmd": "ring_level", "n": 5, "of": 100}));
+    mode.close().await;
+}

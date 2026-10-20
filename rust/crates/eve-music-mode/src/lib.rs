@@ -87,6 +87,14 @@ fn py_int(v: Option<&Value>) -> Option<i64> {
     }
 }
 
+/// `isinstance(v, int)`, bools included (Python's `True` is the int 1): the volume a device reports.
+fn py_int_or_bool(v: Option<&Value>) -> Option<i64> {
+    match v {
+        Some(Value::Bool(b)) => Some(i64::from(*b)),
+        other => py_int(other),
+    }
+}
+
 /// `v == n` with Python's numeric equality (`1.0 == 1`, `True == 1`).
 fn py_eq_int(v: Option<&Value>, n: i64) -> bool {
     match v {
@@ -158,9 +166,10 @@ pub fn rgb(device: &Value) -> Vec<i64> {
     vec![30, 215, 96] // no colour: Spotify green
 }
 
-/// A spawned task this mode may cancel, with its generation: gens only grow, so a task that already woke when
-/// a newer one replaced it (on another worker thread, past the point `abort` can reach) stands down instead of
-/// acting. A task checks `> gen`, not `!= gen`, because it may run before its own slot is stored.
+/// A spawned task this mode may cancel, with its generation. The slot is stored under the state lock before the
+/// task can take that lock, so a task acts only while its own slot is still the current one: one that already
+/// woke when a newer one replaced it, or when `close_picker` took it (on another worker thread, past the point
+/// `abort` can reach), stands down instead of acting, as a cancelled asyncio task would.
 struct Slot {
     gen: u64,
     handle: AbortHandle,
@@ -259,7 +268,7 @@ impl MusicMode {
         tracing::info!("music mode: {}", if on { "on" } else { "off" });
         if on {
             let now = self.inner.spotify.now_playing().await?;
-            let vol = py_int(get(now.get("device"), "volume"));
+            let vol = py_int_or_bool(get(now.get("device"), "volume"));
             self.inner.state.lock().volume = vol;
             return Ok("Spotify mode on: the dial is the volume, one click plays or pauses, two skip, three go back, \
                        hold to pick a device, hold 3 s to leave."
@@ -333,7 +342,7 @@ impl MusicMode {
     async fn dial_volume(&self, detents: i64) -> anyhow::Result<()> {
         if self.inner.state.lock().volume.is_none() {
             let now = self.inner.spotify.now_playing().await?;
-            match py_int(get(now.get("device"), "volume")) {
+            match py_int_or_bool(get(now.get("device"), "volume")) {
                 Some(vol) => self.inner.state.lock().volume = Some(vol),
                 None => {
                     self.flash("error", None).await; // nothing playing anywhere: no volume to move
@@ -349,13 +358,8 @@ impl MusicMode {
             v
         };
         self.send(json!({"cmd": "ring_level", "n": level, "of": 100})).await?;
-        let gen = self.next_gen();
         let me = self.clone();
-        let handle = self.spawn(async move { me.write_volume(gen).await });
-        let mut st = self.inner.state.lock();
-        if let Some(old) = st.volume_task.replace(Slot { gen, handle }) {
-            old.cancel();
-        }
+        self.spawn_slot(|st| &mut st.volume_task, move |gen| async move { me.write_volume(gen).await });
         Ok(())
     }
 
@@ -363,7 +367,7 @@ impl MusicMode {
         (self.inner.sleep)(VOLUME_DEBOUNCE_SECS).await;
         let volume = {
             let st = self.inner.state.lock();
-            if st.volume_task.as_ref().is_some_and(|s| s.gen > gen) {
+            if st.volume_task.as_ref().is_none_or(|s| s.gen != gen) {
                 return; // a newer turn of the dial took over
             }
             st.volume
@@ -488,73 +492,72 @@ impl MusicMode {
     }
 
     fn say_later(&self, text: String, after: f64) {
-        let gen = self.next_gen();
         let me = self.clone();
-        let handle = self.spawn(async move {
+        // a newer name replaces one not yet said
+        self.spawn_slot(|st| &mut st.say_task, move |gen| async move {
             (me.inner.sleep)(after).await;
-            if me.inner.state.lock().say_task.as_ref().is_some_and(|s| s.gen > gen) {
+            if me.inner.state.lock().say_task.as_ref().is_none_or(|s| s.gen != gen) {
                 return; // a newer name replaced this one
             }
             if let Some(say) = me.inner.say.as_ref() {
                 let _ = say(text).await;
             }
         });
-        let mut st = self.inner.state.lock();
-        if let Some(old) = st.say_task.replace(Slot { gen, handle }) {
-            old.cancel(); // a newer name replaces one not yet said
-        }
     }
 
     fn arm_picker_timer(&self) {
-        let gen = self.next_gen();
         let me = self.clone();
-        let handle = self.spawn(async move {
+        self.spawn_slot(|st| &mut st.picker_timer, move |gen| async move {
             (me.inner.sleep)(PICKER_IDLE_SECS).await;
-            {
+            let was_open = {
                 let mut st = me.inner.state.lock();
-                if st.picker_timer.as_ref().is_some_and(|s| s.gen > gen) {
-                    return; // re-armed by newer input
+                if st.picker_timer.as_ref().is_none_or(|s| s.gen != gen) {
+                    return; // re-armed by newer input, or the picker closed
                 }
+                tracing::info!("music mode: picker timed out");
                 st.picker_timer = None; // this task is ending: close_picker must not cancel it
-            }
-            tracing::info!("music mode: picker timed out");
-            me.close_picker().await;
+                Self::take_picker(&mut st)
+            };
+            me.clear_dot(was_open).await;
         });
-        let mut st = self.inner.state.lock();
-        if let Some(old) = st.picker_timer.replace(Slot { gen, handle }) {
-            old.cancel();
-        }
     }
 
     async fn close_picker(&self) {
-        let was_open = {
-            let mut st = self.inner.state.lock();
-            if let Some(timer) = st.picker_timer.take() {
-                timer.cancel();
-            }
-            st.picker.take().is_some()
-        };
+        let was_open = Self::take_picker(&mut self.inner.state.lock());
+        self.clear_dot(was_open).await;
+    }
+
+    /// `_close_picker`'s state half: cancel the idle timer, drop the devices; whether the picker was open.
+    fn take_picker(st: &mut State) -> bool {
+        if let Some(timer) = st.picker_timer.take() {
+            timer.cancel();
+        }
+        st.picker.take().is_some()
+    }
+
+    /// `_close_picker`'s board half.
+    async fn clear_dot(&self, was_open: bool) {
         if was_open {
             let _ = self.send(json!({"cmd": "ring_level", "n": 0, "of": 1, "ms": 0})).await; // the dot goes
         }
     }
 
-    fn next_gen(&self) -> u64 {
-        let mut st = self.inner.state.lock();
-        st.gen += 1;
-        st.gen
-    }
-
-    fn spawn<F>(&self, fut: F) -> AbortHandle
+    /// Spawn the task `make(gen)` into the slot `slot` picks, cancelling the one it replaces. The slot is stored
+    /// before the state lock is released, so the task (which takes the lock before acting) always finds it.
+    fn spawn_slot<F>(&self, slot: fn(&mut State) -> &mut Option<Slot>, make: impl FnOnce(u64) -> F)
     where
         F: std::future::Future<Output = ()> + Send + 'static,
     {
-        let task = tokio::spawn(fut);
-        let handle = task.abort_handle();
         let mut st = self.inner.state.lock();
+        st.gen += 1;
+        let gen = st.gen;
+        let task = tokio::spawn(make(gen));
+        let handle = task.abort_handle();
         st.tasks.retain(|t| !t.is_finished());
         st.tasks.push(task);
-        handle
+        if let Some(old) = slot(&mut st).replace(Slot { gen, handle }) {
+            old.cancel();
+        }
     }
 
     /// Cancel every task the mode started (debounced writes, the picker timer, a name not yet said) and wait
