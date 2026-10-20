@@ -16,7 +16,7 @@ Status: complete
 | `_off` | private `off` | `strip().lower()` in `0/false/no/off`. |
 | `_number` | private `number` | `float(str(raw).strip())` via `py::float_str` (Python's `float()`: underscores, any Unicode decimal digit, `inf`/`nan`); a missing value is `str(None)`, which float() refuses: the default. |
 | `class ChatLogConfig` | `struct ChatLogConfig { enabled, path, max_lines, max_days }` | `Default` is Python's defaults. |
-| `configured(environ=None)` | `configured(Option<&HashMap<String, String>>) -> Result<ChatLogConfig, ConfigError>` | None reads the process environment. `Err(ConfigError::Overflow)` where Python's `int(float("inf"))` raises OverflowError (an infinite `EVE_CHAT_LOG_LINES`). The path is spelled as `pathlib` spells it (`py::pure`). |
+| `configured(environ=None)` | `configured(Option<&HashMap<String, String>>) -> Result<ChatLogConfig, ConfigError>` | None reads the process environment (`vars_os`, lossy: a variable that is not UTF-8 never panics, as `os.environ` never raises). `Err(ConfigError::Overflow)` where Python's `int(float("inf"))` raises OverflowError (an infinite `EVE_CHAT_LOG_LINES`). The path is spelled as `pathlib` spells it (`py::pure`). |
 | `note_text(text, cap=NOTE_CHARS)` | `note_text(&str, cap: usize)` | Links → `(link)`, `" ".join(split())`, `flat[:cap - 1].rstrip() + "…"`; a cap of 0 slices `flat[:-1]` as Python does. |
 | `class Line` | `struct Line` | Same fields in the same order; `extra` is a `serde_json::Map` (always written `{}`, never read, as in Python). |
 | `class ChatLog` | `struct ChatLog` | `Send + Sync`; one `parking_lot::Mutex` over the state where Python holds `threading.Lock`. |

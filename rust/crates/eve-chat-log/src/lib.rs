@@ -130,7 +130,10 @@ pub fn configured(environ: Option<&HashMap<String, String>>) -> Result<ChatLogCo
     let env = match environ {
         Some(e) => e,
         None => {
-            owned = std::env::vars().collect::<HashMap<_, _>>();
+            // vars_os: std::env::vars panics on a variable that is not UTF-8, where os.environ never raises
+            owned = std::env::vars_os()
+                .map(|(k, v)| (k.to_string_lossy().into_owned(), v.to_string_lossy().into_owned()))
+                .collect::<HashMap<_, _>>();
             &owned
         }
     };
