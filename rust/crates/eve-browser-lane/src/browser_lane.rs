@@ -1655,6 +1655,9 @@ impl Page {
             for row in rows {
                 let parts = match row {
                     Value::Array(p) if p.len() == 3 => p,
+                    Value::Array(p) if p.len() > 3 => {
+                        return Err(LaneError::err("ValueError", "too many values to unpack (expected 3)"))
+                    }
                     Value::Array(p) => {
                         return Err(LaneError::err(
                             "ValueError",
@@ -1691,10 +1694,12 @@ impl Page {
                     let i = eve_vault::pystr::int_of_str(&index).ok_or_else(|| {
                         LaneError::err("ValueError", format!("invalid literal for int() with base 10: {}", repr(&index)))
                     })?;
+                    // Python's values[base][i:i + 1], negative bounds counted from the end
                     let chars: Vec<char> = whole.chars().collect();
                     let n = chars.len() as i128;
-                    let start = if i < 0 { (n + i).max(0) } else { i.min(n) } as usize;
-                    chars[start..(start + 1).min(chars.len())].iter().collect()
+                    let bound = |b: i128| if b < 0 { (n + b).max(0) } else { b.min(n) } as usize;
+                    let (start, end) = (bound(i), bound(i + 1));
+                    if start < end { chars[start..end].iter().collect() } else { String::new() }
                 };
                 let loc = format!("[data-eve-fill=\"{fid}\"]");
                 if tag == "select" {
@@ -2193,8 +2198,9 @@ impl LaneCore {
                 }
             }
             drop(tx);
-            // a straggler finishes on its own and is dropped
-            let deadline = deadline_after(t0, budget);
+            // The budget runs from the requests' submission, as concurrent.futures.wait's timeout does; a
+            // straggler finishes on its own and is dropped.
+            let deadline = deadline_after(Instant::now(), budget);
             loop {
                 let left = deadline.saturating_duration_since(Instant::now());
                 match rx.recv_timeout(left) {
