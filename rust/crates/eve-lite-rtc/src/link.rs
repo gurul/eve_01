@@ -308,8 +308,11 @@ impl ChannelWriter {
                     st.buf.drain(..end + 2);
                     let line = raw.split(|c| *c == b';').next().unwrap_or(&[]);
                     let line = py::strip_bytes(line);
+                    // int(bytes, 16): ASCII only, and no whitespace inside past what bytes.strip() took
+                    let ascii = line.is_ascii() && !line.iter().any(|c| (0x1c..=0x1f).contains(c));
                     let size = std::str::from_utf8(line)
                         .ok()
+                        .filter(|_| ascii)
                         .and_then(|s| py::int(s, 16))
                         .ok_or(BadResponse("bad chunk size"))?;
                     if size < 0 {
@@ -791,16 +794,21 @@ impl LinkChannel {
                 let mut writer = req.writer.clone();
                 let me = self.clone();
                 let check = move |t: &str| me.check(t);
-                link.serve(&method, &path, &query, &headers, &mut reader, &mut writer, &check).await.map_err(|e| {
-                    let kind = match e.kind() {
-                        io::ErrorKind::ConnectionReset => "ConnectionResetError",
-                        io::ErrorKind::BrokenPipe => "BrokenPipeError",
-                        io::ErrorKind::UnexpectedEof => "IncompleteReadError",
-                        io::ErrorKind::TimedOut => "TimeoutError",
-                        _ => "OSError",
-                    };
-                    kind.to_string()
-                })
+                let serving = link.serve(&method, &path, &query, &headers, &mut reader, &mut writer, &check);
+                // a panic in LinkChat is its exception: the request ends in err and its slot is freed
+                match std::panic::AssertUnwindSafe(serving).catch_unwind().await {
+                    Ok(served) => served.map_err(|e| {
+                        let kind = match e.kind() {
+                            io::ErrorKind::ConnectionReset => "ConnectionResetError",
+                            io::ErrorKind::BrokenPipe => "BrokenPipeError",
+                            io::ErrorKind::UnexpectedEof => "IncompleteReadError",
+                            io::ErrorKind::TimedOut => "TimeoutError",
+                            _ => "OSError",
+                        };
+                        kind.to_string()
+                    }),
+                    Err(_) => Err("Exception".to_string()),
+                }
             }
             None => Err("AttributeError".to_string()),
         };

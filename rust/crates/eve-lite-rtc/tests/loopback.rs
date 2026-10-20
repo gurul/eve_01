@@ -649,3 +649,112 @@ async fn test_a_peer_takes_one_link_and_one_call_channel_and_refuses_the_rest() 
     wait(|| calls.active().is_none(), 5.0).await;
     link.close();
 }
+
+// ---- under eve lite's process firewall ---------------------------------------------------------------------------
+
+/// The child's marker: which case this process runs.
+const CHILD_ENV: &str = "EVE_LITE_RTC_CHILD";
+
+/// What in a Rust source starts a program or opens a file: the calls the firewall judges when they go through it
+/// (eve_profile::spawn, output, status, audit_path) and the ones that go around it.
+const PROCESS_OR_FILE: [&str; 12] = [
+    "std::process",
+    "Command::new",
+    "libc::fork",
+    "libc::exec",
+    "posix_spawn",
+    "libc::system",
+    "std::fs",
+    "File::open",
+    "File::create",
+    "OpenOptions",
+    "eve_profile::spawn",
+    "eve_profile::output",
+];
+
+fn process_or_file(source: &str) -> Vec<&'static str> {
+    PROCESS_OR_FILE.iter().copied().filter(|p| source.contains(p)).collect()
+}
+
+/// The process firewall eve lite runs under (eve_profile::install_firewall) refuses every program but three and the
+/// private folders. One whole session, a turn over link and a call with eve's spoken answer, runs under it in a fresh
+/// process (an installed guard cannot be removed) and is refused nothing; then a program start is (the control).
+/// Rust has no audit hook: a call site is judged when it asks the guard, so the crate's own code is also read for a
+/// program start or a file open, which it must have none of (libopus is opened with dlopen, as aiortc's native
+/// libraries were loaded, and no folder of the owner's is read).
+#[test]
+fn test_a_webrtc_session_under_the_lite_firewall_starts_no_program_and_opens_no_protected_folder() {
+    let src = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
+    let mut files: Vec<_> = std::fs::read_dir(&src).unwrap().map(|e| e.unwrap().path()).collect();
+    files.sort();
+    assert!(files.len() >= 6, "{files:?}");
+    for file in &files {
+        let text = std::fs::read_to_string(file).unwrap();
+        assert_eq!(process_or_file(&text), Vec::<&str>::new(), "{}", file.display());
+    }
+    // positive control: the scan finds a program start where there is one
+    assert_eq!(process_or_file("let _ = std::process::Command::new(\"/usr/bin/true\");"), ["std::process", "Command::new"]);
+
+    let tmp = tempfile::tempdir().unwrap();
+    let (home, work) = (tmp.path().join("home"), tmp.path().join("work"));
+    std::fs::create_dir(&home).unwrap();
+    std::fs::create_dir(&work).unwrap();
+    let done = std::process::Command::new(std::env::current_exe().unwrap())
+        .args(["--exact", "child_firewall_session", "--nocapture", "--test-threads=1"])
+        .env(CHILD_ENV, "child_firewall_session")
+        .env("EVE_PROFILE", "lite")
+        .env("HOME", &home)
+        .env("WORK", &work)
+        .output()
+        .unwrap();
+    let stdout = String::from_utf8_lossy(&done.stdout);
+    let line = stdout.lines().find(|ln| ln.starts_with("RESULT "));
+    let stderr = String::from_utf8_lossy(&done.stderr);
+    assert!(done.status.success() && line.is_some(), "{}\n{}", stdout, &stderr[stderr.len().saturating_sub(3000)..]);
+    let result: Value = serde_json::from_str(&line.unwrap()["RESULT ".len()..]).unwrap();
+    assert_eq!(result["during"], json!({})); // nothing refused, nothing tried
+    assert_eq!(result["session"], json!(true)); // and the whole session ran
+    assert!(result["control_ran"] == json!(false) && result["after"] == json!({"exec:true": 1})); // the firewall was on
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn child_firewall_session() {
+    if std::env::var(CHILD_ENV).as_deref() != Ok("child_firewall_session") {
+        return;
+    }
+    eve_profile::install_firewall("enforce").unwrap();
+    let work = std::path::PathBuf::from(std::env::var("WORK").unwrap());
+    let inlet = FakeInlet::new(Some(store_at(&work)), Some(two_lines()));
+    let link = door(&work, inlet, fast());
+    let voice = FakeVoice::tone();
+    let calls = Arc::new(PhoneCalls::new(Arc::new(|_: &str| None), Some(FakeBrain::new("Hi.")), Some(voice.clone())));
+    let hub = hub_with(Some(&link), Some(calls), opts(loopback()));
+    let page = Page::loopback().await;
+    let run = async {
+        let got = hub.answer("device-1", Some(&page.offer().await), "127.0.0.1").await.unwrap();
+        page.accept(&got.sdp).await;
+        wait(|| page.link_open(), 20.0).await;
+        page.send_link(&req(1.into(), "POST", TURN_PATH, Some(json!({"text": "hi", "client_id": "firewall-1"})), "", &[]))
+            .await;
+        wait(|| page.link_ended(1), 10.0).await;
+        page.tone(1000.0);
+        page.open_call().await;
+        wait(|| page.seen.call_open.load(Ordering::SeqCst), 10.0).await;
+        tokio::time::sleep(Duration::from_millis(400)).await;
+        page.say(json!({"type": "talk"})).await;
+        tokio::time::sleep(Duration::from_millis(600)).await;
+        page.say(json!({"type": "done"})).await;
+        wait(|| voice.pcm().is_some(), 10.0).await;
+        wait(|| page.seen.heard_max() > 2000.0, 10.0).await;
+        page.say(json!({"type": "end"})).await;
+        tokio::time::sleep(Duration::from_millis(200)).await;
+    };
+    let session = tokio::time::timeout(Duration::from_secs(120), run).await.is_ok();
+    page.close().await;
+    hub.close().await;
+    link.close();
+    let during = eve_profile::firewall_counts();
+    let ran = eve_profile::status(&mut std::process::Command::new("/usr/bin/true")).is_ok();
+    let after = eve_profile::firewall_counts();
+    println!("\nRESULT {}", json!({"during": during, "session": session, "control_ran": ran, "after": after}));
+}

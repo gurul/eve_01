@@ -8,6 +8,7 @@ use std::time::{Duration, Instant};
 use async_trait::async_trait;
 use base64::Engine;
 use bytes::Bytes;
+use futures::FutureExt;
 use indexmap::IndexMap;
 use parking_lot::Mutex;
 use rand::RngCore;
@@ -555,8 +556,11 @@ impl Peer {
         }
         info!("lite rtc: a call opened on a peer");
         let socket: Arc<dyn CallSocket> = Arc::new(sock.clone());
-        if let Err(e) = calls.serve_socket(socket, self.token_check()).await {
-            warn!("lite rtc: a call ended with an error ({})", eve_phone_call::error_name(&e));
+        // a panic in PhoneCalls is its exception: logged by type, and the socket still shuts
+        match std::panic::AssertUnwindSafe(calls.serve_socket(socket, self.token_check())).catch_unwind().await {
+            Ok(Ok(())) => {}
+            Ok(Err(e)) => warn!("lite rtc: a call ended with an error ({})", eve_phone_call::error_name(&e)),
+            Err(_) => warn!("lite rtc: a call ended with an error (Exception)"),
         }
         sock.shut();
     }

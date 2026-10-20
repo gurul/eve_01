@@ -41,8 +41,8 @@ Status: complete
 ## Tests
 | Python file | Python tests | Rust tests | Not ported (why) |
 |---|---|---|---|
-| `test_lite_rtc_loopback.py` | 11 (two parametrized) | `tests/loopback.rs`: 10 (the parametrized cases are loops) | `test_a_webrtc_session_under_the_lite_firewall_starts_no_program_and_opens_no_protected_folder`: it runs the session under `profile.install_firewall`, a CPython audit hook; Rust has no audit hook to install. In `test_the_peers_have_no_ice_server_at_all` the positive control (aiortc's own default adds Google's STUN) is aiortc's behavior and has no webrtc-rs counterpart; the live peer's configuration is checked instead. |
-| `test_lite_link_channel.py` | 16 | `tests/link_channel.rs`: 16 | none. `turn.readers` (private to eve-link) is read through `LinkChat::deliver`'s answer instead. |
+| `test_lite_rtc_loopback.py` | 11 (two parametrized) | `tests/loopback.rs`: 11 (the parametrized cases are loops), plus its child case `child_firewall_session` | In `test_the_peers_have_no_ice_server_at_all` the positive control (aiortc's own default adds Google's STUN) is aiortc's behavior and has no webrtc-rs counterpart; the live peer's configuration is checked instead. `test_a_webrtc_session_under_the_lite_firewall_...` runs the session in a fresh process under `eve_profile::install_firewall("enforce")` (EVE_PROFILE=lite, a tmp HOME) with the same asserts (`firewall_counts()` empty during it, `/usr/bin/true` refused after, `{"exec:true": 1}`); since a Rust call site is judged only when it asks the guard (eve-profile's Boundaries), it also reads this crate's `src/` for any program start or file open (none; a positive control shows the scan finds one). |
+| `test_lite_link_channel.py` | 16 | `tests/link_channel.rs`: 16, plus `test_a_request_whose_linkchat_fails_ends_in_err_and_frees_its_slot` and `test_a_chunk_size_is_read_as_python_reads_int_of_bytes` | none. `turn.readers` (private to eve-link) is read through `LinkChat::deliver`'s answer instead. |
 | `test_rtc_call_socket.py` | 13 | `tests/call_socket.rs`: 13 | none; the microphone arrives as Opus packets (see Differences). |
 | `test_voice_track.py` | 6 | `tests/voice_track.rs`: 6 | The aiortc encoder test runs the libopus encoder the peer uses. |
 | `test_lite_web_local.py` | (ref) | — | It drives lite_web.py with a FakeRtc; it belongs to eve-lite-web. |
@@ -64,5 +64,13 @@ Status: complete
 - **A channel's close waits up to 1 s (`channel::CLOSE_DRAIN_SECS`) for the messages sent before it to leave.**
   aiortc queued its stream reset behind pending data; webrtc-rs's close resets the stream at once and dropped an
   `ended` sent just before it (found by the loopback test). Sends and the close go through one ordered writer task.
+- **A panic is the exception.** Where Python caught `Exception` around LinkChat's `serve` and PhoneCalls'
+  `serve_socket`, a panic in either is caught the same way (`catch_unwind`): the request ends in `err` and frees its
+  slot, and the call's socket still shuts; the log names the type `Exception`.
+- **JSON is read by serde_json**, as PhoneCalls reads the call channel: a page message holding `NaN`/`Infinity` or a
+  lone surrogate escape (which `JSON.stringify` never writes, and Python's `json.loads` accepts) is not JSON here and
+  is dropped (link) or passed on as text the call does not read as a control (call).
+- **The peers bind IPv4** (`HubOptions::udp_addrs`, `0.0.0.0:0` by default); aioice also gathered IPv6 host
+  candidates. The phone and the Mac meet on the LAN over IPv4, which is also all the mDNS rewrite points at.
 - An answer whose request is dropped mid-start (Python's `BaseException` from a cancel) still takes its peer down,
   through a drop guard.

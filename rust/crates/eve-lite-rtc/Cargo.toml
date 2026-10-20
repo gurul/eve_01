@@ -31,6 +31,8 @@ rtc = { version = "0.21.1", default-features = false }
 
 [dev-dependencies]
 eve-link-uploads = { path = "../eve-link-uploads" }
+# the lite firewall test runs a session under eve_profile::install_firewall
+eve-profile = { path = "../eve-profile" }
 eve-transcripts = { path = "../eve-transcripts" }
 tempfile.workspace = true
 uuid.workspace = true

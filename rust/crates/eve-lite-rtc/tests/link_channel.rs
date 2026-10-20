@@ -600,3 +600,64 @@ async fn test_linkchat_uses_only_write_and_drain_on_the_paths_the_channel_forwar
     assert!(!shut.load(Ordering::SeqCst));
     link.close();
 }
+
+/// A LinkChat that fails as Python's raised: a panic mid-answer.
+struct Panics;
+
+#[async_trait]
+impl LinkDoor for Panics {
+    async fn serve(
+        &self,
+        _method: &str,
+        _path: &str,
+        _query: &str,
+        _headers: &Headers,
+        _reader: &mut DynRead,
+        writer: &mut DynWrite,
+        _token_check: &TokenFn,
+    ) -> io::Result<()> {
+        use tokio::io::AsyncWriteExt;
+        writer.write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 10\r\n\r\nabc").await?;
+        panic!("LinkChat broke mid-answer");
+    }
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn test_a_request_whose_linkchat_fails_ends_in_err_and_frees_its_slot() {
+    let ch = FakeChannel::new("link");
+    let lc = LinkChannel::with(ch.clone(), Some(Arc::new(Panics)), SECRET, None, 1);
+    ch.page(get(1, MESSAGES_PATH));
+    until(|| ended(&ch, 1), 5.0).await;
+    let a = answer(&ch, 1).unwrap();
+    assert!(a.status() == 200 && a.body == b"abc" && a.end.as_deref() == Some("err")); // cut short: err
+    until(|| lc.requests().is_empty(), 2.0).await; // the slot is free again
+    ch.page(get(2, MESSAGES_PATH)); // and taken: not a 429
+    until(|| ended(&ch, 2), 5.0).await;
+    assert_eq!(answer(&ch, 2).unwrap().end.as_deref(), Some("err"));
+    assert_eq!(answer(&ch, 2).unwrap().status(), 200);
+}
+
+#[tokio::test]
+async fn test_a_chunk_size_is_read_as_python_reads_int_of_bytes() {
+    // int(b"...", 16): a 0x prefix, single underscores and ASCII spaces around pass
+    for (size, ok) in [(&b"5"[..], true), (b"0x5", true), (b" 5 ", true), (b"0_5", true), (b"5;ext=1", true)] {
+        let ch = FakeChannel::new("link");
+        let w = writer_on(&ch, 1);
+        let mut raw = b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n".to_vec();
+        raw.extend_from_slice(size);
+        raw.extend_from_slice(b"\r\nhello\r\n0\r\n\r\n");
+        assert_eq!(w.write(&raw).is_ok(), ok, "{}", String::from_utf8_lossy(size));
+        let a = answer(&ch, 1).unwrap();
+        assert!(a.end.as_deref() == Some("end") && a.body == b"hello", "{}", String::from_utf8_lossy(size));
+    }
+    // and what Python's int() of bytes refuses: a non-ASCII space, an information separator, a double underscore
+    for size in [&b"\xc2\xa05"[..], b"\x1c5", b"0__5", b"-5"] {
+        let ch = FakeChannel::new("link");
+        let w = writer_on(&ch, 1);
+        let mut raw = b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n".to_vec();
+        raw.extend_from_slice(size);
+        raw.extend_from_slice(b"\r\nhello\r\n");
+        assert_eq!(w.write(&raw).unwrap_err().kind(), io::ErrorKind::ConnectionReset, "{:?}", size);
+        assert_eq!(answer(&ch, 1).unwrap().end.as_deref(), Some("err"));
+    }
+}
