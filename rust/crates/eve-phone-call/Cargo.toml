@@ -1,0 +1,33 @@
+[package]
+name = "eve-phone-call"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+eve-notes = { path = "../eve-notes" }
+eve-openrouter = { path = "../eve-openrouter" }
+eve-records = { path = "../eve-records" }
+eve-spend = { path = "../eve-spend" }
+anyhow.workspace = true
+async-trait.workspace = true
+base64.workspace = true
+futures.workspace = true
+indexmap.workspace = true
+parking_lot.workspace = true
+regex.workspace = true
+reqwest = { workspace = true, features = ["blocking"] }
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tokio-tungstenite.workspace = true
+tracing.workspace = true
+# hashlib.sha1 for the WebSocket accept key; 0.10 as eve-vault and eve-browser-lane use.
+sha1 = "0.10"
+# str.isalpha (letter categories) for `foreign`, as the other ports use.
+unicode-general-category = "1.1.0"
+
+[dev-dependencies]
+eve-pricing = { path = "../eve-pricing" }
+tempfile.workspace = true
