@@ -1153,8 +1153,42 @@ async fn a_build_that_raises_says_what_happened_in_plain_words() {
     let evs = make(port, json!({"initData": signed(), "request": "x"})).await;
     a.app.server.close().await;
     let last = evs.last().unwrap();
-    assert!(last.get("error").is_some() && last.get("done").is_none(), "{last}");
+    // FailingClaude's ConnectionError is none of the SDK's: _error_line's last line
+    assert_eq!(last["error"], "Something went wrong answering that.", "{last}");
+    assert!(last.get("done").is_none() && last["changed"] == false);
     assert!(a.app.server.building.lock().is_empty());
+}
+
+/// test_miniapp.py::test_a_change_that_failed_says_why_under_the_thread, the server's half (the hint is the
+/// stream's error event): a rate-limited Claude reads as _error_line words, and the change still names its app.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_rate_limited_change_says_so_in_plain_words() {
+    let _spend = SpendDir::new();
+    let tmp = tempfile::tempdir().unwrap();
+    let a = apps_server(tmp.path(), None, None, 0.0);
+    a.app.store.save(&doc("v1"), "habit tracker", "", None, None).unwrap();
+    let limited = MiniApp::new(
+        &config(tmp.path(), 0.0),
+        None,
+        Some(a.bot.bot()),
+        Some(&tmp.path().join("pins.json")),
+        Some(Arc::new(|_messages: Vec<Value>, _progress: MakerProgress| {
+            async {
+                Err(eve_openrouter::Error::Status { status: 429, body: "slow".into(), headers: Box::default() }.into())
+            }
+            .boxed()
+        }) as Generate),
+        Some(&tmp.path().join("apps")),
+        Lent::Given(None),
+        Some(Arc::new(|| "Today is Thursday.".to_string())),
+    );
+    let port = serving(&limited).await;
+    let evs = make(port, json!({"initData": signed(), "request": "bigger buttons", "app": "habit-tracker"})).await;
+    limited.server.close().await;
+    let last = evs.last().unwrap();
+    assert_eq!(last["error"], "Claude is rate-limited right now. Try again in a minute.", "{last}");
+    assert!(last["changed"] == true && last["slug"] == "habit-tracker" && last.get("done").is_none());
+    assert!(limited.server.building.lock().is_empty() && limited.server.changing.lock().is_empty());
 }
 
 #[tokio::test(flavor = "multi_thread")]

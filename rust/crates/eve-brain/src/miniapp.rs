@@ -252,7 +252,8 @@ fn cut(s: &str, n: usize) -> String {
     s.chars().take(n).collect()
 }
 
-/// Python `int(str)` for the ASCII forms: whitespace around, a sign, `_` only between digits.
+/// Python `int(str)` for the ASCII forms: whitespace around, a sign, `_` only between digits. A number too big
+/// for i64 saturates (Python's int would hold it, and is only ever compared with bounds far below).
 fn py_int_str(raw: &str) -> Option<i64> {
     let s = py_strip(raw);
     let (neg, digits) = match s.as_bytes().first() {
@@ -267,7 +268,8 @@ fn py_int_str(raw: &str) -> Option<i64> {
         return None;
     }
     let clean: String = digits.chars().filter(|c| *c != '_').collect();
-    let n: i64 = clean.parse().ok()?;
+    // Python's int has no ceiling: a number past i64 stays past every bound it is compared with
+    let n: i64 = clean.parse().unwrap_or(i64::MAX);
     Some(if neg { -n } else { n })
 }
 
@@ -1821,6 +1823,13 @@ impl MiniAppServer {
         gone |= broke;
         let mut reason = String::new();
         let made = match made {
+            // what the build raised (Made.error: Python's make and edit raised it), told in plain words
+            Ok(made) if made.error.is_some() => {
+                let e = made.error.as_ref().expect("checked");
+                tracing::warn!("apps: making failed ({})", error_kind(e));
+                reason = error_line(e);
+                None
+            }
             Ok(made) => Some(made),
             Err(e) => {
                 tracing::warn!("apps: making failed ({})", error_kind(&e));
@@ -1935,9 +1944,21 @@ fn error_kind(e: &anyhow::Error) -> String {
     for cause in e.chain() {
         if let Some(err) = cause.downcast_ref::<eve_openrouter::Error>() {
             return match err {
-                eve_openrouter::Error::Status { status: 401, .. } => "AuthenticationError".into(),
-                eve_openrouter::Error::Status { status: 429, .. } => "RateLimitError".into(),
-                eve_openrouter::Error::Status { .. } => "APIStatusError".into(),
+                // the anthropic SDK's class for each status (_client.py `_make_status_error`)
+                eve_openrouter::Error::Status { status, .. } => match *status {
+                    400 => "BadRequestError",
+                    401 => "AuthenticationError",
+                    403 => "PermissionDeniedError",
+                    404 => "NotFoundError",
+                    409 => "ConflictError",
+                    413 => "RequestTooLargeError",
+                    422 => "UnprocessableEntityError",
+                    429 => "RateLimitError",
+                    529 => "OverloadedError",
+                    s if s >= 500 => "InternalServerError",
+                    _ => "APIStatusError",
+                }
+                .into(),
                 eve_openrouter::Error::Http(e) if e.is_timeout() => "APITimeoutError".into(),
                 eve_openrouter::Error::Http(_) => "APIConnectionError".into(),
                 eve_openrouter::Error::NoKey(_) => "NoKey".into(),
