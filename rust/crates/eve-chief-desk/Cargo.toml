@@ -1,0 +1,23 @@
+[package]
+name = "eve-chief-desk"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+eve-chief-card = { path = "../eve-chief-card" }
+eve-chief-ledger = { path = "../eve-chief-ledger" }
+chrono.workspace = true
+libc.workspace = true
+parking_lot.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+toml = "1.1.8"
+tracing.workspace = true
+# str.isprintable (repr) and the `\d` of strptime: the Unicode general category; the version eve-chief-card uses.
+unicode-general-category = "1.1.0"
+
+[dev-dependencies]
+regex.workspace = true
+tempfile.workspace = true
