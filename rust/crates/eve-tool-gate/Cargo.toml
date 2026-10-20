@@ -1,0 +1,15 @@
+[package]
+name = "eve-tool-gate"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+eve-app-registry = { path = "../eve-app-registry" }
+eve-profile = { path = "../eve-profile" }
+indexmap.workspace = true
+parking_lot.workspace = true
+regex.workspace = true
+serde_json.workspace = true
+unicode-general-category = "1.1.0"
