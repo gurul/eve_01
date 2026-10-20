@@ -1,0 +1,26 @@
+[package]
+name = "eve-pika"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+async-trait.workspace = true
+bytes.workspace = true
+dirs.workspace = true
+futures.workspace = true
+indexmap.workspace = true
+libc.workspace = true
+parking_lot.workspace = true
+regex.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+webrtc = "0.21.1"
+
+[dev-dependencies]
+tempfile.workspace = true
+tracing-subscriber.workspace = true
