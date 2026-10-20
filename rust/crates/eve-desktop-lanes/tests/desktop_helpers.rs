@@ -1395,3 +1395,126 @@ fn test_the_outline_hint_uses_the_lanes_own_confirmation_rule() {
     asked.sort();
     assert_eq!(asked, vec!["Delete".to_string(), "Follow".to_string()], "{lines:?}");
 }
+
+// ---- the real Helpers → adapter → router / executor path (test_desktop_worker.py) ----------------------
+
+fn cal_cand(cid: usize, role: &str, label: &str, value: &str) -> Candidate {
+    let editable = role == "search field";
+    Candidate {
+        id: cid.to_string(),
+        role: role.to_string(),
+        label: label.to_string(),
+        value: value.to_string(),
+        frame: (100 + 70 * cid as i64, 100, 60, 30),
+        actions: if editable { vec![] } else { vec!["AXPress".to_string()] },
+        enabled: true,
+        app: "Calendar".to_string(),
+        in_content: false,
+        in_dialog: false,
+        secure: false,
+        editable,
+    }
+}
+
+fn cal_snapshot(week_selected: bool) -> Snapshot {
+    let cands = vec![
+        cal_cand(0, "button", "Add Event", ""),
+        cal_cand(1, "radio button", "Day", ""),
+        cal_cand(2, "radio button", "Week", if week_selected { "selected" } else { "" }),
+        cal_cand(3, "radio button", "Month", if week_selected { "" } else { "selected" }),
+        cal_cand(4, "button", "Today", ""),
+        cal_cand(5, "button", "Delete Event", ""),
+        cal_cand(6, "search field", "Search", ""),
+    ];
+    Snapshot {
+        seq: 1,
+        app: "Calendar".into(),
+        bundle: "com.apple.iCal".into(),
+        title: "September 2026".into(),
+        pid: 42,
+        node_count: cands.len() as i64 + 3,
+        elements: cands,
+        context_lines: vec!["title: September 2026".to_string()],
+        secs: 0.05,
+        ..Snapshot::default()
+    }
+}
+
+/// Python `_lane_bench`: scripted snapshots (the last repeats), a hit-test that finds the Week radio button
+/// under its own centre, and Calendar (pid 42) in front.
+fn lane_bench(snapshots: Vec<Snapshot>) -> Bench {
+    let (next, _) = scripted(snapshots, false);
+    let cal = Front { app: "Calendar".into(), bundle: "com.apple.iCal".into(), title: "x".into(), pid: 42 };
+    Bench::with(Opts { points: (1440, 900), fronts: vec![cal], ..Opts::default() }, move |mut be| {
+        be.ax_snapshot = Box::new(move |_| Ok(next()));
+        be.element_at = Box::new(|_, _| Ok(Some(el("AXRadioButton", "Week", Some((240, 100, 60, 30)), "Calendar"))));
+        be
+    })
+}
+
+#[test]
+fn test_outline_and_run_plan_run_through_the_real_helpers() {
+    let mut b = lane_bench(vec![cal_snapshot(false), cal_snapshot(false), cal_snapshot(true)]);
+    assert!(b.h.step_asker.is_none());
+    let shown = b.h.outline(80).unwrap();
+    let lines: Vec<String> =
+        shown["lines"].as_array().unwrap().iter().map(|l| l.as_str().unwrap().to_string()).collect();
+    assert_eq!(shown["app"], "Calendar");
+    assert!(lines.iter().any(|l| l == "Week (radio button)"), "{lines:?}");
+    assert!(lines.iter().any(|l| l.starts_with("Delete Event") && l.contains("asks the human first")), "{lines:?}");
+    assert!(!lines.iter().any(|l| l.contains("September 2026")));
+    b.h.begin();
+    let plan = serde_json::json!({"steps": [{"kind": "click", "target": "the week view", "label_hint": "Week"}],
+                                  "final_say": "Week it is."});
+    let ran = b.h.run_plan(&plan, "week view", 0, None, false, false);
+    assert_eq!(ran["status"], "complete", "{ran}");
+    assert_eq!(ran["sentence"], "Week it is.");
+    assert_eq!(b.clicks(), vec![vec![270, 115]]);
+    assert_eq!(ran["ledger"][0]["effect"], "confirmed");
+    assert_eq!(ran["ledger"][0]["how"], "keyword");
+    assert!(b.h.timing_ms().contains_key("ax"), "{:?}", b.h.timing_ms());
+    let none = b.h.run_plan(&serde_json::json!({}), "", 0, None, false, false);
+    assert_eq!(none["status"], "unavailable", "{none}");
+    let bad = b.h.run_plan(&serde_json::json!({"steps": [{"kind": "drag"}]}), "", 0, None, false, false);
+    assert_eq!(bad["status"], "unavailable");
+    assert!(bad["reason"].as_str().unwrap().contains("bad plan"), "{bad}");
+    assert_eq!(b.clicks(), vec![vec![270, 115]]); // the refused plans moved nothing
+}
+
+#[test]
+fn test_lane_first_operation_replies_with_the_route() {
+    let mut b = lane_bench(vec![cal_snapshot(false), cal_snapshot(true)]);
+    b.h.begin();
+    let route = b.h.lane_first("switch to week view", false);
+    assert_eq!(route["status"], "complete", "{route}");
+    assert_eq!(route["clicked"], serde_json::json!(["Week"]));
+    assert_eq!(route["sentence"], "Done. I clicked Week.");
+    assert!(route["line"].as_str().unwrap().starts_with("script: complete"), "{route}");
+    let log: Vec<&str> = route["log"].as_array().unwrap().iter().map(|l| l.as_str().unwrap()).collect();
+    assert!(log.iter().any(|l| l.starts_with("delegate step 1: Week (radio button)")), "{log:?}");
+    assert_eq!(b.clicks(), vec![vec![270, 115]]);
+    assert!(b.h.timing_ms().contains_key("ax"), "{:?}", b.h.timing_ms());
+}
+
+#[test]
+fn test_open_url_passes_on_urlsplits_own_value_error() {
+    // Python's urlsplit raises before the scheme check; the messages are CPython 3.13's own.
+    let cases = [
+        ("http://[::1", "Invalid IPv6 URL"),
+        ("http://a[::1]/", "Invalid IPv6 URL"),
+        ("http://[zz]/", "'zz' does not appear to be an IPv4 or IPv6 address"),
+        ("http://[1.2.3.4]/", "An IPv4 address cannot be in brackets"),
+        ("http://[vz]/", "IPvFuture address is invalid"),
+        ("http://[fe80::1%]/", "'fe80::1%' does not appear to be an IPv4 or IPv6 address"),
+    ];
+    for (url, message) in cases {
+        let mut b = Bench::new(Opts::default());
+        let err = b.h.open_url(url, None, 8.0).expect_err(url);
+        assert_eq!(error_kind(&err), "ValueError", "{url}");
+        assert_eq!(eve_desktop_lanes::error_message(&err), message, "{url}");
+        assert!(b.argv().is_empty() && b.h.acted, "{url}");
+    }
+    let mut b = Bench::new(Opts::default());
+    let err = b.h.open_url("http://[v1.x]/", None, 0.0);
+    assert!(err.is_ok() || error_kind(&err.unwrap_err()) != "ValueError");
+}

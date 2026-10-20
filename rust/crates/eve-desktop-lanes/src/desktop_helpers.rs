@@ -1482,7 +1482,11 @@ impl Helpers {
     /// https and mailto.
     pub fn open_url(&mut self, url: &str, app: Option<&str>, wait: f64) -> anyhow::Result<String> {
         self.mark_acted();
-        let scheme = crate::ax_candidates::urlsplit(url).scheme.to_lowercase();
+        // urlsplit's own ValueError (a bad bracketed host) propagates with its message, as in Python
+        let scheme = crate::ax_candidates::try_urlsplit(url)
+            .map_err(|e| LaneError::err("ValueError", e.0))?
+            .scheme
+            .to_lowercase();
         if !["http", "https", "mailto"].contains(&scheme.as_str()) {
             return Err(LaneError::err("ValueError", "open_url: only http, https and mailto URLs"));
         }

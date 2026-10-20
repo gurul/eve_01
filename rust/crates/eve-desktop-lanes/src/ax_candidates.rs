@@ -569,9 +569,13 @@ pub struct UrlParts {
     pub fragment: String,
 }
 
-/// `urlsplit`'s ValueError ("Invalid IPv6 URL", a bad bracketed host).
+/// `urlsplit`'s ValueError, carrying Python's message ("Invalid IPv6 URL", or the bracketed host's own error).
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct UrlSplitError;
+pub(crate) struct UrlSplitError(pub(crate) String);
+
+fn invalid_ipv6() -> UrlSplitError {
+    UrlSplitError("Invalid IPv6 URL".to_string())
+}
 
 fn is_scheme_char(c: char) -> bool {
     c.is_ascii_alphanumeric() || matches!(c, '+' | '-' | '.')
@@ -584,14 +588,19 @@ fn check_bracketed_host(hostname: &str) -> Result<(), UrlSplitError> {
         let hex_len = rest.chars().take_while(|c| c.is_ascii_hexdigit()).count();
         let after = &rest[hex_len..];
         let ok = hex_len > 0 && after.starts_with('.') && after.len() > 1 && !after[1..].contains('\n');
-        return if ok { Ok(()) } else { Err(UrlSplitError) };
+        return if ok { Ok(()) } else { Err(UrlSplitError("IPvFuture address is invalid".to_string())) };
     }
     // ipaddress.ip_address: IPv6 only (an IPv4 address cannot be in brackets); a zone id is allowed.
+    if hostname.parse::<std::net::Ipv4Addr>().is_ok() {
+        return Err(UrlSplitError("An IPv4 address cannot be in brackets".to_string()));
+    }
+    let not_an_address =
+        || UrlSplitError(format!("{} does not appear to be an IPv4 or IPv6 address", crate::desktop_helpers::py_repr(hostname)));
     let addr = hostname.split_once('%').map_or(hostname, |(a, _)| a);
     if hostname.split_once('%').is_some_and(|(_, zone)| zone.is_empty()) {
-        return Err(UrlSplitError);
+        return Err(not_an_address());
     }
-    addr.parse::<std::net::Ipv6Addr>().map(|_| ()).map_err(|_| UrlSplitError)
+    addr.parse::<std::net::Ipv6Addr>().map(|_| ()).map_err(|_| not_an_address())
 }
 
 /// Python 3.13 `_check_bracketed_netloc`.
@@ -600,11 +609,11 @@ fn check_bracketed_netloc(netloc: &str) -> Result<(), UrlSplitError> {
     let hostname = match hostname_and_port.split_once('[') {
         Some((before, bracketed)) => {
             if !before.is_empty() {
-                return Err(UrlSplitError);
+                return Err(invalid_ipv6());
             }
             let (hostname, port) = bracketed.split_once(']').unwrap_or((bracketed, ""));
             if !port.is_empty() && !port.starts_with(':') {
-                return Err(UrlSplitError);
+                return Err(invalid_ipv6());
             }
             hostname
         }
@@ -614,7 +623,7 @@ fn check_bracketed_netloc(netloc: &str) -> Result<(), UrlSplitError> {
 }
 
 /// Python 3.13 `urlsplit(url)` with its ValueError.
-fn try_urlsplit(url: &str) -> Result<UrlParts, UrlSplitError> {
+pub(crate) fn try_urlsplit(url: &str) -> Result<UrlParts, UrlSplitError> {
     // lstrip(_WHATWG_C0_CONTROL_OR_SPACE), then drop every tab, CR and LF.
     let url: String =
         url.trim_start_matches(|c: char| c <= ' ').chars().filter(|c| !matches!(c, '\t' | '\r' | '\n')).collect();
@@ -634,7 +643,7 @@ fn try_urlsplit(url: &str) -> Result<UrlParts, UrlSplitError> {
         rest = &after[delim..];
         let (open, close) = (netloc.contains('['), netloc.contains(']'));
         if open != close {
-            return Err(UrlSplitError);
+            return Err(invalid_ipv6());
         }
         if open && close {
             check_bracketed_netloc(&netloc)?;
