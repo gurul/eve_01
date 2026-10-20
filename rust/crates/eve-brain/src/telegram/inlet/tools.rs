@@ -1227,6 +1227,12 @@ impl TelegramInlet {
             st.claude_on_job = Some(crate::seams::Job::spawn("claude-on", futures::future::pending::<()>()));
         }
     }
+    /// `inlet.turns = turns; inlet._turn_kinds = kinds`.
+    pub fn tt_set_turns(&self, turns: Vec<(String, String)>, kinds: Vec<String>) {
+        let mut st = self.st.lock();
+        st.turns = turns;
+        st.turn_kinds = kinds;
+    }
     /// `len(inlet._jobs)`: the jobs not yet done.
     pub fn tt_jobs_left(&self) -> usize {
         self.st.lock().jobs.iter().filter(|j| !j.done()).count()
