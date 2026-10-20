@@ -108,6 +108,13 @@ clocks) were identical as `json.dumps` text, and the two SQLite files dumped ide
 `reading`, `here`, `here_line` and the thing tools with a fresh fix at each known place matched too, and 28 318
 mutated `at` strings parsed to the same instant or reason as `phone_location.parse`.
 
+Second verification pass (2026-10-20, a separate harness, not committed): six more random six-week histories
+(Los Angeles, Berlin, Kolkata, UTC, New York, Lord Howe; 5 397 fix, visit, recall, label, summary and prune answers)
+were identical to `places.py`'s, and so were the SQLite dumps. 5 000 fix and visit bodies parsed identically, except
+the 53 that make Python raise OverflowError (the first item under Differences). The two tool schemas serialized
+byte for byte as Python's. A real-clock run of `here_line`, `reading`, naming and the thing tools (27 answers) also
+matched. No defect was found.
+
 ## Boundaries
 None
 
