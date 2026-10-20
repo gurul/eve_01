@@ -121,6 +121,12 @@ fn py_int(s: &str) -> Result<i64, String> {
     py::int_of(&Value::String(s.to_string())).map_err(|_| format!("invalid int value: {}", py::repr_str(s)))
 }
 
+/// The command line's clap definition, read-only: `eve-bridge` renders argparse's `--help` layout from it (the
+/// app's own `cli` still parses). Added for the eve-bridge port.
+pub fn clap_command() -> ClapCommand {
+    parser()
+}
+
 pub(crate) fn parser() -> ClapCommand {
     ClapCommand::new("eve-bridge lights")
         .no_binary_name(true)

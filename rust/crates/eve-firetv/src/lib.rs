@@ -2393,6 +2393,12 @@ pub async fn pair(
     0
 }
 
+/// The command line's clap definition, read-only: `eve-bridge` renders argparse's `--help` layout from it (the
+/// app's own `cli` still parses). Added for the eve-bridge port.
+pub fn clap_command() -> clap::Command {
+    cli_parser()
+}
+
 fn cli_parser() -> clap::Command {
     use clap::{Arg, ArgAction, Command as C};
     // argparse's `type=int`: `int(s)`, so " 7 ", "+7" and "1_0" are numbers too

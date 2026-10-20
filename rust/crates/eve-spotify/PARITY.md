@@ -69,3 +69,6 @@ Status: complete
 - `login` answers a non-GET request on the loopback with 501 and closes; the redirect page and its headers are otherwise the same, minus Python's `Server`/`Date` headers.
 - `cli logout` reports a delete that fails for a reason other than "not found" (Python would raise).
 - `login` reports a token call that gets no answer, or a login file it cannot write, as a line and exit code 1 (Python would raise).
+
+## Added for eve-bridge
+- `clap_command()` returns the private clap parser (`cli_parser`), so eve-bridge can print `eve-bridge spotify --help` in argparse's layout. Small and additive; nothing else changed, and this crate's tests were re-run after it (all pass).

@@ -58,3 +58,6 @@ Status: complete
 - `raw` arguments and `--device` past int32 fail with struct's message as the result line, where Python crashes with `struct.error`.
 - Usage errors (bad choice, missing subcommand, bad number) are clap's wording on stderr with exit 2; argparse's wording differs, the exit code is the same. Ints in the CLI saturate at i64 where Python's are unbounded (every such value is clamped or refused anyway).
 - A decoded float that is NaN or infinite becomes JSON `null` in `raw --json` output (serde_json can't hold them; Python prints `NaN`/`Infinity`). The plain line prints them as Python does (`nan`, `inf`).
+
+## Added for eve-bridge
+- `clap_command()` returns the private clap parser, so eve-bridge can print `eve-bridge obsbot --help` in argparse's layout. Small and additive; nothing else changed, and this crate's tests were re-run after it (all pass).

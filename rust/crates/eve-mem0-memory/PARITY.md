@@ -99,3 +99,6 @@ Status: complete
   datetime) arrives as its `str()`. mem0ai 2.2 already returns ISO strings for its dates.
 - `who` holding a list (unhashable) makes Python's `roles.get` raise `TypeError` out of `messages`; here such a line
   is skipped like any other non-speaker. Transcripts only ever hold strings there.
+
+## Added for eve-bridge
+- `OwnerMemory::is_open()` (no Python counterpart): whether the mem0 store is open, so `eve-bridge memory reindex` can say the index is off the way cli.py reads `index._mem`. Small and additive; nothing else changed, and this crate's tests were re-run after it (all pass).

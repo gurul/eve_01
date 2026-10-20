@@ -109,3 +109,6 @@ Status: complete
   (`Could not read a WiZ export from FILE: TypeError`), where Python's `TypeError` escaped as a traceback.
 - `cli` builds its own tokio runtime, so it is called from outside one (Python's `asyncio.run` had the same
   rule).
+
+## Added for eve-bridge
+- `cli::clap_command()` returns the private clap parser, so eve-bridge can print `eve-bridge lights --help` in argparse's layout. Small and additive; nothing else changed, and this crate's tests were re-run after it (all pass).

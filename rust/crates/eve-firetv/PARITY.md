@@ -112,3 +112,6 @@ Status: complete
 - Where the Python raises out of the module, Rust returns a value: `screenshot`/`screenshot_for_model`/`handle` return `io::Error` when the PNG cannot be written; the CLI prints `Could not save the picture (...)`, `Could not save the TV to ... (...)` (pair) or `Could not forget the TV (...)` and exits 1 instead of a traceback.
 - CLI argument errors are clap's messages (exit 2, help exit 0) rather than argparse's wording; the subcommands, options, defaults and help strings are the same.
 - Integers are `i64`: a tool or panel number past ±9.2e18 saturates (Python's ints grow), which every clamp (0-100, ±100, 1-10) turns into the same answer.
+
+## Added for eve-bridge
+- `clap_command()` returns the private clap parser (`cli_parser`), so eve-bridge can print `eve-bridge firetv --help` in argparse's layout. Small and additive; nothing else changed, and this crate's tests were re-run after it (all pass).

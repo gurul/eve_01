@@ -601,6 +601,12 @@ impl OwnerMemory {
         &self.inner.home
     }
 
+    /// Whether mem0 is open now (Python's `index._mem is not None`): `eve-bridge memory reindex` checks it to say
+    /// the index did not open.
+    pub fn is_open(&self) -> bool {
+        self.inner.state.lock().mem.is_some()
+    }
+
     /// How long a search is waited for (SEARCH_TIMEOUT_SECS; tests shorten it).
     pub fn set_search_timeout(&self, secs: f64) {
         *self.inner.search_timeout.lock() = Duration::from_secs_f64(secs.max(0.0));

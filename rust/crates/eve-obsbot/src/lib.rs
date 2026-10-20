@@ -1207,6 +1207,12 @@ fn choice(name: &'static str, choices: Vec<&'static str>) -> Arg {
     Arg::new(name).required(true).value_parser(choices)
 }
 
+/// The command line's clap definition, read-only: `eve-bridge` renders argparse's `--help` layout from it (the
+/// app's own `cli` still parses). Added for the eve-bridge port.
+pub fn clap_command() -> Command {
+    parser()
+}
+
 fn parser() -> Command {
     Command::new("eve-bridge obsbot")
         .about("Control the OBSBOT camera: moves over USB, OBSBOT's own features through OBSBOT Center while it runs.")
