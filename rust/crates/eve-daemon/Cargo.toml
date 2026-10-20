@@ -1,0 +1,193 @@
+[package]
+name = "eve-daemon"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+# AgentEvent: what a computer task reports (agents).
+eve-agent-contract = { path = "../eve-agent-contract" }
+# purchases for the chat brain (door).
+eve-agentcard = { path = "../eve-agentcard" }
+eve-agentcard-tools = { path = "../eve-agentcard-tools" }
+# U.S. law and government sources (door).
+eve-america = { path = "../eve-america" }
+# "open Spotify" by rules, Codex otherwise (agents).
+eve-app-reflex = { path = "../eve-app-reflex" }
+# eve's apps: lights, Spotify, the TV, the camera, the car (apps).
+eve-app-registry = { path = "../eve-app-registry" }
+eve-lights = { path = "../eve-lights" }
+eve-spotify = { path = "../eve-spotify" }
+eve-firetv = { path = "../eve-firetv" }
+eve-obsbot-panel = { path = "../eve-obsbot-panel" }
+eve-pika = { path = "../eve-pika" }
+# the direct Google/GitHub/Maps bridge (door).
+eve-apps-mcp = { path = "../eve-apps-mcp" }
+# the per-decision log (hooks).
+eve-audit = { path = "../eve-audit" }
+# the robot over Bluetooth (link).
+eve-ble = { path = "../eve-ble" }
+# the text door, the voice, the slow brain, the Mini App, the app maker, sharing (door, voice, run).
+eve-brain = { path = "../eve-brain" }
+# the web reader's Jev router (agents).
+eve-browser-router = { path = "../eve-browser-router" }
+# the Chrome lane's browser (agents).
+eve-browser-lane = { path = "../eve-browser-lane" }
+# Canvas, read only (door).
+eve-canvas = { path = "../eve-canvas" }
+# the thought pager on the robot's screen (explore).
+eve-caption-pager = { path = "../eve-caption-pager" }
+# the chat log (door).
+eve-chat-log = { path = "../eve-chat-log" }
+# the chief of staff (door).
+eve-chief = { path = "../eve-chief" }
+# Chrome's "Allow remote debugging?" (door, agents).
+eve-chrome-consent = { path = "../eve-chrome-consent" }
+# the Chrome lane as a body (agents).
+eve-chrome-lane = { path = "../eve-chrome-lane" }
+# Claude Code's config homes (startup).
+eve-claude-home = { path = "../eve-claude-home" }
+# the picker's live sessions (door).
+eve-claude-live = { path = "../eve-claude-live" }
+# the claude-mem sink and mirror (run).
+eve-claude-mem = { path = "../eve-claude-mem" }
+# Codex computer use and its warm agent (agents).
+eve-codex-computer = { path = "../eve-codex-computer" }
+eve-codex-warm = { path = "../eve-codex-warm" }
+# Composio (door).
+eve-composio-tools = { path = "../eve-composio-tools" }
+# the planner and its config (agents, voice).
+eve-computer-agent = { path = "../eve-computer-agent" }
+# the Voice PE (link, voice, apps).
+eve-controller = { path = "../eve-controller" }
+# the board's hold-to-talk calls (voice).
+eve-desk-call = { path = "../eve-desk-call" }
+# keyword-decided clicks before Codex (agents).
+eve-desk-lane = { path = "../eve-desk-lane" }
+# task_router.installed_apps (agents).
+eve-desktop-lanes = { path = "../eve-desktop-lanes" }
+# the diary (run, explore).
+eve-diary = { path = "../eve-diary" }
+# the nightly dream (run).
+eve-dream = { path = "../eve-dream" }
+# the wake word (voice).
+eve-ears = { path = "../eve-ears" }
+# the idle explorer (explore).
+eve-explore = { path = "../eve-explore" }
+# the terminal raise (ble_handler, voice).
+eve-focus-terminal = { path = "../eve-focus-terminal" }
+# the folder push and the ack router (ble_handler, ipc).
+eve-folder-push = { path = "../eve-folder-push" }
+# eyes on whoever is talking (daemon, voice).
+eve-follow = { path = "../eve-follow" }
+# the head (daemon, ipc).
+eve-head = { path = "../eve-head" }
+# owner identity (board).
+eve-identity = { path = "../eve-identity" }
+# "go away" in any words (run).
+eve-intent = { path = "../eve-intent" }
+# the IPC server (daemon).
+eve-ipc = { path = "../eve-ipc" }
+# Jev's route (voice, hooks).
+eve-jev = { path = "../eve-jev" }
+# the transcript tailer (daemon).
+eve-jsonl-tailer = { path = "../eve-jsonl-tailer" }
+# swipe-down → Enter (ble_handler).
+eve-key-tap = { path = "../eve-key-tap" }
+# lessons and think out loud (run, lesson).
+eve-learning = { path = "../eve-learning" }
+# Eve Link: LinkChat, Updates, the hub seams (door, apps).
+eve-link = { path = "../eve-link" }
+eve-link-memory = { path = "../eve-link-memory" }
+eve-link-notes = { path = "../eve-link-notes" }
+eve-link-uploads = { path = "../eve-link-uploads" }
+# the held Option key (run).
+eve-listen-key = { path = "../eve-listen-key" }
+# expressions on the robot and the phone (daemon, ipc, lesson).
+eve-live-expressions = { path = "../eve-live-expressions" }
+# the Mac's camera (explore).
+eve-mac-camera = { path = "../eve-mac-camera" }
+# the permission matchers (hooks, startup).
+eve-matchers = { path = "../eve-matchers" }
+# the Meet notetaker (door).
+eve-meet = { path = "../eve-meet" }
+# mem0 (run).
+eve-mem0-memory = { path = "../eve-mem0-memory" }
+# the memory facade (run, voice, door).
+eve-memory = { path = "../eve-memory" }
+# the memory bus (run, lesson).
+eve-memory-bus = { path = "../eve-memory-bus" }
+# named motions (ipc).
+eve-motion = { path = "../eve-motion" }
+# Spotify mode on the Voice PE (apps, ble_handler).
+eve-music-mode = { path = "../eve-music-mode" }
+# the room notes (voice, run).
+eve-notes = { path = "../eve-notes" }
+# OPENROUTER_API_KEY (door, agents).
+eve-openrouter = { path = "../eve-openrouter" }
+# OpenTable (door).
+eve-opentable = { path = "../eve-opentable" }
+# the phone's calls and notes (door, voice, run).
+eve-phone-call = { path = "../eve-phone-call" }
+# pictures on the shelf (explore).
+eve-photos = { path = "../eve-photos" }
+# the places loop (run).
+eve-places = { path = "../eve-places" }
+# heartbeats, time sync, entries (board, ipc).
+eve-protocol = { path = "../eve-protocol" }
+# in-cwd reads (hooks).
+eve-read-policy = { path = "../eve-read-policy" }
+# recall, records (run, voice, door).
+eve-records = { path = "../eve-records" }
+# the rosbridge sink (run).
+eve-rosbridge = { path = "../eve-rosbridge" }
+# the voice's eyes (daemon, run).
+eve-scene = { path = "../eve-scene" }
+# the vault (door).
+eve-second-brain = { path = "../eve-second-brain" }
+# the robot over USB (link).
+eve-serial-transport = { path = "../eve-serial-transport" }
+# mute and the mic switch (daemon, board).
+eve-sound = { path = "../eve-sound" }
+# the spend ledger (agents).
+eve-spend = { path = "../eve-spend" }
+# the providers' spend figures (run).
+eve-spend-sync = { path = "../eve-spend-sync" }
+# sessions, entries, tokens (daemon, ipc).
+eve-state = { path = "../eve-state" }
+# what is worth putting on the robot's screen (explore).
+eve-thought-screen = { path = "../eve-thought-screen" }
+# transcripts (run, voice).
+eve-transcripts = { path = "../eve-transcripts" }
+# Jev's typed asks: head poses, command risk (voice, hooks).
+eve-typed-ask = { path = "../eve-typed-ask" }
+# GitHub releases (explore).
+eve-version-check = { path = "../eve-version-check" }
+# host vision (daemon, board).
+eve-vision = { path = "../eve-vision" }
+# the speaker gate (voice).
+eve-voice-gate = { path = "../eve-voice-gate" }
+# the watcher, the web reader (door, agents).
+eve-web = { path = "../eve-web" }
+# the Work tab's Claude Code sessions (door, ipc).
+eve-work-sessions = { path = "../eve-work-sessions" }
+anyhow.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+futures.workspace = true
+async-trait.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+tracing.workspace = true
+parking_lot.workspace = true
+indexmap.workspace = true
+dirs.workspace = true
+libc.workspace = true
+# textwrap.wrap's word splitting (lesson).
+fancy-regex = "0.19.2"
+
+[dev-dependencies]
+tempfile.workspace = true
+tracing-subscriber.workspace = true
