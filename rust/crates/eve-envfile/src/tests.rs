@@ -598,6 +598,39 @@ fn a_non_utf8_env_file_is_an_error_on_load() {
 }
 
 #[test]
+fn decode_errors_match_pythons_text() {
+    // What Python 3.13 prints for `read_text(encoding="utf-8-sig")` of each file.
+    let cases: [(&[u8], Result<&str, &str>); 17] = [
+        (b"\xef", Ok("")),
+        (b"\xef\xbb", Ok("")),
+        (b"\xef\xbb\xbf", Ok("")),
+        (b"\xef\xbbA", Err("'utf-8' codec can't decode bytes in position 0-1: invalid continuation byte")),
+        (b"\xefA", Err("'utf-8' codec can't decode byte 0xef in position 0: invalid continuation byte")),
+        (b"A\xef\xbb", Err("'utf-8' codec can't decode bytes in position 1-2: unexpected end of data")),
+        (b"A=\xe2", Err("'utf-8' codec can't decode byte 0xe2 in position 2: unexpected end of data")),
+        (b"\xf0\x9f\x98", Err("'utf-8' codec can't decode bytes in position 0-2: unexpected end of data")),
+        (b"\xf0\x9f\x98A", Err("'utf-8' codec can't decode bytes in position 0-2: invalid continuation byte")),
+        (b"\xed\xa0\x80", Err("'utf-8' codec can't decode byte 0xed in position 0: invalid continuation byte")),
+        (b"\xc0\xaf", Err("'utf-8' codec can't decode byte 0xc0 in position 0: invalid start byte")),
+        (b"\xf4\x90\x80\x80", Err("'utf-8' codec can't decode byte 0xf4 in position 0: invalid continuation byte")),
+        (b"\xe0\x80", Err("'utf-8' codec can't decode byte 0xe0 in position 0: invalid continuation byte")),
+        (b"\xf0\x80", Err("'utf-8' codec can't decode byte 0xf0 in position 0: invalid continuation byte")),
+        (b"\xff\xfe", Err("'utf-8' codec can't decode byte 0xff in position 0: invalid start byte")),
+        (b"\x80", Err("'utf-8' codec can't decode byte 0x80 in position 0: invalid start byte")),
+        (b"\xef\xbb\xbfA=\xff", Err("'utf-8' codec can't decode byte 0xff in position 2: invalid start byte")),
+    ];
+    for (bytes, want) in cases {
+        let got = decode_utf8_sig(bytes.to_vec()).map_err(|e| e.to_string());
+        assert_eq!(got, want.map(str::to_string).map_err(str::to_string), "{bytes:?}");
+    }
+    // A file that is only part of a BOM loads as an empty file, as in Python.
+    let d = tmp();
+    let f = d.path().join("env");
+    fs::write(&f, b"\xef\xbb").unwrap();
+    assert!(load_env_file(Some(&f), &mut env()).unwrap().is_empty());
+}
+
+#[test]
 fn a_nul_value_is_refused_by_the_process_environment_only() {
     let d = tmp();
     let f = d.path().join("env");

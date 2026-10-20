@@ -570,9 +570,15 @@ fn sync_folder(_folder: &Path) {}
 // ---------------------------------------------------------------------------------------------------------------
 // Bytes, text and Python's error text.
 
-/// `read_text(encoding="utf-8-sig")`: one leading BOM dropped, the rest strict UTF-8.
+/// `read_text(encoding="utf-8-sig")`: one leading BOM dropped, the rest strict UTF-8. A file that is only the
+/// start of a BOM (`EF` or `EF BB`) reads as empty text: Python's incremental `utf-8-sig` decoder holds those
+/// bytes back waiting for more, and the final read drops them without an error.
 fn decode_utf8_sig(mut bytes: Vec<u8>) -> Result<String, EnvFileError> {
-    if bytes.starts_with(b"\xEF\xBB\xBF") {
+    const BOM: &[u8] = b"\xEF\xBB\xBF";
+    if !bytes.is_empty() && bytes.len() < BOM.len() && BOM.starts_with(&bytes) {
+        return Ok(String::new());
+    }
+    if bytes.starts_with(BOM) {
         bytes.drain(..3);
     }
     String::from_utf8(bytes).map_err(|e| {
@@ -592,6 +598,12 @@ fn utf8_error_message(bytes: &[u8], at: usize, error_len: Option<usize>) -> Stri
             bytes.len() - 1
         ),
         None => format!("'utf-8' codec can't decode byte 0x{start:02x} in position {at}: unexpected end of data"),
+        // A valid lead and continuation bytes cut short by a bad one: Python names the whole run.
+        Some(n) if n > 1 => format!(
+            "'utf-8' codec can't decode bytes in position {}-{}: invalid continuation byte",
+            at,
+            at + n - 1
+        ),
         Some(_) => {
             let reason = if matches!(start, 0x80..=0xC1 | 0xF5..=0xFF) {
                 "invalid start byte"
