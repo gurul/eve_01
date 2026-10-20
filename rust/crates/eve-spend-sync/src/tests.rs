@@ -98,25 +98,33 @@ fn approx(v: &Value, want: f64) -> bool {
     v.as_f64().is_some_and(|x| (x - want).abs() < 1e-9)
 }
 
+thread_local! {
+    static LOG: std::cell::RefCell<Vec<u8>> = const { std::cell::RefCell::new(Vec::new()) };
+}
+
 /// Every log line written while `f` runs on this thread.
+///
+/// One global subscriber writes into a per-thread buffer. A scoped (`with_default`) subscriber races with tests
+/// on other threads over tracing's cached callsite interest and can miss the event, so it is not used.
 fn capture<R>(f: impl FnOnce() -> R) -> (R, Vec<String>) {
-    #[derive(Clone, Default)]
-    struct Buf(Arc<Mutex<Vec<u8>>>);
-    impl Write for Buf {
+    struct ThreadBuf;
+    impl Write for ThreadBuf {
         fn write(&mut self, data: &[u8]) -> std::io::Result<usize> {
-            self.0.lock().extend_from_slice(data);
+            LOG.with(|log| log.borrow_mut().extend_from_slice(data));
             Ok(data.len())
         }
         fn flush(&mut self) -> std::io::Result<()> {
             Ok(())
         }
     }
-    let buf = Buf::default();
-    let sink = buf.clone();
-    let subscriber =
-        tracing_subscriber::fmt().with_ansi(false).with_writer(move || sink.clone()).without_time().finish();
-    let out = tracing::subscriber::with_default(subscriber, f);
-    let text = String::from_utf8(buf.0.lock().clone()).unwrap();
+    static INIT: std::sync::Once = std::sync::Once::new();
+    INIT.call_once(|| {
+        let subscriber = tracing_subscriber::fmt().with_ansi(false).with_writer(|| ThreadBuf).without_time().finish();
+        let _ = tracing::subscriber::set_global_default(subscriber);
+    });
+    LOG.with(|log| log.borrow_mut().clear());
+    let out = f();
+    let text = LOG.with(|log| String::from_utf8(std::mem::take(&mut *log.borrow_mut())).unwrap());
     (out, text.lines().map(str::to_string).collect())
 }
 
