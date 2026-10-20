@@ -229,7 +229,7 @@ impl TelegramApi for MutedBotApi {
 /// when notify.py makes one; Telegram's own otherwise. `environ` is what the notifier reads (None: the process's).
 pub fn make_api(config: &TelegramConfig, environ: Option<&Environ>) -> Arc<dyn TelegramApi> {
     if config.app_only {
-        let notifier: Option<Arc<crate::notify::Notifier>> = crate::notify::make_notifier(environ).map(Into::into);
+        let notifier: Option<Arc<crate::notify::Notifier>> = crate::notify::make_notifier(environ);
         Arc::new(MutedBotApi::new(&config.token, notifier))
     } else {
         Arc::new(BotApi::new(&config.token, None))
@@ -250,8 +250,11 @@ pub fn make_inlet(config: TelegramConfig, lent: InletOptions) -> Option<Arc<Tele
         return None;
     }
     use eve_computer_agent::responses::{make_response_creator, make_stream_creator, CreatorOptions};
-    let made = make_response_creator(CreatorOptions::default())
-        .and_then(|create| make_stream_creator(CreatorOptions::default()).map(|stream| (create, stream)));
+    // The key is the one `available` just found: Python's creators read the same os.environ it does.
+    let key = eve_openrouter::key(lent.environ.as_ref());
+    let options = || CreatorOptions { api_key: Some(key.clone()), ..CreatorOptions::default() };
+    let made = make_response_creator(options())
+        .and_then(|create| make_stream_creator(options()).map(|stream| (create, stream)));
     let (create, stream_create) = match made {
         Ok(made) => made,
         Err(e) => {

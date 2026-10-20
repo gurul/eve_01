@@ -282,9 +282,12 @@ pub fn accept_tap(update: &Value, config: &TelegramConfig) -> (String, Option<Ta
     }
     let msg = msg.and_then(Value::as_object);
     let chat = msg.and_then(|m| m.get("chat")).and_then(Value::as_object);
-    let private = chat.is_some_and(|c| {
-        c.get("type").and_then(Value::as_str) == Some("private") && wire_int(c.get("id")) == Some(user_id)
-    });
+    // `chat.get("id") != user_id` is Python's ==: True is 1 and 42.0 is 42
+    let same_id = |id: Option<&Value>| match id {
+        Some(Value::Number(n)) if !(n.is_i64() || n.is_u64()) => n.as_f64() == Some(user_id as f64),
+        other => wire_int(other) == Some(user_id),
+    };
+    let private = chat.is_some_and(|c| c.get("type").and_then(Value::as_str) == Some("private") && same_id(c.get("id")));
     if !private {
         return verdict("not-private"); // a button in a group, or one whose chat Telegram did not say
     }
@@ -369,8 +372,24 @@ pub static CODEX_CHOICES: LazyLock<Vec<(&'static str, Choice)>> = LazyLock::new(
 pub static ASK_OPTIONS: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r#"(?s)^(?P<question>.+?) \((?P<options>1\. .+)\)(?:\n?\z)"#).expect("ASK_OPTIONS"));
 
-/// `re.split(r" / (?=\d+\. )", options)`: cut at every " / " that a numbered option follows.
-static OPTION_CUT: LazyLock<Regex> = LazyLock::new(|| Regex::new(r" / \d+\. ").expect("OPTION_CUT"));
+/// `re.split(r" / (?=\d+\. )", options)`: the text cut at every " / " that a numbered option follows. The lookahead
+/// consumes nothing, so " / 2. / 3. b" is cut twice (Rust's regex has no lookahead: each " / " is tested in turn).
+fn option_pieces(options: &str) -> Vec<&str> {
+    static NUMBERED: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^\d+\. ").expect("NUMBERED"));
+    let mut pieces = Vec::new();
+    let mut start = 0;
+    let mut from = 0;
+    while let Some(at) = options[from..].find(" / ").map(|i| from + i) {
+        let after = at + " / ".len();
+        if NUMBERED.is_match(&options[after..]) {
+            pieces.push(&options[start..at]);
+            start = after;
+        }
+        from = at + 1;
+    }
+    pieces.push(&options[start..]);
+    pieces
+}
 
 /// py: telegram.py:1656 `def answer_choices(question: str) -> tuple[Choice, ...]:`
 ///
@@ -380,7 +399,7 @@ pub fn answer_choices(question: &str) -> Vec<Choice> {
     let text = question.py_trim();
     if let Some(codex) = CODEX_REPLY.captures(text) {
         let mut chosen = Vec::new();
-        for piece in codex["choices"].split(';').map(str::trim) {
+        for piece in codex["choices"].split(';').map(|p| p.py_trim()) {
             match CODEX_CHOICES.iter().find(|(start, _)| piece.starts_with(start)) {
                 Some((_, choice)) => chosen.push(choice.clone()),
                 None => return Vec::new(), // a choice this code does not know: words only, never a guess
@@ -409,16 +428,8 @@ pub fn question_options(hint: &str) -> Vec<(i64, String)> {
     if body.contains(" | ") {
         return Vec::new();
     }
-    let options = &m["options"];
-    let mut pieces = Vec::new();
-    let mut start = 0;
-    for cut in OPTION_CUT.find_iter(options) {
-        pieces.push(&options[start..cut.start()]);
-        start = cut.start() + " / ".len();
-    }
-    pieces.push(&options[start..]);
     let mut out = Vec::new();
-    for (n, piece) in pieces.into_iter().enumerate() {
+    for (n, piece) in option_pieces(&m["options"]).into_iter().enumerate() {
         let n = n as i64 + 1;
         let head = format!("{n}. ");
         let Some(rest) = piece.strip_prefix(&head) else {

@@ -185,9 +185,19 @@ impl BotApi {
 /// A multipart upload's files: (form field, file name, bytes, content type), as httpx's `files=`.
 pub type BotFiles = Vec<(String, String, Vec<u8>, String)>;
 
-/// `name="..."` as httpx writes a form-data parameter: quotes, CR and LF percent-escaped.
+/// `name="..."` as httpx writes a form-data parameter (`_format_form_param`): `"` as %22, a backslash doubled, and
+/// every control character below 0x20 but ESC as %XX.
 fn form_quote(value: &str) -> String {
-    value.replace('"', "%22").replace('\r', "%0D").replace('\n', "%0A")
+    let mut out = String::with_capacity(value.len());
+    for c in value.chars() {
+        match c {
+            '"' => out.push_str("%22"),
+            '\\' => out.push_str("\\\\"),
+            c if (c as u32) <= 0x1F && c != '\u{1b}' => out.push_str(&format!("%{:02X}", c as u32)),
+            c => out.push(c),
+        }
+    }
+    out
 }
 
 /// httpx's multipart body for `data=` (every field as text) and `files=`.

@@ -259,6 +259,12 @@ fn accept_tap_takes_only_the_owners_tap_in_their_own_chat() {
     let mut no_id = tap_update(90, 1001, "k.1", OWNER, "q1");
     no_id["callback_query"]["id"] = json!(5);
     assert_eq!(accept_tap(&val(&no_id), &cfg).0, "malformed");
+    // Python's ==: a chat id of 42.0 is the owner's 42, and 43.0 is not
+    let mut float_chat = tap_update(90, 1001, "k.1", OWNER, "q1");
+    float_chat["callback_query"]["message"]["chat"]["id"] = json!(OWNER as f64);
+    assert_eq!(accept_tap(&val(&float_chat), &cfg).0, OK);
+    float_chat["callback_query"]["message"]["chat"]["id"] = json!(OWNER as f64 + 1.0);
+    assert_eq!(accept_tap(&val(&float_chat), &cfg).0, "not-private");
 }
 
 #[test]
@@ -278,6 +284,9 @@ fn a_question_gets_buttons_only_when_its_answers_are_known() {
     let codex = answer_choices("Codex wants Safari.\nReply: yes to allow once; \"always allow\"; no to deny.");
     assert_eq!(codex.iter().map(|c| c.value.as_str()).collect::<Vec<_>>(), ["yes", "always allow", "no"]);
     assert!(answer_choices("Codex wants Safari.\nReply: maybe later.").is_empty()); // never a guess
+    // each piece is str.strip()ped, which takes Python's whitespace (\x1f is one) off its ends
+    let spaced = answer_choices("Codex wants Safari.\nReply: yes to allow once;\u{1f}no to deny.");
+    assert_eq!(spaced.iter().map(|c| c.value.as_str()).collect::<Vec<_>>(), ["yes", "no"]);
     assert_eq!(reply_words(&ALLOW_DENY), "Reply \"yes\" or \"no\".");
 }
 
@@ -286,6 +295,9 @@ fn a_relayed_question_is_one_question_with_numbered_options() {
     assert_eq!(question_options("Ship now? (1. Yes / 2. No)"), vec![(1, "Yes".to_string()), (2, "No".to_string())]);
     assert!(question_options("Ship now? (1. Yes / 2. No) | Tag it? (1. Yes)").is_empty());
     assert!(question_options("Ship now? (1. Yes / 3. No)").is_empty());
+    // the split's lookahead consumes nothing: an empty option between two cuts refuses the lot, as in Python
+    assert!(question_options("Pick one (1. a / 2. / 3. b)").is_empty());
+    assert_eq!(question_options("Pick one (1. a / b / 2. c)"), vec![(1, "a / b".to_string()), (2, "c".to_string())]);
     assert!(question_options("Ship now?").is_empty());
 }
 
@@ -353,6 +365,11 @@ fn parse_response_reads_calls_text_and_what_goes_back() {
     let unknown = json!({"output": [{"type": "function_call", "name": "rm_rf", "call_id": "c2", "arguments": ""}]});
     let error = parse_response(&unknown, &[], false).unwrap_err();
     assert_eq!(error.to_string(), "unexpected function call 'rm_rf'");
+    // the name as Python's repr shows it: double quotes around a quote, None for a missing one, a number bare
+    for (name, shown) in [(json!("it's"), "\"it's\""), (Value::Null, "None"), (json!(7), "7")] {
+        let odd = json!({"output": [{"type": "function_call", "name": name, "call_id": "c9", "arguments": ""}]});
+        assert_eq!(parse_response(&odd, &[], false).unwrap_err().to_string(), format!("unexpected function call {shown}"));
+    }
     let (calls, _, _) = parse_response(&unknown, &[], true).unwrap();
     assert_eq!(calls[0]["unknown"], json!(true));
     assert_eq!(calls[0]["args"], json!({}));
@@ -613,6 +630,12 @@ async fn a_photo_goes_as_a_form_with_its_file() {
     assert!(form.contains("filename=\"app.jpg\"\r\nContent-Type: image/jpeg\r\n\r\nJPEG\r\n"));
     let missing = api.send_document(OWNER, &dir.path().join("gone.pdf"), "").await.unwrap_err();
     assert_eq!((missing.code, missing.description.as_str()), (0, "FileNotFoundError"));
+    // a file name as httpx quotes it in the form: `"` as %22, a backslash doubled
+    let odd = dir.path().join("odd \"name\"\\x.txt");
+    std::fs::write(&odd, b"T").unwrap();
+    api.send_document(OWNER, &odd, "").await.unwrap();
+    let form = String::from_utf8_lossy(&transport.requests.lock()[2].body).into_owned();
+    assert!(form.contains("name=\"document\"; filename=\"odd %22name%22\\\\x.txt\"\r\nContent-Type: application/octet-stream\r\n"), "{form}");
 }
 
 #[test]
@@ -669,13 +692,25 @@ async fn test_the_muted_api_sends_nothing_and_every_send_looks_sent() {
     assert!(matches!(refused, Err(ApiImageError::Image(_))));
 }
 
-#[test]
-fn test_make_inlet_lends_the_muted_api_in_app_mode() {
+#[tokio::test]
+async fn test_make_inlet_lends_the_muted_api_in_app_mode() {
     let _iso = isolated();
     let cfg = TelegramConfig { app_only: true, ..config() };
     let env: eve_brain::prelude::Environ = [("EVE_NOTIFY".to_string(), "0".to_string())].into_iter().collect();
     assert!(make_api(&cfg, Some(&env)).muted());
     assert!(!make_api(&config(), Some(&env)).muted());
+    // make_inlet itself, with a model key in the environment it is lent: the inlet it builds holds the muted API
+    let mut keyed = env.clone();
+    keyed.insert("OPENROUTER_API_KEY".into(), "sk-test".into());
+    let options = InletOptions {
+        environ: Some(keyed),
+        toolset_route: Lent::Given(None),
+        grader: Lent::Given(None),
+        small_talk_ask: Lent::Given(None),
+        ..InletOptions::default()
+    };
+    let inlet = make_inlet(cfg.clone(), options).expect("an inlet in app mode");
+    assert!(inlet.api.muted());
     // the control: the door shut without a model key, so no inlet is made at all
     let no_key = InletOptions { environ: Some(Default::default()), ..InletOptions::default() };
     assert!(make_inlet(cfg.clone(), no_key).is_none());
@@ -695,12 +730,57 @@ async fn test_app_only_run_never_polls_and_shuts_down_cleanly() {
         sleep: Some(no_sleep()),
         ..InletOptions::default()
     };
+    let codex = Arc::new(ClosedCodex::default());
+    let options = InletOptions { codex: Some(codex.clone()), ..options };
     let inlet = TelegramInlet::new(cfg, Arc::new(Wrapped(fake, Odd { never_poll: true, ..Odd::default() })), FakeCreate::new(vec![]).create(), options);
     let task = tokio::spawn(async move { inlet.run().await });
     tokio::time::sleep(std::time::Duration::from_millis(50)).await;
     assert!(!task.is_finished());
+    assert!(!codex.closed.load(std::sync::atomic::Ordering::SeqCst)); // the control: nothing shut down yet
     task.abort();
     assert!(task.await.unwrap_err().is_cancelled());
+    // `shut == [True]`: the cancelled run still shut the inlet down (its last step closes the Codex door)
+    for _ in 0..100 {
+        if codex.closed.load(std::sync::atomic::Ordering::SeqCst) {
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+    }
+    assert!(codex.closed.load(std::sync::atomic::Ordering::SeqCst), "the inlet was not shut down");
+}
+
+/// A Codex door that only remembers being closed: what `_shutdown` does last, so a closed door says it ran.
+#[derive(Default)]
+struct ClosedCodex {
+    closed: std::sync::atomic::AtomicBool,
+}
+
+#[async_trait]
+impl eve_brain::prelude::CodexDoor for ClosedCodex {
+    fn connected(&self) -> bool {
+        false
+    }
+    fn running(&self) -> bool {
+        false
+    }
+    async fn start(
+        &self,
+        _folder: &std::path::Path,
+        _emit: eve_codex_chat::Emit,
+        _picture: Option<eve_codex_chat::Picture>,
+        _done: Option<eve_codex_chat::Emit>,
+    ) -> Result<(), eve_codex_computer::CodexError> {
+        Err(eve_codex_computer::CodexError::Unavailable("not in this test".into()))
+    }
+    async fn send(&self, _text: &str) -> Result<(), eve_codex_computer::CodexError> {
+        Err(eve_codex_computer::CodexError::Unavailable("not in this test".into()))
+    }
+    async fn interrupt(&self) -> Result<(), eve_codex_computer::CodexError> {
+        Ok(())
+    }
+    async fn close(&self) {
+        self.closed.store(true, std::sync::atomic::Ordering::SeqCst);
+    }
 }
 
 // ---- G10: the poll loop -----------------------------------------------------------------------------------------

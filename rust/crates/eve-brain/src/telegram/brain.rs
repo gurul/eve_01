@@ -557,11 +557,7 @@ pub fn parse_response_with(response: &Value, allowed: &AllowedNames, keep_unknow
                 let name = raw_name.and_then(Value::as_str).unwrap_or("").to_string();
                 let unknown = name.is_empty() || (!TOOL_NAMES.contains(&name.as_str()) && !allowed.contains(&name));
                 if unknown && !keep_unknown {
-                    let shown = match raw_name {
-                        Some(Value::String(s)) => format!("'{s}'"),
-                        Some(other) => wire_str(other),
-                        None => "None".into(),
-                    };
+                    let shown = raw_name.map(eve_canvas::py::py_repr).unwrap_or_else(|| "None".into());
                     anyhow::bail!("unexpected function call {shown}");
                 }
                 let args: Value = match item.get("arguments") {
