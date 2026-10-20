@@ -1,0 +1,46 @@
+[package]
+name = "eve-hooks"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+eve-ipc = { path = "../eve-ipc" }
+serde_json.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[[bin]]
+name = "eve-hook-pretooluse"
+path = "src/bin/pretooluse.rs"
+
+[[bin]]
+name = "eve-hook-permission-request"
+path = "src/bin/permission_request.rs"
+
+[[bin]]
+name = "eve-hook-posttooluse"
+path = "src/bin/posttooluse.rs"
+
+[[bin]]
+name = "eve-hook-session-start"
+path = "src/bin/session_start.rs"
+
+[[bin]]
+name = "eve-hook-session-end"
+path = "src/bin/session_end.rs"
+
+[[bin]]
+name = "eve-hook-user-prompt-submit"
+path = "src/bin/user_prompt_submit.rs"
+
+[[bin]]
+name = "eve-hook-stop"
+path = "src/bin/stop.rs"
+
+[[bin]]
+name = "eve-hook-notification"
+path = "src/bin/notification.rs"
