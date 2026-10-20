@@ -1,9 +1,11 @@
 //! A port of `voice_agent.py`, lines 1583-2240: VoiceSession: tool calls, the gate, tasks, look/photo/head, intents, speech.
 //!
 //! Rust: `st` is never held across an await or while another method that takes it runs. A tool's or a background
-//! job's Python `except Exception` is a caught panic or an `Err` here. A Live send that fails is logged; Python let
-//! it raise out of the task that sent it (the conversation's event task, a background send, a computer task's
-//! question), and the question path still does ([`VoiceSession::ask_user_raising`]).
+//! job's Python `except Exception` is a caught panic or an `Err` here. A Live send that fails raises where Python's
+//! did and the caller that Python's exception reached decides: out of a tool call to the conversation's event loop
+//! ([`VoiceSession::tool_raising`]), out of a computer task's question to the task ([`VoiceSession::ask_user`]), out
+//! of `think_hard` to the slow tool's "failed"; a background send logs "background send failed" (Python's `_bg`
+//! done callback) and stops there.
 
 #[allow(unused_imports)]
 use crate::prelude::*;
@@ -50,15 +52,9 @@ fn truthy(v: Option<&Value>) -> bool {
     }
 }
 
-/// Python's `str(v)` of a JSON value (its `%s` in a log line).
+/// Python's `str(v)` of a JSON value (its `%s` in a log line): a dict or list as Python shows it.
 fn py_str(v: &Value) -> String {
-    match v {
-        Value::Null => "None".into(),
-        Value::Bool(true) => "True".into(),
-        Value::Bool(false) => "False".into(),
-        Value::String(s) => s.clone(),
-        other => other.to_string(),
-    }
+    eve_canvas::py::py_str(v)
 }
 
 /// `str(args.get(key, default))`.
@@ -97,7 +93,16 @@ fn obj_of(value: Value) -> Obj {
 
 impl VoiceSession {
     /// py: voice_agent.py:1583 `async def _tool(self, name: str, call_id: str, arguments: str) -> None:`
+    ///
+    /// Rust: a failed send is logged here; the event loop calls [`VoiceSession::tool_raising`] and stops on it.
     pub(crate) async fn tool(self: &Arc<Self>, name: &str, call_id: &str, arguments: &str) {
+        if let Err(e) = self.tool_raising(name, call_id, arguments).await {
+            tracing::warn!("voice: {name} result not sent: {e}");
+        }
+    }
+
+    /// `_tool` as Python ran it: a failed send raises (an `Err`).
+    pub(crate) async fn tool_raising(self: &Arc<Self>, name: &str, call_id: &str, arguments: &str) -> anyhow::Result<()> {
         let args: Obj = if arguments.is_empty() {
             Obj::new()
         } else {
@@ -239,19 +244,17 @@ impl VoiceSession {
                     // answered from a background task, so Live events (the owner talking,
                     // captions) keep flowing meanwhile.
                     self.slow_tool(name, call_id, &args);
-                    return;
+                    return Ok(());
                 }
                 _ => json!({"ok": false, "reason": format!("unknown tool {name}")}),
             }
         };
         let item = json!({"type": "function_call_output", "call_id": call_id, "output": dumps(&result)});
-        if let Err(e) = self.conn.response_item_create(item).await {
-            tracing::warn!("voice: {name} result not sent: {e}");
-            return;
-        }
+        self.conn.response_item_create(item).await?;
         if !self.ended.is_set() {
-            self.request_response().await;
+            self.request_response_raising().await?;
         }
+        Ok(())
     }
 
     /// Close the owner's open turn now, so its words are heard (`_on_user_turn`) before a decision reads them.
@@ -391,7 +394,7 @@ impl VoiceSession {
             let weak = weak.clone();
             async move {
                 match weak.upgrade() {
-                    Some(me) => me.ask_user_raising(&question).await,
+                    Some(me) => me.ask_user(&question).await,
                     None => Err(anyhow::anyhow!("the conversation closed")),
                 }
             }
@@ -502,7 +505,7 @@ impl VoiceSession {
         } else if name == "look_around" {
             Value::Object(self.look_around().await)
         } else if name == "think_hard" {
-            Value::Object(self.think_hard(&arg_str(args, "question", "")).await)
+            Value::Object(self.think_hard_raising(&arg_str(args, "question", "")).await?)
         } else if name == eve_web::websearch::TOOL_NAME {
             // websearch.search (the engine, or routed by Jev), off the loop: a second or two of network
             let query = arg_str(args, "query", "");
@@ -666,41 +669,64 @@ impl VoiceSession {
     }
 
     /// py: voice_agent.py:1895 `async def _think_hard(self, question: str) -> dict[str, Any]:`
+    ///
+    /// Rust: a failed send is logged here and answered as the slow tool answers it ("think_hard failed").
     pub(crate) async fn think_hard(self: &Arc<Self>, question: &str) -> Obj {
+        match self.think_hard_raising(question).await {
+            Ok(out) => out,
+            Err(e) => {
+                tracing::error!("voice: think_hard failed: {e:#}");
+                refusal("think_hard failed")
+            }
+        }
+    }
+
+    /// `_think_hard` as Python ran it: the "on it" note's send is outside its `try`, and a failure raises.
+    async fn think_hard_raising(self: &Arc<Self>, question: &str) -> anyhow::Result<Obj> {
         let question = question.py_trim();
         if question.is_empty() {
-            return refusal("empty question");
+            return Ok(refusal("empty question"));
         }
         let Some(thinker) = &self.thinker else {
-            return refusal("deep reasoning is off on this computer; answer as best you can");
+            return Ok(refusal("deep reasoning is off on this computer; answer as best you can"));
         };
         // The voice was told to keep the owner company; a fresh reply from the
         // backend is not needed until the answer is in.
-        self.quiet(
-            "A hard question is being worked on in the background. Say a few words that \
-             you are on it if you have not already; do not guess the answer.",
-        )
-        .await;
+        self.conn
+            .thinking_append(
+                "A hard question is being worked on in the background. Say a few words that \
+                 you are on it if you have not already; do not guess the answer.",
+                None,
+            )
+            .await?;
         let context = if self.memory.is_none() {
             String::new()
         } else {
             // The slow brain answers "what should I get my sister" better knowing who the owner is and what
             // was said today (think.py bounds the context).
+            // (inside Python's `try`: a context read that fails is the slow brain not answering)
             let me = self.clone();
-            tokio::task::spawn_blocking(move || me.think_context()).await.unwrap_or_default()
+            match tokio::task::spawn_blocking(move || me.think_context()).await {
+                Ok(context) => context,
+                Err(e) => {
+                    tracing::warn!("voice: think_hard failed: {e}");
+                    return Ok(refusal("the slow brain did not answer in time; answer as best you can"));
+                }
+            }
         };
         let answered = AssertUnwindSafe(thinker(question.to_string(), context)).catch_unwind().await;
-        match answered {
+        Ok(match answered {
             Ok(Ok(out)) => out,
             Ok(Err(e)) => {
-                tracing::warn!("voice: think_hard failed: {e:#}");
+                // "%s: %s", type(e).__name__, e
+                tracing::warn!("voice: think_hard failed: {}: {e}", eve_intent::error_name(&e));
                 refusal("the slow brain did not answer in time; answer as best you can")
             }
             Err(_) => {
                 tracing::warn!("voice: think_hard failed");
                 refusal("the slow brain did not answer in time; answer as best you can")
             }
-        }
+        })
     }
 
     /// py: voice_agent.py:1915 `async def _move_head(self, args: dict[str, Any]) -> dict[str, Any]:`
@@ -961,8 +987,19 @@ impl VoiceSession {
             return;
         }
         tracing::info!("voice: routing a head request the voice did not delegate");
-        self.backend_note(&format!("[look request] {text}")).await;
-        self.request_response().await;
+        self.routed(&format!("[look request] {text}")).await;
+    }
+
+    /// `await self._backend_note(note); await self._request_response()` inside a `_bg` job: a failed send stops
+    /// it, logged as the done callback logged it.
+    async fn routed(self: &Arc<Self>, note: &str) {
+        let sent = async {
+            self.send_backend_note(note).await?;
+            self.request_response_raising().await
+        };
+        if let Err(e) = sent.await {
+            tracing::warn!("voice: background send failed: {e}");
+        }
     }
 
     /// py: voice_agent.py:2079 `async def _route_lesson(self, text: str, turn_started_at: float, setup: bool = False) -> None:`
@@ -984,8 +1021,7 @@ impl VoiceSession {
         }
         tracing::info!("voice: routing a lesson {what} the voice did not delegate");
         let note = if setup { format!("[lesson setup] {text}") } else { format!("[lesson request] {text}") };
-        self.backend_note(&note).await;
-        self.request_response().await;
+        self.routed(&note).await;
     }
 
     /// py: voice_agent.py:2096 `def _begin_farewell(self, said_at: float) -> None:`
@@ -1046,7 +1082,7 @@ impl VoiceSession {
         if !on {
             self.speaker.stop(); // audio mode: drop what is queued at once
         }
-        if was_muted == !on {
+        if was_muted != on {
             return; // no change: nothing new to tell the voice
         }
         tracing::info!("voice: sound {} ({how})", if on { "on" } else { "off" });
@@ -1158,20 +1194,8 @@ impl VoiceSession {
 
     /// py: voice_agent.py:2187 `async def _ask_user(self, question: str) -> str:`
     ///
-    /// Rust: a send that fails ends the question as Python's raise did; here the answer is then a no. The
-    /// computer task itself gets the failure ([`VoiceSession::ask_user_raising`]).
-    pub(crate) async fn ask_user(self: &Arc<Self>, question: &str) -> String {
-        match self.ask_user_raising(question).await {
-            Ok(answer) => answer,
-            Err(e) => {
-                tracing::warn!("voice: the task's question was not asked: {e}");
-                format!("no (the question could not be asked: {e})")
-            }
-        }
-    }
-
-    /// `_ask_user` as the computer task calls it: a failed send raises out of it.
-    async fn ask_user_raising(self: &Arc<Self>, question: &str) -> anyhow::Result<String> {
+    /// Rust: a send that fails raises out of it (an `Err`), to the computer task, as Python's did.
+    pub(crate) async fn ask_user(self: &Arc<Self>, question: &str) -> anyhow::Result<String> {
         let pending = {
             let mut st = self.st.lock();
             if st.farewell {
@@ -1191,6 +1215,8 @@ impl VoiceSession {
         eve_tool_gate::MARKS.add([question]);
         // The slot is released on every exit, a failed send included: a question left pending
         // blocks the idle close and the goodbye for the rest of the session (Eve/Voice.lean, B).
+        // Python's `finally`: a guard, so a task that drops the question mid-wait (stopped) releases it too.
+        let _release = ReleaseQuestion(self.clone(), pending.clone());
         let asked = async {
             // The backend gets the question as context (no response): it is the half that
             // calls answer_question when the owner replies. The voice gets it to ask.
@@ -1210,9 +1236,7 @@ impl VoiceSession {
                 Ok(Err(_)) | Err(_) => "no (no answer within a minute)".to_string(),
             })
         };
-        let out = asked.await;
-        self.st.lock().pending_answer = None;
-        out
+        asked.await
     }
 
     /// py: voice_agent.py:2212 `async def _speak(self, content: str) -> None:`
@@ -1260,16 +1284,47 @@ impl VoiceSession {
     /// py: voice_agent.py:2233 `async def _request_response(self) -> None:`
     ///
     /// response.create now, or as soon as the in-flight backend response completes.
+    ///
+    /// Rust: a failed send is logged here; [`VoiceSession::request_response_raising`] raises it.
     pub(crate) async fn request_response(self: &Arc<Self>) {
+        if let Err(e) = self.request_response_raising().await {
+            tracing::warn!("voice: response.create failed: {e}");
+        }
+    }
+
+    /// `_request_response` as Python ran it: a failed `response.create` raises.
+    async fn request_response_raising(self: &Arc<Self>) -> anyhow::Result<()> {
         {
             let mut st = self.st.lock();
             if st.response_active {
                 st.response_wanted = true;
-                return;
+                return Ok(());
             }
         }
-        if let Err(e) = self.conn.response_create().await {
-            tracing::warn!("voice: response.create failed: {e}");
+        self.conn.response_create().await
+    }
+}
+
+/// `_ask_user`'s `finally: self._pending_answer = None`, on every exit, a dropped (cancelled) question included.
+struct ReleaseQuestion(Arc<VoiceSession>, Pending);
+
+impl Drop for ReleaseQuestion {
+    fn drop(&mut self) {
+        // `st` is never held across an await, but a drop can land while another frame holds it (an agent
+        // replaced under the lock): then the release runs as soon as the lock is free, never deadlocking.
+        if let Some(mut st) = self.0.st.try_lock() {
+            st.pending_answer = None;
+            return;
+        }
+        if tokio::runtime::Handle::try_current().is_ok() {
+            let (me, mine) = (self.0.clone(), self.1.clone());
+            crate::seams::spawn_ctx(async move {
+                let mut st = me.st.lock();
+                // late: a question asked since then is that question's own slot, not this one's
+                if st.pending_answer.as_ref().is_some_and(|p| p.same(&mine)) {
+                    st.pending_answer = None;
+                }
+            });
         }
     }
 }
@@ -1293,6 +1348,8 @@ pub struct VoiceProbe {
     pub slow_tasks: usize,
     pub idea_saves: usize,
     pub taint: String,
+    /// `s._pending_answer is not None`
+    pub pending_answer: bool,
 }
 
 impl VoiceSession {
@@ -1314,6 +1371,7 @@ impl VoiceSession {
             slow_tasks: st.slow_tasks.iter().filter(|j| !j.done()).count(),
             idea_saves: st.idea_saves.iter().filter(|j| !j.done()).count(),
             taint: st.taint.clone(),
+            pending_answer: st.pending_answer.is_some(),
         }
     }
 

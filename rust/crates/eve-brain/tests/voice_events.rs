@@ -1500,8 +1500,14 @@ async fn test_a_running_task_refuses_listening() {
 
 // ---- take_photo (test_voice_agent.py 1871-1944) --------------------------------------------------------------------
 
+/// Python set `s.PHOTO_TIMEOUT_SECS` on one session; the Rust value is the process's, so the photo tests take
+/// turns with it rather than a stalled-camera test's 0.02 s timing out the other one's photo.
+static PHOTO_TIMEOUT_TESTS: std::sync::LazyLock<tokio::sync::Mutex<()>> =
+    std::sync::LazyLock::new(|| tokio::sync::Mutex::new(()));
+
 #[tokio::test]
 async fn test_take_photo_hands_the_note_to_the_daemon_and_returns_the_caption() {
+    let _photo = PHOTO_TIMEOUT_TESTS.lock().await;
     let asked = Arc::new(Mutex::new(Vec::<String>::new()));
     let a = asked.clone();
     let r = rig(vec![tool_call("take_photo", "c1", json!({"note": "my bike"}))], move |o| {
@@ -1525,6 +1531,7 @@ async fn test_take_photo_hands_the_note_to_the_daemon_and_returns_the_caption() 
 
 #[tokio::test]
 async fn test_take_photo_without_a_camera_or_when_it_stalls_says_why() {
+    let _photo = PHOTO_TIMEOUT_TESTS.lock().await;
     async fn go(r: &Rig) {
         let task = r.start();
         eventually(|| !r.outputs().is_empty(), 2.0).await;
@@ -1828,4 +1835,44 @@ async fn test_the_camera_out_loud_reaches_the_camera() {
     let out = out_loud("obsbot", hub.clone(), "camera_control", args.clone()).await;
     assert_eq!(*hub.calls.lock(), vec![("camera_control".to_string(), args)]);
     assert_eq!(out["line"], "Camera pointing 20° left.");
+}
+
+#[tokio::test]
+async fn a_task_question_dropped_mid_wait_still_releases_the_slot() {
+    // _ask_user's `finally`: a question the task stops waiting on (it was stopped) is no longer pending, or the
+    // idle close and the goodbye wait on it for the rest of the session (Eve/Voice.lean, B).
+    let r = rig(vec![], |_| {});
+    r.s.probe_tool("start_task", "c1", r#"{"goal": "open mail"}"#).await;
+    let ask = r.agents.last().ask_user.clone();
+    let asking = tokio::spawn(async move { ask("Which account?".to_string()).await });
+    let conn = r.conn.clone();
+    eventually(
+        || conn.of("commentary.append").iter().any(|c| c["content"].as_str().unwrap_or("").contains("Which account?")),
+        5.0,
+    )
+    .await;
+    assert!(r.s.probe_state().pending_answer);
+    asking.abort();
+    let _ = asking.await;
+    eventually(|| !r.s.probe_state().pending_answer, 5.0).await;
+    r.agents.last().cancel("done");
+    r.s.probe_agent_task().await;
+}
+
+#[tokio::test]
+async fn output_audio_that_does_not_decode_ends_the_conversation_as_python_raised() {
+    // handle_event's base64.b64decode raises binascii.Error on a chunk with bad padding: the exception ends
+    // `_events`, `_until_ended` re-raises it, and the session closes without an end_conversation. Characters
+    // outside the alphabet are dropped first (validate=False), so a chunk with a stray newline still plays.
+    let r = rig(
+        vec![
+            json!({"type": "session.output_audio.delta", "delta": "AAEC\nAwQF"}),
+            json!({"type": "session.output_audio.delta", "delta": "QQ"}),
+        ],
+        |_| {},
+    );
+    let task = r.start();
+    finish(&r, task).await;
+    assert_eq!(*r.speaker.played.lock(), vec![vec![0u8, 1, 2, 3, 4, 5]]);
+    assert!(r.s.probe_state().ended);
 }

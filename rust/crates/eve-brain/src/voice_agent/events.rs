@@ -1,8 +1,10 @@
 //! A port of `voice_agent.py`, lines 1288-1582: VoiceSession: speaker drain, captions, mic pump, watchdog, events, turns.
 //!
 //! Rust: `st` (the session's mutable state) is never held across an await, nor while a callback, `_set`, or another
-//! method that takes it runs. A Live send that fails is logged here; Python let it raise out of the task that sent
-//! it, which ended that task the same way.
+//! method that takes it runs. A Live send that fails, or output audio that does not decode, raises out of
+//! `handle_event` as Python's did: it ends the conversation's event loop (`_events`), and the session closes
+//! (Python's `_until_ended` re-raised it out of `run`'s `finally`; here it is logged there). The mic pump ends the
+//! same way on a failed send.
 
 #[allow(unused_imports)]
 use crate::prelude::*;
@@ -29,15 +31,9 @@ fn transcript_who(who: &str) -> Option<&'static str> {
     TRANSCRIPT_WHO.iter().find(|(k, _)| *k == who).map(|(_, v)| *v)
 }
 
-/// The text of a JSON value as Python's `%s` shows it in a log line.
+/// Python's `str(v)` of a JSON value (its `%s` in a log line): a dict or list as Python shows it.
 fn py_shown(v: &Value) -> String {
-    match v {
-        Value::Null => "None".into(),
-        Value::Bool(true) => "True".into(),
-        Value::Bool(false) => "False".into(),
-        Value::String(s) => s.clone(),
-        other => other.to_string(),
-    }
+    eve_canvas::py::py_str(v)
 }
 
 /// Python truthiness of a JSON value.
@@ -285,7 +281,11 @@ impl VoiceSession {
             if self.ended.is_set() {
                 return;
             }
-            self.handle_event(&event).await;
+            if let Err(e) = self.handle_event_raising(&event).await {
+                // Python's exception ended the events task, and `_until_ended` re-raised it
+                tracing::warn!("voice: the conversation's events stopped: {e:#}");
+                return;
+            }
             if self.ended.is_set() {
                 return;
             }
@@ -293,7 +293,17 @@ impl VoiceSession {
     }
 
     /// py: voice_agent.py:1419 `async def handle_event(self, event: Any) -> None:`
+    ///
+    /// Rust: what Python let raise out of it is logged here; the event loop takes it from
+    /// [`VoiceSession::handle_event_raising`] and stops on it.
     pub async fn handle_event(self: &Arc<Self>, event: &Value) {
+        if let Err(e) = self.handle_event_raising(event).await {
+            tracing::warn!("voice: a live event failed: {e:#}");
+        }
+    }
+
+    /// `handle_event` as Python ran it: a failed send or undecodable audio raises (an `Err`).
+    pub(crate) async fn handle_event_raising(self: &Arc<Self>, event: &Value) -> anyhow::Result<()> {
         let t = attr(event, "type");
         let t = t.as_str().unwrap_or("");
         let delta_text = || attr(event, "delta").as_str().map(str::to_string).unwrap_or_default();
@@ -304,13 +314,15 @@ impl VoiceSession {
                 let delta = attr(event, "delta");
                 let delta = delta.as_str().unwrap_or("");
                 if !delta.is_empty() && !self.captions && !(self.muted)() {
-                    match base64::engine::general_purpose::STANDARD.decode(delta) {
-                        Ok(pcm) => {
-                            self.speaker.play(&pcm);
-                            self.set("speaking");
-                        }
-                        Err(e) => tracing::warn!("voice: output audio not decoded: {e}"),
-                    }
+                    // base64.b64decode (validate=False): characters outside the alphabet are discarded first
+                    let kept: String =
+                        delta.chars().filter(|c| c.is_ascii_alphanumeric() || matches!(c, '+' | '/' | '=')).collect();
+                    // an undecodable chunk raises (binascii.Error), as Python's did
+                    let pcm = base64::engine::general_purpose::STANDARD
+                        .decode(kept)
+                        .map_err(|e| anyhow::anyhow!("output audio not decoded: {e}"))?;
+                    self.speaker.play(&pcm);
+                    self.set("speaking");
                 }
             }
             "session.delegation.created" => {
@@ -333,7 +345,7 @@ impl VoiceSession {
             "response.event" => {
                 let ev = attr(event, "event");
                 let ev = if truthy(Some(&ev)) { ev } else { Value::Object(Obj::new()) };
-                self.backend_event(&ev).await;
+                self.backend_event(&ev).await?;
             }
             "session.usage.updated" => self.note_live_usage(event),
             "session.closed" => {
@@ -343,12 +355,13 @@ impl VoiceSession {
             "error" => tracing::warn!("voice: live error: {}", py_shown(&attr(event, "error"))),
             _ => {}
         }
+        Ok(())
     }
 
     /// py: voice_agent.py:1449 `async def _backend_event(self, ev: Any) -> None:`
     ///
     /// A Responses streaming event, nested inside a Live `response.event`.
-    pub(crate) async fn backend_event(self: &Arc<Self>, ev: &Value) {
+    pub(crate) async fn backend_event(self: &Arc<Self>, ev: &Value) -> anyhow::Result<()> {
         let et = attr(ev, "type");
         let et = et.as_str().unwrap_or("");
         match et {
@@ -368,7 +381,7 @@ impl VoiceSession {
                             _ => default.to_string(),
                         }
                     };
-                    self.tool(&text("name", ""), &text("call_id", ""), &text("arguments", "{}")).await;
+                    self.tool_raising(&text("name", ""), &text("call_id", ""), &text("arguments", "{}")).await?;
                 }
             }
             "response.completed" | "response.failed" | "response.incomplete" | "error" => {
@@ -394,9 +407,7 @@ impl VoiceSession {
                     }
                 };
                 if wanted {
-                    if let Err(e) = self.conn.response_create().await {
-                        tracing::warn!("voice: response.create failed: {e}");
-                    }
+                    self.conn.response_create().await?;
                 } else if self.st.lock().turn_marks.speaker.as_deref() != Some("assistant") {
                     // a tool-only response: nothing will be spoken, so the phase has to
                     // move on without waiting for a caption page that never comes
@@ -432,6 +443,7 @@ impl VoiceSession {
             }
             _ => {}
         }
+        Ok(())
     }
 
     /// py: voice_agent.py:1491 `def _transcript_delta(self, who: str, text: str) -> None:`
