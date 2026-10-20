@@ -869,6 +869,12 @@ async fn test_a_callback_off_this_mac_is_refused_before_any_request() {
         "http://localhost:99999/cb",
         "localhost:48780/cb",
         "",
+        // what Python 3.13's urlsplit refuses around a bracketed host, though its hostname would read as ::1
+        "http://x[::1]:48780/cb",
+        "http://[::1]x:48780/cb",
+        "http://[127.0.0.1]:48780/cb",
+        "http://[localhost]:48780/cb",
+        "http://[::1:48780/cb",
     ] {
         let dir = tmp();
         let (login, fake, _, _) = composio(dir.path(), vec![]);
@@ -1325,6 +1331,70 @@ async fn test_canary_tokens_show_nowhere_but_the_token_file() {
 // ==== the label ===================================================================================================
 
 #[test]
+fn urlsplit_refuses_a_bracketed_host_with_pythons_own_words() {
+    // the text urllib.parse's ValueError carries (Python 3.13, the daemon's interpreter)
+    for (url, said) in [
+        ("http://x[::1]:8080/cb", "Invalid IPv6 URL"),
+        ("http://[::1]x:8080/cb", "Invalid IPv6 URL"),
+        ("http://[::1:8080/cb", "Invalid IPv6 URL"),
+        ("http://[foo]:8080/cb", "'foo' does not appear to be an IPv4 or IPv6 address"),
+        ("http://[127.0.0.1]:8080/cb", "An IPv4 address cannot be in brackets"),
+        ("http://[vz]:80/", "IPvFuture address is invalid"),
+    ] {
+        assert_eq!(onboarding::SplitUrl::parse(url), Err(said.to_string()), "{url}");
+    }
+    for url in ["http://[::1]:8080/cb", "http://[v1.x]:80/", "http://[fe80::1%25en0]:80/"] {
+        assert!(onboarding::SplitUrl::parse(url).is_ok(), "{url}");
+    }
+    let parts = onboarding::SplitUrl::parse("http://[::1]:48783/onboard/openrouter/callback").unwrap();
+    assert_eq!((parts.hostname().as_deref(), parts.port()), (Some("::1"), Ok(Some(48783))));
+    // _checknetloc: a netloc whose NFKC form gains a delimiter is refused, with the netloc in the words
+    for (url, said) in [
+        ("http://local\u{ff0f}host:1/cb", "netloc 'local\u{ff0f}host:1' contains invalid characters under NFKC normalization"),
+        ("http://\u{2100}:1/", "netloc '\u{2100}:1' contains invalid characters under NFKC normalization"),
+    ] {
+        assert_eq!(onboarding::SplitUrl::parse(url), Err(said.to_string()), "{url}");
+        let e = OpenRouterLogin::new(None, None).start(url, "").unwrap_err();
+        assert_eq!(e, SignInError::Value(said.to_string()));
+    }
+    // a non-ASCII netloc NFKC leaves without a delimiter splits, and is then refused as off this Mac
+    for url in ["http://loc\u{e9}lhost:1/cb", "http://\u{ff4c}ocalhost:1/cb"] {
+        assert!(onboarding::SplitUrl::parse(url).is_ok(), "{url}");
+    }
+}
+
+#[test]
+fn a_jwt_exp_is_read_as_pythons_lenient_base64_reads_it() {
+    // what Python 3.13's urlsafe_b64decode (padding added by length) makes of each payload, measured
+    let b = |s: &str| base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(s);
+    let now = 1.9e9;
+    let fallback = now + onboarding::DEFAULT_TOKEN_SECS;
+    let p = b(r#"{"exp":1950000000}"#);
+    for (payload, want) in [
+        (b(r#"{"exp": 2000000000}"#), 2e9),
+        (format!("{}==", b(r#"{"exp": 2000000000}"#)), 2e9),
+        (format!("{}=={}", &p[..3], &p[3..]), 1.95e9),           // a `=` mid-way does not end the input
+        ("e!yJleHAiOjIwMDAwMDAwMDB9".to_string(), 2e9),          // a character outside the alphabet is skipped
+        ("eyJleHAiOjIwMDAwMDAwMDB9!!".to_string(), 2e9),
+        ("eyJleHAi=OjIwMDAwMDAwMDB9".to_string(), 2e9),
+        ("eyJl=eHAiOjIwMDAwMDAwMDB9".to_string(), 2e9),
+        (b("\u{feff}{\"exp\": 2000000000}"), 2e9),               // json.loads of bytes drops a UTF-8 BOM
+        (b(r#"{"exp": 1.95e9, "x": NaN}"#), 1.95e9),
+        (b(r#"{"exp": "2000000000"}"#), fallback),
+        (b(r#"{"exp": Infinity}"#), fallback),
+        (b("[1]"), fallback),
+        ("\u{e9}".to_string(), fallback),
+        (String::new(), fallback),
+    ] {
+        let got = onboarding::expires_at(&Obj::new(), &format!("a.{payload}.c"), now);
+        assert_eq!(got, want, "{payload}");
+    }
+    // padding by length cannot complete a payload whose skipped characters hide a partial quad: "Incorrect padding"
+    assert_eq!(onboarding::expires_at(&Obj::new(), "a.eyJ!.c", now), fallback);
+    assert_eq!(onboarding::expires_at(&Obj::new(), "a.b", now), fallback);
+}
+
+#[test]
 fn test_mac_label_comes_from_the_host_name_without_starting_a_program() {
     assert_eq!(onboarding::mac_label_from(Ok("Test-Mac.local".into())), "eve lite on Test-Mac");
     assert_eq!(onboarding::mac_label_from(Ok(String::new())), "eve lite on this Mac");
@@ -1337,7 +1407,7 @@ async fn test_a_label_is_one_short_printable_line() {
     let label = format!("eve lite\non\u{0} a Mac {}", "x".repeat(200));
     let label = query(&OpenRouterLogin::new(None, None).start(OR_CALLBACK, &label).unwrap())["key_label"][0].clone();
     assert!(label.starts_with("eve lite on a Mac x") && label.chars().count() <= onboarding::LABEL_MAX);
-    assert!(label.chars().all(|c| !c.is_control()));
+    assert!(label.chars().all(eve_lights::py::is_printable));
     assert_eq!(query(&OpenRouterLogin::new(None, None).start(OR_CALLBACK, "").unwrap())["key_label"], [onboarding::mac_label()]);
     let dir = tmp();
     let fake = Provider::new(vec![(register_route(), registered())]);

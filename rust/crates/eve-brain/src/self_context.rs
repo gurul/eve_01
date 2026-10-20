@@ -715,6 +715,7 @@ pub fn lines_lent(environ: Option<&Environ>, lent: &Lent) -> anyhow::Result<Vec<
 /// Mac's tasks, the lights, the voice's halves, the Mini App, Canvas, sharing, the chief and purchases are not part
 /// of it at all, so no line names them, not even as off. The commit is "" with no git started (running_commit);
 /// a test may still lend one.
+#[allow(dead_code)] // the module function as Python names it; the block reads it through what the tests lend
 pub(crate) fn lite_lines(env: &Environ, commit: Option<&str>) -> Vec<String> {
     lite_lines_lent(env, commit, &Lent::default())
 }
@@ -761,6 +762,7 @@ pub(crate) fn lite_models(env: &Environ) -> Vec<String> {
 /// One line while the owner is signed in to Composio Connect (onboarding writes CONNECT_TOKEN_FILE only once a
 /// token arrives, so the file is the sign-in), else none: its apps are whichever the owner connected there, so none
 /// is named. Its presence is all that is read here, never its tokens.
+#[allow(dead_code)] // the module function as Python names it; the block reads it through what the tests lend
 pub(crate) fn lite_apps() -> Vec<String> {
     lite_apps_at(None)
 }

@@ -254,39 +254,10 @@ pub enum SignInError {
 /// The line `start` refuses a callback with.
 const NOT_LOOPBACK: &str = "onboarding: the callback must be eve's own http://localhost:<port>/... page";
 
-/// `str.isprintable()` for one character: not a control, a format character, a separator other than the ASCII
-/// space, a surrogate, a private-use character or a non-character.
+/// `str.isprintable()` for one character: false for the general categories Python counts as not printable (Cc,
+/// Cf, Cs, Co, Cn, Zl, Zp, and Zs other than the ASCII space), unassigned code points included.
 pub(crate) fn is_printable(c: char) -> bool {
-    let u = c as u32;
-    !(u < 0x20
-        || (0x7f..=0xa0).contains(&u)
-        || u == 0xad
-        || (0x600..=0x605).contains(&u)
-        || u == 0x61c
-        || u == 0x6dd
-        || u == 0x70f
-        || (0x890..=0x891).contains(&u)
-        || u == 0x8e2
-        || u == 0x1680
-        || u == 0x180e
-        || (0x2000..=0x200f).contains(&u)
-        || (0x2028..=0x202f).contains(&u)
-        || (0x205f..=0x2064).contains(&u)
-        || (0x2066..=0x206f).contains(&u)
-        || u == 0x3000
-        || (0xd800..=0xf8ff).contains(&u)
-        || (0xfdd0..=0xfdef).contains(&u)
-        || u == 0xfeff
-        || (0xfff9..=0xfffb).contains(&u)
-        || (u & 0xfffe) == 0xfffe
-        || u == 0x110bd
-        || u == 0x110cd
-        || (0x13430..=0x1343f).contains(&u)
-        || (0x1bca0..=0x1bca3).contains(&u)
-        || (0x1d173..=0x1d17a).contains(&u)
-        || u == 0xe0001
-        || (0xe0020..=0xe007f).contains(&u)
-        || u >= 0xf0000)
+    eve_lights::py::is_printable(c)
 }
 
 /// `socket.gethostname()`.
@@ -430,11 +401,67 @@ pub struct SplitUrl {
     pub fragment: String,
 }
 
+/// urllib.parse's ValueError for a bracketed host it will not split.
+const INVALID_IPV6: &str = "Invalid IPv6 URL";
+
+/// urllib.parse's `_check_bracketed_netloc`: nothing before the bracket, nothing but the port after it, and the
+/// bracketed host checked (it mirrors the splitting `.hostname` does).
+fn check_bracketed_netloc(netloc: &str) -> Result<(), String> {
+    let host_port = netloc.rsplit_once('@').map_or(netloc, |(_, h)| h);
+    let hostname = match host_port.split_once('[') {
+        Some((before, bracketed)) => {
+            if !before.is_empty() {
+                return Err(INVALID_IPV6.to_string());
+            }
+            let (hostname, port) = bracketed.split_once(']').unwrap_or((bracketed, ""));
+            if !port.is_empty() && !port.starts_with(':') {
+                return Err(INVALID_IPV6.to_string());
+            }
+            hostname
+        }
+        None => host_port.split_once(':').map_or(host_port, |(h, _)| h),
+    };
+    check_bracketed_host(hostname)
+}
+
+/// urllib.parse's `_check_bracketed_host`: an IPvFuture literal (`v<hex>.<anything>`), else an IPv6 address
+/// (`ipaddress.ip_address`, a `%zone` allowed); an IPv4 address in brackets is refused.
+fn check_bracketed_host(hostname: &str) -> Result<(), String> {
+    static FUTURE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\Av[a-fA-F0-9]+\..+\z").expect("FUTURE"));
+    if hostname.starts_with('v') {
+        return if FUTURE.is_match(hostname) { Ok(()) } else { Err("IPvFuture address is invalid".to_string()) };
+    }
+    if hostname.parse::<std::net::Ipv4Addr>().is_ok() {
+        return Err("An IPv4 address cannot be in brackets".to_string());
+    }
+    let (addr, zone) = match hostname.split_once('%') {
+        Some((a, z)) => (a, Some(z)),
+        None => (hostname, None),
+    };
+    let zone_ok = zone.is_none_or(|z| !z.is_empty() && !z.contains('%'));
+    if zone_ok && addr.parse::<std::net::Ipv6Addr>().is_ok() {
+        return Ok(());
+    }
+    Err(format!("{} does not appear to be an IPv4 or IPv6 address", eve_app_registry::py_str_repr(hostname)))
+}
+
+/// urllib.parse's `_checknetloc`, the last check urlsplit makes: a non-ASCII netloc whose NFKC form (with `@`, `:`,
+/// `#` and `?` taken out first) gains a `/`, `?`, `#`, `@` or `:` is refused, as "℀" (which becomes "a/c") would
+/// otherwise move the host. The NFKC test itself is eve-agentcard's port of the same urlsplit, which runs it last
+/// too: this function is only reached once the bracket checks above have passed, so its refusal here is that one.
+fn check_netloc(netloc: &str, url: &str) -> Result<(), String> {
+    if netloc.is_empty() || netloc.is_ascii() || eve_agentcard::py::urlsplit(url).is_ok() {
+        return Ok(());
+    }
+    Err(format!("netloc '{netloc}' contains invalid characters under NFKC normalization"))
+}
+
 const SCHEME_CHARS: &str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-.";
 
 impl SplitUrl {
-    /// `urlsplit(url)`: None where Python raises ValueError (unbalanced brackets).
-    pub fn parse(url: &str) -> Option<SplitUrl> {
+    /// `urlsplit(url)` as Python 3.13 splits it: `Err` with Python's ValueError text where it raises one (unbalanced
+    /// brackets, or a bracketed host that is not an IPv6 or IPvFuture address, or text around the brackets).
+    pub fn parse(url: &str) -> Result<SplitUrl, String> {
         let trimmed = url.trim_start_matches(|c: char| (c as u32) <= 0x20);
         let url: String = trimmed.chars().filter(|c| !matches!(c, '\t' | '\r' | '\n')).collect();
         let mut scheme = String::new();
@@ -454,7 +481,10 @@ impl SplitUrl {
             netloc = after[..delim].to_string();
             rest = &after[delim..];
             if netloc.contains('[') != netloc.contains(']') {
-                return None;
+                return Err(INVALID_IPV6.to_string());
+            }
+            if netloc.contains('[') && netloc.contains(']') {
+                check_bracketed_netloc(&netloc)?;
             }
         }
         let (rest, fragment) = match rest.split_once('#') {
@@ -465,7 +495,8 @@ impl SplitUrl {
             Some((p, q)) => (p.to_string(), q.to_string()),
             None => (rest.to_string(), String::new()),
         };
-        Some(SplitUrl { scheme, netloc, path, query, fragment })
+        check_netloc(&netloc, &url)?;
+        Ok(SplitUrl { scheme, netloc, path, query, fragment })
     }
 
     fn userinfo(&self) -> Option<&str> {
@@ -505,6 +536,7 @@ impl SplitUrl {
     }
 
     /// `.port`: None when there is none; `Err` where Python raises ValueError (not digits, out of range).
+    #[allow(clippy::result_unit_err)] // Python's ValueError, whose text no caller reads
     pub fn port(&self) -> Result<Option<u32>, ()> {
         match self.hostinfo().1 {
             None => Ok(None),
@@ -541,7 +573,8 @@ pub struct Callback {
 /// only on the local listener, so anything else is a wiring mistake.
 pub(crate) fn loopback(url: &str) -> Result<Callback, SignInError> {
     let refuse = || SignInError::Value(NOT_LOOPBACK.to_string());
-    let parts = SplitUrl::parse(url).ok_or_else(refuse)?;
+    // urlsplit's own ValueError goes out as Python's does, with its text
+    let parts = SplitUrl::parse(url).map_err(SignInError::Value)?;
     let port = parts.port().unwrap_or(None);
     let hostname = parts.hostname();
     let ok = parts.scheme == "http"
@@ -1349,28 +1382,59 @@ pub fn expires_at(answer: &Obj, access: &str, now: f64) -> f64 {
     now + DEFAULT_TOKEN_SECS
 }
 
-/// `base64.urlsafe_b64decode(text + padding)`: `-` and `_` read as `+` and `/`, characters outside the alphabet
-/// dropped, as Python's non-validating decoder does. None where it raises.
+/// `base64.urlsafe_b64decode(text)`: `-` and `_` read as `+` and `/`, then `binascii.a2b_base64(strict_mode=False)`
+/// as Python 3.13 runs it. A character outside the alphabet is skipped. A `=` counts as padding only once two
+/// characters of a quad are in, and a data character after it starts the count again (decoding goes on: padding
+/// does not end the input). The input must end on a whole quad, or on a partial one of two or three characters
+/// that its padding completes. None where Python raises (non-ASCII text, "Incorrect padding", one character over).
 fn urlsafe_b64decode(text: &str) -> Option<Vec<u8>> {
     if !text.is_ascii() {
         return None;
     }
-    let kept: String = text
-        .chars()
-        .map(|c| match c {
-            '-' => '+',
-            '_' => '/',
-            other => other,
-        })
-        .filter(|c| c.is_ascii_alphanumeric() || matches!(c, '+' | '/'))
-        .collect();
-    let engine = base64::engine::GeneralPurpose::new(
-        &base64::alphabet::STANDARD,
-        base64::engine::GeneralPurposeConfig::new()
-            .with_decode_padding_mode(base64::engine::DecodePaddingMode::Indifferent)
-            .with_decode_allow_trailing_bits(true),
-    );
-    engine.decode(kept).ok()
+    let mut out = Vec::with_capacity(text.len() * 3 / 4);
+    let (mut quad_pos, mut pads, mut left) = (0u8, 0u8, 0u8);
+    for b in text.bytes() {
+        if b == b'=' {
+            if quad_pos >= 2 {
+                pads = pads.saturating_add(1);
+            }
+            continue;
+        }
+        let v = match b {
+            b'A'..=b'Z' => b - b'A',
+            b'a'..=b'z' => b - b'a' + 26,
+            b'0'..=b'9' => b - b'0' + 52,
+            b'+' | b'-' => 62,
+            b'/' | b'_' => 63,
+            _ => continue,
+        };
+        pads = 0;
+        match quad_pos {
+            0 => {
+                left = v;
+                quad_pos = 1;
+            }
+            1 => {
+                out.push((left << 2) | (v >> 4));
+                left = v & 0x0f;
+                quad_pos = 2;
+            }
+            2 => {
+                out.push((left << 4) | (v >> 2));
+                left = v & 0x03;
+                quad_pos = 3;
+            }
+            _ => {
+                out.push((left << 6) | v);
+                left = 0;
+                quad_pos = 0;
+            }
+        }
+    }
+    if quad_pos == 1 || (quad_pos >= 2 && u16::from(quad_pos) + u16::from(pads) < 4) {
+        return None;
+    }
+    Some(out)
 }
 
 /// py: onboarding.py:563 `def _jwt_exp(token: str) -> Optional[float]:`
@@ -1379,7 +1443,8 @@ pub(crate) fn jwt_exp(token: &str) -> Option<f64> {
     if parts.len() != 3 {
         return None;
     }
-    let raw = urlsafe_b64decode(parts[1])?;
+    let padding = "=".repeat((4 - parts[1].chars().count() % 4) % 4);
+    let raw = urlsafe_b64decode(&format!("{}{padding}", parts[1]))?;
     let text = std::str::from_utf8(&raw).ok()?;
     match loads(text.strip_prefix('\u{feff}').unwrap_or(text))? {
         Value::Object(claims) => claims.get("exp").and_then(num),
