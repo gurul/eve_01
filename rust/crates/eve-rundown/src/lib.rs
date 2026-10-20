@@ -24,12 +24,28 @@ pub const SKILL: &str =
 
 /// Python's `\s` in a str pattern: what `str.isspace()` accepts, which adds U+001C-U+001F to Unicode White_Space.
 const S: &str = r"[\s\x1c-\x1f]";
+/// Python's `\w` in a str pattern: `str.isalnum()` (letters and numbers) or `_`. The `regex` crate's own `\w` and
+/// `\b` also count combining marks, variation selectors and joiners, so "✈️ 10/22" (an emoji with U+FE0F) or
+/// "⭐️Oct 22" would lose their dates; the word boundary is written out with this class instead.
+const W: &str = r"[\p{L}\p{N}_]";
+/// Python's `[\W_]`: anything that is not a letter or a number.
+const NOT_ALNUM: &str = r"[^\p{L}\p{N}]";
+
+/// Python's `\b`, over Python's `\w`.
+fn boundary() -> String {
+    format!(r"(?:(?<={W})(?!{W})|(?<!{W})(?={W}))")
+}
+
+/// Python's `re` has no backtracking limit; these patterns are near linear, so the limit only guards a pathological
+/// line.
+fn fancy(pattern: &str) -> FancyRegex {
+    fancy_regex::RegexBuilder::new(pattern).backtrack_limit(50_000_000).build().expect("rundown pattern compiles")
+}
 
 pub static OPEN_TASK: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(&format!(r"^{S}*[-*+]{S}+\[ \]{S}+(.+)$")).expect("OPEN_TASK compiles"));
-pub static TASK_DATE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(&format!(r"(?i)(?:📅|⏳|🛫|\b(?:due|scheduled|start)::?){S}*(\d{{4}}-\d{{2}}-\d{{2}})"))
-        .expect("TASK_DATE compiles")
+pub static TASK_DATE: LazyLock<FancyRegex> = LazyLock::new(|| {
+    fancy(&format!(r"(?i)(?:📅|⏳|🛫|{b}(?:due|scheduled|start)::?){S}*(\d{{4}}-\d{{2}}-\d{{2}})", b = boundary()))
 });
 pub const READ_META_TOOLS: [&str; 2] = ["COMPOSIO_SEARCH_TOOLS", "COMPOSIO_GET_TOOL_SCHEMAS"];
 /// The direct apps a rundown reads (apps_mcp), already open when it starts; Slack comes through Composio.
@@ -67,43 +83,80 @@ static MONTHS: LazyLock<HashMap<&'static str, u32>> = LazyLock::new(|| {
 fn month_pattern() -> String {
     let mut names: Vec<&str> = MONTH_NAMES.iter().flat_map(|n| n.iter().copied()).collect();
     names.sort_by_key(|n| std::cmp::Reverse(n.len()));
-    format!(r"(?:{})\b\.?", names.join("|"))
+    format!(r"(?:{})(?:{})\.?", names.join("|"), boundary())
 }
 
-const ORD: &str = r"(?:st|nd|rd|th)?\b";
+/// `_ORD`.
+fn ord_pattern() -> String {
+    format!(r"(?:st|nd|rd|th)?{}", boundary())
+}
 
 fn year_pattern(group: &str) -> String {
-    format!(r"(?:,?{S}+(?P<{group}>\d{{4}})\b)?")
+    format!(r"(?:,?{S}+(?P<{group}>\d{{4}}){})?", boundary())
 }
 
-static NAMED: LazyLock<Regex> = LazyLock::new(|| {
+static NAMED: LazyLock<FancyRegex> = LazyLock::new(|| {
     let month = month_pattern();
-    Regex::new(&format!(
-        r"(?i)\b(?P<m1>{month}){S}+(?P<d1>\d{{1,2}}){ORD}{y1}|\b(?P<d2>\d{{1,2}}){ORD}{S}+(?:of{S}+)?(?P<m2>{month}){y2}",
+    fancy(&format!(
+        r"(?i){b}(?P<m1>{month}){S}+(?P<d1>\d{{1,2}}){ord}{y1}|{b}(?P<d2>\d{{1,2}}){ord}{S}+(?:of{S}+)?(?P<m2>{month}){y2}",
+        b = boundary(),
+        ord = ord_pattern(),
         y1 = year_pattern("y1"),
         y2 = year_pattern("y2"),
     ))
-    .expect("_NAMED compiles")
 });
-static NUMERIC: LazyLock<FancyRegex> = LazyLock::new(|| {
-    FancyRegex::new(r"(?<![\d/.])(?P<m>\d{1,2})/(?P<d>\d{1,2})(?:/(?P<y>\d{4}|\d{2}))?(?![\d/])")
-        .expect("_NUMERIC compiles")
-});
-static ISO: LazyLock<FancyRegex> =
-    LazyLock::new(|| FancyRegex::new(r"(?<![\d-])(\d{4})-(\d{2})-(\d{2})(?![\d-])").expect("_ISO compiles"));
+static NUMERIC: LazyLock<FancyRegex> =
+    LazyLock::new(|| fancy(r"(?<![\d/.])(?P<m>\d{1,2})/(?P<d>\d{1,2})(?:/(?P<y>\d{4}|\d{2}))?(?![\d/])"));
+static ISO: LazyLock<FancyRegex> = LazyLock::new(|| fancy(r"(?<![\d-])(\d{4})-(\d{2})-(\d{2})(?![\d-])"));
 // When an item was written down or finished is not when it is due: capture adds "(added YYYY-MM-DD)".
-static NOT_DUE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(&format!(
-        r"(?i)(?:➕|✅|❌|\b(?:added|created|done|completed|cancelled):{{0,2}}){S}*\d{{4}}-\d{{2}}-\d{{2}}"
+static NOT_DUE: LazyLock<FancyRegex> = LazyLock::new(|| {
+    fancy(&format!(
+        r"(?i)(?:➕|✅|❌|{b}(?:added|created|done|completed|cancelled):{{0,2}}){S}*\d{{4}}-\d{{2}}-\d{{2}}",
+        b = boundary()
     ))
-    .expect("_NOT_DUE compiles")
 });
 // A yearless "10/22" counts only where a date is plainly meant, so "1/2 gallon" stays a quantity.
 // Python's `$` (no MULTILINE) also matches before one final newline, hence `\n?\z`.
-static DATE_SLOT: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(&format!(r"(?i)(?:^[\W_]*(?:p[0-3]\b[\W_]*)?|\b(?:on|by|due|before|until|till){S}+)\n?\z"))
-        .expect("_DATE_SLOT compiles")
+static DATE_SLOT: LazyLock<FancyRegex> = LazyLock::new(|| {
+    fancy(&format!(
+        r"(?i)(?:^{NOT_ALNUM}*(?:p[0-3]{b}{NOT_ALNUM}*)?|{b}(?:on|by|due|before|until|till){S}+)\n?\z",
+        b = boundary()
+    ))
 });
+
+static DECIMAL: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^\d$").expect("DECIMAL compiles"));
+
+fn is_decimal(c: char) -> bool {
+    let mut buf = [0u8; 4];
+    DECIMAL.is_match(c.encode_utf8(&mut buf))
+}
+
+/// A Unicode decimal digit's value. Unicode assigns decimal digits only in runs of ten, 0 to 9, so a digit's value
+/// is its distance from the start of its run of digits, modulo ten.
+fn digit_value(c: char) -> Option<i64> {
+    if let Some(v) = c.to_digit(10) {
+        return Some(v.into());
+    }
+    if !is_decimal(c) {
+        return None;
+    }
+    let mut start = c as u32;
+    while let Some(prev) = start.checked_sub(1).and_then(char::from_u32) {
+        if !is_decimal(prev) {
+            break;
+        }
+        start -= 1;
+    }
+    Some(i64::from((c as u32 - start) % 10))
+}
+
+/// `int(s)` for a run of `\d` the patterns matched: Python reads any Unicode decimal digits ("٢٢" is 22).
+fn py_int(s: &str) -> Option<i64> {
+    if s.is_empty() {
+        return None;
+    }
+    s.chars().try_fold(0i64, |n, c| n.checked_mul(10)?.checked_add(digit_value(c)?))
+}
 
 /// `date(year, month, day)`, None where Python raises ValueError (Python's years run 1 to 9999).
 fn make_date(year: i64, month: u32, day: u32) -> Option<NaiveDate> {
@@ -128,7 +181,7 @@ fn dated(year: Option<&str>, month: u32, day: u32, today: NaiveDate) -> Option<N
         Some(y) if !y.is_empty() => y,
         _ => return yearless(month, day, today),
     };
-    let n: i64 = year.parse().ok()?;
+    let n = py_int(year)?;
     make_date(n + if year.chars().count() == 2 { 2000 } else { 0 }, month, day)
 }
 
@@ -144,14 +197,17 @@ fn iso(d: NaiveDate) -> String {
 pub fn task_date(text: &str, today: NaiveDate) -> Option<NaiveDate> {
     let marked: Vec<NaiveDate> = TASK_DATE
         .captures_iter(text)
+        .map_while(Result::ok)
         .filter_map(|c| date_fromisoformat(c.get(1).map_or("", |m| m.as_str())).ok())
         .collect();
     if let Some(first) = marked.iter().min() {
         return Some(*first);
     }
-    let text = NOT_DUE.replace_all(text, " ").into_owned();
+    let text = NOT_DUE.try_replacen(text, 0, " ").map_or_else(|_| text.to_string(), |t| t.into_owned());
+    let small = |m: Option<fancy_regex::Match<'_>>| m.and_then(|x| py_int(x.as_str())).and_then(|n| u32::try_from(n).ok());
     let mut found: Vec<NaiveDate> = Vec::new();
     for m in NAMED.captures_iter(&text) {
+        let Ok(m) = m else { break };
         let Some(name) = m.name("m1").or_else(|| m.name("m2")).map(|n| n.as_str()) else {
             continue;
         };
@@ -162,7 +218,7 @@ pub fn task_date(text: &str, today: NaiveDate) -> Option<NaiveDate> {
         let Some(&month) = MONTHS.get(key.as_str()) else {
             continue;
         };
-        let Some(day) = m.name("d1").or_else(|| m.name("d2")).and_then(|d| d.as_str().parse::<u32>().ok()) else {
+        let Some(day) = small(m.name("d1").or_else(|| m.name("d2"))) else {
             continue;
         };
         let year = m.name("y1").or_else(|| m.name("y2")).map(|y| y.as_str());
@@ -172,10 +228,7 @@ pub fn task_date(text: &str, today: NaiveDate) -> Option<NaiveDate> {
     }
     for m in ISO.captures_iter(&text) {
         let Ok(m) = m else { break };
-        let (Some(y), Some(mo), Some(d)) = (m.get(1), m.get(2), m.get(3)) else {
-            continue;
-        };
-        let (Ok(mo), Ok(d)) = (mo.as_str().parse::<u32>(), d.as_str().parse::<u32>()) else {
+        let (Some(y), Some(mo), Some(d)) = (m.get(1), small(m.get(2)), small(m.get(3))) else {
             continue;
         };
         if let Some(when) = dated(Some(y.as_str()), mo, d, today) {
@@ -186,12 +239,10 @@ pub fn task_date(text: &str, today: NaiveDate) -> Option<NaiveDate> {
         let Ok(m) = m else { break };
         let start = m.get(0).map_or(0, |w| w.start());
         let year = m.name("y").map(|y| y.as_str());
-        if year.is_none() && !DATE_SLOT.is_match(&text[..start]) {
+        if year.is_none() && !DATE_SLOT.is_match(&text[..start]).unwrap_or(false) {
             continue;
         }
-        let (Some(Ok(month)), Some(Ok(day))) =
-            (m.name("m").map(|x| x.as_str().parse::<u32>()), m.name("d").map(|x| x.as_str().parse::<u32>()))
-        else {
+        let (Some(month), Some(day)) = (small(m.name("m")), small(m.name("d"))) else {
             continue;
         };
         let when = if (1..=12).contains(&month) { dated(year, month, day, today) } else { None };

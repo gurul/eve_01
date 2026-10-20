@@ -11,20 +11,20 @@ Status: complete
 |---|---|---|
 | `SKILL` | `SKILL` | The skill file's text, embedded with `include_str!` from `bridge/src/eve_bridge/skills/rundown/SKILL.md` (Python holds the path and reads it per call; same bytes). |
 | `OPEN_TASK` | `OPEN_TASK` | `regex`; Python's `\s` written as `[\s\x1c-\x1f]` throughout so U+001C-U+001F count as whitespace, as in `re`. |
-| `TASK_DATE` | `TASK_DATE` | Same pattern, `(?i)`. |
+| `TASK_DATE` | `TASK_DATE` (`fancy_regex::Regex`) | Same pattern, `(?i)`; `\b` written out over Python's `\w` (`[\p{L}\p{N}_]`), because the `regex` crate's `\b` counts combining marks, U+FE0F and U+200D as word characters and Python's does not. |
 | `READ_META_TOOLS` | `READ_META_TOOLS` | |
 | `DIRECT_APPS` | `DIRECT_APPS` | |
 | `_MONTHS` | `MONTHS` (private, built from `MONTH_NAMES`) | |
-| `_MONTH` | `month_pattern()` (private) | Names sorted longest first with a stable sort, as `sorted(..., key=len, reverse=True)`. |
-| `_ORD` | `ORD` (private) | |
+| `_MONTH` | `month_pattern()` (private) | Names sorted longest first with a stable sort, as `sorted(..., key=len, reverse=True)`; Python's `\b` as `boundary()`. |
+| `_ORD` | `ord_pattern()` (private) | Python's `\b` as `boundary()`. |
 | `_YEAR` | `year_pattern()` (private) | |
-| `_NAMED` | `NAMED` (private) | `regex` (no lookaround). |
+| `_NAMED` | `NAMED` (private) | `fancy-regex`, for the written-out `\b`. |
 | `_NUMERIC` | `NUMERIC` (private) | `fancy-regex` for the lookbehind/lookahead. |
 | `_ISO` | `ISO` (private) | `fancy-regex`. |
-| `_NOT_DUE` | `NOT_DUE` (private) | |
-| `_DATE_SLOT` | `DATE_SLOT` (private) | Python's trailing `$` written `\n?\z` (Python's `$` also matches before one final newline). |
+| `_NOT_DUE` | `NOT_DUE` (private) | `fancy-regex`, for the written-out `\b`. |
+| `_DATE_SLOT` | `DATE_SLOT` (private) | Python's trailing `$` written `\n?\z` (Python's `$` also matches before one final newline); `[\W_]` as `[^\p{L}\p{N}]`, so "✈️ 10/22" (an emoji with U+FE0F) is a date slot as in Python. |
 | `_yearless` | `yearless` (private) | Nearest occurrence, a tie going forward; years outside 1..=9999 are not dates, as in Python. |
-| `_dated` | `dated` (private) | Two-digit years are 20xx. |
+| `_dated` | `dated` (private) | Two-digit years are 20xx. Numbers read by `py_int` (private), which reads any Unicode decimal digit as `int()` does ("٢٢" is 22). |
 | `task_date` | `task_date(&str, NaiveDate) -> Option<NaiveDate>` | Tasks markers parsed with `eve_google_rest::pytime::date_fromisoformat` (CPython's `date.fromisoformat`). |
 | `_WHAT_IS` | `WHAT_IS` (private) | |
 | `_PLAN` | `PLAN` (private) | |
@@ -45,15 +45,16 @@ Status: complete
 | `bridge/tests/test_rundown.py` | `test_obsidian_dates_completed_fences_and_symlinks`, `test_rundown_tool_policy_reads_four_sources_and_refuses_mutations`, `test_written_dates_are_due_dates`, `test_lines_without_a_date_stay_undated`, `test_mount_tam_is_upcoming_with_its_date_not_backlog`, `test_asking_for_todays_plan_is_the_rundown`, `test_rundown_context_says_when_vault_todos_or_canvas_titles_fed_it` | same names in `src/tests.rs` (the parametrized date tests loop over the same `DATED` / `UNDATED` lists) | `test_rundown_loads_skill_and_reads_sources_even_with_codex_selected`, `test_rundown_declines_a_write_without_executing_or_asking`, `test_codex_progress_is_delivered_to_task_owner`, `test_what_is_my_plane_today_reads_the_calendar_in_one_pass`, `test_a_rundown_from_vault_todos_alone_is_kept_as_outside_words`: they drive the Telegram rig (`test_telegram.Rig`) and test `telegram.py`'s rundown turn, so they belong to the telegram crate. |
 | `bridge/tests/test_canvas.py` (ref) | `test_the_rundown_carries_canvas_deadlines_only_when_on` (the `rundown.context` half) | `test_the_rundown_carries_canvas_deadlines_only_when_on` | The Telegram turn half belongs to the telegram crate. |
 | `bridge/tests/test_menu_tools.py` (ref) | `test_daily_rundown_hands_the_message_to_a_read_only_rundown_turn` | none | Patches `context_and_outside` and tests the telegram/menu hand-off; belongs to those crates. |
-| (new) | | `sources_names_only_the_tools_present`, `the_skill_gets_its_sources_step_and_the_data`, `direct_mail_and_calendar_reads_only`, `a_mixed_composio_call_is_refused`, `a_bad_day_is_an_error_only_with_a_vault`, `tasks_stop_at_two_hundred_and_nested_fences_and_archives_are_skipped`, `a_dst_day_is_not_twenty_four_hours_and_names_its_zone`, `may_as_a_verb_and_other_edges` | Expected values taken from the Python module. |
+| (new) | | `sources_names_only_the_tools_present`, `the_skill_gets_its_sources_step_and_the_data`, `direct_mail_and_calendar_reads_only`, `a_mixed_composio_call_is_refused`, `a_bad_day_is_an_error_only_with_a_vault`, `tasks_stop_at_two_hundred_and_nested_fences_and_archives_are_skipped`, `a_dst_day_is_not_twenty_four_hours_and_names_its_zone`, `may_as_a_verb_and_other_edges`, `an_emoji_with_a_variation_selector_does_not_hide_a_date`, `dates_in_other_digits_are_read_as_python_reads_them`, `a_long_line_is_read_in_reasonable_time` | Expected values taken from the Python module. |
 
-During the port, `task_date` and `matches` were also checked against the Python module on 26,000 generated inputs, and the full `context_and_outside` text on a fixture vault (nested folders, CRLF, a vertical tab, fences, a symlinked folder, Unicode names, a Canvas entry with a float) under `TZ=America/Los_Angeles` and the Mac's own zone: byte-identical.
+In verification, `task_date` was checked against `rundown.py` (Python 3.13) on 70,000 generated lines mixing month names, markers, emoji with U+FE0F/U+200D, combining marks, superscripts, Arabic-Indic, Devanagari and fullwidth digits: identical (the committed port before verification differed on 50 of the first 30,000). During the port, `task_date` and `matches` were also checked against the Python module on 26,000 generated inputs, and the full `context_and_outside` text on a fixture vault (nested folders, CRLF, a vertical tab, fences, a symlinked folder, Unicode names, a Canvas entry with a float) under `TZ=America/Los_Angeles` and the Mac's own zone: byte-identical.
 
 ## Boundaries
 None.
 
 ## Differences
-- Digits: the patterns match Unicode decimal digits as Python's do, but the numbers are read with Rust's ASCII parser, so a date written in non-ASCII digits (for example Arabic-Indic) is not a date in Rust where Python would read it.
+- Python's `\w` is `str.isalnum()` or `_`; Rust writes it as `[\p{L}\p{N}_]`. The two can differ only on a character Unicode gives a numeric value outside the letter and number categories, if one exists in either Unicode version.
+- `fancy-regex` stops a search after 50,000,000 backtracking steps, where Python's `re` has no limit; a line that reaches it gives no date from that pattern. The patterns are near linear, so only a pathological line could.
 - A month name that matches only through Unicode case folding (a long s, `ſept`) raises `KeyError` in Python; Rust passes over it.
 - `tools` drops an entry that is not a JSON object, where Python raises `AttributeError`.
 - A file or folder name that is not valid UTF-8 is shown with replacement characters in `note`, where Python keeps surrogate escapes.

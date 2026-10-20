@@ -417,3 +417,30 @@ fn may_as_a_verb_and_other_edges() {
     assert_eq!(task_date("scheduled:: 2026-02-30 then Oct 1", today()), Some(d(2026, 10, 1)));
     assert_eq!(task_date("done 2026-09-01", today()), None);
 }
+
+
+#[test]
+fn an_emoji_with_a_variation_selector_does_not_hide_a_date() {
+    // U+FE0F and U+200D are not word characters to Python's `re`, so the word boundary and the start-of-line slot
+    // see through them (expected values from rundown.py).
+    assert_eq!(task_date("\u{2708}\u{fe0f} 10/22 flight", today()), Some(d(2026, 10, 22)));
+    assert_eq!(task_date("\u{2b50}\u{fe0f}Oct 22", today()), Some(d(2026, 10, 22)));
+    assert_eq!(task_date("\u{200d}\u{fe0f}10/22", today()), Some(d(2026, 10, 22)));
+    assert_eq!(task_date("Oct 22\u{b2}", today()), None); // a superscript two is a word character to Python
+}
+
+#[test]
+fn dates_in_other_digits_are_read_as_python_reads_them() {
+    assert_eq!(task_date("Dec\t\u{663}", today()), Some(d(2026, 12, 3)));
+    assert_eq!(task_date("(\u{662}\u{660}\u{662}\u{666}-\u{661}\u{660}-\u{662}\u{662}", today()), Some(d(2026, 10, 22)));
+    assert_eq!(task_date("\u{967}\u{966}/\u{968}\u{968} dentist", today()), Some(d(2026, 10, 22)));
+    assert_eq!(task_date("\u{1d7d9}\u{1d7d8}/\u{1d7da}\u{1d7da}", today()), Some(d(2026, 10, 22))); // mathematical digits
+}
+
+#[test]
+fn a_long_line_is_read_in_reasonable_time() {
+    let line = format!("{}by 10/22", "word ".repeat(200_000));
+    let started = std::time::Instant::now();
+    assert_eq!(task_date(&line, today()), Some(d(2026, 10, 22)));
+    assert!(started.elapsed() < std::time::Duration::from_secs(20), "{:?}", started.elapsed());
+}
