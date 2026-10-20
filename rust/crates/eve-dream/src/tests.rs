@@ -60,6 +60,8 @@ struct Calls {
     reconcile_panics: AtomicBool,
     reconcile_none_with_text: AtomicBool,
     consolidate_raises: AtomicBool,
+    /// reconcile returns an empty journal path (Python's `Path("")`)
+    empty_journal: AtomicBool,
     on_reconcile: Mutex<Option<Hook>>,
     /// Some: records.commit patched to record; None: the real commit.
     commits: Mutex<Option<Vec<(PathBuf, String)>>>,
@@ -100,6 +102,7 @@ impl NightRecords for Calls {
         let journal = cfg.records_dir().join("days").join(format!("{day}.md"));
         std::fs::create_dir_all(journal.parent().unwrap()).unwrap();
         std::fs::write(&journal, format!("# {day}\n\n## Happened\n\n- a thing\n")).unwrap();
+        let journal = if self.empty_journal.load(Ordering::SeqCst) { PathBuf::new() } else { journal };
         Ok(Some(DayChange { changed: 2, created: 1, corrections: 1, journal, closed: 0 }))
     }
 
@@ -368,6 +371,20 @@ fn test_a_journal_without_a_final_newline_gets_one_before_the_section() {
     let mut none = DreamReport::new("2026-09-21");
     r.d.append_report("2026-09-21", &mut none);
     assert!(none.journal.is_none());
+}
+
+#[test]
+fn test_an_empty_journal_path_is_no_journal_and_gets_no_section() {
+    // Python: `Path("")` is ".", a folder, so `_append_report` finds no file; it never falls back to days/<day>.md.
+    let r = setup();
+    *r.calls.commits.lock() = Some(Vec::new());
+    r.calls.empty_journal.store(true, Ordering::SeqCst);
+    say(&r.t, at(22, 10, 0), "hello there");
+    let report = block_on(r.d.dream("2026-09-22"));
+    assert!(report.dreamt && report.journal.is_none());
+    let journal = std::fs::read_to_string(r.d.cfg.records_dir().join("days").join("2026-09-22.md")).unwrap();
+    assert!(!journal.contains("## Dream")); // the file reconcile wrote is there, and untouched
+    assert!(r.calls.commits.lock().as_ref().unwrap().is_empty());
 }
 
 #[test]

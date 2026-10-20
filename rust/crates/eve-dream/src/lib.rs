@@ -496,7 +496,9 @@ impl Dreamer {
         report.created = change.created;
         report.corrections = change.corrections;
         report.closed = change.closed;
-        report.journal = (!change.journal.as_os_str().is_empty()).then(|| change.journal.clone());
+        // `DayChange.journal` is a Path, and `str(Path(""))` is ".": always a journal, and an empty one is the
+        // current folder, which is not a file, so it gets no section (never the `days/<day>.md` fallback).
+        report.journal = Some(change.journal.clone());
 
         match self.records.consolidate(&self.cfg, self.client.as_ref()) {
             Ok((consolidated, removed)) => {
