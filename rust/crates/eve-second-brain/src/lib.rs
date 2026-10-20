@@ -166,11 +166,17 @@ fn re(pattern: &str) -> Regex {
     Regex::new(pattern).expect("a constant pattern compiles")
 }
 
+/// A pattern written with Python's `\s`, which is `str.isspace()`: the regex crate's `\s` (Unicode White_Space)
+/// plus the information separators U+001C..U+001F, which Python's `\s` matches and the regex crate's does not.
+fn py_re(pattern: &str) -> Regex {
+    re(&pattern.replace(r"\s", r"[\s\x1C-\x1F]"))
+}
+
 static WORD: LazyLock<Regex> = LazyLock::new(|| re(r"[a-z0-9]+"));
-static PRIORITY: LazyLock<Regex> = LazyLock::new(|| re(r"(?is)\A\s*(p[0-3])\s+(.+)$"));
+static PRIORITY: LazyLock<Regex> = LazyLock::new(|| py_re(r"(?is)\A\s*(p[0-3])\s+(.+)$"));
 static FRONTMATTER: LazyLock<Regex> = LazyLock::new(|| re(r"(?s)\A---\n(.*?)\n---[ \t]*(?:\n|\z)(.*)"));
-static HEADING: LazyLock<Regex> = LazyLock::new(|| re(r"(?m)^#\s+(.+?)\s*$"));
-static OPEN_TODO: LazyLock<Regex> = LazyLock::new(|| re(r"\A\s*[-*]\s+\[ \]\s+(.+?)\s*$"));
+static HEADING: LazyLock<Regex> = LazyLock::new(|| py_re(r"(?m)^#\s+(.+?)\s*$"));
+static OPEN_TODO: LazyLock<Regex> = LazyLock::new(|| py_re(r"\A\s*[-*]\s+\[ \]\s+(.+?)\s*$"));
 // Python's `$` without MULTILINE also matches before one final newline; `\n?\z` keeps that.
 static SAFE_SEGMENT: LazyLock<Regex> = LazyLock::new(|| re(r"\A[A-Za-z0-9][A-Za-z0-9 ._-]{0,79}\n?\z"));
 static CHANGE_ID: LazyLock<Regex> = LazyLock::new(|| re(r"\A\d{8}T\d{12}-[a-f0-9]{32}\z"));
@@ -179,14 +185,12 @@ static PACK_NAME: LazyLock<Regex> = LazyLock::new(|| re(r"\A[a-z0-9][a-z0-9-]{0,
 static INT: LazyLock<Regex> = LazyLock::new(|| re(r"\A-?\d+\z"));
 static DIGIT: LazyLock<Regex> = LazyLock::new(|| re(r"\A\d\z"));
 static PREVIEW_MARK: LazyLock<Regex> =
-    LazyLock::new(|| re(r"\A(#{1,6}\s+|[-*+]\s+\[[ xX]\]\s+|[-*+]\s+|\d+[.)]\s+|>\s*)"));
+    LazyLock::new(|| py_re(r"\A(#{1,6}\s+|[-*+]\s+\[[ xX]\]\s+|[-*+]\s+|\d+[.)]\s+|>\s*)"));
 static PREVIEW_INLINE: LazyLock<Regex> = LazyLock::new(|| re(r"[*_`~]|\[\[|\]\]"));
 
+/// `Path.home()`: `os.path.expanduser("~")`, so `$HOME` (even an empty one) wins over the password database.
 fn home() -> PathBuf {
-    match std::env::var_os("HOME") {
-        Some(h) if !h.is_empty() => PathBuf::from(h),
-        _ => dirs::home_dir().unwrap_or_else(|| PathBuf::from("/")),
-    }
+    PathBuf::from(py::expanduser("~"))
 }
 
 // ---- results -------------------------------------------------------------------------------------

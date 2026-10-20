@@ -196,6 +196,14 @@ fn test_classify_capture_rules() {
 }
 
 #[test]
+fn test_python_whitespace_in_patterns_includes_the_information_separators() {
+    // Python's \s is str.isspace(), which takes U+001C..U+001F; the regex crate's \s does not
+    assert_eq!(title_of("# \u{1c}x", "f"), "x");
+    assert_eq!(classify_capture("p1\u{1c}x"), ("todo", "p1\u{1c}x".to_string()));
+    assert_eq!(priority_of("p1\u{1f}x"), ("P1".to_string(), "x".to_string()));
+}
+
+#[test]
 fn test_slugify() {
     assert_eq!(slugify("The Pasta Place on Castro Street is great, truly"), "the-pasta-place-on-castro-street");
     assert_eq!(slugify("Café — naïve résumé!"), "cafe-naive-resume");
