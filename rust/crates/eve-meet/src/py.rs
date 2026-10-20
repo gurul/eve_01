@@ -196,18 +196,21 @@ fn check_bracketed_netloc(netloc: &str) -> Result<(), UrlError> {
         }
         None => host_port.split_once(':').map_or(host_port, |(h, _)| h),
     };
+    // `_check_bracketed_host`
     if let Some(rest) = hostname.strip_prefix('v') {
-        // IPvFuture: v<hex>.<unreserved, sub-delims or :>
+        // IPvFuture: `\Av[a-fA-F0-9]+\..+\Z` (the newlines `.` would refuse are gone before the split)
         let ok = rest.split_once('.').is_some_and(|(hex, tail)| {
-            !hex.is_empty()
-                && hex.chars().all(|c| c.is_ascii_hexdigit())
-                && !tail.is_empty()
-                && tail.chars().all(|c| c.is_ascii_alphanumeric() || "-._~!$&'()*+,;=:".contains(c))
+            !hex.is_empty() && hex.chars().all(|c| c.is_ascii_hexdigit()) && !tail.is_empty()
         });
         return if ok { Ok(()) } else { Err(UrlError) };
     }
-    let ip = hostname.split_once('%').map_or(hostname, |(h, _)| h);
-    if ip.parse::<std::net::IpAddr>().is_ok() {
+    // `ipaddress.ip_address`: an IPv6 address, with an optional non-empty `%scope` holding no `%`; an IPv4
+    // address parses but "cannot be in brackets"
+    if let Some((addr, scope)) = hostname.split_once('%') {
+        let ok = !scope.is_empty() && !scope.contains('%') && addr.parse::<std::net::Ipv6Addr>().is_ok();
+        return if ok { Ok(()) } else { Err(UrlError) };
+    }
+    if hostname.parse::<std::net::Ipv6Addr>().is_ok() {
         Ok(())
     } else {
         Err(UrlError)
@@ -496,6 +499,15 @@ mod tests {
         assert_eq!(u.port(), Ok(Some(443)));
         assert_eq!((u.path.as_str(), u.query.as_str(), u.fragment.as_str()), ("/abc", "authuser=1", "frag"));
         assert!(urlsplit("https://[::1/x").is_err());
+        // _check_bracketed_host, as Python 3.13 answers each
+        assert!(urlsplit("https://[::1]/x").is_ok());
+        assert!(urlsplit("https://[1.2.3.4]/x").is_err());
+        assert!(urlsplit("https://[v1.a b]/x").is_ok());
+        assert!(urlsplit("https://[v1.é]/x").is_ok());
+        assert!(urlsplit("https://[fe80::1%25eth0]/x").is_ok());
+        assert!(urlsplit("https://[fe80::1%]/x").is_err());
+        assert!(urlsplit("https://[::1%a%b]/x").is_err());
+        assert!(urlsplit("https://[1.2.3.4%x]/x").is_err());
         assert!(urlsplit("https://meet.google.com:x/").unwrap().port().is_err());
         assert_eq!(urlsplit("https://meet.google.com:/").unwrap().port(), Ok(None));
         let at = urlsplit("https://@meet.google.com/").unwrap();
