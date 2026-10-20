@@ -1,0 +1,26 @@
+[package]
+name = "eve-notes-widget"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+eve-records = { path = "../eve-records" }
+eve-transcripts = { path = "../eve-transcripts" }
+anyhow.workspace = true
+chrono.workspace = true
+regex.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+notify.workspace = true
+objc2 = "0.6.5"
+objc2-foundation = { version = "0.3.2", default-features = false, features = ["std", "NSArray", "NSAttributedString", "NSDate", "NSDictionary", "NSEnumerator", "NSGeometry", "NSNotification", "NSObject", "NSRunLoop", "NSString", "NSThread", "NSTimer", "NSURL"] }
+objc2-app-kit = { version = "0.3.2", default-features = false, features = ["std", "libc", "objc2-core-foundation", "objc2-core-graphics", "objc2-quartz-core", "NSApplication", "NSAttributedString", "NSClipView", "NSColor", "NSControl", "NSEvent", "NSFont", "NSGraphics", "NSMenu", "NSMenuItem", "NSPanel", "NSResponder", "NSRunningApplication", "NSScreen", "NSScrollView", "NSScroller", "NSText", "NSTextContainer", "NSTextField", "NSTextStorage", "NSTextView", "NSView", "NSWindow", "NSWorkspace"] }
+objc2-core-graphics = { version = "0.3.2", default-features = false, features = ["std", "CGColor", "CGWindowLevel"] }
+objc2-quartz-core = { version = "0.3.2", default-features = false, features = ["std", "objc2-core-foundation", "objc2-core-graphics", "CALayer"] }
+
+[dev-dependencies]
+tempfile.workspace = true
