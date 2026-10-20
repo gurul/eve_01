@@ -127,6 +127,7 @@ fn names_option(word: &str, options: &[String], all_long: &[String]) -> bool {
 pub fn help_path(parser: &Parser, argv: &[String]) -> Option<Vec<String>> {
     let mut path: Vec<String> = Vec::new();
     let mut level = parser;
+    let mut leaf_positionals = 0;
     let mut i = 0;
     while i < argv.len() {
         let word = &argv[i];
@@ -159,7 +160,21 @@ pub fn help_path(parser: &Parser, argv: &[String]) -> Option<Vec<String>> {
                 path.push(choice.name.clone());
                 level = &choice.parser;
             }
-            None => {} // a positional of the leaf: help may still follow
+            None => {
+                // a positional of the leaf: help may still follow, unless argparse turns the word down first (a
+                // choice it does not offer is an error before a later -h is reached)
+                let positional = level
+                    .args
+                    .iter()
+                    .filter(|a| a.options.is_empty() && !matches!(a.kind, argparse::Kind::Subparsers(_)))
+                    .nth(leaf_positionals);
+                if let Some(choices) = positional.and_then(|a| a.choices.as_ref()) {
+                    if !choices.iter().any(|c| c == word) {
+                        return None;
+                    }
+                }
+                leaf_positionals += 1;
+            }
         }
         i += 1;
     }
@@ -178,4 +193,58 @@ pub fn help_for(slot: &str, argv: &[String]) -> Option<String> {
     let path = help_path(&parser, argv)?;
     let refs: Vec<&str> = path.iter().map(String::as_str).collect();
     parser.find(&refs).map(Parser::format_help)
+}
+
+/// app_template's parser (`eve-bridge app new|list`), as argparse declares it. eve-app-template prints its help and
+/// usage at 80 columns only; this one wraps at the terminal's width, as argparse does.
+pub fn app_template_parser() -> Parser {
+    let prog = "eve-bridge app";
+    let mut parser = Parser::new(prog, Some("eve's apps: the owner's picks, and yours."), true);
+    let mut new = Parser::new(&format!("{prog} new"), None, true);
+    new.arg(Arg::pos("name").help("2 to 16 lowercase letters or digits, starting with a letter (e.g. fan)"))
+        .arg(Arg::opt(&["--dry-run"]).flag().help("say what would be written; write nothing"));
+    parser.subparsers(
+        "cmd",
+        vec![
+            ("new", &[], Some("write a new app: a module, its test, its doc and its registry line"), new),
+            (
+                "list",
+                &[],
+                Some("every app: its slot, its switch, whether the switch is on here, its doc"),
+                Parser::new(&format!("{prog} list"), None, true),
+            ),
+        ],
+    );
+    parser
+}
+
+/// vault's parser (`eve-bridge vault add|list|remove`), as argparse declares it. eve-vault prints its help and usage
+/// at 80 columns only; this one wraps at the terminal's width, as argparse does.
+pub fn vault_parser() -> Parser {
+    let prog = "eve-bridge vault";
+    let mut parser = Parser::new(
+        prog,
+        Some("Sign-ins, cards and 2FA secrets eve fills for you without a model ever seeing them."),
+        true,
+    );
+    let mut add = Parser::new(&format!("{prog} add"), None, true);
+    let kinds: Vec<&str> = eve_vault::KINDS.to_vec();
+    add.arg(Arg::pos("kind").choices(&kinds))
+        .arg(Arg::opt(&["--label"]).required().help("What eve calls it, e.g. \"Chase\" or \"Visa ending 4242\""))
+        .arg(Arg::opt(&["--site"]).default_str("").help("login / totp: the site it fills on, e.g. chase.com"));
+    let mut remove = Parser::new(&format!("{prog} remove"), None, true);
+    remove.arg(Arg::pos("handle"));
+    parser.subparsers(
+        "cmd",
+        vec![
+            ("add", &[], Some("Save an item (values are asked for at the terminal)"), add),
+            ("list", &[], Some("Show the items (never their values)"), Parser::new(&format!("{prog} list"), None, true)),
+            ("remove", &[], Some("Delete an item from the vault and the Keychain"), remove),
+        ],
+    );
+    // add_subparsers(dest="cmd", required=True)
+    if let Some(sub) = parser.args.last_mut() {
+        sub.required = true;
+    }
+    parser
 }

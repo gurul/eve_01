@@ -493,6 +493,103 @@ impl Parser {
         Ok(v)
     }
 
+    /// `_get_nargs_pattern` for a positional ('A' an argument, 'O' an option, '-' the first `--`).
+    fn nargs_pattern(a: &Arg) -> String {
+        match a.nargs {
+            Nargs::One => "(-*A-*)".into(),
+            Nargs::Optional => "(-*A?-*)".into(),
+            Nargs::ZeroOrMore => "(-*[A-]*)".into(),
+            Nargs::OneOrMore => "(-*A[A-]*)".into(),
+            Nargs::Remainder => "(.*)".into(),
+            Nargs::Parser => "(-*A[-AO]*)".into(),
+            Nargs::Exact(k) => format!("((?:-*A){{{k}}}-*)"),
+        }
+    }
+
+    /// `_match_arguments_partial`: how many strings each of the first positionals in `actions` takes from
+    /// `pattern`, as many positionals as match.
+    fn match_partial(&self, actions: &[usize], pattern: &str) -> Vec<usize> {
+        for k in (1..=actions.len()).rev() {
+            let joined: String = actions[..k].iter().map(|&ai| Self::nargs_pattern(&self.args[ai])).collect();
+            let Ok(re) = regex::Regex::new(&format!("^(?s:{joined})")) else { continue };
+            if let Some(caps) = re.captures(pattern) {
+                let mut result: Vec<usize> = (1..=k).map(|g| caps.get(g).map_or(0, |m| m.len())).collect();
+                let end = caps.get(0).map_or(0, |m| m.end());
+                if end < pattern.len() && pattern.as_bytes()[end] == b'O' {
+                    while result.last() == Some(&0) {
+                        result.pop();
+                    }
+                }
+                return result;
+            }
+        }
+        Vec::new()
+    }
+
+    /// `_get_values` and the action for one positional, given its strings (the first `--` already taken out).
+    #[allow(clippy::too_many_arguments)]
+    fn take_positional(
+        &self,
+        ai: usize,
+        args: Vec<String>,
+        ns: &mut Namespace,
+        extras: &mut Vec<String>,
+        out: &mut dyn Write,
+        err: &mut dyn Write,
+    ) -> Result<(), Exit> {
+        let a = &self.args[ai];
+        match a.nargs {
+            Nargs::One | Nargs::Optional => {
+                if args.is_empty() {
+                    // OPTIONAL with nothing: its default (a string default converted and checked)
+                    if let Val::Str(s) = &a.default {
+                        let v = self.convert(a, s, err)?;
+                        ns.0.insert(a.dest.clone(), v);
+                    } else {
+                        ns.0.insert(a.dest.clone(), a.default.clone());
+                    }
+                } else {
+                    let v = self.convert(a, &args[0], err)?;
+                    ns.0.insert(a.dest.clone(), v);
+                }
+            }
+            Nargs::ZeroOrMore if args.is_empty() => {
+                let v = if a.default == Val::None { Val::List(Vec::new()) } else { a.default.clone() };
+                ns.0.insert(a.dest.clone(), v);
+            }
+            Nargs::Exact(_) | Nargs::ZeroOrMore | Nargs::OneOrMore => {
+                for v in &args {
+                    self.convert(a, v, err)?;
+                }
+                ns.0.insert(a.dest.clone(), Val::List(args));
+            }
+            Nargs::Remainder => {
+                ns.0.insert(a.dest.clone(), Val::List(args));
+            }
+            Nargs::Parser => {
+                let Kind::Subparsers(sp) = &a.kind else { unreachable!("a parser positional") };
+                let word = &args[0];
+                let Some(choice) = sp.find(word) else {
+                    let listed: Vec<String> = sp.names().iter().map(|c| py_repr(c)).collect();
+                    return Err(self.error(
+                        &format!("argument {}: invalid choice: {} (choose from {})", a.name(), py_repr(word), listed.join(", ")),
+                        err,
+                    ));
+                };
+                ns.0.insert(a.dest.clone(), Val::Str(word.clone()));
+                // everything after the word goes to the subcommand; what it leaves is the caller's to refuse
+                let mut sub = Namespace::default();
+                choice.parser.parse_known(&args[1..], &mut sub, extras, out, err)?;
+                for (key, v) in sub.0 {
+                    ns.0.insert(key, v);
+                }
+            }
+        }
+        Ok(())
+    }
+
+    /// `parse_known_args` (Python 3.13's `_parse_known_args`, without intermixing): options and positionals
+    /// consumed alternately, positionals matched against the strings' pattern as argparse matches them.
     fn parse_known(
         &self,
         argv: &[String],
@@ -506,215 +603,224 @@ impl Parser {
                 ns.0.insert(a.dest.clone(), a.default.clone());
             }
         }
-        // 'O' or 'A' for each string; after the first "--" everything is 'A' and the "--" itself is dropped
+        // each string as 'O' (an option, or an ambiguous abbreviation: refused once it is consumed), 'A' or '-' (the
+        // first "--"; everything after it is 'A', a later "--" included)
+        #[derive(Clone)]
+        enum Tok {
+            Opt(Option<usize>, Option<String>),
+            Ambiguous(String),
+            Arg,
+            Dash,
+        }
         let mut strings: Vec<String> = Vec::new();
-        let mut kinds: Vec<Option<(Option<usize>, String, Option<String>)>> = Vec::new();
+        let mut toks: Vec<Tok> = Vec::new();
         let mut dashed = false;
         for s in argv {
             if dashed {
                 strings.push(s.clone());
-                kinds.push(None);
+                toks.push(Tok::Arg);
                 continue;
             }
             if s == "--" {
                 dashed = true;
+                strings.push(s.clone());
+                toks.push(Tok::Dash);
                 continue;
             }
             for piece in self.split_flags(s) {
-                let k = self.classify(&piece).map_err(|m| self.error(&m, err))?;
+                let tok = match self.classify(&piece) {
+                    Ok(None) => Tok::Arg,
+                    Ok(Some((action, _, explicit))) => Tok::Opt(action, explicit),
+                    Err(m) => Tok::Ambiguous(m),
+                };
                 strings.push(piece);
-                kinds.push(k);
+                toks.push(tok);
             }
         }
-        let positionals: Vec<usize> = (0..self.args.len()).filter(|&i| self.args[i].positional()).collect();
-        let mut next_pos = 0usize;
+        let pattern: String = toks
+            .iter()
+            .map(|t| match t {
+                Tok::Opt(..) | Tok::Ambiguous(_) => 'O',
+                Tok::Arg => 'A',
+                Tok::Dash => '-',
+            })
+            .collect();
+        let mut positionals: Vec<usize> = (0..self.args.len()).filter(|&i| self.args[i].positional()).collect();
         let mut seen: Vec<bool> = vec![false; self.args.len()];
         let n = strings.len();
-        let mut i = 0usize;
-        while i < n {
-            if let Some((action, _opt, explicit)) = kinds[i].clone() {
-                let Some(ai) = action else {
-                    extras.push(strings[i].clone());
-                    i += 1;
-                    continue;
-                };
-                i += 1;
-                let a = &self.args[ai];
-                match &a.kind {
-                    Kind::Help => {
-                        let _ = write!(out, "{}", self.format_help());
-                        let _ = out.flush();
-                        return Err(Exit(0));
-                    }
-                    Kind::Version(text) => {
-                        let _ = writeln!(out, "{text}");
-                        let _ = out.flush();
-                        return Err(Exit(0));
-                    }
-                    Kind::StoreTrue => {
-                        if let Some(ex) = explicit {
-                            return Err(self.error(
-                                &format!("argument {}: ignored explicit argument {}", a.name(), py_repr(&ex)),
-                                err,
-                            ));
-                        }
-                        seen[ai] = true;
-                        ns.0.insert(a.dest.clone(), Val::Bool(true));
-                    }
-                    Kind::Store | Kind::Append => {
-                        let want = a.takes();
-                        let mut values: Vec<String> = Vec::new();
-                        if let Some(ex) = explicit {
-                            if want != 1 {
-                                return Err(self.error(&format!("argument {}: expected {want} arguments", a.name()), err));
-                            }
-                            values.push(ex);
-                        } else {
-                            while values.len() < want && i < n && kinds[i].is_none() {
-                                values.push(strings[i].clone());
-                                i += 1;
-                            }
-                            if values.len() < want {
-                                let m = if want == 1 { "expected one argument".to_string() } else { format!("expected {want} arguments") };
-                                return Err(self.error(&format!("argument {}: {m}", a.name()), err));
-                            }
-                        }
-                        seen[ai] = true;
-                        if matches!(a.kind, Kind::Append) {
-                            let mut converted = Vec::new();
-                            for v in &values {
-                                match self.convert(a, v, err)? {
-                                    Val::Str(s) => converted.push(s),
-                                    other => converted.push(format!("{other:?}")),
-                                }
-                            }
-                            let mut lists = match ns.0.get(&a.dest) {
-                                Some(Val::Lists(l)) => l.clone(),
-                                _ => Vec::new(),
-                            };
-                            lists.push(converted);
-                            ns.0.insert(a.dest.clone(), Val::Lists(lists));
-                        } else {
-                            let v = self.convert(a, &values[0], err)?;
-                            ns.0.insert(a.dest.clone(), v);
+
+        // consume_positionals: as many positionals as match from `start`; the index where their strings stopped
+        let consume_positionals = |start: usize,
+                                   positionals: &mut Vec<usize>,
+                                   seen: &mut Vec<bool>,
+                                   ns: &mut Namespace,
+                                   extras: &mut Vec<String>,
+                                   out: &mut dyn Write,
+                                   err: &mut dyn Write|
+         -> Result<usize, Exit> {
+            let counts = self.match_partial(positionals, &pattern[start..]);
+            let mut at = start;
+            for (k, &count) in counts.iter().enumerate() {
+                let ai = positionals[k];
+                let mut args: Vec<String> = strings[at..at + count].to_vec();
+                // Strip out the first '--' if it is not in a REMAINDER arg
+                match self.args[ai].nargs {
+                    Nargs::Parser => {
+                        if pattern.as_bytes().get(at) == Some(&b'-') {
+                            args.remove(0);
                         }
                     }
-                    Kind::Subparsers(_) => unreachable!("subparsers are positional"),
+                    Nargs::Remainder => {}
+                    _ => {
+                        if pattern[at..at + count].contains('-') {
+                            if let Some(p) = args.iter().position(|s| s == "--") {
+                                args.remove(p);
+                            }
+                        }
+                    }
                 }
+                at += count;
+                seen[ai] = true;
+                self.take_positional(ai, args, ns, extras, out, err)?;
+            }
+            positionals.drain(..counts.len());
+            Ok(at)
+        };
+
+        // consume_optional: the option at `start` and its arguments; the index after them
+        let consume_optional = |start: usize,
+                                    seen: &mut Vec<bool>,
+                                    ns: &mut Namespace,
+                                    extras: &mut Vec<String>,
+                                    out: &mut dyn Write,
+                                    err: &mut dyn Write|
+         -> Result<usize, Exit> {
+            let (action, explicit) = match &toks[start] {
+                Tok::Opt(action, explicit) => (*action, explicit.clone()),
+                Tok::Ambiguous(m) => return Err(self.error(m, err)),
+                Tok::Arg | Tok::Dash => unreachable!("an option string"),
+            };
+            let Some(ai) = action else {
+                extras.push(strings[start].clone());
+                return Ok(start + 1);
+            };
+            let mut i = start + 1;
+            let a = &self.args[ai];
+            match &a.kind {
+                Kind::Help => {
+                    let _ = write!(out, "{}", self.format_help());
+                    let _ = out.flush();
+                    return Err(Exit(0));
+                }
+                Kind::Version(text) => {
+                    let _ = writeln!(out, "{text}");
+                    let _ = out.flush();
+                    return Err(Exit(0));
+                }
+                Kind::StoreTrue => {
+                    if let Some(ex) = explicit {
+                        return Err(self.error(
+                            &format!("argument {}: ignored explicit argument {}", a.name(), py_repr(&ex)),
+                            err,
+                        ));
+                    }
+                    seen[ai] = true;
+                    ns.0.insert(a.dest.clone(), Val::Bool(true));
+                }
+                Kind::Store | Kind::Append => {
+                    let want = a.takes();
+                    let mut values: Vec<String> = Vec::new();
+                    if let Some(ex) = explicit {
+                        if want != 1 {
+                            return Err(self.error(&format!("argument {}: expected {want} arguments", a.name()), err));
+                        }
+                        values.push(ex);
+                    } else {
+                        // an option's arguments are never the "--"; one with nargs=N takes option-like strings too
+                        // (Python 3.13's '([AO]{N})'), one with a single argument only an 'A'
+                        let any = matches!(a.nargs, Nargs::Exact(_));
+                        while values.len() < want
+                            && i < n
+                            && match toks[i] {
+                                Tok::Arg => true,
+                                Tok::Opt(..) | Tok::Ambiguous(_) => any,
+                                Tok::Dash => false,
+                            }
+                        {
+                            values.push(strings[i].clone());
+                            i += 1;
+                        }
+                        if values.len() < want {
+                            let m = if want == 1 { "expected one argument".to_string() } else { format!("expected {want} arguments") };
+                            return Err(self.error(&format!("argument {}: {m}", a.name()), err));
+                        }
+                    }
+                    seen[ai] = true;
+                    if matches!(a.kind, Kind::Append) {
+                        let mut converted = Vec::new();
+                        for v in &values {
+                            match self.convert(a, v, err)? {
+                                Val::Str(s) => converted.push(s),
+                                other => converted.push(format!("{other:?}")),
+                            }
+                        }
+                        let mut lists = match ns.0.get(&a.dest) {
+                            Some(Val::Lists(l)) => l.clone(),
+                            _ => Vec::new(),
+                        };
+                        lists.push(converted);
+                        ns.0.insert(a.dest.clone(), Val::Lists(lists));
+                    } else {
+                        let v = self.convert(a, &values[0], err)?;
+                        ns.0.insert(a.dest.clone(), v);
+                    }
+                }
+                Kind::Subparsers(_) => unreachable!("subparsers are positional"),
+            }
+            Ok(i)
+        };
+
+        // consume Positionals and Optionals alternately, until we have passed the last option string
+        let option_indices: Vec<usize> = (0..n).filter(|&i| pattern.as_bytes()[i] == b'O').collect();
+        let max_option = option_indices.last().copied();
+        let mut start = 0usize;
+        while max_option.is_some_and(|m| start <= m) {
+            let next_option = option_indices.iter().copied().find(|&i| i >= start).unwrap_or(n);
+            if start != next_option {
+                let end = consume_positionals(start, &mut positionals, &mut seen, ns, extras, out, err)?;
+                if end > start {
+                    start = end;
+                    continue;
+                }
+                start = end;
+            }
+            if !option_indices.contains(&start) {
+                extras.extend(strings[start..next_option].iter().cloned());
+                start = next_option;
+            }
+            start = consume_optional(start, &mut seen, ns, extras, out, err)?;
+        }
+        // consume any positionals following the last Optional
+        let stop = consume_positionals(start, &mut positionals, &mut seen, ns, extras, out, err)?;
+        extras.extend(strings[stop.min(n)..].iter().cloned());
+
+        // what was not given: a string default is converted (not checked); a required one is missing
+        let mut missing: Vec<String> = Vec::new();
+        for (ai, a) in self.args.iter().enumerate() {
+            if seen[ai] {
                 continue;
             }
-            // a run of positional strings
-            let mut j = i;
-            while j < n && kinds[j].is_none() {
-                j += 1;
-            }
-            while i < j && next_pos < positionals.len() {
-                let ai = positionals[next_pos];
-                let a = &self.args[ai];
-                match a.nargs {
-                    Nargs::One | Nargs::Optional => {
-                        let v = self.convert(a, &strings[i], err)?;
-                        ns.0.insert(a.dest.clone(), v);
-                        seen[ai] = true;
-                        i += 1;
-                        next_pos += 1;
-                    }
-                    Nargs::Exact(k) => {
-                        if j - i < k {
-                            break;
-                        }
-                        let vals: Vec<String> = strings[i..i + k].to_vec();
-                        ns.0.insert(a.dest.clone(), Val::List(vals));
-                        seen[ai] = true;
-                        i += k;
-                        next_pos += 1;
-                    }
-                    Nargs::ZeroOrMore | Nargs::OneOrMore => {
-                        ns.0.insert(a.dest.clone(), Val::List(strings[i..j].to_vec()));
-                        seen[ai] = true;
-                        i = j;
-                        next_pos += 1;
-                    }
-                    Nargs::Remainder => {
-                        ns.0.insert(a.dest.clone(), Val::List(strings[i..].to_vec()));
-                        seen[ai] = true;
-                        next_pos += 1;
-                        i = n;
-                        j = n;
-                    }
-                    Nargs::Parser => {
-                        let Kind::Subparsers(sp) = &a.kind else { unreachable!("a parser positional") };
-                        let word = &strings[i];
-                        let Some(choice) = sp.find(word) else {
-                            let listed: Vec<String> = sp.names().iter().map(|c| py_repr(c)).collect();
-                            return Err(self.error(
-                                &format!(
-                                    "argument {}: invalid choice: {} (choose from {})",
-                                    a.name(),
-                                    py_repr(word),
-                                    listed.join(", ")
-                                ),
-                                err,
-                            ));
-                        };
-                        ns.0.insert(a.dest.clone(), Val::Str(word.clone()));
-                        seen[ai] = true;
-                        // everything after the word goes to the subcommand
-                        let rest: Vec<String> = strings[i + 1..].to_vec();
-                        let mut sub = Namespace::default();
-                        choice.parser.parse_known(&rest, &mut sub, extras, out, err)?;
-                        for (key, v) in sub.0 {
-                            ns.0.insert(key, v);
-                        }
-                        next_pos += 1;
-                        i = n;
-                        j = n;
-                    }
-                }
-                // a '?' positional waits for a later run unless this is the end of the arguments
-                if i == j && j < n {
-                    break;
-                }
-            }
-            while i < j {
-                extras.push(strings[i].clone());
-                i += 1;
-            }
-        }
-        // positionals left: their defaults (string defaults are converted and checked, as argparse does)
-        let mut missing: Vec<String> = Vec::new();
-        for &ai in &positionals[next_pos.min(positionals.len())..] {
-            let a = &self.args[ai];
-            match a.nargs {
-                Nargs::Optional => {
-                    if let Val::Str(s) = &a.default {
-                        let v = self.convert(a, s, err)?;
-                        ns.0.insert(a.dest.clone(), v);
-                    }
-                }
-                Nargs::Remainder => {
-                    ns.0.insert(a.dest.clone(), Val::List(Vec::new()));
-                }
-                Nargs::ZeroOrMore => {
-                    let v = if a.default == Val::None { Val::List(Vec::new()) } else { a.default.clone() };
-                    ns.0.insert(a.dest.clone(), v);
-                }
-                _ => {
-                    if a.required {
-                        missing.push(a.name());
-                    }
-                }
-            }
-        }
-        for (ai, a) in self.args.iter().enumerate() {
-            if !a.positional() && a.required && !seen[ai] {
+            if a.required {
                 missing.push(a.name());
+            } else if let (Val::Str(s), Some(c)) = (&a.default, a.conv) {
+                if ns.0.get(&a.dest) == Some(&a.default) {
+                    if let Ok(v) = c(s) {
+                        ns.0.insert(a.dest.clone(), v);
+                    }
+                }
             }
         }
         if !missing.is_empty() {
-            // argparse lists them in the order the actions were added
-            let order: Vec<String> = self.args.iter().filter(|a| a.required).map(Arg::name).collect();
-            missing.sort_by_key(|m| order.iter().position(|o| o == m).unwrap_or(usize::MAX));
             return Err(self.error(&format!("the following arguments are required: {}", missing.join(", ")), err));
         }
         Ok(())

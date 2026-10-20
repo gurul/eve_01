@@ -67,10 +67,29 @@ pub fn main(argv: Option<Vec<String>>) -> i32 {
         }
     }
     if rest.first().map(String::as_str) == Some("app") {
-        return eve_app_template::cli(&rest[1..]);
+        // argparse's help and usage errors at this terminal's width (eve-app-template prints its 80-column text);
+        // a command line that parses goes to eve-app-template
+        let parser = crate::apphelp::app_template_parser();
+        return match parse(&parser, &rest[1..], &io) {
+            Err(code) => code,
+            Ok(args) if args.str("cmd").is_none() => {
+                print_help(&parser, &io);
+                if rest.len() == 1 {
+                    0
+                } else {
+                    2
+                }
+            }
+            Ok(_) => eve_app_template::cli(&rest[1..]),
+        };
     }
     if rest.first().map(String::as_str) == Some("vault") {
         let args: Vec<String> = if rest.len() > 1 { rest[1..].to_vec() } else { vec!["--help".into()] };
+        // argparse's help and usage errors at this terminal's width (eve-vault prints its 80-column text); a
+        // command line that parses goes to eve-vault
+        if let Err(code) = parse(&crate::apphelp::vault_parser(), &args, &io) {
+            return code;
+        }
         return eve_vault::cli_main(&args);
     }
     full_main(&rest, &io, &process_env)
@@ -906,8 +925,21 @@ pub fn daemon_options(args: &Namespace) -> eve_daemon::DaemonOptions {
     }
 }
 
+/// `getattr(logging, level.upper(), logging.INFO)`, as `daemon --log-level` reads it: the name as given (not
+/// stripped), INFO for anything that is not a level's name.
+fn daemon_level(level: &str) -> &'static str {
+    match level.to_uppercase().as_str() {
+        "NOTSET" => "NOTSET",
+        "DEBUG" => "DEBUG",
+        "WARNING" | "WARN" => "WARNING",
+        "ERROR" => "ERROR",
+        "CRITICAL" | "FATAL" => "CRITICAL",
+        _ => "INFO",
+    }
+}
+
 fn run_daemon(args: &Namespace, io: &Io) -> i32 {
-    init_logging(&args.str("log_level").unwrap_or_else(|| "INFO".into()));
+    init_logging(daemon_level(&args.str("log_level").unwrap_or_else(|| "INFO".into())));
     // Refuse to start if another daemon is already listening on this IPC address. A stale Unix socket is safe to
     // remove and proceed.
     let socket = args.str("socket");
@@ -1801,14 +1833,20 @@ fn run_places(args: &Namespace, io: &Io) -> i32 {
         };
         if !args.flag("yes") {
             let n = |k: &str| pstr(summary.get(k).unwrap_or(&Value::Null));
-            let answer = io
-                .ask(&format!(
-                    "Forget {} places, {} visits and {} things, and the phone's latest location? [y/N] ",
-                    n("places"),
-                    n("visits"),
-                    n("things")
-                ))
-                .unwrap_or_default();
+            let answer = match io.ask(&format!(
+                "Forget {} places, {} visits and {} things, and the phone's latest location? [y/N] ",
+                n("places"),
+                n("visits"),
+                n("things")
+            )) {
+                Ok(a) => a,
+                // input() raised EOFError, which nothing catches: Python's traceback and exit 1
+                Err(e) => {
+                    let kind = if e.kind() == std::io::ErrorKind::UnexpectedEof { "EOFError" } else { "OSError" };
+                    io.warn(&format!("eve-bridge: {kind}: {e}"));
+                    return 1;
+                }
+            };
             if !["y", "yes"].contains(&eve_envfile::py_strip(&answer).to_lowercase().as_str()) {
                 io.say("Nothing forgotten.");
                 return 0;

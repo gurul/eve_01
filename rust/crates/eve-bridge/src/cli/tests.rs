@@ -1230,7 +1230,7 @@ fn sha256(bytes: &[u8]) -> String {
 }
 
 #[test]
-fn test_lite_uninstall_keeps_the_memory_on_no() {
+fn test_lite_uninstall_keeps_the_memory_on_no_and_the_installer_takes_the_folder_back() {
     let w = World::with_host(World::launchctl());
     let ctx = w.ctx();
     let p = installed(&w, &ctx, Some(&default_env()), true, false);
@@ -1255,8 +1255,50 @@ fn test_lite_uninstall_keeps_the_memory_on_no() {
     assert!(out.out.lines().last().unwrap().ends_with("the install line takes them back.") && !out.out.contains(CANARY));
     // kept_by_lite reads the folder as the one eve lite kept; a changed env file afterwards is not
     assert!(lite::kept_by_lite(&p.kept, &p.env));
+    // install-lite.sh reads the folder as the one eve lite kept: past its env-file check, to its release check
+    let installer_runs = installer_available();
+    if installer_runs {
+        let (_, _, err) = installer(&w, &["--dry-run"]);
+        assert!(err.contains("is not from a release"), "{err}");
+    }
+    // control: the same folder with its env file changed afterwards is not eve lite's to take back
     std::fs::write(&p.env, format!("OPENROUTER_API_KEY={CANARY}\nEVE_SOMETHING=1\n")).unwrap();
     assert!(!lite::kept_by_lite(&p.kept, &p.env));
+    if installer_runs {
+        let (_, _, err) = installer(&w, &["--dry-run"]);
+        assert!(err.contains("changed after eve lite was uninstalled"), "{err}");
+    }
+}
+
+/// install-lite.sh at the repository's root.
+fn installer_path() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../install-lite.sh")
+}
+
+/// Whether install-lite.sh can run here (the Python's `needs_installer`: a Mac, the script, /bin/bash).
+fn installer_available() -> bool {
+    cfg!(target_os = "macos") && installer_path().is_file() && Path::new("/bin/bash").exists()
+}
+
+/// install-lite.sh itself, run in the world's HOME: only its dry runs, which write nothing and start no service.
+/// (exit code, stdout, stderr)
+fn installer(w: &World, args: &[&str]) -> (i32, String, String) {
+    assert!(args.contains(&"--dry-run"));
+    let done = std::process::Command::new("/bin/bash")
+        .arg(installer_path())
+        .args(args)
+        .env_clear()
+        .env("HOME", &w.home)
+        .env("PATH", "/usr/bin:/bin:/usr/sbin:/sbin")
+        .env("TMPDIR", w.root.join("t"))
+        .stdin(std::process::Stdio::null())
+        .output()
+        .expect("bash runs install-lite.sh");
+    (
+        done.status.code().unwrap_or(-1),
+        String::from_utf8_lossy(&done.stdout).into_owned(),
+        String::from_utf8_lossy(&done.stderr).into_owned(),
+    )
 }
 
 #[test]
@@ -1268,6 +1310,10 @@ fn test_lite_uninstall_of_an_env_file_holding_only_the_profile() {
     assert!(!p.env.exists());
     assert!(std::fs::read_to_string(&p.kept).unwrap().lines().any(|l| l == "env_sha256=none"));
     assert!(lite::kept_by_lite(&p.kept, &p.env));
+    if installer_available() {
+        let (_, _, err) = installer(&w, &["--dry-run"]);
+        assert!(err.contains("is not from a release"), "{err}");
+    }
 }
 
 #[test]
@@ -1401,6 +1447,12 @@ fn test_lite_uninstall_dry_run_writes_nothing_and_decides_as_the_installer() {
         let asks = out.out.contains("Then it would ask before deleting ~/.config/eve-bridge");
         assert_eq!(asks, state == "lite" || state == "kept", "{state}");
         assert!(w.launchd_calls().is_empty() || !w.launchd_calls().iter().any(|c| c[1] == "bootout"));
+        if installer_available() {
+            let (rc, said, err) = installer(&w, &["--uninstall", "--dry-run"]);
+            assert_eq!(rc, 0, "{state}: {err}");
+            assert_eq!(said.contains("Then it would ask before deleting ~/.config/eve-bridge"), asks, "{state}: {said}");
+            assert_eq!(tree(&w.home), before, "{state}");
+        }
     }
 }
 
@@ -1969,4 +2021,131 @@ fn test_app_help_is_argparse_shaped() {
     assert!(crate::apphelp::help_for("lights", &s(&["list"])).is_none());
     assert!(crate::apphelp::help_for("lights", &s(&["bogus", "--help"])).is_none()); // the app says it is bogus
     assert!(crate::apphelp::help_for("spotify", &s(&["play", "--", "--help"])).is_none());
+}
+
+// ---- web open and signals: in a child process, since a signal ends the process it is sent to ------------------
+
+/// Run `child` in a forked copy of this process and return how it ended (its exit status; -1 for a signal). The
+/// child never returns to the test runner: it `_exit`s with what `child` returns, or 97 on a panic.
+fn in_child(child: impl FnOnce() -> i32) -> i32 {
+    // SAFETY: the child calls only what the test gives it and then _exit; it never unwinds into the runner.
+    let pid = unsafe { libc::fork() };
+    assert!(pid >= 0, "fork failed");
+    if pid == 0 {
+        let code = std::panic::catch_unwind(std::panic::AssertUnwindSafe(child)).unwrap_or(97);
+        // SAFETY: ends the child without running the runner's exit handlers.
+        unsafe { libc::_exit(code) };
+    }
+    let mut status: libc::c_int = 0;
+    // SAFETY: waits for the child forked above.
+    let waited = unsafe { libc::waitpid(pid, &mut status, 0) };
+    assert_eq!(waited, pid);
+    if libc::WIFEXITED(status) {
+        libc::WEXITSTATUS(status)
+    } else {
+        -1
+    }
+}
+
+/// The handler installed for `sig` now.
+fn handler_of(sig: libc::c_int) -> libc::sighandler_t {
+    // SAFETY: a query only (no new action).
+    unsafe {
+        let mut old: libc::sigaction = std::mem::zeroed();
+        libc::sigaction(sig, std::ptr::null(), &mut old);
+        old.sa_sigaction
+    }
+}
+
+#[test]
+fn test_sigterm_and_sighup_end_web_open_through_its_cleanup() {
+    for sig in [libc::SIGTERM, libc::SIGHUP] {
+        let tmp = tempfile::tempdir().unwrap();
+        let page = tmp.path().join("eve-open-x.html");
+        std::fs::write(&page, "page").unwrap();
+        let p = page.clone();
+        let code = in_child(move || {
+            // the handlers come back as they were when the guard goes
+            let before = handler_of(sig);
+            drop(lite::StopOnSignals::new(&p));
+            if handler_of(sig) != before {
+                return 98;
+            }
+            let _guard = lite::StopOnSignals::new(&p);
+            // SAFETY: signals this child only.
+            unsafe { libc::kill(libc::getpid(), sig) };
+            std::thread::sleep(Duration::from_secs(5)); // the handler ends the process before this returns
+            99
+        });
+        assert_eq!(code, 128 + sig, "signal {sig}");
+        assert!(!page.exists(), "signal {sig} left the page");
+    }
+}
+
+#[test]
+fn test_web_open_deletes_the_page_on_ctrl_c() {
+    let w = World::new();
+    let opened = w.root.join("opened");
+    let mut ctx = w.ctx();
+    ctx.catch_signals = true;
+    let marker = opened.clone();
+    ctx.open_in_browser = Some(Box::new(move |path| {
+        std::fs::write(&marker, path).unwrap();
+        true
+    }));
+    let code = in_child(move || {
+        // the daemon hands out a code; while web open waits for the browser to use it, Ctrl-C
+        let post: crate::io::Post = Box::new(|event, _, _, _| match event["evt"].as_str() {
+            Some("web_login") => Some(json!({"ok": true, "code": CANARY, "port": PORT})),
+            _ => {
+                // SAFETY: signals this child only.
+                unsafe { libc::kill(libc::getpid(), libc::SIGINT) };
+                std::thread::sleep(Duration::from_secs(5));
+                Some(json!({"ok": true, "used": false}))
+            }
+        });
+        let (io, _) = capture(post, None);
+        lite::lite_main(&s(&["web", "open", "--wait", "1"]), &[], &ctx, &io)
+    });
+    assert_eq!(code, 128 + libc::SIGINT);
+    let page = std::fs::read_to_string(&opened).expect("the browser was given the page");
+    assert!(!Path::new(&page).exists());
+    assert!(w.pages().is_empty(), "{:?}", w.pages());
+}
+
+#[test]
+fn test_web_open_through_lite_daemons_own_ipc() {
+    // End to end with web_auth's MacLogin answering as lite.py's handler does (`web_login`: a code it issued and the
+    // page's port; `web_login_used`: whether a browser consumed it): the code issued is the one the page carries,
+    // the browser's sign-in consumes it, `web_login_used` then says so, and the code is never printed. The whole
+    // LiteDaemon is not started here: its page server is private to eve-lite, whose own tests run this IPC.
+    let w = World::new();
+    let login = Arc::new(eve_web_auth::MacLogin::new());
+    let handler_login = login.clone();
+    let handler: Arc<dyn Fn(&Value) -> Value + Send + Sync> = Arc::new(move |req| {
+        match req.get("evt").and_then(Value::as_str).unwrap_or("") {
+            "web_login" => json!({"ok": true, "code": handler_login.issue(), "port": PORT}),
+            "web_login_used" => json!({"ok": true, "used": handler_login.used(req.get("code").and_then(Value::as_str))}),
+            _ => json!({"ok": false, "error": eve_lite::UNKNOWN_EVENT}),
+        }
+    });
+    let _serving = Serving::new(&w.sock, handler);
+    let codes: Arc<Mutex<Vec<String>>> = Arc::default();
+    let mut ctx = w.ctx();
+    let (seen, browser_login) = (codes.clone(), login.clone());
+    ctx.open_in_browser = Some(Box::new(move |path| {
+        let page = std::fs::read_to_string(path).unwrap();
+        let code = page.split_once("#login=").unwrap().1.split('"').next().unwrap().to_string();
+        assert!(browser_login.consume(Some(&code))); // the page's POST to /api/mac/login
+        seen.lock().unwrap().push(code);
+        true
+    }));
+    let (rc, out) = run_lite(&["web", "open", "--wait", "5"], &ctx);
+    assert_eq!(rc, 0, "{}", out.err);
+    let code = codes.lock().unwrap()[0].clone();
+    assert!(eve_web_auth::TOKEN.is_match(&code) && login.used(Some(&code)));
+    assert!(!login.consume(Some(&code))); // single use: the browser had it
+    assert_eq!(out.out, format!("eve is open in your browser: http://localhost:{PORT}\n"));
+    assert!(!out.out.contains(&code) && !out.err.contains(&code));
+    assert!(w.pages().is_empty());
 }

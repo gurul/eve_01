@@ -4,8 +4,11 @@ Status: complete
 
 The `eve-bridge` command line: `bridge/src/eve_bridge/cli.py` and `__main__.py`. The binary `eve-bridge` has the
 same argparse tree as the Python in both profiles. `python3 tools/check_cli.py` compares every `--help` path:
-286 of 286 match in the full profile and 18 of 18 in the lite profile. A scratch diff of all 304 help pages at
-COLUMNS=80 was also byte-identical.
+286 of 286 match in the full profile and 18 of 18 in the lite profile. A scratch diff of all 304 help pages
+(stdout, stderr and exit code) against the Python was byte-identical at COLUMNS=50, 80 and 130, and so were
+`app` and `vault` help and usage errors at 50, 80, 100 and 130 columns. A differential fuzz of 1,600 random
+command lines (subcommands, options, `--`, abbreviations, negative numbers, help) over the commands that need no
+daemon matched the Python in output and exit code, except `places forget` at end of input (see Differences).
 
 ## Modules
 
@@ -15,8 +18,9 @@ COLUMNS=80 was also byte-identical.
 | `eve_bridge.cli`: `main`, the full-profile parser and its commands | `src/cli.rs` |
 | `eve_bridge.cli`: `memory tail/recall/forget/dream/reindex` | `src/cli/memory.rs` |
 | `eve_bridge.cli`: eve lite's parser and commands (`_lite_*`, `web *`, `doctor`, `lite uninstall`) | `src/cli/lite.rs` |
-| `argparse` (stdlib), as cli.py uses it | `src/argparse.rs`: Python 3.13's usage wrapping, HelpFormatter layout and error text, exit 2 |
+| `argparse` (stdlib), as cli.py uses it | `src/argparse.rs`: Python 3.13's parsing (the `O`/`A`/`-` string pattern, `_match_arguments_partial`'s regex matching of positionals, the first `--` taken out as 3.13 does, `nargs=N` options taking option-like strings), usage wrapping, HelpFormatter layout and error text, exit 2 |
 | argparse help for the app CLIs (lights, spotify, firetv, obsbot/cam) | `src/apphelp.rs`: converts the app's clap `Command` to an argparse parser for `--help` only |
+| `app_template.cli`'s and `vault.cli`'s argparse parsers | `apphelp::app_template_parser`, `apphelp::vault_parser`: `main` parses `app ...` and `vault ...` with them first (help and usage errors at the terminal's width), then hands a command line that parses to eve-app-template or eve-vault |
 | `print`/`input`/`sys.stdin.isatty()`/`client.post`, as tests patch them | `src/io.rs`: the `Io` seam (out, err, post, ask, stdin_tty) passed to each command |
 | `json.dumps`, `str()`, truthiness and `time.strftime`, as cli.py prints values | `src/py.rs` |
 
@@ -105,16 +109,23 @@ Every top-level def, class and constant in cli.py and `__main__.py`.
 
 ## Tests
 
-Run: 88 unit tests (`src/cli/tests.rs`, `argparse`, `py`) and 5 process tests (`tests/cli_process.rs`, which use the
+Run: 91 unit tests (`src/cli/tests.rs`, `argparse`, `py`) and 5 process tests (`tests/cli_process.rs`, which use the
 built binary). No daemon, launchctl, osadecompile or open runs in any test. Stand-ins answer on real Unix sockets in
-temporary folders. HOME is always temporary.
+temporary folders. HOME is always temporary. install-lite.sh runs only as `--dry-run` (as the Python tests run it),
+on a Mac.
 
 Ported:
-- `test_cli_lite.py`: every test except the four listed below. The test names are the Python names. The profile
+- `test_cli_lite.py`: every test except the one listed below. The test names are the Python names. The profile
   case `test_a_profile_that_is_neither_full_nor_lite_exits_78_before_any_command` became the process tests
-  `test_an_unknown_profile_stops_with_ex_config` and `…_in_the_env_file_…`.
-  `test_lite_uninstall_keeps_the_memory_on_no_and_the_installer_takes_the_folder_back` became
-  `test_lite_uninstall_keeps_the_memory_on_no`, with the installer half asserted through `kept_by_lite`.
+  `test_an_unknown_profile_stops_with_ex_config` and `…_in_the_env_file_…`. The installer halves (install-lite.sh
+  `--dry-run` and `--uninstall --dry-run` in the test's HOME) are run as in the Python, on a Mac.
+  - `test_web_open_deletes_the_page_on_ctrl_c` and `test_sigterm_and_sighup_end_web_open_through_its_cleanup` run
+    in a forked child (a signal ends the process it is sent to, and Rust tests share one): Ctrl-C while `web open`
+    waits for the browser, and SIGTERM and SIGHUP under `StopOnSignals`, each delete the page and exit 128+signal;
+    the handlers come back when the guard goes.
+  - `test_web_open_through_lite_daemons_own_ipc` answers with eve-web-auth's real `MacLogin` (the code issued is the
+    one the page carries, the browser consumes it once, `web_login_used` then says so). The whole `LiteDaemon` is not
+    started: its page server is private to eve-lite, whose own tests run that IPC end to end.
 - `test_cli_memory.py`: all six tests, plus the bus helpers (`test_memory_bus_lines`).
 - tests_ref:
   - test_diag_render: all five.
@@ -130,13 +141,6 @@ Ported:
 Not ported, with the reason:
 - `test_importing_the_cli_loads_no_part_of_full_eves_daemon`: a Python import-laziness check. A Rust binary has no
   lazy imports, so there is nothing to observe.
-- `test_web_open_through_lite_daemons_own_ipc`: it starts eve lite's real daemon IPC server in the test process.
-  The `Daemon` stand-in here speaks the same IPC protocol (`web_login`, `web_login_used`, `PAGE_DOWN`,
-  `UNKNOWN_EVENT` from `eve_lite`). The real server is covered by eve-lite's own tests.
-- `test_web_open_deletes_the_page_on_ctrl_c` and `test_sigterm_and_sighup_end_web_open_through_its_cleanup`: they
-  send signals to the test process. Rust tests run as threads of one process, so a signal would end every test.
-  `StopOnSignals` is only a signal handler that unlinks one path and exits. A test of it would need its own
-  process and a fake daemon, and is not written.
 
 ## Boundaries
 
@@ -159,12 +163,14 @@ Not ported, with the reason:
   `json.JSONDecodeError` text. The exit code is the same.
 - The app CLIs (lights, spotify, firetv, obsbot/cam) parse with clap. `--help` at any level is converted to
   argparse's layout and matches the Python. A usage error (a bad choice, a missing argument) is still clap's
-  wording, with exit 2 as before. At widths narrower than 80, `app` and `vault` help is wrapped by their own crates:
-  eve-app-template does not read COLUMNS.
+  wording, with exit 2 as before.
 - `doctor` prints `eve-bridge <version>: <path of this binary>` where the Python printed its interpreter's version
   and path. There is no Python in the Rust install.
+- Ctrl-C during `web open`: the Python's KeyboardInterrupt deleted the page through its `finally` and ended with a
+  traceback, the process killed by SIGINT. Here `StopOnSignals` deletes the page and exits 130, with no traceback.
 - `steel-profile` drives Steel through eve-steel's built-in CDP client where the Python used Playwright.
-- `places`: end of input at its yes/no prompt is a no (the Python raised EOFError).
+- `places forget`: end of input at its yes/no prompt prints `eve-bridge: EOFError: EOF when reading a line` and exits
+  1, where the Python ended with EOFError's traceback (exit 1).
 - `memory tail/recall` name the error class in "not reachable (…)" by its Python equivalent
   (`ConnectionRefusedError`, `TimeoutError`, `OSError`). A websocket failure that has no Python counterpart is
   named `OSError`.
