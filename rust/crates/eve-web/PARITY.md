@@ -295,6 +295,10 @@ Other test notes:
 
 ## Differences
 
+### Edits made by eve-daemon
+- `Watcher::set_notify` (additive): Python's public `watcher.notify = ...`, which the daemon sets to the text door's
+  `tell_owner` after the watcher is made. `deps` stays crate-private.
+
 ### Search and the reader
 - A routed attempt (or a router) that panics is `{"ok": False, "reason": "panic"}` (`"<provider>: panic"` when
   unwrapped), where Python names the exception's class; a Rust panic has no class.
