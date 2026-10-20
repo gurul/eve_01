@@ -1227,6 +1227,10 @@ impl TelegramInlet {
             st.claude_on_job = Some(crate::seams::Job::spawn("claude-on", futures::future::pending::<()>()));
         }
     }
+    /// `inlet._awaiting_answer`.
+    pub fn tt_awaiting_answer(self: &Arc<Self>) -> bool {
+        self.awaiting_answer()
+    }
     /// `(inlet._toolset_mode, inlet._toolset_route is not None)`.
     pub fn tt_toolset(&self) -> (String, bool) {
         (self.toolset_mode.clone(), self.toolset_route.is_some())

@@ -1402,3 +1402,33 @@ async fn test_a_message_telegram_cannot_parse_is_sent_again_as_plain_text() {
     assert_eq!(bodies[0]["text"], json!("<b>Claude</b>\n\nan <b>odd</b> one &lt;tag&gt;"));
     assert_eq!(bodies[1]["text"], json!("Claude\n\nan odd one <tag>"));
 }
+
+#[test]
+fn test_english_calls_drop_words_in_another_script() {
+    for text in ["あ。", "ご視聴ありがとうございました", "Продолжение следует", "谢谢"] {
+        assert!(eve_phone_call::foreign(text, "en"), "{text}");
+    }
+}
+
+#[test]
+fn test_english_and_punctuation_are_kept() {
+    for text in ["Who is the president?", "Play Beyoncé", "café at 5", "ok", "...", "42", ""] {
+        assert!(!eve_phone_call::foreign(text, "en"), "{text}");
+    }
+}
+
+#[test]
+fn test_no_language_or_another_language_keeps_everything() {
+    assert!(!eve_phone_call::foreign("あ。", ""));
+    assert!(!eve_phone_call::foreign("あ。", "ja"));
+}
+
+#[tokio::test]
+async fn test_the_mini_apps_pin_never_reaches_telegram_in_app_mode() {
+    let _iso = isolated();
+    let environ: eve_brain::prelude::Environ = [("EVE_TELEGRAM".to_string(), "app".to_string())].into_iter().collect();
+    let bot = eve_brain::miniapp::bot_caller(TOKEN, Some(&environ));
+    let reply = bot("setChatMenuButton".to_string(), json!({"chat_id": OWNER}).as_object().cloned().unwrap()).await.unwrap();
+    unhide_tokens();
+    assert!(reply["ok"] == json!(false) && reply["description"].as_str().unwrap().contains("EVE_TELEGRAM=app"), "{reply}");
+}

@@ -493,3 +493,41 @@ async fn test_a_tapped_question_option_is_kept_in_the_chats_record() {
         .collect();
     assert!(rows.contains(&("owner".to_string(), "relay".to_string(), "2. eve".to_string())), "{rows:?}");
 }
+
+// ---- test_telegram_lean.py: Questions.lean's counterexample, replayed -------------------------------------------
+
+#[tokio::test]
+async fn test_a_typed_answer_reaches_the_outer_question_after_two_inner_ones_close() {
+    // Questions.lean: A, B and C open in that order; B's asker goes away, C is answered. A still waits, so the
+    // owner's next message must be A's answer. Before the fix C put back the slot it had saved (B, already closed),
+    // found it closed and emptied the slot: A's answer became a new chat turn instead.
+    let _iso = isolated();
+    let api = FakeApi::new(vec![]);
+    let rig = Rig::new(api.clone(), FakeCreate::new(vec![]), config(), |_| {});
+    run_rig(&rig, || async {
+        let ask = |q: &'static str| {
+            let inlet = rig.inlet.clone();
+            tokio::spawn(async move { inlet.tt_ask_user(q, OWNER).await })
+        };
+        let a = ask("Which folder, A?");
+        settle(200).await;
+        let b = ask("Which file, B?");
+        settle(200).await;
+        let c = ask("Which line, C?");
+        settle(200).await;
+        b.abort(); // B's asker went away (a stopped task)
+        let _ = b.await;
+        settle(200).await;
+        api.feed(vec![said("the third one", 2)]); // the slot is C: this is C's answer
+        assert_eq!(tokio::time::timeout(std::time::Duration::from_secs(1), c).await.unwrap().unwrap(), "the third one");
+        settle(200).await;
+        assert!(rig.inlet.tt_awaiting_answer(), "A is still waiting, so a question must still be waiting");
+        api.feed(vec![said("the docs folder", 3)]); // A's answer
+        settle(200).await;
+        assert!(a.is_finished());
+        assert_eq!(a.await.unwrap(), "the docs folder");
+        assert!(!rig.inlet.tt_awaiting_answer() && rig.inlet.tt_pending_answer().is_none());
+    })
+    .await;
+    assert!(rig.create.requests.lock().is_empty()); // no answer became a chat turn
+}
