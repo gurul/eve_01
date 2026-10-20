@@ -601,3 +601,452 @@ async fn test_open_app_with_two_apps_opens_both_in_one_round() {
     let calls = vec![obj(json!({"name": OPEN_TOOL, "args": {"apps": ["calendar", "maps"]}})), obj(json!({"name": OPEN_TOOL, "args": {"app": "gmail"}}))];
     assert_eq!(telegram::call_names(&calls), "open_app[calendar,maps], open_app[gmail]");
 }
+
+// ---- Share ---------------------------------------------------------------------------------------------------
+
+/// `ShareRunner`: osascript, faked: every call recorded; a send says Messages took it.
+fn share_runner() -> (eve_brain::share::Runner, Arc<Mutex<Vec<Vec<String>>>>) {
+    let calls: Arc<Mutex<Vec<Vec<String>>>> = Arc::new(Mutex::new(Vec::new()));
+    let c = calls.clone();
+    let runner: eve_brain::share::Runner = Arc::new(move |argv: Vec<String>, _stdin: Vec<u8>, _timeout: f64| {
+        c.lock().push(argv);
+        async { (0, String::new(), String::new()) }.boxed()
+    });
+    (runner, calls)
+}
+
+#[tokio::test]
+async fn test_share_file_asks_allow_or_deny_and_deny_sends_nothing() {
+    for (tap, sent_it) in [("Deny", false), ("Allow", true)] {
+        let _iso = isolated();
+        let dir = tmp();
+        let tmp_path = dir.path().to_path_buf();
+        std::fs::create_dir(tmp_path.join("Documents")).unwrap();
+        std::fs::write(tmp_path.join("Documents").join("report.pdf"), b"%PDF-1.4 test").unwrap();
+        let (runner, calls) = share_runner();
+        let hub = eve_brain::share::Share::new(eve_brain::share::ShareConfig { enabled: true, imessage: true })
+            .with_runner(runner)
+            .with_home(&tmp_path)
+            .with_outbox(tmp_path.join("Pictures").join("eve-outbox"));
+        let hub = Arc::new(hub);
+        let args = json!({"path": tmp_path.join("Documents").join("report.pdf").to_string_lossy(), "to": "+1 555 010 0199",
+                          "via": "imessage", "message": null});
+        let api = FakeApi::new(vec![vec![said("send the report to +1 555 010 0199", 1)]]);
+        let h = hub.clone();
+        let rig = Rig::new(api.clone(), FakeCreate::new(vec![call("share_file", args, "call_1"), reply("Done.")]), config(), move |o| o.share = Some(h));
+        run_rig(&rig, || async {
+            {
+                let log = api.log.lock();
+                assert_eq!(log.titled.last().unwrap().0.as_deref(), Some("Share a file"));
+                let inline: Vec<String> = log.keyboards.last().unwrap().1.iter().flatten().map(|(t, _, _)| t.clone()).collect();
+                assert_eq!(inline, vec!["Allow", "Deny"]);
+                assert!(log.sent.last().unwrap().1.contains("report.pdf") && calls.lock().is_empty()); // asked first, nothing sent yet
+            }
+            let (message_id, key) = api.key(tap, -1);
+            api.feed(vec![tap_update(2, message_id, &key, OWNER, "q1")]);
+        })
+        .await;
+        assert_eq!(!calls.lock().is_empty(), sent_it, "{tap}");
+        let result = output_of(&rig, 1);
+        assert!(result["ok"] == json!(sent_it) && result.get("token").is_none(), "{tap}: {result}"); // the token never reaches the model
+        assert!(request(&rig, 0)["instructions"].as_str().unwrap().contains(eve_brain::share::INSTRUCTIONS));
+    }
+}
+
+/// `telegram.request(CFG, [], **parts)`.
+fn request_kw(parts: &Obj) -> Obj {
+    let s = |k: &str| parts.get(k).and_then(Value::as_str).unwrap_or("").to_string();
+    let objs = |k: &str| -> Vec<Obj> { parts.get(k).and_then(Value::as_array).map(|a| a.iter().filter_map(|t| t.as_object().cloned()).collect()).unwrap_or_default() };
+    let strs = |k: &str| -> Vec<String> { parts.get(k).and_then(Value::as_array).map(|a| a.iter().filter_map(|t| t.as_str().map(str::to_string)).collect()).unwrap_or_default() };
+    let environ = conftest_env();
+    telegram::request_in(
+        Some(&environ),
+        &config(),
+        &[],
+        "",
+        &s("profile"),
+        &objs("app_tools"),
+        parts.get("vault").and_then(Value::as_bool).unwrap_or(false),
+        &s("today"),
+        &objs("memory_tools"),
+        None,
+        &objs("watch_tools"),
+        &s("watch_block"),
+        &strs("direct_apps"),
+        &s("lent_block"),
+        "",
+        &s("recall"),
+        &objs("chat_tools"),
+    )
+}
+
+#[tokio::test]
+async fn test_with_sharing_on_the_brain_is_told_someone_else_is_share_file_and_me_is_send_file() {
+    let _iso = isolated();
+    let dir = tmp();
+    let (runner, _) = share_runner();
+    let hub = Arc::new(eve_brain::share::Share::new(eve_brain::share::ShareConfig { enabled: true, imessage: true }).with_runner(runner).with_home(dir.path()));
+    let rig = Rig::new(FakeApi::new(vec![]), FakeCreate::new(vec![]), config(), move |o| o.share = Some(hub));
+    let (parts, allowed, _) = rig.inlet.turn_parts(0, false).await;
+    let block = parts["watch_block"].as_str().unwrap();
+    assert!(block.contains(r#""Send the report to Ana" is share_file; "send me the report" is send_file"#), "{block}");
+    assert!(allowed.iter().any(|a| a == "share_file") && telegram::TOOL_NAMES.contains(&"send_file"));
+    // off, send_file's own description is what it was, and no prompt names share_file
+    let off = Rig::new(FakeApi::new(vec![]), FakeCreate::new(vec![]), config(), |_| {});
+    let body = request_kw(&off.inlet.turn_parts(0, false).await.0);
+    assert!(!serde_json::to_string(&body).unwrap().contains("share_file"));
+}
+
+// ---- web_search (websearch.py) -------------------------------------------------------------------------------
+
+#[tokio::test]
+async fn test_web_search_is_a_function_tool_answered_by_exa_when_explicitly_selected() {
+    let _iso = isolated();
+    let seen: Arc<Mutex<Vec<String>>> = Arc::new(Mutex::new(Vec::new()));
+    let s = seen.clone();
+    let environ: eve_brain::prelude::Environ = [
+        ("EVE_TELEGRAM", "1"),
+        ("EVE_TELEGRAM_TOKEN", "t"),
+        ("EVE_TELEGRAM_OWNER", "42"),
+        ("OPENROUTER_API_KEY", "r"),
+        ("EVE_WEB_SEARCH", "openrouter-exa"),
+    ]
+    .into_iter()
+    .map(|(k, v)| (k.to_string(), v.to_string()))
+    .collect();
+    let cfg = telegram::configured(Some(&environ));
+    assert_eq!(cfg.search.engine, "openrouter-exa");
+    let api = FakeApi::new(vec![vec![said("who won the lakers game", 1)]]);
+    let rig = Rig::new(api.clone(), FakeCreate::new(vec![call("web_search", json!({"query": "lakers score"}), "call_1"), reply("Lakers lost, 104 to 112.")]), cfg, |_| {});
+    rig.inlet.tt_set_web_search(Some(Arc::new(move |query: &str, _cfg: &eve_web::websearch::SearchConfig| {
+        s.lock().push(query.to_string());
+        json!({"ok": true, "answer": "112 to 104", "sources": [{"url": "https://espn.com"}]})
+    })));
+    run_plain(&rig).await;
+    let first = request(&rig, 0);
+    let tools = first["tools"].as_array().unwrap();
+    assert!(tools.contains(&eve_web::websearch::WEB_SEARCH_TOOL) && !tools.contains(&json!({"type": "web_search"})));
+    assert_eq!(*seen.lock(), vec!["lakers score"]);
+    assert_eq!(output_of(&rig, 1)["sources"], json!([{"url": "https://espn.com"}]));
+    assert_eq!(sent(&api).last().cloned(), Some(line("Lakers lost, 104 to 112.")));
+}
+
+// ---- the second brain (second_brain.py) ----------------------------------------------------------------------
+
+fn vault_at(root: PathBuf) -> Arc<eve_second_brain::VaultConfig> {
+    Arc::new(eve_second_brain::VaultConfig { enabled: true, root })
+}
+
+fn inbound(text: &str, message_id: i64) -> Inbound {
+    Inbound { message_id, ..Inbound::new(OWNER, OWNER, text) }
+}
+
+fn glob_inbox(root: &Path, needle: &str) -> Vec<PathBuf> {
+    std::fs::read_dir(root.join("01-inbox"))
+        .map(|d| d.flatten().map(|e| e.path()).filter(|p| p.file_name().unwrap().to_string_lossy().contains(needle)).collect())
+        .unwrap_or_default()
+}
+
+#[tokio::test]
+async fn test_the_second_brain_is_offered_and_captures_from_the_chat() {
+    let _iso = isolated();
+    let dir = tmp();
+    let vault = vault_at(dir.path().join("vault"));
+    let api = FakeApi::new(vec![vec![said("note: the pasta place on 5th is great", 1)]]);
+    let v = vault.clone();
+    let rig = Rig::new(
+        api.clone(),
+        FakeCreate::new(vec![call("capture_note", json!({"text": "the pasta place on 5th is great", "kind": "note"}), "call_1")]),
+        config(),
+        move |o| o.vault = Some(v),
+    );
+    // Wait for the actual filesystem-backed turn, not a fixed number of scheduler yields.
+    rig.inlet.tt_turn(&inbound("note: the pasta place on 5th is great", 7)).await;
+    let first = request(&rig, 0);
+    let offered: Vec<String> = names(&first).into_iter().filter(|n| eve_second_brain::SECOND_BRAIN_TOOL_NAMES.contains(&n.as_str())).collect();
+    assert_eq!(offered, eve_second_brain::SECOND_BRAIN_TOOL_NAMES.to_vec());
+    assert!(first["instructions"].as_str().unwrap().contains(eve_second_brain::INSTRUCTIONS_BLOCK));
+    assert_eq!(rig.create.requests.lock().len(), 1); // no second model call to say "Saved."
+    let notes = glob_inbox(&dir.path().join("vault"), "pasta");
+    assert!(notes.len() == 1 && std::fs::read_to_string(&notes[0]).unwrap().trim_end().ends_with("the pasta place on 5th is great"));
+    let log = api.log.lock();
+    assert!(log.reactions == vec![(OWNER, 7, telegram::VAULT_REACTION.to_string())] && log.sent.is_empty()); // ✍ is the receipt
+    let last = rig.inlet.turns().last().cloned().unwrap();
+    assert!(last.0 == "eve" && last.1.contains("01-inbox/"), "{last:?}"); // history says where
+    // off: the tools are not offered and a stray call is told why
+    let api = FakeApi::new(vec![vec![said("note: x", 1)]]);
+    let rig = Rig::new(api, FakeCreate::new(vec![reply("ok")]), config(), |_| {});
+    run_plain(&rig).await;
+    let first = request(&rig, 0);
+    assert!(!names(&first).iter().any(|n| eve_second_brain::SECOND_BRAIN_TOOL_NAMES.contains(&n.as_str())));
+    assert!(!first["instructions"].as_str().unwrap().contains(eve_second_brain::INSTRUCTIONS_BLOCK));
+    let result = rig.inlet.tt_tool("capture_note", &obj(json!({"text": "x", "kind": "note"})), OWNER).await;
+    assert_eq!(Value::Object(result), json!({"ok": false, "reason": "the second brain is off on this computer (EVE_SECOND_BRAIN)"}));
+}
+
+// ---- the watcher (watch.py) ----------------------------------------------------------------------------------
+
+/// `watch.Watcher(watch.WatchConfig(enabled=True, path=path), fetch=fetch, offload=False)`, its ledger in `ledger`.
+fn watcher_at(path: &Path, ledger: &Path, fetch: Option<Arc<dyn eve_web::Http>>) -> Arc<eve_web::watch::watcher::Watcher> {
+    let mut ctx = eve_web::Ctx::global().clone().with_ledger(eve_spend::Ledger::at(ledger));
+    if let Some(f) = &fetch {
+        ctx = ctx.with_http(f.clone());
+    }
+    let mut deps = eve_web::watch::watcher::WatcherDeps::new(ctx);
+    if let Some(f) = fetch {
+        deps.fetch = f;
+    }
+    deps.offload = false;
+    let config = eve_web::watch::config::WatchConfig { enabled: true, path: path.to_path_buf(), ..Default::default() };
+    Arc::new(eve_web::watch::watcher::Watcher::new(config, deps))
+}
+
+#[tokio::test]
+async fn test_the_watcher_is_offered_and_adds_from_the_chat() {
+    let _iso = isolated();
+    let dir = tmp();
+    let path = dir.path().join("watches.json");
+    let quote = json!({"chart": {"result": [{"meta": {"symbol": "AAPL", "currency": "USD", "regularMarketPrice": 341.07}}]}}).to_string();
+    let fetched: Arc<Mutex<Vec<String>>> = Arc::new(Mutex::new(Vec::new()));
+    let f = fetched.clone();
+    let fetch: Arc<dyn eve_web::Http> = Arc::new(move |url: &str, _opts: &eve_web::HttpOptions| -> Result<(u16, String), eve_web::FetchError> {
+        f.lock().push(url.to_string());
+        Ok((200, quote.clone()))
+    });
+    let watcher = watcher_at(&path, dir.path(), Some(fetch));
+    let add = json!({"kind": "quote", "target": "AAPL", "label": "Apple", "condition": "below", "value": 300, "text": null,
+                     "city": null, "every_minutes": null});
+    let api = FakeApi::new(vec![]);
+    let w = watcher.clone();
+    let rig = Rig::new(
+        api.clone(),
+        FakeCreate::new(vec![call("watch_add", add, "call_1"), reply("Apple is at $341 now. I'll text you under $300.")]),
+        config(),
+        move |o| o.watcher = Some(w),
+    );
+    rig.inlet.tt_turn(&inbound("tell me when apple drops under 300", 7)).await;
+    let first = request(&rig, 0);
+    let offered: Vec<String> = names(&first).into_iter().filter(|n| eve_web::watch::tools::TOOL_NAMES.contains(&n.as_str())).collect();
+    assert_eq!(offered, eve_web::watch::tools::TOOL_NAMES.to_vec());
+    assert!(first["instructions"].as_str().unwrap().contains(&watcher.instructions()));
+    // the first check ran through the watcher and its reading went back to the model
+    assert!(fetched.lock().len() == 1 && fetched.lock()[0].contains("AAPL"));
+    let output = first_output(&rig, 1);
+    assert!(output["ok"] == json!(true) && output["id"] == json!("w1") && output["now"] == json!("$341.07"), "{output}");
+    assert_eq!(sent(&api).last().cloned(), Some(line("Apple is at $341 now. I'll text you under $300.")));
+    let reread = watcher_at(&path, dir.path(), None);
+    assert_eq!(reread.watches().iter().map(|w| w.lock().target.clone()).collect::<Vec<_>>(), vec!["AAPL"]);
+    // an alert reaches the owner's chat, titled, and joins the history so a reply can point at it
+    rig.inlet.tell_owner("Apple dropped to $299, past your $300 mark.", "", telegram::WATCH_TITLE, &[]).await;
+    assert_eq!(
+        api.log.lock().titled.last().cloned().unwrap(),
+        (Some(telegram::WATCH_TITLE.to_string()), None, "Apple dropped to $299, past your $300 mark.".to_string())
+    );
+    assert_eq!(rig.inlet.turns().last().cloned().unwrap(), ("eve".to_string(), "Apple dropped to $299, past your $300 mark.".to_string()));
+    // /watches is answered by code, no model call
+    let before = rig.create.requests.lock().len();
+    let api = FakeApi::new(vec![vec![said("/watch", 3)]]);
+    let w = watcher.clone();
+    run_plain(&Rig::new(api.clone(), FakeCreate::new(vec![]), config(), move |o| o.watcher = Some(w))).await;
+    let last = sent(&api).last().cloned().unwrap().1;
+    assert!(last.starts_with("w1 · Apple: at or below $300 · now $341.07"), "{last}");
+    assert_eq!(rig.create.requests.lock().len(), before);
+    // "/watch <words>" is a watch request for the brain, with the watch tools, worded as the owner would say it
+    let api = FakeApi::new(vec![vec![said("/watch BTC-USD above 100000", 4)]]);
+    let w = watcher.clone();
+    let rig = Rig::new(api, FakeCreate::new(vec![reply("On it.")]), config(), move |o| o.watcher = Some(w));
+    run_plain(&rig).await;
+    let first = request(&rig, 0);
+    let said_texts: Vec<String> = first["input"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|i| i.get("role") == Some(&json!("user")))
+        .flat_map(|i| i["content"].as_array().cloned().unwrap_or_default())
+        .filter(|c| c.get("type") == Some(&json!("input_text")))
+        .map(|c| c["text"].as_str().unwrap().to_string())
+        .collect();
+    assert!(said_texts.last().unwrap() == "Watch BTC-USD above 100000" && names(&first).contains(&"watch_add".into()));
+    // off: no watch tools, no block, and a stray call is told why
+    let rig = Rig::new(FakeApi::new(vec![]), FakeCreate::new(vec![reply("ok")]), config(), |_| {});
+    rig.inlet.tt_turn(&inbound("hi", 8)).await;
+    let first = request(&rig, 0);
+    assert!(!names(&first).iter().any(|n| eve_web::watch::tools::TOOL_NAMES.contains(&n.as_str())));
+    assert!(!first["instructions"].as_str().unwrap().contains("watch_add"));
+    assert_eq!(Value::Object(rig.inlet.tt_tool("watch_list", &Map::new(), OWNER).await), json!({"ok": false, "reason": eve_web::watch::OFF_REASON}));
+}
+
+// ---- receipts --------------------------------------------------------------------------------------------------
+
+#[tokio::test]
+async fn test_a_refused_vault_receipt_says_where_it_went() {
+    let _iso = isolated();
+    let dir = tmp();
+    let vault = vault_at(dir.path().join("vault"));
+    let inner = FakeApi::new(vec![]);
+    let mut api = Hooked::new(inner.clone());
+    api.react = Some(Box::new(|_, _, _| Err(api_error(400, "Bad Request: REACTION_INVALID"))));
+    let rig = rig_over(Arc::new(api), FakeCreate::new(vec![call("capture_note", json!({"text": "buy milk", "kind": "todo"}), "call_1")]), move |o| o.vault = Some(vault));
+    rig.inlet.tt_turn(&inbound("todo: buy milk", 7)).await;
+    let sent = sent(&inner);
+    assert!(sent.len() == 1 && sent[0].1.starts_with("Added to the todo list ("), "{sent:?}");
+    assert_eq!(rig.create.requests.lock().len(), 1);
+}
+
+#[tokio::test]
+async fn test_a_star_is_a_trophy_and_a_refused_one_is_a_line() {
+    let _iso = isolated();
+    let dir = tmp();
+    let memory = FakeMemory::new(dir.path(), "");
+    let api = FakeApi::new(vec![]);
+    let m = memory.clone();
+    let rig = Rig::new(api.clone(), FakeCreate::new(vec![call("remember", json!({"claim": "I like ramen"}), "call_1")]), config(), move |o| {
+        o.memory = Some(m as Arc<dyn BrainMemory>)
+    });
+    rig.inlet.tt_turn(&inbound("remember that I like ramen", 4)).await;
+    let log = api.log.lock();
+    assert!(*memory.stars.lock() == vec!["I like ramen"] && log.reactions == vec![(OWNER, 4, telegram::STAR_REACTION.to_string())] && log.sent.is_empty());
+    // the star's result is in the transcript as a tool line; the history's "(Starred for good.)" is not
+    let said_lines = memory.said();
+    let tools: Vec<&Map<String, Value>> = said_lines.iter().filter(|l| l.get("kind") == Some(&json!("tool"))).collect();
+    assert_eq!(tools.iter().map(|l| l["tool"].as_str().unwrap()).collect::<Vec<_>>(), vec!["remember"]);
+    assert!(tools[0]["text"].as_str().unwrap().contains("I like ramen"));
+    assert_eq!(rig.inlet.turns().last().cloned().unwrap(), ("eve".to_string(), format!("({})", telegram::STARRED_LINE)));
+    assert!(!said_lines.iter().any(|l| l.get("text").and_then(Value::as_str).unwrap_or("").contains("Starred for good")));
+    // no message id to put it on: the line it stands for
+    let api = FakeApi::new(vec![]);
+    let m = FakeMemory::new(&dir.path().join("b"), "");
+    let rig = Rig::new(api.clone(), FakeCreate::new(vec![call("remember", json!({"claim": "I like ramen"}), "call_1")]), config(), move |o| {
+        o.memory = Some(m as Arc<dyn BrainMemory>)
+    });
+    rig.inlet.tt_turn(&Inbound::new(OWNER, OWNER, "remember that I like ramen")).await;
+    assert_eq!(sent(&api), vec![line(telegram::STARRED_LINE)]);
+    // no memory lent: nothing is starred, and the tool says why (the model answers with it)
+    let api = FakeApi::new(vec![]);
+    let rig = Rig::new(
+        api.clone(),
+        FakeCreate::new(vec![call("remember", json!({"claim": "I like ramen"}), "call_1"), reply("I can't keep that for good here.")]),
+        config(),
+        |_| {},
+    );
+    rig.inlet.tt_turn(&inbound("remember that I like ramen", 5)).await;
+    let out = output_of(&rig, 1);
+    assert!(out == json!({"ok": false, "reason": "permanent memory is not set up on this computer"}) && api.log.lock().reactions.is_empty());
+}
+
+#[tokio::test]
+async fn test_only_a_clean_receipt_round_skips_the_answer() {
+    // A capture that failed, or one next to another tool, is answered by the model as before; words the model wrote
+    // beside a capture still go, with the ✍.
+    let _iso = isolated();
+    let dir = tmp();
+    let vault = vault_at(dir.path().join("vault"));
+    // failed: the model explains
+    let api = FakeApi::new(vec![]);
+    let v = vault.clone();
+    let rig = Rig::new(
+        api.clone(),
+        FakeCreate::new(vec![call("capture_note", json!({"text": "", "kind": "note"}), "call_1"), reply("There was nothing to save.")]),
+        config(),
+        move |o| o.vault = Some(v),
+    );
+    rig.inlet.tt_turn(&inbound("note:", 2)).await;
+    assert!(api.log.lock().reactions.is_empty() && sent(&api) == vec![line("There was nothing to save.")]);
+    // beside another tool: the model answers
+    let both = json!({"id": "resp", "output": [
+        {"type": "function_call", "name": "capture_note", "call_id": "a",
+         "arguments": json!({"text": "call the bank", "kind": "todo"}).to_string()},
+        {"type": "function_call", "name": "list_todos", "call_id": "b", "arguments": "{}"}]});
+    let api = FakeApi::new(vec![]);
+    let v = vault.clone();
+    let rig = Rig::new(api.clone(), FakeCreate::new(vec![both, reply("Added. You have one todo.")]), config(), move |o| o.vault = Some(v));
+    rig.inlet.tt_turn(&inbound("todo: call the bank, then list them", 3)).await;
+    assert!(api.log.lock().reactions.is_empty() && sent(&api) == vec![line("Added. You have one todo.")]);
+    // with words of its own: they go, and the ✍ too
+    let worded = json!({"id": "resp", "output": [
+        {"type": "message", "role": "assistant", "content": [{"type": "output_text", "text": "Good idea!"}]},
+        {"type": "function_call", "name": "capture_note", "call_id": "a",
+         "arguments": json!({"text": "a bike rack", "kind": "idea"}).to_string()}]});
+    let api = FakeApi::new(vec![]);
+    let v = vault.clone();
+    let rig = Rig::new(api.clone(), FakeCreate::new(vec![worded]), config(), move |o| o.vault = Some(v));
+    rig.inlet.tt_turn(&inbound("idea: a bike rack", 5)).await;
+    assert!(api.log.lock().reactions == vec![(OWNER, 5, telegram::VAULT_REACTION.to_string())] && sent(&api) == vec![line("Good idea!")]);
+}
+
+// ---- one note read, edited and undone --------------------------------------------------------------------------
+
+/// The last request's last tool output.
+fn last_output(create: &FakeCreate) -> Value {
+    let requests = create.requests.lock();
+    let items = requests.last().unwrap()["input"].as_array().unwrap();
+    serde_json::from_str(items.last().unwrap()["output"].as_str().unwrap()).unwrap()
+}
+
+fn later(make: impl FnOnce() -> Value + Send + 'static) -> Scripted {
+    Scripted::Later(Box::new(move || -> BoxFuture<'static, anyhow::Result<Value>> { async move { Ok(make()) }.boxed() }))
+}
+
+#[tokio::test]
+async fn test_telegram_reads_edits_and_undoes_the_same_note() {
+    let _iso = isolated();
+    let dir = tmp();
+    let vault = vault_at(dir.path().join("vault"));
+    let root = vault.root.clone();
+    let path = eve_second_brain::capture(&root, "# Shopping\n- [ ] bathroom mat", "note", "telegram", None).unwrap().path;
+    let original = std::fs::read(root.join(&path)).unwrap();
+    let api = FakeApi::new(vec![]);
+    let create = FakeCreate::new(vec![]);
+    let (c, p) = (create.clone(), path.clone());
+    let edit_from_read = later(move || {
+        let note = last_output(&c);
+        assert!(note["ok"] == json!(true) && note["path"] == json!(p));
+        call("edit_note", json!({"path": note["path"], "revision": note["revision"], "old_text": "", "new_text": "- [ ] alcohol wipes"}), "call_1")
+    });
+    let (c, r, p) = (create.clone(), root.clone(), path.clone());
+    let confirm_edit = later(move || {
+        let changed = last_output(&c);
+        assert!(changed["ok"] == json!(true) && changed["undo_id"].as_str().is_some_and(|u| !u.is_empty()));
+        assert!(std::fs::read_to_string(r.join(&p)).unwrap().ends_with("- [ ] alcohol wipes\n"));
+        assert_eq!(eve_second_brain::inbox(&r).unwrap().len(), 1);
+        reply("Added alcohol wipes to Shopping.")
+    });
+    let c = create.clone();
+    let undo_from_read = later(move || {
+        let note = last_output(&c);
+        assert!(note["ok"] == json!(true) && note["undo_id"].as_str().is_some_and(|u| !u.is_empty()));
+        call("undo_note", json!({"path": note["path"], "revision": note["revision"], "undo_id": note["undo_id"]}), "call_1")
+    });
+    let (c, r, p, o) = (create.clone(), root.clone(), path.clone(), original.clone());
+    let confirm_undo = later(move || {
+        let undone = last_output(&c);
+        assert!(undone["ok"] == json!(true) && std::fs::read(r.join(&p)).unwrap() == o);
+        reply("Undid that edit to Shopping.")
+    });
+    create.push(Scripted::Body(call("read_note", json!({"path": path}), "call_1")));
+    create.push(edit_from_read);
+    create.push(confirm_edit);
+    create.push(Scripted::Body(call("read_note", json!({"path": path}), "call_1")));
+    create.push(undo_from_read);
+    create.push(confirm_undo);
+    let v = vault.clone();
+    let rig = Rig::new(api.clone(), create.clone(), config(), move |o| o.vault = Some(v));
+    // A vault write after reading the note is routine (owner, 2026-10-09): it runs with no question.
+    for text in ["add alcohol wipes to my shopping list", "undo that edit"] {
+        let asked = api.log.lock().keyboards.len();
+        rig.inlet.tt_turn(&Inbound::new(OWNER, OWNER, text)).await;
+        let log = api.log.lock();
+        assert!(log.keyboards.len() == asked && !log.titled.iter().any(|t| t.0.as_deref() == Some(telegram::GATE_TITLE)), "{text}");
+    }
+    let stale = rig.inlet.tt_tool("edit_note", &obj(json!({"path": path, "revision": "stale", "old_text": "", "new_text": "oops"})), OWNER).await;
+    assert_eq!(stale["ok"], json!(false));
+    assert_eq!(sent(&api), vec![line("Added alcohol wipes to Shopping."), line("Undid that edit to Shopping.")]);
+    let first_tools = names(&create.requests.lock()[0]);
+    assert!(first_tools.contains(&"edit_note".into()) && first_tools.contains(&"undo_note".into()));
+    assert_eq!(std::fs::read(root.join(&path)).unwrap(), original);
+    assert_eq!(eve_second_brain::inbox(&root).unwrap().len(), 1);
+    let off = Rig::new(FakeApi::new(vec![]), FakeCreate::new(vec![]), config(), |_| {});
+    for name in ["edit_note", "undo_note"] {
+        assert_eq!(off.inlet.tt_tool(name, &Map::new(), OWNER).await["ok"], json!(false));
+    }
+}
