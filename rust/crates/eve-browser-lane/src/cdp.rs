@@ -92,6 +92,8 @@ pub struct Connection {
     state: Mutex<State>,
     next: AtomicU64,
     rt: Mutex<Option<tokio::runtime::Runtime>>,
+    /// the subscribers ([`Connection::subscribe`]): every protocol event, as it arrives
+    taps: Mutex<Vec<std_mpsc::Sender<Value>>>,
 }
 
 impl Drop for Connection {
@@ -140,6 +142,7 @@ impl Connection {
             state: Mutex::new(State::default()),
             next: AtomicU64::new(1),
             rt: Mutex::new(None),
+            taps: Mutex::new(Vec::new()),
         });
         rt.spawn(async move {
             while let Some(text) = out_rx.recv().await {
@@ -187,6 +190,14 @@ impl Connection {
         self.state.lock().closed
     }
 
+    /// Every protocol event from now on (`{"method", "params", "sessionId"}`), in arrival order: what
+    /// Playwright's `page.on(...)` and `page.route(...)` are built on. Dropping the receiver ends the tap.
+    pub fn subscribe(&self) -> std_mpsc::Receiver<Value> {
+        let (tx, rx) = std_mpsc::channel();
+        self.taps.lock().push(tx);
+        rx
+    }
+
     /// A page's session is gone (closed, crashed, detached): its waiting calls fail, and every later one.
     fn gone(&self, session: &str) {
         let pending: Vec<Reply> = {
@@ -216,6 +227,12 @@ impl Connection {
                 let _ = reply.send(result);
             }
             return;
+        }
+        {
+            let mut taps = self.taps.lock();
+            if !taps.is_empty() {
+                taps.retain(|tap| tap.send(v.clone()).is_ok());
+            }
         }
         let method = v.get("method").and_then(Value::as_str).unwrap_or("");
         let params = v.get("params").cloned().unwrap_or(Value::Null);
@@ -1012,6 +1029,16 @@ impl CdpPage {
         Ok(self.conn.call(Some(&self.session), method, params, CALL_TIMEOUT)?)
     }
 
+    /// The tab's target id (what `Target.attachToTarget` takes).
+    pub fn target_id(&self) -> &str {
+        &self.target
+    }
+
+    /// The browser connection this tab is on.
+    pub fn connection(&self) -> &Arc<Connection> {
+        &self.conn
+    }
+
     fn evaluate_expression(&self, api: &str, expression: &str) -> anyhow::Result<Value> {
         let r = self.call(
             "Runtime.evaluate",
@@ -1092,6 +1119,10 @@ impl CdpPage {
 }
 
 impl PageHandle for CdpPage {
+    fn as_any(&self) -> Option<&dyn std::any::Any> {
+        Some(self)
+    }
+
     fn evaluate(&self, script: &str, arg: Option<&Value>) -> anyhow::Result<Value> {
         self.evaluate_expression("Page.evaluate", &call_expr(script, arg))
     }

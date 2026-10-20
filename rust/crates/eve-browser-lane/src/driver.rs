@@ -59,6 +59,11 @@ pub trait PageHandle: Send {
     /// `page.screenshot(type="jpeg", quality=, mask=[page.locator(selector)], mask_color=)`; `mask` is
     /// (selector, CSS colour).
     fn screenshot_jpeg(&self, quality: u8, mask: Option<(&str, &str)>) -> anyhow::Result<Vec<u8>>;
+    /// The concrete page behind this handle (the real one is a [`crate::cdp::CdpPage`]), for a caller that
+    /// needs what Python reaches through the raw Playwright page (`page.route`, `page.on`); None for a fake.
+    fn as_any(&self) -> Option<&dyn std::any::Any> {
+        None
+    }
 }
 
 /// One cookie as `context.cookies(urls)` lists it (the lane reads only the name and the value).

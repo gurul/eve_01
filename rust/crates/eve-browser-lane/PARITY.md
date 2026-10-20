@@ -58,6 +58,7 @@ Status: complete
 | `_plain_http`, `_page_options`, `_fetch_accounts` and the module functions the tests monkeypatched | `LaneCore.plain_http`, `page_options`, `seams: LaneSeams` (`start_driver`, `devtools_endpoint`, `ensure_chrome_window`, `start_own_chrome`, `steel_start`, `steel_release`, `fetch_accounts`, `profiles`, `profile_lookup_budget_secs`) | |
 | `Vault` as the lane uses it | `trait LaneVault` (impl for `eve_vault::Vault`) | |
 | `make_step_asker` | `make_step_asker(Option<&HashMap>) -> Option<Box<dyn StepAsk>>` | `EVE_JEV_STEP`; Jev's route via `eve_jev::route_config` |
+| (for eve-america's `america_browser.py`, which uses Playwright's `page.route` and `page.on`) | `cdp::Connection::subscribe()` (every protocol event, forwarded to an `mpsc` receiver), `CdpPage::target_id()`, `CdpPage::connection()`, `PageHandle::as_any()` (defaulted `None`; `CdpPage` returns itself) | additive: lets a caller open its own session on the lane's tab for request interception and network events; nothing in the lane itself changed |
 
 ## Tests
 | Python file | Python tests | Rust tests | Not ported (why) |
