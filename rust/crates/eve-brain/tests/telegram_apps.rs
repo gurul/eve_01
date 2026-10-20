@@ -1050,3 +1050,184 @@ async fn test_telegram_reads_edits_and_undoes_the_same_note() {
         assert_eq!(off.inlet.tt_tool(name, &Map::new(), OWNER).await["ok"], json!(false));
     }
 }
+
+// ---- review findings, 2026-10-05: names the prompt offers, and whose question a typed yes answers -----------
+
+// Pinned to EVE_TOOLSET_ROUTER=off (2026-10-05): the door before the toolset router, where Composio and
+// Share ride every turn. With the router on they open by the turn's words; that door is test_telegram_toolsets.py.
+#[tokio::test]
+async fn test_a_wrong_tool_name_is_answered_with_the_offered_tools_and_the_turn_goes_on() {
+    // Review, 2026-10-05: a call to a name the turn never offered raised in parse_response and the owner got
+    // FAILED_LINE, throwing away every read already done. It is now the call's result, naming the real tools.
+    let _iso = isolated();
+    let apps = FakeApps::new(true).await;
+    let api = FakeApi::new(vec![vec![said("any unread mail?", 1)]]);
+    let rig = Rig::new(
+        api.clone(),
+        FakeCreate::new(vec![call("gmail__search_threads", json!({"query": "is:unread"}), "call_1"), reply("Mail isn't connected.")]),
+        config(),
+        with_apps(&apps),
+    );
+    run_plain(&rig).await;
+    assert!(apps.executed.lock().is_empty());
+    let refused = last_output(&rig.create);
+    assert!(refused["ok"] == json!(false) && refused["reason"].as_str().unwrap().contains("not a tool here"), "{refused}");
+    assert!(refused["reason"].as_str().unwrap().contains("COMPOSIO_SEARCH_TOOLS")); // the tools it does have
+    assert_eq!(sent(&api), vec![line("Mail isn't connected.")]);
+    // the strict reader is unchanged
+    assert!(telegram::parse_response(&call("gmail__search_threads", json!({}), "call_1"), &[], false).is_err());
+}
+
+/// `_rundown_skill(request)`: the message part that carries the daily rundown skill.
+fn rundown_skill(request: &Value) -> String {
+    request["input"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|i| i.get("type") == Some(&json!("message")))
+        .flat_map(|i| i["content"].as_array().cloned().unwrap_or_default())
+        .filter_map(|p| p.get("text").and_then(Value::as_str).map(str::to_string))
+        .find(|t| t.contains("daily rundown"))
+        .unwrap()
+}
+
+#[tokio::test]
+async fn test_the_rundown_names_composio_only_when_it_is_up() {
+    // Review, 2026-10-05: the rundown skill named COMPOSIO_SEARCH_TOOLS with Composio off; one such call threw
+    // away the calendar read already done. The skill now names only the sources that are present, and a wrong
+    // name is a refused call, not a failed rundown.
+    let _iso = isolated();
+    let apps = scenario_apps().await;
+    let api = FakeApi::new(vec![vec![said("rundown", 1)]]);
+    let rig = Rig::new(
+        api.clone(),
+        FakeCreate::new(vec![
+            call("calendar__list_events", json!({}), "call_1"),
+            call("COMPOSIO_SEARCH_TOOLS", json!({}), "call_2"),
+            reply("Your day: CS 101 at 10."),
+        ]),
+        config(),
+        with_direct(&apps),
+    );
+    run_plain(&rig).await;
+    let skill = rundown_skill(&request(&rig, 0));
+    assert!(!skill.contains("COMPOSIO") && skill.contains("gmail__") && skill.contains("calendar__"), "{skill}");
+    assert!(skill.contains("Slack is not connected"));
+    assert_eq!(apps.executed_names(), vec!["calendar__list_events"]);
+    let refused = last_output(&rig.create);
+    assert_eq!(refused["ok"], json!(false));
+    assert_eq!(sent(&api), vec![line("Your day: CS 101 at 10.")]);
+    // the reverse: Composio alone, no direct apps; the skill names no direct tool
+    let composio = FakeApps::new(true).await;
+    let api = FakeApi::new(vec![vec![said("rundown", 1)]]);
+    let bridge = composio.bridge.clone();
+    let rig = Rig::new(api.clone(), FakeCreate::new(vec![reply("Your day.")]), config(), move |o| o.apps = Some(bridge));
+    run_plain(&rig).await;
+    let skill = rundown_skill(&request(&rig, 0));
+    assert!(!skill.contains("gmail__") && !skill.contains("calendar__") && skill.contains("COMPOSIO_SEARCH_TOOLS"), "{skill}");
+}
+
+#[tokio::test]
+async fn test_a_typed_yes_for_an_older_question_never_shares_a_file() {
+    // Review, 2026-10-05: with a task's question open, an Allow question became the newest and the owner's "yes"
+    // for the task approved it. An outward send is asked only while no other question waits (as chief_ask).
+    let _iso = isolated();
+    let dir = tmp();
+    let tmp_path = dir.path().to_path_buf();
+    std::fs::create_dir(tmp_path.join("Documents")).unwrap();
+    std::fs::write(tmp_path.join("Documents").join("report.pdf"), b"%PDF-1.4 test").unwrap();
+    let (runner, calls) = share_runner();
+    let hub = Arc::new(
+        eve_brain::share::Share::new(eve_brain::share::ShareConfig { enabled: true, imessage: true })
+            .with_runner(runner)
+            .with_home(&tmp_path)
+            .with_outbox(tmp_path.join("Pictures").join("eve-outbox")),
+    );
+    let args = json!({"path": tmp_path.join("Documents").join("report.pdf").to_string_lossy(), "to": "+1 555 010 0199",
+                      "via": "imessage", "message": null});
+    let api = FakeApi::new(vec![vec![said("send the report to +1 555 010 0199", 1)]]);
+    let create = FakeCreate::new(vec![]);
+    let h = hub.clone();
+    let rig = Rig::new(api.clone(), create.clone(), config(), move |o| o.share = Some(h));
+    // a first model round that, while it runs, has a task open its own yes/no question; then it calls share_file
+    let task: Arc<Mutex<Option<tokio::task::JoinHandle<String>>>> = Arc::new(Mutex::new(None));
+    let (inlet, t) = (rig.inlet.clone(), task.clone());
+    create.push(Scripted::Later(Box::new(move || {
+        async move {
+            let asker = inlet.clone();
+            *t.lock() = Some(tokio::spawn(async move { asker.tt_ask_user("Install the package? Reply yes or no.", OWNER).await }));
+            settle(20).await;
+            Ok(call("share_file", args, "call_1"))
+        }
+        .boxed()
+    })));
+    create.push(Scripted::Body(reply("Answer it first.")));
+    run_rig(&rig, || async {
+        api.feed(vec![said("yes", 2)]);
+        settle(200).await;
+    })
+    .await;
+    assert!(calls.lock().is_empty() && hub.pending_count() == 0);
+    let handle = task.lock().take().unwrap();
+    assert!(handle.is_finished());
+    assert_eq!(handle.await.unwrap(), "yes");
+    let result = output_of(&rig, 1);
+    assert!(result["ok"] == json!(false) && result["reason"].as_str().unwrap().contains("another question"), "{result}");
+}
+
+#[tokio::test]
+async fn test_a_sentence_that_starts_with_ok_never_approves_a_direct_app_write() {
+    // Review, 2026-10-05: the direct app's ask was strict but not firm, so with no relay on "ok, and what's the
+    // weather tomorrow?" was its answer and consent.approves read it as a yes: the GitHub issue was filed.
+    let _iso = isolated();
+    let apps = fake_apps(true, &[]).await;
+    let api = FakeApi::new(vec![vec![said("file an issue on the eve repo: login is slow", 1)]]);
+    let rig = Rig::new(
+        api.clone(),
+        FakeCreate::new(vec![
+            call("github__create_issue", json!({"repo": "eve", "title": "Login is slow"}), "call_1"),
+            reply("Okay, not filed."),
+            reply("Sunny tomorrow."),
+        ]),
+        config(),
+        with_direct(&apps),
+    );
+    run_rig(&rig, || async {
+        api.feed(vec![said("ok, and what's the weather tomorrow?", 2)]);
+        settle(200).await;
+        assert!(apps.executed.lock().is_empty()); // the sentence approved nothing
+        let (message_id, key) = api.key("Deny", -1);
+        api.feed(vec![tap_update(3, message_id, &key, OWNER, "q1")]);
+        settle(200).await;
+    })
+    .await;
+    assert!(apps.executed.lock().is_empty());
+    assert!(sent(&api).contains(&line("Okay, not filed.")));
+}
+
+#[tokio::test]
+async fn test_a_sentence_that_starts_with_ok_never_approves_a_composio_write() {
+    let _iso = isolated();
+    let apps = FakeApps::new(true).await;
+    let api = FakeApi::new(vec![vec![said("tell the team lunch is at noon", 1)]]);
+    let rig = Rig::new(
+        api.clone(),
+        FakeCreate::new(vec![
+            call("COMPOSIO_MULTI_EXECUTE_TOOL", multi(&["SLACK_SEND_MESSAGE"], None), "call_1"),
+            reply("Okay, not sent."),
+            reply("Sunny tomorrow."),
+        ]),
+        config(),
+        with_apps(&apps),
+    );
+    run_rig(&rig, || async {
+        api.feed(vec![said("ok, and what's the weather tomorrow?", 2)]);
+        settle(200).await;
+        assert!(apps.executed.lock().is_empty());
+        let (message_id, key) = api.key("Deny", -1);
+        api.feed(vec![tap_update(3, message_id, &key, OWNER, "q1")]);
+        settle(200).await;
+    })
+    .await;
+    assert!(apps.executed.lock().is_empty());
+}

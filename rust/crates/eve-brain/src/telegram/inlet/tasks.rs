@@ -226,7 +226,8 @@ impl TelegramInlet {
             let reply = progress.map(|p| p.request_id).unwrap_or(0);
             self.say(chat_id, &final_, Some(title), Some(subtitle), &[], reply, None).await;
             let result = final_.clone();
-            let files = tokio::task::spawn_blocking(move || task_files(&result, since, None)).await.unwrap_or_default();
+            let home = self.owner_home();
+            let files = tokio::task::spawn_blocking(move || task_files(&result, since, home.as_deref())).await.unwrap_or_default();
             for path in files {
                 let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
                 let sent = self.send_file(chat_id, &path.to_string_lossy(), &format!("From the task: {name}")).await;

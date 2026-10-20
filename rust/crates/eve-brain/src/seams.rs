@@ -592,6 +592,63 @@ pub trait AppModule: Send + Sync {
     }
 }
 
+/// `app.mod()` for the apps whose module has a code path of its own: spotify, firetv and obsbot_panel (`match`,
+/// `NOT_SET_UP_LINE`, `enabled()`); None for any other slot (the lights match by their hub; pika has no match).
+/// `environ` is what `mod.enabled()` reads; None is the process's, as in Python.
+pub fn app_module(slot: &str, environ: Option<Environ>) -> Option<Arc<dyn AppModule>> {
+    match slot {
+        "spotify" | "firetv" | "obsbot" => Some(Arc::new(BuiltinModule { slot: slot.to_string(), environ })),
+        _ => None,
+    }
+}
+
+/// One of [`app_module`]'s modules.
+struct BuiltinModule {
+    slot: String,
+    environ: Option<Environ>,
+}
+
+impl AppModule for BuiltinModule {
+    fn has_match(&self) -> bool {
+        true
+    }
+    fn module_match(&self, text: &str) -> Option<HubCommand> {
+        match self.slot.as_str() {
+            "spotify" => eve_spotify::match_text(text).map(|c| HubCommand {
+                action: Some(c.action.clone()),
+                query: Some(c.query.clone()),
+                inner: Arc::new(c),
+            }),
+            "firetv" => eve_firetv::match_command(text).map(|c| HubCommand {
+                action: Some(c.action.clone()),
+                query: Some(c.query.clone()),
+                inner: Arc::new(c),
+            }),
+            // obsbot_panel.Command has no query: `getattr(cmd, "query", None)` is None
+            "obsbot" => eve_obsbot_panel::r#match(text).map(|c| HubCommand { action: Some(c.action.clone()), query: None, inner: Arc::new(c) }),
+            _ => None,
+        }
+    }
+    fn not_set_up_line(&self) -> Option<String> {
+        Some(
+            match self.slot.as_str() {
+                "spotify" => eve_spotify::NOT_SET_UP_LINE,
+                "firetv" => eve_firetv::NOT_SET_UP_LINE,
+                _ => eve_obsbot_panel::NOT_SET_UP_LINE,
+            }
+            .to_string(),
+        )
+    }
+    fn enabled(&self) -> bool {
+        let env = self.environ.as_ref();
+        match self.slot.as_str() {
+            "spotify" => eve_spotify::enabled(env),
+            "firetv" => eve_firetv::enabled(env),
+            _ => eve_obsbot_panel::enabled(env),
+        }
+    }
+}
+
 /// `**app_hubs`: eve's apps' hubs by slot, and their modules. Python set each on the object (`self._<slot>`);
 /// a slot with no hub is an app that is off or not set up here.
 #[derive(Clone, Default)]

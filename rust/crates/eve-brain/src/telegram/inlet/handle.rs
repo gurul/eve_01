@@ -436,7 +436,7 @@ impl TelegramInlet {
         for app in eve_app_registry::by_code() {
             let (hub, module) = {
                 let hubs = self.hubs.lock();
-                (hubs.get(&app.slot), hubs.module(&app.slot))
+                (hubs.get(&app.slot), hubs.module(&app.slot).or_else(|| crate::seams::app_module(&app.slot, self.environ.clone())))
             };
             let cmd = if inbound.tapped { None } else { app_command(module.as_ref(), hub.as_ref(), &inbound.text) };
             let Some(cmd) = cmd else { continue };

@@ -1227,6 +1227,10 @@ impl TelegramInlet {
             st.claude_on_job = Some(crate::seams::Job::spawn("claude-on", futures::future::pending::<()>()));
         }
     }
+    /// `await inlet._send_file(chat_id, raw, caption)`.
+    pub async fn tt_send_file(self: &Arc<Self>, chat_id: i64, raw: &str, caption: &str) -> Obj {
+        self.send_file(chat_id, raw, caption).await
+    }
     /// `inlet.turns = turns; inlet._turn_kinds = kinds`.
     pub fn tt_set_turns(&self, turns: Vec<(String, String)>, kinds: Vec<String>) {
         let mut st = self.st.lock();
