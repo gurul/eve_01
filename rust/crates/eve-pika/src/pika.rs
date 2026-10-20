@@ -365,6 +365,11 @@ pub fn video_part(jpeg: &[u8], stamp: Option<i64>) -> Vec<u8> {
     out
 }
 
+/// asyncio's `LimitOverrunError`: `readuntil` found no separator within its limit.
+#[derive(Debug, thiserror::Error)]
+#[error("{0}")]
+pub struct LimitOverrun(pub &'static str);
+
 /// asyncio's `StreamReader.readuntil(sep)`: the bytes up to and including `sep`. EOF first is UnexpectedEof
 /// (IncompleteReadError); no separator within `limit` bytes is InvalidData (LimitOverrunError).
 pub async fn read_until<R: AsyncBufRead + Unpin>(reader: &mut R, sep: &[u8], limit: usize) -> io::Result<Vec<u8>> {
@@ -383,13 +388,13 @@ pub async fn read_until<R: AsyncBufRead + Unpin>(reader: &mut R, sep: &[u8], lim
             reader.consume(take - extra);
             out.truncate(end);
             if end > limit {
-                return Err(io::Error::new(io::ErrorKind::InvalidData, "separator found, but chunk exceed the limit"));
+                return Err(io::Error::new(io::ErrorKind::InvalidData, LimitOverrun("Separator is found, but chunk is longer than limit")));
             }
             return Ok(out);
         }
         reader.consume(take);
         if out.len() > limit {
-            return Err(io::Error::new(io::ErrorKind::InvalidData, "separator not found, and chunk exceed the limit"));
+            return Err(io::Error::new(io::ErrorKind::InvalidData, LimitOverrun("Separator is not found, and chunk exceed the limit")));
         }
     }
 }
@@ -451,8 +456,13 @@ impl<R: AsyncBufRead + Unpin> Body<R> {
             self.done = true;
             return Ok(None);
         }
-        let mut data = vec![0u8; size as usize];
-        self.reader.read_exact(&mut data).await?;
+        // Read what arrives rather than allocating the declared size up front: a bad size line (say `ffffffffffff`)
+        // must end the body as Python's readexactly does at EOF, not exhaust memory.
+        let mut data = Vec::with_capacity((size as usize).min(1 << 20));
+        (&mut self.reader).take(size).read_to_end(&mut data).await?;
+        if (data.len() as u64) < size {
+            return Err(io::Error::new(io::ErrorKind::UnexpectedEof, "incomplete read"));
+        }
         let mut crlf = [0u8; 2];
         self.reader.read_exact(&mut crlf).await?;
         Ok(Some(data))
@@ -551,6 +561,9 @@ pub fn py_error_name(e: &io::Error) -> &'static str {
     if e.get_ref().is_some_and(|inner| inner.is::<GaiError>()) {
         return "gaierror";
     }
+    if e.get_ref().is_some_and(|inner| inner.is::<LimitOverrun>()) {
+        return "LimitOverrunError";
+    }
     match e.kind() {
         io::ErrorKind::ConnectionRefused => "ConnectionRefusedError",
         io::ErrorKind::ConnectionReset => "ConnectionResetError",
@@ -560,6 +573,7 @@ pub fn py_error_name(e: &io::Error) -> &'static str {
         io::ErrorKind::PermissionDenied => "PermissionError",
         io::ErrorKind::NotFound => "FileNotFoundError",
         io::ErrorKind::UnexpectedEof => "IncompleteReadError",
+        io::ErrorKind::NotConnected if e.raw_os_error().is_none() => "ConnectionError", // `_write`'s error
         _ => "OSError",
     }
 }
@@ -657,7 +671,8 @@ fn dump_str(s: &str, out: &mut String) {
             '\t' => out.push_str("\\t"),
             '\u{08}' => out.push_str("\\b"),
             '\u{0c}' => out.push_str("\\f"),
-            c if (c as u32) < 0x20 || (c as u32) > 0x7f => {
+            // ensure_ascii escapes everything outside ' '..='~', DEL included
+            c if (c as u32) < 0x20 || (c as u32) >= 0x7f => {
                 let mut units = [0u16; 2];
                 for u in c.encode_utf16(&mut units) {
                     out.push_str(&format!("\\u{:04x}", u));
@@ -813,7 +828,8 @@ fn not_connected() -> io::Error {
 
 // ---- the panel -----------------------------------------------------------------------------------------------
 
-type Connecting = Shared<BoxFuture<'static, Result<(), PikaError>>>;
+/// The one dial in flight: its shared result, and the task's handle (Python's `self._connecting.done()`).
+type Connecting = (Shared<BoxFuture<'static, Result<(), PikaError>>>, tokio::task::AbortHandle);
 
 struct VideoHolder {
     id: u64,
@@ -1238,17 +1254,18 @@ impl Pika {
     async fn connect(&self) -> Result<(), PikaError> {
         let fut = {
             let mut s = self.inner.state.lock();
+            // A finished dial is never reused, even when no caller has read its result yet (a caller that gave up):
+            // Python makes a new task once `_connecting.done()`.
             match &s.connecting {
-                Some(f) if f.peek().is_none() => f.clone(),
+                Some((f, task)) if !task.is_finished() => f.clone(),
                 _ => {
                     let me = self.clone();
                     let task = tokio::spawn(async move { me.dial().await });
-                    let f: Connecting = async move {
-                        task.await.unwrap_or_else(|_| Err(PikaError::new(UNREACHABLE_LINE)))
-                    }
-                    .boxed()
-                    .shared();
-                    s.connecting = Some(f.clone());
+                    let handle = task.abort_handle();
+                    let f = async move { task.await.unwrap_or_else(|_| Err(PikaError::new(UNREACHABLE_LINE))) }
+                        .boxed()
+                        .shared();
+                    s.connecting = Some((f.clone(), handle));
                     f
                 }
             }
@@ -1628,7 +1645,8 @@ impl Frames {
         // latin-1: one char per byte
         let head: String = head.iter().map(|b| *b as char).collect();
         let lines: Vec<&str> = head.split("\r\n").collect();
-        let status: Vec<&str> = lines[0].split_whitespace().collect();
+        // str.split(): Python's white-space set, which for latin-1 also holds \x1c-\x1f, \x85 and \xa0
+        let status: Vec<&str> = lines[0].split(py_space).filter(|w| !w.is_empty()).collect();
         if status.len() < 2 || status[1] != "200" {
             return Err(PikaError::new(VIDEO_BUSY_LINE));
         }
@@ -1681,6 +1699,35 @@ mod tests {
         assert_eq!(py_float_repr(1.5e-5), "1.5e-05");
         assert_eq!(py_float_repr(2.0), "2.0");
         assert_eq!(py_json_dumps(&json!("😀")), r#""\ud83d\ude00""#);
+    }
+
+    #[test]
+    fn ensure_ascii_escapes_del_too() {
+        assert_eq!(py_json_dumps(&json!("a\u{7f}~")), "\"a\\u007f~\"");
+    }
+
+    #[tokio::test]
+    async fn a_huge_chunk_size_ends_the_body_without_allocating_it() {
+        let raw = b"ffffffffffff\r\nonly a few bytes".to_vec();
+        let mut body = Body::new(&raw[..], true);
+        let err = body.next().await.unwrap_err();
+        assert_eq!(err.kind(), io::ErrorKind::UnexpectedEof);
+    }
+
+    #[tokio::test]
+    async fn a_header_past_the_limit_is_a_limit_overrun() {
+        let raw = vec![b'x'; READ_LIMIT + 10];
+        let mut r = &raw[..];
+        let err = read_until(&mut r, b"\r\n\r\n", READ_LIMIT).await.unwrap_err();
+        assert_eq!(py_error_name(&err), "LimitOverrunError");
+        assert_eq!(py_error_name(&not_connected()), "ConnectionError");
+    }
+
+    #[test]
+    fn the_status_line_splits_on_pythons_white_space() {
+        let line: String = b"HTTP/1.1\x1f200".iter().map(|b| *b as char).collect();
+        let words: Vec<&str> = line.split(py_space).filter(|w| !w.is_empty()).collect();
+        assert_eq!(words, vec!["HTTP/1.1", "200"]);
     }
 
     #[test]

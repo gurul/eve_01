@@ -472,3 +472,32 @@ async fn test_the_chunked_body_is_dechunked() {
     let mut cut = pika::Body::new(&b"5\r\nab"[..], true);
     assert!(cut.next().await.is_err());
 }
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn test_a_finished_dial_is_never_reused() {
+    // Python makes a new dial once `_connecting.done()`: a dial whose caller gave up before reading its result must
+    // not answer the next press with that stale result.
+    let calls = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    let seen = calls.clone();
+    let slow_refuse: pika::Opener = Arc::new(move |_host: String, _port: u16| {
+        seen.fetch_add(1, Ordering::SeqCst);
+        async move {
+            tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+            Err::<TcpStream, _>(io::Error::from(io::ErrorKind::ConnectionRefused))
+        }
+        .boxed()
+    });
+    let p = Pika::with_options(
+        PikaConfig { host: "127.0.0.1".into(), port: 9, ..Default::default() },
+        PikaOptions { opener: slow_refuse, ..Default::default() },
+    );
+    let gave_up = {
+        let p = p.clone();
+        tokio::spawn(async move { drive(&p, "forward", "h").await })
+    };
+    settle(0.01).await;
+    gave_up.abort(); // the app's request went away mid-dial
+    settle(0.1).await; // the dial has finished; nobody read its result
+    assert_eq!(drive(&p, "forward", "h2").await, json!({"ok": false, "stopped": true, "line": pika::UNREACHABLE_LINE}));
+    assert_eq!(calls.load(Ordering::SeqCst), 2);
+}

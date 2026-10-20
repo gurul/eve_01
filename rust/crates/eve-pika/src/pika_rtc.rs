@@ -330,15 +330,19 @@ impl PeerConnectionEventHandler for Handler {
         let id = self.id;
         tokio::spawn(async move {
             let label = channel.label().await.unwrap_or_default();
-            let Some(rtc) = rtc.filter(|r| label == "video" && r.is_current(id)) else {
-                let _ = channel.close().await;
-                return;
-            };
-            let mut s = rtc.inner.state.lock();
-            if let Some(old) = s.sender.take() {
-                old.abort();
+            if let Some(rtc) = rtc.filter(|_| label == "video") {
+                // The check and the new sender go under one lock, as Python's synchronous handler did them in one
+                // step: a close in between must not leave a sender behind that would take the camera.
+                let mut s = rtc.inner.state.lock();
+                if s.pc.as_ref().is_some_and(|(pid, _)| *pid == id) {
+                    if let Some(old) = s.sender.take() {
+                        old.abort();
+                    }
+                    s.sender = Some(tokio::spawn(rtc.clone().send(id, channel)));
+                    return;
+                }
             }
-            s.sender = Some(tokio::spawn(rtc.clone().send(id, channel)));
+            let _ = channel.close().await;
         });
     }
 }
