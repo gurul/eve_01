@@ -222,7 +222,10 @@ and the terminal raise, `git` in `code_origin`).
   The conversation's close (unsubscribe, keepalive cancel) is armed before the speaker gate loads, so a hush during
   the gate load does not leak the mic as Python's did; the follow test's async cleanup is spawned when cancelled.
 - `open_session` errors are logged as "voice: conversation failed: {err}" without Python's exception type name; an
-  `ExploreRefused` after a conversation is logged at info instead of escaping the task.
+  `ExploreRefused` after a conversation is logged at info instead of escaping the task. The default `open_session`
+  seam always answers `Ok`: eve-brain's `open_session` logs a Live connection failure itself and returns, so with the
+  real seam that failure does not reach "voice: conversation failed" and the agent state is not set to "error"
+  (Python's raise did both). Only a seam that returns `Err` takes the daemon's error path.
 - `photo_for_owner`: a `DiaryTaker.keep` or note-append IO error is logged and answered "the picture could not be
   saved" (Python raised). A failed osascript spawn in `type_into_terminal` returns the refusal line.
 - A `LearningError::Other` is logged as "Exception", not by a Python type name.

@@ -667,9 +667,11 @@ impl Daemon {
             Arc::new(move |q: String| {
                 let me = me.clone();
                 Box::pin(async move {
+                    // Python's `_ask_owner_on_phone` raises when there is no way to ask: the broker reads that as
+                    // "unanswered", where an empty reply would read as "declined".
                     match me.upgrade() {
-                        Some(daemon) => Ok(daemon.ask_owner_on_phone(&q).await),
-                        None => Ok(String::new()),
+                        Some(daemon) => daemon.ask_owner_checked(&q).await,
+                        None => Err(anyhow::anyhow!("no Telegram chat to ask the owner in")),
                     }
                 }) as BoxFuture<'static, anyhow::Result<String>>
             }) as eve_chrome_consent::AskOwner
