@@ -78,7 +78,7 @@ Status: complete
 | `test_notes_widget.py` (tests_ref) | `test_widget_plist_shape`, `test_widget_plist_is_separate_from_daemon_plist` | same names | The rest tests notes_widget.py, not this crate |
 | `test_owner_golden.py` (tests_ref) | plist parts | `test_full_eves_plists_are_byte_for_byte_the_golden`, `test_a_full_plist_changed_in_code_does_not_match_the_golden` | The rest is other modules' golden |
 | `test_cli_lite.py`, `test_lite_daemon.py` (tests_ref) | they monkeypatch `install_lite`/`lite_loaded`, or read `LABEL` | — | They test cli.py and lite.py; the plist they build is covered above |
-| — | — | Rust only: full install/uninstall/widget with a recorder, `is_loaded`, systemd install/uninstall/failure, Windows failure paths, dispatcher paths and messages, the plistlib writer (shapes, control-character refusal, CPython comparison), `every_unit_matches_the_python_modules_byte_for_byte` (runs the Python modules when python3 can import them) | |
+| — | — | Rust only: full install/uninstall/widget with a recorder, `is_loaded`, systemd install/uninstall/failure, Windows failure paths, dispatcher paths and messages, `install_lite` naming `PermissionError` when the temporary file cannot be made (tempfile wraps the errno; `os_error_name` reads through the wrapper), the plistlib writer (shapes, control-character refusal, CPython comparison), `every_unit_matches_the_python_modules_byte_for_byte` (runs the Python modules when python3 can import them) | |
 
 ## Boundaries
 None. launchctl, systemctl and schtasks are run as child processes exactly as the Python runs them.
@@ -90,4 +90,5 @@ None. launchctl, systemctl and schtasks are run as child processes exactly as th
 - **`sys.platform`** is derived from the build target: on FreeBSD the unsupported-platform message says `'freebsd'` where Python says `'freebsd14'`.
 - **Captured output** is decoded with `from_utf8_lossy`; Python's `text=True` would raise on undecodable bytes.
 - **Windows launcher line endings.** The script is written as `\r\n` lines on every OS. Python's `write_text` on Windows would translate each `\n` again (`\r\r\n`); on macOS and Linux the bytes are the same.
+- **Windows home.** Python's `Path.home()` on Windows reads `USERPROFILE` (then `HOMEDRIVE`+`HOMEPATH`) and ignores `HOME`; the Rust paths come from `eve-claude-home`'s `HomeEnv`, which reads `HOME` first and falls back to `USERPROFILE`. They differ only on a Windows machine that sets `HOME` (Git Bash, MSYS); the Windows backend is untested on Windows in both.
 - **`installed_lite_plist`** parses with the `plist` crate (XML or binary, as `plistlib.load`); a malformed file is None in both.

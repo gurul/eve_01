@@ -177,7 +177,15 @@ pub(crate) fn py_splitlines(s: &str) -> Vec<&str> {
 
 /// The name of the `OSError` subclass Python raises for `err` (`type(e).__name__`).
 pub(crate) fn os_error_name(err: &io::Error) -> &'static str {
-    let Some(code) = err.raw_os_error() else { return "OSError" };
+    let Some(code) = err.raw_os_error() else {
+        // A wrapped error (tempfile adds the path to the OS error, which drops its errno): the OS error inside it,
+        // else the kind it kept.
+        let inner = err.get_ref().and_then(|e| e.source()).and_then(|s| s.downcast_ref::<io::Error>());
+        if let Some(inner) = inner {
+            return os_error_name(inner);
+        }
+        return kind_error_name(err.kind());
+    };
     #[cfg(unix)]
     {
         match code {
@@ -200,15 +208,28 @@ pub(crate) fn os_error_name(err: &io::Error) -> &'static str {
     }
     #[cfg(not(unix))]
     {
-        match err.kind() {
-            io::ErrorKind::AlreadyExists => "FileExistsError",
-            io::ErrorKind::NotFound => "FileNotFoundError",
-            io::ErrorKind::PermissionDenied => "PermissionError",
-            _ => {
-                let _ = code;
-                "OSError"
-            }
-        }
+        let _ = code;
+        kind_error_name(err.kind())
+    }
+}
+
+/// The `OSError` subclass for an error that carries only its kind.
+fn kind_error_name(kind: io::ErrorKind) -> &'static str {
+    use io::ErrorKind as K;
+    match kind {
+        K::AlreadyExists => "FileExistsError",
+        K::NotFound => "FileNotFoundError",
+        K::PermissionDenied => "PermissionError",
+        K::NotADirectory => "NotADirectoryError",
+        K::IsADirectory => "IsADirectoryError",
+        K::Interrupted => "InterruptedError",
+        K::WouldBlock => "BlockingIOError",
+        K::BrokenPipe => "BrokenPipeError",
+        K::ConnectionAborted => "ConnectionAbortedError",
+        K::ConnectionRefused => "ConnectionRefusedError",
+        K::ConnectionReset => "ConnectionResetError",
+        K::TimedOut => "TimeoutError",
+        _ => "OSError",
     }
 }
 
@@ -239,5 +260,24 @@ mod tests {
         assert_eq!(os_error_name(&io::Error::from_raw_os_error(libc::EEXIST)), "FileExistsError");
         assert_eq!(os_error_name(&io::Error::from_raw_os_error(libc::EROFS)), "OSError");
         assert_eq!(os_error_name(&io::Error::other("x")), "OSError");
+        // wrapped, as tempfile wraps it: the errno inside, else the kind
+        let wrapped = io::Error::new(io::ErrorKind::PermissionDenied, Wrapped(io::Error::from_raw_os_error(libc::EACCES)));
+        assert_eq!(os_error_name(&wrapped), "PermissionError");
+        assert_eq!(os_error_name(&io::Error::new(io::ErrorKind::NotFound, "gone")), "FileNotFoundError");
+    }
+
+    #[derive(Debug)]
+    struct Wrapped(io::Error);
+
+    impl std::fmt::Display for Wrapped {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(f, "{} at a path", self.0)
+        }
+    }
+
+    impl std::error::Error for Wrapped {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            Some(&self.0)
+        }
     }
 }

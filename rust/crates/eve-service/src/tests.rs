@@ -679,6 +679,31 @@ fn test_install_lite_says_so_when_launchagents_cannot_be_written() {
     );
 }
 
+/// The temporary file cannot be made in a LaunchAgents folder the user may not write: Python's mkstemp raises
+/// PermissionError, and the message names it.
+#[cfg(unix)]
+#[test]
+fn install_lite_names_the_exception_when_the_temporary_file_cannot_be_made() {
+    use std::os::unix::fs::PermissionsExt;
+    let (_t, home) = home();
+    let agents = home.join("Library/LaunchAgents");
+    std::fs::create_dir_all(&agents).unwrap();
+    std::fs::set_permissions(&agents, std::fs::Permissions::from_mode(0o500)).unwrap();
+    // root writes anyway; the case only exists for a user the folder refuses
+    if std::fs::write(agents.join("probe"), b"").is_ok() {
+        return;
+    }
+    let fake = Fake::new(&[], &[]);
+    let rc = launchd_in(&home, fake.clone()).install_lite().unwrap();
+    std::fs::set_permissions(&agents, std::fs::Permissions::from_mode(0o700)).unwrap();
+    assert_eq!(rc, 2);
+    assert!(fake.calls().is_empty());
+    assert_eq!(
+        fake.err(),
+        format!("eve-bridge: eve lite's login service could not be written to {} (PermissionError).\n", agents.display())
+    );
+}
+
 #[test]
 fn test_install_lite_needs_launchctl() {
     let (_t, home) = home();
