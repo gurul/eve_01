@@ -219,7 +219,8 @@ pub fn configured(environ: Option<&Environ>) -> CanvasConfig {
 // ---- transport: GET only, one origin -------------------------------------------------------------------------
 
 static LINK: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r#"<([^>]+)>\s*;\s*rel="?([^";,]+)"?"#).expect("valid regex"));
+    // `\s` widened by FS, GS, RS and US, which Python's `\s` matches and Rust's does not
+    LazyLock::new(|| Regex::new(r#"<([^>]+)>[\s\x1c-\x1f]*;[\s\x1c-\x1f]*rel="?([^";,]+)"?"#).expect("valid regex"));
 
 /// The `rel="next"` URL of a Link header, or "".
 pub fn next_link(header: &str) -> String {
@@ -414,7 +415,12 @@ pub fn html_text(value: Option<&Value>, limit: usize) -> String {
     if text.chars().count() <= limit {
         text
     } else {
-        format!("{}…", py::rstrip(py::take_chars(&text, limit.saturating_sub(1))))
+        // Python's `text[: limit - 1]`: a limit of 0 slices to -1, every character but the last
+        let keep = match limit.checked_sub(1) {
+            Some(n) => n,
+            None => text.chars().count() - 1,
+        };
+        format!("{}…", py::rstrip(py::take_chars(&text, keep)))
     }
 }
 
@@ -986,6 +992,19 @@ mod tests {
         assert_eq!(long, format!("{}…", "x".repeat(599)));
         assert_eq!(html_text(Some(&json!("&#x80; &copy &notit;")), MESSAGE_CLIP), "€ © ¬it;");
         assert_eq!(html_text(Some(&json!("a b c d e")), 4), "a b…");
+        assert_eq!(html_text(Some(&json!("abc ")), 0), "ab…");
+        // values canvas.html_text returned for the same inputs
+        let cases = [
+            ("&amp;amp; &#0; &#x110000; &#55296; &AElig &notin; &#128; &#x0d; &#65535; &gt&lt",
+             "&amp; \u{fffd} \u{fffd} \u{fffd} \u{c6} \u{2209} \u{20ac} ><"),
+            ("<a href=\"x>y\">t</a>\n\t z", "y\">t z"),
+            ("a<b", "a<b"),
+            ("&#1114111;&#x1F600;&#X41;&#;", "\u{1f600}A&#;"),
+        ];
+        for (input, want) in cases {
+            assert_eq!(html_text(Some(&json!(input)), MESSAGE_CLIP), want, "{input}");
+        }
+        assert_eq!(html_text(Some(&json!("")), 0), "");
     }
 
     #[test]
@@ -1069,6 +1088,12 @@ mod tests {
             json!({"course": "", "name": "", "due": "Wed Oct 28, 5:00 PM PDT", "due_at": "2026-10-29T00:00:00+00:00",
                    "status": "not submitted", "points": null, "url": ""})
         );
+    }
+
+    #[test]
+    fn next_link_reads_python_whitespace_around_the_semicolon() {
+        assert_eq!(next_link("<https://a/x>\u{1c};\u{1f}rel=\"next\""), "https://a/x");
+        assert_eq!(next_link("<https://a/x> ; rel=next"), "https://a/x");
     }
 
     #[test]
