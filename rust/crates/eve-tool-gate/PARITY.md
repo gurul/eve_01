@@ -48,7 +48,7 @@ Status: complete
 | `MARKS` | `MARKS: LazyLock<Marks>` | one per process |
 | `_texts` | `texts` (private) | strings anywhere in objects and arrays, `data:` URLs skipped |
 | `carried` | `carried(parts: IntoIterator<&Value>, marks: Option<&Marks>) -> &'static str` | `None` reads `MARKS` |
-| (Python builtins) | `py_truthy`, `py_str` (pub); `py::strip`, `py::split`, `py::capitalize`, `py::is_word`, `py::is_format`, `py::dumps_sorted` | `py_str` uses `eve_app_registry::py_repr` for non-strings |
+| (Python builtins) | `py_truthy`, `py_str` (pub); `py::strip`, `py::split`, `py::capitalize` (title case from a table generated over every code point with CPython 3.13; the rest lowered in context, so a final sigma is `ς`), `py::is_word`, `py::is_format`, `py::dumps_sorted` | `py_str` uses `eve_app_registry::py_repr` for non-strings |
 
 ## Tests
 | Python file | Python tests | Rust tests | Not ported (why) |
@@ -66,6 +66,14 @@ A one-off differential run (not kept in the tree) compared 4000 random calls aga
 same run compared `\w`, `Cf` and `str.isspace()` over every code point against Python 3.13 (Unicode 15.1): `Cf` and
 whitespace are identical; `\w` differs only on characters Unicode 16 added.
 
+Verification (2026-10-19) repeated it: 28000 random calls (Greek, Georgian, ligatures, final sigma, hidden
+characters, C0 controls, nested arguments, floats) against CPython 3.13's `tool_gate` for `acting`,
+`needs_confirmation`, `taints`, `source`, `describe`, `say_act`, `question`, `spoken_question`, `said_whole`,
+`_words`, `carried`, `Marks.found`, `visible` and `fingerprint`: all equal after fixing `source`'s capitalization
+(it upper-cased Greek letters with ypogegrammeni and Georgian Mkhedruli, and lowered a final sigma as `σ`). Over
+every code point, `_words`, `visible` and `fingerprint` differ only on the 4384 characters unassigned in Unicode
+15.1.
+
 ## Boundaries
 None
 
@@ -73,7 +81,4 @@ None
 - `args` is a JSON object, so Python's `str(a)` fallback for a `json.dumps` TypeError cannot arise.
 - `unicode-general-category` 1.1.0 carries Unicode 16; Python 3.13 carries 15.1. Characters assigned in Unicode 16
   count as `\w` in `said_whole`'s word split here and not in Python. The Cf set is identical.
-- `source`'s capitalization of an `app__tool` prefix uses title case for the Latin digraphs, ß and the Latin and
-  Armenian ligatures, else `char::to_uppercase`; Python's title case also differs for Greek letters with
-  ypogegrammeni. Tool names are ASCII (the function-calling name pattern), where both agree.
 - `needs_confirmation`'s `tainted` is a `&str` (every caller passes a taint string); Python accepted any truthy value.

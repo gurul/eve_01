@@ -404,6 +404,12 @@ fn test_python_helpers_match_python() {
     assert_eq!(py::capitalize("gMAIL"), "Gmail");
     assert_eq!(py::capitalize("ǆungla"), "ǅungla");
     assert_eq!(py::capitalize(""), "");
+    // title case, not upper case, for the first letter; the rest lowered in the whole string's context
+    assert_eq!(py::capitalize("\u{1fb3}\u{3b2}"), "\u{1fbc}\u{3b2}"); // ᾳβ → ᾼβ (Python), not ΑΙβ
+    assert_eq!(py::capitalize("\u{10d0}\u{10d1}"), "\u{10d0}\u{10d1}"); // Mkhedruli is its own title case
+    assert_eq!(py::capitalize("\u{391}\u{3a3}"), "\u{391}\u{3c2}"); // ΑΣ → Ας: a final sigma
+    assert_eq!(py::capitalize("\u{3a3}A"), "\u{3a3}a");
+    assert_eq!(full_source("\u{1fb3}\u{3b2}__z"), "\u{1fbc}\u{3b2}");
     assert_eq!(py::split("a\u{1f}b \u{a0} c"), vec!["a", "b", "c"]);
     assert_eq!(py_str(&json!(["a", 1, null, true])), "['a', 1, None, True]");
     assert!(!py_truthy(&json!(0.0)) && py_truthy(&json!("0")));
