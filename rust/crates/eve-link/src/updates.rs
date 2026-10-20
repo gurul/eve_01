@@ -568,6 +568,10 @@ fn parsedate_tz(data: &str) -> Option<DateTuple> {
     }
     if yy.ends_with(',') {
         yy.pop();
+        // Python 3.13: `if not yy: return None`
+        if yy.is_empty() {
+            return None;
+        }
     }
     if yy.chars().next().is_none_or(|c| py::int(c.encode_utf8(&mut [0u8; 4])).is_none()) {
         std::mem::swap(&mut yy, &mut tz);

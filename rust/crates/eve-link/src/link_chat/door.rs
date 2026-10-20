@@ -241,7 +241,8 @@ fn py_int(text: &str) -> Option<i64> {
         if c == '_' {
             continue;
         }
-        let d = c.to_digit(10)? as i64;
+        // any Unicode decimal digit counts, as in Python's int()
+        let d = tpy::int(c.encode_utf8(&mut [0u8; 4]))?;
         n = n.saturating_mul(10).saturating_add(d);
     }
     Some(if neg { -n } else { n })
@@ -1641,7 +1642,8 @@ impl LinkChat {
             // a held arrow (Pika, the camera) beats every 150 ms
             let said = match action.filter(|a| tpy::truthy(a)) {
                 Some(Value::String(s)) => s.clone(),
-                Some(other) => tpy::dumps(other),
+                // str(value): Python's repr for a number, a list or a dict
+                Some(other) => eve_app_registry::py_repr(other),
                 None => "status".to_string(),
             };
             let said: String = said.chars().take(24).collect();
