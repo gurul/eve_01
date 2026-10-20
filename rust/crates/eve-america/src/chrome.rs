@@ -65,7 +65,11 @@ impl AmericaLane for ChromeLane {
             .run(move |core: &mut LaneCore| {
                 let mut slot = net.lock();
                 let mut worker = ChromeWorker { core, net: &mut slot };
-                job(&mut worker)
+                let outcome = job(&mut worker);
+                // Detach our session between questions: its event tap would otherwise queue every protocol
+                // event of the idle tab until the next question (Playwright consumes them as they come).
+                *slot = None;
+                outcome
             })
             .await
     }
@@ -101,7 +105,7 @@ impl LaneWorker for ChromeWorker<'_> {
             .and_then(|any| any.downcast_ref::<CdpPage>())
             .ok_or_else(|| LaneError::err("Error", "the browser lane's page is not a DevTools page"))?;
         if let Some(net) = self.net.as_ref().filter(|n| n.target == cdp.target_id() && !n.conn.is_closed()) {
-            net.pump(Duration::ZERO); // what the page did between questions is nobody's
+            net.pump(Duration::ZERO); // what the page did before this question is nobody's
             return Ok(());
         }
         *self.net = None;
