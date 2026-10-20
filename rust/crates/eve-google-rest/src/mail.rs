@@ -98,21 +98,25 @@ impl Tok {
     }
 }
 
-/// `get_unstructured`'s tokens: runs of whitespace (fws) and the words between them (utext).
+/// The header tree of an unstructured value (Subject, In-Reply-To, References): `get_unstructured`'s tokens,
+/// with an encoded word the value itself holds read back into its text, as the email package's header parser
+/// does before folding.
 fn unstructured(value: &str) -> Tok {
-    let mut out = Vec::new();
-    let mut rest = value;
-    while !rest.is_empty() {
-        if rest.starts_with(is_wsp) {
-            let word = rest.trim_start_matches(is_space);
-            out.push(Tok::fws(&rest[..rest.len() - word.len()]));
-            rest = word;
-            continue;
-        }
-        let end = rest.find(is_wsp).unwrap_or(rest.len());
-        out.push(Tok::value(&rest[..end], "utext"));
-        rest = &rest[end..];
-    }
+    let out = get_unstructured(value)
+        .into_iter()
+        .map(|t| match t {
+            UTok::Fws(text) => Tok::fws(&text),
+            UTok::EwWs => Tok::fws(""),
+            UTok::Vtext(text) => Tok::value(&text, "utext"),
+            UTok::Ew(children) => Tok::list(
+                "encoded-word",
+                children
+                    .into_iter()
+                    .map(|(ws, text)| if ws { Tok::fws(&text) } else { Tok::value(&text, "utext") })
+                    .collect(),
+            ),
+        })
+        .collect();
     Tok::list("unstructured", out)
 }
 
@@ -210,73 +214,203 @@ fn ew_encode(s: &str, charset: &str) -> String {
     }
 }
 
-fn ew_decode(word: &str) -> Option<String> {
-    let inner = word.strip_prefix("=?")?.strip_suffix("?=")?;
-    let mut parts = inner.split('?');
-    let (charset, cte, text) = (parts.next()?, parts.next()?, parts.next()?);
-    if parts.next().is_some() || !charset.eq_ignore_ascii_case("utf-8") {
-        return None;
-    }
-    let bytes = match cte {
-        "q" | "Q" => {
-            let mut out = Vec::new();
-            let b = text.as_bytes();
-            let mut i = 0;
-            while i < b.len() {
-                match b[i] {
-                    b'_' => out.push(b' '),
-                    b'=' if i + 2 < b.len() && b[i + 1].is_ascii_hexdigit() && b[i + 2].is_ascii_hexdigit() => {
-                        let hex = std::str::from_utf8(&b[i + 1..i + 3]).ok()?;
-                        out.push(u8::from_str_radix(hex, 16).ok()?);
-                        i += 2;
-                    }
-                    c => out.push(c),
-                }
-                i += 1;
-            }
-            out
-        }
-        "b" | "B" => base64::engine::general_purpose::STANDARD.decode(text).ok()?,
-        _ => return None,
-    };
-    String::from_utf8(bytes).ok()
+/// One token of `get_unstructured`'s list.
+#[derive(Debug)]
+enum UTok {
+    /// A run of blanks.
+    Fws(String),
+    /// The blank between two encoded words, which reads as nothing (`EWWhiteSpaceTerminal`).
+    EwWs,
+    /// An encoded word: its decoded text as (is-blank, text) pieces.
+    Ew(Vec<(bool, String)>),
+    Vtext(String),
 }
 
-/// `str(get_unstructured(value))` over text this folder wrote: its encoded words read back, and the blank
-/// between two encoded words dropped, as RFC 2047 says a reader does.
-fn unstructured_str(value: &str) -> String {
-    #[derive(PartialEq)]
-    enum K {
-        Fws,
-        Ew,
-        Text,
+impl UTok {
+    fn text(&self) -> String {
+        match self {
+            UTok::Fws(t) | UTok::Vtext(t) => t.clone(),
+            UTok::EwWs => String::new(),
+            UTok::Ew(children) => children.iter().map(|(_, t)| t.as_str()).collect(),
+        }
     }
-    let mut toks: Vec<(K, String)> = Vec::new();
-    let mut rest = value;
-    while !rest.is_empty() {
-        if rest.starts_with(is_wsp) {
-            let word = rest.trim_start_matches(is_space);
-            toks.push((K::Fws, rest[..rest.len() - word.len()].to_string()));
-            rest = word;
+}
+
+/// `get_fws`: the leading run `str.lstrip()` removes, and the rest.
+fn get_fws(value: &str) -> (String, &str) {
+    let rest = value.trim_start_matches(is_space);
+    (value[..value.len() - rest.len()].to_string(), rest)
+}
+
+/// `_wsp_splitter(value, 1)` joined back: the text up to the first blank, and the rest from that blank on.
+fn wsp_split(value: &str) -> (&str, &str) {
+    let end = value.find(is_wsp).unwrap_or(value.len());
+    (&value[..end], &value[end..])
+}
+
+/// `_encoded_words.decode_b`: strict with the padding mended, else the lenient decoder, else the raw bytes.
+fn decode_b(encoded: &[u8]) -> Vec<u8> {
+    use base64::engine::{DecodePaddingMode, GeneralPurpose, GeneralPurposeConfig};
+    let strict = GeneralPurpose::new(
+        &base64::alphabet::STANDARD,
+        GeneralPurposeConfig::new()
+            .with_decode_allow_trailing_bits(true)
+            .with_decode_padding_mode(DecodePaddingMode::Indifferent),
+    );
+    let pad_err = encoded.len() % 4;
+    let mut padded = encoded.to_vec();
+    if pad_err != 0 {
+        padded.extend_from_slice(&b"==="[..4 - pad_err]);
+    }
+    if let Ok(v) = strict.decode(&padded) {
+        return v;
+    }
+    // validate=False reads the standard alphabet only: the url-safe characters are skipped like any other junk
+    let lenient = |b: &[u8]| -> Option<Vec<u8>> {
+        let text: String = b.iter().map(|&c| if c == b'-' || c == b'_' { '!' } else { c as char }).collect();
+        crate::py::b64decode_urlsafe(&text)
+    };
+    if let Some(v) = lenient(encoded) {
+        return v;
+    }
+    let mut more = encoded.to_vec();
+    more.extend_from_slice(b"==");
+    lenient(&more).unwrap_or_else(|| encoded.to_vec())
+}
+
+/// `_encoded_words.decode_q`: `_` is a blank, `=XX` a byte.
+fn decode_q(encoded: &[u8]) -> Vec<u8> {
+    let b: Vec<u8> = encoded.iter().map(|&c| if c == b'_' { b' ' } else { c }).collect();
+    let mut out = Vec::with_capacity(b.len());
+    let mut i = 0;
+    while i < b.len() {
+        if b[i] == b'=' && i + 2 < b.len() && b[i + 1].is_ascii_hexdigit() && b[i + 2].is_ascii_hexdigit() {
+            let hex = [b[i + 1], b[i + 2]];
+            out.push(u8::from_str_radix(std::str::from_utf8(&hex).unwrap_or("00"), 16).unwrap_or(0));
+            i += 3;
+        } else {
+            out.push(b[i]);
+            i += 1;
+        }
+    }
+    out
+}
+
+/// `_encoded_words.decode(ew)`: None where it raises ValueError or KeyError (not five `?` fields, text that
+/// is not ASCII, a transfer encoding other than q or b).
+fn ew_decode(word: &str) -> Option<String> {
+    let fields: Vec<&str> = word.split('?').collect();
+    let [_, charset, cte, cte_string, _] = fields[..] else { return None };
+    let charset = charset.split('*').next().unwrap_or("");
+    if !cte_string.is_ascii() {
+        return None;
+    }
+    let bytes = match cte.to_ascii_lowercase().as_str() {
+        "q" => decode_q(cte_string.as_bytes()),
+        "b" => decode_b(cte_string.as_bytes()),
+        _ => return None,
+    };
+    let name = charset.to_ascii_lowercase().replace('_', "-");
+    Some(match name.as_str() {
+        "latin-1" | "latin1" | "iso-8859-1" | "iso8859-1" | "l1" => bytes.iter().map(|&b| b as char).collect(),
+        // utf-8 and its aliases; ascii and an unknown charset read the ASCII bytes as they are (Python keeps
+        // the others as surrogate escapes, which a Rust string cannot hold: they become U+FFFD)
+        _ => String::from_utf8_lossy(&bytes).into_owned(),
+    })
+}
+
+static RFC2047: std::sync::LazyLock<regex::Regex> =
+    std::sync::LazyLock::new(|| regex::Regex::new(r"=\?[^?]*\?[qQbB]\?.*?\?=").expect("valid regex"));
+
+enum EwErr {
+    /// `_InvalidEwError`: shaped like an encoded word but not decodable.
+    Invalid,
+    /// `HeaderParseError`: no `?=` at all.
+    Parse,
+}
+
+/// `get_encoded_word(value, 'utext')`: the word at the start of `value` and what follows it.
+fn get_encoded_word(value: &str) -> Result<(UTok, &str), EwErr> {
+    let body = &value[2..];
+    let Some((tok, remstr)) = body.split_once("?=") else { return Err(EwErr::Parse) };
+    let mut tok = tok.to_string();
+    let mut rest = remstr;
+    let hex = |c: Option<char>| c.is_some_and(|c| c.is_ascii_hexdigit());
+    let mut rc = remstr.chars();
+    if remstr.chars().count() > 1 && hex(rc.next()) && hex(rc.next()) && tok.matches('?').count() < 2 {
+        // the ? after the transfer encoding was followed by an =XX escape
+        let (more, after) = remstr.split_once("?=").unwrap_or((remstr, ""));
+        tok = format!("{tok}?={more}");
+        rest = after;
+    }
+    let text = ew_decode(&format!("=?{tok}?=")).ok_or(EwErr::Invalid)?;
+    let mut children = Vec::new();
+    let mut t = text.as_str();
+    while !t.is_empty() {
+        if t.starts_with(is_wsp) {
+            let (ws, after) = get_fws(t);
+            children.push((true, ws));
+            t = after;
             continue;
         }
-        let end = rest.find(is_wsp).unwrap_or(rest.len());
-        let tok = &rest[..end];
-        if tok.starts_with("=?") {
-            if let Some(text) = ew_decode(tok) {
-                let n = toks.len();
-                if n > 1 && toks[n - 1].0 == K::Fws && toks[n - 2].0 == K::Ew {
-                    toks[n - 1].1.clear();
+        let (word, after) = wsp_split(t);
+        children.push((false, word.to_string()));
+        t = after;
+    }
+    Ok((UTok::Ew(children), rest))
+}
+
+/// `get_unstructured(value)`.
+fn get_unstructured(value: &str) -> Vec<UTok> {
+    let mut out: Vec<UTok> = Vec::new();
+    let mut value = value;
+    while !value.is_empty() {
+        if value.starts_with(is_wsp) {
+            let (ws, rest) = get_fws(value);
+            out.push(UTok::Fws(ws));
+            value = rest;
+            continue;
+        }
+        let mut valid_ew = true;
+        if value.starts_with("=?") {
+            match get_encoded_word(value) {
+                Ok((ew, rest)) => {
+                    let mut have_ws = true;
+                    if !out.is_empty() && !matches!(out.last(), Some(UTok::Fws(_) | UTok::EwWs)) {
+                        have_ws = false;
+                    }
+                    let n = out.len();
+                    if have_ws && n > 1 && matches!(out[n - 2], UTok::Ew(_)) {
+                        out[n - 1] = UTok::EwWs;
+                    }
+                    out.push(ew);
+                    value = rest;
+                    continue;
                 }
-                toks.push((K::Ew, text));
-                rest = &rest[end..];
-                continue;
+                Err(EwErr::Invalid) => valid_ew = false,
+                Err(EwErr::Parse) => {}
             }
         }
-        toks.push((K::Text, tok.to_string()));
-        rest = &rest[end..];
+        let (mut tok, mut rest) = wsp_split(value);
+        if valid_ew && RFC2047.is_match(tok) {
+            // an encoded word inside an atom is split off, to be read on the next round
+            // (never at the start: there get_encoded_word has read it or refused it as invalid)
+            let at = value.find("=?").unwrap_or(value.len());
+            if at > 0 {
+                tok = &value[..at];
+                rest = &value[at..];
+            }
+        }
+        out.push(UTok::Vtext(tok.to_string()));
+        value = rest;
     }
-    toks.into_iter().map(|(_, s)| s).collect()
+    out
+}
+
+/// `str(get_unstructured(value))`: the value with its encoded words read back, and the blank between two
+/// encoded words dropped, as RFC 2047 says a reader does.
+fn unstructured_str(value: &str) -> String {
+    get_unstructured(value).iter().map(UTok::text).collect()
 }
 
 // ---- the folder: email._header_value_parser._refold_parse_tree -------------------------------------------
@@ -493,6 +627,26 @@ fn fold_header(name: &str, value: Tok) -> String {
     refold(tree)
 }
 
+/// The generator's `verify_generated_headers` check: a folded header whose next line does not start with a
+/// blank would start a new header, so it is refused (HeaderWriteError) rather than written.
+fn verify_generated(folded: &str) -> Result<(), Error> {
+    let body = folded.strip_suffix(LINESEP).unwrap_or(folded);
+    let b = body.as_bytes();
+    let bad = (0..b.len()).any(|i| match b[i] {
+        // NEWLINE_WITHOUT_FWSP: \r\n[^ \t] | \r[^ \n\t] | \n[^ \t]
+        b'\r' => matches!(b.get(i + 1), Some(c) if !matches!(c, b' ' | b'\n' | b'\t')),
+        b'\n' => matches!(b.get(i + 1), Some(c) if !matches!(c, b' ' | b'\t')),
+        _ => false,
+    });
+    if bad {
+        return Err(Error::HeaderWrite(format!(
+            "folded header contains newline: {}",
+            crate::py::repr_bytes(folded.as_bytes())
+        )));
+    }
+    Ok(())
+}
+
 /// The SMTP policy's check on a header value: one line by `str.splitlines`.
 fn one_line_header(value: &str) -> Result<(), Error> {
     if splitlines(value).len() > 1 {
@@ -639,20 +793,30 @@ pub fn message_bytes(
     body: &str,
     reply_headers: &[(String, String)],
 ) -> Result<Vec<u8>, Error> {
-    let mut out = String::new();
-    out.push_str(&fold_header("To", address_list(to)));
-    if !cc.is_empty() {
-        out.push_str(&fold_header("Cc", address_list(cc)));
-    }
-    if !bcc.is_empty() {
-        out.push_str(&fold_header("Bcc", address_list(bcc)));
-    }
+    // the policy refuses a value with a line break when the header is set, before anything is written
     one_line_header(subject)?;
-    out.push_str(&fold_header("Subject", unstructured(subject)));
-    for (k, v) in reply_headers {
+    for (_, v) in reply_headers {
         if !v.is_empty() {
             one_line_header(v)?;
-            out.push_str(&fold_header(k, unstructured(v)));
+        }
+    }
+    let mut out = String::new();
+    let mut write = |folded: String| -> Result<(), Error> {
+        verify_generated(&folded)?;
+        out.push_str(&folded);
+        Ok(())
+    };
+    write(fold_header("To", address_list(to)))?;
+    if !cc.is_empty() {
+        write(fold_header("Cc", address_list(cc)))?;
+    }
+    if !bcc.is_empty() {
+        write(fold_header("Bcc", address_list(bcc)))?;
+    }
+    write(fold_header("Subject", unstructured(subject)))?;
+    for (k, v) in reply_headers {
+        if !v.is_empty() {
+            write(fold_header(k, unstructured(v)))?;
         }
     }
     let (cte, payload) = encode_text(body);

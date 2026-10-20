@@ -126,6 +126,9 @@ pub enum Error {
     /// `OverflowError`: a date past Python's range.
     #[error("{0}")]
     Overflow(String),
+    /// `email.errors.HeaderWriteError`: a folded header would have started a new header line.
+    #[error("{0}")]
+    HeaderWrite(String),
 }
 
 impl Error {
@@ -143,6 +146,7 @@ impl Error {
             Error::Attribute(_) => "AttributeError",
             Error::Type(_) => "TypeError",
             Error::Overflow(_) => "OverflowError",
+            Error::HeaderWrite(_) => "HeaderWriteError",
         }
     }
 
@@ -318,6 +322,15 @@ fn py_iter(v: &Value) -> Result<Vec<Value>, Error> {
 /// A nested list read leniently: its items, or nothing.
 fn nlist(v: &Value) -> Vec<Value> {
     py_iter(v).unwrap_or_default()
+}
+
+/// The TypeError `v["id"]` raises when `v` is not a dict.
+fn subscript_error(v: &Value) -> String {
+    match v {
+        Value::String(_) => "string indices must be integers, not 'str'".into(),
+        Value::Array(_) => "list indices must be integers or slices, not str".into(),
+        other => format!("'{}' object is not subscriptable", type_name(other)),
+    }
 }
 
 fn or_value(v: &Value, default: Value) -> Value {
@@ -523,7 +536,8 @@ pub fn free_slots(
 ) -> Result<Vec<Value>, Error> {
     let mut busy = busy.to_vec();
     busy.sort();
-    let want = minutes(minutes_)?;
+    // built where it is compared, as the Python does: a span with nothing to compare never reads it
+    let want = || minutes(minutes_);
     let mut out = Vec::new();
     let mut day = zone.convert(&start).date_naive();
     let local = |d: NaiveDate, hour: i64| -> Result<DateTime<FixedOffset>, Error> {
@@ -537,12 +551,12 @@ pub fn free_slots(
             if *b1 <= cursor || *b0 >= hi {
                 continue;
             }
-            if (*b0 - cursor) >= want {
+            if (*b0 - cursor) >= want()? {
                 out.push(json!({"start": isoformat(&cursor), "end": isoformat(b0)}));
             }
             cursor = pymax(cursor, *b1);
         }
-        if cursor < hi && (hi - cursor) >= want {
+        if cursor < hi && (hi - cursor) >= want()? {
             out.push(json!({"start": isoformat(&cursor), "end": isoformat(&hi)}));
         }
         day = day
@@ -922,9 +936,11 @@ pub struct ReqwestTransport {
 impl ReqwestTransport {
     pub fn new(timeout_secs: f64) -> Self {
         let t = StdDuration::from_secs_f64(timeout_secs.max(0.0));
+        // httpx.Client(timeout=...) follows no redirects: a 3xx comes back as it is
         let client = reqwest::Client::builder()
             .connect_timeout(t)
             .read_timeout(t)
+            .redirect(reqwest::redirect::Policy::none())
             .build()
             .unwrap_or_else(|_| reqwest::Client::new());
         Self { client }
@@ -957,8 +973,11 @@ impl Transport for ReqwestTransport {
         for (k, v) in &request.headers {
             b = b.header(k, v);
         }
-        if let Some(body) = request.body {
-            b = b.body(body);
+        match request.body {
+            Some(body) => b = b.body(body),
+            // httpx sends Content-Length: 0 on a POST, PUT or PATCH with no body (quickAdd is one)
+            None if matches!(request.method.as_str(), "POST" | "PUT" | "PATCH") => b = b.body(Vec::new()),
+            None => {}
         }
         let resp = b.send().await.map_err(transport_error)?;
         let status = resp.status().as_u16();
@@ -986,6 +1005,41 @@ where
     async fn token(&self) -> Option<String> {
         self()
     }
+}
+
+/// `dict(arguments or {})`: a mapping as it is, a list of key/value pairs as dict() reads one, and dict()'s own
+/// errors for anything else (a key that is not text cannot name an argument, so it is left out).
+fn py_dict(arguments: &Value) -> Result<Map<String, Value>, Error> {
+    let items = match arguments {
+        Value::Object(m) => return Ok(m.clone()),
+        v if !truthy(v) => return Ok(Map::new()),
+        Value::Array(items) => items.clone(),
+        Value::String(s) => s.chars().map(|c| json!(c.to_string())).collect(),
+        other => return Err(Error::Type(format!("'{}' object is not iterable", type_name(other)))),
+    };
+    let mut out = Map::new();
+    for (i, item) in items.iter().enumerate() {
+        let pair: Vec<Value> = match item {
+            Value::Array(p) => p.clone(),
+            Value::String(s) => s.chars().map(|c| json!(c.to_string())).collect(),
+            Value::Object(o) => o.keys().map(|k| json!(k)).collect(),
+            _ => {
+                return Err(Error::Type(format!(
+                    "cannot convert dictionary update sequence element #{i} to a sequence"
+                )))
+            }
+        };
+        if pair.len() != 2 {
+            return Err(Error::value(format!(
+                "dictionary update sequence element #{i} has length {}; 2 is required",
+                pair.len()
+            )));
+        }
+        if let Value::String(k) = &pair[0] {
+            out.insert(k.clone(), pair[1].clone());
+        }
+    }
+    Ok(out)
 }
 
 /// `quote_plus` as httpx encodes a query value: letters, digits and `_.-~` kept, a space as `+`.
@@ -1177,13 +1231,7 @@ impl GoogleRestClient {
         if !known {
             return Ok(json!({"isError": true, "content": [{"type": "text", "text": format!("no tool {name}")}]}));
         }
-        let a = match arguments {
-            Value::Object(m) => m.clone(),
-            v if !truthy(v) => Map::new(),
-            other => {
-                return Err(Error::Type(format!("'{}' object is not a mapping of arguments", type_name(other))))
-            }
-        };
+        let a = py_dict(arguments)?;
         match self.dispatch(name, a).await {
             Ok(v) => Ok(json!({"isError": false, "structuredContent": v})),
             Err(e) if e.is_tool_error() => {
@@ -1242,7 +1290,7 @@ impl GoogleRestClient {
         for t in py_iter(get(&listing, "threads")?)? {
             let id = match &t {
                 Value::Object(m) => m.get("id").cloned().ok_or_else(|| Error::Key("id".into()))?,
-                other => return Err(Error::Type(format!("{} indices must be integers", type_name(other)))),
+                other => return Err(Error::Type(subscript_error(other))),
             };
             let full = self
                 .get(
@@ -1714,14 +1762,15 @@ impl GoogleRestClient {
         let mut rest = a.clone();
         rest.shift_remove("attendeeEmails");
         let mut body = self.event_body(&rest)?;
-        let mut guests: Vec<Value> = Vec::new();
+        let mut guests = json!([]);
         if truthy(aget(a, "addAttendeeEmails")) || aget(a, "notifyGuests").is_null() {
             let event = self.get(&url, vec![]).await?;
-            guests = py_iter(get(&event, "attendees")?)?;
+            guests = or_value(get(&event, "attendees")?, json!([]));
         }
         if truthy(aget(a, "addAttendeeEmails")) {
-            let known: Vec<Value> = guests.iter().map(|g| nget(g, "email").clone()).collect();
-            let mut all = guests.clone();
+            let listed = py_iter(&guests)?;
+            let known: Vec<Value> = listed.iter().map(|g| nget(g, "email").clone()).collect();
+            let mut all = listed.clone();
             for e in py_iter(&a["addAttendeeEmails"])? {
                 if !known.contains(&e) {
                     all.push(json!({"email": e}));
@@ -1729,7 +1778,7 @@ impl GoogleRestClient {
             }
             body.insert("attendees".into(), Value::Array(all));
         }
-        let has = !guests.is_empty() || body.get("attendees").is_some_and(truthy);
+        let has = truthy(&guests) || body.get("attendees").is_some_and(truthy);
         let query = vec![("sendUpdates".to_string(), json!(send_updates(a, has)))];
         Ok(compact_event(&self.req("PATCH", &url, &query, Body::Json(Value::Object(body))).await?))
     }
@@ -1758,11 +1807,11 @@ impl GoogleRestClient {
         let url = Self::event_url(a)?;
         let guests = if aget(a, "notifyGuests").is_null() {
             let event = self.get(&url, vec![]).await?;
-            py_iter(get(&event, "attendees")?)?
+            get(&event, "attendees")?.clone()
         } else {
-            vec![]
+            json!([])
         };
-        let query = vec![("sendUpdates".to_string(), json!(send_updates(a, !guests.is_empty())))];
+        let query = vec![("sendUpdates".to_string(), json!(send_updates(a, truthy(&guests))))];
         self.req("DELETE", &url, &query, Body::None).await?;
         Ok(json!({"deleted": a["eventId"]}))
     }

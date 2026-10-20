@@ -228,6 +228,29 @@ pub fn repr_str(s: &str) -> String {
     out
 }
 
+/// `repr(bytes)`: `b'...'`, single quotes unless the bytes hold a single quote and no double quote.
+pub fn repr_bytes(b: &[u8]) -> String {
+    let quote = if b.contains(&b'\'') && !b.contains(&b'"') { b'"' } else { b'\'' };
+    let mut out = String::from("b");
+    out.push(quote as char);
+    for &c in b {
+        match c {
+            b'\\' => out.push_str("\\\\"),
+            b'\t' => out.push_str("\\t"),
+            b'\n' => out.push_str("\\n"),
+            b'\r' => out.push_str("\\r"),
+            c if c == quote => {
+                out.push('\\');
+                out.push(c as char);
+            }
+            0x20..=0x7e => out.push(c as char),
+            c => out.push_str(&format!("\\x{c:02x}")),
+        }
+    }
+    out.push(quote as char);
+    out
+}
+
 /// `int(value)`: bools are 0 and 1, floats truncate, strings are read in base 10 (whitespace around, a sign,
 /// single underscores between digits). A string that is not a number is a ValueError, as Python's; a list, a
 /// dict or None is a TypeError, which `call_tool` does not catch.

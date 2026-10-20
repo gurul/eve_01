@@ -1217,6 +1217,240 @@
     }
    ],
    "To: a@b.co\r\nSubject: s\r\nReferences: <only@x>\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "a@b.co"
+    ],
+    [],
+    [],
+    "=?utf-8?q?hi?= there",
+    "b",
+    null
+   ],
+   "To: a@b.co\r\nSubject: hi there\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "a@b.co"
+    ],
+    [],
+    [],
+    "=?utf-8?q?=C3=A9t=C3=A9?= plans",
+    "b",
+    null
+   ],
+   "To: a@b.co\r\nSubject: =?utf-8?b?w6l0w6k=?= plans\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "a@b.co"
+    ],
+    [],
+    [],
+    "x=?utf-8?q?a?=y and more",
+    "b",
+    null
+   ],
+   "To: a@b.co\r\nSubject: xay and more\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "a@b.co"
+    ],
+    [],
+    [],
+    "=?bogus?x?y?=",
+    "b",
+    null
+   ],
+   "To: a@b.co\r\nSubject: =?bogus?x?y?=\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "a@b.co"
+    ],
+    [],
+    [],
+    "=?utf-8?b?w6k=?= =?utf-8?b?w6k=?= end",
+    "b",
+    null
+   ],
+   "To: a@b.co\r\nSubject: =?utf-8?q?=C3=A9=C3=A9?= end\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "a@b.co"
+    ],
+    [],
+    [],
+    "=?iso-8859-1?q?caf=E9?= ok",
+    "b",
+    null
+   ],
+   "To: a@b.co\r\nSubject: =?utf-8?q?caf=C3=A9?= ok\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "a@b.co"
+    ],
+    [],
+    [],
+    "=?utf-8?q?a b?= c",
+    "b",
+    null
+   ],
+   "To: a@b.co\r\nSubject: a b c\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "a@b.co"
+    ],
+    [],
+    [],
+    "=?utf-8?q?unterminated",
+    "b",
+    null
+   ],
+   "To: a@b.co\r\nSubject: =?utf-8?q?unterminated\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "a@b.co"
+    ],
+    [],
+    [],
+    "Re: =?UTF-8?B?w6l0w6k=?= word word word word word word word word word word word word word word",
+    "b",
+    null
+   ],
+   "To: a@b.co\r\nSubject: Re: =?utf-8?b?w6l0w6k=?= word word word word word word word word word\r\n word word word word word\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "a@b.co"
+    ],
+    [],
+    [],
+    "line sep",
+    "b",
+    null
+   ],
+   {
+    "err": "ValueError: Header values may not contain linefeed or carriage return characters"
+   }
+  ],
+  [
+   [
+    [
+     "a.very.long.local.part.that.keeps.going@домен-очень-длинный.рф",
+     "é@b.co"
+    ],
+    [],
+    [],
+    "a\u000bb",
+    "b",
+    null
+   ],
+   {
+    "err": "ValueError: Header values may not contain linefeed or carriage return characters"
+   }
+  ],
+  [
+   [
+    [
+     "josé@x.co"
+    ],
+    [],
+    [],
+    "s",
+    "b",
+    null
+   ],
+   "To: =?utf-8?q?jos=C3=A9?=@x.co\r\nSubject: s\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "user@домен.рф"
+    ],
+    [],
+    [],
+    "s",
+    "b",
+    null
+   ],
+   "To: user@=?utf-8?b?0LTQvtC80LXQvS7RgNGE?=\r\nSubject: s\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "a.very.long.local.part.that.keeps.going@домен-очень-длинный.рф",
+     "é@b.co"
+    ],
+    [],
+    [],
+    "s",
+    "b",
+    null
+   ],
+   {
+    "err": "HeaderWriteError: folded header contains newline: b'To: a.very.long.local.part.that.keeps.going@\\r\\n=?utf-8?b?0LTQvtC80LXQvS3QvtGH0LXQvdGMLdC00LvQuNC90L3Ri9C5LtGA0YQ=?=,\\r\\n =?utf-8?q?=C3=A9?=@b.co\\r\\n'"
+   }
+  ],
+  [
+   [
+    [
+     "a(b)@x.co"
+    ],
+    [],
+    [],
+    "s",
+    "b",
+    null
+   ],
+   "To: a(b)@x.co\r\nSubject: s\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "a[1]@x.co"
+    ],
+    [],
+    [],
+    "s",
+    "b",
+    null
+   ],
+   "To: a[1]@x.co\r\nSubject: s\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "p0@пример.рф",
+     "p1@пример.рф",
+     "p2@пример.рф",
+     "p3@пример.рф",
+     "p4@пример.рф",
+     "p5@пример.рф"
+    ],
+    [],
+    [],
+    "s",
+    "b",
+    null
+   ],
+   "To: p0@=?utf-8?b?0L/RgNC40LzQtdGALtGA0YQ=?=,\r\n p1@=?utf-8?b?0L/RgNC40LzQtdGALtGA0YQ=?=,\r\n p2@=?utf-8?b?0L/RgNC40LzQtdGALtGA0YQ=?=,\r\n p3@=?utf-8?b?0L/RgNC40LzQtdGALtGA0YQ=?=,\r\n p4@=?utf-8?b?0L/RgNC40LzQtdGALtGA0YQ=?=,\r\n p5@=?utf-8?b?0L/RgNC40LzQtdGALtGA0YQ=?=\r\nSubject: s\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
   ]
  ],
  "free_slots": [
@@ -1694,5 +1928,613 @@
     ]
    }
   ]
- ]
+ ],
+ "tools": {
+  "gmail": [
+   {
+    "name": "search_threads",
+    "description": "Search mail threads with Gmail search syntax (from:, to:, is:unread, newer_than:2d, has:attachment, subject:...). Returns each thread's subject, sender, date and snippet.",
+    "inputSchema": {
+     "type": "object",
+     "properties": {
+      "query": {
+       "type": "string"
+      },
+      "pageSize": {
+       "type": "integer",
+       "description": "How many to return (default 10)."
+      },
+      "pageToken": {
+       "type": "string",
+       "description": "nextPageToken from the previous call, for the next page."
+      }
+     },
+     "required": []
+    },
+    "annotations": {
+     "readOnlyHint": true
+    }
+   },
+   {
+    "name": "get_thread",
+    "description": "Read a whole thread: every message's sender, date, subject, text and attachments.",
+    "inputSchema": {
+     "type": "object",
+     "properties": {
+      "threadId": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "threadId"
+     ]
+    },
+    "annotations": {
+     "readOnlyHint": true
+    }
+   },
+   {
+    "name": "get_message",
+    "description": "Read one message: sender, date, subject, text and attachments.",
+    "inputSchema": {
+     "type": "object",
+     "properties": {
+      "messageId": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "messageId"
+     ]
+    },
+    "annotations": {
+     "readOnlyHint": true
+    }
+   },
+   {
+    "name": "get_attachment",
+    "description": "Read an attachment's text (PDF and text files) by the attachmentId that get_message or get_thread listed.",
+    "inputSchema": {
+     "type": "object",
+     "properties": {
+      "messageId": {
+       "type": "string"
+      },
+      "attachmentId": {
+       "type": "string"
+      },
+      "filename": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "messageId",
+      "attachmentId"
+     ]
+    },
+    "annotations": {
+     "readOnlyHint": true
+    }
+   },
+   {
+    "name": "list_labels",
+    "description": "The mailbox's labels, with the inbox's total and unread counts.",
+    "inputSchema": {
+     "type": "object",
+     "properties": {},
+     "required": []
+    },
+    "annotations": {
+     "readOnlyHint": true
+    }
+   },
+   {
+    "name": "send_message",
+    "description": "Send an email from the owner's Gmail. to, cc and bcc are email addresses; \"me\" is the owner's own. To answer a message, pass its messageId as replyToMessageId: the email goes into that thread, and the subject defaults to the original's with Re:. body is plain text.",
+    "inputSchema": {
+     "type": "object",
+     "properties": {
+      "to": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      },
+      "cc": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      },
+      "bcc": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      },
+      "subject": {
+       "type": "string"
+      },
+      "body": {
+       "type": "string"
+      },
+      "replyToMessageId": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "to",
+      "body"
+     ]
+    },
+    "annotations": {
+     "readOnlyHint": false
+    }
+   }
+  ],
+  "contacts": [
+   {
+    "name": "search_contacts",
+    "description": "Find people by name, email or phone in the owner's Google contacts, and among the people they have emailed. Returns names, email addresses, phone numbers and organizations.",
+    "inputSchema": {
+     "type": "object",
+     "properties": {
+      "query": {
+       "type": "string"
+      },
+      "pageSize": {
+       "type": "integer",
+       "description": "How many to return (default 10)."
+      }
+     },
+     "required": [
+      "query"
+     ]
+    },
+    "annotations": {
+     "readOnlyHint": true
+    }
+   }
+  ],
+  "calendar": [
+   {
+    "name": "list_calendars",
+    "description": "The owner's calendars (id, name, primary).",
+    "inputSchema": {
+     "type": "object",
+     "properties": {
+      "pageSize": {
+       "type": "integer",
+       "description": "How many to return (default 10)."
+      }
+     },
+     "required": []
+    },
+    "annotations": {
+     "readOnlyHint": true
+    }
+   },
+   {
+    "name": "list_events",
+    "description": "Events between startTime and endTime, soonest first, recurring events as single occurrences, each tagged with its calendar. Default: every calendar the owner sees except holidays (a calendarId reads that one only), from now, 7 days.",
+    "inputSchema": {
+     "type": "object",
+     "properties": {
+      "calendarId": {
+       "type": "string"
+      },
+      "startTime": {
+       "type": "string",
+       "description": "ISO 8601, e.g. 2026-10-10T12:00:00-07:00 (no offset: the owner's own)."
+      },
+      "endTime": {
+       "type": "string",
+       "description": "ISO 8601, e.g. 2026-10-10T12:00:00-07:00 (no offset: the owner's own)."
+      },
+      "fullText": {
+       "type": "string"
+      },
+      "pageSize": {
+       "type": "integer",
+       "description": "How many to return (default 10)."
+      },
+      "pageToken": {
+       "type": "string",
+       "description": "nextPageToken from the previous call, for the next page."
+      }
+     },
+     "required": []
+    },
+    "annotations": {
+     "readOnlyHint": true
+    }
+   },
+   {
+    "name": "search_events",
+    "description": "Find events on the primary calendar by words in the title, description, place or attendees, from a year ago on, soonest first.",
+    "inputSchema": {
+     "type": "object",
+     "properties": {
+      "query": {
+       "type": "string"
+      },
+      "pageSize": {
+       "type": "integer",
+       "description": "How many to return (default 10)."
+      },
+      "pageToken": {
+       "type": "string",
+       "description": "nextPageToken from the previous call, for the next page."
+      }
+     },
+     "required": [
+      "query"
+     ]
+    },
+    "annotations": {
+     "readOnlyHint": true
+    }
+   },
+   {
+    "name": "get_event",
+    "description": "One event in full.",
+    "inputSchema": {
+     "type": "object",
+     "properties": {
+      "calendarId": {
+       "type": "string"
+      },
+      "eventId": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "eventId"
+     ]
+    },
+    "annotations": {
+     "readOnlyHint": true
+    }
+   },
+   {
+    "name": "suggest_time",
+    "description": "Free slots of at least durationMinutes between startTime and endTime, busy time taken from every calendar the owner sees except holidays, within working hours (default 9 to 18).",
+    "inputSchema": {
+     "type": "object",
+     "properties": {
+      "startTime": {
+       "type": "string",
+       "description": "ISO 8601, e.g. 2026-10-10T12:00:00-07:00 (no offset: the owner's own)."
+      },
+      "endTime": {
+       "type": "string",
+       "description": "ISO 8601, e.g. 2026-10-10T12:00:00-07:00 (no offset: the owner's own)."
+      },
+      "durationMinutes": {
+       "type": "integer"
+      },
+      "workdayStartHour": {
+       "type": "integer"
+      },
+      "workdayEndHour": {
+       "type": "integer"
+      }
+     },
+     "required": [
+      "startTime",
+      "endTime",
+      "durationMinutes"
+     ]
+    },
+    "annotations": {
+     "readOnlyHint": true
+    }
+   },
+   {
+    "name": "create_event",
+    "description": "Create an event. With allDay, startTime and endTime are dates (YYYY-MM-DD, end exclusive). recurrence takes RRULE lines, e.g. [\"RRULE:FREQ=WEEKLY;BYDAY=MO\"].",
+    "inputSchema": {
+     "type": "object",
+     "properties": {
+      "summary": {
+       "type": "string"
+      },
+      "startTime": {
+       "type": "string",
+       "description": "ISO 8601, e.g. 2026-10-10T12:00:00-07:00 (no offset: the owner's own)."
+      },
+      "endTime": {
+       "type": "string",
+       "description": "ISO 8601, e.g. 2026-10-10T12:00:00-07:00 (no offset: the owner's own)."
+      },
+      "allDay": {
+       "type": "boolean"
+      },
+      "timeZone": {
+       "type": "string"
+      },
+      "description": {
+       "type": "string"
+      },
+      "location": {
+       "type": "string"
+      },
+      "attendeeEmails": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      },
+      "recurrence": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      },
+      "addGoogleMeetUrl": {
+       "type": "boolean"
+      },
+      "calendarId": {
+       "type": "string"
+      },
+      "notifyGuests": {
+       "type": "boolean",
+       "description": "Email the guests about it (default: yes when there are guests)."
+      }
+     },
+     "required": [
+      "summary",
+      "startTime",
+      "endTime"
+     ]
+    },
+    "annotations": {
+     "readOnlyHint": false
+    }
+   },
+   {
+    "name": "quick_add_event",
+    "description": "Create an event from one plain sentence, the way Google Calendar's quick add reads it: \"Lunch with Ana Friday 12pm at Zuni\".",
+    "inputSchema": {
+     "type": "object",
+     "properties": {
+      "text": {
+       "type": "string"
+      },
+      "calendarId": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "text"
+     ]
+    },
+    "annotations": {
+     "readOnlyHint": false
+    }
+   },
+   {
+    "name": "update_event",
+    "description": "Change an event: only the fields given change. For a recurring event's one occurrence, use that occurrence's eventId (list_events returns them).",
+    "inputSchema": {
+     "type": "object",
+     "properties": {
+      "eventId": {
+       "type": "string"
+      },
+      "calendarId": {
+       "type": "string"
+      },
+      "summary": {
+       "type": "string"
+      },
+      "startTime": {
+       "type": "string",
+       "description": "ISO 8601, e.g. 2026-10-10T12:00:00-07:00 (no offset: the owner's own)."
+      },
+      "endTime": {
+       "type": "string",
+       "description": "ISO 8601, e.g. 2026-10-10T12:00:00-07:00 (no offset: the owner's own)."
+      },
+      "allDay": {
+       "type": "boolean"
+      },
+      "timeZone": {
+       "type": "string"
+      },
+      "description": {
+       "type": "string"
+      },
+      "location": {
+       "type": "string"
+      },
+      "addAttendeeEmails": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      },
+      "notifyGuests": {
+       "type": "boolean",
+       "description": "Email the guests about it (default: yes when there are guests)."
+      }
+     },
+     "required": [
+      "eventId"
+     ]
+    },
+    "annotations": {
+     "readOnlyHint": false
+    }
+   },
+   {
+    "name": "respond_to_event",
+    "description": "Answer an invitation as the owner: accepted, declined or tentative.",
+    "inputSchema": {
+     "type": "object",
+     "properties": {
+      "eventId": {
+       "type": "string"
+      },
+      "calendarId": {
+       "type": "string"
+      },
+      "responseStatus": {
+       "type": "string",
+       "enum": [
+        "accepted",
+        "declined",
+        "tentative"
+       ]
+      },
+      "notifyGuests": {
+       "type": "boolean",
+       "description": "Email the guests about it (default: yes when there are guests)."
+      }
+     },
+     "required": [
+      "eventId",
+      "responseStatus"
+     ]
+    },
+    "annotations": {
+     "readOnlyHint": false
+    }
+   },
+   {
+    "name": "delete_event",
+    "description": "Delete an event.",
+    "inputSchema": {
+     "type": "object",
+     "properties": {
+      "eventId": {
+       "type": "string"
+      },
+      "calendarId": {
+       "type": "string"
+      },
+      "notifyGuests": {
+       "type": "boolean",
+       "description": "Email the guests about it (default: yes when there are guests)."
+      }
+     },
+     "required": [
+      "eventId"
+     ]
+    },
+    "annotations": {
+     "readOnlyHint": false
+    }
+   }
+  ],
+  "drive": [
+   {
+    "name": "search_files",
+    "description": "Find files by words in their name or text (or a Drive query such as \"name contains 'budget'\"). Returns id, name, type, modified time and link.",
+    "inputSchema": {
+     "type": "object",
+     "properties": {
+      "query": {
+       "type": "string"
+      },
+      "pageSize": {
+       "type": "integer",
+       "description": "How many to return (default 10)."
+      },
+      "pageToken": {
+       "type": "string",
+       "description": "nextPageToken from the previous call, for the next page."
+      }
+     },
+     "required": [
+      "query"
+     ]
+    },
+    "annotations": {
+     "readOnlyHint": true
+    }
+   },
+   {
+    "name": "list_recent_files",
+    "description": "The most recently changed files.",
+    "inputSchema": {
+     "type": "object",
+     "properties": {
+      "pageSize": {
+       "type": "integer",
+       "description": "How many to return (default 10)."
+      },
+      "pageToken": {
+       "type": "string",
+       "description": "nextPageToken from the previous call, for the next page."
+      }
+     },
+     "required": []
+    },
+    "annotations": {
+     "readOnlyHint": true
+    }
+   },
+   {
+    "name": "get_file_metadata",
+    "description": "One file's name, type, owners, size, modified time and link.",
+    "inputSchema": {
+     "type": "object",
+     "properties": {
+      "fileId": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "fileId"
+     ]
+    },
+    "annotations": {
+     "readOnlyHint": true
+    }
+   },
+   {
+    "name": "read_file_content",
+    "description": "A file's text: Docs as Markdown, Sheets as CSV (first sheet), Slides as text, PDFs and plain text files as text.",
+    "inputSchema": {
+     "type": "object",
+     "properties": {
+      "fileId": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "fileId"
+     ]
+    },
+    "annotations": {
+     "readOnlyHint": true
+    }
+   },
+   {
+    "name": "create_file",
+    "description": "Create a file in the owner's Drive from text. mimeType application/vnd.google-apps.document makes it a Google Doc.",
+    "inputSchema": {
+     "type": "object",
+     "properties": {
+      "title": {
+       "type": "string"
+      },
+      "textContent": {
+       "type": "string"
+      },
+      "mimeType": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "title"
+     ]
+    },
+    "annotations": {
+     "readOnlyHint": false
+    }
+   }
+  ]
+ }
 }

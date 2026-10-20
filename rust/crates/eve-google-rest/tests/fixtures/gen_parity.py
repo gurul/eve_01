@@ -97,7 +97,10 @@ out["addresses"] = [[a, attempt(g.addresses, a)] for a in ADDR]
 
 
 def mail(to, cc, bcc, subject, body, reply=None):
-    raw = g.build_mail(to, cc, bcc, subject, body, reply)
+    try:
+        raw = g.build_mail(to, cc, bcc, subject, body, reply)
+    except Exception as e:  # noqa: BLE001
+        return {"err": f"{type(e).__name__}: {e}"}
     return base64.urlsafe_b64decode(raw + "=" * (-len(raw) % 4)).decode("latin-1")
 
 
@@ -130,6 +133,17 @@ cases.append([["x" * 80 + "@y.com"], [], [], "s", "b", None])
 cases.append([["a@b.co"], [], [], "s", "b", {"References": " ".join(
     f"<msgid-number-{i}@mail.gmail.com>" for i in range(4)), "In-Reply-To": "<x@y>"}])
 cases.append([["a@b.co"], [], [], "s", "b", {"In-Reply-To": "", "References": "<only@x>"}])
+# encoded words the subject itself holds are read back by the header parser; addresses outside ASCII
+for s in ["=?utf-8?q?hi?= there", "=?utf-8?q?=C3=A9t=C3=A9?= plans", "x=?utf-8?q?a?=y and more", "=?bogus?x?y?=",
+          "=?utf-8?b?w6k=?= =?utf-8?b?w6k=?= end", "=?iso-8859-1?q?caf=E9?= ok", "=?utf-8?q?a b?= c",
+          "=?utf-8?q?unterminated", "Re: =?UTF-8?B?w6l0w6k=?=" + " word" * 14]:
+    cases.append([["a@b.co"], [], [], s, "b", None])
+cases.append([["a@b.co"], [], [], "line\u2028sep", "b", None])
+cases.append([["a.very.long.local.part.that.keeps.going@домен-очень-длинный.рф", "é@b.co"], [], [], "a\x0bb", "b",
+              None])
+for to in [["josé@x.co"], ["user@домен.рф"], ["a.very.long.local.part.that.keeps.going@домен-очень-длинный.рф", "é@b.co"],
+           ["a(b)@x.co"], ["a[1]@x.co"], [f"p{i}@пример.рф" for i in range(6)]]:
+    cases.append([to, [], [], "s", "b", None])
 out["build_mail"] = [[c, mail(*c)] for c in cases]
 
 LA = timezone(timedelta(hours=-7))
@@ -163,6 +177,7 @@ FREE = [
     [[], "2026-10-05T00:00:00-07:00", "2026-10-06T00:00:00-07:00", -5, 9, 18],
 ]
 out["free_slots"] = [[c, slots(*c)] for c in FREE]
+out["tools"] = g.TOOLS
 
 (HERE / "python_parity.json").write_text(json.dumps(out, indent=1, ensure_ascii=False) + "\n")
 print("wrote", HERE / "python_parity.json")

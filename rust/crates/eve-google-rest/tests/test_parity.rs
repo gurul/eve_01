@@ -97,8 +97,13 @@ fn build_mail_is_byte_for_byte_pythons() {
             .map(|m| m.iter().map(|(k, v)| (k.clone(), v.as_str().unwrap().to_string())).collect())
             .unwrap_or_default();
         let raw = gr::build_mail(&strings(&c[0]), &strings(&c[1]), &strings(&c[2]), c[3].as_str().unwrap(),
-                                 c[4].as_str().unwrap(), &reply)
-            .unwrap();
+                                 c[4].as_str().unwrap(), &reply);
+        if let Some(err) = case[1].get("err") {
+            let e = raw.expect_err(&format!("{c}"));
+            assert_eq!(format!("{}: {e}", e.type_name()), *err, "{c}");
+            continue;
+        }
+        let raw = raw.unwrap();
         let bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(raw).unwrap();
         let latin1: String = bytes.iter().map(|&b| b as char).collect();
         assert_eq!(latin1, case[1].as_str().unwrap(), "{c}");
@@ -118,4 +123,12 @@ fn free_slots_match_python_in_los_angeles() {
                                  c[5].as_i64().unwrap(), LA);
         assert_eq!(outcome(got, |v| json!(v)), case[1], "{c}");
     }
+}
+
+#[test]
+fn tools_are_pythons_verbatim() {
+    let want = &fixture()["tools"];
+    let got: serde_json::Map<String, Value> =
+        gr::TOOLS.iter().map(|(app, tools)| (app.to_string(), Value::Array(tools.clone()))).collect();
+    assert_eq!(serde_json::to_string(&Value::Object(got)).unwrap(), serde_json::to_string(want).unwrap());
 }
