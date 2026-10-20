@@ -636,7 +636,18 @@ fn test_configured_save_dir_expands_user() {
     let home = std::env::var_os("HOME").map(PathBuf::from).unwrap();
     assert_eq!(configured_save_dir_from(Some("~/frames"), None), Some(home.join("frames")));
     assert_eq!(configured_save_dir_from(Some("~//frames"), None), Some(home.join("frames")));
-    assert_eq!(configured_save_dir_from(Some("~"), None), Some(home));
+    assert_eq!(configured_save_dir_from(Some("~"), None), Some(home.clone()));
+    // Spelled as pathlib spells it: str(Path("~/a//b/./c/").expanduser()).
+    let want = format!("{}/a/b/c", home.to_string_lossy().trim_end_matches('/'));
+    assert_eq!(configured_save_dir_from(Some("~/a//b/./c/"), None).unwrap().to_str(), Some(want.as_str()));
+    assert_eq!(expanduser("/tmp//frames/").to_str(), Some("/tmp/frames"));
+    assert_eq!(expanduser("//net/x").to_str(), Some("//net/x"));
+    assert_eq!(expanduser("///x").to_str(), Some("/x"));
+    assert_eq!(expanduser("./rel/").to_str(), Some("rel"));
+    assert_eq!(expanduser("a/~b").to_str(), Some("a/~b"));
+    assert_eq!(expanduser("/~").to_str(), Some("/~"));
+    // An unknown user keeps the path (pathlib raises RuntimeError).
+    assert_eq!(expanduser("~no_such_user_eve_xyz/f").to_str(), Some("~no_such_user_eve_xyz/f"));
 }
 
 // ---- adapter availability ----------------------------------------------------

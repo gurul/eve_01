@@ -838,7 +838,13 @@ impl FaceTracker {
         }
     }
 
-    fn submit(&self, frame: Arc<Frame>) -> Option<tokio::sync::oneshot::Receiver<WorkResult>> {
+    /// Queue one detect on the tracker's worker, starting the worker if there
+    /// is none. A worker per tracker, made lazily; after stop() a drain that
+    /// is still going gets a fresh one, as Python's `run_in_executor(None)`
+    /// falls back to the loop's default executor and keeps detecting. The
+    /// check and the send happen under one lock, so a stop() in between
+    /// cannot leave the drain without a worker.
+    fn submit(&self, frame: Arc<Frame>) -> std::io::Result<Option<tokio::sync::oneshot::Receiver<WorkResult>>> {
         let detect = self.inner.detect.read().clone();
         let identity = self.inner.identity.read().clone();
         let (tx, rx) = tokio::sync::oneshot::channel();
@@ -847,35 +853,31 @@ impl FaceTracker {
                 .unwrap_or_else(|p| Err(anyhow::anyhow!("detector panicked: {}", panic_message(&p))));
             let _ = tx.send(out);
         });
-        let ex = self.inner.executor.lock();
-        ex.as_ref()?.tx.send(job).ok()?;
-        Some(rx)
+        let mut ex = self.inner.executor.lock();
+        if ex.is_none() {
+            *ex = Some(Executor::spawn()?);
+        }
+        let sent = ex.as_ref().is_some_and(|e| e.tx.send(job).is_ok());
+        Ok(sent.then_some(rx))
     }
 
     /// Detect on the worker, reply, then drain the governor's parked frame.
     async fn run(&self, frame: Frame) {
         let mut nxt = Some(frame);
         while let Some(cur) = nxt {
-            // A worker per tracker, made lazily. After stop() a drain that is
-            // still going gets a fresh one, as Python's run_in_executor(None)
-            // falls back to the loop's default executor and keeps detecting.
-            {
-                let mut ex = self.inner.executor.lock();
-                if ex.is_none() {
-                    match Executor::spawn() {
-                        Ok(e) => *ex = Some(e),
-                        Err(e) => {
-                            tracing::error!("vision: could not start the detector thread: {}", e);
-                            return;
-                        }
-                    }
-                }
-            }
             let cur = Arc::new(cur);
             let t0 = (self.inner.clock)();
+            let rx = match self.submit(cur.clone()) {
+                Ok(Some(rx)) => rx,
+                // The worker thread ended (it never does while the tracker is alive).
+                Ok(None) => return,
+                Err(e) => {
+                    tracing::error!("vision: could not start the detector thread: {}", e);
+                    return;
+                }
+            };
             // Executor shut down under us (daemon stopping): a queued detect
             // that stop() cancelled ends the drain, as Python's CancelledError does.
-            let Some(rx) = self.submit(cur.clone()) else { return };
             let (rects, who) = match rx.await {
                 Err(_) => return,
                 Ok(Ok(v)) => v,
@@ -1091,27 +1093,54 @@ pub fn configured_save_dir_from(cli_value: Option<&str>, env_value: Option<&str>
     }
 }
 
-/// Python's `Path.expanduser()`: `~` and `~/...` from HOME (else the password
-/// database), `~user/...` from the password database; unchanged otherwise.
-pub fn expanduser(p: &str) -> PathBuf {
-    let Some(rest) = p.strip_prefix('~') else { return PathBuf::from(p) };
-    let (user, tail) = match rest.find('/') {
-        Some(i) => (&rest[..i], &rest[i + 1..]),
-        None => (rest, ""),
-    };
-    let home = if user.is_empty() {
-        std::env::var_os("HOME").map(PathBuf::from).or_else(|| passwd_home(None))
+/// `PurePosixPath(p)` split the way pathlib parses it: the root ("/", or "//"
+/// for exactly two leading slashes, as POSIX allows) and the parts, with
+/// empty and "." parts dropped.
+fn pathlib_parse(p: &str) -> (&'static str, Vec<&str>) {
+    let root = if p.starts_with("//") && !p.starts_with("///") {
+        "//"
+    } else if p.starts_with('/') {
+        "/"
     } else {
-        passwd_home(Some(user))
+        ""
     };
-    // pathlib splits on runs of '/', so "~//x" is home/x, never "/x".
-    let tail = tail.trim_start_matches('/');
-    match home {
-        Some(h) if tail.is_empty() => h,
-        Some(h) => h.join(tail),
-        // Python's Path.expanduser raises RuntimeError here; keep the path as given.
-        None => PathBuf::from(p),
+    (root, p.split('/').filter(|s| !s.is_empty() && *s != ".").collect())
+}
+
+/// The string `str(PurePosixPath(...))` gives for a root and parts.
+fn pathlib_join(root: &str, parts: &[&str]) -> PathBuf {
+    let s = format!("{root}{}", parts.join("/"));
+    PathBuf::from(if s.is_empty() { ".".to_string() } else { s })
+}
+
+/// Python's `Path(p).expanduser()`: a leading `~` from HOME (else the
+/// password database), `~user` from the password database; the result is
+/// spelled as pathlib spells it (`//` runs collapsed, `.` parts and a
+/// trailing `/` dropped).
+pub fn expanduser(p: &str) -> PathBuf {
+    let (root, parts) = pathlib_parse(p);
+    let first = parts.first().copied().unwrap_or("");
+    if !root.is_empty() || !first.starts_with('~') {
+        return pathlib_join(root, &parts);
     }
+    let user = &first[1..];
+    let home = if user.is_empty() {
+        std::env::var_os("HOME")
+            .map(|h| h.to_string_lossy().into_owned())
+            .or_else(|| passwd_home(None).map(|h| h.to_string_lossy().into_owned()))
+    } else {
+        passwd_home(Some(user)).map(|h| h.to_string_lossy().into_owned())
+    };
+    let Some(home) = home else {
+        // Python's Path.expanduser raises RuntimeError here; keep the path as given.
+        return pathlib_join(root, &parts);
+    };
+    // posixpath.expanduser: `userhome.rstrip("/")`, and an empty result is "/".
+    let home = home.trim_end_matches('/');
+    let home = if home.is_empty() { "/" } else { home };
+    let (hroot, mut hparts) = pathlib_parse(home);
+    hparts.extend_from_slice(&parts[1..]);
+    pathlib_join(hroot, &hparts)
 }
 
 fn passwd_home(user: Option<&str>) -> Option<PathBuf> {

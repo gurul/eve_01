@@ -37,7 +37,7 @@ Status: complete
 | `FaceTracker._maybe_save` | private `maybe_save` | At most one frame per `SAVE_FRAMES_MIN_INTERVAL`; an I/O error disables the dump |
 | `save_frame` | `save_frame(&Frame, &Path) -> io::Result<PathBuf>` | `frame_{seq:06}.jpg` verbatim / `.png` via `encode_gray_png`; creates parents |
 | `encode_gray_png` | `encode_gray_png(w, h, &[u8]) -> Result<Vec<u8>, ValueError>` | Same chunk layout (IHDR 8-bit gray, one IDAT, IEND), filter 0 per row, zlib level 6 (flate2), CRC32 (crc32fast); same mismatch message |
-| `configured_save_dir` | `configured_save_dir(Option<&str>)` (process env) and `configured_save_dir_from(cli, env)` | `cli or EVE_SAVE_FRAMES or ""`, stripped, `expanduser` (HOME, else passwd; `~user`) |
+| `configured_save_dir` | `configured_save_dir(Option<&str>)` (process env) and `configured_save_dir_from(cli, env)` | `cli or EVE_SAVE_FRAMES or ""`, stripped, `expanduser` (HOME, else passwd; `~user`; home `rstrip("/")`, empty is `/`); `pub expanduser` returns the path spelled as pathlib spells it (`//` runs collapsed except a leading `//`, `.` parts and trailing `/` dropped) |
 | `make_detector` | `make_detector() -> Option<Detector>` | Off-mac: the same warning and None. On mac: checks the Vision classes exist, else warns and returns None |
 | `_cgimage_from_frame` | `cgimage_from_frame(&Frame) -> Option<CFRetained<CGImage>>` (macOS, pub for identity) | Gray: `CGImageCreate` 8 bpc/8 bpp DeviceGray, no alpha; otherwise `CGImageSourceCreateWithData` + `CreateImageAtIndex(0)` |
 | `vision_detect` | `vision_detect(&Frame) -> anyhow::Result<Vec<Rect>>` | Inside an autorelease pool; `VNDetectFaceRectanglesRequest` with default options; y flipped from bottom-left to top-left with the CGImage's own size; errors `could not decode {fmt} frame {seq}` and `Vision request failed: <NSError -description>` (Python's `str(err)`) |
@@ -57,7 +57,7 @@ None. The Vision, ImageIO and Core Graphics calls go through `objc2-vision`, `ob
 ## Differences
 - Python's `_run` catches every `RuntimeError` from `run_in_executor` as "executor shut down", which also swallows a `RuntimeError` raised by the detector itself (`Vision request failed: …`) and leaves the governor busy forever, so tracking stops for the rest of the run. Rust treats only a stopped worker as shutdown; a detector or identity error (or panic) is logged and the frame answers "no face", as Python does for every other exception.
 - After `stop()`, a drain loop that is still running gets a fresh worker thread for its parked frame, where Python's `run_in_executor(None, …)` falls back to asyncio's default executor; both keep answering frames.
-- `_clamp` on a NaN (a detector reporting a NaN box) gives 0 where Python's `round` raises `ValueError` on the loop thread and wedges the tracker; Vision never reports one.
+- `_clamp` on a NaN (a detector reporting a NaN box) gives 0 and on an infinity gives the bound, where Python's `round` raises `ValueError` / `OverflowError` on the loop thread and wedges the tracker; Vision never reports either.
 - `encode_gray_png` compresses with flate2 (miniz_oxide) at level 6, so the IDAT bytes can differ from CPython's zlib; the PNG decodes to the same pixels.
 - `seq`/`w`/`h` beyond 64-bit range are rejected as bad frames (Python would build a big int).
 - `configured_save_dir` with `~user` for an unknown user keeps the path as given (pathlib raises `RuntimeError`).
