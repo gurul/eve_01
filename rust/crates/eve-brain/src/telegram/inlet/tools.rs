@@ -1227,6 +1227,19 @@ impl TelegramInlet {
             st.claude_on_job = Some(crate::seams::Job::spawn("claude-on", futures::future::pending::<()>()));
         }
     }
+    /// `inlet._chat_id`.
+    pub fn tt_chat_id(&self) -> Option<i64> {
+        self.st.lock().chat_id
+    }
+    /// `inlet._codex_chat is None and inlet._launch is None and inlet._agent is None`.
+    pub fn tt_nothing_started(&self) -> bool {
+        let st = self.st.lock();
+        st.codex_chat.is_none() && st.launch.is_none() && st.agent.is_none()
+    }
+    /// `inlet._write_question(composio_tools, name, args)`.
+    pub fn tt_composio_write_question(self: &Arc<Self>, name: &str, args: &Obj) -> Option<String> {
+        self.write_question(super::chief::ItlDescriber::Composio, name, args, false)
+    }
     /// `inlet._awaiting_answer`.
     pub fn tt_awaiting_answer(self: &Arc<Self>) -> bool {
         self.awaiting_answer()
