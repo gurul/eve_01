@@ -1,0 +1,18 @@
+[package]
+name = "eve-codex-auth"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+dirs.workspace = true
+indexmap.workspace = true
+parking_lot.workspace = true
+regex.workspace = true
+serde_json.workspace = true
+tempfile.workspace = true
+thiserror.workspace = true
+toml = "1.1.8"
+tracing.workspace = true
+
+[dev-dependencies]
+tracing-subscriber.workspace = true
