@@ -44,6 +44,7 @@ Status: complete
 | `prewarm`, `warm`, `discard` | `prewarm()` (a prewarm future dropped midway closes what it started in the background, as `except BaseException: await self._close()`), `warm(max_age)`, `discard()`; also `impl eve_codex_warm::WarmAgent`, `warm_factory`, `ask_from_warm` | |
 | `run` | `run(goal) -> Result<String, CodexError>` | `Err` only where Python raises out of `run()` |
 | `_close` | `Shared::close` | jobs, `turn/interrupt` (3 s), terminate then kill (3 s), reader, waiters |
+| (the underscore members `CodexChat` uses as a subclass: `_answer_request` override, `_launch`, `_rpc`, `_send`, `_thread_started`, `_begin_metering`, `_finish_metering`, `_close`, `_emit`, `_approval_lock`, `_cancelled`, `_done`, `_auth_mode`, `_meter_turn_id`, `_jobs`, `_proc`/`_reader`) | `set_request_handler` (`RequestHandler`), `answer_request`, `ask_user`, `emit`, `launch`, `rpc`, `send_message`, `thread_started`, `begin_metering`, `finish_metering`, `close_process`, `detach`, `process_alive`, `cancel_jobs`, `lock_approvals`, `is_cancelled`/`set_cancelled`, `auth_mode`, `ledger`, `max_secs`, `new_done`/`done_finished`/`done_pending`/`complete_turn` (`TurnOutcome`), `set_running`, `set_thread_id`, `set_turn_id`, `set_meter_turn_id`, `set_final_text`, `reset_turn` | additive, for eve-codex-chat (a request the handler takes runs as one of the agent's background jobs, as the override's task does) |
 | (`asyncio.create_subprocess_exec`) | `process::{Spawner, Spawned, Child, os_spawner}` | |
 
 ## Tests

@@ -510,6 +510,15 @@ impl Default for Options {
 
 type Reply = Result<Value, CodexError>;
 
+/// How a turn ended, as the agent's done future holds it: the `turn` of `turn/completed`, or the transport
+/// failure that ended the event stream.
+pub type TurnOutcome = Result<Value, CodexError>;
+
+/// A replacement for `_answer_request` (Python's subclass override, as `CodexChat` makes one): given a
+/// server-to-client request, the future that answers it, or `None` to answer it as the agent does. The future
+/// runs as one of the agent's background jobs.
+pub type RequestHandler = Arc<dyn Fn(&Value) -> Option<BoxFuture<'static, ()>> + Send + Sync>;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct Tokens {
     input: i128,
@@ -596,6 +605,7 @@ struct Shared {
     cancelled: watch::Sender<bool>,
     on_event: Mutex<OnEvent>,
     ask_user: Mutex<Ask>,
+    request_handler: Mutex<Option<RequestHandler>>,
     binary: String,
     max_secs: f64,
     rpc_timeout: f64,
@@ -685,6 +695,7 @@ impl CodexComputerAgent {
             cancelled: watch::Sender::new(false),
             on_event: Mutex::new(on_event),
             ask_user: Mutex::new(ask_user),
+            request_handler: Mutex::new(None),
             binary: options.binary.filter(|b| !b.is_empty()).unwrap_or_else(executable),
             max_secs: options.max_secs,
             rpc_timeout: options.rpc_timeout,
@@ -1394,6 +1405,14 @@ impl Shared {
     /// The `finally` of `run()`.
     async fn finish_run(self: &Arc<Self>) {
         self.close().await;
+        self.record_metering();
+        let mut st = self.st.lock();
+        st.warmed_at = None;
+        st.running = false;
+    }
+
+    /// `_finish_metering()`: the API-key spend row of the metered turn, if one is due.
+    fn record_metering(&self) {
         let row = self.st.lock().finish_metering();
         if let Some((usd, tokens, note)) = row {
             let mut opts = RecordOpts::new().note(&note);
@@ -1406,9 +1425,6 @@ impl Shared {
             }
             self.ledger.record("openai", "codex", eve_spend::CODEX, usd, opts);
         }
-        let mut st = self.st.lock();
-        st.warmed_at = None;
-        st.running = false;
     }
 
     async fn steer(self: Arc<Self>, text: String) {
@@ -1474,8 +1490,14 @@ impl Shared {
         let msg: Value =
             serde_json::from_slice(line).map_err(|e| PyError::new("JSONDecodeError", e.to_string()))?;
         if py::contains(&msg, "method")? && py::contains(&msg, "id")? {
-            let shared = self.clone();
-            self.background(async move { shared.answer_request(msg).await });
+            let handler = self.request_handler.lock().clone();
+            match handler.and_then(|h| h(&msg)) {
+                Some(answer) => self.background(answer),
+                None => {
+                    let shared = self.clone();
+                    self.background(async move { shared.answer_request(msg).await });
+                }
+            }
         } else if py::contains(&msg, "id")? {
             let key = pending_key(py::index(&msg, "id")?)?;
             let mut st = self.st.lock();
@@ -1825,6 +1847,191 @@ impl Shared {
         }
         // Dropping a waiter's sender cancels it, as `future.cancel()`.
         self.st.lock().pending.clear();
+    }
+}
+
+// ---- the subclass surface ---------------------------------------------------------------------------------------
+
+/// Python's underscore members, for an agent built on this one as `CodexChat(CodexComputerAgent)` is
+/// (eve-codex-chat): it starts its own thread, runs turns one message at a time, and answers command and
+/// file-change approvals itself.
+impl CodexComputerAgent {
+    /// Answer server-to-client requests with `handler` first (`None`: the agent's own `_answer_request`).
+    pub fn set_request_handler(&self, handler: Option<RequestHandler>) {
+        *self.shared.request_handler.lock() = handler;
+    }
+
+    /// The agent's own `_answer_request(msg)` (`super()._answer_request(msg)`).
+    pub async fn answer_request(&self, msg: Value) {
+        self.shared.clone().answer_request(msg).await;
+    }
+
+    /// The current `ask_user`.
+    pub fn ask_user(&self) -> Ask {
+        self.shared.ask_user.lock().clone()
+    }
+
+    /// `_emit(kind, text)`: one event to `on_event`.
+    pub fn emit(&self, kind: &str, text: &str) {
+        self.shared.emit(kind, text);
+    }
+
+    /// `_launch()`: the app-server, `initialize` and `initialized`; the auth mode is captured here.
+    pub async fn launch(&self) -> Result<(), CodexError> {
+        self.shared.launch().await
+    }
+
+    /// `_rpc(method, params)`: one request and its result, within `rpc_timeout`.
+    pub async fn rpc(&self, method: &str, params: Value) -> Result<Value, CodexError> {
+        self.shared.rpc(method, params).await
+    }
+
+    /// `_send(message)`: one JSON line to the app-server.
+    pub async fn send_message(&self, message: &Value) -> Result<(), CodexError> {
+        self.shared.send(message).await
+    }
+
+    /// `_thread_started(result)`: a `thread/start` result's thread id and model, and a fresh usage baseline.
+    pub fn thread_started(&self, result: &Value) -> PyResult<()> {
+        self.shared.st.lock().thread_started(result)
+    }
+
+    /// `_begin_metering(what)`.
+    pub fn begin_metering(&self, what: &str) {
+        self.shared.st.lock().begin_metering(what);
+    }
+
+    /// `_finish_metering()`: records the metered turn's API-key spend row, once.
+    pub fn finish_metering(&self) {
+        self.shared.record_metering();
+    }
+
+    /// `_close()`: background jobs, a running turn's interrupt, the app-server, the reader, waiting requests.
+    pub async fn close_process(&self) {
+        self.shared.close().await;
+    }
+
+    /// `self._proc = self._reader = self._done = None` after `_close()`: a later `_send` is "Codex is not
+    /// connected.".
+    pub async fn detach(&self) {
+        *self.shared.stdin.lock().await = None;
+        let mut st = self.shared.st.lock();
+        st.child = None;
+        st.reader = None;
+        st.done = None;
+    }
+
+    /// `_proc` is running and `_reader` has not ended.
+    pub fn process_alive(&self) -> bool {
+        let st = self.shared.st.lock();
+        st.child.as_ref().is_some_and(|c| c.returncode().is_none()) && st.reader.as_ref().is_some_and(|r| !r.is_finished())
+    }
+
+    /// Cancel the background jobs (request answers, corrections) and wait until they have stopped.
+    pub async fn cancel_jobs(&self) {
+        let jobs = std::mem::take(&mut self.shared.st.lock().jobs);
+        for job in &jobs {
+            job.abort();
+        }
+        for job in jobs {
+            let _ = job.await;
+        }
+    }
+
+    /// `_approval_lock`: held while one approval is decided and answered.
+    pub async fn lock_approvals(&self) -> tokio::sync::MutexGuard<'_, ()> {
+        self.shared.approval_lock.lock().await
+    }
+
+    /// `_cancelled`.
+    pub fn is_cancelled(&self) -> bool {
+        self.shared.cancelled()
+    }
+
+    /// `self._cancelled = value` (a chat resets it for each new thread).
+    pub fn set_cancelled(&self, value: bool) {
+        self.shared.cancelled.send_replace(value);
+    }
+
+    /// `_auth_mode`: captured at launch.
+    pub fn auth_mode(&self) -> AuthMode {
+        self.shared.st.lock().auth_mode
+    }
+
+    /// Where spend rows go.
+    pub fn ledger(&self) -> &Ledger {
+        &self.shared.ledger
+    }
+
+    /// `max_secs`.
+    pub fn max_secs(&self) -> f64 {
+        self.shared.max_secs
+    }
+
+    /// `self._done = loop.create_future()`: a new done future, resolved by `turn/completed` or a transport failure.
+    pub fn new_done(&self) -> watch::Receiver<Option<TurnOutcome>> {
+        let (tx, rx) = watch::channel(None);
+        self.shared.st.lock().done = Some(tx);
+        rx
+    }
+
+    /// `self._done is not None and self._done.done()`.
+    pub fn done_finished(&self) -> bool {
+        self.shared.st.lock().done.as_ref().is_some_and(|d| d.borrow().is_some())
+    }
+
+    /// `self._done is not None and not self._done.done()`.
+    pub fn done_pending(&self) -> bool {
+        self.shared.st.lock().done_pending()
+    }
+
+    /// `self._done.set_result(turn)` when it is still pending, as `turn/completed` does.
+    pub fn complete_turn(&self, turn: Value) {
+        let st = self.shared.st.lock();
+        if let Some(done) = &st.done {
+            if done.borrow().is_none() {
+                done.send_replace(Some(Ok(turn)));
+            }
+        }
+    }
+
+    /// `self.running = value`.
+    pub fn set_running(&self, value: bool) {
+        self.shared.st.lock().running = value;
+    }
+
+    /// `self.thread_id = value` (`Value::Null` is `None`).
+    pub fn set_thread_id(&self, value: Value) {
+        self.shared.st.lock().thread_id = value;
+    }
+
+    /// `self.turn_id = value` (`Value::Null` is `None`).
+    pub fn set_turn_id(&self, value: Value) {
+        self.shared.st.lock().turn_id = value;
+    }
+
+    /// `self._meter_turn_id = value`.
+    pub fn set_meter_turn_id(&self, value: Value) {
+        self.shared.st.lock().meter.turn_id = if value.is_null() { None } else { Some(value) };
+    }
+
+    /// `self.final = text`.
+    pub fn set_final_text(&self, text: &str) {
+        self.shared.st.lock().final_text = text.to_string();
+    }
+
+    /// A new turn's state: `goal = goal`, `final = last_commentary = ''`, `turn_id = None`, no browser use or
+    /// picture or tab, no UI evidence.
+    pub fn reset_turn(&self, goal: &str) {
+        let mut st = self.shared.st.lock();
+        st.goal = goal.to_string();
+        st.final_text.clear();
+        st.last_commentary.clear();
+        st.turn_id = Value::Null;
+        st.browser_used = false;
+        st.browser_screenshot = None;
+        st.browser_tab_id = None;
+        st.ui_evidence.clear();
     }
 }
 
