@@ -1,16 +1,19 @@
 //! A port of `telegram.py`, lines 1-715: constants, the text brain's prompts, eve lite's lines, the credit/key checks.
 //!
-//! Skeleton: constants and prompts are verbatim (generated from the Python values); bodies are
-//! `todo!()` until this file's unit fills them.
+//! The constants and prompts are the Python values, verbatim. The ones Python derives from another (INSTRUCTIONS,
+//! `_TEXT_STYLE`, `_TEXT_STYLE_LITE`) are written out here, and the unit tests below hold each one to its derivation,
+//! as the module's top-level asserts do.
+
+use std::sync::atomic::{AtomicBool, Ordering};
 
 #[allow(unused_imports)]
 use crate::prelude::*;
 #[allow(unused_imports)]
 use crate::telegram::*;
 
-// py: telegram.py:137: a top-level `If`, ported by this file's unit.
+// py: telegram.py:137 `if TYPE_CHECKING: from .memory import Memory`: typing only, nothing to port.
 
-// py: telegram.py:140 `log` (Logger): ported by this file's unit.
+// py: telegram.py:140 `log = logging.getLogger(__name__)`: the `tracing` macros, each line starting "telegram: ".
 
 /// py: telegram.py:142 `TELEGRAM_DEFAULT`
 /// ships off: no evaluation of the text brain exists yet
@@ -722,13 +725,14 @@ Mac and cannot see its screen or hear you. Talk the way a friend texts: warm and
 punctuation (use a comma or a full stop), no offers of things you \"can help with\" — you are a friend, not an
 assistant menu. Whether a reply is plain text or an openui-lang block follows the Eve Link app section below.";
 
-// py: telegram.py:536: a top-level `Assert`, ported by this file's unit.
+// py: telegram.py:536 `assert _TEXT_STYLE in INSTRUCTIONS and "no lists" in _TEXT_STYLE`: the unit test
+// `text_style_is_in_the_instructions` below.
 
 /// py: telegram.py:539 `def app_instructions(instructions: str) -> str:`
 ///
 /// ``instructions`` with the texting style swapped for ``APP_STYLE``: an app turn's (``request``).
 pub fn app_instructions(instructions: &str) -> String {
-    todo!("telegram.py:539 app_instructions")
+    instructions.replace(TEXT_STYLE, APP_STYLE)
 }
 
 /// py: telegram.py:556 `INSTRUCTIONS_LITE`
@@ -775,7 +779,8 @@ not be at the Mac. Talk the way a friend texts: warm and brief, no emoji ever, n
 or a full stop), no offers of things you \"can help with\" — you are a friend, not an assistant menu. Whether a reply is
 plain text or an openui-lang block follows the web app section below.";
 
-// py: telegram.py:593: a top-level `Assert`, ported by this file's unit.
+// py: telegram.py:593 `assert _TEXT_STYLE_LITE in INSTRUCTIONS_LITE and "no lists" in _TEXT_STYLE_LITE`: the unit test
+// `lite_text_style_is_in_the_lite_instructions` below.
 
 /// py: telegram.py:596 `CALL_NOTE_LITE`
 pub const CALL_NOTE_LITE: &str = "The owner is talking to you by voice in eve's web app, push to talk. Your reply is read aloud and shown in the chat: answer in one to three short spoken sentences, with no Markdown, lists or emoji. When they will need something in writing (a link, an address, a code, numbers to copy, a list to keep), end your reply with a line that is just 📎 and put only that part after it: that part is shown in the chat and never read aloud.";
@@ -800,28 +805,44 @@ This message came from the Eve Link app on the owner's iPhone. The app shows pla
 This message came from eve's web app, on the owner's phone or a computer. The app shows plain text as Markdown and draws an openui-lang block as cards, tables, charts and buttons."), ("This turn is from the Eve Link app:", "This turn is from eve's web app:"), ("the openui-lang block in an Eve Link reply", "the openui-lang block in a reply in eve's web app")];
 
 /// py: telegram.py:629 `_LITE_APP_WARNED`
-pub(crate) const LITE_APP_WARNED: &[&str] = &[];
+///
+/// Python's list that holds True once the warning in `lite_app_block` was logged: once per process.
+pub(crate) static LITE_APP_WARNED: AtomicBool = AtomicBool::new(false);
 
 /// py: telegram.py:632 `def _lite(environ: Any = None) -> bool:`
 ///
 /// eve lite (EVE_PROFILE=lite): every lite branch in this module asks here, for ``environ`` or the process's
 /// environment. profile.py is read when asked; with EVE_PROFILE unset this is False and no lite branch is taken.
+///
+/// Python's `profile.is_lite` raises when EVE_PROFILE is neither full nor lite, and nothing here catches it: the
+/// same error is a panic here, with profile's own words (the daemon checks the profile at boot, so a turn never
+/// meets it).
 pub(crate) fn lite(environ: Option<&Environ>) -> bool {
-    todo!("telegram.py:632 _lite")
+    match eve_profile::is_lite(environ) {
+        Ok(lite) => lite,
+        Err(e) => panic!("{e}"),
+    }
 }
 
 /// py: telegram.py:640 `def _lite_tools(tools: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:`
 ///
 /// ``tools`` less every tool eve lite does not have, in their order (profile.filter_tools).
 pub(crate) fn lite_tools(tools: &[Obj]) -> Vec<Obj> {
-    todo!("telegram.py:640 _lite_tools")
+    tools.iter().filter(|tool| lite_has_tool(tool)).cloned().collect()
+}
+
+/// `profile.filter_tools`'s test for one definition: its name (`name`, else `function.name`) is one eve lite has.
+fn lite_has_tool(tool: &Obj) -> bool {
+    // profile.tool_name reads a definition of any shape; it takes a Value, so the one map is lent as one.
+    let name = eve_profile::tool_name(&Value::Object(tool.clone()));
+    eve_profile::lite_tool_allowed(&name)
 }
 
 /// py: telegram.py:647 `def _lite_has(name: str) -> bool:`
 ///
 /// Whether eve lite has the tool ``name`` (profile.lite_tool_allowed: its own set and Composio's meta tools).
 pub(crate) fn lite_has(name: &str) -> bool {
-    todo!("telegram.py:647 _lite_has")
+    eve_profile::lite_tool_allowed(name)
 }
 
 /// py: telegram.py:654 `def lite_app_block(block: str) -> str:`
@@ -830,7 +851,17 @@ pub(crate) fn lite_has(name: &str) -> bool {
 /// (LITE_APP_SWAPS); "" stays "". A block that still names the phone app after the swaps (link_chat.py or the
 /// reference reworded) is logged once, with no words from it, and test_lite_brain.py fails on it.
 pub fn lite_app_block(block: &str) -> String {
-    todo!("telegram.py:654 lite_app_block")
+    let mut block = block.to_string();
+    for (old, new) in LITE_APP_SWAPS {
+        block = block.replace(old, new);
+    }
+    if !block.is_empty() && block.contains("Eve Link") && !LITE_APP_WARNED.swap(true, Ordering::SeqCst) {
+        tracing::warn!(
+            "telegram: lite: the app block still names the phone app after {} swaps; LITE_APP_SWAPS needs the new wording",
+            LITE_APP_SWAPS.len()
+        );
+    }
+    block
 }
 
 /// py: telegram.py:670 `OPENUI_PLACEHOLDER_LITE`
@@ -842,7 +873,13 @@ pub const OPENUI_PLACEHOLDER_LITE: &str = "(A table or chart is here: it shows i
 /// program it cannot draw (OPENUI_PLACEHOLDER_LITE). The taint marks are made from this same text (_note,
 /// _sync_turns), so a marked line still matches the prompt that shows it (tool_gate.carried).
 pub(crate) fn history_text(text: &str, app: bool) -> String {
-    todo!("telegram.py:673 _history_text")
+    use eve_link::link_chat::OPENUI_PLACEHOLDER;
+
+    let shown = eve_link::link_chat::history_text(text, app);
+    if !app && shown.contains(OPENUI_PLACEHOLDER) && lite(None) {
+        return shown.replace(OPENUI_PLACEHOLDER, OPENUI_PLACEHOLDER_LITE);
+    }
+    shown
 }
 
 /// py: telegram.py:685 `NO_CREDIT_STATUS`
@@ -855,15 +892,30 @@ pub const KEY_REJECTED_STATUS: i64 = 401;
 ///
 /// Whether ``error`` (or one it was raised from) carries HTTP ``want`` from the model call: the OpenAI SDK's
 /// APIStatusError keeps it on ``status_code``, an httpx error on its ``response``.
+///
+/// Python walks ``__cause__`` / ``__context__``; here it is the error's chain of sources (an `anyhow` context, a
+/// `#[source]`). The model call's errors are eve-openrouter's (`Error::Status`, the SDK's APIStatusError) and
+/// reqwest's (`error_for_status`, httpx's HTTPStatusError).
 pub(crate) fn model_http_status(error: &anyhow::Error, want: i64) -> bool {
-    todo!("telegram.py:689 _model_http_status")
+    error.chain().any(|e| http_status(e) == Some(want))
+}
+
+/// The HTTP status one error carries, if it is one that carries one.
+fn http_status(e: &(dyn std::error::Error + 'static)) -> Option<i64> {
+    if let Some(e) = e.downcast_ref::<eve_openrouter::Error>() {
+        return e.status().map(i64::from);
+    }
+    if let Some(e) = e.downcast_ref::<reqwest::Error>() {
+        return e.status().map(|s| i64::from(s.as_u16()));
+    }
+    None
 }
 
 /// py: telegram.py:705 `def no_credit(error: BaseException) -> bool:`
 ///
 /// Whether a model call failed for want of credit: HTTP 402, on the error or one it was raised from.
 pub fn no_credit(error: &anyhow::Error) -> bool {
-    todo!("telegram.py:705 no_credit")
+    model_http_status(error, NO_CREDIT_STATUS)
 }
 
 /// py: telegram.py:710 `def key_rejected(error: BaseException) -> bool:`
@@ -871,5 +923,106 @@ pub fn no_credit(error: &anyhow::Error) -> bool {
 /// Whether a model call failed because OpenRouter turned the key down: HTTP 401. In eve lite the key was minted
 /// by the OAuth sign-in, so the fix is to sign in again, not to touch a file (LITE_KEY_REJECTED_LINE).
 pub fn key_rejected(error: &anyhow::Error) -> bool {
-    todo!("telegram.py:710 key_rejected")
+    model_http_status(error, KEY_REJECTED_STATUS)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// `s[s.index(start):s.index(end)]`.
+    fn between<'a>(s: &'a str, start: &str, end: &str) -> &'a str {
+        &s[s.find(start).expect("start")..s.find(end).expect("end")]
+    }
+
+    #[test]
+    fn text_style_is_in_the_instructions() {
+        // py: telegram.py:528 `_TEXT_STYLE = INSTRUCTIONS_ROBOT[...index("Right now they are texting"):...index("\n\nYou can operate")]`
+        assert_eq!(TEXT_STYLE, between(INSTRUCTIONS_ROBOT, "Right now they are texting", "\n\nYou can operate"));
+        // py: telegram.py:536
+        assert!(INSTRUCTIONS.contains(TEXT_STYLE) && TEXT_STYLE.contains("no lists"));
+    }
+
+    #[test]
+    fn lite_text_style_is_in_the_lite_instructions() {
+        assert_eq!(
+            TEXT_STYLE_LITE,
+            between(INSTRUCTIONS_LITE, "Right now they are writing", "\n\nEverything you can do")
+        );
+        // py: telegram.py:593
+        assert!(INSTRUCTIONS_LITE.contains(TEXT_STYLE_LITE) && TEXT_STYLE_LITE.contains("no lists"));
+    }
+
+    #[test]
+    fn the_instructions_are_the_robots_with_its_paragraph_swapped() {
+        // py: telegram.py:519 `_ROBOT_PARAGRAPH = INSTRUCTIONS_ROBOT[index("When your robot body"):index("\n\nStarting a coding session")]`
+        assert_eq!(
+            ROBOT_PARAGRAPH,
+            between(INSTRUCTIONS_ROBOT, "When your robot body", "\n\nStarting a coding session")
+        );
+        // py: telegram.py:524 `INSTRUCTIONS = INSTRUCTIONS_ROBOT.replace(_ROBOT_PARAGRAPH, _NO_ROBOT_PARAGRAPH)`
+        assert_eq!(INSTRUCTIONS, INSTRUCTIONS_ROBOT.replace(ROBOT_PARAGRAPH, NO_ROBOT_PARAGRAPH));
+        assert_ne!(INSTRUCTIONS, INSTRUCTIONS_ROBOT);
+    }
+
+    #[test]
+    fn an_app_turn_reads_the_app_style() {
+        let app = app_instructions(INSTRUCTIONS);
+        assert!(app.contains(APP_STYLE) && !app.contains(TEXT_STYLE));
+        assert_eq!(app.replace(APP_STYLE, TEXT_STYLE), INSTRUCTIONS);
+        assert_eq!(app_instructions("no style here"), "no style here");
+    }
+
+    #[test]
+    fn the_lite_app_block_swaps_every_eve_link_line() {
+        for (old, new) in LITE_APP_SWAPS {
+            let swapped = lite_app_block(&format!("before {old} after"));
+            assert_eq!(swapped, format!("before {new} after"));
+        }
+        assert_eq!(lite_app_block(""), "");
+        // a block the swaps miss is returned as it is (and logged once)
+        assert_eq!(lite_app_block("Eve Link reworded"), "Eve Link reworded");
+        assert!(LITE_APP_WARNED.load(Ordering::SeqCst));
+        assert_eq!(lite_app_block("Eve Link reworded"), "Eve Link reworded");
+    }
+
+    #[test]
+    fn lite_has_its_own_tools_and_composios_meta_tools() {
+        assert!(lite_has("remember") && lite_has("think_hard") && lite_has("web_search"));
+        assert!(!lite_has("start_task") && !lite_has("screenshot") && !lite_has(""));
+        let tools: Vec<Obj> = [json!({"type": "function", "name": "remember"}),
+                               json!({"type": "function", "name": "start_task"}),
+                               json!({"type": "function", "function": {"name": "think_hard"}})]
+        .into_iter()
+        .map(|v| v.as_object().cloned().unwrap())
+        .collect();
+        let kept: Vec<Value> = lite_tools(&tools).into_iter().map(Value::Object).collect();
+        assert_eq!(kept, vec![json!({"type": "function", "name": "remember"}),
+                              json!({"type": "function", "function": {"name": "think_hard"}})]);
+    }
+
+    #[test]
+    fn lite_reads_the_profile_of_the_environment_lent() {
+        let mut env = Environ::new();
+        assert!(!lite(Some(&env)));
+        env.insert("EVE_PROFILE".into(), "lite".into());
+        assert!(lite(Some(&env)));
+        env.insert("EVE_PROFILE".into(), "full".into());
+        assert!(!lite(Some(&env)));
+    }
+
+    #[test]
+    #[should_panic(expected = "EVE_PROFILE")]
+    fn a_profile_that_is_neither_raises() {
+        let env: Environ = [("EVE_PROFILE".to_string(), "medium".to_string())].into_iter().collect();
+        lite(Some(&env));
+    }
+
+    #[test]
+    fn a_full_eve_history_line_reads_link_chats_placeholder() {
+        let program = "Here:\n```openui-lang\nroot = Card([])\n```";
+        let shown = history_text(program, false);
+        assert_eq!(shown, eve_link::link_chat::history_text(program, false));
+        assert_eq!(history_text(program, true), eve_link::link_chat::history_text(program, true));
+    }
 }

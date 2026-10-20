@@ -1,7 +1,7 @@
 //! A port of `telegram.py`, lines 716-1166: the text brain's tools, the apps blocks, the intent lines, tools_for.
 //!
-//! Skeleton: constants and prompts are verbatim (generated from the Python values); bodies are
-//! `todo!()` until this file's unit fills them.
+//! The constants are the Python values, verbatim; the tests in `tests/telegram_prompts.rs` hold the derived ones
+//! (TOOL_NAMES, APPS_BLOCK_REST_NO_WEB, LENT_LABELS' keys) to their derivations.
 
 #[allow(unused_imports)]
 use crate::prelude::*;
@@ -44,7 +44,21 @@ accounts. Nothing on the public web (a course page, opening hours, a product, th
 /// The APPS_BLOCK sentence that keeps the direct apps out of COMPOSIO, naming only the ones that are up
 /// (apps_mcp.AppsBridge.apps), in its own order; "" with none up.
 pub fn apps_direct_line(direct_apps: &[String]) -> String {
-    todo!("telegram.py:876 apps_direct_line")
+    use eve_apps_mcp::{SEP, SERVERS};
+
+    let up: Vec<&str> = direct_apps.iter().map(String::as_str).filter(|a| SERVERS.contains_key(a)).collect();
+    if up.is_empty() {
+        return String::new();
+    }
+    let labels: Vec<&str> = up.iter().map(|a| SERVERS[a].label).collect();
+    let named = if labels.len() == 1 {
+        labels[0].to_string()
+    } else {
+        format!("{} and {}", labels[..labels.len() - 1].join(", "), labels[labels.len() - 1])
+    };
+    let (verb, they) = if up.len() == 1 { ("is", "it has its") } else { ("are", "they have their") };
+    let prefixes: Vec<String> = up.iter().map(|a| format!("{a}{SEP}…")).collect();
+    format!(" The owner's own {named} {verb} not in COMPOSIO: {they} own tools ({}).", prefixes.join(", "))
 }
 
 /// py: telegram.py:894 `APPS_BLOCK_LITE`
@@ -76,7 +90,20 @@ pub(crate) const APPS_LITE_NO_WEB: &str = " Nothing on the public web (a course 
 /// reaches, in kinds of app, never by name; how to find and run a tool when search and multi-execute are both
 /// listed; the sign-in link when the connection manager is; and web_search for the public web when ``web``.
 pub fn apps_block_lite(names: &[String], web: bool) -> String {
-    todo!("telegram.py:912 apps_block_lite")
+    use eve_composio_tools::{MANAGE_CONNECTIONS, MULTI_EXECUTE};
+
+    let have = |name: &str| names.iter().any(|n| n == name);
+    let mut block = APPS_BLOCK_LITE.to_string();
+    if have("COMPOSIO_SEARCH_TOOLS") && have(MULTI_EXECUTE) {
+        block.push_str(APPS_LITE_FIND);
+    }
+    block.push_str(APPS_LITE_ASKED);
+    if have(MANAGE_CONNECTIONS) {
+        block.push_str(APPS_LITE_LINK);
+    }
+    block.push_str(APPS_LITE_SUMMARY);
+    block.push_str(if web { APPS_LITE_WEB } else { APPS_LITE_NO_WEB });
+    block
 }
 
 /// py: telegram.py:930 `LENT_LABELS`
@@ -95,13 +122,27 @@ pub const ROBOT_BODY_TOOLS: &[&str] = &["find", "go_explore", "look", "look_arou
 ///
 /// An app's code-path command in ``text``, or None: the module's own ``match`` when it has one (it matches with
 /// no hub, so a switched-on app that is not set up can say so), else the hub's (the lights match their names).
-pub(crate) fn code_match(app: &Value, hub: &Value, text: &str) -> Value {
-    todo!("telegram.py:946 _code_match")
+///
+/// ``app.mod()`` is the app's module as the inlet holds it (`AppHubs::module`), None when it lent none; ``hub`` is
+/// the app's hub (`AppHubs::get`), None when it is off or not set up.
+pub(crate) fn code_match(module: Option<&dyn AppModule>, hub: Option<&dyn AppHub>, text: &str) -> Option<HubCommand> {
+    if let Some(module) = module {
+        if module.has_match() {
+            return module.module_match(text);
+        }
+    }
+    hub.and_then(|hub| hub.match_command(text))
 }
 
 /// py: telegram.py:955 `def robot_enabled(environ: Any = None) -> bool:`
 pub fn robot_enabled(environ: Option<&Environ>) -> bool {
-    todo!("telegram.py:955 robot_enabled")
+    let raw = env_get(environ, "EVE_ROBOT").unwrap_or_default();
+    matches!(raw.trim().to_lowercase().as_str(), "1" | "true" | "yes" | "on")
+}
+
+/// TOOLS as definitions (each one a JSON object).
+fn tools_list() -> Vec<Obj> {
+    TOOLS.as_array().map(|tools| tools.iter().filter_map(|t| t.as_object().cloned()).collect()).unwrap_or_default()
 }
 
 /// py: telegram.py:960 `def own_tools() -> list[dict[str, Any]]:`
@@ -109,8 +150,42 @@ pub fn robot_enabled(environ: Option<&Environ>) -> bool {
 /// eve's own tools as lent this turn: TOOLS, less the robot body's unless EVE_ROBOT=1. eve lite's are the ones
 /// it has (profile.filter_tools): remember and think_hard.
 pub fn own_tools() -> Vec<Obj> {
-    todo!("telegram.py:960 own_tools")
+    own_tools_in(None)
 }
+
+/// [`own_tools`] for the environment ``environ`` (None: the process's), where Python's tests set EVE_ROBOT and
+/// EVE_PROFILE with monkeypatch.
+pub fn own_tools_in(environ: Option<&Environ>) -> Vec<Obj> {
+    let all = tools_list();
+    let tools: Vec<Obj> = if robot_enabled(environ) {
+        all
+    } else {
+        all.into_iter()
+            .filter(|t| !ROBOT_BODY_TOOLS.contains(&t.get("name").and_then(Value::as_str).unwrap_or("")))
+            .collect()
+    };
+    if lite(environ) {
+        lite_tools(&tools)
+    } else {
+        tools
+    }
+}
+
+/// INTENT_LINES as (the tools a line needs, the line).
+static INTENT_LINE_LIST: LazyLock<Vec<(Vec<String>, String)>> = LazyLock::new(|| {
+    INTENT_LINES
+        .as_array()
+        .map(|lines| {
+            lines
+                .iter()
+                .filter_map(|pair| {
+                    let needs = pair.get(0)?.as_array()?.iter().filter_map(|n| n.as_str().map(str::to_string));
+                    Some((needs.collect(), pair.get(1)?.as_str()?.to_string()))
+                })
+                .collect()
+        })
+        .unwrap_or_default()
+});
 
 /// py: telegram.py:973 `INTENT_WORDS`
 pub const INTENT_WORDS: &str = "Choosing a tool: call one only for something the owner wants done or found now. A question about what you can do or how something works, a request that starts with \"don't\" or \"no need to\", something that already happened, and small talk about their day are answered in words with no tool. When the right tool depends on something they did not say, ask one short question.";
@@ -142,7 +217,36 @@ pub(crate) const FILES_NO_READ: &[&str] = &["screenshot", "list_files", "send_fi
 /// line needs both of its tools; with only web_search, the plainer line says where showtimes go. The no-device line
 /// names only the reads this turn offers; ``apps``: the direct apps up (INTENT_APP_LINES).
 pub fn intent_block(offered: &[String], apps: &[String]) -> String {
-    todo!("telegram.py:1100 intent_block")
+    let have = |name: &str| offered.iter().any(|o| o == name);
+    let mut lines: Vec<String> = vec![INTENT_WORDS.to_string()];
+    let mut movie = false;
+    for (needs, line) in INTENT_LINE_LIST.iter() {
+        if !needs.iter().all(|n| have(n)) || (needs.as_slice() == FILES_NO_READ && have("read_file")) {
+            continue;
+        }
+        let mut line = line.clone();
+        if needs.as_slice() == ["web_search", "firetv_control"] {
+            movie = true;
+        } else if needs.as_slice() == ["web_search"] && movie {
+            line = "Current facts, news, prices and opening hours are web_search.".to_string();
+        }
+        lines.push(line);
+    }
+    for (app, line) in INTENT_APP_LINES {
+        if apps.iter().any(|a| a == app) {
+            lines.push(line.to_string());
+        }
+    }
+    let reads: Vec<&str> = NO_DEVICE_READS.iter().copied().filter(|r| have(r)).collect();
+    if !reads.is_empty() {
+        lines.push(NO_DEVICE.replace("{reads}", &reads.join(" or ")));
+    }
+    let recall: Vec<&str> = ["memory_search", "recent_messages"].into_iter().filter(|r| have(r)).collect();
+    if !recall.is_empty() {
+        let verb = if recall.len() > 1 { "are" } else { "is" };
+        lines.insert(1, INTENT_TALK.replace("{recall}", &recall.join(" and ")).replace("{verb}", verb));
+    }
+    lines.join("\n")
 }
 
 /// py: telegram.py:1128 `_MAC_JOBS`
@@ -161,14 +265,20 @@ pub(crate) const ROUTE_MAC_ON: &str = "Route every request to do something in an
 ///
 /// ``instructions`` with the start_task lines reworded for the menu tools' switch (see _MAC_JOBS).
 pub fn menu_instructions(instructions: &str) -> String {
-    todo!("telegram.py:1137 menu_instructions")
+    let out = replace_flat(instructions, MAC_JOBS, MAC_JOBS_ON);
+    replace_flat(&out, ROUTE_MAC, ROUTE_MAC_ON)
 }
 
 /// py: telegram.py:1143 `def _replace_flat(text: str, old: str, new: str) -> str:`
 ///
 /// Replace ``old`` in ``text`` where the text may wrap it over lines (a newline for any one space).
 pub(crate) fn replace_flat(text: &str, old: &str, new: &str) -> String {
-    todo!("telegram.py:1143 _replace_flat")
+    let pattern = old.split(' ').map(regex::escape).collect::<Vec<_>>().join(r"\s+");
+    match Regex::new(&pattern) {
+        Ok(re) => re.replacen(text, 1, regex::NoExpand(new)).into_owned(),
+        // every piece is escaped, so the pattern always builds; a text left as it is would be the safe miss
+        Err(_) => text.to_string(),
+    }
 }
 
 /// py: telegram.py:1149 `def tools_for(config: TelegramConfig, memory_tools: Sequence[dict[str, Any]] = (), extra: Sequence[dict[str, Any]] = (), vault: bool = False, watch_tools: Sequence[dict[str, Any]] = (), chat_tools: Sequence[dict[str, Any]] = ()) -> list[dict[str, Any]]:`
@@ -180,7 +290,34 @@ pub(crate) fn replace_flat(text: &str, old: &str, new: &str) -> String {
 /// and with them everything eve could look up (owner, 2026-09-23). The watch tools (watch.py) come after the
 /// vault's when a Watcher is lent. eve lite offers only the tools it has (profile.filter_tools), in this order.
 pub fn tools_for(config: &TelegramConfig, memory_tools: &[Obj], extra: &[Obj], vault: bool, watch_tools: &[Obj], chat_tools: &[Obj]) -> Vec<Obj> {
-    todo!("telegram.py:1149 tools_for")
+    tools_for_in(None, config, memory_tools, extra, vault, watch_tools, chat_tools)
+}
+
+/// [`tools_for`] for the environment ``environ`` (None: the process's): EVE_ROBOT and EVE_PROFILE.
+pub fn tools_for_in(
+    environ: Option<&Environ>,
+    config: &TelegramConfig,
+    memory_tools: &[Obj],
+    extra: &[Obj],
+    vault: bool,
+    watch_tools: &[Obj],
+    chat_tools: &[Obj],
+) -> Vec<Obj> {
+    let objects = |tools: Vec<Value>| -> Vec<Obj> { tools.into_iter().filter_map(|t| t.as_object().cloned()).collect() };
+    let mut tools = own_tools_in(environ);
+    tools.extend(memory_tools.iter().cloned());
+    tools.extend(chat_tools.iter().cloned());
+    tools.extend(objects(eve_web::websearch::tools_for(&config.search)));
+    if vault {
+        tools.extend(objects(eve_second_brain::SECOND_BRAIN_TOOLS.clone()));
+    }
+    tools.extend(watch_tools.iter().cloned());
+    tools.extend(extra.iter().cloned());
+    if lite(environ) {
+        lite_tools(&tools)
+    } else {
+        tools
+    }
 }
 
 /// py: telegram.py:1166 `SCREEN_NOW`
