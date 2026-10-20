@@ -1,0 +1,18 @@
+[package]
+name = "eve-chief-receipt"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+eve-chief-card = { path = "../eve-chief-card" }
+regex.workspace = true
+serde_json.workspace = true
+# str.casefold: Unicode full case folding (CaseFolding.txt C + F), as CPython's.
+caseless = "0.2.2"
+# str.isdecimal / str.isprintable: the Unicode general category.
+unicode-general-category = "1.1.0"
+
+[dev-dependencies]
+tempfile.workspace = true
