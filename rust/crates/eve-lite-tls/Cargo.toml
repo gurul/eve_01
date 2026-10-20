@@ -1,0 +1,31 @@
+[package]
+name = "eve-lite-tls"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+chrono.workspace = true
+eve-lan-net = { path = "../eve-lan-net" }
+hex.workspace = true
+libc.workspace = true
+parking_lot.workspace = true
+pem = "4"
+rcgen = { version = "0.14.10", features = ["x509-parser"] }
+ring = "0.17"
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12", "logging"] }
+sha2.workspace = true
+base64.workspace = true
+time = "0.3"
+tracing.workspace = true
+uuid = { workspace = true, features = ["v5"] }
+x509-parser = { version = "0.18", features = ["verify"] }
+
+[dev-dependencies]
+plist = "1.10"
+tempfile.workspace = true
+tokio.workspace = true
+tokio-rustls = { version = "0.26", default-features = false, features = ["ring", "tls12", "logging"] }
+tracing-subscriber.workspace = true
