@@ -89,21 +89,114 @@ pub static RECENT_MESSAGES_TOOL: LazyLock<Value> =
 /// A time the model wrote (ISO 8601, the owner's local time unless it carries an offset) as epoch seconds, or
 /// None when there is none or it cannot be read.
 ///
-/// `datetime.fromisoformat` is eve-transcripts' port of it (dates, any one separator, times, offsets), and a naive
-/// time is read in this computer's zone as `astimezone()` reads it (`local_aware`).
+/// `datetime.fromisoformat` is eve-transcripts' port of it (dates, any one separator, times, offsets), with the ISO
+/// week dates Python 3.11+ also reads (`iso_week_date`) rewritten to calendar dates first; a naive time is read in
+/// this computer's zone as `astimezone()` reads it (`local_aware`).
 pub(crate) fn local_time(raw: &Value) -> Option<f64> {
     let text = py_str_or_empty(raw);
     let text = text.py_trim();
     if text.is_empty() {
         return None;
     }
-    let (naive, offset) = eve_transcripts::py::fromisoformat(&text.replace('Z', "+00:00"))?;
+    let text = text.replace('Z', "+00:00");
+    let text = match iso_week_date(&text) {
+        None => text,
+        Some(calendar) => calendar?,
+    };
+    let (naive, offset) = eve_transcripts::py::fromisoformat(&text)?;
     let at = match offset {
         Some(offset) => chrono::TimeZone::from_local_datetime(&offset, &naive).single()?,
         None => local_aware(naive),
     };
     // timedelta.total_seconds(): the whole microseconds, over 10**6
     Some(at.timestamp_micros() as f64 / 1e6)
+}
+
+/// `datetime.fromisoformat`'s ISO week dates (`YYYY-Www[-D]`, `YYYYWww[D]`, Python 3.11+), which eve-transcripts'
+/// port does not read: None when ``text`` is not one (its fifth character, or the sixth after a dash, is not "W");
+/// else the same string with the date written as `YYYY-MM-DD`, or None inside when Python raises on it.
+///
+/// The date's length is CPython's `_find_isoformat_datetime_separator`, character for character; the one character
+/// after it is the separator, whatever it is, and a separator with nothing after it is a ValueError, as in Python.
+fn iso_week_date(text: &str) -> Option<Option<String>> {
+    let b = text.as_bytes();
+    let dashed = b.get(4) == Some(&b'-');
+    if b.get(4 + usize::from(dashed)) != Some(&b'W') {
+        return None;
+    }
+    Some(week_calendar(text, dashed))
+}
+
+/// The work of [`iso_week_date`] for a string that is a week date.
+fn week_calendar(text: &str, dashed: bool) -> Option<String> {
+    let b = text.as_bytes();
+    let len = b.len();
+    if len < 7 {
+        return None;
+    }
+    let sep = if len == 7 {
+        7
+    } else if dashed {
+        if len > 8 && b[8] == b'-' {
+            if len == 9 {
+                return None;
+            }
+            // YYYY-Www-## is read as YYYY-Www, a hyphen, then the time (CPython's own best effort)
+            if len > 10 && b[10].is_ascii_digit() {
+                8
+            } else {
+                10
+            }
+        } else {
+            8
+        }
+    } else {
+        let mut idx = 7;
+        while idx < len && b[idx].is_ascii_digit() {
+            idx += 1;
+        }
+        if idx < 9 {
+            idx
+        } else if idx % 2 == 0 {
+            7
+        } else {
+            8
+        }
+    };
+    let date = text.get(..sep)?;
+    let d = date.as_bytes();
+    let number = |from: usize, to: usize| -> Option<u32> {
+        let part = date.get(from..to)?;
+        (!part.is_empty() && part.bytes().all(|c| c.is_ascii_digit())).then(|| part.parse().ok()).flatten()
+    };
+    let year = number(0, 4)?;
+    let mut pos = 5 + usize::from(dashed);
+    let week = number(pos, pos + 2)?;
+    pos += 2;
+    let mut day = 1;
+    if d.len() > pos {
+        if (d[pos] == b'-') != dashed {
+            return None; // "Inconsistent use of dash separator"
+        }
+        pos += usize::from(dashed);
+        day = number(pos, pos + 1)?;
+        if d.len() != pos + 1 {
+            return None;
+        }
+    }
+    // _isoweek_to_gregorian: a year from MINYEAR, week 1 to the year's last (52 or 53), day 1 to 7
+    if year < 1 || !(1..=7).contains(&day) {
+        return None;
+    }
+    let weekday = chrono::Weekday::try_from(u8::try_from(day - 1).ok()?).ok()?;
+    let calendar = chrono::NaiveDate::from_isoywd_opt(i32::try_from(year).ok()?, week, weekday)?;
+    let calendar = calendar.format("%Y-%m-%d").to_string();
+    let mut rest = text.get(sep..)?.chars();
+    match rest.next() {
+        None => Some(calendar),
+        Some(_separator) if rest.as_str().is_empty() => None,
+        Some(_separator) => Some(format!("{calendar}T{}", rest.as_str())),
+    }
 }
 
 /// `naive.astimezone()`: a naive time read as this computer's local time. A time the clocks show twice (the hour
@@ -136,7 +229,7 @@ fn py_str_or_empty(raw: &Value) -> String {
 /// py: telegram.py:1267 `def _words(text: str) -> list[str]:`
 pub(crate) fn words(text: &str) -> Vec<String> {
     static WORD: LazyLock<Regex> = LazyLock::new(|| Regex::new("[a-z0-9]+").expect("WORD"));
-    let flat = text.to_lowercase().replace('’', "").replace('\'', "");
+    let flat = text.to_lowercase().replace(['’', '\''], "");
     WORD.find_iter(&flat).map(|m| m.as_str().to_string()).collect()
 }
 
@@ -430,12 +523,37 @@ pub(crate) fn owner_ids(raw: &str) -> Vec<i64> {
     ids.into_iter().collect()
 }
 
-/// `piece.isdigit() and int(piece) > 0`, as the id: ASCII decimal digits, above 0, within i64 (every Telegram id is).
+/// `piece.isdigit() and int(piece) > 0`, as the id: decimal digits of any script (`int` reads "١٢" as 12), above 0.
+///
+/// Two places where Python does otherwise, neither an id Telegram hands out: a digit that is not a decimal one (a
+/// superscript "²" is `isdigit`) makes Python's `int` raise out of `configured`, and here it is an entry ignored with
+/// the same warning; a number past i64 (every Telegram id is far inside it) is ignored too.
 fn py_positive_int(piece: &str) -> Option<i64> {
-    if piece.is_empty() || !piece.bytes().all(|b| b.is_ascii_digit()) {
+    if piece.is_empty() {
         return None;
     }
-    piece.parse::<i64>().ok().filter(|&n| n > 0)
+    let mut n: i64 = 0;
+    for c in piece.chars() {
+        n = n.checked_mul(10)?.checked_add(i64::from(decimal_digit(c)?))?;
+    }
+    (n > 0).then_some(n)
+}
+
+/// The first code point of every run of ten decimal digits (Unicode 15.1, Python 3.13's `unicodedata`: each run is
+/// 0 to 9 in order).
+const DECIMAL_ZEROS: [u32; 68] = [
+    0x30, 0x660, 0x6F0, 0x7C0, 0x966, 0x9E6, 0xA66, 0xAE6, 0xB66, 0xBE6, 0xC66, 0xCE6, 0xD66, 0xDE6, 0xE50, 0xED0,
+    0xF20, 0x1040, 0x1090, 0x17E0, 0x1810, 0x1946, 0x19D0, 0x1A80, 0x1A90, 0x1B50, 0x1BB0, 0x1C40, 0x1C50, 0xA620,
+    0xA8D0, 0xA900, 0xA9D0, 0xA9F0, 0xAA50, 0xABF0, 0xFF10, 0x104A0, 0x10D30, 0x11066, 0x110F0, 0x11136, 0x111D0,
+    0x112F0, 0x11450, 0x114D0, 0x11650, 0x116C0, 0x11730, 0x118E0, 0x11950, 0x11C50, 0x11D50, 0x11DA0, 0x11F50,
+    0x16A60, 0x16AC0, 0x16B50, 0x1D7CE, 0x1D7D8, 0x1D7E2, 0x1D7EC, 0x1D7F6, 0x1E140, 0x1E2F0, 0x1E4F0, 0x1E950,
+    0x1FBF0,
+];
+
+/// `unicodedata.decimal(c)`: the value of a decimal digit of any script, None for anything else.
+fn decimal_digit(c: char) -> Option<u32> {
+    let cp = u32::from(c);
+    DECIMAL_ZEROS.iter().find(|&&zero| (zero..zero + 10).contains(&cp)).map(|&zero| cp - zero)
 }
 
 /// `(env.get(name) or default).strip()`.
@@ -466,10 +584,7 @@ fn search_configured(environ: Option<&Environ>) -> eve_web::websearch::SearchCon
 /// eve lite (EVE_PROFILE=lite in ``environ``) has a brain of its own (``_lite_configured``).
 pub fn configured(environ: Option<&Environ>) -> TelegramConfig {
     if lite(environ) {
-        return match environ {
-            Some(env) => lite_configured(env),
-            None => lite_configured(&std::env::vars().collect()),
-        };
+        return lite_configured(environ);
     }
     let switch = env_str(environ, "EVE_TELEGRAM", if TELEGRAM_DEFAULT { "1" } else { "0" }).to_lowercase();
     let app_only = switch == "app";
@@ -531,18 +646,21 @@ pub fn configured(environ: Option<&Environ>) -> TelegramConfig {
 /// as nothing to hide and nothing to reach. One owner, the web app's own chat (profile.LITE_CHAT_ID), so the app's
 /// chat and the watcher's alerts have a chat to be in (TelegramInlet._chat_id). The models, the efforts and the web
 /// search are read as full eve reads them, and ``about`` is eve lite's block (self_context._lite_lines).
-pub(crate) fn lite_configured(env: &Environ) -> TelegramConfig {
+///
+/// ``environ``: the mapping lent, or None for the process's environment (Python's `os.environ`), read key by key as
+/// `env.get` reads it.
+pub(crate) fn lite_configured(environ: Option<&Environ>) -> TelegramConfig {
     TelegramConfig {
         enabled: true,
         app_only: true,
         token: String::new(),
         owner_ids: vec![eve_profile::LITE_CHAT_ID],
-        model: env_str(Some(env), "EVE_TELEGRAM_MODEL", DEFAULT_MODEL),
-        effort: effort(env, "EVE_TELEGRAM_EFFORT", DEFAULT_EFFORT),
-        app_think_model: env_str(Some(env), "EVE_APP_THINK_MODEL", DEFAULT_APP_THINK_MODEL),
-        app_think_effort: effort(env, "EVE_APP_THINK_EFFORT", DEFAULT_APP_THINK_EFFORT),
-        search: search_configured(Some(env)),
-        about: crate::self_context::block(Some(env), None, None),
+        model: env_str(environ, "EVE_TELEGRAM_MODEL", DEFAULT_MODEL),
+        effort: effort(environ, "EVE_TELEGRAM_EFFORT", DEFAULT_EFFORT),
+        app_think_model: env_str(environ, "EVE_APP_THINK_MODEL", DEFAULT_APP_THINK_MODEL),
+        app_think_effort: effort(environ, "EVE_APP_THINK_EFFORT", DEFAULT_APP_THINK_EFFORT),
+        search: search_configured(environ),
+        about: crate::self_context::block(environ, None, None),
         ..TelegramConfig::default()
     }
 }
@@ -550,8 +668,9 @@ pub(crate) fn lite_configured(env: &Environ) -> TelegramConfig {
 /// py: telegram.py:1445 `def _effort(env: Any, name: str, default: str) -> str:`
 ///
 /// The reasoning effort ``name`` sets, or ``default`` (with one warning) when it is not one of EFFORTS.
-pub(crate) fn effort(env: &Environ, name: &str, default: &str) -> String {
-    let effort = env_str(Some(env), name, default).to_lowercase();
+/// ``environ``: the mapping lent, or None for the process's environment.
+pub(crate) fn effort(environ: Option<&Environ>, name: &str, default: &str) -> String {
+    let effort = env_str(environ, name, default).to_lowercase();
     if !EFFORTS.contains(&effort.as_str()) {
         tracing::warn!(
             "telegram: {name}={} is not a reasoning effort; using {default}",
@@ -648,6 +767,21 @@ mod tests {
         let naive = chrono::NaiveDate::from_ymd_opt(2026, 10, 9).unwrap().and_hms_opt(18, 0, 0).unwrap();
         let local = chrono::TimeZone::from_local_datetime(&chrono::Local, &naive).earliest().unwrap();
         assert_eq!(local_time(&json!("2026-10-09T18:00")), Some(local.timestamp() as f64));
+        // ISO week dates, as Python 3.11+ reads them (2026-W41-5 is Friday 2026-10-09)
+        let local = |y, m, d, h| {
+            let naive = chrono::NaiveDate::from_ymd_opt(y, m, d).unwrap().and_hms_opt(h, 0, 0).unwrap();
+            chrono::TimeZone::from_local_datetime(&chrono::Local, &naive).earliest().unwrap().timestamp() as f64
+        };
+        assert_eq!(local_time(&json!("2026-W41-5T18:00Z")), Some(utc));
+        assert_eq!(local_time(&json!("2026-W41-5")), Some(local(2026, 10, 9, 0)));
+        assert_eq!(local_time(&json!("2026W415T1800")), Some(local(2026, 10, 9, 18)));
+        assert_eq!(local_time(&json!("2026-W41")), Some(local(2026, 10, 5, 0)));
+        assert_eq!(local_time(&json!("2026W41512")), Some(local(2026, 10, 5, 12))); // CPython's own best effort
+        assert_eq!(local_time(&json!("2026-W53-1")), Some(local(2026, 12, 28, 0)));
+        for bad in ["2026-W00-1", "2026-W41-8", "2026-W415", "2026W41-5", "2026-W41-512", "2026-W41-5T", "2025-W53-1",
+                    "2026-W4"] {
+            assert_eq!(local_time(&json!(bad)), None, "{bad}");
+        }
         for none in [json!(null), json!(""), json!("  "), json!("nonsense"), json!("2026-13-01T00:00"), json!(0),
                      json!(false)] {
             assert_eq!(local_time(&none), None, "{none}");
@@ -660,23 +794,26 @@ mod tests {
         assert_eq!(owner_ids("1;2;,3"), [1, 2, 3]);
         assert_eq!(owner_ids(" 12 ,12"), [12]);
         assert_eq!(owner_ids("007"), [7]);
-        for bad in ["", "  ", "@guru", "-5", "0", "abc", "+5", "1.5"] {
+        for bad in ["", "  ", "@guru", "-5", "0", "abc", "+5", "1.5", "\u{b2}", "99999999999999999999"] {
             assert!(owner_ids(bad).is_empty(), "{bad:?}");
         }
+        // int() reads the decimal digits of any script
+        assert_eq!(owner_ids("\u{661}\u{662}, \u{ff17}"), [7, 12]);
+        assert_eq!(owner_ids("\u{660}"), Vec::<i64>::new());
     }
 
     #[test]
     fn an_effort_that_is_not_one_falls_back() {
-        assert_eq!(effort(&env(&[("E", " HIGH ")]), "E", "low"), "high");
-        assert_eq!(effort(&env(&[("E", "sideways")]), "E", "low"), "low");
-        assert_eq!(effort(&env(&[("E", "")]), "E", "medium"), "medium");
-        assert_eq!(effort(&env(&[]), "E", "medium"), "medium");
+        assert_eq!(effort(Some(&env(&[("E", " HIGH ")])), "E", "low"), "high");
+        assert_eq!(effort(Some(&env(&[("E", "sideways")])), "E", "low"), "low");
+        assert_eq!(effort(Some(&env(&[("E", "")])), "E", "medium"), "medium");
+        assert_eq!(effort(Some(&env(&[])), "E", "medium"), "medium");
     }
 
     #[test]
     fn lite_is_configured_without_telegram() {
-        let cfg = lite_configured(&env(&[("EVE_TELEGRAM_TOKEN", "t"), ("EVE_TELEGRAM_OWNER", "42"),
-                                         ("EVE_TELEGRAM_EFFORT", "max")]));
+        let cfg = lite_configured(Some(&env(&[("EVE_TELEGRAM_TOKEN", "t"), ("EVE_TELEGRAM_OWNER", "42"),
+                                         ("EVE_TELEGRAM_EFFORT", "max")])));
         assert!(cfg.enabled && cfg.app_only && cfg.token.is_empty());
         assert_eq!(cfg.owner_ids, vec![eve_profile::LITE_CHAT_ID]);
         assert_eq!(cfg.effort, "max");

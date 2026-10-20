@@ -261,9 +261,11 @@ async fn test_forwarded_words_and_non_text_never_reach_a_model() {
 
 // ---- the setup check -------------------------------------------------------------------------------------------
 
+/// Set in the child process `test_the_setup_check_prints_ids_never_words` runs to read what diagnose prints.
+const SETUP_CHECK_CHILD: &str = "EVE_TEST_SETUP_CHECK_CHILD";
+
 #[tokio::test]
 async fn test_the_setup_check_prints_ids_never_words() {
-    // stdout is not captured here: the exit codes and the read without acknowledging are the claims kept
     let api = FakeApi::new(vec![vec![update(1, "my secret words", OWNER, NOW, 1),
                                      update(2, "hi", STRANGER, NOW, 2)]]);
     let owner = OWNER.to_string();
@@ -272,6 +274,21 @@ async fn test_the_setup_check_prints_ids_never_words() {
     assert_eq!(code, 0);
     assert_eq!(api.log.lock().offsets, vec![None]); // read without acknowledging
     assert_eq!(diagnose(Some(&env(&[])), None).await, 1);
+    if std::env::var_os(SETUP_CHECK_CHILD).is_some() {
+        return; // the child: the run above printed what the parent reads
+    }
+    // capsys: diagnose prints to stdout, which the test harness holds back; this same test, run again in a child
+    // process with --nocapture, prints it where it can be read
+    let out = std::process::Command::new(std::env::current_exe().expect("the test binary"))
+        .args(["test_the_setup_check_prints_ids_never_words", "--exact", "--nocapture", "--test-threads=1"])
+        .env(SETUP_CHECK_CHILD, "1")
+        .output()
+        .expect("the child test");
+    assert!(out.status.success(), "{}", String::from_utf8_lossy(&out.stderr));
+    let out = String::from_utf8_lossy(&out.stdout);
+    assert!(out.contains("@eve_test_bot") && out.contains(&format!("user id {OWNER}")) && out.contains("already an owner"),
+            "{out}");
+    assert!(out.contains(&format!("user id {STRANGER}")) && !out.contains("secret") && !out.contains(TOKEN), "{out}");
 }
 
 // ---- the apps (composio_tools.py) and the search engine (websearch.py) -----------------------------------------
@@ -595,6 +612,30 @@ fn test_a_402_is_no_credit_and_nothing_else_is() {
     let nested = anyhow::Error::new(Turn(eve_openrouter::Error::Status { status: 402, body: String::new(),
                                                                        headers: Box::default() }));
     assert!(no_credit(&nested) && !key_rejected(&nested));
+    // httpx.HTTPStatusError(response=httpx.Response(402)): reqwest's error_for_status on a real 402
+    let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
+    assert!(no_credit(&runtime.block_on(http_status_error(402))));
+    assert!(!no_credit(&runtime.block_on(http_status_error(500))));
+    assert!(key_rejected(&runtime.block_on(http_status_error(401))));
+}
+
+/// A reqwest status error, as `error_for_status` makes it from a real answer with HTTP ``code`` (a one-shot listener
+/// on 127.0.0.1).
+async fn http_status_error(code: u16) -> anyhow::Error {
+    use std::io::{Read, Write};
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("a local port");
+    let addr = listener.local_addr().unwrap();
+    let server = std::thread::spawn(move || {
+        if let Ok((mut stream, _)) = listener.accept() {
+            let mut request = [0u8; 4096];
+            let _ = stream.read(&mut request);
+            let _ = write!(stream, "HTTP/1.1 {code} Status\r\ncontent-length: 0\r\nconnection: close\r\n\r\n");
+        }
+    });
+    let client = reqwest::Client::builder().no_proxy().build().unwrap();
+    let response = client.post(format!("http://{addr}/api/v1/responses")).send().await.expect("the local answer");
+    server.join().unwrap();
+    anyhow::Error::new(response.error_for_status().expect_err("an error status"))
 }
 
 #[test]
@@ -616,9 +657,7 @@ fn test_own_tools_and_tools_for_filter_in_lite_and_not_in_full_eve() {
     assert_eq!(full_own, every); // full eve: the very list, as before
     assert_eq!(names(&own_tools_in(Some(&env(&[("EVE_ROBOT", "1"), ("EVE_PROFILE", "lite")])))),
                strings(&["remember", "think_hard"]));
-    let cfg = TelegramConfig { search: eve_web::websearch::SearchConfig { engine: "openrouter-perplexity".into(),
-                                                                          ..Default::default() },
-                               ..TelegramConfig::default() };
+    let cfg = configured(Some(&lite_env(&[])));
     let tool = |name: &str| obj(json!({"type": "function", "name": name}));
     let lent = tools_for_in(Some(&env(&[("EVE_PROFILE", "lite")])), &cfg,
                             &[tool("memory_search"), tool("capture_note")],
