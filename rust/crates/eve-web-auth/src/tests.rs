@@ -699,3 +699,32 @@ fn test_what_python_json_reads_costs_one_row_not_the_file() {
     assert_eq!(python_json_compat(r#"["NaN", "-0", "\\ud800", -0.5, -01]"#), r#"["NaN", "-0", "\\ud800", -0.5, -01]"#);
     assert!(matches!(python_json_compat("{\"a\": 1}"), std::borrow::Cow::Borrowed(_)));
 }
+
+#[test]
+fn test_a_number_past_f64_costs_one_row_as_in_python() {
+    // json.loads reads 1e400 as inf and a 400-digit integer as an int; serde_json refuses both ("number out of
+    // range"). The row with the odd stamp goes, the others stay, as in Python (the big int: see Differences).
+    let tmp = tempfile::tempdir().unwrap();
+    let path = tmp.path().join("web-devices.json");
+    let h = sha_hex(CANARY);
+    let other = sha_hex("ANOTHER-CANARY-NOT-A-KEY");
+    let body = format!(
+        r#"{{"version": 1, "devices": [{{"id": "0a1b2c3d", "label": "ok", "host": "h", "sha256": "{h}", "created": 1,
+        "last_seen": 1800000000}}, {{"id": "1a1b2c3d", "sha256": "{other}", "created": 1e400, "last_seen": 1}},
+        {{"id": "2a1b2c3d", "sha256": "{other}", "created": {}, "last_seen": -1E+999}}]}}"#,
+        "9".repeat(400)
+    );
+    fs::write(&path, body).unwrap();
+    let devices = Devices::with_clock(&path, FakeClock::new().clock());
+    assert_eq!(devices.list().iter().map(|d| d.id.as_str()).collect::<Vec<_>>(), ["0a1b2c3d"]);
+    assert!(devices.check(CANARY, None).is_some());
+    assert_eq!(python_json_compat("[1e400, -1E+999, 1e-400, 1E-0, 2.5]"), "[null, null, 1e-400, 1E-0, 2.5]");
+    // past 4300 digits Python's json.loads refuses the whole file (a ValueError), and so does this
+    fs::write(&path, format!(r#"{{"version": 1, "devices": [{}]}}"#, "9".repeat(4301))).unwrap();
+    let (rows, log) = caplog(|| Devices::new(&path).list());
+    assert!(rows.is_empty());
+    assert!(log.contains("could not be read (ValueError)"), "{log}");
+    fs::write(&path, format!(r#"{{"version": 1, "devices": [{}]}}"#, "9".repeat(4300))).unwrap();
+    let (_, log) = caplog(|| Devices::new(&path).list());
+    assert!(!log.contains("could not be read"), "{log}");
+}

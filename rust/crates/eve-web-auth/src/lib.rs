@@ -277,6 +277,13 @@ fn os_error_name(e: &io::Error) -> &'static str {
         Some(libc::ENOTDIR) => "NotADirectoryError",
         Some(libc::EINTR) => "InterruptedError",
         Some(libc::ETIMEDOUT) => "TimeoutError",
+        Some(libc::EAGAIN) | Some(libc::EALREADY) | Some(libc::EINPROGRESS) => "BlockingIOError",
+        Some(libc::ECHILD) => "ChildProcessError",
+        Some(libc::EPIPE) | Some(libc::ESHUTDOWN) => "BrokenPipeError",
+        Some(libc::ECONNABORTED) => "ConnectionAbortedError",
+        Some(libc::ECONNREFUSED) => "ConnectionRefusedError",
+        Some(libc::ECONNRESET) => "ConnectionResetError",
+        Some(libc::ESRCH) => "ProcessLookupError",
         _ => "OSError",
     }
 }
@@ -549,6 +556,9 @@ impl Devices {
         };
         let data: Value = match serde_json::from_str(&python_json_compat(&text)) {
             Ok(v) => v,
+            // what is still out of range after python_json_compat is an integer past 4300 digits: Python's
+            // int() refuses it with a plain ValueError, not a JSONDecodeError
+            Err(e) if e.to_string().starts_with("number out of range") => return unreadable("ValueError"),
             Err(_) => return unreadable("JSONDecodeError"),
         };
         let raw = data.as_object().and_then(|d| d.get("devices")).and_then(Value::as_array);
@@ -586,6 +596,9 @@ impl Devices {
     }
 }
 
+/// Python's default `sys.int_info.default_max_str_digits`: `json.loads` refuses a longer integer.
+const PY_INT_MAX_STR_DIGITS: usize = 4300;
+
 fn hex4(b: &[u8], at: usize) -> Option<u32> {
     let digits = b.get(at..at + 4)?;
     if !digits.iter().all(u8::is_ascii_hexdigit) {
@@ -600,6 +613,10 @@ fn hex4(b: &[u8], at: usize) -> Option<u32> {
 /// * A lone surrogate escape is a str in Python, whose character `_text` drops (category Cs) and no id, hash or
 ///   door matches: `￿` (category Cn) does the same.
 /// * The integer `-0` is Python's int 0, a valid stamp; serde_json reads it as the float -0.0.
+/// * A number past f64's range (`1e400`, or an integer of 310 to 4300 digits) is `inf` or a big int in Python and
+///   "number out of range" to serde_json. A float `inf` is never a stamp, as null is not; the big int is dropped as
+///   the Differences say. An integer of more than 4300 digits stays as it is: Python's `json.loads` refuses it
+///   (`sys.int_info.default_max_str_digits`), and the whole file is unreadable in both.
 fn python_json_compat(text: &str) -> std::borrow::Cow<'_, str> {
     let b = text.as_bytes();
     let mut out = String::new();
@@ -652,12 +669,23 @@ fn python_json_compat(text: &str) -> std::borrow::Cow<'_, str> {
             swap(&mut out, &mut last, i, i + word.len(), "null");
             i += word.len();
             continue;
-        } else if rest.starts_with(b"-0")
-            && (i == 0 || !matches!(b[i - 1], b'e' | b'E'))
-            && !rest.get(2).is_some_and(|c| c.is_ascii_digit() || matches!(c, b'.' | b'e' | b'E'))
-        {
-            swap(&mut out, &mut last, i, i + 2, "0");
-            i += 2;
+        } else if b[i] == b'-' || b[i].is_ascii_digit() {
+            // one whole number token, so a "-0" inside an exponent is never taken for one
+            let len = rest
+                .iter()
+                .position(|c| !(c.is_ascii_digit() || matches!(c, b'-' | b'+' | b'.' | b'e' | b'E')))
+                .unwrap_or(rest.len());
+            let token = &text[i..i + len];
+            let float = token.contains(['.', 'e', 'E']);
+            let digits = token.bytes().filter(u8::is_ascii_digit).count();
+            if token == "-0" {
+                swap(&mut out, &mut last, i, i + len, "0");
+            } else if (float || digits <= PY_INT_MAX_STR_DIGITS)
+                && token.parse::<f64>().is_ok_and(f64::is_infinite)
+            {
+                swap(&mut out, &mut last, i, i + len, "null");
+            }
+            i += len;
             continue;
         }
         i += 1;
