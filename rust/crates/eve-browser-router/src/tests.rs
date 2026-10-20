@@ -320,3 +320,12 @@ fn fit_picks_the_gates_python_picks() {
         BodyGates::new(0.95, 0.05, 0.05, 0.95, 0.1, 0.05)
     );
 }
+
+/// The whole question set, byte for byte: `tests/fixtures/python_questions.json` is Python's
+/// `json.dumps(browser_router.questions())`, so any drift in the prompt text or key order fails here.
+#[test]
+fn the_questions_dump_byte_identical_to_python() {
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/python_questions.json");
+    let python = std::fs::read_to_string(path).unwrap();
+    assert_eq!(eve_jev::py_dumps(&questions()), python);
+}
