@@ -1170,3 +1170,56 @@ fn test_cli_without_a_pairing() {
     std::fs::write(tmp.path().join("good.json"), json!({"token": TOKEN}).to_string()).unwrap();
     assert_eq!(notify::read_token(Some(&tmp.path().join("good.json"))), TOKEN);
 }
+
+// ---- make_inlet: the notifier in app mode ---------------------------------------------------------------------
+
+#[test]
+fn test_make_inlet_lends_the_notifier_in_app_mode_and_not_when_off() {
+    // Rust: `make_inlet` makes the API with `make_api(config, environ)`; `notify.read_token` is not patched since
+    // the notifier reads its token only when it posts.
+    let env = |pairs: &[(&str, &str)]| -> std::collections::HashMap<String, String> {
+        pairs.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect()
+    };
+    let cfg = eve_brain::telegram::configured(Some(&env(&[("EVE_TELEGRAM", "app"), ("EVE_TELEGRAM_TOKEN", "1:x"), ("EVE_TELEGRAM_OWNER", "42")])));
+    assert!(cfg.enabled && cfg.app_only);
+    assert!(eve_brain::telegram::make_api(&cfg, Some(&env(&[]))).notifier().is_some());
+    assert!(eve_brain::telegram::make_api(&cfg, Some(&env(&[("EVE_NOTIFY", "0")]))).notifier().is_none());
+    eve_brain::telegram::unhide_tokens();
+}
+
+// ---- through the inlet: an app turn's reply goes to the app, not to a notification ---------------------------
+
+#[tokio::test]
+async fn test_app_turn_replies_do_not_notify_but_unasked_lines_do() {
+    use eve_brain::seams::{in_ctx, TurnCtx};
+    let post = FakePost::new();
+    let api: Arc<dyn eve_brain::telegram::TelegramApi> = Arc::new(eve_brain::telegram::MutedBotApi::new("", Some(quick(&post, true))));
+    let rig = support::Rig::over(api, support::FakeCreate::new(vec![]), support::config());
+    rig.inlet.tt_set_chat_id(Some(OWNER));
+    let to_app: Arc<Mutex<Vec<String>>> = Arc::new(Mutex::new(Vec::new()));
+    let reading = Arc::new(std::sync::atomic::AtomicBool::new(true));
+    let (t, r) = (to_app.clone(), reading.clone());
+    *rig.inlet.app_out.lock() = Some(Arc::new(move |_turn: &str, text: &str, _kind: &str| {
+        let on = r.load(std::sync::atomic::Ordering::SeqCst);
+        if on {
+            t.lock().push(text.to_string());
+        }
+        on
+    }));
+    let in_app_turn = |text: &'static str| {
+        let ctx = TurnCtx { app: Some("turn-1".into()), ..TurnCtx::default() };
+        let inlet = rig.inlet.clone();
+        in_ctx(ctx, async move { inlet.tt_say(OWNER, text, None).await })
+    };
+    in_app_turn("Here is your answer.").await;
+    sleep(0.1).await;
+    assert!(*to_app.lock() == vec!["Here is your answer.".to_string()] && post.calls.lock().is_empty()); // in the app, no notification
+    reading.store(false, std::sync::atomic::Ordering::SeqCst);
+    in_app_turn("The task finished.").await; // the app hung up: notify
+    sleep(0.1).await;
+    assert_eq!(post.bodies(), vec!["The task finished.".to_string()]);
+    assert!(rig.inlet.tell_owner("Fare dropped to $412", "watch: fare", eve_brain::telegram::WATCH_TITLE, &[]).await); // a watch alert
+    sleep(0.3).await;
+    let bodies = post.bodies();
+    assert!(bodies.len() == 2 && bodies[1].ends_with("Fare dropped to $412"), "{bodies:?}");
+}

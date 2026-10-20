@@ -332,6 +332,11 @@ pub trait TelegramApi: Send + Sync {
     fn muted(&self) -> bool {
         false
     }
+
+    /// `getattr(api, "notifier", None)`: the phone's notifier a MutedBotApi carries (EVE_TELEGRAM=app).
+    fn notifier(&self) -> Option<Arc<crate::notify::Notifier>> {
+        None
+    }
 }
 
 /// `receive_image`'s failures: Telegram's (BotApiError, a network OSError folded in) or the image's own

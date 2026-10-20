@@ -605,8 +605,10 @@ fn test_a_save_that_cannot_write_is_a_plain_line() {
     assert_eq!(std::fs::read_dir(&folder).unwrap().count(), 0);
 }
 
+/// Rust: the log redaction is the lent `hide` (telegram::hide_token in eve); what is handed to it is hidden from
+/// every log line from then on (telegram_wire's redaction tests).
 #[tokio::test]
-async fn test_the_key_is_handed_to_the_redaction_the_moment_it_arrives() {
+async fn test_the_key_is_hidden_from_every_log_record_the_moment_it_arrives() {
     let (login, _, _, hidden) = openrouter(vec![]);
     assert!(hidden.lock().is_empty()); // control: nothing before the key arrives
     let state = state_of(&login.start(OR_CALLBACK, "x").unwrap());
@@ -1214,8 +1216,10 @@ async fn test_a_token_file_that_cannot_be_written_is_a_plain_line() {
     assert_eq!(std::fs::read_dir(&folder).unwrap().count(), 0);
 }
 
+/// Rust: the log redaction is the lent `hide` (telegram::hide_token in eve); what is handed to it is hidden from
+/// every log line from then on (telegram_wire's redaction tests).
 #[tokio::test]
-async fn test_the_tokens_are_handed_to_the_redaction_once_they_arrive() {
+async fn test_the_tokens_are_hidden_from_every_log_record_once_they_arrive() {
     let dir = tmp();
     let (login, _, _, hidden) = composio(dir.path(), vec![]);
     let url = login.start(CP_CALLBACK).await.unwrap();

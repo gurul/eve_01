@@ -219,6 +219,10 @@ impl TelegramApi for MutedBotApi {
     fn muted(&self) -> bool {
         true
     }
+
+    fn notifier(&self) -> Option<Arc<crate::notify::Notifier>> {
+        self.notifier.clone()
+    }
 }
 
 /// The Bot API `make_inlet` lends the inlet: muted in app-only mode (EVE_TELEGRAM=app), with the phone's notifier
