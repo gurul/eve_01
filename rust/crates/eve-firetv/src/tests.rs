@@ -1238,6 +1238,24 @@ fn test_cli_keys_volume_and_open() {
     assert!(lines[3].starts_with("Unknown key 'power'. Keys: up, down,"));
 }
 
+#[test]
+fn test_cli_numbers_read_like_argparse() {
+    // argparse: "-5" is a positional (no option looks like a number), and `type=int` is `int()`
+    let dir = tempfile::tempdir().unwrap();
+    let p = dir.path().join("firetv.json");
+    save(&cfg(HOST, Some(MDNS)), Some(&p)).unwrap();
+    let fake = FakeAdb::new();
+    let mut lines = Vec::new();
+    let e = || Some(env(&[("EVE_ADB", "adb")]));
+    assert_eq!(run_cli(&["volume", "-5"], &p, Some(fake.clone()), e(), &mut lines), 1);
+    assert_eq!(lines, vec![s("Give a level 0-100, up or down.")]);
+    lines.clear();
+    assert_eq!(run_cli(&["key", "down", "--times", "-3"], &p, Some(fake.clone()), e(), &mut lines), 0);
+    assert_eq!(run_cli(&["key", "up", "--times", " +2 "], &p, Some(fake.clone()), e(), &mut lines), 0);
+    assert_eq!(lines, vec![s("Pressed down."), s("Pressed up 2 times.")]);
+    assert_eq!(run_cli(&["key", "up", "--times", "x"], &p, Some(fake.clone()), e(), &mut lines), 2);
+}
+
 // ---- guards ----
 
 const SOURCE: &str = include_str!("lib.rs");

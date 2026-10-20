@@ -2394,9 +2394,14 @@ pub async fn pair(
 }
 
 fn cli_parser() -> clap::Command {
-    use clap::{value_parser, Arg, ArgAction, Command as C};
+    use clap::{Arg, ArgAction, Command as C};
+    // argparse's `type=int`: `int(s)`, so " 7 ", "+7" and "1_0" are numbers too
+    let int = |s: &str| pyfmt::py_int_str(s).ok_or_else(|| format!("invalid int value: {}", py_repr_str(s)));
     let keys: Vec<&str> = NAV_KEYS.iter().map(|(k, _)| *k).chain(MEDIA_KEYS.iter().map(|(k, _)| *k)).collect();
-    let rest = |name: &'static str| Arg::new(name).num_args(1..).required(true).action(ArgAction::Append);
+    // argparse takes a word that looks like a negative number ("-5") as a positional, not an option
+    let rest = |name: &'static str| {
+        Arg::new(name).num_args(1..).required(true).action(ArgAction::Append).allow_negative_numbers(true)
+    };
     C::new("eve-bridge firetv")
         .subcommand_required(true)
         .infer_long_args(true)
@@ -2404,7 +2409,7 @@ fn cli_parser() -> clap::Command {
             C::new("pair")
                 .about("Find the Fire TV on the network and save it (ADB debugging on, on the TV)")
                 .arg(Arg::new("host").long("host").default_value("").help("the TV's address, when mDNS doesn't find it"))
-                .arg(Arg::new("port").long("port").value_parser(value_parser!(i64)).default_value("5555")),
+                .arg(Arg::new("port").long("port").value_parser(int).allow_negative_numbers(true).default_value("5555")),
         )
         .subcommand(C::new("forget").about("Forget the paired TV"))
         .subcommand(C::new("status").about("Power, the app in front, the volume"))
@@ -2414,10 +2419,12 @@ fn cli_parser() -> clap::Command {
             C::new("key")
                 .about(format!("Press a remote key: {}", keys.join(", ")))
                 .arg(Arg::new("key").required(true))
-                .arg(Arg::new("times").long("times").value_parser(value_parser!(i64)).default_value("1")),
+                .arg(Arg::new("times").long("times").value_parser(int).allow_negative_numbers(true).default_value("1")),
         )
         .subcommand(
-            C::new("volume").about("Set the volume (0-100) or step it (up, down)").arg(Arg::new("level").required(true)),
+            C::new("volume")
+                .about("Set the volume (0-100) or step it (up, down)")
+                .arg(Arg::new("level").required(true).allow_negative_numbers(true)),
         )
         .subcommand(C::new("mute"))
         .subcommand(C::new("unmute"))

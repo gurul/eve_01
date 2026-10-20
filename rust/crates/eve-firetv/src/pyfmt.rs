@@ -125,7 +125,8 @@ pub fn py_int(v: &Value) -> Option<i64> {
 
 /// `int(s)` for a string: surrounding whitespace, a sign, digits with single underscores between them.
 pub fn py_int_str(s: &str) -> Option<i64> {
-    let t = s.trim();
+    // `str.strip()` whitespace: Unicode White_Space plus the four separators \x1c-\x1f
+    let t = s.trim_matches(|c: char| c.is_whitespace() || ('\x1c'..='\x1f').contains(&c));
     let (neg, digits) = match t.as_bytes().first() {
         Some(b'-') => (true, &t[1..]),
         Some(b'+') => (false, &t[1..]),
@@ -135,10 +136,8 @@ pub fn py_int_str(s: &str) -> Option<i64> {
         return None;
     }
     let clean: String = digits.chars().filter(|c| *c != '_').collect();
-    if clean.is_empty() || !clean.bytes().all(|b| b.is_ascii_digit()) {
-        return None;
-    }
-    let n = clean.parse::<i64>().unwrap_or(i64::MAX);
+    // int() reads the decimal digits of any script ("５５５５" is 5555)
+    let n = parse_decimal(&clean)?;
     Some(if neg { -n } else { n })
 }
 
@@ -337,6 +336,9 @@ mod tests {
         assert_eq!(py_int(&json!("1_000")), Some(1000));
         assert_eq!(py_int(&json!("12.5")), None);
         assert_eq!(py_int(&json!(7.9)), Some(7));
+        assert_eq!(py_int(&json!("\u{ff15}\u{ff15}")), Some(55)); // fullwidth digits, as int() reads them
+        assert_eq!(py_int(&json!("-7")), Some(-7));
+        assert_eq!(py_int(&json!("\u{b2}")), None);
         assert_eq!(py_repr_str("power"), "'power'");
         assert_eq!(py_repr_str("it's"), "\"it's\"");
         assert_eq!(splitlines("a\r\nb\nc\n"), vec!["a", "b", "c"]);
