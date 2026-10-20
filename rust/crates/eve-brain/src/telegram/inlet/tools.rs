@@ -1227,6 +1227,42 @@ impl TelegramInlet {
             st.claude_on_job = Some(crate::seams::Job::spawn("claude-on", futures::future::pending::<()>()));
         }
     }
+    /// `len(inlet._jobs)`: the jobs not yet done.
+    pub fn tt_jobs_left(&self) -> usize {
+        self.st.lock().jobs.iter().filter(|j| !j.done()).count()
+    }
+    /// `inlet._thinking`.
+    pub fn tt_thinking(self: &Arc<Self>) -> bool {
+        self.thinking()
+    }
+    /// `chat_id in inlet._paused_typing`.
+    pub fn tt_paused_typing(&self, chat_id: i64) -> bool {
+        self.st.lock().paused_typing.contains_key(&chat_id)
+    }
+    /// `inlet._open_progress(chat_id, head, lambda cid: None)`.
+    pub fn tt_open_progress(self: &Arc<Self>, chat_id: i64, head: &str) -> Arc<_Progress> {
+        self.open_progress(chat_id, head, Arc::new(|_| {}), None, None, 0)
+    }
+    /// `inlet._task_progress = progress`.
+    pub fn tt_set_task_progress(&self, progress: Option<Arc<_Progress>>) {
+        self.st.lock().task_progress = progress;
+    }
+    /// `inlet._progress_step(progress, line)`.
+    pub fn tt_progress_step(self: &Arc<Self>, progress: &Arc<_Progress>, line: &str) {
+        self.progress_step(Some(progress), line);
+    }
+    /// `await inlet._image(inbound, target, epoch)`.
+    pub async fn tt_image(self: &Arc<Self>, inbound: &Inbound, target: &str, epoch: i64) {
+        self.image(inbound, target, epoch, None).await;
+    }
+    /// `await inlet._say(chat_id, text, reply_to=reply_to)`.
+    pub async fn tt_say_reply(self: &Arc<Self>, chat_id: i64, text: &str, reply_to: i64) {
+        self.say(chat_id, text, None, None, &[], reply_to, None).await;
+    }
+    /// `await inlet._ask_user(question, chat_id, choices=choices)`.
+    pub async fn tt_ask_user_choices(self: &Arc<Self>, question: &str, chat_id: i64, choices: &[Choice]) -> String {
+        self.ask_user(question, chat_id, TASK_ASKS_TITLE, Some(choices), None, false, false, None, false).await
+    }
     /// `await inlet._app_tool(name, args, chat_id)`.
     pub async fn tt_app_tool(self: &Arc<Self>, name: &str, args: &Obj, chat_id: i64) -> Obj {
         self.app_tool(name, args, chat_id).await

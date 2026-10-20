@@ -122,12 +122,18 @@ pub struct Hooked {
     pub react: Option<ReactHook>,
     /// awaited before each `send_inline` goes on to the FakeApi
     pub before_inline: Option<Box<dyn Fn() -> futures::future::BoxFuture<'static, ()> + Send + Sync>>,
+    /// awaited before each `react` (and its hook) runs
+    pub before_react: Option<Box<dyn Fn() -> futures::future::BoxFuture<'static, ()> + Send + Sync>>,
+    /// run before each `edit_message` goes on to the FakeApi
+    pub before_edit: Option<Box<dyn Fn() + Send + Sync>>,
+    /// run before each `send_message`: an error here is the send's
+    pub before_message: Option<Box<dyn Fn() -> Option<BotApiError> + Send + Sync>>,
 }
 
 impl Hooked {
     /// `class Api(FakeApi)` with nothing of its own yet.
     pub fn new(inner: Arc<FakeApi>) -> Self {
-        Self { inner, photo: None, document: None, react: None, before_inline: None }
+        Self { inner, photo: None, document: None, react: None, before_inline: None, before_react: None, before_edit: None, before_message: None }
     }
 }
 
@@ -143,6 +149,9 @@ impl TelegramApi for Hooked {
         self.inner.receive_image(item).await
     }
     async fn send_message(&self, chat_id: i64, text: &str, title: Option<&str>, subtitle: Option<&str>, buttons: &[String], reply_to: i64, force_reply: Option<&str>) -> Result<(), BotApiError> {
+        if let Some(e) = self.before_message.as_ref().and_then(|hook| hook()) {
+            return Err(e);
+        }
         self.inner.send_message(chat_id, text, title, subtitle, buttons, reply_to, force_reply).await
     }
     async fn send_inline(&self, chat_id: i64, text: &str, keyboard: &[Vec<(String, String, String)>], title: Option<&str>, subtitle: Option<&str>) -> Result<i64, BotApiError> {
@@ -152,6 +161,9 @@ impl TelegramApi for Hooked {
         self.inner.send_inline(chat_id, text, keyboard, title, subtitle).await
     }
     async fn edit_message(&self, chat_id: i64, message_id: i64, text: &str, title: Option<&str>, subtitle: Option<&str>, keyboard: Option<&[Vec<(String, String, String)>]>) -> Result<(), BotApiError> {
+        if let Some(hook) = &self.before_edit {
+            hook();
+        }
         self.inner.edit_message(chat_id, message_id, text, title, subtitle, keyboard).await
     }
     async fn drop_buttons(&self, chat_id: i64, message_id: i64) -> Result<(), BotApiError> {
@@ -161,6 +173,9 @@ impl TelegramApi for Hooked {
         self.inner.answer_callback(query_id, text).await
     }
     async fn react(&self, chat_id: i64, message_id: i64, emoji: &str) -> Result<(), BotApiError> {
+        if let Some(wait) = &self.before_react {
+            wait().await;
+        }
         match &self.react {
             Some(hook) => hook(chat_id, message_id, emoji),
             None => self.inner.react(chat_id, message_id, emoji).await,
