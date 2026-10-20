@@ -119,7 +119,9 @@ projects".
 A session that started outside eve cannot be typed into: Warp has no
 AppleScript tab addressing, and an IDE's terminal has none either. So
 continuing **forks** it. `continue` opens a new Work session in the
-original's folder (not the work folder) running
+original's folder (not the work folder: the first `cwd` its transcript names,
+since a hook's `cwd` is wherever the session's shell has moved to; the list's
+folder name comes from there too) running
 
     claude --dangerously-skip-permissions --mcp-config <file> \
            --resume <id> --fork-session --session-id <new> -- <text>

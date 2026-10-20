@@ -306,6 +306,27 @@ def transcript_turns(path: Optional[Path], *, limit: int = TURNS_SHOWN, tail: in
     return turns[-limit:], cut or len(turns) > limit
 
 
+def transcript_cwd(path: Optional[Path], limit: int = LINE_TAIL_BYTES) -> str:
+    """The folder a session started in, from the first transcript line that names one. A hook's ``cwd`` is where the
+    session's shell is now (``cd rust`` moves it), so this is the project, for the row and for a continue."""
+    if path is None:
+        return ""
+    try:
+        with open(path, "rb") as f:
+            head = f.read(limit)
+    except OSError:
+        return ""
+    for raw in head.split(b"\n"):
+        try:
+            obj = json.loads(raw)
+        except ValueError:
+            continue
+        cwd = obj.get("cwd") if isinstance(obj, dict) else None
+        if isinstance(cwd, str) and cwd.startswith("/"):
+            return cwd
+    return ""
+
+
 def last_line(path: Optional[Path]) -> str:
     """Claude's newest text in the transcript, one line, at most LINE_CHARS."""
     turns, _ = transcript_turns(path, limit=TURNS_SHOWN, tail=LINE_TAIL_BYTES, chars=LINE_CHARS * 2)
@@ -614,7 +635,8 @@ class WorkSessions:
                 continue
             path = self._transcript(None, s)
             waiting = bool(state is not None and state._needs_input_live(s))
-            rows.append({"id": sid, "folder": Path(s.cwd).name, "title": Path(s.cwd).name,
+            folder = Path(transcript_cwd(path) or s.cwd).name
+            rows.append({"id": sid, "folder": folder, "title": folder,
                          "state": "waiting" if waiting else "working" if s.running else "idle",
                          "last_activity": int(max(s.started_at, _mtime(path))), "last_line": last_line(path),
                          "from_work": False, "can_reply": False, "can_stop": False,
@@ -730,8 +752,12 @@ class WorkSessions:
                 if pids is None or sid in pids or now - rec.created_at < GRACE_SECS:
                     return 409, {"ok": False, "reason": LIVE_WORK}
                 self._end(rec)
-            cwd = str(self._folder(rec)) if rec is not None else str(getattr(session, "cwd", "") or "")
             path = self._transcript(rec, session, sid)
+            if rec is not None:
+                cwd = str(self._folder(rec))
+            else:                                       # where it started, else where its shell is now
+                started = await asyncio.to_thread(transcript_cwd, path)
+                cwd = started if started and Path(started).is_dir() else str(getattr(session, "cwd", "") or "")
             if not await asyncio.to_thread(self._continuable, cwd, path):
                 return 409, {"ok": False, "reason": NO_CONTINUE}
             title = rec.title if rec is not None and rec.title else Path(cwd).name
@@ -760,7 +786,8 @@ class WorkSessions:
                 row.update(state="ended", can_reply=False, can_stop=False,
                            can_continue=await asyncio.to_thread(self._continuable, str(self._folder(rec)), path))
         else:
-            row = {"id": sid, "folder": Path(session.cwd or "").name, "title": Path(session.cwd or "").name,
+            folder = Path(await asyncio.to_thread(transcript_cwd, path) or session.cwd or "").name
+            row = {"id": sid, "folder": folder, "title": folder,
                    "state": "waiting" if state._needs_input_live(session) else "working" if session.running
                    else "idle", "last_activity": int(max(session.started_at, _mtime(path))),
                    "from_work": False, "can_reply": False, "can_stop": False,

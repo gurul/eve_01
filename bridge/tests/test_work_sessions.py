@@ -703,3 +703,29 @@ def test_the_continue_route(tmp_path: Path) -> None:
         await server.close()
 
     asyncio.run(go())
+
+
+def test_a_session_whose_shell_moved_continues_in_the_folder_it_started_in(tmp_path: Path) -> None:
+    """A hook's cwd is the shell's folder now (after ``cd rust``); the transcript's first cwd is the project."""
+    state = State()
+    work, mac = make(tmp_path, state=state)
+    project = tmp_path / "code" / "eve"
+    sub = project / "rust"
+    sub.mkdir(parents=True)
+    state.session_start(OTHER, cwd=str(sub))
+    path = transcript(tmp_path / "claude" / "projects" / "-code-eve" / f"{OTHER}.jsonl", [
+        {"type": "user", "cwd": str(project), "timestamp": "2026-10-20T10:00:00Z",
+         "message": {"role": "user", "content": "Make the hooks fast"}},
+        {"type": "assistant", "cwd": str(sub), "timestamp": "2026-10-20T10:01:00Z",
+         "message": {"role": "assistant", "content": [{"type": "text", "text": "Done."}]}}])
+    assert work_sessions.transcript_cwd(path) == str(project)
+    assert asyncio.run(work.detail(OTHER))[1]["session"]["folder"] == "eve"
+    assert next(r for r in asyncio.run(work.list())[1]["sessions"] if r["id"] == OTHER)["folder"] == "eve"
+    out = asyncio.run(work.continue_session(OTHER, "go on"))[1]
+    assert out["session"]["folder"] == "eve"
+    assert mac.scripts[-1][1][0].startswith(f"cd {shlex.quote(str(project))} && ")
+    # a start folder that is gone: the shell's folder, which is there
+    path.write_text(path.read_text().replace(str(project), str(tmp_path / "deleted"), 1))
+    asyncio.run(work.continue_session(OTHER, "again"))
+    assert mac.scripts[-1][1][0].startswith(f"cd {shlex.quote(str(sub))} && ")
+    assert work_sessions.transcript_cwd(None) == "" and work_sessions.transcript_cwd(tmp_path / "none") == ""
