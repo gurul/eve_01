@@ -95,7 +95,51 @@ impl DaemonParts {
     /// Inert parts for a test: `link` as the board, nothing on disk outside `dir` (the sound and mic switches,
     /// the audit log, the presence map, the notes and memory folders), every optional piece off, the real seams.
     pub fn for_test(link: Arc<dyn BoardLink>, dir: &std::path::Path) -> DaemonParts {
-        todo!()
+        // The daemon's own reads go to this map, never to the process's environment: every file the parts
+        // would find through it lands in `dir`.
+        let mut environ = Environ::new();
+        for (key, file) in [
+            ("EVE_EXPRESSIONS_FILE", "expressions.json"),
+            ("EVE_PRESENCE_FILE", "presence.json"),
+            ("EVE_OWNER_PRINTS", "owner_faceprints.json"),
+        ] {
+            environ.insert(key.to_string(), dir.join(file).to_string_lossy().into_owned());
+        }
+        let env = Some(&environ);
+        let mut sound = eve_sound::SoundSetting::new(Some(dir.join("sound.json")), "sound");
+        sound.load();
+        let mut mic = eve_sound::SoundSetting::new(Some(dir.join("mic.json")), "mic");
+        mic.load();
+        let mut explore_cfg = eve_explore::configured(env);
+        explore_cfg.notes_dir = dir.join("explore");
+        let mut agent_cfg = eve_computer_agent::configured(env);
+        agent_cfg.runs_dir = dir.join("runs");
+        let presence = eve_follow::PresenceMap::new(Some(dir.join("presence.json"))).load();
+        DaemonParts {
+            link,
+            controller: None,
+            with_ipc: false,
+            ipc_socket: None,
+            with_jsonl: false,
+            matchers: eve_matchers::MatcherConfig::default(),
+            audit: eve_audit::AuditLog::new(Some(dir.join("audit.jsonl"))),
+            sound,
+            mic,
+            explore_cfg,
+            ears_cfg: eve_ears::configured_from(|k| environ.get(k).cloned()),
+            voice_cfg: eve_brain::voice_agent::configured(env),
+            recall_cfg: eve_records::RecallConfig::new(dir.join("memory"), dir.join("notes")),
+            bus_cfg: eve_memory_bus::configured(env),
+            agent_cfg,
+            scene_cfg: eve_scene::configured(env),
+            follow_enabled: eve_follow::configured(env),
+            presence,
+            save_frames: None,
+            cjk_codec: None,
+            environ: Some(environ.clone()),
+            seams: Seams::default(),
+            now: eve_state::monotonic(),
+        }
     }
 }
 
@@ -308,14 +352,281 @@ impl Daemon {
     /// `Daemon(...)`: the real parts from the environment and the disk, assembled. Fails only when the IPC address
     /// is invalid.
     pub fn new(opts: DaemonOptions) -> anyhow::Result<Arc<Daemon>> {
-        todo!()
+        // The IPC address first, as `IPCServer(...)` is the first thing `__init__` makes after the state.
+        let probe: eve_ipc::Handler = Arc::new(|_req| Box::pin(async { Ok(Value::Null) }));
+        eve_ipc::IpcServer::new(probe, opts.socket_path.as_deref())?;
+        let inbox: crate::link::Inbox = Arc::new(std::sync::OnceLock::new());
+        let (link, controller) = crate::link::make_link(&opts, None, inbox.clone());
+        // JSONLTailer() resolves its roots now; a home that cannot be found fails here, not later.
+        eve_claude_home::transcript_roots(None)?;
+        let matchers = match opts.matchers.clone() {
+            Some(m) => m,
+            None => eve_matchers::load_config(None)?,
+        };
+        let audit = eve_audit::AuditLog::new(None);
+        let mut sound = eve_sound::SoundSetting::new(None, "sound");
+        sound.load();
+        let mut mic = eve_sound::SoundSetting::new(None, "mic");
+        mic.load();
+        // Wire codec for heartbeat string fields. Set when the user has
+        // flashed the fork-only CJK firmware variant (`m5stickc-plus-cjk-*`)
+        // and tells the bridge which one via env var. None = stock firmware,
+        // ASCII-only content. See protocol.CJK_CODECS for the mapping.
+        let target = std::env::var("EVE_CJK_TARGET").unwrap_or_default().trim().to_string();
+        let cjk_codec =
+            if target.is_empty() { None } else { eve_protocol::cjk_codec(&target).map(str::to_string) };
+        if let Some(codec) = &cjk_codec {
+            tracing::info!("cjk firmware target={}, wire codec={}", target, codec);
+        }
+        let parts = DaemonParts {
+            link,
+            controller,
+            with_ipc: true,
+            ipc_socket: opts.socket_path.clone(),
+            with_jsonl: true,
+            matchers,
+            audit,
+            sound,
+            mic,
+            explore_cfg: eve_explore::configured(None),
+            ears_cfg: eve_ears::configured(),
+            voice_cfg: eve_brain::voice_agent::configured(None),
+            recall_cfg: eve_records::configured(None),
+            bus_cfg: eve_memory_bus::configured(None),
+            agent_cfg: eve_computer_agent::configured(None),
+            scene_cfg: eve_scene::configured(None),
+            follow_enabled: eve_follow::configured(None),
+            presence: eve_follow::PresenceMap::new(Some(eve_follow::presence_path(None))).load(),
+            save_frames: eve_vision::configured_save_dir(opts.save_frames.as_deref()),
+            cjk_codec,
+            environ: None,
+            seams: Seams::default(),
+            now: eve_state::monotonic(),
+        };
+        let daemon = Daemon::assemble(parts);
+        let _ = inbox.set(Arc::downgrade(&daemon));
+        Ok(daemon)
     }
 
     /// The daemon from its parts: the tracker, the scene watcher, the head, the follower and the expressions wired
     /// to the link and to each other as `__init__` does, the IPC server and the tailer bound to the daemon's
     /// handlers when asked for.
     pub fn assemble(parts: DaemonParts) -> Arc<Daemon> {
-        todo!()
+        Arc::new_cyclic(|weak: &Weak<Daemon>| {
+            let link = parts.link.clone();
+            let send = crate::seams::link_sender(link.clone());
+            let ipc = if parts.with_ipc {
+                let w = weak.clone();
+                let handler: eve_ipc::Handler = Arc::new(move |req: Value| {
+                    let w = w.clone();
+                    Box::pin(async move {
+                        let daemon = w.upgrade().ok_or_else(|| anyhow::anyhow!("the daemon has shut down"))?;
+                        match req {
+                            Value::Object(req) => daemon.handle_ipc(req).await.map(Value::Object),
+                            other => Err(eve_ipc::NamedError::new(
+                                "AttributeError",
+                                format!("'{}' object has no attribute 'get'", py_type_name(&other)),
+                            )
+                            .into()),
+                        }
+                    })
+                });
+                match eve_ipc::IpcServer::new(handler, parts.ipc_socket.as_deref()) {
+                    Ok(server) => Some(server),
+                    Err(e) => {
+                        tracing::error!("ipc: bad address {:?}: {}", parts.ipc_socket, e);
+                        None
+                    }
+                }
+            } else {
+                None
+            };
+            let jsonl = if parts.with_jsonl {
+                let (wt, wa) = (weak.clone(), weak.clone());
+                let on_tokens: eve_jsonl_tailer::TokensCallback =
+                    Arc::new(move |cumulative, today, cost_cumulative, cost_today, entries| {
+                        let w = wt.clone();
+                        Box::pin(async move {
+                            match w.upgrade() {
+                                Some(d) => d.on_tokens(cumulative, today, cost_cumulative, cost_today, entries).await,
+                                None => Ok(()),
+                            }
+                        })
+                    });
+                let on_text: eve_jsonl_tailer::AssistantTextCallback = Arc::new(move |path, text, uuid| {
+                    let w = wa.clone();
+                    Box::pin(async move {
+                        match w.upgrade() {
+                            Some(d) => d.on_assistant_text(&path, &text, &uuid).await,
+                            None => Ok(()),
+                        }
+                    })
+                });
+                match eve_jsonl_tailer::JsonlTailer::new(on_tokens, None, Some(on_text)) {
+                    Ok(t) => Some(Arc::new(t)),
+                    Err(e) => {
+                        tracing::error!("tailer: cannot find the transcript roots: {e}");
+                        None
+                    }
+                }
+            } else {
+                None
+            };
+            // Host vision: the board streams camera frames, we answer with the
+            // face position. The detector (macOS Vision) is resolved in run() so
+            // constructing a Daemon never loads Vision; until then, and on
+            // hosts without Vision, the tracker is disabled and we never ask the
+            // board to stream — it keeps its on-board tracking.
+            let vision = Arc::new(eve_vision::FaceTracker::with_options(
+                None,
+                send.clone(),
+                parts.save_frames.clone(),
+                Arc::new(eve_vision::monotonic),
+                None,
+                None,
+            ));
+            // Eyes for the voice (scene.py): camera frames become timestamped
+            // descriptions, only while a conversation is open. The client (an
+            // image model) is resolved in run(), like the detector.
+            let scene = {
+                let (link, vision) = (link.clone(), vision.clone());
+                Arc::new(
+                    eve_scene::SceneWatcher::new(None, Some(parts.scene_cfg.clone()))
+                        .with_camera_ok(Arc::new(move || link.connected() && vision.enabled())),
+                )
+            };
+            // Head control for the voice (head.py). The board echoes its real
+            // pose on every camera frame; relative moves start from that.
+            let head = {
+                let link = link.clone();
+                Arc::new(eve_head::Head::with(
+                    send.clone(),
+                    Arc::new(move || link.connected()),
+                    Arc::new(eve_head::monotonic),
+                    eve_head::tokio_sleep(),
+                ))
+            };
+            // In a conversation eve keeps its eyes on whoever is talking (follow.py): every face of every
+            // frame goes to the follower, which stands down for an asked-for pose, an explore, the dictation
+            // key and the lesson's listening pose.
+            let follower = {
+                let (wb, wp) = (weak.clone(), weak.clone());
+                let blocked: eve_follow::Blocked = Arc::new(move || {
+                    let Some(d) = wb.upgrade() else { return String::new() };
+                    if d.explorer.lock().active() {
+                        return "explore".into();
+                    }
+                    let st = d.st.lock();
+                    if st.listen_down {
+                        "dictation".into()
+                    } else if st.think_aloud_state == "on" {
+                        "lesson listening pose".into()
+                    } else {
+                        String::new()
+                    }
+                });
+                // /eve/presence: seen, lost, found and how
+                let publish: eve_follow::Publisher = Arc::new(move |topic: &str, msg| {
+                    if let Some(d) = wp.upgrade() {
+                        d.bus.publish(topic, msg);
+                    }
+                    Ok(())
+                });
+                Arc::new(eve_follow::SpeakerFollower::with(
+                    send.clone(),
+                    eve_follow::FollowerOptions {
+                        enabled: parts.follow_enabled,
+                        blocked,
+                        presence: Some(parts.presence),
+                        publish: Some(publish),
+                        ..Default::default()
+                    },
+                ))
+            };
+            {
+                let f = follower.clone();
+                head.set_on_move(Some(Arc::new(move |hold_secs| f.owner_moved(hold_secs))));
+                let f = follower.clone();
+                let on_faces: eve_vision::OnFaces = Arc::new(move |faces, yaw, pitch| {
+                    let f = f.clone();
+                    Box::pin(async move {
+                        let faces: Vec<eve_follow::Face> =
+                            faces.iter().map(|r| eve_follow::Face::new(r.bx, r.by, r.size, r.conf)).collect();
+                        f.on_faces(&faces, yaw, pitch).await;
+                        Ok(())
+                    })
+                });
+                vision.set_on_faces(Some(on_faces));
+            }
+            // The board's live expressions, muted with the owner's sound and told the conversation's phase.
+            let expressions = {
+                let send_link = link.clone();
+                let send_fn: eve_live_expressions::SendFn = Arc::new(move |obj: Value| {
+                    let link = send_link.clone();
+                    Box::pin(async move { Ok(link.send(&obj, None).await) })
+                });
+                let (lc, wm, wph) = (link.clone(), weak.clone(), weak.clone());
+                let env: Option<Arc<dyn eve_jev::Env + Send + Sync>> =
+                    parts.environ.clone().map(|e| Arc::new(e) as Arc<dyn eve_jev::Env + Send + Sync>);
+                Arc::new(eve_live_expressions::LiveExpressions::new(
+                    send_fn,
+                    eve_live_expressions::Options {
+                        connected: Arc::new(move || lc.connected()),
+                        muted: Arc::new(move || wm.upgrade().is_some_and(|d| d.sound.lock().muted())),
+                        phase: Arc::new(move || {
+                            let state = wph.upgrade().map(|d| d.st.lock().agent_state.clone()).unwrap_or_default();
+                            if state.is_empty() { "idle".to_string() } else { state }
+                        }),
+                        env,
+                        ..Default::default()
+                    },
+                ))
+            };
+            let thought_pager = eve_caption_pager::CaptionPager::new(eve_caption_pager::PagerConfig {
+                read_cps: parts.voice_cfg.caption_cps,
+                ..Default::default()
+            });
+            let st = DaemonState {
+                think_aloud_state: "off".into(),
+                agent_state: "idle".into(),
+                last_activity_at: parts.now,
+                ..Default::default()
+            };
+            Daemon {
+                me: weak.clone(),
+                state: Mutex::new(eve_state::State::new()),
+                ipc,
+                ble: link,
+                controller: parts.controller,
+                jsonl,
+                matchers: parts.matchers,
+                audit: parts.audit,
+                vision,
+                scene,
+                head,
+                follower,
+                sound: Mutex::new(parts.sound),
+                expressions,
+                mic: Mutex::new(parts.mic),
+                explorer: Mutex::new(eve_explore::Explorer::new(parts.explore_cfg.clone(), parts.now)),
+                explore_cfg: parts.explore_cfg,
+                ears_cfg: parts.ears_cfg,
+                voice_cfg: parts.voice_cfg,
+                recall_cfg: parts.recall_cfg,
+                bus: eve_memory_bus::MemoryBus::new(),
+                bus_cfg: parts.bus_cfg,
+                agent_cfg: parts.agent_cfg,
+                thought_pager: Mutex::new(thought_pager),
+                screen: Mutex::new(eve_thought_screen::ThoughtScreen::new()),
+                acks: eve_folder_push::AckRouter::new(),
+                cjk_codec: parts.cjk_codec,
+                shutdown: tokio::sync::watch::channel(false).0,
+                background: Mutex::new(Vec::new()),
+                environ: parts.environ,
+                seams: parts.seams,
+                st: Mutex::new(st),
+            }
+        })
     }
 
     /// The daemon's own `Arc`.
@@ -355,18 +666,43 @@ impl Daemon {
     where
         F: Future<Output = ()> + Send + 'static,
     {
-        todo!()
+        let job = Job::spawn(name, fut);
+        let mut background = self.background.lock();
+        background.retain(|j| !j.done());
+        background.push(job.clone());
+        job
     }
 
     /// `self._background` as a list: the jobs still running (finished ones are dropped from the set first, as
     /// their done callbacks did).
     pub fn background_jobs(&self) -> Vec<Job> {
-        todo!()
+        let mut background = self.background.lock();
+        background.retain(|j| !j.done());
+        background.clone()
     }
 
     /// `_work_note(daemon, evt, req)`: a hook event for the Work sessions' registry, when it exists. A failure
     /// costs the Work tab's state, never the hook's reply.
     pub fn work_note(&self, evt: &str, req: &Obj) {
-        todo!()
+        let work = self.st.lock().work.clone();
+        let Some(work) = work else { return };
+        let req = Value::Object(req.clone());
+        let noted = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| work.note(evt, &req)));
+        if noted.is_err() {
+            tracing::warn!("work sessions: note {} failed ({})", evt, "panic");
+        }
+    }
+}
+
+/// Python's `type(x).__name__` for a JSON value.
+fn py_type_name(v: &Value) -> &'static str {
+    match v {
+        Value::Null => "NoneType",
+        Value::Bool(_) => "bool",
+        Value::Number(n) if n.is_f64() => "float",
+        Value::Number(_) => "int",
+        Value::String(_) => "str",
+        Value::Array(_) => "list",
+        Value::Object(_) => "dict",
     }
 }
