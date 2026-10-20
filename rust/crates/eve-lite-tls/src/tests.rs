@@ -135,7 +135,11 @@ fn a_sec1_ec_private_key_loads_as_python_loads_it() {
         0xa0, 0x0a, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07,
     ];
     let body = &sec1[2..]; // ring's ECPrivateKey is short enough for a one-byte length
-    let at = body.iter().position(|b| *b == 0xa1).unwrap();
+    // version INTEGER (02 01 01), then privateKey OCTET STRING (04 <len> <key>): the parameters go right after it.
+    // (Searching for the 0xa1 tag byte instead would hit it inside the random key one run in eight.)
+    assert_eq!(&body[..4], [0x02, 0x01, 0x01, 0x04]);
+    let at = 5 + body[4] as usize;
+    assert_eq!(body[at], 0xa1);
     let mut inner = body[..at].to_vec();
     inner.extend_from_slice(&p256);
     inner.extend_from_slice(&body[at..]);
