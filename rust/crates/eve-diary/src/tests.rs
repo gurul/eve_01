@@ -1481,15 +1481,20 @@ fn test_a_slow_thought_times_out_and_is_logged_once() {
     });
     assert_eq!(t.failed(), 2);
     assert_eq!(logs.matches("diary: thought failed — timed out (further failures muted for 10 min)").count(), 1, "{logs}");
+    // The second call timed out while still queued behind the first: like a cancelled future that
+    // never started, it is skipped rather than sent to the model once the worker frees up.
+    std::thread::sleep(Duration::from_millis(500));
+    assert_eq!(client.contexts().len(), 1);
 }
 
 #[test]
 fn test_stop_cancels_a_queued_call() {
     let tmp = tempfile::tempdir().unwrap();
     let clock = TestClock::new(dt(2026, 9, 6, 10, 0, 0));
-    let client = Arc::new(FakeClient { delay: Some(Duration::from_millis(200)), ..fake(vec![rp(&[("a", 0.5)]).s(); 2]) });
+    let client = Arc::new(FakeClient { delay: Some(Duration::from_millis(800)), ..fake(vec![rp(&[("a", 0.5)]).s(); 2]) });
     let t = Arc::new(DiaryTaker::new(client.clone(), tmp.path().join("notes")).with_wall(clock.wall()).with_timeout(5.0));
-    let result = run(async {
+    let (result, cancelled_after) = run(async {
+        let start = std::time::Instant::now();
         let t1 = t.clone();
         let first = tokio::spawn(async move { t1.take(&note(frame(0), 0, 45)).await.map(|_| ()) });
         tokio::time::sleep(Duration::from_millis(50)).await;
@@ -1497,10 +1502,15 @@ fn test_stop_cancels_a_queued_call() {
         let second = tokio::spawn(async move { t2.take(&note(frame(0), 0, 45)).await.map(|_| ()) });
         tokio::time::sleep(Duration::from_millis(50)).await;
         t.stop();
+        // The queued call is cancelled at once, not when the running one finishes.
+        let r = second.await.unwrap();
+        let after = start.elapsed();
         let _ = first.await.unwrap();
-        second.await.unwrap()
+        (r, after)
     });
     assert!(result.unwrap_err().downcast_ref::<DiaryCancelled>().is_some());
+    assert!(cancelled_after < Duration::from_millis(600), "{cancelled_after:?}");
+    assert_eq!(client.contexts().len(), 1); // the queued call never reached the model
 }
 
 #[test]
@@ -1508,4 +1518,17 @@ fn test_local_time_round_trips() {
     let when = dt(2026, 9, 6, 14, 12, 7);
     assert_eq!(local(timestamp(&when)), when);
     assert_eq!(day_of_ts(timestamp(&when)), "2026-09-06");
+}
+
+#[test]
+fn test_reflection_meta_reads_importance_as_int_does() {
+    assert_eq!(meta_int(None), Some(0));
+    assert_eq!(meta_int(Some(&json!(" 12 "))), Some(12));
+    assert_eq!(meta_int(Some(&json!("1_2"))), Some(12));
+    assert_eq!(meta_int(Some(&json!("-7"))), Some(-7));
+    assert_eq!(meta_int(Some(&json!(3.9))), Some(3)); // int() truncates a float
+    for bad in ["_12", "12_", "1__2", "12.0", "", "+"] {
+        assert_eq!(meta_int(Some(&json!(bad))), None, "{bad:?}"); // int() raises ValueError: the count is kept
+    }
+    assert_eq!(meta_int(Some(&json!(null))), None);
 }

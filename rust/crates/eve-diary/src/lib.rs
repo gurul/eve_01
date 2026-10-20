@@ -54,8 +54,8 @@ use std::collections::{BTreeSet, HashMap};
 use std::io::Write as _;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::mpsc as std_mpsc;
-use std::sync::{Arc, LazyLock};
+use std::collections::VecDeque;
+use std::sync::{Arc, Condvar, LazyLock, Mutex as StdMutex};
 use std::time::Duration;
 
 use base64::Engine as _;
@@ -762,7 +762,8 @@ fn meta_int(v: Option<&Value>) -> Option<i64> {
         Some(Value::String(s)) => {
             let t = py::strip(s);
             let digits = t.strip_prefix(['+', '-']).unwrap_or(t);
-            if !digits.is_empty() && digits.chars().all(|c| c.is_ascii_digit() || c == '_') {
+            // int() takes single underscores between digits only ("1_2", not "_12", "12_" or "1__2").
+            if !digits.is_empty() && digits.split('_').all(|g| !g.is_empty() && g.chars().all(|c| c.is_ascii_digit())) {
                 t.replace('_', "").parse().ok()
             } else {
                 None
@@ -1381,33 +1382,69 @@ pub type OnWritten = Arc<dyn Fn(&Record) + Send + Sync>;
 
 type Job = Box<dyn FnOnce() + Send>;
 
+/// The work queue the worker thread drains, and whether it was shut down.
+#[derive(Default)]
+struct Queue {
+    jobs: VecDeque<Job>,
+    shut: bool,
+}
+
 /// The single-worker executor: one thread named `diary_0` running calls in
 /// order. Shutting it down (`shutdown(wait=False, cancel_futures=True)`) lets
-/// the running call finish and drops queued ones.
+/// the running call finish and cancels the queued ones at once: each dropped
+/// job drops its answer channel, so whoever awaits it sees the cancellation
+/// immediately, as Python's cancelled futures do.
 struct Executor {
-    tx: std_mpsc::Sender<Job>,
-    shut: Arc<AtomicBool>,
+    shared: Arc<(StdMutex<Queue>, Condvar)>,
 }
 
 impl Executor {
     fn spawn() -> std::io::Result<Self> {
-        let (tx, rx) = std_mpsc::channel::<Job>();
-        let shut = Arc::new(AtomicBool::new(false));
-        let flag = shut.clone();
+        let shared: Arc<(StdMutex<Queue>, Condvar)> = Arc::default();
+        let worker = shared.clone();
         std::thread::Builder::new().name("diary_0".into()).spawn(move || {
-            while let Ok(job) = rx.recv() {
-                if flag.load(Ordering::SeqCst) {
-                    drop(job);
-                    continue;
-                }
+            let (lock, ready) = &*worker;
+            loop {
+                let job = {
+                    let mut q = lock.lock().unwrap_or_else(|p| p.into_inner());
+                    loop {
+                        if let Some(job) = q.jobs.pop_front() {
+                            break job;
+                        }
+                        if q.shut {
+                            return;
+                        }
+                        q = ready.wait(q).unwrap_or_else(|p| p.into_inner());
+                    }
+                };
                 job();
             }
         })?;
-        Ok(Executor { tx, shut })
+        Ok(Executor { shared })
+    }
+
+    /// Queue a job; false when the executor was already shut down.
+    fn submit(&self, job: Job) -> Result<(), Job> {
+        let (lock, ready) = &*self.shared;
+        let mut q = lock.lock().unwrap_or_else(|p| p.into_inner());
+        if q.shut {
+            return Err(job);
+        }
+        q.jobs.push_back(job);
+        ready.notify_one();
+        Ok(())
     }
 
     fn shutdown(self) {
-        self.shut.store(true, Ordering::SeqCst);
+        let (lock, ready) = &*self.shared;
+        let dropped: VecDeque<Job> = {
+            let mut q = lock.lock().unwrap_or_else(|p| p.into_inner());
+            q.shut = true;
+            std::mem::take(&mut q.jobs)
+        };
+        // Dropped outside the lock: each one cancels its awaiting caller.
+        drop(dropped);
+        ready.notify_all();
     }
 }
 
@@ -1608,10 +1645,10 @@ impl DiaryTaker {
             *guard = Some(Executor::spawn()?);
         }
         let ex = guard.as_ref().expect("executor just set");
-        if let Err(std_mpsc::SendError(job)) = ex.tx.send(job) {
-            // The worker thread is gone (it can only end by panicking): start a fresh one.
+        if let Err(job) = ex.submit(job) {
+            // Only reachable if a shut executor were still installed: start a fresh one.
             let fresh = Executor::spawn()?;
-            let _ = fresh.tx.send(job);
+            let _ = fresh.submit(job);
             *guard = Some(fresh);
         }
         Ok(())
@@ -1625,6 +1662,11 @@ impl DiaryTaker {
         let (tx, rx) = tokio::sync::oneshot::channel::<anyhow::Result<String>>();
         let client = self.client.clone();
         let job: Job = Box::new(move || {
+            // The caller stopped waiting (it timed out) before the worker reached this call: a
+            // cancelled future that never started, which ThreadPoolExecutor skips rather than runs.
+            if tx.is_closed() {
+                return;
+            }
             let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| f(&*client)))
                 .unwrap_or_else(|p| Err(RuntimeError(panic_message(p)).into()));
             let _ = tx.send(result);
