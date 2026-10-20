@@ -1,0 +1,57 @@
+[package]
+name = "eve-lite"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+# telegram.py's inlet (the brain), think.py's think_hard, onboarding.py's two sign-ins.
+eve-brain = { path = "../eve-brain" }
+eve-chat-log = { path = "../eve-chat-log" }
+# composio_connect.ConnectBridge and its token source.
+eve-composio-connect = { path = "../eve-composio-connect" }
+# the brain reads Composio through composio_tools.ComposioBridge: Connect's tools are lent to it (ConnectApps).
+eve-composio-tools = { path = "../eve-composio-tools" }
+eve-dream = { path = "../eve-dream" }
+eve-ipc = { path = "../eve-ipc" }
+# link_chat.LinkChat
+eve-link = { path = "../eve-link" }
+eve-lite-rtc = { path = "../eve-lite-rtc" }
+eve-lite-tls = { path = "../eve-lite-tls" }
+eve-lite-web = { path = "../eve-lite-web" }
+eve-loop-watchdog = { path = "../eve-loop-watchdog" }
+eve-mem0-memory = { path = "../eve-mem0-memory" }
+eve-memory = { path = "../eve-memory" }
+eve-openrouter = { path = "../eve-openrouter" }
+eve-phone-call = { path = "../eve-phone-call" }
+eve-profile = { path = "../eve-profile" }
+# recall.py and records.py
+eve-records = { path = "../eve-records" }
+eve-spend-sync = { path = "../eve-spend-sync" }
+eve-transcripts = { path = "../eve-transcripts" }
+# watch.py
+eve-web = { path = "../eve-web" }
+eve-web-auth = { path = "../eve-web-auth" }
+anyhow.workspace = true
+async-trait.workspace = true
+chrono.workspace = true
+futures.workspace = true
+libc.workspace = true
+parking_lot.workspace = true
+serde_json.workspace = true
+tempfile.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+[dev-dependencies]
+# memory parity: full eve's build_memory and dream loop, beside eve lite's copy
+eve-daemon = { path = "../eve-daemon" }
+eve-link-uploads = { path = "../eve-link-uploads" }
+# full eve's LaunchAgent label
+eve-service = { path = "../eve-service" }
+indexmap.workspace = true
+regex.workspace = true
+# the network guard's positive control
+reqwest.workspace = true
