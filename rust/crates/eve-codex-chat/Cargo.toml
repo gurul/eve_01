@@ -1,0 +1,28 @@
+[package]
+name = "eve-codex-chat"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+eve-agent-contract = { path = "../eve-agent-contract" }
+eve-codex-auth = { path = "../eve-codex-auth" }
+eve-codex-computer = { path = "../eve-codex-computer" }
+eve-vault = { path = "../eve-vault" }
+anyhow.workspace = true
+caseless = "0.2.2"
+futures.workspace = true
+libc.workspace = true
+parking_lot.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+base64.workspace = true
+chrono.workspace = true
+eve-spend = { path = "../eve-spend" }
+image.workspace = true
+indexmap.workspace = true
+tempfile.workspace = true
