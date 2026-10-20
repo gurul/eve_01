@@ -1226,7 +1226,9 @@ fn arg_text(args: &Obj, keys: &[&str]) -> String {
 pub struct ChatMaker {
     pub(crate) app: Arc<dyn MakerHost>,
     pub(crate) spawn: SpawnFn,
-    pub building: Mutex<HashSet<String>>,
+    /// The apps being changed from the chat; the daemon shares it with the Mini App's `changing`
+    /// (`door.building = self._miniapp.changing`), see [`ChatMaker::sharing`].
+    pub building: Arc<Mutex<HashSet<String>>>,
     /// CHAT_PROGRESS_SECS, the module constant Python's tests patch (to 0); [`ChatMaker::set_progress_secs`].
     progress_secs: Mutex<f64>,
 }
@@ -1235,7 +1237,13 @@ impl ChatMaker {
     /// py: apps_maker.py:1751 `def __init__(self, app: Any, spawn: Callable[[Awaitable[Any], str], Any]) -> None:`
     pub fn new(app: Arc<dyn MakerHost>, spawn: SpawnFn) -> Arc<Self> {
         // miniapp.MiniApp: .maker, .store, .app_url(slug), .chat_url(slug), .url
-        Arc::new(Self { app, spawn, building: Mutex::new(HashSet::new()), progress_secs: Mutex::new(CHAT_PROGRESS_SECS) })
+        Self::sharing(app, spawn, Arc::new(Mutex::new(HashSet::new())))
+    }
+
+    /// `ChatMaker(app, spawn)` followed by `door.building = shared` (daemon._start_miniapp): one set of
+    /// apps-being-changed for both doors.
+    pub fn sharing(app: Arc<dyn MakerHost>, spawn: SpawnFn, building: Arc<Mutex<HashSet<String>>>) -> Arc<Self> {
+        Arc::new(Self { app, spawn, building, progress_secs: Mutex::new(CHAT_PROGRESS_SECS) })
     }
 
     /// The shortest gap between two progress lines (CHAT_PROGRESS_SECS unless set: Python's tests patch the

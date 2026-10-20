@@ -14,7 +14,7 @@ use std::sync::Arc;
 
 use futures::future::BoxFuture;
 use futures::FutureExt;
-use serde_json::{json, Map, Value};
+use serde_json::{Map, Value};
 
 use crate::daemon::Daemon;
 use crate::seams::{Inlet, Job, Obj};
@@ -211,7 +211,11 @@ impl Daemon {
         // The watcher texts through this door, so it exists only with it. Made here, started beside the door.
         let watcher = if tg.enabled {
             match guarded(|| eve_web::watch::make_watcher(None)) {
-                Ok(w) => w.map(Arc::new),
+                Ok(w) => w.map(|mut w| {
+                    // run(): `watcher.notify = self._telegram.tell_owner`, read at call time from the door
+                    w.set_notify(Some(self.watch_notify()));
+                    Arc::new(w)
+                }),
                 // a watcher that cannot start costs the watching, never the daemon
                 Err(e) => {
                     tracing::error!("watch: could not start; watching is off this run ({e})");
@@ -645,13 +649,51 @@ impl Daemon {
         let calendar = apps.map(|a| Arc::new(DirectCalendar(a.clone())) as Arc<dyn eve_meet::CalendarApps>);
         let notes_root = eve_notes::notes_dir(&self.recall_cfg);
         match guarded(|| eve_meet::make_meeter(None, &notes_root, Some(answer), calendar, self.environ())) {
-            Ok(meeter) => meeter.map(Arc::new),
+            Ok(meeter) => meeter.map(|mut m| {
+                // run(): `meeter.notify = meet_notify`, the door's tell_owner under the Meet title
+                m.notify = self.meet_notify();
+                Arc::new(m)
+            }),
             // a notetaker that cannot start costs the meetings, never the daemon
             Err(e) => {
                 tracing::error!("meet: could not start; joining meetings is off this run ({e})");
                 None
             }
         }
+    }
+
+    /// The watcher's notify: `self._telegram.tell_owner(text, about=about)` (the Watch title), through the door as
+    /// it stands when the alert is sent. No door yet is a send that did not go.
+    fn watch_notify(&self) -> eve_web::watch::Notify {
+        let d = self.me.clone();
+        Arc::new(move |text: String, about: String| {
+            let d = d.clone();
+            async move {
+                let inlet = d.upgrade().and_then(|d| d.st.lock().telegram_inlet.clone());
+                let Some(inlet) = inlet else { return Ok(false) };
+                Ok(inlet.tell_owner(&text, &about, eve_brain::telegram::WATCH_TITLE, &[]).await)
+            }
+            .boxed()
+        })
+    }
+
+    /// run()'s `meet_notify(text, about="")`: `inlet.tell_owner(text, about=about, title=telegram.MEET_TITLE)`.
+    fn meet_notify(&self) -> eve_meet::Notify {
+        let d = self.me.clone();
+        Arc::new(move |text: String, about: String| {
+            let d = d.clone();
+            async move {
+                let inlet = d.upgrade().and_then(|d| d.st.lock().telegram_inlet.clone());
+                match inlet {
+                    Some(inlet) => {
+                        inlet.tell_owner(&text, &about, eve_brain::telegram::MEET_TITLE, &[]).await;
+                    }
+                    None => tracing::info!("meet: (no chat to tell) {text}"),
+                }
+                Ok(())
+            }
+            .boxed()
+        })
     }
 
     /// `_ask_owner_on_phone(question)` as the Chrome consent broker calls it: the owner's answer, or the error
@@ -779,9 +821,8 @@ impl Daemon {
         // The Work tab's Claude Code sessions in ~/Documents/personal/work (work_sessions.py,
         // docs/work-sessions.md); EVE_WORK_SESSIONS=0 leaves them off and the routes answer 503.
         if eve_work_sessions::enabled(self.environ()) {
-            let d = d.clone();
-            let state: eve_work_sessions::StateFn =
-                Arc::new(move || Some(Arc::new(parking_lot::Mutex::new(state_view(&d)))));
+            let shared = self.state.clone();
+            let state: eve_work_sessions::StateFn = Arc::new(move || Some(shared.clone()));
             let work = eve_work_sessions::WorkSessions::new(eve_work_sessions::Options {
                 state,
                 environ: self.environ.clone(),
@@ -829,9 +870,12 @@ impl Daemon {
                 }
             });
             // One set of apps-being-changed for both doors, so a delete, rename or undo from either one waits
-            // for a build started from the other. (ChatMaker keeps a set of its own here: see PARITY.md.)
-            let maker =
-                eve_brain::apps_maker::ChatMaker::new(miniapp.clone() as Arc<dyn eve_brain::seams::MakerHost>, spawn);
+            // for a build started from the other.
+            let maker = eve_brain::apps_maker::ChatMaker::sharing(
+                miniapp.clone() as Arc<dyn eve_brain::seams::MakerHost>,
+                spawn,
+                miniapp.changing.clone(),
+            );
             *inlet.maker.lock() = Some(maker);
         }
     }
@@ -903,21 +947,6 @@ fn phone_notes_action(calls: &Arc<eve_phone_call::PhoneCalls>) -> eve_brain::sea
         }
         .boxed()
     })
-}
-
-/// `lambda: self.state`, as the Work sessions read it: what the daemon's state holds now. The daemon keeps its state
-/// in a lock of its own, so the Work sessions see a copy of its sessions taken per call (see PARITY.md).
-fn state_view(d: &Daemon) -> eve_state::State {
-    let st = d.state.lock();
-    let mut view = eve_state::State::new();
-    view.sessions = st.sessions.clone();
-    view.entries = st.entries.clone();
-    view.tokens_cumulative = st.tokens_cumulative;
-    view.tokens_today = st.tokens_today;
-    view.cost_cumulative = st.cost_cumulative;
-    view.cost_today = st.cost_today;
-    view.completed_until = st.completed_until;
-    view
 }
 
 // ---- adapters: the daemon's objects as the door's traits --------------------------------------------------------

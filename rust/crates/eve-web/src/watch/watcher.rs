@@ -194,6 +194,12 @@ static NOT_WORDS: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?i)^(?:\d+|ti
 static IDS_IN_TEXT: LazyLock<Regex> = LazyLock::new(|| Regex::new(r#""w(\d{1,9})""#).expect("ids"));
 
 impl Watcher {
+    /// `watcher.notify = ...`: who the alerts are texted through, set after the watcher is made (the daemon lends
+    /// the text door's tell_owner once the door exists).
+    pub fn set_notify(&mut self, notify: Option<Notify>) {
+        self.deps.notify = notify;
+    }
+
     /// `Watcher(config, ...)`: the list loaded from `config.path`.
     pub fn new(config: WatchConfig, deps: WatcherDeps) -> Self {
         let mut deps = deps;

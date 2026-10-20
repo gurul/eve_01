@@ -1,9 +1,8 @@
-//! Tests for the door fill unit: the text door's [`Inlet`] mapping onto the real `TelegramInlet`, and the daemon's
+//! Tests for the text door: the text door's [`Inlet`] mapping onto the real `TelegramInlet`, and the daemon's
 //! door methods (the parts of test_chrome_lane.py, test_chrome_consent.py, test_phone_expressions.py,
 //! test_telegram.py and test_telegram_chief.py that drive `Daemon._ask_owner_on_phone`, `_start_phone_expressions`,
-//! `_make_telegram` and `_make_chief`). A test that builds a daemon needs `DaemonParts::for_test` and
-//! `Daemon::assemble`, which another unit fills (and `_make_telegram` the app hubs and the agent factory): those
-//! are ignored until the integrator joins them.
+//! `_make_telegram` and `_make_chief`). A test that needs a daemon assembles an inert one from
+//! `DaemonParts::for_test`.
 
 use std::sync::Arc;
 
@@ -173,7 +172,6 @@ fn daemon(dir: &std::path::Path, env: &[(&str, &str)]) -> Arc<Daemon> {
 }
 
 #[tokio::test]
-#[ignore = "needs unit daemon (DaemonParts::for_test, Daemon::assemble)"]
 async fn test_chrome_approval_is_asked_in_the_owners_telegram_chat() {
     let dir = tempfile::tempdir().unwrap();
     let d = daemon(dir.path(), &[]);
@@ -192,7 +190,6 @@ async fn test_chrome_approval_is_asked_in_the_owners_telegram_chat() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit daemon (DaemonParts::for_test, Daemon::assemble)"]
 async fn test_a_waiting_question_is_never_overwritten_by_the_chrome_question() {
     let dir = tempfile::tempdir().unwrap();
     let d = daemon(dir.path(), &[]);
@@ -204,7 +201,6 @@ async fn test_a_waiting_question_is_never_overwritten_by_the_chrome_question() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit daemon (DaemonParts::for_test, Daemon::assemble)"]
 async fn a_line_for_the_owner_goes_to_the_doors_chat_only_when_there_is_one() {
     let dir = tempfile::tempdir().unwrap();
     let d = daemon(dir.path(), &[]);
@@ -220,7 +216,6 @@ async fn a_line_for_the_owner_goes_to_the_doors_chat_only_when_there_is_one() {
 }
 
 #[tokio::test]
-#[ignore = "needs units daemon and agents (Daemon::assemble, app_hubs, agent_factory)"]
 async fn test_the_daemon_builds_no_inlet_when_off() {
     let dir = tempfile::tempdir().unwrap();
     let d = daemon(dir.path(), &[]);
@@ -230,7 +225,6 @@ async fn test_the_daemon_builds_no_inlet_when_off() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit daemon (DaemonParts::for_test, Daemon::assemble)"]
 async fn test_the_default_switch_builds_no_chief_and_touches_nothing() {
     let dir = tempfile::tempdir().unwrap();
     let (inlet, _api) = door(vec![OWNER], false);
@@ -243,7 +237,6 @@ async fn test_the_default_switch_builds_no_chief_and_touches_nothing() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit daemon (DaemonParts::for_test, Daemon::assemble)"]
 async fn the_apps_and_the_direct_apps_are_off_unless_switched_on() {
     let dir = tempfile::tempdir().unwrap();
     let d = daemon(dir.path(), &[]);
@@ -252,7 +245,6 @@ async fn the_apps_and_the_direct_apps_are_off_unless_switched_on() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit daemon (DaemonParts::for_test, Daemon::assemble)"]
 async fn canvas_sharing_and_america_are_made_once() {
     let dir = tempfile::tempdir().unwrap();
     let d = daemon(dir.path(), &[]);
@@ -267,7 +259,6 @@ async fn canvas_sharing_and_america_are_made_once() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit daemon (DaemonParts::for_test, Daemon::assemble)"]
 async fn the_mini_app_stays_off_without_eve_miniapp() {
     let dir = tempfile::tempdir().unwrap();
     let d = daemon(dir.path(), &[]);
@@ -278,7 +269,6 @@ async fn the_mini_app_stays_off_without_eve_miniapp() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit daemon (DaemonParts::for_test, Daemon::assemble)"]
 async fn test_the_daemon_wires_the_phone_picker_on_by_default() {
     let dir = tempfile::tempdir().unwrap();
     let d = daemon(dir.path(), &[]);
@@ -297,7 +287,6 @@ async fn test_the_daemon_wires_the_phone_picker_on_by_default() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit daemon (DaemonParts::for_test, Daemon::assemble)"]
 async fn test_the_daemon_leaves_the_phone_picker_off_when_switched_off() {
     let dir = tempfile::tempdir().unwrap();
     let d = daemon(dir.path(), &[("EVE_PHONE_EXPRESSIONS", "0")]);

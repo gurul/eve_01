@@ -1,4 +1,4 @@
-//! The board unit: `test_daemon_scene.py` and `test_daemon_touch.py`, plus the heartbeat, the watchdog, the
+//! The board: `test_daemon_scene.py` and `test_daemon_touch.py`, plus the heartbeat, the watchdog, the
 //! acks, the tailer's callbacks and identity.
 //!
 //! Python drove single `Daemon` methods on a `SimpleNamespace` stub; here a real daemon is assembled from
@@ -239,7 +239,6 @@ async fn test_mute_without_a_board_is_kept_for_the_next_connect() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit voice_lesson (Daemon::on_caption)"]
 async fn test_caption_chirps_are_dropped_while_muted() {
     let dir = tempfile::tempdir().unwrap();
     let (d, ble) = daemon(dir.path(), true);
@@ -272,7 +271,6 @@ async fn test_status_ack_mismatch_resends_the_owners_choice() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit ipc_hooks (Daemon::handle_ipc)"]
 async fn test_ipc_sound_command() {
     let dir = tempfile::tempdir().unwrap();
     let (d, ble) = daemon(dir.path(), true);
@@ -335,7 +333,6 @@ fn touch_daemon() -> (tempfile::TempDir, Arc<Daemon>, Arc<Ble>, Arc<Desktop>) {
 }
 
 #[tokio::test]
-#[ignore = "needs unit owning explore.rs (Daemon::note_activity, Daemon::dismiss_explore)"]
 async fn test_focus_during_a_conversation_is_ignored() {
     let (_dir, d, ble, desktop) = touch_daemon();
     let conv = in_conversation(&d);
@@ -351,7 +348,6 @@ async fn test_focus_during_a_conversation_is_ignored() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit owning explore.rs (Daemon::note_activity, Daemon::dismiss_explore)"]
 async fn test_key_during_a_conversation_taps_nothing() {
     let (_dir, d, _ble, desktop) = touch_daemon();
     let conv = in_conversation(&d);
@@ -362,7 +358,6 @@ async fn test_key_during_a_conversation_taps_nothing() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit owning explore.rs (Daemon::note_activity, Daemon::dismiss_explore)"]
 async fn test_a_closed_conversation_does_not_block_a_touch() {
     let (_dir, d, _ble, desktop) = touch_daemon();
     let conv = in_conversation(&d);
@@ -374,7 +369,6 @@ async fn test_a_closed_conversation_does_not_block_a_touch() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit owning explore.rs (Daemon::note_activity, Daemon::dismiss_explore)"]
 async fn test_focus_outside_a_conversation_raises_the_terminal() {
     let (_dir, d, _ble, desktop) = touch_daemon();
     d.handle_ble(obj(json!({"cmd": "focus"}))).await.unwrap();
@@ -384,7 +378,6 @@ async fn test_focus_outside_a_conversation_raises_the_terminal() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit owning explore.rs (Daemon::note_activity, Daemon::dismiss_explore)"]
 async fn test_key_outside_a_conversation_taps_enter() {
     let (_dir, d, _ble, desktop) = touch_daemon();
     d.handle_ble(obj(json!({"cmd": "key", "name": "enter"}))).await.unwrap();
@@ -639,7 +632,6 @@ async fn resync_sends_time_heartbeat_and_status_first() {
 }
 
 #[tokio::test]
-#[ignore = "needs units owning explore.rs and voice.rs (Daemon::reset_listen, Daemon::resync_agent)"]
 async fn send_resync_order() {
     let dir = tempfile::tempdir().unwrap();
     let (d, ble) = daemon(dir.path(), true);
@@ -667,4 +659,76 @@ async fn background_jobs_drop_finished_work() {
 fn code_origin_names_the_checkout() {
     let origin = eve_daemon::code_origin();
     assert!(origin.contains(" @ ") || std::path::Path::new(&origin).exists(), "{origin}");
+}
+
+// ---- test_daemon_explore.py: the Voice PE's music input -------------------------------------------------------
+
+/// The Voice PE's serial link, connected, keeping what it was sent.
+#[derive(Default)]
+struct PeLink(Mutex<Vec<Value>>);
+
+impl eve_controller::ControllerLink for PeLink {
+    fn port(&self) -> String {
+        "fake".into()
+    }
+    fn connected(&self) -> bool {
+        true
+    }
+    fn wait_connected(&self) -> futures::future::BoxFuture<'_, ()> {
+        Box::pin(async {})
+    }
+    fn send<'a>(&'a self, obj: &'a Value) -> futures::future::BoxFuture<'a, anyhow::Result<bool>> {
+        self.0.lock().push(obj.clone());
+        Box::pin(async { Ok(true) })
+    }
+    fn run(&self) -> futures::future::BoxFuture<'static, ()> {
+        Box::pin(async {})
+    }
+    fn stop(&self) -> futures::future::BoxFuture<'_, ()> {
+        Box::pin(async {})
+    }
+    fn set_on_boot(&self, _hook: Option<eve_serial_transport::BootHook>) {}
+}
+
+/// Spotify, never asked: a mode that is off answers the board itself.
+struct NoSpotify;
+
+#[async_trait::async_trait]
+impl eve_music_mode::SpotifyControl for NoSpotify {
+    async fn now_playing(&self) -> anyhow::Result<Value> {
+        panic!("Spotify asked")
+    }
+    async fn control(&self, _action: &str, _kw: serde_json::Map<String, Value>) -> anyhow::Result<Value> {
+        panic!("Spotify asked")
+    }
+}
+
+#[tokio::test]
+async fn test_the_voice_pe_music_input_reaches_spotify_mode_or_puts_the_board_back() {
+    let dir = tempfile::tempdir().unwrap();
+    let ble = Ble::new(true);
+    let link = Arc::new(PeLink::default());
+    let lent = link.clone();
+    let factory = move |_on: eve_serial_transport::IncomingHandler, _port: &str| {
+        lent.clone() as Arc<dyn eve_controller::ControllerLink>
+    };
+    let nothing: eve_serial_transport::IncomingHandler = Arc::new(|_m| Box::pin(async {}));
+    let controller = Arc::new(eve_controller::Controller::with_link_factory("pe", nothing, &factory));
+    let mut parts = DaemonParts::for_test(ble, dir.path());
+    parts.controller = Some(controller);
+    let d = Daemon::assemble(parts);
+    // no Spotify: the board leaves the mode
+    d.handle_ble(obj(json!({"cmd": "music", "clicks": 2}))).await.unwrap();
+    assert_eq!(*link.0.lock(), vec![json!({"cmd": "music_mode", "on": false})]);
+    // Spotify mode gets the input (here: a mode that is off, which puts the board back through its own send)
+    let got = Arc::new(Mutex::new(Vec::new()));
+    let sink = got.clone();
+    let send: eve_music_mode::SendFn = Arc::new(move |v: Value| {
+        sink.lock().push(v);
+        Box::pin(async { Ok(()) })
+    });
+    d.st.lock().music_mode = Some(Arc::new(eve_music_mode::MusicMode::new(Arc::new(NoSpotify), send, None)));
+    d.handle_ble(obj(json!({"cmd": "music", "dial": 3}))).await.unwrap();
+    assert_eq!(*got.lock(), vec![json!({"cmd": "music_mode", "on": false})]);
+    assert_eq!(link.0.lock().len(), 1, "the controller itself was not asked again");
 }

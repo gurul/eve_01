@@ -293,7 +293,7 @@ pub struct Daemon {
     /// The daemon's own `Arc`, for callbacks made in `&self` methods.
     pub me: Weak<Daemon>,
     /// `self.state`: the sessions, entries and tokens the heartbeat carries.
-    pub state: Mutex<eve_state::State>,
+    pub state: Arc<Mutex<eve_state::State>>,
     /// `self.ipc`: None in tests.
     pub ipc: Option<eve_ipc::IpcServer>,
     /// `self.ble`.
@@ -594,7 +594,7 @@ impl Daemon {
             };
             Daemon {
                 me: weak.clone(),
-                state: Mutex::new(eve_state::State::new()),
+                state: Arc::new(Mutex::new(eve_state::State::new())),
                 ipc,
                 ble: link,
                 controller: parts.controller,

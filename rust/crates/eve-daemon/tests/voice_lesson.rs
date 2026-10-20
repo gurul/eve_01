@@ -1,10 +1,9 @@
-//! Tests for the voice_lesson fill unit: test_daemon_task_cancel.py, test_daemon_explore.py and the daemon half
+//! Tests for the voice, the lesson and the explorer: test_daemon_task_cancel.py, test_daemon_explore.py and the daemon half
 //! of test_daemon_lesson.py. No board, no mic, no network: a recording board link, fake microphones, sessions
 //! and agents, and the daemon built from [`DaemonParts::for_test`].
 //!
 //! Python built a `SimpleNamespace` with only the attributes a method reads; here every test builds the real
-//! daemon from inert parts, so a test that reaches a method of another fill unit waits on that unit (ignored with
-//! its name until the integrator fills it).
+//! daemon from inert parts.
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -311,7 +310,6 @@ fn snap_line(snap: bool, w: i64, h: i64) -> Obj {
 // ---- test_daemon_task_cancel.py -----------------------------------------------------------------------------
 
 #[tokio::test]
-#[ignore = "needs unit board"]
 async fn test_cancel_active_task_cancels_and_captions() {
     let board = Board::new(true);
     let (d, _dir) = daemon(&board);
@@ -327,7 +325,6 @@ async fn test_cancel_active_task_cancels_and_captions() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board"]
 async fn test_cancel_active_task_is_a_noop_without_a_running_task() {
     let board = Board::new(true);
     let (d, _dir) = daemon(&board);
@@ -347,7 +344,6 @@ async fn ipc(d: &Arc<Daemon>, req: Value) -> Obj {
 }
 
 #[tokio::test]
-#[ignore = "needs units board, ipc_hooks"]
 async fn test_ipc_start_puts_the_board_in_explore_mode_without_counting_as_activity() {
     let board = Board::new(true);
     let (d, _dir) = daemon(&board);
@@ -362,7 +358,6 @@ async fn test_ipc_start_puts_the_board_in_explore_mode_without_counting_as_activ
 }
 
 #[tokio::test]
-#[ignore = "needs units board, ipc_hooks"]
 async fn test_ipc_stop_ends_it_and_status_reports() {
     let board = Board::new(true);
     let (d, _dir) = daemon(&board);
@@ -388,7 +383,6 @@ async fn test_ipc_stop_ends_it_and_status_reports() {
 }
 
 #[tokio::test]
-#[ignore = "needs units board, ipc_hooks"]
 async fn test_ipc_start_is_refused_while_disconnected_or_dictating() {
     for (connected, listen_sent, why) in [(false, None, "board disconnected"), (true, Some(true), "listen key")] {
         let board = Board::new(connected);
@@ -408,7 +402,6 @@ async fn test_ipc_start_is_refused_while_disconnected_or_dictating() {
 }
 
 #[tokio::test]
-#[ignore = "needs units board, ipc_hooks"]
 async fn test_ipc_start_works_when_the_idle_start_is_disabled() {
     let board = Board::new(true);
     let (d, _dir) = daemon_with(&board, false, |_| {});
@@ -422,7 +415,6 @@ async fn test_ipc_start_works_when_the_idle_start_is_disabled() {
 // ---- the explorer driven directly (what the IPC route calls) ------------------------------------------------
 
 #[tokio::test]
-#[ignore = "needs unit board"]
 async fn test_request_explore_starts_a_pan_and_a_busy_tick_keeps_it_going() {
     let board = Board::new(true);
     let (d, _dir) = daemon(&board);
@@ -443,7 +435,6 @@ async fn test_request_explore_starts_a_pan_and_a_busy_tick_keeps_it_going() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board"]
 async fn test_request_explore_is_refused_while_disconnected_or_dictating() {
     for (connected, listen_sent, why) in [(false, None, "board disconnected"), (true, Some(true), "listen key")] {
         let board = Board::new(connected);
@@ -457,7 +448,6 @@ async fn test_request_explore_is_refused_while_disconnected_or_dictating() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board"]
 async fn test_the_idle_start_disabled_never_starts_on_its_own_and_dismiss_is_quiet_when_off() {
     let board = Board::new(true);
     let (d, _dir) = daemon_with(&board, false, |_| {});
@@ -474,7 +464,6 @@ async fn test_the_idle_start_disabled_never_starts_on_its_own_and_dismiss_is_qui
 // ---- the board and the mic --------------------------------------------------------------------------------------
 
 #[tokio::test]
-#[ignore = "needs unit board"]
 async fn test_a_touch_ends_a_manual_explore_at_once() {
     let board = Board::new(true);
     let (d, _dir) = daemon(&board);
@@ -489,7 +478,6 @@ async fn test_a_touch_ends_a_manual_explore_at_once() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board"]
 async fn test_a_touch_during_a_conversation_ends_the_explore_but_not_the_conversation() {
     let board = Board::new(true);
     let (d, _dir) = daemon(&board);
@@ -504,7 +492,6 @@ async fn test_a_touch_during_a_conversation_ends_the_explore_but_not_the_convers
 }
 
 #[tokio::test]
-#[ignore = "needs unit board"]
 async fn test_the_wake_word_ends_a_manual_explore_before_the_conversation() {
     let board = Board::new(true);
     let (d, _dir) = daemon(&board);
@@ -547,7 +534,6 @@ fn open_session_seam(explore: bool, hang: bool) -> (eve_daemon::seams::OpenSessi
 }
 
 #[tokio::test]
-#[ignore = "needs units board, run_memory, agents, door"]
 async fn test_the_lesson_word_opens_a_conversation_flagged_as_a_lesson_wake() {
     let board = Board::new(true);
     let (seam, opened) = open_session_seam(false, false);
@@ -567,7 +553,6 @@ async fn test_the_lesson_word_opens_a_conversation_flagged_as_a_lesson_wake() {
 }
 
 #[tokio::test]
-#[ignore = "needs units board, run_memory, agents, door"]
 async fn test_voice_go_explore_starts_once_the_conversation_has_closed() {
     let board = Board::new(true);
     let (seam, _opened) = open_session_seam(true, false);
@@ -589,7 +574,6 @@ async fn test_voice_go_explore_starts_once_the_conversation_has_closed() {
 }
 
 #[tokio::test]
-#[ignore = "needs units board, run_memory, agents, door"]
 async fn test_voice_go_explore_is_dropped_when_the_conversation_is_hushed() {
     let board = Board::new(true);
     let (seam, opened) = open_session_seam(true, true);
@@ -611,7 +595,6 @@ async fn test_voice_go_explore_is_dropped_when_the_conversation_is_hushed() {
 // ---- photos: {"cmd":"snap"} and the one frame line that answers it ------------------------------------------
 
 #[tokio::test]
-#[ignore = "needs unit board"]
 async fn test_take_snapshot_sends_snap_and_returns_the_answering_frame() {
     let board = Board::new(true);
     let (d, _dir) = daemon(&board);
@@ -629,7 +612,6 @@ async fn test_take_snapshot_sends_snap_and_returns_the_answering_frame() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board"]
 async fn test_take_snapshot_times_out_on_old_firmware_and_leaves_no_waiter() {
     let board = Board::new(true);
     let (d, _dir) = daemon(&board);
@@ -642,7 +624,6 @@ async fn test_take_snapshot_times_out_on_old_firmware_and_leaves_no_waiter() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board"]
 async fn test_take_snapshot_refuses_while_disconnected_or_busy() {
     let away = Board::new(false);
     let (d0, _dir0) = daemon(&away);
@@ -659,7 +640,6 @@ async fn test_take_snapshot_refuses_while_disconnected_or_busy() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board"]
 async fn test_stream_frames_still_go_to_the_tracker_and_bad_snaps_are_none() {
     let board = Board::new(true);
     let (d, _dir) = daemon(&board);
@@ -678,7 +658,6 @@ async fn test_stream_frames_still_go_to_the_tracker_and_bad_snaps_are_none() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board"]
 async fn test_every_other_board_touch_still_ends_it() {
     // focus / key: either one is the human, so either ends the explore.
     for cmd in [json!({"cmd": "focus"}), json!({"cmd": "key", "name": "enter"})] {
@@ -696,7 +675,6 @@ async fn test_every_other_board_touch_still_ends_it() {
 // ---- thoughts on the robot's own screen while it explores -------------------------------------------------
 
 #[tokio::test]
-#[ignore = "needs unit board"]
 async fn test_a_thought_goes_onto_the_screen_while_exploring() {
     let board = Board::new(true);
     let (d, _dir) = daemon(&board);
@@ -719,7 +697,6 @@ async fn test_a_thought_goes_onto_the_screen_while_exploring() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board"]
 async fn test_a_photographed_thought_says_so_on_the_screen() {
     let board = Board::new(true);
     let (d, _dir) = daemon(&board);
@@ -735,7 +712,6 @@ async fn test_a_photographed_thought_says_so_on_the_screen() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board"]
 async fn test_nothing_is_drawn_when_the_screen_is_not_eves_to_use() {
     // not exploring at all
     let board = Board::new(true);
@@ -775,7 +751,6 @@ async fn test_nothing_is_drawn_when_the_screen_is_not_eves_to_use() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board"]
 async fn test_the_screen_is_cleared_when_the_explore_ends() {
     let board = Board::new(true);
     let (d, _dir) = daemon(&board);
@@ -793,7 +768,6 @@ async fn test_the_screen_is_cleared_when_the_explore_ends() {
 // ---- being called back by hand -------------------------------------------------------------------------
 
 #[tokio::test]
-#[ignore = "needs unit board"]
 async fn test_a_double_tap_on_the_screen_calls_eve_back() {
     let board = Board::new(true);
     let (d, _dir) = daemon(&board);
@@ -828,7 +802,6 @@ fn cancel_idle(d: &Daemon) {
 }
 
 #[tokio::test]
-#[ignore = "needs units board, run_memory"]
 async fn test_step_thinks_then_shows_one_caption_that_fits_the_screen() {
     let board = Board::new(true);
     let app = answers("Subtract three from both sides to get the x part alone.");
@@ -852,7 +825,6 @@ async fn test_step_thinks_then_shows_one_caption_that_fits_the_screen() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-#[ignore = "needs units board, run_memory"]
 async fn test_a_dispatch_notice_is_the_only_caption() {
     let board = Board::new(true);
     let (d, _dir) = daemon(&board);
@@ -879,7 +851,6 @@ async fn test_a_dispatch_notice_is_the_only_caption() {
 }
 
 #[tokio::test]
-#[ignore = "needs units board, run_memory"]
 async fn test_open_speaks_without_thinking() {
     let board = Board::new(true);
     let app = answers("Would you like to learn a topic?");
@@ -895,7 +866,6 @@ async fn test_open_speaks_without_thinking() {
 }
 
 #[tokio::test]
-#[ignore = "needs units board, run_memory"]
 async fn test_start_options_are_forwarded_and_unknown_keys_dropped() {
     let board = Board::new(true);
     let app = answers("What is 3/4 + 1/4?");
@@ -916,7 +886,6 @@ async fn test_start_options_are_forwarded_and_unknown_keys_dropped() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board"]
 async fn test_unknown_action_and_bad_mode_are_refused_before_anything_happens() {
     let board = Board::new(true);
     let app = answers("x");
@@ -933,7 +902,6 @@ async fn test_unknown_action_and_bad_mode_are_refused_before_anything_happens() 
 }
 
 #[tokio::test]
-#[ignore = "needs unit board"]
 async fn test_learning_disabled_is_a_clear_error_without_a_caption() {
     let board = Board::new(true);
     let (d, _dir) = with_learning(&board, None);
@@ -948,7 +916,6 @@ async fn test_learning_disabled_is_a_clear_error_without_a_caption() {
 }
 
 #[tokio::test]
-#[ignore = "needs units board, run_memory"]
 async fn test_a_refusal_shows_the_error_state_with_the_reason() {
     let board = Board::new(true);
     let refuse = learning(|_| Err(eve_learning::LearningError::value("Open a lesson first.")));
@@ -973,7 +940,6 @@ async fn test_a_refusal_shows_the_error_state_with_the_reason() {
 }
 
 #[tokio::test]
-#[ignore = "needs units board, run_memory"]
 async fn test_an_unexpected_error_ends_thinking_with_an_error_caption() {
     let board = Board::new(true);
     let broken = learning(|_| Err(eve_learning::LearningError::Other(anyhow::anyhow!("disk full near 2x+3=11"))));
@@ -996,7 +962,6 @@ async fn test_an_unexpected_error_ends_thinking_with_an_error_caption() {
 }
 
 #[tokio::test]
-#[ignore = "needs units board, run_memory"]
 async fn test_during_a_conversation_live_keeps_the_screen() {
     let board = Board::new(true);
     let app = answers("x");
@@ -1014,7 +979,6 @@ async fn test_during_a_conversation_live_keeps_the_screen() {
 }
 
 #[tokio::test]
-#[ignore = "needs units board, run_memory"]
 async fn test_a_lesson_ends_a_manual_explore() {
     let board = Board::new(true);
     let (d, _dir) = with_learning(&board, Some(answers("x")));
@@ -1029,7 +993,6 @@ async fn test_a_lesson_ends_a_manual_explore() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board"]
 async fn test_status_neither_ends_the_explore_nor_captions() {
     let board = Board::new(true);
     let status = learning(|_| {
@@ -1049,7 +1012,6 @@ async fn test_status_neither_ends_the_explore_nor_captions() {
 }
 
 #[tokio::test]
-#[ignore = "needs units board, run_memory"]
 async fn test_back_to_back_notices_keep_only_the_latest_idle_timer() {
     let board = Board::new(true);
     let (d, _dir) = daemon(&board);
@@ -1065,7 +1027,6 @@ async fn test_back_to_back_notices_keep_only_the_latest_idle_timer() {
 }
 
 #[tokio::test]
-#[ignore = "needs units board, run_memory"]
 async fn test_a_long_word_still_fits_the_screen() {
     let board = Board::new(true);
     let (d, _dir) = daemon(&board);
@@ -1126,7 +1087,6 @@ fn listening_daemon_with(
 }
 
 #[tokio::test]
-#[ignore = "needs unit board"]
 async fn test_a_wake_word_conversation_switches_instead_of_opening_another() {
     let board = Board::new(true);
     let (d, _app, lesson, _dir) = listening_daemon(&board, true);
@@ -1145,7 +1105,6 @@ async fn test_a_wake_word_conversation_switches_instead_of_opening_another() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board"]
 async fn test_listen_while_connecting_is_handed_to_the_session_when_it_opens() {
     let board = Board::new(true);
     let (d, _app, lesson, _dir) = listening_daemon(&board, true);
@@ -1163,7 +1122,6 @@ async fn test_listen_while_connecting_is_handed_to_the_session_when_it_opens() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board"]
 async fn test_an_open_session_that_refuses_is_answered_not_queued() {
     let board = Board::new(true);
     let (d, _app, lesson, _dir) = listening_daemon(&board, true);
@@ -1188,7 +1146,6 @@ async fn test_an_open_session_that_refuses_is_answered_not_queued() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board"]
 async fn test_listen_without_a_microphone_says_why() {
     let board = Board::new(true);
     let (d, app, _lesson, _dir) = listening_daemon(&board, false);
@@ -1200,7 +1157,6 @@ async fn test_listen_without_a_microphone_says_why() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board"]
 async fn test_the_listening_pose_drops_while_eve_thinks_or_speaks() {
     let board = Board::new(true);
     let (d, _app, lesson, _dir) = listening_daemon(&board, true);
@@ -1218,7 +1174,6 @@ async fn test_the_listening_pose_drops_while_eve_thinks_or_speaks() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board"]
 async fn test_a_listener_call_on_the_event_loop_is_refused_rather_than_deadlocking() {
     let board = Board::new(true);
     let (d, _app, _lesson, _dir) = listening_daemon(&board, true);
@@ -1228,7 +1183,6 @@ async fn test_a_listener_call_on_the_event_loop_is_refused_rather_than_deadlocki
 }
 
 #[tokio::test]
-#[ignore = "needs units board, run_memory, agents, door"]
 async fn test_ipc_listen_opens_a_conversation_and_stop_listening_closes_it() {
     let board = Board::new(true);
     let (seam, opened) = open_session_seam(false, true);
@@ -1296,7 +1250,6 @@ async fn test_ipc_listen_opens_a_conversation_and_stop_listening_closes_it() {
 }
 
 #[tokio::test]
-#[ignore = "needs units board, run_memory"]
 async fn test_ipc_listen_with_no_lesson_open_is_refused_with_a_caption() {
     let board = Board::new(true);
     let (d, dir) = daemon_with(&board, true, |p| {
@@ -1330,7 +1283,6 @@ async fn test_ipc_listen_with_no_lesson_open_is_refused_with_a_caption() {
 }
 
 #[tokio::test]
-#[ignore = "needs units board, run_memory, agents, door"]
 async fn test_stop_while_a_listening_conversation_is_still_connecting_cancels_it() {
     let board = Board::new(true);
     let (seam, _opened) = open_session_seam(false, true);
@@ -1346,4 +1298,40 @@ async fn test_stop_while_a_listening_conversation_is_still_connecting_cancels_it
     let out = d.think_aloud_stop().await; // stopping twice is harmless
     assert_eq!(out["ok"], true);
     assert!(out["answer"].as_str().unwrap().contains("not listening"));
+}
+
+// ---- test_daemon_membus.py: the agent state and a lesson action on the bus ----------------------------------
+
+fn bus_events(d: &Daemon, topic: &str) -> Vec<Obj> {
+    d.bus.recent(topic).into_iter().map(|e| e.msg).collect()
+}
+
+#[tokio::test]
+async fn test_a_state_change_publishes_eve_state_once_per_change() {
+    let board = Board::new(true);
+    let (d, _dir) = daemon(&board);
+    d.on_agent_state("thinking");
+    d.on_agent_state("thinking");
+    d.on_agent_state("speaking");
+    settle().await;
+    let events = bus_events(&d, "/eve/state");
+    let states: Vec<&str> = events.iter().map(|e| e["state"].as_str().unwrap()).collect();
+    assert_eq!(states, ["thinking", "speaking"]);
+    assert!(events.iter().all(|e| e["time"].is_f64()));
+}
+
+#[tokio::test]
+async fn test_an_ipc_lesson_action_names_the_action_in_its_event_and_clears_it_after() {
+    let board = Board::new(true);
+    let app = answers("What do the bottoms need to be?");
+    let (d, _dir) = with_learning(&board, Some(app.clone()));
+    let resp = Value::Object(d.handle_ipc(obj(json!({"evt": "lesson", "action": "hint"}))).await.unwrap());
+    settle().await;
+    assert_eq!(resp["ok"], true);
+    assert_eq!(*app.calls.lock(), vec![obj(json!({"action": "hint"}))]);
+    let events = bus_events(&d, "/eve/memory/lesson");
+    let actions: Vec<&str> = events.iter().map(|e| e["action"].as_str().unwrap()).collect();
+    assert_eq!(actions, ["hint"]);
+    assert_eq!(d.st.lock().lesson_action, "");
+    cancel_idle(&d);
 }

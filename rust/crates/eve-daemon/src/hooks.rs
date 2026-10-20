@@ -395,7 +395,7 @@ impl Daemon {
     pub async fn handle_read_pretooluse(
         self: &Arc<Self>,
         req: Obj,
-        tool_use_id: &str,
+        _tool_use_id: &str,
         session_id: &str,
         hint: &str,
     ) -> anyhow::Result<Obj> {

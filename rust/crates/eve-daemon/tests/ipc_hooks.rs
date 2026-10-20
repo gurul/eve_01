@@ -1,4 +1,4 @@
-//! Tests for the ipc_hooks fill unit: the IPC dispatch and its handlers, the permission path (PreToolUse,
+//! Tests for the IPC handlers and the hooks: the IPC dispatch and its handlers, the permission path (PreToolUse,
 //! PermissionRequest, Read, the command-risk gate) and the Work sessions' MCP calls.
 //!
 //! Ported from bridge/tests/test_daemon_background.py (the unit's own), and the parts of test_ipc_dispatch.py,
@@ -246,7 +246,6 @@ fn asker_saying(decision: &str, why: &str, calls: Option<Calls>) -> CommandAsker
 // ---- test_daemon_background.py ------------------------------------------------------------------------------------
 
 #[tokio::test]
-#[ignore = "needs unit board/run_memory: Daemon::assemble, DaemonParts::for_test, Daemon::spawn"]
 async fn test_turn_end_side_effects_task_is_held_in_background() {
     let r = rig_with(false, MatcherConfig::default());
     let got = r.d.handle_ipc(req(json!({"evt": "turn_end", "session_id": "s1"}))).await.unwrap();
@@ -258,13 +257,15 @@ async fn test_turn_end_side_effects_task_is_held_in_background() {
         job.join().await;
     }
     tokio::task::yield_now().await;
-    assert!(r.d.background_jobs().is_empty()); // discarded once done
+    // discarded once done; what is left is the real side effects' own follow-up push at pulse end
+    // (Python's test stubbed the side effects, so its set came back empty)
+    let left: Vec<String> = r.d.background_jobs().iter().map(|j| j.name().to_string()).collect();
+    assert_eq!(left, ["heartbeat-after"]);
     // the deferred running→0 flip is pending for the session, not held in the background
     assert!(r.d.st.lock().pending_turn_ends.contains_key("s1"));
 }
 
 #[tokio::test]
-#[ignore = "needs unit board/run_memory: Daemon::assemble, DaemonParts::for_test, Daemon::spawn, drain_background"]
 async fn test_drain_background_waits_for_held_work() {
     let r = rig_with(false, MatcherConfig::default());
     r.d.handle_ipc(req(json!({"evt": "turn_end", "session_id": "s1"}))).await.unwrap();
@@ -292,7 +293,6 @@ fn test_every_entry_is_the_matching_async_method() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board/run_memory: Daemon::assemble, DaemonParts::for_test, Daemon::note_activity"]
 async fn test_unknown_and_malformed_events_are_refused_as_before() {
     let r = rig_with(false, MatcherConfig::default());
     let ask = |v: Value| {
@@ -321,7 +321,6 @@ async fn chat(r: &Rig, v: Value) -> Value {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board/run_memory: Daemon::assemble, DaemonParts::for_test"]
 async fn test_typed_words_reach_the_chat_as_the_owners() {
     let r = rig_with(false, MatcherConfig::default());
     let tg = Arc::new(FakeInlet::new(false, None));
@@ -332,7 +331,6 @@ async fn test_typed_words_reach_the_chat_as_the_owners() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board/run_memory: Daemon::assemble, DaemonParts::for_test"]
 async fn test_long_words_are_cut_to_a_telegram_message() {
     let r = rig_with(false, MatcherConfig::default());
     let tg = Arc::new(FakeInlet::new(false, None));
@@ -342,7 +340,6 @@ async fn test_long_words_are_cut_to_a_telegram_message() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board/run_memory: Daemon::assemble, DaemonParts::for_test"]
 async fn test_nothing_is_sent_when_it_cannot_be() {
     let r = rig_with(false, MatcherConfig::default());
     let tg = Arc::new(FakeInlet::new(false, None));
@@ -395,7 +392,6 @@ fn last(r: &Rig) -> Obj {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board/run_memory: Daemon::assemble, DaemonParts::for_test"]
 async fn test_off_is_todays_relay() {
     let tg = Arc::new(FakeInlet::new(true, None));
     let r = risk_rig(tg.clone(), None, "default");
@@ -409,12 +405,12 @@ async fn test_off_is_todays_relay() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-#[ignore = "needs unit board/run_memory: Daemon::assemble, DaemonParts::for_test, Daemon::spawn"]
 async fn test_shadow_allows_and_logs_the_verdict() {
     let calls = Arc::new(Mutex::new(Vec::new()));
     let tg = Arc::new(FakeInlet::new(true, None));
     let r = risk_rig(tg.clone(), Some(("shadow".into(), asker_saying("risky", "destroys data", Some(calls.clone())))), "default");
     assert_eq!(pre(&r, base_req()).await, json!({"ok": true, "decision": "allow"}));
+    r.settle().await; // the shadow verdict is written by its own background task
     assert_eq!(
         *calls.lock(),
         vec![("Bash".to_string(), "git push --force origin main".to_string(), "/r".to_string())]
@@ -432,7 +428,6 @@ async fn test_shadow_allows_and_logs_the_verdict() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-#[ignore = "needs unit board/run_memory: Daemon::assemble, DaemonParts::for_test"]
 async fn test_ask_routes_a_risky_command_to_the_phone() {
     for (decision, expect) in [("allow", json!({"ok": true, "decision": "allow"})), ("deny", json!({"ok": true, "decision": "deny"}))] {
         let tg = Arc::new(FakeInlet::new(true, Some(decision)));
@@ -480,7 +475,6 @@ async fn test_ask_routes_a_risky_command_to_the_phone() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-#[ignore = "needs unit board/run_memory: Daemon::assemble, DaemonParts::for_test"]
 async fn test_the_regex_class_asks_before_jev_is_consulted() {
     let calls = Arc::new(Mutex::new(Vec::new()));
     let tg = Arc::new(FakeInlet::new(true, Some("allow")));
@@ -504,7 +498,6 @@ async fn test_the_regex_class_asks_before_jev_is_consulted() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board/run_memory: Daemon::assemble, DaemonParts::for_test"]
 async fn test_command_risk_reads_its_mode_once() {
     // EVE_COMMAND_RISK=off: built once as off, and the cache answers after
     let dir = tempfile::tempdir().unwrap();
@@ -528,7 +521,6 @@ async fn test_command_risk_reads_its_mode_once() {
 // ---- test_telegram.py: the phone's decision -----------------------------------------------------------------------
 
 #[tokio::test]
-#[ignore = "needs unit board/run_memory: Daemon::assemble, DaemonParts::for_test"]
 async fn test_the_daemon_honours_the_phones_decision_and_defers_without_one() {
     let q = obj(json!({"tool_use_id": "t1", "session_id": "s1", "tool_name": "Bash", "hint": "rm -rf build/", "cwd": "/r"}));
     for (decision, expect) in [
@@ -579,7 +571,6 @@ async fn test_the_daemon_honours_the_phones_decision_and_defers_without_one() {
 // ---- test_relay_questions.py --------------------------------------------------------------------------------------
 
 #[tokio::test]
-#[ignore = "needs unit board/run_memory: Daemon::assemble, DaemonParts::for_test"]
 async fn test_ask_user_question_is_relayed_and_never_decided() {
     let relay = Arc::new(FakeInlet::new(true, Some("allow")));
     let r = risk_rig(relay.clone(), None, "ask");
@@ -601,7 +592,6 @@ async fn perm(r: &Rig, v: Value) -> Value {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board/run_memory: Daemon::assemble, DaemonParts::for_test"]
 async fn test_permission_request_asks_the_phone_when_the_relay_is_on() {
     let relay = Arc::new(FakeInlet::new(true, Some("deny")));
     let r = risk_rig(relay.clone(), None, "default");
@@ -613,7 +603,6 @@ async fn test_permission_request_asks_the_phone_when_the_relay_is_on() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board/run_memory: Daemon::assemble, DaemonParts::for_test"]
 async fn test_permission_request_without_relay_or_answer_leaves_the_dialog() {
     let off = Arc::new(FakeInlet::new(false, Some("allow")));
     let r = risk_rig(off, None, "default");
@@ -788,7 +777,6 @@ fn golden() -> Map<String, Value> {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-#[ignore = "needs unit board/run_memory: Daemon::assemble, DaemonParts::for_test, Daemon::spawn"]
 async fn test_the_permission_path_matches_its_golden_master() {
     let want = golden();
     let dir = tempfile::tempdir().unwrap();
@@ -879,7 +867,6 @@ fn fake_inlet_with_tool() -> FakeInlet {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board/run_memory: Daemon::assemble, DaemonParts::for_test"]
 async fn test_the_daemon_answers_only_a_live_sessions_token() {
     let inlet = Arc::new(fake_inlet_with_tool());
     let (r, token) = work_rig(inlet.clone());
@@ -924,7 +911,6 @@ async fn test_the_daemon_answers_only_a_live_sessions_token() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board/run_memory: Daemon::assemble, DaemonParts::for_test, Daemon::background_jobs"]
 async fn test_the_daemon_bounds_a_long_call_and_never_cancels_it() {
     // A call still running past the ask timeout plus MCP_CALL_BOUND_SECS: the daemon answers first (before the MCP
     // side's call_secs), says the outcome is unknown, and the call goes on to finish in _background.
@@ -968,7 +954,6 @@ async fn test_the_daemon_bounds_a_long_call_and_never_cancels_it() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board/run_memory: Daemon::assemble, DaemonParts::for_test"]
 async fn test_the_daemon_refuses_while_no_chat_runs() {
     let inlet = Arc::new(fake_inlet_with_tool());
     *inlet.chat_id.lock() = None;
@@ -1004,7 +989,6 @@ fn test_the_hooks_reach_the_work_registry() {
 // ---- test_telegram.py: the turn's relay ---------------------------------------------------------------------------
 
 #[tokio::test]
-#[ignore = "needs unit board/run_memory: Daemon::assemble, DaemonParts::for_test, push_heartbeat, deferred_turn_end"]
 async fn test_the_daemon_ends_the_relays_typing_at_the_stop_hook() {
     let r = rig_with(false, MatcherConfig::default());
     let tg = Arc::new(FakeInlet::new(true, None));
@@ -1020,7 +1004,6 @@ async fn test_the_daemon_ends_the_relays_typing_at_the_stop_hook() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board/run_memory: Daemon::assemble, DaemonParts::for_test, push_heartbeat"]
 async fn test_turn_begin_relays_the_prompt_and_adds_the_entry() {
     let r = rig_with(false, MatcherConfig::default());
     let tg = Arc::new(FakeInlet::new(true, None));
@@ -1037,7 +1020,6 @@ async fn test_turn_begin_relays_the_prompt_and_adds_the_entry() {
 // ---- the other handlers -------------------------------------------------------------------------------------------
 
 #[tokio::test]
-#[ignore = "needs unit board/run_memory: Daemon::assemble, DaemonParts::for_test, push_heartbeat"]
 async fn test_posttooluse_adopts_the_session_and_backfills_its_cwd() {
     let r = rig_with(false, MatcherConfig::default());
     // posttooluse carries no cwd: the session is adopted without one
@@ -1054,7 +1036,6 @@ async fn test_posttooluse_adopts_the_session_and_backfills_its_cwd() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board/run_memory: Daemon::assemble, DaemonParts::for_test"]
 async fn test_hook_events_without_a_session_id_raise_as_a_key_error() {
     let r = rig_with(false, MatcherConfig::default());
     let err = r.d.handle_ipc(req(json!({"evt": "session_end"}))).await.unwrap_err();
@@ -1063,7 +1044,6 @@ async fn test_hook_events_without_a_session_id_raise_as_a_key_error() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board/run_memory: Daemon::assemble, DaemonParts::for_test"]
 async fn test_board_commands_need_the_board() {
     let r = rig_with(false, MatcherConfig::default());
     let ask = |v: Value| {
@@ -1091,7 +1071,6 @@ async fn test_board_commands_need_the_board() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board/run_memory: Daemon::assemble, DaemonParts::for_test"]
 async fn test_board_commands_reach_a_connected_board() {
     let r = rig_with(true, MatcherConfig::default());
     let got = Value::Object(r.d.handle_ipc(req(json!({"evt": "species", "idx": "2"}))).await.unwrap());
@@ -1112,7 +1091,6 @@ async fn test_board_commands_reach_a_connected_board() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board/run_memory: Daemon::assemble, DaemonParts::for_test"]
 async fn test_trace_and_pose_read_what_the_board_reported() {
     let r = rig_with(false, MatcherConfig::default());
     r.d.st.lock().motion_trace = vec![(1.23456, 10.0, -5.0)];
@@ -1125,7 +1103,6 @@ async fn test_trace_and_pose_read_what_the_board_reported() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board/run_memory: Daemon::assemble, DaemonParts::for_test"]
 async fn test_expressions_refuse_bad_text_and_unknown_actions() {
     let r = rig_with(false, MatcherConfig::default());
     let ask = |v: Value| {
@@ -1154,7 +1131,6 @@ async fn test_expressions_refuse_bad_text_and_unknown_actions() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit board/run_memory: Daemon::assemble, DaemonParts::for_test"]
 async fn test_get_state_is_the_huds_snapshot() {
     let r = rig_with(false, MatcherConfig::default());
     r.d.state.lock().add_entry("> hello", None);

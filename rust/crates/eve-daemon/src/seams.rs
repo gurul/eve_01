@@ -4,7 +4,7 @@
 //! [`Seams`]. The real implementations live beside them, or in the file that owns the real object
 //! ([`crate::link`] for the board, [`crate::inlet`] for the text door, [`crate::apps`] for the hubs).
 //!
-//! Architect-owned: no fill unit edits this file.
+//! The seams every section of the daemon shares.
 
 use std::sync::Arc;
 

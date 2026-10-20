@@ -731,7 +731,6 @@ fn daemon(dir: &Path, bus_cfg: BusConfig) -> Arc<Daemon> {
 }
 
 #[tokio::test]
-#[ignore = "needs unit daemon"]
 async fn test_the_daemon_wires_remember_and_recall_onto_its_bus() {
     let tmp = tempfile::tempdir().unwrap();
     let d = daemon(tmp.path(), BusConfig::default());
@@ -750,7 +749,6 @@ async fn test_the_daemon_wires_remember_and_recall_onto_its_bus() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit daemon"]
 async fn test_the_daemon_publishes_a_kept_thought_and_a_bare_lesson() {
     let tmp = tempfile::tempdir().unwrap();
     let d = daemon(tmp.path(), BusConfig::default());
@@ -763,7 +761,6 @@ async fn test_the_daemon_publishes_a_kept_thought_and_a_bare_lesson() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-#[ignore = "needs unit daemon"]
 async fn test_shutdown_closes_the_open_voice_conversation_and_forgets_it() {
     let tmp = tempfile::tempdir().unwrap();
     let memory = memory(tmp.path());
@@ -784,7 +781,6 @@ async fn test_shutdown_closes_the_open_voice_conversation_and_forgets_it() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit daemon"]
 async fn test_shutdown_with_memory_off_writes_nothing() {
     let tmp = tempfile::tempdir().unwrap();
     let state = tmp.path().join("state");
@@ -798,7 +794,6 @@ async fn test_shutdown_with_memory_off_writes_nothing() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-#[ignore = "needs unit daemon"]
 async fn test_the_daemon_drains_its_background_work() {
     let tmp = tempfile::tempdir().unwrap();
     let d = daemon(tmp.path(), BusConfig::default());

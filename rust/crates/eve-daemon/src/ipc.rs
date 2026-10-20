@@ -521,7 +521,7 @@ impl Daemon {
     }
 
     /// `_ipc_trace(req)`.
-    pub async fn ipc_trace(self: &Arc<Self>, req: Obj) -> anyhow::Result<Obj> {
+    pub async fn ipc_trace(self: &Arc<Self>, _req: Obj) -> anyhow::Result<Obj> {
         // The pose series the board reported during the last motion.
         let trace: Vec<Value> = self
             .st
@@ -534,7 +534,7 @@ impl Daemon {
     }
 
     /// `_ipc_pose(req)`.
-    pub async fn ipc_pose(self: &Arc<Self>, req: Obj) -> anyhow::Result<Obj> {
+    pub async fn ipc_pose(self: &Arc<Self>, _req: Obj) -> anyhow::Result<Obj> {
         // Where the head actually is, as the BOARD reports it on every camera
         // frame (~4.3/s, head.observe). Sampling this during a motion is how a
         // delivered swing is measured without a camera pointed at the room —
@@ -702,7 +702,7 @@ impl Daemon {
     }
 
     /// `_ipc_diag(req)`.
-    pub async fn ipc_diag(self: &Arc<Self>, req: Obj) -> anyhow::Result<Obj> {
+    pub async fn ipc_diag(self: &Arc<Self>, _req: Obj) -> anyhow::Result<Obj> {
         // `eve-bridge diag`: ask the board for a fresh report, then
         // return the last one we hold. The board's reply arrives
         // asynchronously over serial, so a request now shows up in the
@@ -852,7 +852,7 @@ impl Daemon {
     }
 
     /// `_ipc_unpair(req)`.
-    pub async fn ipc_unpair(self: &Arc<Self>, req: Obj) -> anyhow::Result<Obj> {
+    pub async fn ipc_unpair(self: &Arc<Self>, _req: Obj) -> anyhow::Result<Obj> {
         // Tell the stick to erase its stored bond so the next pairing
         // shows a fresh passkey (REFERENCE.md §Security and pairing).
         // Macos side still needs a manual 'Forget' from System Settings.
@@ -1005,7 +1005,7 @@ impl Daemon {
     }
 
     /// `_ipc_get_state(req)`.
-    pub async fn ipc_get_state(self: &Arc<Self>, req: Obj) -> anyhow::Result<Obj> {
+    pub async fn ipc_get_state(self: &Arc<Self>, _req: Obj) -> anyhow::Result<Obj> {
         // Queried by the `eve-bridge hud` subcommand (or anyone else
         // who wants a one-shot snapshot). Kept small on purpose.
         let (ears, sec, battery, update) = {

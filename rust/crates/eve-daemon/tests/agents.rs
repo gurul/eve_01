@@ -1,4 +1,4 @@
-//! Tests for the agents fill unit: the agent factory's pieces (`_warn_removed_computer`, `_bodies`' router, the
+//! Tests for the agent factory and the apps: the agent factory's pieces (`_warn_removed_computer`, `_bodies`' router, the
 //! Chrome lane's rule, the reflex's forwarding to the body that ran) and eve's apps' modules and switches. The
 //! Python tests these port: test_telegram_chief.py (the Holo warning, the chief's Codex floor), test_web_reader.py
 //! (the daemon's wiring), test_chrome_lane.py (the daemon's wiring), test_codex_computer.py (the daemon factory),
@@ -226,7 +226,6 @@ fn daemon(dir: &std::path::Path, environ: HashMap<String, String>) -> Arc<eve_da
 }
 
 #[tokio::test]
-#[ignore = "needs unit core (DaemonParts::for_test, Daemon::assemble)"]
 async fn the_daemon_factory_routes_the_shared_task_contract_to_codex() {
     let dir = tempfile::tempdir().unwrap();
     let d = daemon(dir.path(), env(&[("EVE_DESK_LANE", "0")]));
@@ -241,7 +240,6 @@ async fn the_daemon_factory_routes_the_shared_task_contract_to_codex() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit core (DaemonParts::for_test, Daemon::assemble)"]
 async fn the_daemon_makes_one_lane_and_the_switch_turns_it_off() {
     let dir = tempfile::tempdir().unwrap();
     assert!(daemon(dir.path(), env(&[("EVE_DESK_LANE", "0")])).desk().is_none());
@@ -251,7 +249,6 @@ async fn the_daemon_makes_one_lane_and_the_switch_turns_it_off() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit core (DaemonParts::for_test, Daemon::assemble)"]
 async fn with_the_lane_off_nothing_changes() {
     let dir = tempfile::tempdir().unwrap();
     let d = daemon(dir.path(), env(&[]));
@@ -262,7 +259,6 @@ async fn with_the_lane_off_nothing_changes() {
 }
 
 #[tokio::test]
-#[ignore = "needs unit core (DaemonParts::for_test, Daemon::assemble)"]
 async fn an_app_switched_off_makes_no_hub_once() {
     let dir = tempfile::tempdir().unwrap();
     for app in eve_app_registry::APPS.iter() {

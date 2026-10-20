@@ -25,9 +25,6 @@
 //! * [`apps`]: eve's apps' hubs (lights, Spotify, the TV, the camera, the car) and the Voice PE's say.
 //! * [`startup`]: the code origin and the permission summary logged at start.
 
-// Integration removes this allow: the skeleton's todo!() bodies leave parameters and imports unused until filled.
-#![allow(unused_variables, unused_imports, dead_code, clippy::unused_async)]
-
 pub mod agents;
 pub mod apps;
 pub mod ble_handler;
