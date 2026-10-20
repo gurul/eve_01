@@ -330,9 +330,9 @@ impl Default for Seams {
         Seams {
             open_session: Arc::new(|mic, on_state, agent_factory, on_open, options| {
                 Box::pin(async move {
+                    // Err is what Python's open_session raises (a connect failure, a session that cannot start)
                     eve_brain::voice_agent::open_session(mic, on_state, agent_factory, None, None, on_open, options)
-                        .await;
-                    Ok(())
+                        .await
                 })
             }),
             focus_terminal: Arc::new(|cwd: String| {

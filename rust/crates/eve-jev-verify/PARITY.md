@@ -71,6 +71,7 @@ Status: complete
 - `src/pychars.rs` is data generated from CPython 3.13.14 (Unicode 15.1.0) by `gen_pychars.py`: `isalpha`, `isdecimal`, `isdigit`, `isnumeric` and `casefold`, so `\w`, `\d` and casefolding count the same words Python's `re` does.
 
 ## Differences
+- Upstream edit (eve-brain's apps_maker verify): `mod py` is now `pub mod py`, so apps_maker's `owner_values` and `without_owner_data` use the same CPython 3.13 `\w` and `[^\W\d_]` tables (`py::is_word`, `py::is_letter`). Additive; no behavior here changes.
 - `act` and `read_screen` bound the page by an explicit `eval_s` (`*_within`, `WalkOptions::eval_timeout_s`) where the Python tests monkeypatch the module's `EVAL_TIMEOUT_S`; the default is the same 5 s.
 - `screen_from` skips a control that is not a JSON object, reads a `controls` that is not a list and a non-object result as empty, and reads an `options` that is a number or a bool as no options, where Python raises AttributeError or TypeError (COLLECT_JS never returns any of these).
 - `offered` (and so `Verifier::pick`) offers nothing for a step whose kind is not tap, type or choose, where Python's `ACTS_ON[step.do]` raises KeyError. `parse_journeys` never makes such a step; only a hand-built `Step` can.

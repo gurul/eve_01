@@ -47,16 +47,6 @@ fn say_job(inlet: &Arc<TelegramInlet>, chat_id: i64, text: &str, name: &str) {
     inlet.spawn(async move { me.say(chat_id, &text, None, None, &[], 0, None).await }, name);
 }
 
-/// `_code_match(app, hub, text)`: an app's code-path command in `text`, or None: the module's own `match` when it
-/// has one (it matches with no hub, so a switched-on app that is not set up can say so), else the hub's (the
-/// lights match their names).
-fn app_command(module: Option<&Arc<dyn AppModule>>, hub: Option<&Arc<dyn AppHub>>, text: &str) -> Option<HubCommand> {
-    if let Some(module) = module.filter(|m| m.has_match()) {
-        return module.module_match(text);
-    }
-    hub.and_then(|hub| hub.match_command(text))
-}
-
 impl TelegramInlet {
     /// `self._note(who, text, kind)`: a line with nothing else.
     fn note_line(self: &Arc<Self>, who: &str, text: &str, kind: &str) {
@@ -438,7 +428,7 @@ impl TelegramInlet {
                 let hubs = self.hubs.lock();
                 (hubs.get(&app.slot), hubs.module(&app.slot).or_else(|| crate::seams::app_module(&app.slot, self.environ.clone())))
             };
-            let cmd = if inbound.tapped { None } else { app_command(module.as_ref(), hub.as_ref(), &inbound.text) };
+            let cmd = if inbound.tapped { None } else { crate::telegram::tools::code_match(module.as_deref(), hub.as_deref(), &inbound.text) };
             let Some(cmd) = cmd else { continue };
             let Some(hub) = hub else {
                 if let Some(module) = &module {

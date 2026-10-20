@@ -521,7 +521,7 @@ impl Daemon {
         });
         let on_spoken_idea: Option<eve_brain::seams::SpokenIdeaFn> = server.clone().map(|s| {
             Arc::new(move |lesson_id: &str, text: &str| {
-                s.append_spoken(lesson_id, text).map(|_| ()).map_err(anyhow::Error::from)
+                s.append_spoken(lesson_id, text).map_err(anyhow::Error::from)
             }) as eve_brain::seams::SpokenIdeaFn
         });
         let d = self.clone();

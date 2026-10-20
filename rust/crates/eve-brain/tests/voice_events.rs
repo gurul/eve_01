@@ -1226,7 +1226,7 @@ fn listening(tweak: impl FnOnce(&mut VoiceSessionOptions)) -> Listening {
         o.think_aloud = Some(lesson());
         o.on_spoken_idea = Some(Arc::new(move |lesson_id: &str, text: &str| {
             sv.lock().push((lesson_id.to_string(), text.to_string()));
-            Ok(())
+            Ok(true)
         }));
         o.on_think_aloud = Some(Arc::new(move |on: bool, lid: Option<&str>| n.lock().push((on, lid.map(str::to_string)))));
         tweak(o);
@@ -1376,7 +1376,7 @@ async fn test_a_step_while_listening_waits_for_what_the_learner_just_said() {
         o.think_aloud = Some(lesson());
         o.on_spoken_idea = Some(Arc::new(move |_lid: &str, _text: &str| {
             o1.lock().push("saved".into());
-            Ok(())
+            Ok(true)
         }));
         o.learning = Some(Arc::new(move |req: &eve_learning::LessonRequest| {
             o2.lock().push(req.to_map()["action"].as_str().unwrap().to_string());
@@ -1476,7 +1476,7 @@ async fn test_spoken_ideas_are_saved_in_the_order_spoken_even_when_one_save_is_s
                 std::thread::sleep(Duration::from_millis(100)); // a slow disk write must not let the next idea jump ahead
             }
             sv.lock().push(text.to_string());
-            Ok(())
+            Ok(true)
         }));
     });
     r.s.probe_close_turn("user", "first");

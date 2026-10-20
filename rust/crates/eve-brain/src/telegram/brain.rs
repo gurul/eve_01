@@ -764,42 +764,55 @@ pub fn task_files(result: &str, since: f64, home: Option<&Path>) -> Vec<PathBuf>
 }
 
 /// py: telegram.py:2120 `def list_files(raw: str, home: Optional[Path] = None) -> dict[str, Any]:`
+///
+/// A folder that cannot be read lists as empty here; [`try_list_files`] returns that error as Python raises it.
 pub fn list_files(raw: &str, home: Option<&Path>) -> Obj {
+    try_list_files(raw, home).unwrap_or_else(|_| {
+        let real = resolve_owner_path(raw, home).0.unwrap_or_default();
+        match json!({"ok": true, "folder": real.display().to_string(), "files": [], "more": 0}) {
+            Value::Object(map) => map,
+            _ => Obj::new(),
+        }
+    })
+}
+
+/// `list_files` with the `OSError` Python's `real.iterdir()` raises: a folder (or one of its entries) that cannot
+/// be read is an `Err`, which `_tool` answers as `list_files failed`.
+pub fn try_list_files(raw: &str, home: Option<&Path>) -> std::io::Result<Obj> {
     let refuse = |why: &str| match json!({"ok": false, "reason": why}) {
         Value::Object(map) => map,
         _ => Obj::new(),
     };
     let (real, why) = resolve_owner_path(raw, home);
     let Some(real) = real else {
-        return refuse(&why);
+        return Ok(refuse(&why));
     };
     if !real.is_dir() {
-        return refuse("that is a file, not a folder");
+        return Ok(refuse("that is a file, not a folder"));
     }
     let mut entries: Vec<(f64, String, u64)> = Vec::new();
-    if let Ok(dir) = std::fs::read_dir(&real) {
-        for entry in dir.flatten() {
-            let name = entry.file_name().to_string_lossy().into_owned();
-            if name.starts_with('.') {
-                continue;
-            }
-            let p = entry.path();
-            let Ok(meta) = std::fs::metadata(&p) else {
-                continue;
-            };
-            let shown = if p.is_dir() { format!("{name}/") } else { name };
-            entries.push((mtime_of(&meta), shown, meta.len()));
+    for entry in std::fs::read_dir(&real)? {
+        let entry = entry?;
+        let name = entry.file_name().to_string_lossy().into_owned();
+        if name.starts_with('.') {
+            continue;
         }
+        let p = entry.path();
+        let Ok(meta) = std::fs::metadata(&p) else {
+            continue;
+        };
+        let shown = if p.is_dir() { format!("{name}/") } else { name };
+        entries.push((mtime_of(&meta), shown, meta.len()));
     }
     entries.sort_by(|a, b| {
         b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal).then_with(|| b.1.cmp(&a.1)).then_with(|| b.2.cmp(&a.2))
     });
     let files: Vec<Value> = entries.iter().take(MAX_LISTING).map(|(_, n, s)| json!({"name": n, "bytes": s})).collect();
     let more = entries.len().saturating_sub(MAX_LISTING);
-    match json!({"ok": true, "folder": real.display().to_string(), "files": files, "more": more}) {
+    Ok(match json!({"ok": true, "folder": real.display().to_string(), "files": files, "more": more}) {
         Value::Object(map) => map,
         _ => Obj::new(),
-    }
+    })
 }
 
 /// py: telegram.py:2140 `READ_CHARS`

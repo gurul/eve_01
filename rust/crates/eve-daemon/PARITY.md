@@ -206,6 +206,8 @@ and the terminal raise, `git` in `code_origin`).
 - eve-brain (door unit): `telegram/inlet/door.rs`, the door's accessors the daemon's `Inlet` mapping reads.
 
 ## Differences
+- Fix (eve-brain's voice_session verify): the default `Seams::open_session` returns `eve_brain::voice_agent::open_session`'s `Err` (a connect failure, a session that cannot start), so `_on_wake` logs "voice: conversation failed: ..." and sets the agent state to `error` as daemon.py does; it used to drop it.
+- Follow-up to an eve-brain seam change: `on_spoken_idea` hands back `append_spoken`'s bool (eve-brain's `SpokenIdeaFn` is `anyhow::Result<bool>`), so the voice session logs `ok=False` for an idea that was not written, as Python's `bool(result)` does.
 - Construction: `Daemon::new` checks the IPC address and the transcript roots first, since `IpcServer::new` and
   `JsonlTailer::new` can fail; inside `assemble` a failure is logged and the field is left `None`.
 - A `build_heartbeat` timestamp error is logged and that push is skipped (Python raised).

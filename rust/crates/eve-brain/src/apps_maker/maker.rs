@@ -521,12 +521,9 @@ pub fn apply_edits(html: &str, answer: &str) -> (Option<String>, String) {
 pub(crate) static DATE_LIKE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r#"^\d{4}-\d{2}-\d{2}"#).expect("DATE_LIKE"));
 
-/// `[^\W\d_]`: a letter.
-static LETTER: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[^\W\d_]").expect("LETTER"));
-
-/// `\w` in a Python `str` pattern: `isalnum()` or `_`.
+/// `\w` in a Python `str` pattern: `isalnum()` or `_`, from CPython 3.13's tables.
 fn is_word(c: char) -> bool {
-    c == '_' || c.is_alphanumeric()
+    eve_jev_verify::py::is_word(c)
 }
 
 /// `" ".join(v.split())`.
@@ -544,7 +541,7 @@ pub fn owner_values(data: &Value, html: &str) -> Vec<String> {
         let t = fold_spaces(s);
         let n = t.chars().count();
         if (3..=80).contains(&n)
-            && LETTER.is_match(&t)
+            && t.chars().any(eve_jev_verify::py::is_letter) // re.search(r"[^\W\d_]", t)
             && !DATE_LIKE.is_match(&t)
             && !page.contains(&eve_transcripts::py::casefold(&t))
         {

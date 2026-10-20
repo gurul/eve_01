@@ -239,6 +239,9 @@ pub struct InletOptions {
     pub claude_sessions: Option<ClaudeSessions>,
     pub codex: Option<Arc<dyn CodexDoor>>,
     pub codex_folders: Option<CodexFolders>,
+    /// `codex_folders` that can raise (it wins over `codex_folders`); both None is `accessible_folders`, which
+    /// raises `CodexUnavailable` for a saved-folders file it cannot read.
+    pub codex_folders_result: Option<CodexFoldersResult>,
     pub permission_timeout_secs: f64,
     pub clock: Option<Clock>,
     pub wall: Option<Clock>,
@@ -292,6 +295,7 @@ impl Default for InletOptions {
             claude_sessions: None,
             codex: None,
             codex_folders: None,
+            codex_folders_result: None,
             permission_timeout_secs: DEFAULT_PERMISSION_TIMEOUT_SECS,
             clock: None,
             wall: None,
@@ -428,7 +432,7 @@ pub struct TelegramInlet {
     pub(crate) on_caption: Option<OnCaption>,
     pub(crate) notes: Option<NotesFn>,
     pub(crate) codex: Arc<dyn CodexDoor>,
-    pub(crate) codex_folders: CodexFolders,
+    pub(crate) codex_folders: CodexFoldersResult,
     pub(crate) codex_lock: tokio::sync::Mutex<()>,
     pub(crate) terminal: Option<Terminal>,
     pub(crate) launcher: Launcher,
@@ -616,6 +620,7 @@ impl TelegramInlet {
             claude_sessions,
             codex,
             codex_folders,
+            codex_folders_result,
             permission_timeout_secs,
             clock,
             wall,
@@ -734,8 +739,11 @@ impl TelegramInlet {
                 on_caption,
                 notes,
                 codex,
-                codex_folders: codex_folders
-                    .unwrap_or_else(|| Arc::new(|| eve_codex_chat::accessible_folders(None).unwrap_or_default())),
+                codex_folders: match (codex_folders_result, codex_folders) {
+                    (Some(lister), _) => lister,
+                    (None, Some(lister)) => Arc::new(move || Ok(lister())),
+                    (None, None) => Arc::new(|| eve_codex_chat::accessible_folders(None)),
+                },
                 codex_lock: tokio::sync::Mutex::new(()),
                 terminal,
                 launcher: launcher.unwrap_or_else(|| {

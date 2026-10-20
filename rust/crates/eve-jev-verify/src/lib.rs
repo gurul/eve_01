@@ -34,7 +34,8 @@
 //! The page is behind the [`Page`] trait: Python drives Playwright, the Rust daemon drives Chromium over CDP
 //! (app_check's port implements the trait). The page scripts below are the same bytes either way.
 
-mod py;
+/// Python `str` character classes from CPython 3.13's tables (public for apps_maker's owner-data words).
+pub mod py;
 mod pychars;
 
 use std::collections::HashSet;

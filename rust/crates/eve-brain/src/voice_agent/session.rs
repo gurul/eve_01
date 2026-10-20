@@ -930,7 +930,8 @@ impl VoiceSession {
                 if t == "error" {
                     anyhow::bail!("live: session start rejected: {}", eve_computer_agent::py::value_str(&attr(&event, "error")));
                 }
-                self.handle_event(&event).await;
+                // _await_started's _handle_event raise escapes run() before its try/finally
+                self.handle_event_raising(&event).await?;
             }
             Ok(())
         };
@@ -1074,7 +1075,7 @@ impl VoiceSession {
                 t.join().await;
             }
             let ok = match tokio::task::spawn_blocking(eve_spend::carry(move || save(&lesson_id, &text))).await {
-                Ok(Ok(())) => true,
+                Ok(Ok(saved)) => saved, // bool(result)
                 Ok(Err(e)) => {
                     tracing::warn!("voice: spoken idea not saved ({})", e);
                     false

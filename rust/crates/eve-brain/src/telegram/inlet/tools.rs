@@ -1046,8 +1046,13 @@ impl TelegramInlet {
     pub(crate) async fn tool_list_files(self: &Arc<Self>, name: &str, args: &Obj, _chat_id: i64) -> Obj {
         let raw = itl_str(args, "path");
         let home = self.owner_home();
-        match tokio::task::spawn_blocking(move || list_files(&raw, home.as_deref())).await {
-            Ok(out) => out,
+        match tokio::task::spawn_blocking(move || try_list_files(&raw, home.as_deref())).await {
+            Ok(Ok(out)) => out,
+            Ok(Err(e)) => {
+                // real.iterdir() raised OSError: _tool's caught exception
+                tracing::error!("telegram: {name} failed: {e}");
+                itl_failed(name)
+            }
             Err(e) if e.is_panic() => std::panic::resume_unwind(e.into_panic()),
             Err(_) => itl_failed(name),
         }

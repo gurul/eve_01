@@ -1595,6 +1595,30 @@ async fn test_codex_failure_returns_to_eve_without_replaying_failed_work() {
     rig.probe().shutdown().await;
 }
 
+/// `accessible_folders` raising CodexUnavailable (a missing or broken saved-folders file) is answered in its own
+/// words, and the Codex chat is closed, as a failed start is.
+#[tokio::test]
+async fn test_unreadable_saved_codex_folders_are_said_and_close_codex() {
+    let codex = FakeCodex::new();
+    let c = codex.clone();
+    let rig = TRig::new(Hooked::new(FakeApi::new(vec![])), FakeCreate::new(vec![]), config(), move |o| {
+        o.codex = Some(c as Arc<dyn CodexDoor>);
+        // a lent infallible lister is overridden by the raising one
+        o.codex_folders = Some(folders(&[CODEX_FOLDER]));
+        o.codex_folders_result = Some(Arc::new(|| {
+            Err(eve_codex_computer::CodexError::Unavailable("Could not read saved Codex folders.".into()))
+        }));
+    });
+    for command in ["codex on", "codex eve"] {
+        let closed = codex.st.lock().closed;
+        dispatch(&rig, command, 1).await;
+        assert_eq!(sent(&rig).last().unwrap(), &(OWNER, "Could not read saved Codex folders.".to_string()), "{command}");
+        assert_eq!(codex.st.lock().closed, closed + 1, "{command}");
+        assert!(codex.selected().is_empty() && rig.probe().codex_chat().is_none(), "{command}");
+    }
+    rig.probe().shutdown().await;
+}
+
 #[tokio::test]
 async fn test_codex_owner_binding_and_claude_switch() {
     let codex = FakeCodex::new();

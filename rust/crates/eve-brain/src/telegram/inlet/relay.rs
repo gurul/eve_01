@@ -36,13 +36,18 @@ impl TelegramInlet {
             return;
         }
         let lister = self.codex_folders.clone();
-        let folders = match tokio::task::spawn_blocking(move || lister()).await {
-            Ok(folders) => folders,
+        let listed = match tokio::task::spawn_blocking(move || lister()).await {
+            Ok(listed) => listed,
             Err(e) => {
                 // the lent lister raised (a panic on its thread): not one of the errors the chat answers
                 tracing::error!("telegram: listing the Codex folders failed ({e})");
                 return;
             }
+        };
+        let folders = match listed {
+            Ok(folders) => folders,
+            // accessible_folders raised inside _codex_command's try: the same except as a failed start
+            Err(e) => return self.codex_failed(chat_id, epoch, e).await,
         };
         if epoch != self.st.lock().codex_epoch {
             return;
@@ -84,6 +89,11 @@ impl TelegramInlet {
             }
         };
         let Some(e) = failed else { return };
+        self.codex_failed(chat_id, epoch, e).await;
+    }
+
+    /// `_codex_command`'s `except (OSError, TimeoutError, KeyError, codex_chat.CodexUnavailable)`.
+    async fn codex_failed(self: &Arc<Self>, chat_id: i64, epoch: i64, e: eve_codex_computer::CodexError) {
         if !caught_codex(e.class_name()) {
             // Python lets it escape the job, which logs it
             tracing::error!("telegram: the Codex command failed ({})", e.class_name());

@@ -95,6 +95,7 @@ and the shipped browser router). Ported from `bridge/src/eve_bridge/chief.py`.
 No upstream crate was edited.
 
 ## Differences
+- Upstream edit (eve-brain's inlet verify): `Chief::in_doubt`, `router_word`, `as_data` and `doubtful` (Python's `_in_doubt`, `_router_word`, `_as_data`, `_doubtful`) are `pub`, so the app's Projects tab (telegram.py's `_LinkChief`) reads them instead of a copy. Additive; no behavior changes.
 - `CEILINGS` is a module dict in Python that tests patch (`monkeypatch.setitem`); in Rust it is a const table, and
   each Chief copies it into its own `ceilings` map, which a test changes before the chief is shared.
 - `SHIPPED` is a const; `enabled_shipped(environ, shipped)` is the seam the switch test uses instead of patching it.

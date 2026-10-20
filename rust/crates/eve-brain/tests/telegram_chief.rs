@@ -707,6 +707,15 @@ async fn test_the_menu_offers_jobs_only_while_the_chief_is_on() {
 
 // ---- on: the Mac slot, the Go, the floor --------------------------------------------------------------------------
 
+/// Yield until `done()` holds, for at most five seconds of wall time: what `settle` does, without a fixed count.
+async fn until(done: impl Fn() -> bool) {
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+    while !done() && std::time::Instant::now() < deadline {
+        settle(10).await;
+        tokio::time::sleep(std::time::Duration::from_millis(1)).await;
+    }
+}
+
 #[tokio::test]
 async fn test_a_chief_mac_step_queues_while_a_task_runs_or_the_desk_has_the_mac() {
     let _iso = isolated();
@@ -723,7 +732,8 @@ async fn test_a_chief_mac_step_queues_while_a_task_runs_or_the_desk_has_the_mac(
         let card = r.card("c1");
         assert!(card.status == "waiting" && card.waiting_for.as_deref() == Some("mac_slot") && r.agent_count() == 1);
         r.agent(0).release.set();
-        settle(200).await;
+        // the released run ends on another task: wait for it (a fixed number of yields lost the race under load)
+        until(|| !r.rig.inlet.task_running()).await;
         assert!(!r.rig.inlet.task_running());
         busy.store(true, Ordering::SeqCst); // someone is talking at the desk
         r.tick().await;
@@ -732,6 +742,8 @@ async fn test_a_chief_mac_step_queues_while_a_task_runs_or_the_desk_has_the_mac(
         assert!(!events(&r, "c1").iter().any(|e| e["e"] == "dispatched" || e["e"] == "result"));
         busy.store(false, Ordering::SeqCst);
         r.tick().await; // free: the step goes, read-only, on the floor
+        // the second agent is made, then given its goal when its run starts
+        until(|| r.agent_count() == 2 && !r.agent(1).goal.lock().is_empty()).await;
         settle(200).await;
         assert!(r.agent_count() == 2 && *r.floors.lock() == vec![None, None]);
         assert!(r.agent(1).goal.lock().starts_with(eve_chief::READ_ONLY));

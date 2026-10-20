@@ -1417,7 +1417,7 @@ fn listening_voice(
         o.think_aloud = Some(lesson());
         o.on_spoken_idea = Some(Arc::new(move |lesson_id: &str, text: &str| {
             sv.lock().push((lesson_id.to_string(), text.to_string()));
-            Ok(())
+            Ok(true)
         }));
         o.on_think_aloud = Some(Arc::new(move |on: bool, lid: Option<&str>| n.lock().push((on, lid.map(str::to_string)))));
         tweak(o);

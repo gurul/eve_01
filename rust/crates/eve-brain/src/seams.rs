@@ -393,6 +393,10 @@ pub type Launcher = Arc<dyn Fn(PathBuf, String) -> BoxFuture<'static, anyhow::Re
 pub type LaunchRecent = Arc<dyn Fn() -> Vec<eve_claude_launch::Recent> + Send + Sync>;
 /// `codex_folders() -> [Path]` (codex_chat.accessible_folders).
 pub type CodexFolders = Arc<dyn Fn() -> Vec<PathBuf> + Send + Sync>;
+/// `codex_folders()` with what it raises: `Err` is the `CodexUnavailable("Could not read saved Codex folders.")`
+/// that `accessible_folders` raises for a missing or broken saved-folders file.
+pub type CodexFoldersResult =
+    Arc<dyn Fn() -> Result<Vec<PathBuf>, eve_codex_computer::CodexError> + Send + Sync>;
 /// `small_talk.ask(text, owner_voice) -> Answer`; an error is the lane raising.
 pub type SmallTalkAsk =
     Arc<dyn Fn(String, String) -> BoxFuture<'static, anyhow::Result<eve_small_talk::Answer>> + Send + Sync>;
@@ -773,8 +777,8 @@ pub type HeadPoseFn = Arc<dyn Fn(String) -> BoxFuture<'static, anyhow::Result<St
 /// `learning(request) -> dict` (learning.run_lesson's voice).
 pub type LearningFn =
     Arc<dyn Fn(&eve_learning::LessonRequest) -> Result<Obj, eve_learning::LearningError> + Send + Sync>;
-/// `on_spoken_idea(lesson_id, text)` (LearningApp.append_spoken, blocking).
-pub type SpokenIdeaFn = Arc<dyn Fn(&str, &str) -> anyhow::Result<()> + Send + Sync>;
+/// `on_spoken_idea(lesson_id, text) -> bool` (LearningApp.append_spoken, blocking): whether the idea was written.
+pub type SpokenIdeaFn = Arc<dyn Fn(&str, &str) -> anyhow::Result<bool> + Send + Sync>;
 /// `on_think_aloud(listening, lesson_id)`.
 pub type ThinkAloudFn = Arc<dyn Fn(bool, Option<&str>) + Send + Sync>;
 /// `on_expression(who, text)`.

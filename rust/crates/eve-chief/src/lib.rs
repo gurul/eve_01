@@ -1066,7 +1066,7 @@ impl Chief {
     }
 
     /// The phase's last `dispatched` line has no `result` after it.
-    fn in_doubt(&self, cid: &str, n: usize) -> bool {
+    pub fn in_doubt(&self, cid: &str, n: usize) -> bool {
         let mut state = false;
         for e in self.ledger.events(Some(cid)) {
             if !num_is(e.get("phase"), n as i64) {
@@ -1267,7 +1267,8 @@ impl Chief {
         }
     }
 
-    fn router_word(&self, cid: &str, n: usize) -> String {
+    /// `_router_word`: the router's word for the phase's latest dispatch, "" with none.
+    pub fn router_word(&self, cid: &str, n: usize) -> String {
         let mut word = String::new();
         for e in self.ledger.events(Some(cid)) {
             if is_event(&e, "dispatched") && num_is(e.get("phase"), n as i64) {
@@ -1277,7 +1278,8 @@ impl Chief {
         word
     }
 
-    fn as_data(&self, c: &Card) -> Value {
+    /// `_as_data(card)`: the card as the app's Projects tab reads it, in Python's key order.
+    pub fn as_data(&self, c: &Card) -> Value {
         let phases: Vec<Value> = c
             .phases
             .iter()
@@ -1689,7 +1691,7 @@ impl Chief {
     /// The act "I may have done" asks about: dispatched with no result, and not running now. An act that runs
     /// again (after "go c<N>") is in the Mac's hands, and an old "It happened" or "It didn't" tap on it would
     /// close the card mid-run or queue it for a second Go while it may be buying (reviewer after P4, 2026-09-29).
-    fn doubtful(&self, card: &Card) -> Option<Phase> {
+    pub fn doubtful(&self, card: &Card) -> Option<Phase> {
         if card.terminal() {
             return None;
         }

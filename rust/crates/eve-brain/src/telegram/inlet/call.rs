@@ -679,72 +679,10 @@ impl eve_phone_call::Brain for TelegramInlet {
 /// with what the chief says of each (`_as_data`, `_doubtful`), and its own methods.
 pub struct LinkChief(pub Arc<eve_chief::Chief>);
 
-/// `e.get("e") == kind`.
-fn is_event(e: &Obj, kind: &str) -> bool {
-    e.get("e").and_then(Value::as_str) == Some(kind)
-}
-
-/// `e.get(key) == n` for an int n.
-fn num_is(v: Option<&Value>, n: i64) -> bool {
-    match v {
-        Some(Value::Number(x)) => x.as_i64().map(|i| i == n).unwrap_or_else(|| x.as_f64() == Some(n as f64)),
-        Some(Value::Bool(b)) => i64::from(*b) == n,
-        _ => false,
-    }
-}
-
 impl LinkChief {
-    /// chief._router_word: the router's word for a phase's latest dispatch, "" with none.
-    fn router_word(events: &[Obj], n: usize) -> String {
-        let mut word = String::new();
-        for e in events {
-            if is_event(e, "dispatched") && num_is(e.get("phase"), n as i64) {
-                word = super::tools::itl_str_of(e.get("router"));
-            }
-        }
-        word
-    }
-
-    /// chief._in_doubt: a phase dispatched with no result since.
-    fn in_doubt(events: &[Obj], n: usize) -> bool {
-        let mut state = false;
-        for e in events {
-            if !num_is(e.get("phase"), n as i64) {
-                continue;
-            }
-            if is_event(e, "dispatched") {
-                state = true;
-            } else if is_event(e, "result") {
-                state = false;
-            }
-        }
-        state
-    }
-
-    /// chief._as_data(card), in its key order.
-    fn as_data(c: &eve_chief_card::Card, events: &[Obj]) -> Obj {
-        let phases: Vec<Value> = c
-            .phases
-            .iter()
-            .map(|p| {
-                json!({"n": p.n, "do": p.r#do, "goal": p.goal, "door": p.door, "status": p.status,
-                       "executor": p.executor, "why": Self::router_word(events, p.n)})
-            })
-            .collect();
-        itl_o(json!({"id": c.id, "kind": c.kind, "title": c.title, "status": c.status, "waiting_for": c.waiting_for,
-               "end_state": c.end_state, "deadline": c.deadline,
-               "cue": c.cue.as_ref().map(|q| json!({"at": q.at, "next_action": q.next_action})),
-               "phases": phases,
-               "checks": c.done_checks.iter().map(eve_chief_card::Check::describe).collect::<Vec<_>>(),
-               "spent": {"usd": super::tools::itl_round(c.spent.usd, 4),
-                         "minutes": super::tools::itl_round(c.spent.wall_s / 60.0, 1)},
-               "budget": {"usd": c.budget.usd, "minutes": c.budget.wall_min}}))
-    }
-
     fn view(&self, c: &eve_chief_card::Card) -> eve_link::seams::JobCard {
-        let events = self.0.ledger.events(Some(&c.id));
-        let doubtful = !c.terminal()
-            && c.phases.iter().any(|p| p.r#do == "act" && p.status == "queued" && Self::in_doubt(&events, p.n));
+        // chief._doubtful and chief._as_data, the Chief's own
+        let doubtful = self.0.doubtful(c).is_some();
         eve_link::seams::JobCard {
             id: c.id.clone(),
             kind: c.kind.clone(),
@@ -769,7 +707,7 @@ impl LinkChief {
                 .collect(),
             cue_at: c.cue.as_ref().and_then(|q| q.at.clone()),
             doubtful,
-            data: Self::as_data(c, &events),
+            data: as_obj(self.0.as_data(c)),
         }
     }
 }
@@ -838,29 +776,5 @@ mod itl_call_tests {
         assert!(!same_context(&captured, &None));
         assert!(same_context(&None, &None)); // none then, none now
         assert!(!same_context(&None, &Some(q)));
-    }
-
-    fn ev(v: Value) -> Obj {
-        v.as_object().cloned().unwrap()
-    }
-
-    #[test]
-    fn the_router_word_is_the_latest_dispatch_and_a_phase_is_in_doubt_until_its_result() {
-        let events = vec![
-            ev(json!({"e": "dispatched", "phase": 1, "router": "web"})),
-            ev(json!({"e": "result", "phase": 1})),
-            ev(json!({"e": "dispatched", "phase": 1, "router": "mac"})),
-            ev(json!({"e": "dispatched", "phase": 2, "router": null})),
-        ];
-        assert_eq!(LinkChief::router_word(&events, 1), "mac");
-        assert_eq!(LinkChief::router_word(&events, 2), ""); // str(None or "")
-        assert_eq!(LinkChief::router_word(&events, 3), "");
-        assert!(LinkChief::in_doubt(&events, 1)); // dispatched again after its result
-        assert!(LinkChief::in_doubt(&events, 2));
-        assert!(!LinkChief::in_doubt(&events[..2], 1));
-        assert!(!LinkChief::in_doubt(&events, 3));
-        // e.get("phase") == n: 1.0 is 1 to Python, "1" is not
-        assert!(LinkChief::in_doubt(&[ev(json!({"e": "dispatched", "phase": 1.0}))], 1));
-        assert!(!LinkChief::in_doubt(&[ev(json!({"e": "dispatched", "phase": "1"}))], 1));
     }
 }
