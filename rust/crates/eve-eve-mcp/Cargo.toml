@@ -1,0 +1,25 @@
+[package]
+name = "eve-eve-mcp"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+name = "eve_eve_mcp"
+path = "src/lib.rs"
+
+# `python -m eve_bridge.eve_mcp`: the stdio MCP server a Work session's Claude Code starts.
+[[bin]]
+name = "eve-mcp"
+path = "src/main.rs"
+
+[dependencies]
+eve-ipc = { path = "../eve-ipc" }
+anyhow.workspace = true
+parking_lot.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+tokio.workspace = true
