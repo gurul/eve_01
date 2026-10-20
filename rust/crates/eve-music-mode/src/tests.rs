@@ -411,3 +411,23 @@ async fn a_boolean_volume_is_python_s_int() {
     assert_eq!(sent.lock().last().unwrap(), &json!({"cmd": "ring_level", "n": 5, "of": 100}));
     mode.close().await;
 }
+
+#[tokio::test]
+async fn a_dial_past_i64_is_still_a_turn() {
+    // Python's ints are unbounded: a dial of 2**63 is an int, so the volume moves (and clamps); in the picker the
+    // index wraps exactly
+    let rig = Rig::new(false);
+    go(&rig, &[json!({"dial": 9_223_372_036_854_775_808u64})]).await;
+    let levels: Vec<Value> = rig.levels().into_iter().map(|o| o["n"].clone()).collect();
+    assert_eq!(levels, vec![json!(100)]);
+
+    let rig = Rig::new(false);
+    rig.mode.set(true).await.unwrap();
+    rig.mode.on_input(&music(json!({"hold": "short"}))).await.unwrap();
+    // (0 + 2**63) % 2 == 0, and (0 + 2**64 - 1) % 2 == 1
+    rig.mode.on_input(&music(json!({"dial": 9_223_372_036_854_775_808u64}))).await.unwrap();
+    assert_eq!(rig.mode.index(), 0);
+    rig.mode.on_input(&music(json!({"dial": u64::MAX}))).await.unwrap();
+    assert_eq!(rig.mode.index(), 1);
+    rig.mode.close().await;
+}

@@ -79,19 +79,25 @@ fn truthy(v: Option<&Value>) -> bool {
     }
 }
 
-/// `isinstance(v, int) and not isinstance(v, bool)`: a JSON integer.
-fn py_int(v: Option<&Value>) -> Option<i64> {
+/// `isinstance(v, int) and not isinstance(v, bool)`: a JSON integer (any JSON integer, as Python's ints are
+/// unbounded; `i128` holds every `i64` and `u64`).
+fn py_int(v: Option<&Value>) -> Option<i128> {
     match v {
-        Some(Value::Number(n)) => n.as_i64(),
+        Some(Value::Number(n)) => n.as_i64().map(i128::from).or_else(|| n.as_u64().map(i128::from)),
         _ => None,
     }
+}
+
+/// An int volume as the shadow holds it; past `i64` it saturates, which the 0..100 clamp makes exact.
+fn sat_i64(n: i128) -> i64 {
+    i64::try_from(n).unwrap_or(if n < 0 { i64::MIN } else { i64::MAX })
 }
 
 /// `isinstance(v, int)`, bools included (Python's `True` is the int 1): the volume a device reports.
 fn py_int_or_bool(v: Option<&Value>) -> Option<i64> {
     match v {
         Some(Value::Bool(b)) => Some(i64::from(*b)),
-        other => py_int(other),
+        other => py_int(other).map(sat_i64),
     }
 }
 
@@ -303,7 +309,7 @@ impl MusicMode {
             return self.open_picker().await;
         }
         if let Some(dial) = py_int(obj.get("dial")).filter(|d| *d != 0) {
-            return self.dial_volume(dial).await;
+            return self.dial_volume(sat_i64(dial)).await;
         }
         let clicks = obj.get("clicks");
         let Some(n) = (1..=3).find(|n| py_eq_int(clicks, *n)) else {
@@ -426,8 +432,8 @@ impl MusicMode {
                 let Some(len) = st.picker.as_ref().map(Vec::len) else {
                     return Ok(());
                 };
-                let len = len as i64;
-                st.index = (st.index as i64).wrapping_add(dial).rem_euclid(len) as usize;
+                let len = len as i128;
+                st.index = (st.index as i128 + dial).rem_euclid(len) as usize;
             }
             self.show_pick().await?;
             self.arm_picker_timer();
