@@ -1,0 +1,155 @@
+{
+  "statusLine": {
+    "type": "command",
+    "command": "true",
+    "padding": 0
+  },
+  "numbers": [
+    1.5,
+    1e-05,
+    1e+16,
+    100.0,
+    0.0001,
+    -0.0,
+    123456789012345678,
+    3.14159,
+    2.5e-07,
+    1e+300
+  ],
+  "text": "héllo ✓ \u0001 tab\t \"q\" \\   ",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/path/to/unrelated-hook",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "/venv/bin/python -I -m eve_bridge.hooks.pretooluse",
+            "timeout": 330
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/venv/bin/python -I -m eve_bridge.hooks.pretooluse",
+            "timeout": 330
+          }
+        ],
+        "matcher": "Read"
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/venv/bin/python -I -m eve_bridge.hooks.pretooluse",
+            "timeout": 330
+          }
+        ],
+        "matcher": "AskUserQuestion"
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "other-tool hook"
+          },
+          {
+            "type": "command",
+            "command": "/venv/bin/python -I -m eve_bridge.hooks.session_start",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/venv/bin/python -I -m eve_bridge.hooks.stop",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "say hi"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/venv/bin/python -I -m eve_bridge.hooks.notification",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Custom": {},
+    "PermissionRequest": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/venv/bin/python -I -m eve_bridge.hooks.permission_request",
+            "timeout": 330
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/venv/bin/python -I -m eve_bridge.hooks.posttooluse",
+            "timeout": 10
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/venv/bin/python -I -m eve_bridge.hooks.session_end",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/venv/bin/python -I -m eve_bridge.hooks.user_prompt_submit",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
+  "empty": {},
+  "emptyList": [],
+  "z": null
+}
