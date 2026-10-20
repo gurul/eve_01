@@ -61,7 +61,9 @@ None
 ## Differences
 - A Discovery answer is read with `serde_json`, not Python's `json.loads`: a body carrying `NaN`/`Infinity`
   literals or a lone surrogate escape is "Ticketmaster sent an unreadable answer" here where Python read it.
-  Ticketmaster sends neither.
+  Ticketmaster sends neither. Two more edges of the same reader: a body nested deeper than serde_json's 128 levels
+  is "unreadable" here, where Python parsed it (or, past its recursion limit, said "could not be reached"); and a
+  `totalElements` integer past 64 bits is read as a float, so `total` is left out where Python kept it.
 - Where Python raised out of `search` on a shape or value it did not expect (a truthy non-object where an object
   belongs, a width `int()` cannot read, a non-finite price, a last day of 9999-12-31, an infinite back-off), the port
   reads the field as missing, skips that picture, leaves the price out, answers the bad-dates reason, or saturates
