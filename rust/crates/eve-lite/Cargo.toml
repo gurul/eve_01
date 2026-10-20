@@ -46,6 +46,31 @@ tracing.workspace = true
 tracing-subscriber.workspace = true
 
 [dev-dependencies]
+# test_lite_brain.py's turns: eve-brain's own test rig (tests/support, tests/more, included by path) and what it
+# reaches, and the name checker's universe (every crate's tool names)
+eve-agent-contract = { path = "../eve-agent-contract" }
+eve-agentcard = { path = "../eve-agentcard" }
+eve-america = { path = "../eve-america" }
+eve-app-registry = { path = "../eve-app-registry" }
+eve-apps-mcp = { path = "../eve-apps-mcp" }
+eve-canvas = { path = "../eve-canvas" }
+eve-chief = { path = "../eve-chief" }
+eve-events = { path = "../eve-events" }
+eve-firetv = { path = "../eve-firetv" }
+eve-lights = { path = "../eve-lights" }
+eve-meet = { path = "../eve-meet" }
+eve-menu-tools = { path = "../eve-menu-tools" }
+eve-obsbot-panel = { path = "../eve-obsbot-panel" }
+eve-opentable = { path = "../eve-opentable" }
+eve-places = { path = "../eve-places" }
+eve-science-search = { path = "../eve-science-search" }
+eve-second-brain = { path = "../eve-second-brain" }
+eve-spend = { path = "../eve-spend" }
+eve-spotify = { path = "../eve-spotify" }
+eve-telegram-images = { path = "../eve-telegram-images" }
+eve-tool-gate = { path = "../eve-tool-gate" }
+# the .docx the doc-upload turn sends (eve-link-uploads' version)
+zip = { version = "2.6.1", default-features = false, features = ["deflate", "bzip2", "lzma"] }
 # memory parity: full eve's build_memory and dream loop, beside eve lite's copy
 eve-daemon = { path = "../eve-daemon" }
 eve-link-uploads = { path = "../eve-link-uploads" }

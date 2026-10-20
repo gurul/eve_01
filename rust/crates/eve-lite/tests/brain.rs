@@ -7,34 +7,17 @@
 //! * the apps block is built from the Composio tools the bridge lists;
 //! * eve lite's instructions say what eve lite is, in a positive set.
 //!
-//! The turn-driven tests (a lite turn's offered tools and instructions, the call notes) drive eve-brain's inlet
-//! through its test rig and are not here (PARITY.md, Tests).
+//! The turn-driven tests (a lite turn's offered tools and instructions, the call notes) are in brain_turns.rs. The
+//! name checker (Python's UNIVERSE, every tool name eve offers in any door) is in names/mod.rs.
+
+mod names;
 
 use std::collections::{BTreeSet, HashMap};
 
 use eve_brain::telegram;
 type Obj = serde_json::Map<String, serde_json::Value>;
-use regex::Regex;
+use names::{names_written, problems, COMPOSIO_NAMES};
 use serde_json::json;
-
-const COMPOSIO_NAMES: &[&str] = &[
-    "COMPOSIO_SEARCH_TOOLS",
-    "COMPOSIO_GET_TOOL_SCHEMAS",
-    "COMPOSIO_MULTI_EXECUTE_TOOL",
-    "COMPOSIO_MANAGE_CONNECTIONS",
-    "COMPOSIO_WAIT_FOR_CONNECTIONS",
-    "COMPOSIO_REMOTE_WORKBENCH",
-    "COMPOSIO_REMOTE_BASH_TOOL",
-];
-/// Names that are also plain English words: the checker cannot tell the tool from the word, so it leaves these out.
-const ENGLISH: &[&str] = &["find", "look", "remember", "lesson"];
-/// App, door and device names a lite prompt never writes.
-const APP_NAMES: &[&str] = &[
-    "Gmail", "Google Calendar", "Google Drive", "Google Docs", "Google Sheets", "Google Maps", "Slack", "Notion",
-    "Linear", "GitHub", "Outlook", "Spotify", "Fire TV", "Telegram", "iPhone", "Mini App", "Eve Link", "Canvas",
-    "OpenTable", "Ticketmaster", "Obsidian", "Codex", "Claude Code", "OBSBOT", "StackChan", "Pika", "TinyFish",
-    "Firecrawl", "AgentCard",
-];
 
 /// eve lite's environment for the parts these tests build (test_telegram_lite.LITE_ENV).
 fn lite_env() -> HashMap<String, String> {
@@ -55,38 +38,6 @@ fn lite_env() -> HashMap<String, String> {
     .into_iter()
     .map(|(k, v)| (k.to_string(), v.to_string()))
     .collect()
-}
-
-/// The tool names the checker reads: eve's own, eve lite's, Connect's and the web search, less the English words.
-fn checked() -> BTreeSet<String> {
-    telegram::TOOL_NAMES
-        .iter()
-        .chain(eve_profile::LITE_TOOL_NAMES)
-        .chain(COMPOSIO_NAMES)
-        .chain([eve_web::websearch::TOOL_NAME].iter())
-        .filter(|n| !ENGLISH.contains(n))
-        .map(|n| n.to_string())
-        .collect()
-}
-
-/// Every tool name the text writes, as a whole word.
-fn names_written(text: &str) -> BTreeSet<String> {
-    checked()
-        .into_iter()
-        .filter(|n| Regex::new(&format!(r"(?:^|[^A-Za-z0-9_]){}(?:$|[^A-Za-z0-9_])", regex::escape(n))).unwrap().is_match(text))
-        .collect()
-}
-
-/// What breaks the owner's rule in `text` for a turn offering `offered`: a tool name it does not offer, or any app.
-fn problems(text: &str, offered: &[&str]) -> Vec<String> {
-    let mut out: Vec<String> =
-        names_written(text).into_iter().filter(|n| !offered.contains(&n.as_str())).map(|n| format!("tool {n}")).collect();
-    for app in APP_NAMES {
-        if Regex::new(&format!(r"\b{}\b", regex::escape(app))).unwrap().is_match(text) {
-            out.push(format!("app {app}"));
-        }
-    }
-    out
 }
 
 fn tool(name: &str) -> Obj {

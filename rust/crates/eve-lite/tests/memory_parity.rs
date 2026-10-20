@@ -283,8 +283,13 @@ fn a_memory(root: &Path) -> Arc<eve_memory::Memory> {
     Arc::new(eve_memory::Memory::with_options(cfg, transcripts, None, eve_memory::MemoryOptions::default()))
 }
 
+/// Python patches `dream.Dreamer` to record what each side hands it and runs `Daemon._start_dream` beside
+/// `lite.start_dream`. Here lite's start is run whole (named, held, ended by the shutdown, let go), and full eve's
+/// `dream_loop` (the step `Daemon::start_dream` runs, which needs a whole Daemon) is given the same memory, config,
+/// client and index; that both hand the Dreamer the same four things is the statement check's
+/// (`the_copy_is_the_daemons_statement_for_statement`).
 #[test]
-fn lite_starts_the_dream_as_background_work_the_shutdown_ends() {
+fn both_start_the_same_dream() {
     let rt = tokio::runtime::Builder::new_multi_thread().enable_all().build().unwrap();
     rt.block_on(async {
         let tmp = tempfile::tempdir().unwrap();

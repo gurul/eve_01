@@ -138,6 +138,8 @@ fn with_a_key_it_builds_only_the_lite_parts_each_once() {
         };
         let refused = launcher(PathBuf::from("/tmp/project"), "claude".into()).await.unwrap();
         assert_eq!(refused, eve_brain::telegram::LITE_NOT_HERE);
+        // isinstance(d.inlet.api, telegram.MutedBotApi): nothing reaches Telegram
+        assert!(inlet.api.muted());
         // one chat door, its uploads the brain's; calls on the same brain
         let link = d.link().unwrap();
         assert!(inlet.link_uploads.lock().as_ref().is_some_and(|u| Arc::ptr_eq(u, link.uploads())));
