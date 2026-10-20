@@ -527,6 +527,34 @@ async fn sink_posts_the_bytes_python_json_dumps_writes() {
     assert_eq!(worker.posts()[0], body);
 }
 
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn the_real_memory_bus_carries_the_sink_and_the_mirror() {
+    // Python's tests run the sink and the mirror on a real MemoryBus; here the memory-bus port's.
+    let worker = FakeWorker::start(vec![obs(21, "debrief", "Fixed the tailer"), obs(22, "eve", "own")], 30.0).await;
+    let bus = Arc::new(eve_memory_bus::MemoryBus::new());
+    let mut sink = ClaudeMemSink::new(Arc::clone(&bus), sink_opts(&worker.url));
+    sink.start();
+    assert_eq!(bus.subscription_count(), 1);
+    eve_memory_bus::MemoryBus::publish(&bus, "/eve/memory/remember", json!({"text": "Keep this."}).as_object().unwrap().clone());
+    eve_memory_bus::MemoryBus::publish(&bus, "/eve/state", json!({"state": "wake"}).as_object().unwrap().clone());
+    assert!(wait_until(|| sink.stats().saved == 1, 3.0).await);
+    sink.stop(Duration::from_secs(2)).await;
+    assert_eq!(bus.subscription_count(), 0); // unsubscribe found the subscription by its id
+    assert_eq!(worker.posts()[0]["title"], "Keep this.");
+
+    let seen: Arc<Mutex<Vec<Value>>> = Arc::default();
+    let s = Arc::clone(&seen);
+    eve_memory_bus::MemoryBus::subscribe(&bus, MIRROR_TOPIC, move |_t: &str, m: &eve_memory_bus::Msg| {
+        s.lock().push(Value::Object(m.clone()))
+    });
+    let mut mirror = ClaudeMemMirror::new(Arc::clone(&bus), mirror_opts(&worker.url, 0.2));
+    mirror.start();
+    assert!(wait_until(|| seen.lock().len() == 1, 3.0).await);
+    mirror.stop(Duration::from_secs(3)).await;
+    assert_eq!(seen.lock()[0]["id"], 21);
+    assert_eq!(bus.recent(MIRROR_TOPIC).len(), 1);
+}
+
 // ---- recall -------------------------------------------------------------------------------
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

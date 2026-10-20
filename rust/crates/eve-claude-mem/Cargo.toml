@@ -4,6 +4,8 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
+anyhow.workspace = true
+eve-memory-bus = { path = "../eve-memory-bus" }
 dirs.workspace = true
 parking_lot.workspace = true
 regex.workspace = true

@@ -78,6 +78,40 @@ pub trait Bus: Send + Sync + 'static {
     fn publish(&self, topic: &str, msg: Value);
 }
 
+/// The daemon's real bus (the memory-bus port). Its messages are JSON objects; this module's callbacks take
+/// a `Value`, so each delivery hands over the object, and a publish of anything but an object sends `{}`
+/// (this module only ever publishes objects).
+impl Bus for eve_memory_bus::MemoryBus {
+    fn subscribe(&self, topic: &str, callback: Callback) -> Subscription {
+        let sub = eve_memory_bus::MemoryBus::subscribe(self, topic, move |t: &str, m: &eve_memory_bus::Msg| {
+            callback(t, &Value::Object(m.clone()))
+        });
+        Subscription { topic: sub.topic, id: sub.id }
+    }
+
+    fn unsubscribe(&self, sub: &Subscription) {
+        // The bus matches a subscription by its topic and id; the callback is not looked at.
+        eve_memory_bus::MemoryBus::unsubscribe(
+            self,
+            &eve_memory_bus::Subscription {
+                topic: sub.topic.clone(),
+                callback: eve_memory_bus::Callback::Sync(Arc::new(|_: &str, _: &eve_memory_bus::Msg| {
+                    Ok::<(), anyhow::Error>(())
+                })),
+                id: sub.id,
+            },
+        );
+    }
+
+    fn publish(&self, topic: &str, msg: Value) {
+        let msg = match msg {
+            Value::Object(m) => m,
+            _ => Map::new(),
+        };
+        eve_memory_bus::MemoryBus::publish(self, topic, msg);
+    }
+}
+
 // ---- where the worker is ----------------------------------------------------------------
 
 /// EVE_CLAUDE_MEM_URL wins; else the plugin's settings.json port; else worker.pid; else 37777.
