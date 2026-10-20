@@ -278,6 +278,17 @@ impl<T: Into<Peer>> From<Option<T>> for Peer {
     }
 }
 
+/// Python's `str.isspace()` for one character: Unicode White_Space plus the four separators \x1c-\x1f, which
+/// Python's `str.strip()` also removes.
+fn py_space(c: char) -> bool {
+    c.is_whitespace() || ('\x1c'..='\x1f').contains(&c)
+}
+
+/// Python's `text.strip()`.
+fn py_strip(text: &str) -> &str {
+    text.trim_matches(py_space)
+}
+
 /// Parse Python's `ipaddress.ip_address(text)` way: IPv4 dotted quad, or IPv6 with an optional zone
 /// (`%<zone>`, which must be non-empty and hold no `%`). The zone is dropped.
 fn parse_ip(text: &str) -> Option<IpAddr> {
@@ -305,7 +316,7 @@ pub fn address(addr: &Peer) -> Option<Address> {
         Peer::Ip(ip) => *ip,
         Peer::Socket(sa) => sa.ip(),
         Peer::Text(text) | Peer::Tuple { host: text, .. } => {
-            let mut text = text.trim();
+            let mut text = py_strip(text);
             if text.starts_with('[') && text.ends_with(']') && text.len() >= 2 {
                 text = &text[1..text.len() - 1];
             }
@@ -333,7 +344,7 @@ pub fn scope(addr: &Peer) -> String {
     if !text.contains('%') {
         return String::new();
     }
-    let stripped = text.trim().trim_matches(|c| c == '[' || c == ']');
+    let stripped = py_strip(text).trim_matches(|c| c == '[' || c == ']');
     stripped.split_once('%').map(|(_, zone)| zone.to_string()).unwrap_or_default()
 }
 
@@ -546,7 +557,23 @@ pub fn lan_interface(name: &str) -> bool {
 }
 
 static ORDER: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^([A-Za-z]+)([0-9]*)$").expect("ORDER is a valid pattern"));
+    LazyLock::new(|| Regex::new(r"^([A-Za-z]+)(\d*)$").expect("ORDER is a valid pattern"));
+static DIGIT: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^\d$").expect("DIGIT is a valid pattern"));
+
+/// The value of one decimal digit as Python's `int()` reads it: `\d` (Unicode Nd) matches any script's digits.
+/// Unicode encodes every decimal digit set as a contiguous run of ten, zero first, and runs may abut, so the value
+/// is the distance from the start of the stretch of digits, modulo ten.
+fn digit_value(c: char) -> u128 {
+    if let Some(d) = c.to_digit(10) {
+        return u128::from(d);
+    }
+    let is_digit = |cp: u32| char::from_u32(cp).is_some_and(|ch| DIGIT.is_match(ch.encode_utf8(&mut [0u8; 4])));
+    let mut start = u32::from(c);
+    while start > 0 && is_digit(start - 1) {
+        start -= 1;
+    }
+    u128::from((u32::from(c) - start) % 10)
+}
 
 /// `_interface_order`: en0 before en1 before en10 before anything else: on a Mac, en0 is the built-in Wi-Fi or
 /// Ethernet.
@@ -554,7 +581,7 @@ pub fn interface_order(name: &str) -> (u8, String, u128) {
     let (stem, num) = match ORDER.captures(name) {
         Some(m) => {
             let digits = m.get(2).map_or("", |d| d.as_str());
-            let num = digits.bytes().fold(0u128, |n, d| n.saturating_mul(10).saturating_add(u128::from(d - b'0')));
+            let num = digits.chars().fold(0u128, |n, d| n.saturating_mul(10).saturating_add(digit_value(d)));
             (m[1].to_string(), num)
         }
         None => (name.to_string(), 0),
@@ -715,7 +742,7 @@ pub fn local_hostname_with(
         Ok((done.code, text))
     });
     match outcome {
-        Ok((Some(0), text)) => name = text.trim().to_string(),
+        Ok((Some(0), text)) => name = py_strip(&text).to_string(),
         Ok(_) => {}
         Err(e) => tracing::info!("lan: scutil could not tell the local host name ({})", run_error_kind(&e)),
     }
@@ -723,7 +750,7 @@ pub fn local_hostname_with(
         return name;
     }
     let Ok(host) = hostname() else { return String::new() };
-    let host = host.trim().trim_end_matches('.');
+    let host = py_strip(&host).trim_end_matches('.');
     if let Some((stem, suffix)) = host.rsplit_once('.') {
         if suffix.to_lowercase() == "local" && LABEL.is_match(stem) {
             return stem.to_string();
@@ -801,14 +828,45 @@ fn errno_code_name(code: i32) -> Option<&'static str> {
         EPFNOSUPPORT, EAFNOSUPPORT, EADDRINUSE, EADDRNOTAVAIL, ENETDOWN, ENETUNREACH, ENETRESET, ECONNABORTED,
         ECONNRESET, ENOBUFS, EISCONN, ENOTCONN, ESHUTDOWN, ETOOMANYREFS, ETIMEDOUT, ECONNREFUSED, EHOSTDOWN,
         EHOSTUNREACH, EALREADY, EINPROGRESS, ESTALE, EDQUOT, ECANCELED, EOVERFLOW, EILSEQ, ENOTSUP, EPROTO,
+        ENOTBLK, EUSERS, EREMOTE, EIDRM, ENOMSG, EBADMSG, EMULTIHOP, ENODATA, ENOLINK, ENOSR, ENOSTR, ETIME,
+        ENOTRECOVERABLE, EOWNERDEAD,
+    )
+    .or_else(|| apple_errno_name(code))
+}
+
+/// The errnos only Darwin has, so `errno.errorcode` there knows every code from 1 to 106.
+#[cfg(any(target_os = "macos", target_os = "ios"))]
+fn apple_errno_name(code: i32) -> Option<&'static str> {
+    errno_names!(code;
+        EPROCLIM, EBADRPC, ERPCMISMATCH, EPROGUNAVAIL, EPROGMISMATCH, EPROCUNAVAIL, EFTYPE, EAUTH, ENEEDAUTH,
+        EPWROFF, EDEVERR, EBADEXEC, EBADARCH, ESHLIBVERS, EBADMACHO, ENOATTR, ENOPOLICY, EQFULL,
     )
 }
 
-/// `_errno_name`: the errno's name ("EHOSTUNREACH"), or the error's type when it has no known errno.
+#[cfg(not(any(target_os = "macos", target_os = "ios")))]
+fn apple_errno_name(_code: i32) -> Option<&'static str> {
+    None
+}
+
+/// `_errno_name`: the errno's name ("EHOSTUNREACH"), or the error's type when it has no known errno. A
+/// getaddrinfo failure carries its EAI code as its errno, as Python's `socket.gaierror` does, so it is looked up in
+/// the same table (EAI_NONAME, 8, reads as "ENOEXEC" on a Mac, exactly as Python logs it).
 pub fn errno_name(e: &io::Error) -> String {
-    match e.raw_os_error().and_then(errno_code_name) {
-        Some(name) => name.to_string(),
-        None => "OSError".to_string(),
+    let type_name = if e.get_ref().is_some_and(|inner| inner.is::<GaiError>()) {
+        "gaierror"
+    } else if e.get_ref().is_some_and(|inner| inner.is::<IdnaError>()) {
+        "UnicodeEncodeError"
+    } else {
+        "OSError"
+    };
+    py_errno(e).and_then(errno_code_name).unwrap_or(type_name).to_string()
+}
+
+/// The error's `errno` as Python sees it: the OS errno, or a gaierror's EAI code.
+fn py_errno(e: &io::Error) -> Option<i32> {
+    match e.get_ref().and_then(|inner| inner.downcast_ref::<GaiError>()) {
+        Some(gai) => Some(gai.0),
+        None => e.raw_os_error(),
     }
 }
 
@@ -829,18 +887,110 @@ pub fn trigger_local_network_alert() {
     trigger_local_network_alert_with(udp)
 }
 
-/// The scope id a zone names: a number as itself, an interface name through if_nametoindex (what getaddrinfo with
-/// AI_NUMERICHOST does with `fe80::1%en0`). An error when the interface does not exist.
-fn zone_index(zone: &str) -> io::Result<u32> {
-    if let Ok(n) = zone.parse::<u32>() {
-        return Ok(n);
+/// A getaddrinfo failure: Python's `socket.gaierror`, whose errno is the EAI code.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct GaiError(pub i32);
+
+impl std::fmt::Display for GaiError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "getaddrinfo failed with code {}", self.0)
     }
-    let c = std::ffi::CString::new(zone).map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e))?;
-    let index = unsafe { libc::if_nametoindex(c.as_ptr()) };
-    if index == 0 {
-        return Err(io::Error::new(io::ErrorKind::InvalidInput, "gaierror: no such interface"));
+}
+
+impl std::error::Error for GaiError {}
+
+/// A host Python's `idna` codec refuses before getaddrinfo is called (a label empty or longer than 63).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IdnaError(pub String);
+
+impl std::fmt::Display for IdnaError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "'idna' codec can't encode: {}", self.0)
     }
-    Ok(index)
+}
+
+impl std::error::Error for IdnaError {}
+
+/// The bytes Python's `socket.getaddrinfo` hands the system for a str host: the `idna` codec's encoding. An ASCII
+/// host passes through when every label but the last is 1 to 63 bytes and the last at most 63; any other ASCII host
+/// is a UnicodeEncodeError. A non-ASCII host is punycoded, which no numeric parse accepts (EAI_NONAME).
+fn idna_host(host: &str) -> io::Result<std::ffi::CString> {
+    if !host.is_ascii() {
+        return Err(io::Error::other(GaiError(libc::EAI_NONAME)));
+    }
+    let labels: Vec<&str> = host.split('.').collect();
+    let (last, rest) = labels.split_last().unwrap_or((&"", &[]));
+    if rest.iter().any(|label| label.is_empty() || label.len() >= 64) {
+        return Err(io::Error::other(IdnaError("label empty or too long".to_string())));
+    }
+    if last.len() >= 64 {
+        return Err(io::Error::other(IdnaError("label too long".to_string())));
+    }
+    // a C string ends at the first NUL: getaddrinfo reads the host only up to there, as it does from Python
+    let up_to_nul = host.split('\0').next().unwrap_or_default();
+    std::ffi::CString::new(up_to_nul).map_err(io::Error::other)
+}
+
+/// `socket.getaddrinfo(host, port, family, SOCK_DGRAM, 0, AI_NUMERICHOST)[0][4]`: the system parses the numeric
+/// host, and a zone (`fe80::1%en0`, `fe80::1%4`) goes through the system's own scope rules, so an unknown zone
+/// reads as the system reads it (scope 0 on a Mac). Nothing is looked up on the network.
+fn numeric_sockaddr(host: &str, port: u16, family: Family) -> io::Result<SocketAddr> {
+    struct Owned(*mut libc::addrinfo);
+    impl Drop for Owned {
+        fn drop(&mut self) {
+            if !self.0.is_null() {
+                unsafe { libc::freeaddrinfo(self.0) };
+            }
+        }
+    }
+
+    let c_host = idna_host(host)?;
+    let c_port = std::ffi::CString::new(port.to_string()).map_err(io::Error::other)?;
+    // SAFETY: addrinfo is a plain C struct; all-zero is its documented "no hints" value.
+    let mut hints: libc::addrinfo = unsafe { std::mem::zeroed() };
+    hints.ai_family = match family {
+        Family::Inet => libc::AF_INET,
+        Family::Inet6 => libc::AF_INET6,
+    };
+    hints.ai_socktype = libc::SOCK_DGRAM;
+    hints.ai_flags = libc::AI_NUMERICHOST;
+    let mut res: *mut libc::addrinfo = std::ptr::null_mut();
+    let rc = unsafe { libc::getaddrinfo(c_host.as_ptr(), c_port.as_ptr(), &hints, &mut res) };
+    let owned = Owned(res);
+    if rc != 0 {
+        // Python raises the errno's own OSError for EAI_SYSTEM, a gaierror for the rest
+        if rc == libc::EAI_SYSTEM {
+            return Err(io::Error::last_os_error());
+        }
+        return Err(io::Error::other(GaiError(rc)));
+    }
+    if owned.0.is_null() {
+        return Err(io::Error::other(GaiError(libc::EAI_NONAME)));
+    }
+    // SAFETY: getaddrinfo succeeded, so the first entry and its sockaddr are valid until `owned` drops.
+    let first = unsafe { &*owned.0 };
+    let sa = first.ai_addr as *const libc::sockaddr;
+    if sa.is_null() {
+        return Err(io::Error::other(GaiError(libc::EAI_NONAME)));
+    }
+    match first.ai_family {
+        libc::AF_INET => {
+            let sin = unsafe { &*(sa as *const libc::sockaddr_in) };
+            let ip = Ipv4Addr::from(u32::from_be(sin.sin_addr.s_addr));
+            Ok(SocketAddr::V4(SocketAddrV4::new(ip, u16::from_be(sin.sin_port))))
+        }
+        libc::AF_INET6 => {
+            let sin6 = unsafe { &*(sa as *const libc::sockaddr_in6) };
+            let ip = Ipv6Addr::from(sin6.sin6_addr.s6_addr);
+            Ok(SocketAddr::V6(SocketAddrV6::new(
+                ip,
+                u16::from_be(sin6.sin6_port),
+                u32::from_be(sin6.sin6_flowinfo),
+                sin6.sin6_scope_id,
+            )))
+        }
+        _ => Err(io::Error::other(GaiError(libc::EAI_FAMILY))),
+    }
 }
 
 /// `probe` with the interface list and the socket factory as parameters.
@@ -860,15 +1010,9 @@ pub fn probe_with(
             return "unknown";
         }
     }
-    let target = match ip {
-        IpAddr::V4(v4) => Ok(SocketAddr::V4(SocketAddrV4::new(v4, DISCARD_PORT))),
-        IpAddr::V6(v6) => {
-            let scope_id = if zone.is_empty() { Ok(0) } else { zone_index(&zone) };
-            scope_id.map(|id| SocketAddr::V6(SocketAddrV6::new(v6, DISCARD_PORT, 0, id)))
-        }
-    };
+    let host = if zone.is_empty() { ip.to_string() } else { format!("{ip}%{zone}") };
     let family = if matches!(ip, IpAddr::V4(_)) { Family::Inet } else { Family::Inet6 };
-    let outcome = target.and_then(|target| {
+    let outcome = numeric_sockaddr(&host, DISCARD_PORT, family).and_then(|target| {
         let mut s = make(family)?;
         s.set_blocking(false)?;
         s.connect(target)?;
@@ -878,16 +1022,12 @@ pub fn probe_with(
     match outcome {
         Ok(()) => "ok",
         Err(e) => {
-            if e.raw_os_error().is_some_and(|code| BLOCKED.contains(&code)) {
+            // `e.errno in BLOCKED`, a gaierror's EAI code included, as in Python
+            if py_errno(&e).is_some_and(|code| BLOCKED.contains(&code)) {
                 tracing::info!("lan: the local network probe was refused ({})", errno_name(&e));
                 "blocked"
             } else {
-                let name = if e.raw_os_error().is_none() && e.kind() == io::ErrorKind::InvalidInput {
-                    "gaierror".to_string()
-                } else {
-                    errno_name(&e)
-                };
-                tracing::info!("lan: the local network probe got {}", name);
+                tracing::info!("lan: the local network probe got {}", errno_name(&e));
                 "unknown"
             }
         }

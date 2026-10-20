@@ -225,6 +225,17 @@ fn interfaces_order_en0_first_then_by_stem_and_number() {
     assert_eq!(interface_order("en0"), (0, "en".to_string(), 0));
     assert_eq!(interface_order("en"), (0, "en".to_string(), 0));
     assert_eq!(interface_order("eth0:1"), (1, "eth0:1".to_string(), 0));
+    // Python's \d and int() read any script's digits: Arabic-Indic 12, and Mathematical bold 7 (runs that abut).
+    assert_eq!(interface_order("en\u{661}\u{662}"), (0, "en".to_string(), 12));
+    assert_eq!(interface_order("en\u{1D7D5}"), (0, "en".to_string(), 7));
+}
+
+#[test]
+fn strips_like_python_str_strip() {
+    // Python's strip() also removes the separators \x1c-\x1f, which Rust's trim() keeps.
+    assert_eq!(address(&"\x1c10.0.0.1\x1f".into()), Some(ip("10.0.0.1")));
+    let calls: Calls = Rc::default();
+    assert_eq!(local_hostname_with(scutil(&calls, Ok((0, "Kitchen-Mac\x1e\n"))), host("x.lan")), "Kitchen-Mac");
 }
 
 #[test]
@@ -491,17 +502,63 @@ fn test_probe_reaches_ipv6_peers_with_their_zone() {
     assert_eq!(sent, vec![vec![Vec::<u8>::new()], vec![Vec::new()], vec![Vec::new()]]);
 }
 
-#[test]
-fn probe_reads_a_numeric_zone_in_text_and_refuses_an_unknown_one() {
-    let made: Made = Rc::default();
-    assert_eq!(probe_at_home("fe80::1%7", &made, 0, 0), "ok");
-    match made.borrow()[0].borrow().connected {
-        Some(SocketAddr::V6(sa)) => assert_eq!(sa.scope_id(), 7),
+fn last_scope_id(made: &Made) -> u32 {
+    match made.borrow().last().expect("a socket").borrow().connected {
+        Some(SocketAddr::V6(sa)) => sa.scope_id(),
         other => panic!("not an IPv6 target: {other:?}"),
     }
+}
+
+#[test]
+fn probe_reads_a_zone_through_getaddrinfo_as_python_does() {
     let made: Made = Rc::default();
-    assert_eq!(probe_at_home("fe80::1%no-such-if0", &made, 0, 0), "unknown");
+    assert_eq!(probe_at_home("fe80::1%7", &made, 0, 0), "ok");
+    assert_eq!(last_scope_id(&made), 7);
+    // An interface name becomes its index.
+    let lo0 = unsafe { libc::if_nametoindex(c"lo0".as_ptr()) };
+    if lo0 != 0 {
+        assert_eq!(probe_at_home("fe80::1%lo0", &made, 0, 0), "ok");
+        assert_eq!(last_scope_id(&made), lo0);
+    }
+    // macOS's getaddrinfo reads a zone it cannot place as scope 0 and still answers, as Python 3.13 sees there.
+    #[cfg(target_os = "macos")]
+    for zone in ["no-such-if0", "+4", " 4"] {
+        let made: Made = Rc::default();
+        assert_eq!(probe_at_home(format!("fe80::1%{zone}"), &made, 0, 0), "ok", "{zone:?}");
+        assert_eq!(last_scope_id(&made), 0, "{zone:?}");
+    }
+}
+
+#[test]
+fn probe_reads_a_host_getaddrinfo_refuses_as_unknown_without_a_socket() {
+    // A non-ASCII zone is punycoded by Python's idna codec, which no numeric parse takes: a gaierror, EAI_NONAME.
+    let made: Made = Rc::default();
+    let logs = capture_logs(|| assert_eq!(probe_at_home("fe80::1%\u{e9}", &made, 0, 0), "unknown"));
     assert!(made.borrow().is_empty());
+    #[cfg(target_os = "macos")]
+    assert!(logs.contains("lan: the local network probe got ENOEXEC"), "{logs}"); // errno.errorcode[8], as Python logs
+    #[cfg(not(target_os = "macos"))]
+    let _ = logs;
+    // A label past 63 characters is refused by the idna codec before getaddrinfo runs.
+    let made: Made = Rc::default();
+    let long = format!("fe80::1%{}", "a".repeat(60));
+    let logs = capture_logs(|| assert_eq!(probe_at_home(long, &made, 0, 0), "unknown"));
+    assert!(made.borrow().is_empty());
+    assert!(logs.contains("UnicodeEncodeError"), "{logs}");
+}
+
+#[test]
+fn numeric_sockaddr_matches_getaddrinfo() {
+    assert_eq!(numeric_sockaddr("192.168.1.30", 9, Family::Inet).unwrap(), "192.168.1.30:9".parse().unwrap());
+    assert_eq!(numeric_sockaddr("fd00::5", 9, Family::Inet6).unwrap(), "[fd00::5]:9".parse().unwrap());
+    // AI_NUMERICHOST: a name is never looked up.
+    let e = numeric_sockaddr("localhost", 9, Family::Inet).unwrap_err();
+    assert!(e.get_ref().is_some_and(|inner| inner.is::<GaiError>()), "{e:?}");
+    // The idna codec's label rules: an empty inner label is refused, a trailing dot is not.
+    assert!(idna_host("a..b").unwrap_err().get_ref().is_some_and(|inner| inner.is::<IdnaError>()));
+    assert!(idna_host("1.2.3.4.").is_ok());
+    // A NUL ends the C string the system reads.
+    assert_eq!(idna_host("fe80::1%\0x").unwrap().as_bytes(), b"fe80::1%");
 }
 
 #[test]
@@ -510,6 +567,32 @@ fn errno_names_match_python() {
     assert_eq!(errno_name(&io::Error::from_raw_os_error(libc::EPERM)), "EPERM");
     assert_eq!(errno_name(&io::Error::from_raw_os_error(libc::EAGAIN)), "EAGAIN");
     assert_eq!(errno_name(&io::Error::other("no errno")), "OSError");
+    assert_eq!(errno_name(&io::Error::other(GaiError(999))), "gaierror");
+    assert_eq!(errno_name(&io::Error::other(GaiError(libc::EAI_NONAME))), errno_name(&io::Error::from_raw_os_error(libc::EAI_NONAME)));
+}
+
+/// `errno.errorcode` on macOS (Python 3.13), every code from 1 to 106.
+#[cfg(target_os = "macos")]
+#[test]
+fn errno_names_cover_every_darwin_errno_as_python_does() {
+    const PYTHON: &[&str] = &[
+        "EPERM", "ENOENT", "ESRCH", "EINTR", "EIO", "ENXIO", "E2BIG", "ENOEXEC", "EBADF", "ECHILD", "EDEADLK",
+        "ENOMEM", "EACCES", "EFAULT", "ENOTBLK", "EBUSY", "EEXIST", "EXDEV", "ENODEV", "ENOTDIR", "EISDIR", "EINVAL",
+        "ENFILE", "EMFILE", "ENOTTY", "ETXTBSY", "EFBIG", "ENOSPC", "ESPIPE", "EROFS", "EMLINK", "EPIPE", "EDOM",
+        "ERANGE", "EAGAIN", "EINPROGRESS", "EALREADY", "ENOTSOCK", "EDESTADDRREQ", "EMSGSIZE", "EPROTOTYPE",
+        "ENOPROTOOPT", "EPROTONOSUPPORT", "ESOCKTNOSUPPORT", "ENOTSUP", "EPFNOSUPPORT", "EAFNOSUPPORT", "EADDRINUSE",
+        "EADDRNOTAVAIL", "ENETDOWN", "ENETUNREACH", "ENETRESET", "ECONNABORTED", "ECONNRESET", "ENOBUFS", "EISCONN",
+        "ENOTCONN", "ESHUTDOWN", "ETOOMANYREFS", "ETIMEDOUT", "ECONNREFUSED", "ELOOP", "ENAMETOOLONG", "EHOSTDOWN",
+        "EHOSTUNREACH", "ENOTEMPTY", "EPROCLIM", "EUSERS", "EDQUOT", "ESTALE", "EREMOTE", "EBADRPC", "ERPCMISMATCH",
+        "EPROGUNAVAIL", "EPROGMISMATCH", "EPROCUNAVAIL", "ENOLCK", "ENOSYS", "EFTYPE", "EAUTH", "ENEEDAUTH", "EPWROFF",
+        "EDEVERR", "EOVERFLOW", "EBADEXEC", "EBADARCH", "ESHLIBVERS", "EBADMACHO", "ECANCELED", "EIDRM", "ENOMSG",
+        "EILSEQ", "ENOATTR", "EBADMSG", "EMULTIHOP", "ENODATA", "ENOLINK", "ENOSR", "ENOSTR", "EPROTO", "ETIME",
+        "EOPNOTSUPP", "ENOPOLICY", "ENOTRECOVERABLE", "EOWNERDEAD", "EQFULL",
+    ];
+    for (i, want) in PYTHON.iter().enumerate() {
+        let code = i as i32 + 1;
+        assert_eq!(errno_name(&io::Error::from_raw_os_error(code)), *want, "errno {code}");
+    }
 }
 
 #[test]
