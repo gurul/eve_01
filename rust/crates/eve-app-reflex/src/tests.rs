@@ -928,3 +928,26 @@ async fn test_status_before_any_handoff_and_steer_without_a_body() {
     assert_eq!(Value::Object(r.agent.status()), json!({"running": false, "provider": "codex"}));
     assert!(r.agent.inner().unwrap().as_any().downcast_ref::<Inner>().is_some());
 }
+
+#[tokio::test]
+async fn test_discard_reaches_the_wrapped_agent_only_after_the_handoff() {
+    // Python's __getattr__ forwards `discard` to the wrapped agent; before the handoff there is nothing to close.
+    let discarded: Arc<Mutex<Vec<String>>> = Arc::default();
+    let codex = Arc::new(Inner {
+        provider: "codex".into(),
+        reply: "codex did it".into(),
+        goals: Mutex::new(Vec::new()),
+        cancelled: Mutex::new(String::new()),
+        discarded: Some(Arc::clone(&discarded)),
+    });
+    let agent = ReflexFirstAgent::new(
+        make(&codex),
+        Arc::new(|_ev| {}),
+        ReflexOptions { apps: apps_of(&APPS), opener: ok_opener(), ..Default::default() },
+    );
+    Agent::discard(&agent).await.unwrap();
+    assert!(discarded.lock().is_empty());
+    agent.run("play jazz on spotify", "").await.unwrap();
+    Agent::discard(&agent).await.unwrap();
+    assert_eq!(*discarded.lock(), strs(&["codex"]));
+}

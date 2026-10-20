@@ -925,6 +925,15 @@ impl Agent for ReflexFirstAgent {
         ReflexFirstAgent::provider(self)
     }
 
+    /// Python's `__getattr__` reaches the wrapped agent's `discard`; before the handoff there is none, and a
+    /// caller's `getattr(agent, "discard", None)` does nothing.
+    async fn discard(&self) -> anyhow::Result<()> {
+        match self.inner() {
+            Some(inner) => inner.discard().await,
+            None => Ok(()),
+        }
+    }
+
     fn as_any(&self) -> &dyn Any {
         self
     }

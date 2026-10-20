@@ -2,7 +2,7 @@
 Status: complete
 
 The launch and quit reflex in front of whichever computer-use agent the daemon builds, plus the desk lane and the
-body router seams. `cargo test -p eve-app-reflex`: 38 tests pass.
+body router seams. `cargo test -p eve-app-reflex`: 39 tests pass.
 
 ## Modules
 | Python | Rust |
@@ -37,7 +37,7 @@ body router seams. `cargo test -p eve-app-reflex`: 38 tests pass.
 | ReflexFirstAgent.cancel | cancel(reason) | before the handoff only records the reason; after it forwards |
 | ReflexFirstAgent.steer | steer(text) | false before the handoff |
 | ReflexFirstAgent.status | status() -> Map | `{"running","provider","goal":"","reflex"}` before the handoff (`reflex` null until something was reflexed), else the wrapped agent's |
-| ReflexFirstAgent.__getattr__ | inner() -> Option<Arc<dyn Agent>>, Agent::as_any | the wrapped agent itself, to downcast for `browser_used`, `final` … |
+| ReflexFirstAgent.__getattr__ | inner() -> Option<Arc<dyn Agent>>, Agent::as_any; `Agent::discard` for ReflexFirstAgent | the wrapped agent itself, to downcast for `browser_used`, `final` …; `discard` forwards to the wrapped agent after the handoff and does nothing before it |
 | ReflexFirstAgent._plan | plan (private) | `apps()` and `task_router::classify(goal, "", apps, asker, quit_asker)` each on `spawn_blocking` (Jev is a blocking HTTP call) |
 | ReflexFirstAgent.run | run(goal, note) -> anyhow::Result<String> | same order: quit/launch reflex, cancel check, desk lane (complete with a sentence answers; partial prepends `desk_lane::codex_note`), cancel check, body choice, cancel check with `discard` + `on_done`, then the body runs `goal + note` and `on_done` follows. Same log lines |
 | (attributes body, provider, reflexed) | body(), provider(), reflexed() | behind one `parking_lot::Mutex` with the inner agent and the cancel reason, so a Stop and the handoff cannot interleave |
@@ -52,7 +52,7 @@ body router seams. `cargo test -p eve-app-reflex`: 38 tests pass.
 | test_quit_reflex.py (ref) | test_the_wrapper_quits_without_codex, test_quit_all_keeps_eves_own_and_the_terminals | same names | the classify / typed_ask cases belong to eve-desktop-lanes and eve-typed-ask |
 | test_desk_lane.py (ref) | the seven ReflexFirstAgent rig tests | same names | DeskLane itself is eve-desk-lane's; Daemon._desk is eve-daemon's |
 | test_browser_router.py (ref) | test_the_wrapper_sends_a_routed_task_to_its_named_body_and_keeps_reflexes_first, test_named_bodies_alone_are_enough_and_a_broken_router_keeps_codex | same names | the router itself is eve-browser-router's |
-| (added) | - | test_the_switches_parse_like_python, test_links_are_capped_and_deduplicated, test_goal_shape_names_hosts_never_words, test_quit_all_sentences, test_quit_app_sentences, test_quote_and_the_keep_list, test_a_quit_that_fails_falls_back_to_the_inner_agent, test_a_router_without_a_body_to_choose_is_never_asked, test_status_before_any_handoff_and_steer_without_a_body | expected strings checked against the Python |
+| (added) | - | test_the_switches_parse_like_python, test_links_are_capped_and_deduplicated, test_goal_shape_names_hosts_never_words, test_quit_all_sentences, test_quit_app_sentences, test_quote_and_the_keep_list, test_a_quit_that_fails_falls_back_to_the_inner_agent, test_a_router_without_a_body_to_choose_is_never_asked, test_status_before_any_handoff_and_steer_without_a_body, test_discard_reaches_the_wrapped_agent_only_after_the_handoff | expected strings checked against the Python |
 
 The tests that use `browser_lane.is_web_goal` and `telegram.TASK_FILE_HINT` carry test-local copies of
 `WEB_WORDS` and the hint text, since those crates sit downstream of this one.
