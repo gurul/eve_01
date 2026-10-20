@@ -1672,3 +1672,31 @@ async fn default_transport_called_inside_a_runtime_blocks_instead_of_panicking()
     assert_eq!((response.status, response.body.as_slice()), (200, &b"{}"[..]));
     server.join().unwrap();
 }
+
+/// Python's `str.strip()` also removes U+001C..U+001F; Rust's `trim` keeps them.
+#[test]
+fn python_strip_removes_ascii_separators() {
+    let config = configured(Some(&env(&[
+        ("EVE_AGENTCARD", "1\u{1c}"),
+        ("AGENTCARD_ACCESS_TOKEN", "\u{1d}tok\u{1f}"),
+    ])))
+    .unwrap();
+    assert!(config.enabled);
+    assert_eq!(config.token, "tok");
+
+    let dir = tmp();
+    let (client, server) = service(dir.path());
+    let result = client.handle(
+        "agentcard_buy",
+        &json!({"ask": "\u{1c}\u{1f}", "conversation_id": null}),
+    );
+    assert_eq!(result["reason"], json!("invalid_ask"));
+    assert!(server.calls.lock().is_empty());
+
+    let mut bad = cart();
+    bad["merchant_name"] = json!("\u{1e}");
+    let body = shopping(Some(vec![bad]));
+    let projected = client.project(body.as_object().unwrap(), None);
+    assert_eq!(projected["carts"], json!([]));
+    assert_eq!(projected["cart_validation_error"], json!(true));
+}

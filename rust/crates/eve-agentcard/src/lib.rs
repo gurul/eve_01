@@ -126,7 +126,7 @@ fn char_len(s: &str) -> usize {
 
 /// Python `str.strip()` is non-empty.
 fn has_text(s: &str) -> bool {
-    !s.trim().is_empty()
+    !py::strip(s).is_empty()
 }
 
 /// `_address`: validate the private delivery address.
@@ -228,17 +228,12 @@ pub fn configured_from(
     env: impl Fn(&str) -> Option<String>,
 ) -> Result<AgentCardConfig, AgentCardError> {
     let enabled = matches!(
-        env("EVE_AGENTCARD")
-            .unwrap_or_default()
-            .trim()
+        py::strip(&env("EVE_AGENTCARD").unwrap_or_default())
             .to_lowercase()
             .as_str(),
         "1" | "true" | "yes" | "on"
     );
-    let token = env("AGENTCARD_ACCESS_TOKEN")
-        .unwrap_or_default()
-        .trim()
-        .to_string();
+    let token = py::strip(&env("AGENTCARD_ACCESS_TOKEN").unwrap_or_default()).to_string();
     if !enabled || token.is_empty() {
         return Ok(AgentCardConfig::default());
     }
@@ -729,7 +724,7 @@ Start a new shopping conversation after any placed or partially placed order."
         secrets.sort_by(|a, b| char_len(b).cmp(&char_len(a)).then_with(|| a.cmp(b)));
         for secret in secrets {
             if !secret.is_empty() {
-                value = py::sub_word(&value, secret.trim(), "[redacted]");
+                value = py::sub_word(&value, py::strip(&secret), "[redacted]");
             }
         }
         let value = BEARER.replace_all(&value, regex::NoExpand("Bearer [redacted]"));
@@ -783,7 +778,7 @@ Start a new shopping conversation after any placed or partially placed order."
         vault: bool,
     ) -> Option<String> {
         let text = self.text(value, address, None, 2048)?;
-        if text.is_empty() || text.contains("[redacted]") || text.chars().any(char::is_whitespace) {
+        if text.is_empty() || text.contains("[redacted]") || text.chars().any(py::is_space) {
             return None;
         }
         let parsed = py::urlsplit(&text).ok()?;
@@ -1869,14 +1864,15 @@ Start a new shopping conversation after any placed or partially placed order."
         json!({"ok": true, "merchants": out})
     }
 
-    /// `_binding`.
-    fn binding(conv: &Conv, hashes: &[String]) -> String {
-        let carts: Vec<Value> = hashes
+    /// `_binding`. A hash missing from the conversation's carts is Python's
+    /// `KeyError` inside the state lock, reported as `StateError`.
+    fn binding(conv: &Conv, hashes: &[String]) -> Result<String, StateError> {
+        let carts = hashes
             .iter()
-            .map(|h| Value::String(conv.carts.get(h).cloned().unwrap_or_default()))
-            .collect();
+            .map(|h| conv.carts.get(h).cloned().map(Value::String).ok_or(StateError))
+            .collect::<Result<Vec<Value>, StateError>>()?;
         let value = json!({"address": conv.address_digest, "carts": carts});
-        sha256_hex(dumps(&value, true, true).as_bytes())
+        Ok(sha256_hex(dumps(&value, true, true).as_bytes()))
     }
 
     /// `prepare_confirm`: a fresh ledger read, then a single-use snapshot and
@@ -1973,7 +1969,7 @@ Start a new shopping conversation after any placed or partially placed order."
             let data = Arc::new(SnapshotData {
                 nonce: uuid::Uuid::new_v4().simple().to_string(),
                 conversation_id: cid.to_string(),
-                binding: Self::binding(conv, &hashes),
+                binding: Self::binding(conv, &hashes)?,
                 cart_hashes: hashes.clone(),
                 version: conv.version,
             });
@@ -2137,7 +2133,7 @@ Start a new shopping conversation after any placed or partially placed order."
             if snap.cart_hashes.iter().any(|h| !conv.carts.contains_key(h)) {
                 return Ok(Err(failure("confirmation_snapshot_stale")));
             }
-            if Self::binding(conv, &snap.cart_hashes) != snap.binding {
+            if Self::binding(conv, &snap.cart_hashes)? != snap.binding {
                 return Ok(Err(failure("confirmation_snapshot_stale")));
             }
             let address = self.bound_address(conv)?;
@@ -2220,7 +2216,7 @@ Start a new shopping conversation after any placed or partially placed order."
             let conv = match state.conversations.get_mut(cid) {
                 Some(conv)
                     if conv.version == snap.version
-                        && Self::binding(conv, &snap.cart_hashes) == snap.binding
+                        && Self::binding(conv, &snap.cart_hashes)? == snap.binding
                         && snap
                             .cart_hashes
                             .iter()

@@ -263,10 +263,15 @@ pub fn parse_float(text: &str) -> Option<f64> {
     cleaned.parse::<f64>().ok()
 }
 
-/// Python `str.isspace()` for a non-ASCII character (the same set as
-/// Unicode `White_Space` outside ASCII).
-fn is_space(c: char) -> bool {
-    c.is_whitespace()
+/// Python `str.isspace()`: Unicode `White_Space` plus the ASCII separators
+/// U+001C..U+001F, which Python counts as whitespace and Rust does not.
+pub fn is_space(c: char) -> bool {
+    c.is_whitespace() || ('\x1c'..='\x1f').contains(&c)
+}
+
+/// Python `str.strip()` with no arguments.
+pub fn strip(s: &str) -> &str {
+    s.trim_matches(is_space)
 }
 
 /// Python `unicodedata.decimal(c)`: the value of a `Nd` digit. Unicode lays
