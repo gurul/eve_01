@@ -74,7 +74,7 @@ pub fn default_path() -> PathBuf {
 /// [`default_path`] with the environment and home passed in (the test seam).
 pub fn default_path_from(override_: Option<&str>, xdg_data_home: Option<&str>, home: &Path) -> PathBuf {
     if let Some(o) = override_.filter(|s| !s.is_empty()) {
-        return normalize(Path::new(&expanduser(o)));
+        return path_expanduser(&normalize(Path::new(o)));
     }
     if cfg!(target_os = "macos") {
         return home.join("Library").join("Logs").join("eve-bridge-audit.jsonl");
@@ -117,6 +117,29 @@ pub fn expanduser(path: &str) -> String {
     } else {
         joined
     }
+}
+
+/// `pathlib.Path.expanduser` on an already-normalized path: only a leading
+/// `~`/`~name` component is expanded (so `Path("./~/x")`, which pathlib
+/// normalizes to `~/x`, expands too), and the result is normalized again.
+/// Where pathlib raises `RuntimeError` (unknown user) the path is kept as is.
+fn path_expanduser(p: &Path) -> PathBuf {
+    let mut comps = p.components();
+    let Some(Component::Normal(first)) = comps.next() else {
+        return p.to_path_buf();
+    };
+    let Some(first) = first.to_str().filter(|f| f.starts_with('~')) else {
+        return p.to_path_buf();
+    };
+    let home = expanduser(first);
+    if home.starts_with('~') {
+        return p.to_path_buf();
+    }
+    let mut out = normalize(Path::new(&home));
+    for c in comps {
+        out.push(c.as_os_str());
+    }
+    out
 }
 
 #[cfg(unix)]
@@ -218,22 +241,48 @@ impl AuditLog {
                 tracing::warn!(
                     "audit log write failed (will not retry-log): {}: {}",
                     self.path.display(),
-                    py_oserror(&e, &at)
+                    py_oserror(&e, at.as_deref())
                 );
             }
         }
     }
 
-    fn append(&self, line: &str) -> Result<(), (PathBuf, io::Error)> {
+    /// The error carries the filename Python's `OSError` would: the directory
+    /// pathlib's `mkdir` failed on, the file `open` failed on, and none for a
+    /// failed write.
+    fn append(&self, line: &str) -> Result<(), (Option<PathBuf>, io::Error)> {
+        // `self.path.parent` of a bare filename is "." in pathlib, which exists.
         if let Some(parent) = self.path.parent().filter(|p| !p.as_os_str().is_empty()) {
-            fs::create_dir_all(parent).map_err(|e| (parent.to_path_buf(), e))?;
+            mkdir_parents(parent).map_err(|(at, e)| (Some(at), e))?;
         }
         let mut f = OpenOptions::new()
             .append(true)
             .create(true)
             .open(&self.path)
-            .map_err(|e| (self.path.clone(), e))?;
-        f.write_all(line.as_bytes()).map_err(|e| (self.path.clone(), e))
+            .map_err(|e| (Some(self.path.clone()), e))?;
+        f.write_all(line.as_bytes()).map_err(|e| (None, e))
+    }
+}
+
+/// `Path.mkdir(parents=True, exist_ok=True)`, reporting the directory whose
+/// `os.mkdir` raised, as pathlib's recursion does.
+fn mkdir_parents(p: &Path) -> Result<(), (PathBuf, io::Error)> {
+    match fs::create_dir(p) {
+        Ok(()) => Ok(()),
+        Err(e) if e.kind() == io::ErrorKind::NotFound => {
+            let parent = match p.parent() {
+                Some(parent) if !parent.as_os_str().is_empty() && parent != p => parent,
+                _ => return Err((p.to_path_buf(), e)),
+            };
+            mkdir_parents(parent)?;
+            match fs::create_dir(p) {
+                Ok(()) => Ok(()),
+                Err(_) if p.is_dir() => Ok(()),
+                Err(e) => Err((p.to_path_buf(), e)),
+            }
+        }
+        Err(_) if p.is_dir() => Ok(()),
+        Err(e) => Err((p.to_path_buf(), e)),
     }
 }
 
@@ -297,17 +346,45 @@ where
     s
 }
 
-/// Python's `str(OSError)`: `[Errno 21] Is a directory: '/path'`.
-fn py_oserror(e: &io::Error, at: &Path) -> String {
+/// Python's `str(OSError)`: `[Errno 21] Is a directory: '/path'`, or
+/// `[Errno 28] No space left on device` when the error has no filename.
+fn py_oserror(e: &io::Error, at: Option<&Path>) -> String {
     match e.raw_os_error() {
         Some(code) => {
             let text = io::Error::from_raw_os_error(code).to_string();
             let suffix = format!(" (os error {code})");
             let strerror = text.strip_suffix(&suffix).unwrap_or(&text);
-            format!("[Errno {code}] {strerror}: '{}'", at.display())
+            match at {
+                Some(at) => format!("[Errno {code}] {strerror}: {}", py_repr_str(&at.to_string_lossy())),
+                None => format!("[Errno {code}] {strerror}"),
+            }
         }
         None => e.to_string(),
     }
+}
+
+/// `repr(str)` for a filename: single quotes unless the text holds a `'` and
+/// no `"`; backslashes, the chosen quote and control characters escaped.
+fn py_repr_str(s: &str) -> String {
+    let quote = if s.contains('\'') && !s.contains('"') { '"' } else { '\'' };
+    let mut out = String::with_capacity(s.len() + 2);
+    out.push(quote);
+    for c in s.chars() {
+        match c {
+            '\\' => out.push_str("\\\\"),
+            '\n' => out.push_str("\\n"),
+            '\r' => out.push_str("\\r"),
+            '\t' => out.push_str("\\t"),
+            c if c == quote => {
+                out.push('\\');
+                out.push(c);
+            }
+            c if (c as u32) < 0x20 || c as u32 == 0x7f => out.push_str(&format!("\\x{:02x}", c as u32)),
+            c => out.push(c),
+        }
+    }
+    out.push(quote);
+    out
 }
 
 fn take_chars(s: &str, n: usize) -> String {

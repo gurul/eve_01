@@ -537,3 +537,58 @@ fn render_follow_streams_new_matching_entries_and_survives_truncation() {
     stop.store(true, Ordering::Relaxed);
     assert_eq!(handle.join().unwrap(), 0);
 }
+
+#[test]
+fn default_path_override_normalizes_before_expanding_like_pathlib() {
+    // pathlib drops the leading "." first, so `Path("./~/x").expanduser()` is under home.
+    let home = Path::new("/home/nobody");
+    let real_home = std::env::var("HOME").unwrap_or_default();
+    if !real_home.trim_end_matches('/').is_empty() {
+        let want = Path::new(real_home.trim_end_matches('/')).join("x").join("a.jsonl");
+        assert_eq!(default_path_from(Some("./~/x/a.jsonl"), None, home), want);
+    }
+    // Only a leading component expands; an unknown user keeps the literal path.
+    assert_eq!(default_path_from(Some("a/~/b"), None, home), PathBuf::from("a/~/b"));
+    assert_eq!(
+        default_path_from(Some("~no-such-user-eve-audit//x"), None, home),
+        PathBuf::from("~no-such-user-eve-audit/x")
+    );
+}
+
+#[test]
+fn write_failure_message_names_the_path_python_names() {
+    let tmp = TempDir::new().unwrap();
+    // A regular file where a parent directory should be: ENOTDIR on the path itself.
+    let blocker = tmp.path().join("blocker");
+    fs::write(&blocker, "").unwrap();
+    let (at, e) = mkdir_parents(&blocker.join("a").join("b")).unwrap_err();
+    assert_eq!(at, blocker.join("a").join("b"));
+    assert_eq!(py_oserror(&e, Some(&at)), format!("[Errno 20] Not a directory: '{}'", at.display()));
+    // The parent itself is a file: FileExistsError on the parent.
+    let (at, e) = mkdir_parents(&blocker).unwrap_err();
+    assert_eq!(at, blocker);
+    assert_eq!(py_oserror(&e, Some(&at)), format!("[Errno 17] File exists: '{}'", blocker.display()));
+    // A missing chain under a read-only directory: pathlib's recursion raises
+    // on the deepest directory it tried, not on the leaf.
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let ro = tmp.path().join("ro");
+        fs::create_dir(&ro).unwrap();
+        fs::set_permissions(&ro, fs::Permissions::from_mode(0o555)).unwrap();
+        let res = mkdir_parents(&ro.join("missing").join("leaf"));
+        fs::set_permissions(&ro, fs::Permissions::from_mode(0o755)).unwrap();
+        // Root ignores mode bits; only assert when the mkdir really failed.
+        if let Err((at, e)) = res {
+            assert_eq!(at, ro.join("missing"));
+            assert_eq!(e.raw_os_error(), Some(13));
+        }
+    }
+    // An existing directory is fine (exist_ok=True).
+    assert!(mkdir_parents(tmp.path()).is_ok());
+    // A failed write carries no filename.
+    let e = io::Error::from_raw_os_error(28);
+    assert_eq!(py_oserror(&e, None), "[Errno 28] No space left on device");
+    assert_eq!(py_repr_str("/a'b"), "\"/a'b\"");
+    assert_eq!(py_repr_str("/a\\b"), "'/a\\\\b'");
+}
