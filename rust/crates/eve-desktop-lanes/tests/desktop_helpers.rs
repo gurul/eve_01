@@ -1350,3 +1350,48 @@ fn test_the_acting_wrap_covers_every_input_call() {
     assert_eq!(b.h.last_click(), Some("AXButton 'Play' in Music"));
     assert!(b.h.timing_ms().contains_key("act") && b.h.timing_ms().contains_key("ax"));
 }
+
+// ---- test_side_effect_precision.py: the planner's outline marks what the lane will ask for ----------
+
+#[test]
+fn test_the_outline_hint_uses_the_lanes_own_confirmation_rule() {
+    let cand = |label: &str, role: &str, in_content: bool, cid: &str| Candidate {
+        id: cid.into(),
+        role: role.into(),
+        label: label.into(),
+        frame: (10, 20 * cid.parse::<i64>().unwrap(), 60, 16),
+        actions: vec!["AXPress".into()],
+        enabled: true,
+        app: "Safari".into(),
+        in_content,
+        ..Candidate::default()
+    };
+    let rows = vec![
+        cand("Follow", "button", true, "0"),
+        cand("Star Wars", "link", true, "1"),
+        cand("Delete", "button", false, "2"),
+        cand("Save", "button", false, "3"),
+    ];
+    let s = Snapshot {
+        seq: 1,
+        app: "Safari".into(),
+        bundle: "com.apple.Safari".into(),
+        pid: 7,
+        elements: rows,
+        ..Snapshot::default()
+    };
+    let mut bench = Bench::with(Opts { points: (1440, 900), ..Opts::default() }, move |mut be| {
+        be.ax_snapshot = Box::new(move |_| Ok(s.clone()));
+        be
+    });
+    let out = bench.h.outline(80).unwrap();
+    let lines: Vec<String> =
+        out["lines"].as_array().unwrap().iter().map(|l| l.as_str().unwrap().to_string()).collect();
+    let mut asked: Vec<String> = lines
+        .iter()
+        .filter(|l| l.ends_with("[asks the human first]"))
+        .map(|l| l.split(" (").next().unwrap().to_string())
+        .collect();
+    asked.sort();
+    assert_eq!(asked, vec!["Delete".to_string(), "Follow".to_string()], "{lines:?}");
+}

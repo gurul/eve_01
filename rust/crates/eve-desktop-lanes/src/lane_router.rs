@@ -140,7 +140,7 @@ impl RouteResult {
         }
     }
 
-    /// `{"status", "reason", "line", "clicked", "already", "sentence", "log", "ms"}` (ms rounded to 0.1).
+    /// `{"status", "reason", "line", "clicked", "already", "sentence", "log", "ms"}` (ms is Python's `round(ms, 1)`).
     pub fn to_dict(&self) -> Value {
         json!({
             "status": self.status,
@@ -150,7 +150,7 @@ impl RouteResult {
             "already": self.already,
             "sentence": self.sentence,
             "log": self.log_lines,
-            "ms": (self.ms * 10.0).round() / 10.0,
+            "ms": crate::py_round_n(self.ms, 1),
         })
     }
 }

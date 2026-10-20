@@ -81,10 +81,7 @@ pub const SHELL_APPS: &[&str] = &["terminal", "warp", "iterm", "iterm2", "ghostt
 
 /// Python's `round(x, 1)`: correctly rounded on the exact binary value, ties to even.
 fn round1(x: f64) -> f64 {
-    if !x.is_finite() {
-        return x;
-    }
-    format!("{x:.1}").parse().unwrap_or(x)
+    crate::py_round_n(x, 1)
 }
 
 #[derive(Debug, Clone, PartialEq)]

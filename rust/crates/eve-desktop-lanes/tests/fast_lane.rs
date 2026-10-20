@@ -17,6 +17,7 @@ use eve_decider::{render_option, Choice};
 use eve_decisions::{Answer, Evaluate};
 use eve_desktop_lanes::ax_candidates::{Candidate, Snapshot};
 use eve_desktop_lanes::decision_lane as dl;
+use eve_desktop_lanes::desktop_helpers::LaneAdapter;
 use eve_desktop_lanes::fast_lane::{
     self as fl, describe_pick, format_line, gate, run_delegate, run_script, DelegateOptions, DelegateResult,
     Effectors as EffectorsTrait, GateState, LaneDecider, LaneStatus, LineFields, MenuItem, ScriptOptions,
@@ -2855,11 +2856,7 @@ fn solid(w: u32, h: u32, rgb: [u8; 3]) -> DynamicImage {
 
 /// desktop_helpers._LaneAdapter.image_matches: any pixel change below the 32-point menu bar is a mismatch.
 fn image_matches(before: &DynamicImage, after: &DynamicImage) -> bool {
-    if before.width() != after.width() || before.height() != after.height() || before.height() <= 32 {
-        return false;
-    }
-    let (a, b) = (before.to_rgb8(), after.to_rgb8());
-    (32..before.height()).all(|y| (0..before.width()).all(|x| a.get_pixel(x, y) == b.get_pixel(x, y)))
+    LaneAdapter::image_matches(before, after)
 }
 
 struct DSenses {
@@ -3301,4 +3298,18 @@ fn test_gates_pick_scores_and_evidence() {
         &Snapshot { pid: 0, ..s.clone() },
         &Snapshot { pid: 0, ..s.clone() }
     ));
+}
+
+#[test]
+fn test_route_result_ms_rounds_as_pythons_round() {
+    // Python: round(0.25, 1) == 0.2 (tie to even), round(0.35, 1) == 0.3 (0.35 is below the tie in binary),
+    // round(2.675, 2) == 2.67, round(0.125, 2) == 0.12.
+    let ms = |v: f64| lr::RouteResult { ms: v, ..lr::RouteResult::new("none") }.to_dict()["ms"].as_f64().unwrap();
+    assert_eq!(ms(0.25), 0.2);
+    assert_eq!(ms(0.35), 0.3);
+    assert_eq!(ms(0.45), 0.5);
+    assert_eq!(ms(12.0), 12.0);
+    assert_eq!(eve_desktop_lanes::py_round_n(2.675, 2), 2.67);
+    assert_eq!(eve_desktop_lanes::py_round_n(0.125, 2), 0.12);
+    assert_eq!(eve_desktop_lanes::py_round_n(0.375, 2), 0.38);
 }

@@ -542,10 +542,7 @@ fn py_bool(b: bool) -> &'static str {
 
 /// Python's `round(x, 4)` (correctly rounded on the exact binary value, as Python's is).
 fn round4(x: f64) -> f64 {
-    if !x.is_finite() {
-        return x;
-    }
-    format!("{x:.4}").parse().unwrap_or(x)
+    crate::py_round_n(x, 4)
 }
 
 fn f64_value(f: f64) -> Value {

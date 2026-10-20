@@ -130,6 +130,15 @@ pub fn casefold(text: &str) -> String {
     out
 }
 
+/// Python's `round(x, n)` on a float: correctly rounded on the exact binary value, ties to even. Rust's
+/// fixed-precision formatting rounds the same way, so the decimal it prints is the value Python's round returns.
+pub fn py_round_n(x: f64, n: usize) -> f64 {
+    if !x.is_finite() {
+        return x;
+    }
+    format!("{x:.n$}").parse().unwrap_or(x)
+}
+
 /// Python's `len(text)`: characters (code points), not bytes.
 pub fn py_len(text: &str) -> usize {
     text.chars().count()

@@ -1497,3 +1497,115 @@ fn test_fixture_dict_round_trip_keeps_numbers() {
     assert!(snapshot_from_dict(&json!({"seq": null})).is_err());
     let _ = ax::DESTINATION_PREFIX;
 }
+
+// ---- test_ax_press_fallback.py: the live element rides the snapshot -------------------------------
+
+#[test]
+fn test_refs_ride_the_snapshot_and_never_reach_its_dict() {
+    // REF stands for the live AXUIElement
+    struct Ref;
+    let node = json!({"role": "AXButton", "title": "Week", "frame": [10, 10, 40, 20], "actions": ["AXPress"],
+                      "enabled": true, "children": []});
+    let root = json!({"role": "AXWindow", "title": "w", "frame": [0, 0, 500, 500], "children": [node]});
+    let raw = json!({"app": "Calendar", "bundle": "b", "pid": 42, "root": root});
+    let shared = AxRef::new(Ref);
+    let refs: HashMap<NodePath, AxRef> = [(vec![0], shared.clone())].into_iter().collect();
+    let snap = snapshot_from_raw(&raw, 1, None, Some(&refs));
+    assert_eq!(snap.elements.len(), 1);
+    let c = &snap.elements[0];
+    let got = snap.element_ref(&c.id).expect("the button's live element");
+    assert!(std::sync::Arc::ptr_eq(&got.0, &shared.0)); // `is REF`
+    assert_eq!(snap, snapshot_from_raw(&raw, 1, None, None)); // refs never change equality
+    let dumped = serde_json::to_string(&snap.to_dict()).unwrap(); // and never reach the serialised form
+    assert!(!dumped.contains("ref"), "{dumped}");
+    assert!(snapshot_from_raw(&raw, 1, None, None).element_ref(&c.id).is_none());
+}
+
+// ---- test_side_effect_precision.py: the lane's gate and run_delegate ask by href ------------------
+
+struct HnSenses(Snapshot);
+
+impl eve_desktop_lanes::fast_lane::Senses for HnSenses {
+    fn snapshot(&self) -> anyhow::Result<Snapshot> {
+        Ok(self.0.clone())
+    }
+    fn text_visible(&self, _s: &str) -> anyhow::Result<bool> {
+        Ok(false)
+    }
+    fn focused(&self) -> Option<Candidate> {
+        None
+    }
+    fn frontmost_pid(&self) -> anyhow::Result<i64> {
+        Ok(1)
+    }
+    fn screen_changed(&self) -> anyhow::Result<Option<bool>> {
+        Ok(Some(true))
+    }
+}
+
+#[derive(Default)]
+struct HnEffectors {
+    clicks: std::cell::RefCell<Vec<String>>,
+}
+
+impl eve_desktop_lanes::fast_lane::Effectors for HnEffectors {
+    fn click_candidate(&self, c: &Candidate) -> anyhow::Result<String> {
+        self.clicks.borrow_mut().push(c.label.clone());
+        Ok(format!("clicked {} '{}'", c.role, c.label))
+    }
+    fn focus_and_type(&self, _c: &Candidate, _text: &str) -> anyhow::Result<String> {
+        anyhow::bail!("the precision test never types")
+    }
+    fn press(&self, _key: &str) -> anyhow::Result<String> {
+        anyhow::bail!("the precision test never presses a key")
+    }
+    fn settle(&self, _secs: f64) -> anyhow::Result<f64> {
+        Ok(0.0)
+    }
+}
+
+#[test]
+fn test_gate_asks_for_an_href_only_account_link() {
+    use eve_desktop_lanes::fast_lane::{gate, GateState, MenuItem, Thresholds};
+
+    let c = hn_page(1).get("2").cloned().expect("the vote arrow");
+    let item = MenuItem {
+        key: "1".into(),
+        kind: "click".into(),
+        text: "link: vote arrow".into(),
+        candidate: Some(c.clone()),
+        payload: String::new(),
+        href: VOTE.into(),
+    };
+    let choice = eve_decider::Choice {
+        id: "1".into(),
+        p_top: 1.0,
+        margin: 1.0,
+        confidence: 1.0,
+        probabilities: [("1".to_string(), 1.0)].into_iter().collect(),
+        k: 1,
+        ..eve_decider::Choice::default()
+    };
+    let th = Thresholds::default();
+    let kw = GateState { approve: None, approve_used: false, search_typed: false, dialog_open: false, reobserve_count: 0 };
+    assert_eq!(gate(&choice, Some(&item), &th, &kw), ("confirm", "sensitive"));
+    let no_href = MenuItem { href: String::new(), ..item.clone() };
+    assert_eq!(gate(&choice, Some(&no_href), &th, &kw), ("act", "")); // no href, no tell
+    let yes = GateState { approve: Some("vote arrow"), ..kw };
+    assert_eq!(gate(&choice, Some(&item), &th, &yes), ("act", "")); // the human's yes
+}
+
+#[test]
+fn test_the_lane_confirms_an_href_only_vote_link_instead_of_clicking_it() {
+    use eve_desktop_lanes::fast_lane::{run_delegate, DelegateOptions, LaneStatus};
+
+    let opts = || DelegateOptions { decide: "keyword".into(), allow_page_links: true, ..DelegateOptions::default() };
+    let eff = HnEffectors::default();
+    let r = run_delegate("click the vote arrow", &HnSenses(hn_page(1)), &eff, None, opts());
+    assert!(r.status == LaneStatus::Confirm && r.line.starts_with("confirm: \"vote arrow\""), "{}", r.line);
+    assert!(eff.clicks.borrow().is_empty());
+    // the same page, a reading link: clicked as before
+    let eff = HnEffectors::default();
+    let r = run_delegate("open the comments", &HnSenses(hn_page(1)), &eff, None, opts());
+    assert_eq!(*eff.clicks.borrow(), vec!["12 comments".to_string()], "{}", r.line);
+}

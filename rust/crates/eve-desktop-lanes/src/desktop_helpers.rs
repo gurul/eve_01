@@ -207,13 +207,7 @@ fn py_round(x: f64) -> i64 {
 
 /// Python's `round(x, n)` on a float.
 fn py_round_to(x: f64, n: i32) -> f64 {
-    let p = 10f64.powi(n);
-    let r = (x * p).round_ties_even() / p;
-    if r.is_finite() {
-        r
-    } else {
-        x
-    }
+    crate::py_round_n(x, n.max(0) as usize)
 }
 
 /// Python's `int(s)` of a string: surrounding whitespace, a sign, and single underscores between digits allowed.

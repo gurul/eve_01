@@ -765,7 +765,7 @@ pub fn valid_key(key: Option<&str>) -> (Option<String>, String) {
 
 /// Python's `round(x, 2)` for the step timings.
 fn round2(x: f64) -> f64 {
-    (x * 100.0).round() / 100.0
+    crate::py_round_n(x, 2)
 }
 
 /// Python's `str(type(e).__name__)` and `str(e)` of a caught error.
