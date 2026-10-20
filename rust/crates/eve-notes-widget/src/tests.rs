@@ -377,6 +377,17 @@ fn load_position_reads_what_float_accepts() {
 }
 
 #[test]
+fn the_learning_port_reads_as_python_int_does() {
+    assert_eq!(nw::py_int_str("48766"), Some(48766));
+    assert_eq!(nw::py_int_str(" +48_766\n"), Some(48766));
+    assert_eq!(nw::py_int_str("-1"), Some(-1));
+    assert_eq!(nw::py_int_str("\u{0664}\u{0668}"), Some(48));
+    for bad in ["", "  ", "+", "4__8", "_48", "48_", "4.8", "0x10", "--1"] {
+        assert_eq!(nw::py_int_str(bad), None, "{bad:?}");
+    }
+}
+
+#[test]
 fn test_default_position_is_top_right_with_margin() {
     let screen = (0.0, 0.0, 1920.0, 1055.0); // visible frame: menu bar already removed
     assert_eq!(nw::default_position(screen, (360.0, 420.0), 24.0), (1536.0, 611.0));

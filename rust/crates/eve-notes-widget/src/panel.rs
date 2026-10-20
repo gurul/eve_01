@@ -81,7 +81,7 @@ define_class!(
             let raw = std::env::var_os("EVE_LEARNING_PORT")
                 .map(|v| v.to_string_lossy().into_owned())
                 .unwrap_or_else(|| "48766".to_string());
-            let Some(port) = eve_transcripts::py::int(eve_transcripts::py::strip(&raw)) else {
+            let Some(port) = crate::py_int_str(&raw) else {
                 warn!("notes-widget: invalid literal for int() with base 10: {raw:?}");
                 return;
             };

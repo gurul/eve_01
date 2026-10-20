@@ -412,6 +412,22 @@ fn py_float_str(s: &str) -> Option<f64> {
     clean.parse::<f64>().ok()
 }
 
+/// Python's `int(s)` for a string: surrounding whitespace, one optional sign, `_` between digits, any Unicode
+/// decimal digit. None where Python raises `ValueError` (or past i64).
+pub(crate) fn py_int_str(s: &str) -> Option<i64> {
+    let s = tpy::strip(s);
+    let (neg, body) = match s.chars().next() {
+        Some('-') => (true, &s[1..]),
+        Some('+') => (false, &s[1..]),
+        _ => (false, s),
+    };
+    if body.is_empty() || body.starts_with('_') || body.ends_with('_') || body.contains("__") {
+        return None;
+    }
+    let n = tpy::int(&body.replace('_', ""))?;
+    Some(if neg { -n } else { n })
+}
+
 /// `float(value)` for a decoded JSON value: None where Python raises `ValueError`/`TypeError`.
 fn py_float(v: &Value) -> Option<f64> {
     match v {
