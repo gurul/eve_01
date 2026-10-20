@@ -592,10 +592,13 @@ async fn test_a_voice_line_said_between_two_texts_is_in_the_second_turns_today_b
     assert!(second.find(telegram::TODAY_HEADER).unwrap() < second.find("dentist").unwrap());
 }
 
-#[tokio::test]
-async fn test_no_line_of_the_history_is_repeated_in_the_today_block_and_none_is_lost() {
-    // Rust: the commands=0 case; commands=2 types code words through _handle, which a test outside the crate
-    // cannot call.
+/// The today block leaves out exactly the lines the history shows: the history's say lines plus the
+/// owner's new message. A code word is in neither (the transcript's only), so it does not count. A fixed
+/// exclude_tail=HISTORY_TURNS fails both cases: with no command it repeats one line, with two it loses one.
+///
+/// Rust: a code word is noted as `_handle` notes it (`self._note("user", inbound.text, "command")`, then its own
+/// line, which is never noted); `_handle` is the crate's own, so the test makes the same note.
+async fn no_line_of_the_history_is_repeated_in_the_today_block_and_none_is_lost(commands: usize) {
     let dir = tmp();
     let memory = FakeMemory::new(dir.path(), "");
     let earlier = memory.transcripts.new_conv("telegram");
@@ -606,6 +609,13 @@ async fn test_no_line_of_the_history_is_repeated_in_the_today_block_and_none_is_
         o.memory = Some(m)
     });
     for i in 0..n {
+        if i == n - 4 {
+            for c in 0..commands {
+                // command lines inside the history window
+                let word = if c % 2 == 0 { "stealth" } else { "stealth off" };
+                r.inlet.note("user", word, "command", None, None, None, false, None);
+            }
+        }
         r.inlet.turn(&inbound(&format!("text {i}"), i as i64 + 1), None, &[], false, false).await;
     }
     let last = requests(&r).last().cloned().unwrap();
@@ -627,7 +637,22 @@ async fn test_no_line_of_the_history_is_repeated_in_the_today_block_and_none_is_
         assert_eq!(shown, 1, "{text}: {shown}"); // every say line exactly once: history or block
     }
     assert!(block.contains("an earlier chat today") && block.contains("Owner: text 0")); // the positive controls
-    assert!(!history.contains(&"text 0".to_string())); // text 0 fell out
+    // text 0 fell out; code words never enter
+    assert!(!history.contains(&"text 0".to_string()) && !history.iter().any(|h| h.contains("stealth")));
+    if commands > 0 {
+        // the control: the code words are in the transcript, as commands
+        assert_eq!(memory.said().iter().filter(|l| l["kind"] == json!("command")).count(), commands);
+    }
+}
+
+#[tokio::test]
+async fn test_no_line_of_the_history_is_repeated_in_the_today_block_and_none_is_lost_0() {
+    no_line_of_the_history_is_repeated_in_the_today_block_and_none_is_lost(0).await;
+}
+
+#[tokio::test]
+async fn test_no_line_of_the_history_is_repeated_in_the_today_block_and_none_is_lost_2() {
+    no_line_of_the_history_is_repeated_in_the_today_block_and_none_is_lost(2).await;
 }
 
 #[tokio::test]

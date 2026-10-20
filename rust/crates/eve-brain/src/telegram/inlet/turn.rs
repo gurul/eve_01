@@ -168,7 +168,8 @@ impl TelegramInlet {
             return false;
         }
         let (t0, arrived) = ((self.clock)(), (self.wall)());
-        let voice = self.small_talk_voice();
+        let me = self.clone();
+        let voice = tokio::task::spawn_blocking(move || me.small_talk_voice()).await.unwrap_or_default();
         self.keep_typing(Some(inbound.chat_id), "turn", TYPING_TURN_SECS);
         let answer = {
             let _typing = TypingGuard { inlet: self.clone(), chat_id: inbound.chat_id, reason: "turn", clear_said: false };
@@ -189,7 +190,8 @@ impl TelegramInlet {
             return false;
         }
         if self.needs_seed() {
-            self.seed_log();
+            let me = self.clone();
+            let _ = tokio::task::spawn_blocking(move || me.seed_log()).await;
         }
         self.note("user", &inbound.text, "say", None, Some(arrived), None, false, None);
         self.note("eve", &answer.reply, "say", None, None, None, false, None);
@@ -266,7 +268,13 @@ impl TelegramInlet {
         for upload in &files {
             let upload = (*upload).clone();
             let name = upload.name.clone();
-            match tokio::task::spawn_blocking(move || eve_link_uploads::brain_parts(&upload)).await {
+            // profile.is_lite reads the environment this inlet was lent, as `lite` below does (the process's without one)
+            let environ = self.environ.clone();
+            let parts = move || match environ.as_ref() {
+                Some(env) => eve_link_uploads::brain_parts_in(&upload, env),
+                None => eve_link_uploads::brain_parts(&upload),
+            };
+            match tokio::task::spawn_blocking(parts).await {
                 Ok(Ok(parts)) => content.extend(parts),
                 _ => content.push(json!({"type": "input_text", "text": format!("(The attached file \"{name}\" could not be read.)")})),
             }
@@ -278,7 +286,8 @@ impl TelegramInlet {
         // this turn's memory sources, its own (memory_sources.py)
         set_ctx(|c| c.sources = Some(Arc::new(Mutex::new(Vec::new()))));
         if self.needs_seed() {
-            self.seed_log();
+            let me = self.clone();
+            let _ = tokio::task::spawn_blocking(move || me.seed_log()).await;
         }
         // with the chat log, a quiet spell or a restart before this message is a gap note right before it
         let mut items = self.history();
@@ -297,7 +306,9 @@ impl TelegramInlet {
         if daily {
             let school = self.canvas_rundown().await.map(Value::Object);
             let root = self.vault.as_ref().map(|v| v.root.clone());
-            let now = chrono::DateTime::from_timestamp((self.wall)().floor() as i64, (((self.wall)().fract()) * 1e9) as u32)
+            // `datetime.fromtimestamp(self._wall())`: one reading of the clock, its seconds and its fraction alike
+            let wall = (self.wall)();
+            let now = chrono::DateTime::from_timestamp(wall.floor() as i64, (wall.fract() * 1e9) as u32)
                 .unwrap_or_default()
                 .with_timezone(&chrono::Local)
                 .fixed_offset();
