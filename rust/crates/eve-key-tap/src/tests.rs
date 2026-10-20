@@ -314,3 +314,14 @@ fn run_with_timeout_covers_held_pipes() {
     assert!(matches!(r, Err(RunError::Timeout)));
     assert!(t.elapsed() < Duration::from_secs(3));
 }
+
+/// Python's `.strip()` also drops the separators U+001C..U+001F, which
+/// Rust's `trim` keeps; env values are parsed the Python way.
+#[test]
+fn env_values_strip_python_whitespace() {
+    assert_eq!(enter_keycode_for(Some("\u{1c}keypad\u{1f}")), KEY_KEYPAD_ENTER);
+    assert!(force_hid_for(Some("\u{1d}HID ")));
+    let (mut k, _p) = tapper(true);
+    // "\u{1e}bogus" is not a System Events method either way; it posts.
+    assert!(k.tap_with_method("enter", Some("\u{1e}bogus")));
+}

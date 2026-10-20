@@ -50,7 +50,7 @@ pub fn enter_keycode_for(value: Option<&str>) -> u16 {
         Some(v) if !v.is_empty() => v,
         _ => "return",
     };
-    let choice = raw.trim().to_lowercase();
+    let choice = py_strip(raw).to_lowercase();
     if matches!(choice.as_str(), "keypad" | "keypad-enter" | "enter") {
         return KEY_KEYPAD_ENTER;
     }
@@ -97,7 +97,7 @@ fn env_var(name: &str) -> Option<String> {
 
 /// `EVE_KEY_SOURCE` → true when the real HID source is forced.
 pub fn force_hid_for(value: Option<&str>) -> bool {
-    value.unwrap_or("").trim().to_lowercase() == "hid"
+    py_strip(value.unwrap_or("")).to_lowercase() == "hid"
 }
 
 /// The source choice of [`quartz_poster`], independent of Quartz.
@@ -395,10 +395,15 @@ fn realpath(p: &Path) -> PathBuf {
     std::fs::canonicalize(p).unwrap_or_else(|_| p.to_path_buf())
 }
 
-/// Python's `str.strip()` then `[:200]` (characters, not bytes). Python's
-/// whitespace is Unicode White_Space plus the separators U+001C..U+001F.
-fn strip_200(s: &str) -> String {
+/// Python's `str.strip()`: Python's whitespace is Unicode White_Space plus
+/// the separators U+001C..U+001F, which Rust's `trim` keeps.
+fn py_strip(s: &str) -> &str {
     s.trim_matches(|c: char| c.is_whitespace() || ('\u{1c}'..='\u{1f}').contains(&c))
+}
+
+/// Python's `str.strip()` then `[:200]` (characters, not bytes).
+fn strip_200(s: &str) -> String {
+    py_strip(s)
         .chars()
         .take(200)
         .collect()
@@ -600,9 +605,8 @@ impl KeyTapper {
         let method = match method {
             Some(m) if !m.is_empty() => m,
             _ => "auto",
-        }
-        .trim()
-        .to_lowercase();
+        };
+        let method = py_strip(method).to_lowercase();
         if matches!(method.as_str(), "osascript" | "system-events") {
             let ok = Self::tap_via_system_events(key);
             tracing::info!(
