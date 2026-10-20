@@ -1,0 +1,19 @@
+[package]
+name = "eve-follow"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+eve-head = { path = "../eve-head" }
+indexmap.workspace = true
+libc.workspace = true
+parking_lot.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+futures.workspace = true
+eve-memory-bus = { path = "../eve-memory-bus" }
+tempfile.workspace = true
