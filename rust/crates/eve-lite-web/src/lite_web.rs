@@ -1964,18 +1964,26 @@ impl Door {
             if failed || got.is_empty() {
                 continue;
             }
-            let mut listeners = Vec::new();
+            let mut ready = Vec::new();
             for sock in got {
                 let Ok(addr) = sock.local_addr() else { continue };
                 let Ok(listener) = TcpListener::from_std(sock) else { continue };
-                let door = Arc::clone(self);
-                listeners.push((addr, tokio::spawn(door.accept_loop(listener))));
+                ready.push((addr, listener));
             }
-            if listeners.is_empty() {
+            if ready.is_empty() {
                 continue;
             }
-            *self.listeners.lock() = listeners;
+            // the port (and the Mac page's Host allowlist, which names it) before the first connection is taken, as
+            // Python sets both before its loop can run a handler
             self.port.store(port, Ordering::SeqCst);
+            if self.kind == Where::Local {
+                self.allowed.lock().0 = LOOPBACK_NAMES.iter().map(|name| format!("{name}:{port}")).collect();
+            }
+            let listeners = ready
+                .into_iter()
+                .map(|(addr, listener)| (addr, tokio::spawn(Arc::clone(self).accept_loop(listener))))
+                .collect();
+            *self.listeners.lock() = listeners;
             return Ok(port);
         }
         Err(PortsTaken { errno: libc_eaddrinuse(), count: ports.len() })
@@ -3218,8 +3226,8 @@ impl LocalServer {
         }
         let parts = door.ctx.parts();
         let saved = &door.shared().saved;
+        // bind sets the Host allowlist (LOOPBACK_NAMES with the port) before it takes a connection
         let port = door.bind(&parts.local_hosts, &ports(&parts.local_ports, saved.local_port()))?;
-        door.allowed.lock().0 = LOOPBACK_NAMES.iter().map(|name| format!("{name}:{port}")).collect();
         if saved.local_port() != Some(port) {
             let ctx = Arc::clone(&door.ctx);
             let _ = tokio::task::spawn_blocking(move || ctx.shared.saved.save(&[Change::LocalPort(port)])).await;
@@ -3316,6 +3324,21 @@ impl LanServer {
     /// This Mac's private addresses, as last read.
     pub fn lan_addresses(&self) -> Vec<String> {
         self.0.names.lock().1.clone()
+    }
+
+    /// Whether the context's LAN door is listening (`_Door.lan_on`).
+    pub fn lan_on(&self) -> bool {
+        self.0.lan_on()
+    }
+
+    /// `GET /api/web/status`'s answer (`_Door.status`).
+    pub async fn status(&self) -> Value {
+        self.0.status().await
+    }
+
+    /// Connections past a cap, closed at once.
+    pub fn refused(&self) -> u64 {
+        self.0.refused.load(Ordering::SeqCst)
     }
 
     /// Read the Host allowlist again on the next request (`_allowed_at = 0.0`).
