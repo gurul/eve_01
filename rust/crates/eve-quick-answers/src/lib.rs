@@ -436,9 +436,40 @@ static THOUSANDS: LazyLock<fancy_regex::Regex> = LazyLock::new(|| fancy(r"(?<=\d
 static SUM_CHARS: LazyLock<Regex> = LazyLock::new(|| full(r"[\d\s.+\-*/()]+"));
 static SUM_OP: LazyLock<Regex> = LazyLock::new(|| re(r"\d\s*(?:\*\*|[+\-*/])\s*[\d(]"));
 
-/// Python's `float(text)` for the digits these patterns capture (ASCII; see PARITY.md).
+/// One Unicode decimal digit (`\d`, category Nd).
+static ND: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^\d$").expect("a pattern"));
+
+/// The value of a decimal digit: Unicode encodes every Nd digit in runs of ten, 0 to 9, so it is the distance from
+/// the start of its run of Nd code points, modulo ten.
+fn digit_value(c: char) -> Option<u32> {
+    if c.is_ascii_digit() {
+        return c.to_digit(10);
+    }
+    let is_nd = |c: char| ND.is_match(c.encode_utf8(&mut [0u8; 4]));
+    if !is_nd(c) {
+        return None;
+    }
+    let mut start = c as u32;
+    while let Some(prev) = start.checked_sub(1).and_then(char::from_u32) {
+        if !is_nd(prev) {
+            break;
+        }
+        start -= 1;
+    }
+    Some((c as u32 - start) % 10)
+}
+
+/// Python's `float(text)` for the digits these patterns capture: `-?\d+(?:\.\d+)?`, where `\d` and `float()` both
+/// take any Unicode decimal digit.
 fn digits_float(text: &str) -> Option<f64> {
-    text.parse::<f64>().ok()
+    let ascii: Option<String> = text
+        .chars()
+        .map(|c| match c {
+            '-' | '.' => Some(c),
+            c => digit_value(c).and_then(|d| char::from_digit(d, 10)),
+        })
+        .collect();
+    ascii?.parse::<f64>().ok()
 }
 
 /// The sum for words that are only a sum.
@@ -1333,7 +1364,39 @@ fn py_repr(s: &str) -> String {
 /// `ZoneInfo(name)`, or None where Python raises: zoneinfo opens a file under the zone directory, so on the Mac's
 /// case-insensitive file system a key in the wrong case still loads.
 fn zone_named(name: &str) -> Option<Tz> {
-    name.parse::<Tz>().ok().or_else(|| Tz::from_str_insensitive(name).ok())
+    zone_info(name).ok()
+}
+
+/// `os.path.normpath` for a relative POSIX path.
+fn normpath(path: &str) -> String {
+    let mut parts: Vec<&str> = Vec::new();
+    for part in path.split('/') {
+        match part {
+            "" | "." => {}
+            ".." if parts.last().is_some_and(|p| *p != "..") => {
+                parts.pop();
+            }
+            p => parts.push(p),
+        }
+    }
+    if parts.is_empty() {
+        ".".to_string()
+    } else {
+        parts.join("/")
+    }
+}
+
+/// `ZoneInfo(key)` with the error it raises: ValueError for a key that is absolute, not normalized or outside the
+/// zone directory (zoneinfo checks that first), ZoneInfoNotFoundError for a key no zone has.
+fn zone_info(name: &str) -> Result<Tz, Failed> {
+    if name.starts_with('/') {
+        return Err(Failed::ZoneKey);
+    }
+    let normal = normpath(name);
+    if py::chars_len(&normal) != py::chars_len(name) || normal == ".." || normal.starts_with("../") {
+        return Err(Failed::ZoneKey);
+    }
+    name.parse::<Tz>().ok().or_else(|| Tz::from_str_insensitive(name).ok()).ok_or(Failed::Zone)
 }
 
 fn env_get(environ: Option<&Env>, key: &str) -> Option<String> {
@@ -1421,10 +1484,37 @@ pub async fn get_json_with(client: &reqwest::Client, url: &str, params: &Map<Str
     fetch_json(client, url, params).await
 }
 
+/// `urllib.parse.quote_plus(text, safe="")` as httpx writes a query: letters, digits and `_.-~` stay, a space is
+/// `+`, every other byte of the UTF-8 is `%XX`.
+fn quote_plus(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    for b in text.bytes() {
+        match b {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'_' | b'.' | b'-' | b'~' => out.push(b as char),
+            b' ' => out.push('+'),
+            _ => out.push_str(&format!("%{b:02X}")),
+        }
+    }
+    out
+}
+
+/// The query string httpx builds from the parameters, in their order.
+fn query_string(params: &Map<String, Value>) -> String {
+    params.iter().map(|(k, v)| format!("{}={}", quote_plus(k), quote_plus(&query_value(v)))).collect::<Vec<_>>().join("&")
+}
+
 /// The request itself, with httpx's request line in the log: `HTTP Request: GET <url> "HTTP/1.1 200 OK"`.
 pub async fn fetch_json(client: &reqwest::Client, url: &str, params: &Map<String, Value>) -> anyhow::Result<Value> {
-    let query: Vec<(String, String)> = params.iter().map(|(k, v)| (k.clone(), query_value(v))).collect();
-    let resp = client.get(url).query(&query).send().await?;
+    let mut target = reqwest::Url::parse(url).map_err(|_| Failed::InvalidUrl)?;
+    if !params.is_empty() {
+        let query = query_string(params);
+        let merged = match target.query() {
+            Some(q) if !q.is_empty() => format!("{q}&{query}"),
+            _ => query,
+        };
+        target.set_query(Some(&merged));
+    }
+    let resp = client.get(target).send().await?;
     let status = resp.status();
     log_http(&format!(
         "HTTP Request: GET {} \"{:?} {} {}\"",
@@ -1463,7 +1553,7 @@ pub struct Place {
 pub fn phone_here(environ: Option<&Env>) -> Option<Place> {
     let fix = phone_location::fresh_within(environ, PHONE_FRESH_MIN as f64, None)?;
     Some(Place {
-        name: fix.place.clone().unwrap_or_else(|| PHONE_PLACE.to_string()),
+        name: fix.place.clone().filter(|p| !p.is_empty()).unwrap_or_else(|| PHONE_PLACE.to_string()),
         lat: py::round_to(fix.lat, PHONE_DECIMALS),
         lon: py::round_to(fix.lon, PHONE_DECIMALS),
         tz: None,
@@ -1482,6 +1572,14 @@ enum Failed {
     Value(&'static str),
     #[error("ZoneInfoNotFoundError")]
     Zone,
+    /// `ZoneInfo(key)` for a key that is not a normalized relative path.
+    #[error("ValueError")]
+    ZoneKey,
+    /// `hit.get` on a hit that is not a dict.
+    #[error("AttributeError")]
+    Attribute(&'static str),
+    #[error("InvalidURL")]
+    InvalidUrl,
 }
 
 /// The kind of an error, for the log: the type, never its message.
@@ -1492,15 +1590,25 @@ fn error_name(e: &anyhow::Error) -> &'static str {
             Failed::Shape(_) => "TypeError",
             Failed::Value(_) => "ValueError",
             Failed::Zone => "ZoneInfoNotFoundError",
+            Failed::ZoneKey => "ValueError",
+            Failed::Attribute(_) => "AttributeError",
+            Failed::InvalidUrl => "InvalidURL",
         };
     }
     if let Some(r) = e.downcast_ref::<reqwest::Error>() {
-        return if r.is_timeout() {
-            "TimeoutException"
+        // httpx raises the concrete class, and `type(e).__name__` names it
+        return if r.is_timeout() && r.is_connect() {
+            "ConnectTimeout"
+        } else if r.is_timeout() {
+            "ReadTimeout"
         } else if r.is_connect() {
             "ConnectError"
         } else if r.is_decode() {
             "JSONDecodeError"
+        } else if r.is_body() {
+            "ReadError"
+        } else if r.is_request() {
+            "RemoteProtocolError"
         } else {
             "HTTPError"
         };
@@ -1511,8 +1619,19 @@ fn error_name(e: &anyhow::Error) -> &'static str {
     if e.is::<tokio::time::error::Elapsed>() {
         return "TimeoutError";
     }
-    if e.is::<std::io::Error>() {
-        return "OSError";
+    if let Some(io) = e.downcast_ref::<std::io::Error>() {
+        // the OSError subclass Python raises for the kind (a missing pmset is FileNotFoundError)
+        return match io.kind() {
+            std::io::ErrorKind::NotFound => "FileNotFoundError",
+            std::io::ErrorKind::PermissionDenied => "PermissionError",
+            std::io::ErrorKind::TimedOut => "TimeoutError",
+            std::io::ErrorKind::BrokenPipe => "BrokenPipeError",
+            std::io::ErrorKind::ConnectionRefused => "ConnectionRefusedError",
+            std::io::ErrorKind::ConnectionReset => "ConnectionResetError",
+            std::io::ErrorKind::ConnectionAborted => "ConnectionAbortedError",
+            std::io::ErrorKind::Interrupted => "InterruptedError",
+            _ => "OSError",
+        };
     }
     "Error"
 }
@@ -1552,6 +1671,11 @@ fn py_value_repr(v: &Value) -> String {
     }
 }
 
+/// `float(v)` with the error Python raises: ValueError for a string that is not a number, TypeError for the rest.
+fn float_of(v: &Value, what: &'static str) -> Result<f64, Failed> {
+    py_float(v).ok_or(if v.is_string() { Failed::Value(what) } else { Failed::Shape(what) })
+}
+
 /// The geocoder's first hit as a Place: None for no hit; Err where Python raises.
 fn geocoded(found: &Value, name: &str) -> anyhow::Result<Option<Place>> {
     let Value::Object(found) = found else {
@@ -1570,14 +1694,14 @@ fn geocoded(found: &Value, name: &str) -> anyhow::Result<Option<Place>> {
         return Ok(None);
     }
     let Value::Object(hit) = hit else {
-        return Err(Failed::Shape("hit.get").into()); // AttributeError in Python: the answer fails all the same
+        return Err(Failed::Attribute("hit.get").into());
     };
     let place_name = match hit.get("name") {
         Some(v) if truthy(v) => py_str(v),
         _ => name.to_string(),
     };
-    let lat = py_float(hit.get("latitude").ok_or(Failed::Key("latitude"))?).ok_or(Failed::Value("latitude"))?;
-    let lon = py_float(hit.get("longitude").ok_or(Failed::Key("longitude"))?).ok_or(Failed::Value("longitude"))?;
+    let lat = float_of(hit.get("latitude").ok_or(Failed::Key("latitude"))?, "latitude")?;
+    let lon = float_of(hit.get("longitude").ok_or(Failed::Key("longitude"))?, "longitude")?;
     // a timezone that is not a string cannot be a zone: the time there is the model's, as in Python
     let tz = hit.get("timezone").and_then(Value::as_str).map(str::to_string);
     Ok(Some(Place { name: place_name, lat, lon, tz }))
@@ -1709,7 +1833,7 @@ impl QuickAnswers {
                 let Some(tz) = place.tz.as_deref().filter(|t| !t.is_empty()) else {
                     return Ok(None);
                 };
-                let tz = zone_named(tz).ok_or(Failed::Zone)?;
+                let tz = zone_info(tz)?;
                 return Ok(Some(time_line(&Utc::now().with_timezone(&tz).naive_local(), &place.name)));
             }
             Kind::Date => return Ok(Some(date_line(&now))),
@@ -1873,6 +1997,53 @@ mod tests {
     fn the_python_whitespace_is_the_regex_whitespace() {
         assert_eq!(normalize("what\x1ctime is it"), "what time is it");
         assert_eq!(pyre(r"[^&\s]\s+"), r"[^&\s\x1c-\x1f][\s\x1c-\x1f]+");
+    }
+
+    #[test]
+    fn the_query_is_written_as_httpx_writes_it() {
+        let mut params = Map::new();
+        params.insert("name".into(), json!("São Paulo ~*'!()/,:"));
+        params.insert("count".into(), json!(1));
+        params.insert("latitude".into(), json!(37.77));
+        params.insert("b".into(), json!(true));
+        // httpx 0.28: name=S%C3%A3o+Paulo+~%2A%27%21%28%29%2F%2C%3A&count=1&latitude=37.77&b=true
+        assert_eq!(query_string(&params), "name=S%C3%A3o+Paulo+~%2A%27%21%28%29%2F%2C%3A&count=1&latitude=37.77&b=true");
+    }
+
+    #[test]
+    fn a_zone_key_fails_as_zoneinfo_fails() {
+        assert_eq!(zone_info("Asia/Tokyo").ok(), Some(chrono_tz::Asia::Tokyo));
+        assert_eq!(zone_info("america/new_york").ok(), Some(chrono_tz::America::New_York));
+        for key in ["", "/abs", "../etc", "..", "a//b", "./a", "a/", "a/../b"] {
+            assert!(matches!(zone_info(key), Err(Failed::ZoneKey)), "{key:?}");
+        }
+        for key in ["Mars/Base", "America", "US/Pacific-New"] {
+            assert!(matches!(zone_info(key), Err(Failed::Zone)), "{key:?}");
+        }
+    }
+
+    #[test]
+    fn the_error_names_are_pythons() {
+        let name = |e: anyhow::Error| error_name(&e);
+        assert_eq!(name(std::io::Error::from(std::io::ErrorKind::NotFound).into()), "FileNotFoundError");
+        assert_eq!(name(std::io::Error::other("offline").into()), "OSError");
+        assert_eq!(name(BadStatus(500).into()), "HTTPStatusError");
+        assert_eq!(name(float_of(&json!("x"), "latitude").unwrap_err().into()), "ValueError");
+        assert_eq!(name(float_of(&Value::Null, "latitude").unwrap_err().into()), "TypeError");
+        assert_eq!(name(geocoded(&json!({"results": ["x"]}), "x").unwrap_err()), "AttributeError");
+        assert_eq!(name(geocoded(&json!({"results": {"a": 1}}), "x").unwrap_err()), "KeyError");
+        assert_eq!(name(geocoded(&json!({"results": [{"latitude": []}]}), "x").unwrap_err()), "TypeError");
+    }
+
+    #[test]
+    fn any_decimal_digit_is_a_number_as_in_python() {
+        // float("١٢.٥") == 12.5; float("𝟗") == 9.0 (the fourth run of ten in the mathematical digits)
+        assert_eq!(digits_float("١٢.٥"), Some(12.5));
+        assert_eq!(digits_float("-𝟗"), Some(-9.0));
+        assert_eq!(digits_float("\u{1D7E1}"), Some(9.0));
+        let s = arithmetic("١٥ percent of ٨٠").expect("a sum");
+        assert_eq!((s.said.as_str(), s.value.to_f64()), ("15 percent of 80", 12.0));
+        assert_eq!(conversion("٥ km to m").map(|c| c.result), Some(5000.0));
     }
 
     #[test]
