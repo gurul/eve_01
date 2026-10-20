@@ -5,7 +5,7 @@ The chief of staff's record: the Card, its strict parse from the brain's `take_o
 revisions, the backbrief, and the stored JSON form. One Python module, ported into `src/lib.rs`; the Python
 semantics it leans on (whitespace, `repr`, `casefold`, `int()` on digit strings, `strptime`, `os.path.realpath`)
 are in the private `src/py.rs`. `CONSEQUENTIAL` comes from eve-desktop-lanes (`task_router::CONSEQUENTIAL`).
-`cargo test -p eve-chief-card`: 32 tests pass (26 integration, 6 unit).
+`cargo test -p eve-chief-card`: 33 tests pass (27 integration, 6 unit).
 
 ## Modules
 | Python | Rust |
@@ -75,19 +75,24 @@ are in the private `src/py.rs`. `CONSEQUENTIAL` comes from eve-desktop-lanes (`t
 | test_chief_receipt.py | test_a_stored_result_is_checked_strictly | test_a_stored_result_is_checked_strictly | the rest test chief_receipt (eve-chief-receipt) |
 | test_link_chat.py | the chief_card.verbs control in the job-lead test | test_verbs_positive_control | the rest test link_chat |
 | test_chief.py, test_chief_desk.py, test_chief_reflect.py, test_chief_replan.py, test_model_research_roles.py, test_routine_confirmations.py | read for behavior (backbrief text, door floors) | covered by the tests above | they test chief, desk, reflect, replan and routing through the card; ported with those crates |
-| (new, against CPython 3.13 output) | | refusal_messages_name_values_as_python_repr_does, dates_are_read_as_strptime_reads_them, python_truthiness_and_equality_carry_over, the_backbrief_reads_as_python_writes_it, ids_and_stored_fields_follow_python, reopen_and_to_args_follow_python; py.rs unit tests | |
+| (new, against CPython 3.13 output) | | refusal_messages_name_values_as_python_repr_does, dates_are_read_as_strptime_reads_them, python_truthiness_and_equality_carry_over, the_backbrief_reads_as_python_writes_it, ids_and_stored_fields_follow_python, reopen_and_to_args_follow_python, a_rev_at_the_integer_limit_does_not_overflow; py.rs unit tests | |
 
 ## Boundaries
 None.
 
 ## Differences
+Verified 2026-10-20 by a differential run against CPython 3.13 (`bridge/.venv`): about 40,000 generated `parse`,
+`revise`, `from_json`/`reopen`/`backbrief`/`to_args`, `result_from`, `at_time`, `verbs`/`grounded`/`door`, id and
+`home_path` cases gave identical output except for the integer limits below.
+
 - `backbrief` of a commitment whose cue is within 45 minutes of the end of year 9999 leaves out the "at the latest"
   clause; Python raises OverflowError there.
 - `to_json` writes every float field as a float (`5.0`) where Python writes an int a caller passed (`Approval("t", 1,
   5)` → `5`), and a non-finite float as `null` where Python writes `NaN`; both read back the same through `from_json`.
 - Integers beyond i64 in a stored card (`rev`, a phase's `n`, an approval's `rev`) are refused by `from_json`;
   Python loads them. `int()` of a huge stored float (`budget.wall_min`, `nudges.sent/ignored`) saturates at i64.
-  serde_json reads an integer past u64 as a float, so a refusal naming one shows it in float form.
+  serde_json reads an integer past u64 as a float, so a refusal naming one shows it in float form. `revise` and
+  `reopen` of a card whose `rev` is already i64::MAX keep it at i64::MAX (Python writes 2**63).
 - The Unicode tables (`\d`, `str.isdecimal`, `str.isprintable`) are the Rust crates' Unicode version, not CPython
   3.13's 15.1; the digit-but-not-decimal table is CPython 3.13's.
 - `home_path` with a relative home folder and no readable working directory resolves against `/`; Python raises

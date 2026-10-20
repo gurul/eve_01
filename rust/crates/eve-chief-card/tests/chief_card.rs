@@ -602,3 +602,15 @@ fn reopen_and_to_args_follow_python() {
     assert_eq!(Check::new("ui_seen", "order confirmed").describe(), "'order confirmed' seen on screen");
     assert_eq!(Check::new("guru_says_done", "").describe(), "you say it is done");
 }
+
+#[test]
+fn a_rev_at_the_integer_limit_does_not_overflow() {
+    // A hand-edited store can hold rev 9223372036854775807; Python's rev + 1 grows past it, here it stays put
+    // rather than panicking (debug) or wrapping to a negative rev that from_json would then refuse (release).
+    let c = Card { id: "c1".into(), rev: i64::MAX, ..card(json!({})) };
+    let loaded = from_json(&to_json(&c)).unwrap();
+    assert_eq!(reopen(&loaded, 1.0).rev, i64::MAX);
+    let revised = revise(&loaded, &obj(json!({"never": ["over $550"]})), "change c1", &LIVE, 2.0, None).unwrap();
+    assert_eq!(revised.rev, i64::MAX);
+    assert!(from_json(&to_json(&revised)).is_ok());
+}

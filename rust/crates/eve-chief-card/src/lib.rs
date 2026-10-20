@@ -991,7 +991,7 @@ pub fn revise(
     };
     Ok(Card {
         id: card.id.clone(),
-        rev: card.rev + 1,
+        rev: card.rev.saturating_add(1),
         phases,
         budget,
         spent: card.spent,
@@ -1007,7 +1007,7 @@ pub fn revise(
 /// A done or dropped card comes back as a new revision, active; its history stays in the events log.
 pub fn reopen(card: &Card, now: f64) -> Card {
     Card {
-        rev: card.rev + 1,
+        rev: card.rev.saturating_add(1),
         status: "active".to_string(),
         waiting_for: None,
         updated: now,
