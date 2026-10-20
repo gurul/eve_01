@@ -1,0 +1,26 @@
+[package]
+name = "eve-vault"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+dirs.workspace = true
+hex.workspace = true
+hmac.workspace = true
+indexmap.workspace = true
+libc.workspace = true
+parking_lot.workspace = true
+rand.workspace = true
+regex.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+thiserror.workspace = true
+# 0.10, not the newest 0.11: it must share `digest` 0.10 with the workspace's hmac 0.12.
+sha1 = "0.10"
+unicode-normalization = "0.1.26"
+
+[dev-dependencies]
+tempfile.workspace = true
