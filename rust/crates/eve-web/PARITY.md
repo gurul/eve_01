@@ -380,7 +380,7 @@ Other test notes:
   replay accepts either result.
 
 ### Watch: the watcher
-- `reply_text`: a non-object choice reads as empty text, and non-string content reads as its JSON text.
+- `reply_text`: a non-object choice reads as empty text. Non-string content is Python's `str()` of it (a list or dict is its repr), as in `str(content or "")`.
 - A reader or a rule that raises something other than FetchError: Python catches any `Exception` in `_run_one`, `add`
   and `run`. A Rust reader returns FetchError where Python's would raise one; what stands for the other exceptions is
   a panic, caught (`catch_unwind`) at the same three places with the same effect (an error counted, "an answer I could

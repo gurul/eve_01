@@ -135,27 +135,24 @@ pub fn json_object(text: &str) -> Result<Map<String, Value>, FetchError> {
 
 /// `_reply_text`: the first choice's message content. No choices: FetchError "the model sent no answer". A
 /// choice or a message that is not an object reads as empty (Python's `or {}`; one that is a non-empty
-/// non-object raises AttributeError there: see PARITY); content that is not a string is its JSON text.
+/// non-object raises AttributeError there: see PARITY); content that is not a string is Python's `str()` of it.
 pub fn reply_text(payload: &Value) -> Result<String, FetchError> {
     let choices = match payload.get("choices") {
         Some(Value::Array(c)) if !c.is_empty() => c,
         _ => return Err(FetchError::new("the model sent no answer")),
     };
     let content = choices[0].get("message").and_then(|m| m.get("content"));
+    // `str(content or "")`: a falsy value is "", a str itself, anything else Python's str() of it, which for a
+    // list or a dict is its repr (single-quoted strings): a list of content parts reads as Python reads it
     Ok(match content {
-        None | Some(Value::Null) => String::new(),
         Some(Value::String(s)) => s.clone(),
-        Some(Value::Bool(false)) => String::new(),
-        Some(Value::Bool(true)) => "True".to_string(),
-        Some(Value::Array(a)) if a.is_empty() => String::new(),
-        Some(Value::Object(o)) if o.is_empty() => String::new(),
-        Some(Value::Number(n)) if n.as_f64() == Some(0.0) => String::new(),
-        Some(other) => other.to_string(),
+        Some(v) if crate::firecrawl::truthy(v) => crate::firecrawl::py_repr(v),
+        _ => String::new(),
     })
 }
 
 static PLAIN_LINK: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r#"^https?://[^\s\[\]()<>"'`]+$"#).expect("plain link regex"));
+    LazyLock::new(|| Regex::new(r#"^https?://[^\s\x1c-\x1f\[\]()<>"'`]+$"#).expect("plain link regex"));
 
 /// `_plain_link`: an http(s) link with nothing the Telegram formatter could read as markup: no brackets,
 /// parentheses, quotes, angle brackets or spaces (a search result's "https://real.example/[Buy](https://evil.example)"
@@ -247,6 +244,19 @@ mod tests {
     }
 
     #[test]
+    fn reply_text_is_pythons_str_of_non_string_content() {
+        // `str(content or "")`: a list of content parts is its repr, so the price JSON inside is the object found
+        let parts = json!({"choices": [{"message": {"content": [{"type": "text", "text": "{\"price\": 5}"}]}}]});
+        let text = reply_text(&parts).unwrap();
+        assert_eq!(text, r#"[{'type': 'text', 'text': '{"price": 5}'}]"#);
+        assert_eq!(json_object(&text).unwrap()["price"], json!(5));
+        assert_eq!(reply_text(&json!({"choices": [{"message": {"content": 0}}]})).unwrap(), "");
+        assert_eq!(reply_text(&json!({"choices": [{"message": {"content": []}}]})).unwrap(), "");
+        assert_eq!(reply_text(&json!({"choices": [{"message": {"content": 7}}]})).unwrap(), "7");
+        assert_eq!(reply_text(&json!({"choices": [{"message": {"content": true}}]})).unwrap(), "True");
+    }
+
+    #[test]
     fn plain_link_refuses_markup_and_credentials() {
         assert!(plain_link("https://real.example/p?q=1"));
         assert!(!plain_link("https://real.example/[Buy](https://evil.example)"));
@@ -256,5 +266,8 @@ mod tests {
         assert!(!plain_link("ftp://real.example/"));
         assert!(!plain_link("https:///path"));
         assert!(!plain_link(&format!("https://e.example/{}", "a".repeat(500))));
+        // Python's `\s` takes in \x1c-\x1f
+        assert!(!plain_link("https://e.example/a\x1cb"));
+        assert!(!plain_link("https://e.example/a\x1fb"));
     }
 }
