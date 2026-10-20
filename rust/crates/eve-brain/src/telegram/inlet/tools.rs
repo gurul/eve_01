@@ -1197,6 +1197,18 @@ impl TelegramInlet {
     pub fn tt_handle(self: &Arc<Self>, inbound: &Inbound) {
         self.handle(inbound);
     }
+    /// `inlet._taint = reason`.
+    pub fn tt_set_taint(&self, reason: &str) {
+        self.st.lock().taint = reason.to_string();
+    }
+    /// `inlet._taint`.
+    pub fn tt_taint(&self) -> String {
+        self.st.lock().taint.clone()
+    }
+    /// `await inlet._gate(name, args, chat_id)`: None when the call may run, else what the model is told.
+    pub async fn tt_gate(self: &Arc<Self>, name: &str, args: &Obj, chat_id: i64) -> Option<Obj> {
+        self.gate(name, args, chat_id, None).await
+    }
     /// `await inlet._turn(inbound)`.
     pub async fn tt_turn(self: &Arc<Self>, inbound: &Inbound) {
         self.turn(inbound, None, &[], false, false).await;

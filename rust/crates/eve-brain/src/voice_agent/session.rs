@@ -1176,6 +1176,12 @@ impl VoiceSession {
         st.held_said = said;
     }
 
+    /// `s._held`.
+    #[doc(hidden)]
+    pub fn test_held(&self) -> Option<(String, i64)> {
+        self.st.lock().held.clone()
+    }
+
     /// `s._held_said`.
     #[doc(hidden)]
     pub fn test_held_said(&self) -> bool {
