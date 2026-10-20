@@ -406,3 +406,63 @@ fn latest_address_reads_the_topic_over_http() {
     assert_eq!(latest_address(&token, &base), ""); // an error status reads as nothing
     assert_eq!(latest_address(&token, "ntfy.sh"), "");
 }
+
+#[test]
+fn redirects_follow_urllibs_rules() {
+    // urllib follows ten redirects to distinct targets and refuses the eleventh with its code.
+    let mut ten: Vec<String> = (1..=10).map(|i| reply("302 Found", &format!("Location: /r{i}\r\n"), "")).collect();
+    ten.push(reply("200 OK", "", "ok"));
+    let (base, rx) = serve(ten);
+    assert_eq!(post(&format!("{base}/t"), b"x"), Ok(200));
+    let seen: Vec<Seen> = rx.iter().take(11).collect();
+    assert_eq!(seen[0].request_line, "POST /t HTTP/1.1");
+    assert_eq!(seen[10].request_line, "GET /r10 HTTP/1.1"); // a 302 turns a POST into a GET, as urllib does
+    assert!(seen[1..].iter().all(|s| s.body.is_empty() && !s.headers.iter().any(|(k, _)| k == "referer")));
+    let eleven: Vec<String> = (1..=11).map(|i| reply("302 Found", &format!("Location: /r{i}\r\n"), "")).collect();
+    let (base, _rx) = serve(eleven);
+    assert_eq!(post(&format!("{base}/t"), b"x"), Ok(302));
+    // the same target four times is followed; the fifth is refused
+    let same: Vec<String> = (0..5).map(|_| reply("302 Found", "Location: /same\r\n", "")).collect();
+    let (base, _rx) = serve(same);
+    assert_eq!(post(&format!("{base}/t"), b"x"), Ok(302));
+    // a GET follows a 307; a redirect that is refused reads as nothing
+    let token = "t".repeat(43);
+    let body = String::from_utf8(ndjson(&["https://one.trycloudflare.com"])).unwrap();
+    let (base, _rx) = serve(vec![reply("307 Temporary Redirect", "Location: /moved\r\n", ""), reply("200 OK", "", &body)]);
+    assert_eq!(latest_address(&token, &base), "https://one.trycloudflare.com");
+    let (base, _rx) = serve(vec![reply("302 Found", "Location: gopher://h/x\r\n", "")]);
+    assert_eq!(latest_address(&token, &base), "");
+}
+
+#[test]
+fn json_is_read_as_pythons_json_loads_reads_it() {
+    let token = "t".repeat(43);
+    let body = concat!(
+        "{\"event\":\"message\",\"message\":\"https://a.trycloudflare.com\",\"time\":1e400}\n",
+        "{\"event\":\"open\",\"event\":\"message\",\"message\":\"https://x.trycloudflare.com\",\"message\":\"https://b.trycloudflare.com\"}\n",
+    );
+    assert_eq!(latest_address_with(&token, "https://n", |_, _| Ok(body.as_bytes().to_vec())), "https://b.trycloudflare.com");
+    // `$` before one final newline: "…com\n/" stripped of its slash still matches, and is kept as it is
+    let body = "{\"event\":\"message\",\"message\":\"https://c.trycloudflare.com\\n/\"}\n";
+    assert_eq!(latest_address_with(&token, "https://n", |_, _| Ok(body.as_bytes().to_vec())), "https://c.trycloudflare.com\n");
+    let body = "{\"event\":\"message\",\"message\":\"https://c.trycloudflare.com\\n\\n/\"}\n";
+    assert_eq!(latest_address_with(&token, "https://n", |_, _| Ok(body.as_bytes().to_vec())), "");
+    let dir = tmp();
+    let path = dir.path().join("stick-link.json");
+    let t = LinkToken::new(&path);
+    fs::write(&path, format!("{{\"token\": \"{token}\", \"created\": 1e400}}")).unwrap();
+    assert_eq!(t.current(), token);
+    fs::write(&path, format!("{{\"token\": 5, \"token\": \"{token}\"}}")).unwrap();
+    assert_eq!(t.current(), token);
+    fs::write(&path, format!("{{\"token\": \"{token}\"}} x")).unwrap();
+    assert_eq!(t.current(), "");
+}
+
+#[test]
+#[ignore = "live: reads an empty topic on ntfy.sh over TLS"]
+fn live_the_real_rendezvous_answers_over_tls() {
+    let token = "live-check-".repeat(4);
+    let url = format!("{RENDEZVOUS_URL}/{}/json?poll=1&since=all", rendezvous_topic(&token));
+    assert!(open(&url, Duration::from_secs(10)).is_ok());
+    assert_eq!(latest_address(&token, RENDEZVOUS_URL), "");
+}

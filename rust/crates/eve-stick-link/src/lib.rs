@@ -65,12 +65,12 @@ impl LinkToken {
         let Ok(text) = String::from_utf8(bytes) else {
             return String::new();
         };
-        let Ok(value) = serde_json::from_str::<serde_json::Value>(&text) else {
+        // Python: `.get("token", "")` on anything but a dict raises AttributeError, caught as "".
+        let Some([token]) = json_object_fields(&text, ["token"]) else {
             return String::new();
         };
-        // Python: `.get("token", "")` on anything but a dict raises AttributeError, caught as "".
-        match value.as_object().and_then(|o| o.get("token")) {
-            Some(serde_json::Value::String(token)) if token.chars().count() >= 32 => token.clone(),
+        match token {
+            Some(serde_json::Value::String(token)) if token.chars().count() >= 32 => token,
             _ => String::new(),
         }
     }
@@ -133,6 +133,50 @@ impl LinkToken {
 /// `pathlib.Path.with_suffix(".tmp")`: the last suffix replaced (`stick-link.json` → `stick-link.tmp`).
 fn with_suffix_tmp(path: &Path) -> PathBuf {
     path.with_extension("tmp")
+}
+
+/// `json.loads(text)` read as a dict for the values of `keys` alone: `None` when the text is not JSON or not an
+/// object. Like Python's dict, a repeated key keeps its last value; the other keys' values are only checked for
+/// syntax (serde_json's skipping), so a number past f64's range there (`1e400`, which Python reads as `inf`) does
+/// not make the whole text unreadable.
+fn json_object_fields<const N: usize>(text: &str, keys: [&str; N]) -> Option<[Option<serde_json::Value>; N]> {
+    use serde::de::{DeserializeSeed, IgnoredAny, MapAccess, Visitor};
+
+    struct Fields<'k, const N: usize>([&'k str; N]);
+
+    impl<'de, const N: usize> Visitor<'de> for Fields<'_, N> {
+        type Value = [Option<serde_json::Value>; N];
+
+        fn expecting(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            f.write_str("a JSON object")
+        }
+
+        fn visit_map<A: MapAccess<'de>>(self, mut map: A) -> Result<Self::Value, A::Error> {
+            let mut out: [Option<serde_json::Value>; N] = std::array::from_fn(|_| None);
+            while let Some(key) = map.next_key::<String>()? {
+                match self.0.iter().position(|k| *k == key) {
+                    Some(i) => out[i] = Some(map.next_value::<serde_json::Value>()?),
+                    None => {
+                        map.next_value::<IgnoredAny>()?;
+                    }
+                }
+            }
+            Ok(out)
+        }
+    }
+
+    impl<'de, const N: usize> DeserializeSeed<'de> for Fields<'_, N> {
+        type Value = [Option<serde_json::Value>; N];
+
+        fn deserialize<D: serde::Deserializer<'de>>(self, d: D) -> Result<Self::Value, D::Error> {
+            d.deserialize_map(self)
+        }
+    }
+
+    let mut de = serde_json::Deserializer::from_str(text);
+    let fields = Fields(keys).deserialize(&mut de).ok()?;
+    de.end().ok()?; // json.loads: "Extra data"
+    Some(fields)
 }
 
 /// `hmac.compare_digest` over bytes: no early exit on the first difference.
@@ -204,6 +248,8 @@ impl TransportError {
     fn from_reqwest(e: &reqwest::Error) -> Self {
         let name = if e.is_builder() {
             "ValueError" // urllib: "unknown url type"
+        } else if e.is_connect() {
+            "URLError" // urllib wraps every OSError of the connect and the send, a timeout included
         } else if e.is_timeout() {
             "TimeoutError"
         } else if e.is_decode() || e.is_body() {
@@ -223,20 +269,42 @@ impl fmt::Display for TransportError {
 
 impl std::error::Error for TransportError {}
 
-/// Python's `_post`: POST `body` as text/plain with `Title: eve`, and return the HTTP status, an error status
-/// included (urllib's `HTTPError.code`). Like urllib, a 307/308 answer to a POST is not followed: its status is
-/// the answer. Blocking.
-pub fn post(url: &str, body: &[u8]) -> Result<u16, TransportError> {
-    let policy = reqwest::redirect::Policy::custom(|attempt| {
-        if matches!(attempt.status().as_u16(), 307 | 308) || attempt.previous().len() >= 10 {
+/// urllib's `HTTPRedirectHandler`: a GET follows 301, 302, 303, 307 and 308, a POST only 301, 302 and 303 (as a
+/// GET); only to http or https; and a redirect is refused (its answer kept, as urllib's `HTTPError` carries its
+/// code) once the same target was reached `max_repeats` (4) times or `max_redirections` (10) distinct targets
+/// were. reqwest's `previous` starts with the first URL, which urllib's `redirect_dict` does not count.
+fn urllib_redirects(post: bool) -> reqwest::redirect::Policy {
+    reqwest::redirect::Policy::custom(move |attempt| {
+        if post && matches!(attempt.status().as_u16(), 307 | 308) {
+            return attempt.stop();
+        }
+        if !matches!(attempt.url().scheme(), "http" | "https") {
+            return attempt.stop();
+        }
+        let visited = attempt.previous().get(1..).unwrap_or_default();
+        let repeats = visited.iter().filter(|u| *u == attempt.url()).count();
+        let mut distinct: Vec<&reqwest::Url> = Vec::new();
+        for u in visited {
+            if !distinct.contains(&u) {
+                distinct.push(u);
+            }
+        }
+        if repeats >= 4 || distinct.len() >= 10 {
             attempt.stop()
         } else {
             attempt.follow()
         }
-    });
+    })
+}
+
+/// Python's `_post`: POST `body` as text/plain with `Title: eve`, and return the HTTP status, an error status
+/// included (urllib's `HTTPError.code`). Like urllib, a 307/308 answer to a POST is not followed: its status is
+/// the answer. Blocking.
+pub fn post(url: &str, body: &[u8]) -> Result<u16, TransportError> {
     let client = reqwest::blocking::Client::builder()
         .timeout(rendezvous_timeout())
-        .redirect(policy)
+        .redirect(urllib_redirects(true))
+        .referer(false)
         .build()
         .map_err(|e| TransportError::from_reqwest(&e))?;
     let reply = client
@@ -284,12 +352,13 @@ pub fn publish_address_with(
     true
 }
 
-/// urllib's `urlopen(url, timeout).read()` for a GET: the body of a 2xx answer (redirects followed, at most 10),
-/// any other status an error. Blocking.
+/// urllib's `urlopen(url, timeout).read()` for a GET: the body of a 2xx answer (redirects followed as urllib
+/// does), any other status an error. Blocking.
 pub fn open(url: &str, timeout: Duration) -> Result<Vec<u8>, TransportError> {
     let client = reqwest::blocking::Client::builder()
         .timeout(timeout)
-        .redirect(reqwest::redirect::Policy::limited(10))
+        .redirect(urllib_redirects(false))
+        .referer(false)
         .build()
         .map_err(|e| TransportError::from_reqwest(&e))?;
     let reply = client.get(url).send().map_err(|e| TransportError::from_reqwest(&e))?;
@@ -302,8 +371,11 @@ pub fn open(url: &str, timeout: Duration) -> Result<Vec<u8>, TransportError> {
         .map_err(|e| TransportError::from_reqwest(&e))
 }
 
-/// `^https://[a-z0-9-]+\.trycloudflare\.com$`: a bare quick-tunnel origin.
+/// `re.match(r"^https://[a-z0-9-]+\.trycloudflare\.com$", s)`: a bare quick-tunnel origin. Python's `$` also
+/// matches just before one final "\n", so `https://x.trycloudflare.com\n` (what `"…com\n/"` stripped of its
+/// slash leaves) matches too.
 fn is_quick_tunnel_origin(s: &str) -> bool {
+    let s = s.strip_suffix('\n').unwrap_or(s);
     s.strip_prefix("https://")
         .and_then(|rest| rest.strip_suffix(".trycloudflare.com"))
         .is_some_and(|name| {
@@ -334,17 +406,17 @@ pub fn latest_address_with(
     let text = String::from_utf8_lossy(&body);
     let mut newest = String::new();
     for line in py_splitlines(&text) {
-        let Ok(serde_json::Value::Object(event)) = serde_json::from_str::<serde_json::Value>(line) else {
+        let Some([kind, message]) = json_object_fields(line, ["event", "message"]) else {
             continue;
         };
-        if event.get("event").and_then(|v| v.as_str()) != Some("message") {
+        if kind.as_ref().and_then(|v| v.as_str()) != Some("message") {
             continue;
         }
         // `str(event.get("message") or "")`: only a string can look like an address.
-        let Some(message) = event.get("message").and_then(|v| v.as_str()) else {
+        let Some(serde_json::Value::String(message)) = message else {
             continue;
         };
-        let message = py_strip(message).trim_end_matches('/');
+        let message = py_strip(&message).trim_end_matches('/');
         if is_quick_tunnel_origin(message) {
             newest = message.to_owned();
         }
