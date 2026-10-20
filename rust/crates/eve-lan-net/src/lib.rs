@@ -719,8 +719,33 @@ pub fn gethostname() -> io::Result<String> {
     Ok(String::from_utf8_lossy(&buf[..end]).into_owned())
 }
 
-/// The Python exception type an `io::Error` from running scutil would have been.
+/// The OSError subclass Python raises for an errno (PEP 3151's table, `Objects/exceptions.c`).
+fn os_error_subclass(code: i32) -> &'static str {
+    match code {
+        libc::EAGAIN | libc::EALREADY | libc::EINPROGRESS => "BlockingIOError",
+        libc::ECHILD => "ChildProcessError",
+        libc::EPIPE | libc::ESHUTDOWN => "BrokenPipeError",
+        libc::ECONNABORTED => "ConnectionAbortedError",
+        libc::ECONNREFUSED => "ConnectionRefusedError",
+        libc::ECONNRESET => "ConnectionResetError",
+        libc::EEXIST => "FileExistsError",
+        libc::ENOENT => "FileNotFoundError",
+        libc::EISDIR => "IsADirectoryError",
+        libc::ENOTDIR => "NotADirectoryError",
+        libc::EINTR => "InterruptedError",
+        libc::EACCES | libc::EPERM => "PermissionError",
+        libc::ESRCH => "ProcessLookupError",
+        libc::ETIMEDOUT => "TimeoutError",
+        _ => "OSError",
+    }
+}
+
+/// The Python exception type an `io::Error` from running scutil would have been: the errno's OSError subclass
+/// for a failed start, `TimeoutExpired` for the timeout, `UnicodeDecodeError` for stdout that is not UTF-8.
 fn run_error_kind(e: &io::Error) -> &'static str {
+    if let Some(code) = e.raw_os_error() {
+        return os_error_subclass(code);
+    }
     match e.kind() {
         io::ErrorKind::NotFound => "FileNotFoundError",
         io::ErrorKind::PermissionDenied => "PermissionError",

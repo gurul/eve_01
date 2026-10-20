@@ -321,6 +321,23 @@ fn local_hostname_edges() {
     let bad_utf8 = |_: &[&str], _: Duration| Ok(RunOutput { code: Some(0), stdout: vec![0xff, 0xfe] });
     let logs = capture_logs(|| assert_eq!(local_hostname_with(bad_utf8, host("Den.local")), "Den"));
     assert!(logs.contains("UnicodeDecodeError"), "{logs}");
+    // A failed start logs the OSError subclass Python picks from the errno.
+    for (code, want) in [
+        (libc::ENOENT, "FileNotFoundError"),
+        (libc::EACCES, "PermissionError"),
+        (libc::EPERM, "PermissionError"),
+        (libc::ENOTDIR, "NotADirectoryError"),
+        (libc::ENOEXEC, "OSError"),
+    ] {
+        let failed = move |_: &[&str], _: Duration| -> io::Result<RunOutput> { Err(io::Error::from_raw_os_error(code)) };
+        let logs = capture_logs(|| assert_eq!(local_hostname_with(failed, host("x.lan")), ""));
+        assert!(logs.contains(&format!("lan: scutil could not tell the local host name ({want})")), "{logs}");
+    }
+    let slow = |_: &[&str], _: Duration| -> io::Result<RunOutput> {
+        Err(io::Error::new(io::ErrorKind::TimedOut, "scutil timed out"))
+    };
+    let logs = capture_logs(|| assert_eq!(local_hostname_with(slow, host("x.lan")), ""));
+    assert!(logs.contains("(TimeoutExpired)"), "{logs}");
     // A signal-ended scutil is not a name.
     let killed = |_: &[&str], _: Duration| Ok(RunOutput { code: None, stdout: b"Kitchen-Mac\n".to_vec() });
     assert_eq!(local_hostname_with(killed, host("x.lan")), "");

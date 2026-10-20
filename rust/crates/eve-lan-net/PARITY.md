@@ -33,7 +33,7 @@ Status: complete
 | `private_addresses` | `fn private_addresses()`, `fn private_addresses_in(&[InterfaceIp])` | |
 | `_on_link_networks` | `fn on_link_networks(&[InterfaceIp])` | |
 | `peer_allowed` | `fn peer_allowed(impl Into<Peer>)`, `fn peer_allowed_with(&Peer, interfaces)` | the interface list is read only when the fixed ranges did not decide |
-| `local_hostname` | `fn local_hostname()`, `fn local_hostname_with(run, hostname)` | `run_captured` is `subprocess.run(capture_output, stdin=DEVNULL, timeout)`; stdout must be UTF-8, as `text=True` |
+| `local_hostname` | `fn local_hostname()`, `fn local_hostname_with(run, hostname)` | `run_captured` is `subprocess.run(capture_output, stdin=DEVNULL, timeout)`; stdout must be UTF-8, as `text=True`. The log names the exception Python raises: the errno's OSError subclass for a failed start (`FileNotFoundError`, `PermissionError`, `NotADirectoryError`, ...), `TimeoutExpired`, `UnicodeDecodeError` |
 | `_udp` | `fn udp(Family) -> Box<dyn UdpSocket>` | an unbound socket2 datagram socket; dropping it closes it |
 | `_errno_name` | `fn errno_name(&io::Error)` | `errno.errorcode` names: every Darwin errno 1-106 (as Python 3.13 on macOS) plus the POSIX set elsewhere; a `GaiError` is looked up by its EAI code, as `gaierror.errno` is; else the type name (`gaierror`, `UnicodeEncodeError`, `OSError`) |
 | `trigger_local_network_alert` | `fn trigger_local_network_alert()`, `fn trigger_local_network_alert_with(make)` | |
@@ -60,7 +60,7 @@ Status: complete
 | `test_lan_net.py` | `test_probe_sends_nothing_where_it_proves_nothing` (9 params) | same name, a loop | |
 | `test_lan_net.py` | `test_probe_reaches_ipv6_peers_with_their_zone` | same name | |
 | `test_lite_web_lan.py` | `test_the_peer_filter_admits_home_networks_and_refuses_the_rest` | same name | the rest of that file tests lite_web's LAN door |
-| (new) | | `real_interfaces_are_read_and_normalized`, `netmasks_read_the_way_ipaddress_reads_them`, `interfaces_order_en0_first_then_by_stem_and_number`, `not_lan_names_are_whole_names`, `on_link_networks_keep_narrow_lan_prefixes`, `local_hostname_edges`, `run_captured_times_out_and_reads_stdout`, `probe_reads_a_zone_through_getaddrinfo_as_python_does`, `probe_reads_a_host_getaddrinfo_refuses_as_unknown_without_a_socket`, `numeric_sockaddr_matches_getaddrinfo`, `errno_names_match_python`, `errno_names_cover_every_darwin_errno_as_python_does`, `strips_like_python_str_strip`, `addresses_and_scopes_read_like_python` | |
+| (new) | | `real_interfaces_are_read_and_normalized`, `netmasks_read_the_way_ipaddress_reads_them`, `interfaces_order_en0_first_then_by_stem_and_number`, `not_lan_names_are_whole_names`, `on_link_networks_keep_narrow_lan_prefixes`, `local_hostname_edges` (also the logged exception names), `run_captured_times_out_and_reads_stdout`, `probe_reads_a_zone_through_getaddrinfo_as_python_does`, `probe_reads_a_host_getaddrinfo_refuses_as_unknown_without_a_socket`, `numeric_sockaddr_matches_getaddrinfo`, `errno_names_match_python`, `errno_names_cover_every_darwin_errno_as_python_does`, `strips_like_python_str_strip`, `addresses_and_scopes_read_like_python` | |
 
 Checked by hand on this Mac (2026-10-19): `get_adapters()` gave the same 23 (interface, address, prefix) rows as Python's `ifaddr.get_adapters()`, and `private_addresses()`, `local_hostname()` and `peer_allowed()` for three sample peers matched Python's `lan_net`.
 
