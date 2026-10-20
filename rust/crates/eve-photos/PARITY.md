@@ -27,7 +27,7 @@ Status: complete
 ## Tests
 | Python file | Python tests | Rust tests | Not ported (why) |
 |---|---|---|---|
-| `bridge/tests/test_photos.py` | all 10 | `src/tests.rs`: the same 10 names (`test_relative_path_sorts_by_day_then_time` … `test_iter_recent_is_newest_first`), plus `configured_parses_like_python_int_of_float`, `photo_config_default_matches_python`, `format_usage_counts_and_megabytes`, `all_photos_ignores_other_files_and_loose_files`, `iter_recent_zero_and_negative_follow_python_slicing`, `py_repr_quotes_like_python`, `configured_strips_like_python_str_strip` | None. `caplog` becomes a scoped `tracing` subscriber; `notes_widget.LINE_RE` is copied verbatim into the test (notes_widget is another crate). |
+| `bridge/tests/test_photos.py` | all 10 | `src/tests.rs`: the same 10 names (`test_relative_path_sorts_by_day_then_time` … `test_iter_recent_is_newest_first`), plus 7 more: `configured_parses_like_python_int_of_float`, `photo_config_default_matches_python`, `format_usage_counts_and_megabytes`, `all_photos_ignores_other_files_and_loose_files`, `iter_recent_zero_and_negative_follow_python_slicing`, `py_repr_quotes_like_python`, `configured_strips_like_python_str_strip` | None. `caplog` becomes a scoped `tracing` subscriber; `notes_widget.LINE_RE` is copied verbatim into the test (notes_widget is another crate). |
 | `bridge/tests/test_diary.py` (tests_ref) | uses `PhotoConfig`, the relative path and the image line | covered by the tests above | The diary behaviour belongs to the diary crate. |
 
 ## Boundaries
@@ -37,4 +37,5 @@ None.
 - `EVE_PHOTOS_MAX=inf` / `EVE_PHOTOS_MAX_MB=inf`: Python raises `OverflowError` from `int(...)` and crashes the caller; Rust saturates to `i64::MAX` (effectively no cap).
 - An unreadable `photos/` or day directory: Python's `iterdir` raises out of `all_photos`/`prune`; Rust treats it as empty.
 - Python's `float()` also accepts non-ASCII Unicode decimal digits (`"١٢"`); Rust accepts ASCII digits only, so such a value is junk (warning + default).
+- `configured(None)` reads only `EVE_PHOTOS_MAX` and `EVE_PHOTOS_MAX_MB` from the process environment, lossily as UTF-8 (a non-UTF-8 value is junk, as its surrogate-escaped str is in Python).
 - OS error text in log lines uses Rust's `io::Error` wording rather than Python's `[Errno N] ...`.

@@ -168,7 +168,16 @@ pub fn configured(environ: Option<&HashMap<String, String>>) -> PhotoConfig {
     match environ {
         Some(env) => configured_from(env),
         None => {
-            let env: HashMap<String, String> = std::env::vars().collect();
+            // Only the two keys, read as OsStr: `std::env::vars()` panics on
+            // any non-UTF-8 variable, where `os.environ` would not. A
+            // non-UTF-8 value becomes junk (warning + default), as the
+            // surrogate-escaped str does in Python.
+            let env: HashMap<String, String> = ["EVE_PHOTOS_MAX", "EVE_PHOTOS_MAX_MB"]
+                .iter()
+                .filter_map(|k| {
+                    std::env::var_os(k).map(|v| (k.to_string(), v.to_string_lossy().into_owned()))
+                })
+                .collect();
             configured_from(&env)
         }
     }
