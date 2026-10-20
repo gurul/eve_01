@@ -278,8 +278,8 @@ pub fn load_mandate(path: &Path) -> (Mandate, String) {
         return unreadable("UnicodeDecodeError");
     };
     let text = py::universal_newlines(&text);
-    let raw = match text.parse::<toml::Table>() {
-        Ok(t) if !py::toml_1_1_only(&text) => t,
+    let raw = match py::tomllib_text(&text).map(|t| t.parse::<toml::Table>()) {
+        Some(Ok(t)) => t,
         _ => return unreadable("TOMLDecodeError"),
     };
     let checked = (|| -> Result<Mandate, DeskError> {

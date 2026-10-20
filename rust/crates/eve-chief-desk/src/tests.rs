@@ -94,6 +94,17 @@ fn test_quiet_hours_cross_midnight_and_a_daytime_window_works_too() {
     assert_eq!(quiet_ends(&m, at(10)).unwrap(), at(10));
 }
 
+#[test]
+fn in_quiet_is_the_lean_models_quiet_for_every_minute() {
+    // test_chief_lean.py: Chief.lean's `quiet m = QUIET_FROM <= m || m < QUIET_TO` over all 1440 minutes
+    let (from, to) = (minutes_of(QUIET_START).unwrap(), minutes_of(QUIET_END).unwrap());
+    assert_eq!((from, to, PUSHES_PER_DAY), (1350, 480, 2));
+    for m in 0..1440u32 {
+        let ts = at_day(m / 60, m % 60, 29);
+        assert_eq!(in_quiet(&Mandate::default(), ts).unwrap(), from <= i64::from(m) || i64::from(m) < to, "{m}");
+    }
+}
+
 // ---- the daily budget ------------------------------------------------------------------------
 
 #[test]
@@ -328,7 +339,7 @@ fn the_mandate_problem_lines_read_as_python_writes_them() {
     // python3: chief_desk.load_mandate(path) for each file
     let dir = tmp();
     let file = dir.path().join(MANDATE_FILE);
-    let cases: [(&[u8], &str); 9] = [
+    let cases: [(&[u8], &str); 12] = [
         (b"quiet_start = \"8\"\n", "mandate.toml has a problem (time data '8' does not match format '%H:%M'), so I'm sending nothing unprompted until it's fixed."),
         (b"quiet_end = 8\n", "mandate.toml has a problem (not a time), so I'm sending nothing unprompted until it's fixed."),
         (b"a=1\r b=2", "mandate.toml has a problem (unknown setting 'a'), so I'm sending nothing unprompted until it's fixed."),
@@ -337,6 +348,10 @@ fn the_mandate_problem_lines_read_as_python_writes_them() {
         (b"quiet_start = \"21:00\"\nquiet_start = \"22:00\"\n", "I couldn't read mandate.toml (TOMLDecodeError), so I'm sending nothing unprompted."),
         ("\u{feff}quiet_start=\"21:00\"\n".as_bytes(), "I couldn't read mandate.toml (TOMLDecodeError), so I'm sending nothing unprompted."),
         (b"\xff", "I couldn't read mandate.toml (UnicodeDecodeError), so I'm sending nothing unprompted."),
+        // an offset is not a time without seconds, and Python's int and float have no i64 / f64 ceiling
+        (b"quiet_start = 1979-05-27T07:32:00+05:30\n", "mandate.toml has a problem (not a time), so I'm sending nothing unprompted until it's fixed."),
+        (b"pushes_per_day = 99999999999999999999\n", "mandate.toml has a problem (pushes_per_day must be 0 to 10), so I'm sending nothing unprompted until it's fixed."),
+        (b"pushes_per_day = 1\nquiet_end = 1e999\n", "mandate.toml has a problem (not a time), so I'm sending nothing unprompted until it's fixed."),
         (b"quiet_start = \" 7:5 \"\nquiet_end = \"9:00\"\npushes_per_day = 0\n", ""),
     ];
     for (bytes, want) in cases {
@@ -596,8 +611,8 @@ fn test_docs_mandate_defaults_equal_the_constants() {
     for word in ["$0.50 and 20 min", "$1 and 30 min", "21:00", "Sunday 18:00", "45 minutes", "90 seconds"] {
         assert!(text.contains(word), "{word}");
     }
-    assert!(cc::DEFAULT_BUDGET_READ_USD == 0.50 && cc::DEFAULT_BUDGET_READ_MIN == 20);
-    assert!(cc::DEFAULT_BUDGET_ACT_USD == 1.00 && cc::DEFAULT_BUDGET_ACT_MIN == 30);
+    assert_eq!((cc::DEFAULT_BUDGET_READ_USD, cc::DEFAULT_BUDGET_READ_MIN), (0.50, 20));
+    assert_eq!((cc::DEFAULT_BUDGET_ACT_USD, cc::DEFAULT_BUDGET_ACT_MIN), (1.00, 30));
     assert!(EVENING_CLOSE_AT == "21:00" && WEEKLY_SHEET_AT == "18:00" && WEEKLY_SHEET_DAY == 6);
 }
 

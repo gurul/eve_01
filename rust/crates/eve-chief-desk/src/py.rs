@@ -144,16 +144,20 @@ enum Lex {
     MlLiteral,
 }
 
-/// Whether `text` leans on something the `toml` crate (TOML 1.1) reads and CPython's `tomllib` (TOML 1.0)
-/// refuses with TOMLDecodeError: a byte-order mark, a `\x` or `\e` escape, a newline or a trailing comma in an
-/// inline table, or a time without its seconds. Everything else the two read alike.
-pub fn toml_1_1_only(text: &str) -> bool {
+/// The text the `toml` crate (TOML 1.1, i64 integers, finite floats) should parse so that it reads `text` as
+/// CPython 3.13's `tomllib` (TOML 1.0, Python's unbounded int and float) does, or None where `tomllib` refuses
+/// what the crate reads: a byte-order mark, a `\x` or `\e` escape, a newline or a trailing comma in an inline
+/// table, a time without its seconds, a leap second (`:60`, which `datetime.time` refuses) or the year 0000. An
+/// integer outside i64 becomes `0.5` and a float literal past f64's range `inf`: for the desk's checks they mean
+/// what Python's values mean (`pushes_per_day` out of range, a time that is not a str, an unknown key still
+/// unknown), where the crate would refuse the whole file.
+pub fn tomllib_text(text: &str) -> Option<String> {
     if text.starts_with('\u{feff}') {
-        return true;
+        return None;
     }
     let chars: Vec<char> = text.chars().collect();
     let three = |i: usize, q: char| chars.get(i) == Some(&q) && chars.get(i + 1) == Some(&q) && chars.get(i + 2) == Some(&q);
-    // the text with strings and comments blanked, for the time check
+    // the text with strings and comments blanked, one byte per char, so an index in it is an index in `chars`
     let mut code: Vec<u8> = Vec::with_capacity(chars.len());
     let mut stack: Vec<char> = Vec::new();
     let mut last = '\n';
@@ -178,14 +182,14 @@ pub fn toml_1_1_only(text: &str) -> bool {
                     '{' | '[' => stack.push(c),
                     '}' => {
                         if last == ',' && stack.last() == Some(&'{') {
-                            return true;
+                            return None;
                         }
                         stack.pop();
                     }
                     ']' => {
                         stack.pop();
                     }
-                    '\n' if stack.last() == Some(&'{') => return true,
+                    '\n' if stack.last() == Some(&'{') => return None,
                     _ => {}
                 }
                 if state == Lex::Code {
@@ -202,7 +206,7 @@ pub fn toml_1_1_only(text: &str) -> bool {
                 if c == '\n' {
                     state = Lex::Code;
                     if stack.last() == Some(&'{') {
-                        return true;
+                        return None;
                     }
                 }
                 code.push(if c == '\n' { b'\n' } else { b' ' });
@@ -210,7 +214,7 @@ pub fn toml_1_1_only(text: &str) -> bool {
             Lex::Basic | Lex::MlBasic => {
                 if c == '\\' {
                     if matches!(chars.get(i + 1), Some('x') | Some('e')) {
-                        return true;
+                        return None;
                     }
                     i += 1;
                     code.push(b' ');
@@ -240,18 +244,128 @@ pub fn toml_1_1_only(text: &str) -> bool {
             }
         }
         i += 1;
+        // a quote run or an escape consumed more chars than it pushed: keep one byte per char
+        code.resize(code.len().max(i.min(chars.len())), b' ');
     }
-    // a time with no seconds: HH:MM that is not part of a longer HH:MM:SS
     let b = &code;
-    (0..b.len().saturating_sub(4)).any(|i| {
-        b[i].is_ascii_digit()
-            && b[i + 1].is_ascii_digit()
-            && b[i + 2] == b':'
-            && b[i + 3].is_ascii_digit()
-            && b[i + 4].is_ascii_digit()
-            && (i == 0 || !(b[i - 1].is_ascii_digit() || b[i - 1] == b':'))
-            && b.get(i + 5) != Some(&b':')
-    })
+    let d = |i: usize| b.get(i).is_some_and(u8::is_ascii_digit);
+    for i in 0..b.len() {
+        // HH:MM that is not part of a longer HH:MM:SS: a time; one with no seconds is TOML 1.1, but an offset
+        // (`+05:30`, `-01:00`) is not a time
+        let starts = i == 0 || !(d(i - 1) || b[i - 1] == b':');
+        if starts && d(i) && d(i + 1) && b.get(i + 2) == Some(&b':') && d(i + 3) && d(i + 4) {
+            let offset = i > 0 && matches!(b[i - 1], b'+' | b'-');
+            let seconds = b.get(i + 5) == Some(&b':');
+            if !seconds && !offset {
+                return None;
+            }
+            if seconds && b.get(i + 6) == Some(&b'6') && b.get(i + 7) == Some(&b'0') && !d(i + 8) {
+                return None;
+            }
+        }
+        // YYYY-MM-DD in the year 0000, which `datetime.date` refuses
+        if (i == 0 || !d(i - 1)) && b[i..].starts_with(b"0000-") && d(i + 5) && d(i + 6) && b.get(i + 7) == Some(&b'-')
+        {
+            return None;
+        }
+    }
+    Some(rewrite_numbers(&chars, b))
+}
+
+/// The out-of-range numbers among the values, rewritten for the `toml` crate (see [`tomllib_text`]). `code` is
+/// the text with strings and comments blanked, one byte per char of `chars`.
+fn rewrite_numbers(chars: &[char], code: &[u8]) -> String {
+    let stop = |c: u8| matches!(c, b' ' | b'\t' | b'\r' | b'\n' | b',' | b'[' | b']' | b'{' | b'}' | b'=');
+    let mut out = String::with_capacity(chars.len());
+    let mut depth = 0usize;
+    let mut line_start = true;
+    let mut i = 0;
+    while i < code.len() {
+        let c = code[i];
+        if c == b'[' && line_start && depth == 0 {
+            // a table header: keys, to the end of the line
+            while i < code.len() && code[i] != b'\n' {
+                out.push(chars[i]);
+                i += 1;
+            }
+            continue;
+        }
+        if !stop(c) {
+            let end = (i..code.len()).find(|&j| stop(code[j])).unwrap_or(code.len());
+            let token = std::str::from_utf8(&code[i..end]).unwrap_or("");
+            let next = code[end..].iter().copied().find(|c| !matches!(c, b' ' | b'\t'));
+            // a token followed by `=` is a key
+            let swap = if next == Some(b'=') { None } else { toml_number_swap(token) };
+            match swap {
+                Some(s) => out.push_str(s),
+                None => out.extend(&chars[i..end]),
+            }
+            line_start = false;
+            i = end;
+            continue;
+        }
+        match c {
+            b'[' | b'{' => depth += 1,
+            b']' | b'}' => depth = depth.saturating_sub(1),
+            _ => {}
+        }
+        if c == b'\n' {
+            line_start = true;
+        } else if !matches!(c, b' ' | b'\t' | b'\r') {
+            line_start = false;
+        }
+        out.push(chars[i]);
+        i += 1;
+    }
+    out
+}
+
+fn digits_ok(body: &str, radix: u32) -> bool {
+    !body.is_empty()
+        && !body.starts_with('_')
+        && !body.ends_with('_')
+        && !body.contains("__")
+        && body.chars().all(|c| c == '_' || c.is_digit(radix))
+}
+
+/// What a TOML 1.0 number the `toml` crate cannot hold becomes: `0.5` for an integer outside i64, `inf` or
+/// `-inf` for a float literal that rounds past f64. None for anything else (in range, or not a number).
+fn toml_number_swap(token: &str) -> Option<&'static str> {
+    for (prefix, radix) in [("0x", 16), ("0o", 8), ("0b", 2)] {
+        if let Some(body) = token.strip_prefix(prefix) {
+            if !digits_ok(body, radix) {
+                return None;
+            }
+            return i64::from_str_radix(&body.replace('_', ""), radix).is_err().then_some("0.5");
+        }
+    }
+    let (neg, unsigned) = match token.as_bytes().first() {
+        Some(b'-') => (true, &token[1..]),
+        Some(b'+') => (false, &token[1..]),
+        _ => (false, token),
+    };
+    let (int_part, rest) = unsigned.split_at(unsigned.find(['.', 'e', 'E']).unwrap_or(unsigned.len()));
+    if !digits_ok(int_part, 10) || (int_part.len() > 1 && int_part.starts_with('0')) {
+        return None;
+    }
+    if rest.is_empty() {
+        return token.replace('_', "").parse::<i64>().is_err().then_some("0.5");
+    }
+    let (frac, exp) = match rest.find(['e', 'E']) {
+        Some(k) => (&rest[..k], Some(&rest[k + 1..])),
+        None => (rest, None),
+    };
+    if !(frac.is_empty() || frac.starts_with('.') && digits_ok(&frac[1..], 10)) {
+        return None;
+    }
+    if let Some(e) = exp {
+        let e = e.strip_prefix(['+', '-']).unwrap_or(e);
+        if !digits_ok(e, 10) {
+            return None;
+        }
+    }
+    let value: f64 = token.replace('_', "").parse().ok()?;
+    value.is_infinite().then_some(if neg { "-inf" } else { "inf" })
 }
 
 // ---- strptime("%H:%M") -------------------------------------------------------------------------
@@ -640,8 +754,8 @@ mod tests {
     }
 
     #[test]
-    fn toml_1_1_only_finds_what_tomllib_refuses() {
-        // python3 -c 'import tomllib; tomllib.loads(X)' raises TOMLDecodeError for each of these
+    fn tomllib_text_refuses_and_rewrites_as_tomllib_reads() {
+        // python3.13 -c 'import tomllib; tomllib.loads(X)' raises TOMLDecodeError for each of these
         for t in [
             "a = 08:00",
             r#"a = "\x32""#,
@@ -649,25 +763,61 @@ mod tests {
             "a = {b=1,\n c=2}",
             "a = {b=1,}",
             "a = 1979-05-27 07:32",
+            "a = 1979-05-27T07:32+01:00",
             "\u{feff}a=1",
             r#"a = """x\e""""#,
             "a = {b=1 # c\n}",
+            "a = 23:59:60",
+            "a = 07:32:60.5",
+            "a = 1979-12-31T23:59:60Z",
+            "a = 0000-01-01",
+            "a = 0000-01-01T00:00:00Z",
         ] {
-            assert!(toml_1_1_only(t), "{t:?}");
+            assert!(tomllib_text(t).is_none(), "{t:?}");
         }
-        // and reads these
+        // and reads these, as the toml crate then does
         for t in [
             "a = 08:00:00",
             "a = 1979-05-27 07:32:00",
+            "a = 1979-05-27T07:32:00-23:59",
+            "a = 1979-05-27T07:32:00.1+05:30",
+            "a = 0001-01-01T00:00:00+01:00",
             "a = [1,\n2,]",
             r"a = '''x\e'''",
             r#"a = "x:12:34""#,
+            r#"a = """x:12""""#,
             "a = {b=[1,\n2]}",
             "a = \"\"\"x\"\"\"\"\nb = {c=1}",
             "# 08:00\na = \"\\\\x\"",
             "a = { b = 1 , c = '{,}' }",
         ] {
-            assert!(!toml_1_1_only(t), "{t:?}");
+            let read = tomllib_text(t).unwrap_or_else(|| panic!("{t:?}"));
+            assert_eq!(read, t);
+            assert!(read.parse::<toml::Table>().is_ok(), "{t:?}");
+        }
+        // numbers past the crate's i64 and f64, which tomllib holds; the desk only needs "a number, out of range"
+        for (t, want) in [
+            ("a = 99999999999999999999\n", "a = 0.5\n"),
+            ("a = -9223372036854775809", "a = 0.5"),
+            ("a = 1_000_000_000_000_000_000_000", "a = 0.5"),
+            ("a = 0x8000000000000000", "a = 0.5"),
+            ("a = 0o1777777777777777777777", "a = 0.5"),
+            ("a = [99999999999999999999, 1]", "a = [0.5, 1]"),
+            ("a = {b = 99999999999999999999}", "a = {b = 0.5}"),
+            ("a = [[\n99999999999999999999]]", "a = [[\n0.5]]"),
+            ("a = \"\"\"x\"\"\" # 99999999999999999999\nb = 99999999999999999999", "a = \"\"\"x\"\"\" # 99999999999999999999\nb = 0.5"),
+            ("a = 1e1000", "a = inf"),
+            ("a = -1.5e400", "a = -inf"),
+            ("a = 1.7976931348623159e308", "a = inf"),
+            ("99999999999999999999 = 1", "99999999999999999999 = 1"),
+            ("[99999999999999999999]\na = 1", "[99999999999999999999]\na = 1"),
+            ("a = 9223372036854775807", "a = 9223372036854775807"),
+            ("a = '99999999999999999999'", "a = '99999999999999999999'"),
+            ("a = 1e-1000", "a = 1e-1000"),
+        ] {
+            let read = tomllib_text(t).unwrap_or_else(|| panic!("{t:?}"));
+            assert_eq!(read, want, "{t:?}");
+            assert!(read.parse::<toml::Table>().is_ok(), "{t:?}");
         }
     }
 
