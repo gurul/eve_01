@@ -221,6 +221,25 @@ fn py_eq(a: &Value, b: &Value) -> bool {
     }
 }
 
+/// Python's built-in `sum()` over floats as CPython 3.12+ computes it (the live venv is 3.13): Neumaier-compensated,
+/// so ten 0.1s sum to exactly 1.0. The compensation is added only when it is non-zero and finite.
+pub fn py_sum(values: impl IntoIterator<Item = f64>) -> f64 {
+    let (mut total, mut c) = (0.0_f64, 0.0_f64);
+    for x in values {
+        let t = total + x;
+        if total.abs() >= x.abs() {
+            c += (total - t) + x;
+        } else {
+            c += (x - t) + total;
+        }
+        total = t;
+    }
+    if c != 0.0 && c.is_finite() {
+        total += c;
+    }
+    total
+}
+
 /// Validate every required answer; one refusal or malformed field invalidates the decision.
 pub fn parse(body: &Value, questions: &[Value]) -> Result<Map<String, Value>, Failure> {
     let answers = match body.as_object().and_then(|b| b.get("answers")) {
@@ -280,7 +299,7 @@ pub fn parse(body: &Value, questions: &[Value]) -> Result<Map<String, Value>, Fa
             probs.push((row_key, probability(row.get("probability"))?));
         }
         let choice = a.get("choice").and_then(Value::as_str);
-        let total: f64 = probs.iter().fold(0.0, |acc, (_, p)| acc + p);
+        let total = py_sum(probs.iter().map(|(_, p)| *p));
         let p = match choice.and_then(|c| probs.iter().find(|(k, _)| *k == c)) {
             Some((_, p)) if (total - 1.0).abs() <= 0.02 => *p,
             _ => return Err(decision("invalid choice distribution")),

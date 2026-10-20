@@ -24,12 +24,13 @@ Status: complete
 | `Client.close` | `Client::close` (also on `Drop`) | |
 | `_warned` | `WARNED: AtomicBool` (private) | `from_env_with` takes its own flag for tests |
 | `from_env` | `from_env(Option<&HashMap>) -> Option<Client>` (always `None`), `from_env_with` | Logs `OFF_WARNING` once a process when `EVE_DECISIONS` is on |
+| (`sum(probs.values())` in `parse`) | `py_sum` | CPython 3.12+ Neumaier-compensated float sum (the live venv is 3.13), so the 0.02 tolerance decides the same way |
 | (`json.dumps(context, ensure_ascii=False)`) | `py_dumps(&Value)` | `", "`/`": "` separators, Python float repr, UTF-8 kept |
 
 ## Tests
 | Python file | Python tests | Rust tests | Not ported (why) |
 |---|---|---|---|
-| `bridge/tests/test_decisions.py` | 6 (two parametrized: 11 faults, 2 exceptions) | All 6 with the same names in `src/tests.rs` (parametrized ones as loops), plus 8 parity tests: `enabled` strings, Pillow thumbnail sizes, bounded RGB PNG, context text byte-for-byte (key order, `screen_text` override, float repr, non-ASCII), choice `p`/`margin`, question shape, failure kinds (no key, bad JSON, `KeyError`, integer-only token metering), a real refused loopback connection from async code | The `nan` fault: JSON cannot carry NaN, so it is sent as null and `probability_f64(NaN)` is asserted directly. The log-once test captures `tracing` output with a per-test flag instead of resetting the global |
+| `bridge/tests/test_decisions.py` | 6 (two parametrized: 11 faults, 2 exceptions) | All 6 with the same names in `src/tests.rs` (parametrized ones as loops), plus 9 parity tests: `enabled` strings, the choice total summed as Python sums floats, Pillow thumbnail sizes, bounded RGB PNG, context text byte-for-byte (key order, `screen_text` override, float repr, non-ASCII), choice `p`/`margin`, question shape, failure kinds (no key, bad JSON, `KeyError`, integer-only token metering), a real refused loopback connection from async code | The `nan` fault: JSON cannot carry NaN, so it is sent as null and `probability_f64(NaN)` is asserted directly. The log-once test captures `tracing` output with a per-test flag instead of resetting the global |
 | `bridge/tests/test_decisions_observation.py` | 14 | none here | Every test drives `decision_lane` (`lane.evidence`, `lane.route`, `snapshot_from_raw`); they belong to the eve-desktop-lanes crate. Its only use of this module, `decisions.Answer({...})`, is `Answer::new` |
 | `bridge/tests/test_decision_lane.py`, `test_computer_protocol_eval.py` (tests_ref) | — | — | Use only `Answer`, `NONE`, `selection_questions` and a fake `Client`; covered here, the rest belongs to their crates |
 

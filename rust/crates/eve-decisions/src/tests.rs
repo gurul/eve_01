@@ -343,3 +343,24 @@ fn a_real_transport_failure_names_its_kind_even_from_async_code() {
     });
     assert_eq!(kind.err().as_deref(), Some("ConnectError"));
 }
+
+#[test]
+fn choice_total_is_summed_as_python_sums_floats() {
+    // CPython 3.12+ (the live venv): sum([0.1] * 10) == 1.0 and sum([1e16, 1.0, -1e16]) == 1.0.
+    assert_eq!(py_sum([0.1; 10]), 1.0);
+    assert_eq!(py_sum([1e16, 1.0, -1e16]), 1.0);
+    assert_eq!(py_sum([]), 0.0);
+    assert!(py_sum([f64::INFINITY, 1.0]).is_infinite());
+    // Ten choices at 0.1 each are a valid distribution that picks the first (a tie is not below the others).
+    let options: Vec<(String, String)> = (0..9).map(|i| (format!("c{i}"), format!("control {i}"))).collect();
+    let qs = selection_questions(options);
+    let rows: Vec<Value> = qs[0]["choices"].as_array().unwrap().iter()
+        .map(|c| json!({"value": c["value"], "probability": 0.1})).collect();
+    let mut answers = vec![json!({"name": "target", "type": "choice", "choice": "c0", "confidence": 0.9,
+                                   "probabilities": rows})];
+    for q in &qs[1..] {
+        answers.push(json!({"name": q["name"], "type": "predicate", "probability": 0.5}));
+    }
+    let values = parse(&json!({"answers": answers}), &qs).unwrap();
+    assert_eq!(values["target"], json!({"id": "c0", "p": 0.1, "margin": 0.0}));
+}
