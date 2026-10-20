@@ -36,6 +36,12 @@ AskUserQuestion), working (between a prompt and Stop), idle, or starting (opened
 **Detail** answers state "ended" (and ``ended: true``) for a session that is over, and ends one whose process ``ps``
 no longer finds after ``GRACE_SECS``, as the list does. A 409 for an ended session carries ``code: "ended"``.
 
+**Continue** (``continue_session``): a session eve did not start, or a Work session that has ended, is jumped into
+from the phone by forking it. A new Work session runs ``claude --resume <sid> --fork-session --session-id <new>`` in
+the original's folder, the owner's words its first prompt: the whole conversation under a new id that ps names, so
+reply and stop work on it as on any Work session. The original (in Warp, an IDE, wherever) is left as it was; Warp
+cannot be typed into by tab, so a fork is the one way in that works for every terminal.
+
 **Detail** reads the transcript's last ``TAIL_BYTES`` on a thread: the owner's prompts and Claude's text, never
 tool calls, tool results or thinking, each clipped to ``TURN_CHARS`` with token-shaped strings and ``KEY=value``
 secrets masked (``redact``). Folders are basenames only.
@@ -94,6 +100,8 @@ OFF_LINE = "Work sessions are off on this Mac (EVE_WORK_SESSIONS=0)."
 ENDED = "that session has ended"
 NO_WINDOW = "can't reach that session's window"
 NOT_OURS = "eve can only reply to or stop sessions it started from Work"
+NO_CONTINUE = "eve can't find that session's folder or transcript, so it can't continue it"
+LIVE_WORK = "that session takes replies as it is; continue is for one that can't"
 UNKNOWN = "there is no such session"
 
 # Terminal.app, with every value an argument (``on run argv``), never part of the script's text.
@@ -195,11 +203,32 @@ def redact(text: str) -> str:
 # ---- transcripts -------------------------------------------------------------------------------------------------
 
 def derived_transcript(cwd: Path, sid: str, config_dir: Optional[Path] = None) -> Path:
-    """Where Claude Code writes a session's transcript: <config>/projects/<cwd, "/" and "." as "-">/<sid>.jsonl."""
+    """Where Claude Code writes a session's transcript: <config>/projects/<cwd, every character that is not a letter
+    or a digit as "-">/<sid>.jsonl."""
     from .claude_home import claude_config_dir
 
     base = config_dir or claude_config_dir()
-    return base / "projects" / re.sub(r"[/.]", "-", str(cwd)) / f"{sid}.jsonl"
+    return base / "projects" / re.sub(r"[^A-Za-z0-9]", "-", str(cwd)) / f"{sid}.jsonl"
+
+
+def found_transcript(cwd: Optional[str], sid: str, config_dir: Optional[Path] = None) -> Optional[Path]:
+    """A session's transcript when nothing recorded its path (a session the daemon adopted from a tool hook after a
+    restart): the derived path, else ``<sid>.jsonl`` in any project folder. None when there is none."""
+    from .claude_home import claude_config_dir
+
+    if not UUID_RE.match(sid):
+        return None
+    if cwd:
+        path = derived_transcript(Path(cwd), sid, config_dir)
+        if path.is_file():
+            return path
+    base = (config_dir or claude_config_dir()) / "projects"
+    with contextlib.suppress(OSError):
+        for folder in base.iterdir():
+            path = folder / f"{sid}.jsonl"
+            if path.is_file():
+                return path
+    return None
 
 
 def _epoch(stamp: Any) -> float:
@@ -327,13 +356,15 @@ def session_pids(run: Callable[..., Any] = subprocess.run) -> Optional[dict[str,
     return out
 
 
-def launch_argv(sid: str, task: str, mcp_config: Path, claude: str = "claude") -> list[str]:
+def launch_argv(sid: str, task: str, mcp_config: Path, claude: str = "claude", resume: str = "") -> list[str]:
     """Claude Code's argv for a Work session. ``--mcp-config`` takes several values, so ``--session-id`` follows it,
     and ``--`` ends the options: the task is the one positional argument (the first prompt), even when it starts
-    with a dash."""
-    if not UUID_RE.match(sid):
+    with a dash. ``resume``: a session this one continues, forked (``--resume <it> --fork-session``), so the new
+    session has the whole conversation under its own id and the original is left as it was."""
+    if not UUID_RE.match(sid) or (resume and not UUID_RE.match(resume)):
         raise ValueError("not a session id")
-    return [claude, "--dangerously-skip-permissions", "--mcp-config", str(mcp_config), "--session-id", sid,
+    fork = ["--resume", resume, "--fork-session"] if resume else []
+    return [claude, "--dangerously-skip-permissions", "--mcp-config", str(mcp_config), *fork, "--session-id", sid,
             "--", task]
 
 
@@ -373,7 +404,7 @@ def _hash(token: str) -> str:
 # ---- the registry --------------------------------------------------------------------------------------------------
 
 SAVED_FIELDS = ("sid", "created_at", "title", "token_hash", "client_id", "window_id", "tty", "transcript_path",
-                "stopped", "ended_at")
+                "stopped", "ended_at", "cwd", "resumed_from")
 
 
 @dataclass
@@ -388,6 +419,8 @@ class Record:
     transcript_path: str = ""
     stopped: bool = False
     ended_at: float = 0.0
+    cwd: str = ""                                 # its folder; "" is the work folder
+    resumed_from: str = ""                        # the session it continues (forked), if any
     phase: str = "starting"                       # not saved: starting, working, waiting, idle
     last_activity: float = 0.0                    # not saved: the newest hook
 
@@ -449,7 +482,8 @@ class WorkSessions:
                              client_id=str(row.get("client_id") or ""),
                              window_id=int(row["window_id"]) if row.get("window_id") is not None else None,
                              tty=str(row.get("tty") or ""), transcript_path=str(row.get("transcript_path") or ""),
-                             stopped=bool(row.get("stopped")), ended_at=float(row.get("ended_at") or 0))
+                             stopped=bool(row.get("stopped")), ended_at=float(row.get("ended_at") or 0),
+                             cwd=str(row.get("cwd") or ""), resumed_from=str(row.get("resumed_from") or ""))
             except (TypeError, ValueError):
                 continue
             rec.phase = "idle"
@@ -509,6 +543,9 @@ class WorkSessions:
         return hmac.compare_digest(_hash(token), rec.token_hash)
 
     # -- helpers --
+    def _folder(self, rec: Record) -> Path:
+        return Path(rec.cwd) if rec.cwd else self.root
+
     def _transcript(self, rec: Optional[Record], session: Any = None, sid: str = "") -> Optional[Path]:
         if rec is not None and rec.transcript_path:
             return Path(rec.transcript_path)
@@ -516,7 +553,10 @@ class WorkSessions:
         if isinstance(path, str) and path:
             return Path(path)
         if rec is not None:
-            return derived_transcript(self.root, rec.sid, self._claude_dir)
+            return derived_transcript(self._folder(rec), rec.sid, self._claude_dir)
+        if session is not None:
+            return found_transcript(getattr(session, "cwd", None), getattr(session, "session_id", "") or sid,
+                                    self._claude_dir)
         return None
 
     def _probe(self) -> tuple[Optional[dict[str, int]], Optional[dict[str, bool]]]:
@@ -530,16 +570,24 @@ class WorkSessions:
             (self.files / f"{rec.sid}.mcp.json").unlink()
         with contextlib.suppress(OSError):
             (self.files / f"{rec.sid}.task").unlink()
+        with contextlib.suppress(OSError):
+            (self.files / f"{rec.sid}.resume").unlink()
 
     def _row(self, rec: Record, pids: Optional[dict[str, int]], path: Optional[Path], line: str) -> dict[str, Any]:
         alive = pids is None or rec.sid in pids
         state = rec.phase if rec.phase in STATES else "idle"
         if pids is not None and rec.sid not in pids and self._clock() - rec.created_at < GRACE_SECS:
             state = "starting"                          # within its grace: opened, claude not up yet
-        return {"id": rec.sid, "folder": self.root.name, "title": rec.title,
+        return {"id": rec.sid, "folder": self._folder(rec).name, "title": rec.title,
                 "state": state, "last_activity": int(max(rec.last_activity, rec.created_at, _mtime(path))),
                 "last_line": line, "from_work": True,
-                "can_reply": alive and rec.window_id is not None and bool(rec.tty), "can_stop": True}
+                "can_reply": alive and rec.window_id is not None and bool(rec.tty), "can_stop": True,
+                "can_continue": False}
+
+    @staticmethod
+    def _continuable(cwd: Any, path: Optional[Path]) -> bool:
+        """A session another can fork: its folder is there and so is its transcript."""
+        return bool(cwd) and Path(str(cwd)).is_dir() and path is not None and path.is_file()
 
     def _rows(self, records: list[Record], sessions: list[Any], pids: Optional[dict[str, int]],
               live: Optional[dict[str, bool]]) -> tuple[list[dict[str, Any]], list[Record]]:
@@ -569,7 +617,8 @@ class WorkSessions:
             rows.append({"id": sid, "folder": Path(s.cwd).name, "title": Path(s.cwd).name,
                          "state": "waiting" if waiting else "working" if s.running else "idle",
                          "last_activity": int(max(s.started_at, _mtime(path))), "last_line": last_line(path),
-                         "from_work": False, "can_reply": False, "can_stop": False})
+                         "from_work": False, "can_reply": False, "can_stop": False,
+                         "can_continue": self._continuable(s.cwd, path)})
         rows.sort(key=lambda r: r["last_activity"], reverse=True)
         return rows[:MAX_LISTED], gone
 
@@ -604,42 +653,93 @@ class WorkSessions:
                 self.root.mkdir(parents=True, exist_ok=True)
             except OSError as e:
                 return 503, {"ok": False, "reason": f"the work folder is not there ({type(e).__name__})"}
-            sid = str(uuid.uuid4())
-            token = secrets.token_urlsafe(32)
-            rec = Record(sid=sid, created_at=now, title=flat(task.splitlines()[0], TITLE_CHARS),
-                         token_hash=_hash(token), client_id=client_id)
-            rec.last_activity = now
-            try:
-                _write_private(self.files / f"{sid}.task", task)
-                _write_private(self.files / f"{sid}.mcp.json",
-                               json.dumps(mcp_config(sid, token, self.python, self._environ)))
-            except OSError as e:
-                log.warning("work sessions: could not write the session's files (%s)", type(e).__name__)
-                return 503, {"ok": False, "reason": "eve couldn't write the session's files"}
-            self.records[sid] = rec
-            self._save()
-            # Only code-made words: the folder (quoted), this Python (quoted), the module and a checked UUID.
-            # -P: Python leaves the cwd (the shared work folder, where sessions write files) off sys.path, so a
-            # json.py or uuid.py a session left there cannot shadow the stdlib or run in this interpreter.
-            line = (f"cd {shlex.quote(str(self.root))} && exec {shlex.quote(self.python)} "
-                    f"-P -m eve_bridge.work_sessions launch {sid}")
-            try:
-                code, out = await self._osascript(TERMINAL_OPEN, line)
-            except OSError as e:
-                code, out = 1, type(e).__name__
-            if code != 0:
-                log.warning("work sessions: Terminal did not open (exit %d)", code)
-                del self.records[sid]
-                self._end(rec)
-                self._save()
-                return 503, {"ok": False, "reason": "eve couldn't open Terminal on the Mac"}
-            wid, _, tty = str(out).strip().partition(" ")
-            # the window opened; without its id or tty the session runs, and replies say they can't reach it
-            rec.window_id = int(wid) if wid.isdigit() and int(wid) > 0 else None
-            rec.tty = tty.strip() if tty.strip().startswith("/dev/") else ""
-            self._save()
-            log.info("work sessions: %s started (task %d characters)", sid[:8], len(task))
+            rec, problem = await self._open(task, client_id, now)
+            if rec is None:
+                return 503, {"ok": False, "reason": problem}
+            log.info("work sessions: %s started (task %d characters)", rec.sid[:8], len(task))
             return 200, {"ok": True, "session": self._row(rec, None, None, "")}
+
+    async def _open(self, task: str, client_id: str, now: float, *, cwd: str = "", resume: str = "",
+                    title: str = "") -> tuple[Optional[Record], str]:
+        """Write a new session's files and open its Terminal window: (the record, "") or (None, why not). The
+        caller holds the lock. ``cwd``: its folder ("" is the work folder); ``resume``: the session it forks."""
+        sid = str(uuid.uuid4())
+        token = secrets.token_urlsafe(32)
+        rec = Record(sid=sid, created_at=now, title=title or flat(task.splitlines()[0], TITLE_CHARS),
+                     token_hash=_hash(token), client_id=client_id, cwd=cwd, resumed_from=resume)
+        rec.last_activity = now
+        try:
+            _write_private(self.files / f"{sid}.task", task)
+            if resume:
+                _write_private(self.files / f"{sid}.resume", resume)
+            _write_private(self.files / f"{sid}.mcp.json",
+                           json.dumps(mcp_config(sid, token, self.python, self._environ)))
+        except OSError as e:
+            log.warning("work sessions: could not write the session's files (%s)", type(e).__name__)
+            return None, "eve couldn't write the session's files"
+        self.records[sid] = rec
+        self._save()
+        # Only code-made words: the folder (quoted), this Python (quoted), the module and a checked UUID.
+        # -P: Python leaves the cwd (the folder, where sessions write files) off sys.path, so a json.py or
+        # uuid.py a session left there cannot shadow the stdlib or run in this interpreter.
+        line = (f"cd {shlex.quote(str(self._folder(rec)))} && exec {shlex.quote(self.python)} "
+                f"-P -m eve_bridge.work_sessions launch {sid}")
+        try:
+            code, out = await self._osascript(TERMINAL_OPEN, line)
+        except OSError as e:
+            code, out = 1, type(e).__name__
+        if code != 0:
+            log.warning("work sessions: Terminal did not open (exit %d)", code)
+            del self.records[sid]
+            self._end(rec)
+            self._save()
+            return None, "eve couldn't open Terminal on the Mac"
+        wid, _, tty = str(out).strip().partition(" ")
+        # the window opened; without its id or tty the session runs, and replies say they can't reach it
+        rec.window_id = int(wid) if wid.isdigit() and int(wid) > 0 else None
+        rec.tty = tty.strip() if tty.strip().startswith("/dev/") else ""
+        self._save()
+        return rec, ""
+
+    async def continue_session(self, sid: str, text: Any, client_id: Any = "") -> tuple[int, dict[str, Any]]:
+        """Jump into a session from the phone: one eve did not start (in Warp, an IDE, another terminal) or a Work
+        session that has ended. A new Work session forks it (``claude --resume <sid> --fork-session``) in the same
+        folder, ``text`` its first prompt, and takes replies from then on. The original is left as it was."""
+        if not isinstance(text, str) or not text.strip():
+            return 400, {"ok": False, "reason": "say what Claude should do next"}
+        text = text.strip()
+        if len(text) > MAX_TASK_CHARS:
+            return 400, {"ok": False, "reason": f"at most {MAX_TASK_CHARS} characters"}
+        if client_id is None:
+            client_id = ""
+        if not isinstance(client_id, str) or len(client_id) > MAX_CLIENT_ID_CHARS:
+            return 400, {"ok": False, "reason": "client_id must be a string of at most 64 characters"}
+        async with self._lock:
+            now = self._clock()
+            if client_id:                               # a retry of the same send is the session it already made
+                for other in self.records.values():
+                    if other.client_id == client_id and now - other.created_at < DEDUPE_SECS:
+                        return 200, {"ok": True, "session": self._row(other, None, self._transcript(other), "")}
+            rec = self.records.get(sid)
+            state = self._state()
+            session = getattr(state, "sessions", {}).get(sid) if state is not None else None
+            if rec is None and session is None:
+                return 404, {"ok": False, "reason": UNKNOWN}
+            if rec is not None and not rec.over:
+                pids = await asyncio.to_thread(session_pids, self._run)
+                if pids is None or sid in pids or now - rec.created_at < GRACE_SECS:
+                    return 409, {"ok": False, "reason": LIVE_WORK}
+                self._end(rec)
+            cwd = str(self._folder(rec)) if rec is not None else str(getattr(session, "cwd", "") or "")
+            path = self._transcript(rec, session, sid)
+            if not await asyncio.to_thread(self._continuable, cwd, path):
+                return 409, {"ok": False, "reason": NO_CONTINUE}
+            title = rec.title if rec is not None and rec.title else Path(cwd).name
+            new, problem = await self._open(text, client_id, now, cwd=cwd, resume=sid, title=title)
+            if new is None:
+                return 503, {"ok": False, "reason": problem}
+        log.info("work sessions: %s continues %s (%d characters)", new.sid[:8], sid[:8], len(text))
+        return 200, {"ok": True, "session": self._row(new, None, None, "")}
 
     async def detail(self, sid: str) -> tuple[int, dict[str, Any]]:
         rec = self.records.get(sid)
@@ -657,12 +757,14 @@ class WorkSessions:
                 self._end(rec)                          # claude exited (/exit, a crash): the sheet shows it ended
             row = self._row(rec, pids, path, "")
             if rec.over:
-                row.update(state="ended", can_reply=False, can_stop=False)
+                row.update(state="ended", can_reply=False, can_stop=False,
+                           can_continue=await asyncio.to_thread(self._continuable, str(self._folder(rec)), path))
         else:
             row = {"id": sid, "folder": Path(session.cwd or "").name, "title": Path(session.cwd or "").name,
                    "state": "waiting" if state._needs_input_live(session) else "working" if session.running
                    else "idle", "last_activity": int(max(session.started_at, _mtime(path))),
-                   "from_work": False, "can_reply": False, "can_stop": False}
+                   "from_work": False, "can_reply": False, "can_stop": False,
+                   "can_continue": await asyncio.to_thread(self._continuable, session.cwd, path)}
         last = next((t["text"] for t in reversed(turns) if t["role"] == "claude"), "")
         row["last_line"] = flat(last, LINE_CHARS)
         return 200, {"ok": True, "session": row, "turns": turns, "cut": cut, "ended": bool(rec and rec.over)}
@@ -752,11 +854,19 @@ def main(argv: Optional[list[str]] = None, *, home: Optional[Path] = None,
         return 1
     with contextlib.suppress(OSError):
         task_path.unlink()
+    resume = ""
+    resume_path = folder / f"{sid}.resume"
+    with contextlib.suppress(OSError):
+        resume = resume_path.read_text(encoding="utf-8").strip()
+        resume_path.unlink()
+    if resume and not UUID_RE.match(resume):
+        print("This Work session's resume file does not name a session.", file=sys.stderr)
+        return 1
     claude = shutil.which("claude")
     if claude is None:
         print("Claude Code (claude) is not on this shell's PATH.", file=sys.stderr)
         return 127
-    argv_out = launch_argv(sid, task, folder / f"{sid}.mcp.json", claude)
+    argv_out = launch_argv(sid, task, folder / f"{sid}.mcp.json", claude, resume)
     execvp(argv_out[0], argv_out)
     return 0                                            # only reached when execvp is a test's stand-in
 

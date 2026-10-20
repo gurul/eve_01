@@ -1779,6 +1779,14 @@ check(replyReq.httpMethod == "POST" && replyReq.url?.path == "/api/link/sessions
 let longReply = WorkSessionRequests.reply(ep, id: sid1, text: String(repeating: "r", count: 4500))
 check(((try? JSONSerialization.jsonObject(with: longReply.httpBody ?? Data())) as? [String: String])?["text"]?.count
       == WorkSessionRequests.maxReply, "a reply is at most 4000 characters")
+let contReq = WorkSessionRequests.continueSession(ep, id: sid2, text: " and run the tests \n", clientID: String(repeating: "k", count: 80))
+check(contReq.httpMethod == "POST" && contReq.url?.path == "/api/link/sessions/\(sid2)/continue"
+      && (try? JSONSerialization.jsonObject(with: contReq.httpBody ?? Data())) as? [String: String]
+         == ["text": "and run the tests", "client_id": String(repeating: "k", count: 64)]
+      && contReq.timeoutInterval == WorkSessionRequests.startTimeout, "the continue request: trimmed, a start's timeout")
+let continuable = WorkSession(json: ["id": sid2, "state": "working", "from_work": false, "can_continue": true])
+check(continuable?.canContinue == true && continuable?.canReply == false, "a session eve didn't start can be continued")
+check(s1?.canContinue == false, "can_continue is false when the daemon leaves it out")
 let stopReq = WorkSessionRequests.stop(ep, id: sid1)
 check(stopReq.httpMethod == "POST" && stopReq.url?.path == "/api/link/sessions/\(sid1)/stop"
       && stopReq.httpBody == Data("{}".utf8), "the stop request")

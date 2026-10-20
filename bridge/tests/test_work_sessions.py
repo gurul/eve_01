@@ -241,7 +241,8 @@ def test_states_follow_the_hooks_and_the_list_has_every_live_session(tmp_path: P
     mine = next(r for r in out["sessions"] if r["from_work"])
     assert mine["can_reply"] and mine["can_stop"]
     assert set(mine) == {"id", "folder", "title", "state", "last_activity", "last_line", "from_work", "can_reply",
-                         "can_stop"}
+                         "can_stop", "can_continue"}
+    assert mine["can_continue"] is False and other["can_continue"] is False      # no transcript for it yet
     assert all("/" not in r["folder"] for r in out["sessions"])     # basenames only
     assert out["folder"] == "work"
 
@@ -486,7 +487,8 @@ def test_every_session_route_needs_the_link_token_and_no_origin(tmp_path: Path) 
         doors = (("GET", link_chat.SESSIONS_PATH, None), ("POST", link_chat.SESSION_START_PATH, {"task": "hi"}),
                  ("GET", f"{link_chat.SESSIONS_PATH}/{SID}", None),
                  ("POST", f"{link_chat.SESSIONS_PATH}/{SID}/reply", {"text": "hi"}),
-                 ("POST", f"{link_chat.SESSIONS_PATH}/{SID}/stop", None))
+                 ("POST", f"{link_chat.SESSIONS_PATH}/{SID}/stop", None),
+                 ("POST", f"{link_chat.SESSIONS_PATH}/{SID}/continue", {"text": "hi"}))
         for method, path, body in doors:
             assert (await http(port, method, path, body))[0] == 401, path
             assert (await http(port, method, path, body, token=token[:-1]))[0] == 401, path
@@ -557,3 +559,147 @@ def test_the_switch() -> None:
     assert work_sessions.enabled({}) and work_sessions.enabled({"EVE_WORK_SESSIONS": "1"})
     for off in ("0", "off", "false", "no"):
         assert not work_sessions.enabled({"EVE_WORK_SESSIONS": off})
+
+
+# ---- sessions eve did not start: their turns, and continuing them from the phone --------------------------------
+
+OTHER = "11111111-2222-4333-8444-555555555555"
+
+
+def adopted(tmp_path: Path, state: State, folder: str = "eve") -> tuple[Path, Path]:
+    """A session the daemon adopted from a tool hook after a restart: a cwd, no transcript_path. Its transcript is
+    where Claude Code writes it."""
+    cwd = tmp_path / "code" / folder
+    cwd.mkdir(parents=True, exist_ok=True)
+    state.session_start(OTHER, cwd=str(cwd))
+    path = transcript(work_sessions.derived_transcript(cwd, OTHER, tmp_path / "claude"), [
+        line("user", "Make the hooks fast"), line("assistant", [{"type": "text", "text": "Ported them to Rust."}])])
+    return cwd, path
+
+
+def test_an_adopted_session_without_a_transcript_path_shows_its_turns(tmp_path: Path) -> None:
+    state = State()
+    work, _ = make(tmp_path, state=state)
+    _, path = adopted(tmp_path, state)
+    assert state.sessions[OTHER].transcript_path is None
+    status, out = asyncio.run(work.detail(OTHER))
+    assert status == 200
+    assert [(t["role"], t["text"]) for t in out["turns"]] == [("owner", "Make the hooks fast"),
+                                                               ("claude", "Ported them to Rust.")]
+    assert out["session"]["can_continue"] is True and out["session"]["can_reply"] is False
+    row = next(r for r in asyncio.run(work.list())[1]["sessions"] if r["id"] == OTHER)
+    assert row["last_line"] == "Ported them to Rust." and row["can_continue"] is True
+    # a cwd that does not map to the transcript's folder (a symlink, a renamed folder): found by id in any project
+    moved = tmp_path / "claude" / "projects" / "-somewhere-else" / f"{OTHER}.jsonl"
+    moved.parent.mkdir(parents=True)
+    path.rename(moved)
+    assert len(asyncio.run(work.detail(OTHER))[1]["turns"]) == 2
+    assert work_sessions.found_transcript(None, "../../etc/passwd", tmp_path / "claude") is None
+
+
+def test_the_derived_path_turns_every_non_alphanumeric_into_a_dash(tmp_path: Path) -> None:
+    got = work_sessions.derived_transcript(Path("/tmp/claude-501/my_proj v2"), "abc", tmp_path)
+    assert got == tmp_path / "projects" / "-tmp-claude-501-my-proj-v2" / "abc.jsonl"
+
+
+def launched(tmp_path: Path, sid: str) -> list[str]:
+    ran: list[tuple[str, list[str]]] = []
+    import shutil as _shutil
+    old = _shutil.which
+    try:
+        _shutil.which = lambda name: "/usr/local/bin/claude" if name == "claude" else None   # type: ignore[assignment]
+        assert work_sessions.main(["launch", sid], home=tmp_path / "home",
+                                  execvp=lambda f, a: ran.append((f, a))) == 0
+    finally:
+        _shutil.which = old                                         # type: ignore[assignment]
+    [(_, argv)] = ran
+    return argv
+
+
+@pytest.mark.parametrize("text", HOSTILE[:3])
+def test_continue_forks_a_session_eve_did_not_start_in_its_own_folder(tmp_path: Path, text: str) -> None:
+    state = State()
+    work, mac = make(tmp_path, state=state)
+    cwd, path = adopted(tmp_path, state)
+    before = path.read_text()
+    status, out = asyncio.run(work.continue_session(OTHER, text, "c-1"))
+    assert status == 200 and out["ok"] is True
+    new = out["session"]["id"]
+    assert new != OTHER and out["session"]["from_work"] is True and out["session"]["folder"] == "eve"
+    assert out["session"]["title"] == "eve"
+    [(script, (cmd,))] = mac.scripts
+    assert script == work_sessions.TERMINAL_OPEN
+    assert cmd == f"cd {shlex.quote(str(cwd))} && exec {shlex.quote(PYTHON)} -P -m eve_bridge.work_sessions launch {new}"
+    resume = tmp_path / "home" / "work" / f"{new}.resume"
+    assert resume.read_text() == OTHER and stat.S_IMODE(resume.stat().st_mode) == 0o600
+    argv = launched(tmp_path, new)
+    mcp = tmp_path / "home" / "work" / f"{new}.mcp.json"
+    assert argv == ["/usr/local/bin/claude", "--dangerously-skip-permissions", "--mcp-config", str(mcp),
+                    "--resume", OTHER, "--fork-session", "--session-id", new, "--", text.strip()]
+    assert not resume.exists()                                      # read once, then gone
+    # ps names the fork by its own id, never the original's, so reply and stop reach only the fork
+    mac.procs[70] = " ".join(argv)
+    assert work_sessions.session_pids(mac.run) == {new: 70}
+    assert asyncio.run(work.reply(new, "and the tests"))[0] == 200
+    assert asyncio.run(work.continue_session(OTHER, text, "c-1"))[1]["session"]["id"] == new   # a retry: same one
+    assert len([s for s in mac.scripts if s[0] == work_sessions.TERMINAL_OPEN]) == 1
+    assert path.read_text() == before and OTHER in state.sessions   # the original is left as it was
+    reloaded = WorkSessions(root=tmp_path / "personal" / "work", home=tmp_path / "home", osascript=_never, environ={})
+    assert reloaded.records[new].cwd == str(cwd) and reloaded.records[new].resumed_from == OTHER
+
+
+def test_continue_is_refused_when_it_cannot_or_need_not_fork(tmp_path: Path) -> None:
+    now = {"t": 1000.0}
+    state = State()
+    work, mac = make(tmp_path, state=state, clock=lambda: now["t"])
+    assert asyncio.run(work.continue_session(OTHER, "go"))[0] == 404             # unknown
+    state.session_start(OTHER, cwd=str(tmp_path / "gone"))                      # no folder, no transcript
+    assert asyncio.run(work.continue_session(OTHER, "go")) == (409, {"ok": False, "reason": work_sessions.NO_CONTINUE})
+    state.session_end(OTHER)
+    adopted(tmp_path, state)
+    for bad in ("", "  ", None, 3, "x" * 4001):
+        assert asyncio.run(work.continue_session(OTHER, bad))[0] == 400
+    assert asyncio.run(work.continue_session(OTHER, "go", "c" * 65))[0] == 400
+    live = start(work, "hello")[1]["session"]["id"]                             # a live Work session takes replies
+    mac.claude(5, live)
+    now["t"] += work_sessions.GRACE_SECS + 1
+    assert asyncio.run(work.continue_session(live, "go")) == (409, {"ok": False, "reason": work_sessions.LIVE_WORK})
+    mac.ps_fails = True                                                         # cannot tell: never fork
+    assert asyncio.run(work.continue_session(live, "go"))[0] == 409
+    assert len(mac.scripts) == 1                                                # only the start opened a window
+    mac.ps_fails = False
+    assert asyncio.run(work.continue_session(OTHER, "go"))[0] == 200            # positive control
+
+
+def test_an_ended_work_session_can_be_continued_in_the_work_folder(tmp_path: Path) -> None:
+    now = {"t": 1000.0}
+    work, mac = make(tmp_path, clock=lambda: now["t"])
+    sid = start(work, "hello")[1]["session"]["id"]
+    root = tmp_path / "personal" / "work"
+    transcript(work_sessions.derived_transcript(root, sid, tmp_path / "claude"),
+               [line("user", "hello"), line("assistant", [{"type": "text", "text": "Done."}])])
+    now["t"] += work_sessions.GRACE_SECS + 1                                    # claude exited
+    out = asyncio.run(work.detail(sid))[1]
+    assert out["ended"] is True and out["session"]["can_continue"] is True
+    status, got = asyncio.run(work.continue_session(sid, "one more thing"))
+    assert status == 200 and got["session"]["title"] == "hello" and got["session"]["folder"] == "work"
+    assert mac.scripts[-1][1][0].startswith(f"cd {shlex.quote(str(root))} && ")
+    assert (tmp_path / "home" / "work" / f"{got['session']['id']}.resume").read_text() == sid
+
+
+def test_the_continue_route(tmp_path: Path) -> None:
+    state = State()
+    work, mac = make(tmp_path, state=state)
+    adopted(tmp_path, state)
+
+    async def go() -> None:
+        server, port, token = await serve(tmp_path, FakeInlet(store_at(tmp_path)), work=lambda: work)
+        path = f"{link_chat.SESSIONS_PATH}/{OTHER}/continue"
+        assert (await http(port, "GET", path, token=token))[0] == 405
+        assert (await http(port, "POST", path, {"text": ""}, token=token))[0] == 400
+        status, _, raw = await http(port, "POST", path, {"text": "keep going", "client_id": "k"}, token=token)
+        got = json.loads(raw)
+        assert status == 200 and got["session"]["from_work"] is True and got["session"]["id"] != OTHER
+        await server.close()
+
+    asyncio.run(go())

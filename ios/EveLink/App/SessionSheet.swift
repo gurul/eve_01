@@ -1,6 +1,7 @@
 // One Claude Code session from the Work tab (docs/work-sessions.md): its latest turns, read again every few seconds
 // while the sheet is open, a reply box that types into that session's own terminal, and Stop (with a confirm) that
-// ends it. A session eve did not start is shown read-only.
+// ends it. A session the phone can't reply to (eve didn't start it, or it ended) can be continued: a fork of it opens as
+// a new Work session in the same folder, the owner's words its next prompt, and the sheet follows the fork.
 import SwiftUI
 
 struct SessionSheet: View {
@@ -8,6 +9,12 @@ struct SessionSheet: View {
     /// The session as the list had it, until the first read.
     let fallback: WorkSession
     @Environment(\.dismiss) private var dismiss
+    /// The session the sheet shows: the one it opened on, then the fork a continue made.
+    @State private var current: String
+    /// The fork as the continue answered it, until its first read.
+    @State private var forked: WorkSession?
+    /// One per continue wording, so a retry after a dropped connection is the same fork.
+    @State private var continueID = UUID().uuidString
     @State private var detail: WorkSessionDetail?
     @State private var loadProblem: String?
     @State private var ended = false
@@ -21,8 +28,14 @@ struct SessionSheet: View {
     /// How often an open sheet reads its session again.
     static let poll: Duration = .seconds(4)
 
+    init(work: WorkModel, fallback: WorkSession) {
+        self.work = work
+        self.fallback = fallback
+        _current = State(initialValue: fallback.id)
+    }
+
     private var session: WorkSession {
-        var s = detail?.session ?? fallback
+        var s = detail?.session ?? forked ?? fallback
         if ended { s.state = .ended }
         return s
     }
@@ -95,7 +108,7 @@ struct SessionSheet: View {
             } message: {
                 Text("Claude Code quits on your Mac. Its terminal window stays open.")
             }
-            .task(id: fallback.id) {
+            .task(id: current) {
                 while !Task.isCancelled {
                     await load()
                     if ended { break }
@@ -130,46 +143,64 @@ struct SessionSheet: View {
     }
 
     @ViewBuilder private var replyBar: some View {
-        if ended {
+        if !ended && session.canReply {
+            input("Reply to Claude", hint: "Types your reply into this session on your Mac") { await send() }
+        } else if session.canContinue {
+            VStack(spacing: 0) {
+                input("Continue from here", hint: "Opens this conversation in a new Terminal window on your Mac") {
+                    await continueHere()
+                }
+                Text(ended ? "This session has ended. Continuing opens it again in a new Terminal window on your Mac."
+                           : "Continuing opens this conversation in a new Terminal window on your Mac. The original stays as it is.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 8)
+            }
+        } else if ended {
             note("This session has ended.")
-        } else if !session.canReply {
-            note(session.fromWork ? "This session can't take a reply from the phone."
-                                  : "eve didn't start this session, so it can only show it here.")
         } else {
-            HStack(alignment: .bottom, spacing: 10) {
-                TextField("Reply to Claude", text: $reply, axis: .vertical)
-                    .lineLimit(1...5)
-                    .focused($replyFocused)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 9)
-                    .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Color.eveFill))
-                    .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .strokeBorder(Color.eveEdge, lineWidth: 1))
-                    .disabled(sending)
-                    .accessibilityLabel("Reply")
-                    .onChange(of: reply) { _, now in
-                        if now.count > WorkSessionRequests.maxReply {
-                            reply = String(now.prefix(WorkSessionRequests.maxReply))
-                        }
-                    }
-                Button { Task { await send() } } label: {
-                    if sending {
-                        ProgressView()
-                    } else {
-                        Image(systemName: "arrow.up").font(.system(size: 16, weight: .semibold))
+            note(session.fromWork ? "This session can't take a reply from the phone."
+                                  : "eve can't find this session's transcript, so it can only show it here.")
+        }
+    }
+
+    /// The text box and its send button, for a reply or a continue.
+    private func input(_ placeholder: String, hint: String, action: @escaping () async -> Void) -> some View {
+        HStack(alignment: .bottom, spacing: 10) {
+            TextField(placeholder, text: $reply, axis: .vertical)
+                .lineLimit(1...5)
+                .focused($replyFocused)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 9)
+                .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Color.eveFill))
+                .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .strokeBorder(Color.eveEdge, lineWidth: 1))
+                .disabled(sending)
+                .accessibilityLabel("Reply")
+                .onChange(of: reply) { _, now in
+                    if now.count > WorkSessionRequests.maxReply {
+                        reply = String(now.prefix(WorkSessionRequests.maxReply))
                     }
                 }
-                .buttonStyle(RoundButtonStyle(size: 38))
-                .foregroundStyle(.primary)
-                .disabled(!canSend)
-                .opacity(canSend || sending ? 1 : 0.4)
-                .accessibilityLabel(sending ? "Sending" : "Send")
-                .accessibilityHint("Types your reply into this session on your Mac")
+            Button { Task { await action() } } label: {
+                if sending {
+                    ProgressView()
+                } else {
+                    Image(systemName: "arrow.up").font(.system(size: 16, weight: .semibold))
+                }
             }
-            .padding(.horizontal, 12)
-            .padding(.top, 8)
-            .padding(.bottom, 10)
+            .buttonStyle(RoundButtonStyle(size: 38))
+            .foregroundStyle(.primary)
+            .disabled(!canSend)
+            .opacity(canSend || sending ? 1 : 0.4)
+            .accessibilityLabel(sending ? "Sending" : "Send")
+            .accessibilityHint(hint)
         }
+        .padding(.horizontal, 12)
+        .padding(.top, 8)
+        .padding(.bottom, 10)
     }
 
     private func note(_ line: String) -> some View {
@@ -187,7 +218,7 @@ struct SessionSheet: View {
     }
 
     private func load() async {
-        switch await work.detail(fallback.id) {
+        switch await work.detail(current) {
         case .success(let d):
             if d != detail { detail = d }
             loadProblem = nil
@@ -202,7 +233,7 @@ struct SessionSheet: View {
         guard canSend else { return }
         sending = true
         problem = nil
-        let said = await work.reply(reply, to: fallback.id)
+        let said = await work.reply(reply, to: current)
         sending = false
         if let said {
             problem = said
@@ -213,10 +244,31 @@ struct SessionSheet: View {
         }
     }
 
+    /// Forks this session into a Work session and follows it: the sheet now reads, replies to and stops the fork.
+    private func continueHere() async {
+        guard canSend else { return }
+        sending = true
+        problem = nil
+        let result = await work.continueSession(reply, from: current, clientID: continueID)
+        sending = false
+        switch result {
+        case .success(let s):
+            reply = ""
+            continueID = UUID().uuidString
+            forked = s
+            detail = nil
+            loadProblem = nil
+            ended = false
+            current = s.id                  // the .task restarts on the fork
+        case .failure(let p):
+            problem = p.message
+        }
+    }
+
     private func stop() async {
         stopping = true
         problem = nil
-        let said = await work.stop(fallback.id)
+        let said = await work.stop(current)
         stopping = false
         if let said {
             problem = said

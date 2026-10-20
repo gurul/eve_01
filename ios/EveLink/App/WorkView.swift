@@ -93,6 +93,25 @@ final class WorkModel: ObservableObject {
         return out
     }
 
+    /// Jump into a session the phone can't reply to: a fork of it, in its own folder, becomes a Work session with
+    /// `text` its next prompt. The new session, or why there is none. The same clientID again is the same fork.
+    func continueSession(_ text: String, from id: String, clientID: String) async -> Result<WorkSession, Problem> {
+        let out: Result<WorkSession, Problem>
+        switch await client.continueSession(id, text: text, clientID: clientID) {
+        case .success(let r):
+            if let s = r.session {
+                out = .success(s)
+                acted += 1
+            } else {
+                out = .failure(Problem(message: r.reason ?? "eve didn't continue it."))
+            }
+        case .failure(let f):
+            out = .failure(Problem(message: f.message))
+        }
+        await refreshSessions()
+        return out
+    }
+
     /// A session's latest turns, for its sheet.
     func detail(_ id: String) async -> Result<WorkSessionDetail, Problem> {
         switch await client.session(id) {

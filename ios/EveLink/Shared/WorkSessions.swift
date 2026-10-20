@@ -11,9 +11,12 @@
 //   POST /api/link/sessions/<id>/reply    {"text"} → {"ok": true}; 409 {"reason"} when it has ended (with
 //                                         "code": "ended") or can't be reached
 //   POST /api/link/sessions/<id>/stop     {"ok": true, "stopped": true}
+//   POST /api/link/sessions/<id>/continue {"text", "client_id"} → {"ok": true, "session": S}: a session the phone can't
+//                                         reply to (eve didn't start it, or it ended) forked into a new Work session in
+//                                         its own folder, the text its next prompt; the original is left as it was
 //
 //   S = {"id", "folder", "title", "state": starting | working | waiting | idle | ended, "last_activity": epoch seconds,
-//        "last_line", "from_work", "can_reply", "can_stop"}
+//        "last_line", "from_work", "can_reply", "can_stop", "can_continue"}
 import Foundation
 
 /// Where a session is. The daemon's rule (state.py agent_rows): waiting on the owner beats working beats idle.
@@ -59,12 +62,15 @@ struct WorkSession: Equatable, Sendable, Identifiable {
     var fromWork: Bool
     var canReply: Bool
     var canStop: Bool
+    /// The phone can jump in: a fork of it becomes a Work session that takes replies.
+    var canContinue: Bool
 
     init(id: String, folder: String = "", title: String = "", state: WorkSessionState = .idle,
          lastActivity: Date? = nil, lastLine: String = "", fromWork: Bool = false, canReply: Bool = false,
-         canStop: Bool = false) {
+         canStop: Bool = false, canContinue: Bool = false) {
         self.id = id; self.folder = folder; self.title = title; self.state = state; self.lastActivity = lastActivity
         self.lastLine = lastLine; self.fromWork = fromWork; self.canReply = canReply; self.canStop = canStop
+        self.canContinue = canContinue
     }
 
     /// nil without an id. An unknown state reads as idle (a newer eve's word for something quiet); the texts are
@@ -80,7 +86,8 @@ struct WorkSession: Equatable, Sendable, Identifiable {
                   lastLine: Self.clean(json["last_line"] as? String, Self.maxLine),
                   fromWork: json["from_work"] as? Bool ?? false,
                   canReply: json["can_reply"] as? Bool ?? false,
-                  canStop: json["can_stop"] as? Bool ?? false)
+                  canStop: json["can_stop"] as? Bool ?? false,
+                  canContinue: json["can_continue"] as? Bool ?? false)
     }
 
     /// The row's first line: the title, else what it last said, else its folder.
@@ -218,6 +225,14 @@ enum WorkSessionRequests {
     static func stop(_ ep: ChatEndpoint, id: String) -> URLRequest {
         WorkRequests.request(ep, ["api", "link", "sessions", id, "stop"], post: true)
     }
+
+    /// Opens a terminal on the Mac like a start, so it gets a start's timeout. `clientID` as for a start.
+    static func continueSession(_ ep: ChatEndpoint, id: String, text: String, clientID: String) -> URLRequest {
+        var r = WorkRequests.request(ep, ["api", "link", "sessions", id, "continue"], post: true,
+                                     body: ["text": trimmed(text, maxTask), "client_id": String(clientID.prefix(64))])
+        r.timeoutInterval = startTimeout
+        return r
+    }
 }
 
 extension WorkClient {
@@ -238,6 +253,12 @@ extension WorkClient {
     func reply(_ text: String, to id: String) async -> Result<WorkActionResult, ChatFailure> {
         await call(.sessions, { WorkSessionRequests.reply($0, id: id, text: text) }) { data, _ in
             WorkActionResult.decode(data)
+        }
+    }
+
+    func continueSession(_ id: String, text: String, clientID: String) async -> Result<WorkSessionStart, ChatFailure> {
+        await call(.sessions, { WorkSessionRequests.continueSession($0, id: id, text: text, clientID: clientID) }) {
+            data, _ in WorkSessionStart.decode(data)
         }
     }
 

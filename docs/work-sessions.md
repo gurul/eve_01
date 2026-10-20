@@ -14,6 +14,10 @@ calendar, contacts, memory, notes, lights, music, TV, camera, watches,
 location, research search, sharing...) through an MCP server, and every
 acting tool asks the owner on the phone exactly as it does in chat.
 
+Sessions eve did not start (one in Warp, an IDE or another terminal, in any
+project) show their turns too, and can be **continued** from the phone: see
+[Continue: jump into any session](#continue-jump-into-any-session).
+
 Gates and their checks: [work-sessions-gates.md](work-sessions-gates.md).
 
 ## The folder, and what it is not
@@ -79,7 +83,7 @@ Known limit: `/clear` inside a session goes on under a new Claude Code
 session id in the same process. The Work row stays (ps still shows the id it
 started with) and reply and stop still reach it, but its state and detail
 stop following, and the new id is listed beside it as a session eve did not
-start (read-only).
+start (it can be continued, below).
 
 A session's state: **waiting** (a Notification that waits on the human, or an
 `AskUserQuestion` call), **working** (between a prompt and Stop), **idle**,
@@ -93,14 +97,46 @@ for the wrong method, and 503 while Work sessions are off.
 
 | Call | Answer |
 |---|---|
-| `GET /api/link/sessions` | `{"ok": true, "folder": "work", "sessions": [S]}`, newest activity first, at most 30. S: `{"id", "folder", "title", "state": "starting"\|"working"\|"waiting"\|"idle", "last_activity" (epoch s), "last_line" (Claude's newest text, one line, 200 characters), "from_work", "can_reply", "can_stop"}`. Every live session the daemon knows is listed; only Work sessions (`from_work: true`) can be replied to or stopped. A Work session whose claude process is gone (after its 30 s grace) leaves the list and is marked ended; `starting` only within that grace. |
+| `GET /api/link/sessions` | `{"ok": true, "folder": "work", "sessions": [S]}`, newest activity first, at most 30. S: `{"id", "folder", "title", "state": "starting"\|"working"\|"waiting"\|"idle", "last_activity" (epoch s), "last_line" (Claude's newest text, one line, 200 characters), "from_work", "can_reply", "can_stop", "can_continue"}`. Every live session the daemon knows is listed; only Work sessions (`from_work: true`) can be replied to or stopped. A Work session whose claude process is gone (after its 30 s grace) leaves the list and is marked ended; `starting` only within that grace. |
 | `POST /api/link/sessions/start` | `{"task": 1..4000 chars, "client_id"?: ≤ 64}` → `{"ok": true, "session": S}` with state `starting`. 400 for a bad body, 503 `{"ok": false, "reason"}` when Terminal does not open. |
 | `GET /api/link/sessions/<id>` | `{"ok": true, "session": S, "turns": [{"role": "owner"\|"claude", "text", "at"}], "cut": bool, "ended": bool}`; an ended or stopped Work session has S's state `"ended"` and `"ended": true`, and so does one whose claude process is gone after its 30 s grace (detail marks it ended, as the list does). The last 20 turns from the transcript's last 512 kB. Only the owner's prompts and Claude's text: no tool calls, tool results, thinking, subagents' lines or command wrappers. Each turn is clipped to 2000 characters, and token-shaped strings and `KEY=value` secrets are masked as `[hidden]`. 404 for an unknown id. |
 | `POST /api/link/sessions/<id>/reply` | `{"text": 1..4000}` → `{"ok": true}`. The text is flattened to one line (a newline would submit early) and typed into that session's own tab (below). 409 "that session has ended" (with `"code": "ended"`, which the app matches, never the words), "can't reach that session's window", or "eve can only reply to or stop sessions it started from Work"; 404 for an unknown id. |
 | `POST /api/link/sessions/<id>/stop` | `{"ok": true, "stopped": true}`, also for one already gone. 409 for a session eve did not start. |
+| `POST /api/link/sessions/<id>/continue` | `{"text": 1..4000, "client_id"?: ≤ 64}` → `{"ok": true, "session": S}`: a new Work session that forks `<id>` (below). 409 "that session takes replies as it is" for a live Work session (or when ps cannot tell), 409 "eve can't find that session's folder or transcript" when there is nothing to fork, 404 for an unknown id. The same `client_id` within 10 minutes answers the first fork. |
 
 The transcript is SessionStart's `transcript_path`, or else Claude Code's own
-place for it: `<config home>/projects/<folder with "/" and "." as "-">/<id>.jsonl`.
+place for it: `<config home>/projects/<folder, every character that is not a
+letter or digit as "-">/<id>.jsonl`, or else `<id>.jsonl` in any project
+folder. A session the daemon adopted from a tool hook after a restart has no
+`transcript_path`; before 2026-10-20 its sheet said "Nothing yet."
+
+## Continue: jump into any session
+
+Owner, 2026-10-20: "i want to be able to see the content of sessions i didnt
+start and just jump in and continue from mobile if i am working on multiple
+projects".
+
+A session that started outside eve cannot be typed into: Warp has no
+AppleScript tab addressing, and an IDE's terminal has none either. So
+continuing **forks** it. `continue` opens a new Work session in the
+original's folder (not the work folder) running
+
+    claude --dangerously-skip-permissions --mcp-config <file> \
+           --resume <id> --fork-session --session-id <new> -- <text>
+
+The fork has the whole conversation under a new id, which `ps` names, so
+reply, stop and the state chips work on it as on any Work session. The
+original session and its transcript are left as they were. If it is still
+running at the desk, the two run side by side in one folder, so the sheet
+says so before the owner sends. The original's id waits in `<new>.resume` (0600)
+beside the task file; `launch` reads it once, checks it is a UUID, and deletes
+it. A Work session that has ended can be continued the same way, in the work
+folder.
+
+`can_continue` is true for a session eve did not start whose folder and
+transcript are both there, and for an ended Work session with a transcript.
+The sheet shows a "Continue from here" box in place of the read-only note,
+and follows the fork once it opens.
 
 ## Reply: that session's tab, only while it is live
 
@@ -192,7 +228,7 @@ reply, a transcript line, a token or a tool's arguments (AGENTS.md rule 10).
 
 | File | What |
 |---|---|
-| `bridge/src/eve_bridge/work_sessions.py` | the registry, start / list / detail / reply / stop, `launch` |
+| `bridge/src/eve_bridge/work_sessions.py` | the registry, start / list / detail / reply / stop / continue, `launch` |
 | `bridge/src/eve_bridge/eve_mcp.py` | the stdio MCP server |
 | `bridge/src/eve_bridge/link_chat.py` | the `/api/link/sessions*` routes |
 | `bridge/src/eve_bridge/daemon.py` | `_work`, the hooks' `_work_note`, IPC `mcp_tools` and `mcp_call` |

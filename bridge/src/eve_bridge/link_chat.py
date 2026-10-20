@@ -131,7 +131,8 @@ view and does all its networking natively (ios/EveLink); this module is the daem
   happens"): the Work tab's Claude Code sessions in ``~/Documents/personal/work``. Start opens one Terminal window
   running ``claude`` with the task as its first prompt, never through a shell string; detail is the transcript's
   latest turns, words only, secrets masked; reply types into that session's own tab only while it runs; stop ends
-  it. 503 while ``EVE_WORK_SESSIONS=0`` (``work`` is None).
+  it; ``POST .../<id>/continue`` ``{"text", "client_id"?}`` forks a session the phone cannot reply to (one eve did not
+  start, or an ended one) into a new Work session in its own folder. 503 while ``EVE_WORK_SESSIONS=0`` (``work`` is None).
 
 **Who may call.** The link token (stick_link.LinkToken), as ``Authorization: Bearer``, checked in constant time.
 A browser sends an Origin on every cross-site fetch and the app's URLSession sends none, so any Origin is refused
@@ -208,7 +209,7 @@ SESSIONS_PATH = "/api/link/sessions"     # work_sessions.py: the Work tab's Clau
 SESSION_START_PATH = "/api/link/sessions/start"
 MUSE_PATH = "/api/link/muse"            # the composer's eve/Muse switch: GET {"available", "on"}; POST {"on"}
 SESSION_RE = re.compile(r"^/api/link/sessions/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})"
-                        r"(?:/(reply|stop))?$")
+                        r"(?:/(reply|stop|continue))?$")
 # one kept upload's bytes, full size; anything after the prefix that is not 32 hex is a 404 (never a path)
 FILE_RE = re.compile(r"^/api/link/file/([^/]{0,64})$")
 PATHS = (TURN_PATH, MESSAGES_PATH, JOBS_PATH, APPS_PATH, UPLOAD_PATH, CONTROLS_PATH, TODAY_PATH, *STREAM_PATHS,
@@ -1550,7 +1551,8 @@ class LinkChat:
                         reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         """The Work tab's Claude Code sessions (work_sessions.py, docs/work-sessions.md): ``GET /api/link/sessions``,
         ``POST .../start`` ``{"task", "client_id"?}``, ``GET .../<id>``, ``POST .../<id>/reply`` ``{"text"}`` and
-        ``POST .../<id>/stop``. The token and Origin checks in ``serve`` come first; 503 while they are off."""
+        ``POST .../<id>/stop`` and ``POST .../<id>/continue`` ``{"text", "client_id"?}`` (a fork of a session the phone
+        cannot reply to, as a new Work session). The token and Origin checks in ``serve`` come first; 503 while they are off."""
         work = self._work() if self._work is not None else None
         if work is None:
             if path == SESSION_START_PATH or (session is not None and session.group(2)):
@@ -1574,6 +1576,11 @@ class LinkChat:
                 if body is None:
                     return
                 status, out = await work.reply(sid, body.get("text"))
+            elif verb == "continue":
+                body = await self._optional_body(headers, reader, writer)
+                if body is None:
+                    return
+                status, out = await work.continue_session(sid, body.get("text"), body.get("client_id", ""))
             else:
                 status, out = await work.stop(sid)
         await self._json(writer, status, out)
