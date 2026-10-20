@@ -400,12 +400,38 @@ pub fn external_environment() -> IndexMap<String, String> {
     eve_codex_auth::launch_environment(None).0
 }
 
-/// `Path.home()`: `$HOME` (an empty one is `.`), else the password database.
+/// `str(Path.home())` (Python 3.13): `os.path.expanduser('~')` (`$HOME` when set, even empty, else the password
+/// database; trailing slashes dropped, nothing left is `/`), then pathlib's normalization.
 fn home() -> String {
-    match std::env::var("HOME") {
-        Ok(h) if h.is_empty() => ".".into(),
+    let userhome = match std::env::var("HOME") {
         Ok(h) => h,
-        Err(_) => dirs::home_dir().map(|p| p.to_string_lossy().into_owned()).unwrap_or_else(|| "/".into()),
+        Err(_) => dirs::home_dir().map(|p| p.to_string_lossy().into_owned()).unwrap_or_else(|| "~".into()),
+    };
+    home_from(&userhome)
+}
+
+/// [`home`] over an explicit `userhome`.
+fn home_from(userhome: &str) -> String {
+    let expanded = userhome.trim_end_matches('/');
+    let expanded = if expanded.is_empty() { "/" } else { expanded };
+    pathlib_str(expanded)
+}
+
+/// `str(PurePosixPath(p))`: `//` kept as a root only when exactly two slashes lead, empty and `.` parts dropped.
+fn pathlib_str(p: &str) -> String {
+    let root = if p.starts_with("//") && !p.starts_with("///") {
+        "//"
+    } else if p.starts_with('/') {
+        "/"
+    } else {
+        ""
+    };
+    let parts: Vec<&str> = p.split('/').filter(|s| !s.is_empty() && *s != ".").collect();
+    let out = format!("{root}{}", parts.join("/"));
+    if out.is_empty() {
+        ".".into()
+    } else {
+        out
     }
 }
 
@@ -784,7 +810,12 @@ impl CodexComputerAgent {
                 return Ok(());
             }
         }
-        if let Err(e) = self.shared.start().await {
+        // `except BaseException: await self._close(); raise`: a prewarm called off midway (its future dropped)
+        // closes what it started in the background.
+        let mut guard = CloseOnDrop(Some(self.shared.clone()));
+        let started = self.shared.start().await;
+        guard.0 = None;
+        if let Err(e) = started {
             self.shared.close().await;
             return Err(e);
         }
@@ -910,6 +941,18 @@ impl Drop for RunGuard {
     }
 }
 
+/// Closes the agent in the background when a `prewarm()` future is dropped before its start finished.
+struct CloseOnDrop(Option<Arc<Shared>>);
+
+impl Drop for CloseOnDrop {
+    fn drop(&mut self) {
+        let Some(sh) = self.0.take() else { return };
+        if let Ok(rt) = tokio::runtime::Handle::try_current() {
+            rt.spawn(async move { sh.close().await });
+        }
+    }
+}
+
 enum ReadLine {
     Line(Vec<u8>),
     Eof,
@@ -989,20 +1032,44 @@ static BROWSER_TAB: LazyLock<Regex> =
 static CAPTURE_MARKER: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?m)^EVE_BROWSER_CAPTURE (\{[^\n]+\})$").expect("capture marker pattern"));
 
-/// `base64.b64decode(s, validate=True)`: only the alphabet then at most two `=`; data a multiple of four once
-/// padded, with excess padding and stray trailing bits ignored, as binascii does.
+/// `base64.b64decode(s, validate=True)`, which Python 3.13 runs as `binascii.a2b_base64(s, strict_mode=True)`:
+/// only the alphabet; no leading, excess or discontinuous padding and nothing after it; the data a multiple of
+/// four once padded. Stray trailing bits are ignored, as binascii does.
 fn b64decode_validate(s: &str) -> Option<Vec<u8>> {
-    let data = s.trim_end_matches('=');
-    let pads = s.len() - data.len();
-    if pads > 2 || !data.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'+' || b == b'/') {
-        return None;
+    let b = s.as_bytes();
+    if b.first() == Some(&b'=') {
+        return None; // Leading padding not allowed
     }
-    match data.len() % 4 {
-        1 => return None,
-        2 if pads < 2 => return None,
-        3 if pads < 1 => return None,
-        _ => {}
+    let (mut quad, mut pads, mut padding, mut done) = (0usize, 0usize, false, false);
+    let mut data_end = 0;
+    for (i, &c) in b.iter().enumerate() {
+        if c == b'=' {
+            padding = true;
+            if quad == 0 {
+                return None; // Excess padding not allowed
+            }
+            if quad >= 2 {
+                pads += 1;
+                if quad + pads >= 4 {
+                    if i + 1 < b.len() {
+                        return None; // Excess data after padding
+                    }
+                    done = true;
+                    break;
+                }
+            }
+            continue;
+        }
+        if !(c.is_ascii_alphanumeric() || c == b'+' || c == b'/') || padding {
+            return None; // Only base64 data is allowed / Discontinuous padding not allowed
+        }
+        quad = (quad + 1) % 4;
+        data_end = i + 1;
     }
+    if !done && quad != 0 {
+        return None; // Incorrect padding, or one more than a multiple of four
+    }
+    let data = &s[..data_end];
     let engine = base64::engine::GeneralPurpose::new(
         &base64::alphabet::STANDARD,
         base64::engine::GeneralPurposeConfig::new()

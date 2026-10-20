@@ -656,12 +656,11 @@ async fn test_new_cua_action_invalidates_previous_browser_picture() {
 
 #[test]
 fn base64_validate_is_pythons() {
-    // Measured with CPython: base64.b64decode(s, validate=True).
-    for (s, want) in [
-        ("QQ==", Some(&b"A"[..])), ("QQ", None), ("QQ=", None), ("QUFB", Some(b"AAA")), ("QUFB=", Some(b"AAA")),
-        ("QUFB==", Some(b"AAA")), ("QUFBQQ===", None), ("QR==", Some(b"A")), ("Q===", None), ("", Some(b"")),
-        ("AB=C", None), ("====", None), ("A", None), ("invalid!", None),
-    ] {
+    // Measured with CPython 3.13 (the daemon's): base64.b64decode(s, validate=True), which is strict_mode.
+    let cases: [(&str, Option<&[u8]>); 28] = [
+        ("QQ==", Some(&b"A"[..])), ("QQ", None), ("QQ=", None), ("QUFB", Some(&b"AAA"[..])), ("QUFB=", None), ("QUFB==", None), ("QUFBQQ===", None), ("QR==", Some(&b"A"[..])), ("Q===", None), ("", Some(&b""[..])), ("AB=C", None), ("====", None), ("A", None), ("invalid!", None), ("=", None), ("QQ===", None), ("QUI=", Some(&b"AB"[..])), ("QUI==", None), ("QQ=A", None), ("QQ==QQ==", None), ("=QQ=", None), ("QUJDRA", None), ("QUJDRA==", Some(&b"ABCD"[..])), ("QUJD\n", None), ("Q=", None), ("Q==", None), ("QUJ=D", None), ("QUI=\n", None),
+    ];
+    for (s, want) in cases {
         assert_eq!(b64decode_validate(s).as_deref(), want, "{s:?}");
     }
 }
@@ -1471,4 +1470,30 @@ fn malformed_forms_raise_where_python_raises() {
     assert_eq!(pending_key(&json!(true)).unwrap(), Some(1));
     assert_eq!(pending_key(&json!("1")).unwrap(), None);
     assert!(pending_key(&json!([1])).is_err());
+}
+
+#[test]
+fn thread_cwd_is_str_of_path_home() {
+    // Measured with CPython 3.13: HOME=<h> python -c "print(str(pathlib.Path.home()))".
+    for (h, want) in [
+        ("", "/"), ("/", "/"), ("/Users/x/", "/Users/x"), ("//a//b/./c/", "//a/b/c"), ("///a", "/a"),
+        ("rel/x", "rel/x"), ("./", "."), ("/a/./", "/a"),
+    ] {
+        assert_eq!(home_from(h), want, "{h:?}");
+    }
+}
+
+#[tokio::test]
+async fn a_prewarm_called_off_midway_closes_what_it_started() {
+    let rig = Rig::new(Fake::process(), AuthMode::Plan);
+    let agent = rig.agent(rig.answering("no"));
+    {
+        // One poll: the app-server is started and `initialize` is written, then the future is dropped.
+        let mut warm_up = std::pin::pin!(agent.prewarm());
+        assert!(futures::poll!(warm_up.as_mut()).is_pending());
+    }
+    assert_eq!(rig.launches.lock().len(), 1);
+    let mut finished = rig.fake().finished.subscribe();
+    tokio::time::timeout(Duration::from_secs(2), finished.wait_for(|f| *f)).await.unwrap().unwrap();
+    assert!(!agent.warm(900.0));
 }
