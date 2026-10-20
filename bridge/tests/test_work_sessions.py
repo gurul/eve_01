@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import re
 import shlex
 import signal
@@ -756,3 +757,16 @@ def test_continue_refuses_a_folder_claude_was_never_trusted_in(tmp_path: Path) -
     assert work_sessions.folder_trusted(str(tmp_path / "code" / "eve"), tmp_path / "claude") is None
     claude_state.write_text(json.dumps({"projects": {str(tmp_path): {"hasTrustDialogAccepted": True}}}))
     assert asyncio.run(work.continue_session(OTHER, "go"))[0] == 200     # a trusted folder above it: positive control
+
+
+def test_launch_drops_an_inherited_claude_session_marker(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A Terminal first started from inside a Claude Code session hands its markers on; a claude that inherits
+    CLAUDE_CODE_CHILD_SESSION saves no transcript, so the phone would see nothing."""
+    work, _ = make(tmp_path)
+    sid = start(work, "hello")[1]["session"]["id"]
+    for name in work_sessions.INHERITED_SESSION_ENV:
+        monkeypatch.setenv(name, "1")
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", "/keep/me")
+    launched(tmp_path, sid)
+    assert not any(name in os.environ for name in work_sessions.INHERITED_SESSION_ENV)
+    assert os.environ["CLAUDE_CONFIG_DIR"] == "/keep/me"

@@ -887,6 +887,14 @@ class WorkSessions:
         return 200, {"ok": True, "stopped": True}
 
 
+# Markers a running Claude Code session puts in its children's environment. A Work session is a session of its own,
+# so launch drops them: Terminal.app keeps the environment of whatever first started it, and a claude that inherits
+# CLAUDE_CODE_CHILD_SESSION runs as a child and saves no transcript, which the phone reads (found live 2026-10-20).
+INHERITED_SESSION_ENV = ("CLAUDECODE", "CLAUDE_CODE_CHILD_SESSION", "CLAUDE_CODE_SESSION_ID", "CLAUDE_CODE_ENTRYPOINT",
+                         "CLAUDE_CODE_EXECPATH", "CLAUDE_CODE_MESSAGING_SOCKET", "CLAUDE_CODE_MESSAGING_TOKEN",
+                         "CLAUDE_CODE_SESSION_ATTENDED", "CLAUDE_PID")
+
+
 # ---- the session's own first moment: python -m eve_bridge.work_sessions launch <sid> --------------------------------
 
 def main(argv: Optional[list[str]] = None, *, home: Optional[Path] = None,
@@ -919,6 +927,8 @@ def main(argv: Optional[list[str]] = None, *, home: Optional[Path] = None,
         print("Claude Code (claude) is not on this shell's PATH.", file=sys.stderr)
         return 127
     argv_out = launch_argv(sid, task, folder / f"{sid}.mcp.json", claude, resume)
+    for name in INHERITED_SESSION_ENV:
+        os.environ.pop(name, None)
     execvp(argv_out[0], argv_out)
     return 0                                            # only reached when execvp is a test's stand-in
 
