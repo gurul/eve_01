@@ -1116,9 +1116,17 @@ fn index(v: &Value, i: usize) -> Option<Value> {
     }
 }
 
-/// Python's `float(s)` for a string: blanks around, `_` between digits, `inf`/`infinity`/`nan` in any case.
+/// What `float()` and `int()` read a string as first (CPython's `_PyUnicode_TransformDecimalAndSpaceToASCII`):
+/// every Unicode decimal digit as its ASCII digit.
+fn ascii_digits(s: &str) -> String {
+    s.chars().map(|c| digit_value(c).and_then(|d| char::from_digit(d, 10)).unwrap_or(c)).collect()
+}
+
+/// Python's `float(s)` for a string: blanks around, `_` between digits, `inf`/`infinity`/`nan` in any case, any
+/// Unicode decimal digit.
 fn str_float(s: &str) -> Option<f64> {
-    let t = py::strip(s);
+    let s = ascii_digits(s);
+    let t = py::strip(&s);
     let chars: Vec<char> = t.chars().collect();
     for (i, c) in chars.iter().enumerate() {
         if *c == '_' {
@@ -1177,7 +1185,8 @@ fn py_int(v: &Value) -> Option<i128> {
         }
         Value::Bool(b) => Some(i128::from(*b)),
         Value::String(s) => {
-            let t = py::strip(s);
+            let s = ascii_digits(s);
+            let t = py::strip(&s);
             let digits = t.strip_prefix(['+', '-']).unwrap_or(t);
             let chars: Vec<char> = digits.chars().collect();
             if chars.is_empty() || !chars[0].is_ascii_digit() || !chars[chars.len() - 1].is_ascii_digit() {
@@ -1991,6 +2000,10 @@ mod tests {
         assert_eq!(py_int(&json!(2.9)), Some(2));
         assert_eq!(py_int(&json!(" 61 ")), Some(61));
         assert_eq!(py_int(&json!("2.0")), None);
+        // float("١٢.٥") == 12.5 and int("٦١") == 61: the digits are read as ASCII first
+        assert_eq!(py_float(&json!(" ١٢.٥ ")), Some(12.5));
+        assert_eq!(str_float("٣٧.٥"), Some(37.5));
+        assert_eq!(py_int(&json!("٦١")), Some(61));
     }
 
     #[test]

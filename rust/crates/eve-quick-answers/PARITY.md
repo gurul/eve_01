@@ -33,7 +33,7 @@ Status: complete
 | `time_line` | `time_line(&NaiveDateTime, &str)` | `%-I:%M %p`; the place is "" for here |
 | `date_line` | `date_line(&NaiveDateTime)` | |
 | `WMO` | `wmo(i128) -> Option<&str>` | same codes and words |
-| `weather_line` | `weather_line(&str, &Value, usize) -> Option<String>` | Python's `float()`/`int()`/`round()` on JSON values (strings, bools, ties to even), list or string indexing; None where Python catches |
+| `weather_line` | `weather_line(&str, &Value, usize) -> Option<String>` | Python's `float()`/`int()`/`round()` on JSON values (strings with any Unicode decimal digit, bools, ties to even), list or string indexing; None where Python catches |
 | `sun_line` | `sun_line(&str, &Value, &str, usize)` | `datetime.fromisoformat` via `eve_places::py::fromisoformat` |
 | `AQI_BANDS` | `AQI_BANDS` | |
 | `air_line` | `air_line(&str, &Value)` | |
