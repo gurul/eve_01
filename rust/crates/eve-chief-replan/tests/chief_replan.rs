@@ -385,3 +385,10 @@ fn test_a_replan_cancels_a_yes_given_before_it() {
     assert!(plan.phases[1..].iter().all(|p| p.executor.is_empty() && p.result.is_none() && p.status == "queued"));
     assert!(plan.phases[3].grounded && plan.phases[3].door == "one_way");
 }
+
+/// Python's json.loads keeps the last of a repeated key (checked against CPython 3.13); so does the port.
+#[test]
+fn test_a_reply_with_a_repeated_key_reads_the_last() {
+    let d = chief_replan::parse(r#"{"decision": "keep", "decision": "revise", "why": "a", "steps": []}"#);
+    assert_eq!(d, Some(Decision::new("revise", "a", vec![])));
+}
