@@ -1,4 +1,4 @@
-//! Unit `inlet_core`: telegram.py 2448-3714 (inlet/mod, run, handle); tests: test_telegram.py G6-G8 (542-780), the robot and stealth (1057-1209), where the owner's message goes (4215-4381), review findings and the relay join (6341-6675); test_telegram_agentcard.py.
+//! Unit `inlet_core`: telegram.py 2448-3714 (inlet/mod, run, handle); tests: test_telegram.py G6-G8 (542-780), the robot and stealth (1057-1209), where the owner's message goes (4215-4381); and five of this port's own over `run`, `_dispatch`, `menu_commands`, stealth and `set_muse` (the poll's backoff, the menu, forwarded and non-text messages), which no Python test names.
 //!
 //! The shared fakes are in `support` (architect-owned); this unit's own go here. Python's tests that drive private
 //! methods (`_ask_user`, `_relay_to`, `_launch_step`, `_tool`, `_turn_parts`) are driven here through the poll loop
@@ -201,7 +201,10 @@ async fn test_a_second_task_is_refused_while_one_runs() {
             .iter()
             .map(|i| i["type"].as_str().unwrap_or("").to_string())
             .collect();
-        assert_eq!(&kinds[kinds.len() - 2..], &["function_call".to_string(), "function_call_output".to_string()]);
+        assert_eq!(
+            &kinds[kinds.len() - 3..],
+            &["reasoning".to_string(), "function_call".to_string(), "function_call_output".to_string()]
+        );
         rig.agents.last().release.set();
     })
     .await;
@@ -303,7 +306,7 @@ async fn test_a_stranger_cannot_answer_a_tasks_question() {
             msg_with(Some("yes"), 4, OWNER, (OWNER, "private"), json!({"forward_origin": {"type": "user"}})),
         ]);
         settle(200).await;
-        assert!(rig.inlet.waiting_on_owner()); // still waiting
+        assert!(rig.inlet.tt_awaiting_answer()); // still waiting
         feed(&rig, msg("no", 5)); // the owner, in their own words: the control
         settle(200).await;
         rig.agents.last().release.set();
@@ -331,7 +334,7 @@ async fn test_no_answer_in_time_reads_as_no() {
     .await;
     let last = sent(&rig).last().cloned().unwrap().1;
     assert!(last.starts_with("Calculator is open. (answer=no (no answer within"), "{last}");
-    assert!(!rig.inlet.waiting_on_owner());
+    assert!(rig.inlet.tt_pending_answer().is_none());
 }
 
 // ---- the robot over text, and stealth ---------------------------------------------------------------------------------
@@ -473,7 +476,14 @@ async fn test_a_text_is_a_word_said_to_the_robot() {
         o.memory = Some(m as Arc<dyn BrainMemory>);
     });
     run_rig(&rig, async {}).await;
-    assert_eq!(moves.lock().len(), 1);
+    // head.move(-60.0, None, False, 15.0): yaw -60 and the default 15 s hold, the pitch kept as it was
+    {
+        let moves = moves.lock();
+        assert_eq!(moves.len(), 1);
+        assert_eq!(moves[0]["cmd"], json!("look"));
+        assert_eq!(moves[0]["yaw"], json!(-60));
+        assert_eq!(moves[0]["hold"], json!(15000));
+    }
     assert_eq!(*notes.calls.lock(), vec!["start".to_string()]);
     assert_eq!(*sounds.lock(), vec![false]);
     assert_eq!(*memory.stars.lock(), vec!["I like ramen".to_string()]); // "remember that" stars via memory.star
@@ -481,16 +491,24 @@ async fn test_a_text_is_a_word_said_to_the_robot() {
     assert_eq!(texts, vec!["Looking left.", "Taking notes.", "Muted.", "A desk with a mug."]);
     assert_eq!(rig.api.log.lock().reactions, vec![(OWNER, 4, STAR_REACTION.to_string())]); // starred: a receipt
     assert_eq!(last_output(&rig, 8)["view"], json!("a desk with a mug"));
+    let tools = eve_brain::telegram::TOOLS.as_array().unwrap().clone();
+    for name in ["look", "look_around", "find", "move_head", "go_explore", "set_sound", "remember", "take_notes"] {
+        assert!(tools.iter().any(|t| t["name"] == json!(name)), "{name}");
+    }
 }
 
 #[tokio::test]
 async fn test_take_notes_started_on_a_call_says_its_reply_and_lets_the_chat_go_after_the_turn() {
-    async fn run(defer: bool) -> (Vec<String>, Vec<String>) {
+    /// What was read and texted for "start taking notes", then whether the listener was let go: Python's
+    /// `rig.inlet._call_say is None`, seen here as the next line heard with no call of its own (the listener's,
+    /// `call=None`) being texted, not read.
+    async fn run(defer: bool) -> (Vec<String>, Vec<String>, bool) {
         let api = FakeApi::new(vec![]);
         let create = FakeCreate::new(vec![
             reply("ok"),
             call("take_notes", json!({"action": "start"}), "call_1"),
             reply("Taking notes."),
+            reply("Still here."),
         ]);
         let rig = Rig::new(api, create, config(), |_| {});
         let read = Arc::new(Mutex::new(Vec::<String>::new()));
@@ -521,13 +539,16 @@ async fn test_take_notes_started_on_a_call_says_its_reply_and_lets_the_chat_go_a
         rig.inlet.hear("start taking notes", Default::default(), true, None, None, "auto", &[]);
         settle(400).await;
         let texts = sent(&rig).into_iter().map(|(_, t)| t).collect();
-        let read = read.lock().clone();
-        (read, texts)
+        let heard = read.lock().clone();
+        rig.inlet.hear("are you there", Default::default(), true, None, None, "auto", &[]);
+        settle(400).await;
+        let let_go = sent(&rig).iter().any(|(_, t)| t == "Still here.") && !read.lock().iter().any(|t| t == "Still here.");
+        (heard, texts, let_go)
     }
-    let (read, texts) = run(true).await;
-    assert!(read.iter().any(|t| t == "Taking notes.") && !texts.iter().any(|t| t == "Taking notes."));
+    let (read, texts, let_go) = run(true).await;
+    assert!(read.iter().any(|t| t == "Taking notes.") && !texts.iter().any(|t| t == "Taking notes.") && let_go);
     // positive control: let go inside the turn, the same reply is texted and never said
-    let (read, texts) = run(false).await;
+    let (read, texts, _) = run(false).await;
     assert!(texts.iter().any(|t| t == "Taking notes.") && !read.iter().any(|t| t == "Taking notes."));
 }
 
@@ -624,23 +645,25 @@ async fn test_eve_yes_while_allow_deny_waits_is_for_eve_and_allows_nothing() {
 
 #[tokio::test]
 async fn test_an_image_is_refused_while_a_question_with_buttons_waits_and_no_relay_is_on() {
-    let rig = Rig::new(
-        FakeApi::new(vec![vec![msg("delete the draft", 1)]]),
-        FakeCreate::new(vec![call("start_task", json!({"goal": "delete the draft"}), "call_1")]),
-        config(),
-        |_| {},
-    );
-    *rig.agents.ask.lock() = Some("Delete the draft? yes / no?".into());
-    run_rig(&rig, async {
-        assert!(rig.inlet.waiting_on_owner());
-        let photo = msg_with(None, 9, OWNER, (OWNER, "private"), json!({"photo": [{"file_id": "f", "file_size": 10}]}));
-        feed(&rig, photo);
-        settle(200).await;
-        assert!(sent(&rig).last().unwrap().1.contains("answer the pending question"));
-        assert_eq!(rig.create.requests.lock().len(), 1);
-        rig.agents.last().release.set();
-    })
-    .await;
+    let rig = Rig::new(FakeApi::new(vec![]), FakeCreate::new(vec![]), config(), |_| {});
+    let inlet = rig.inlet.clone();
+    let ask = tokio::spawn(async move {
+        inlet.tt_ask_user_choices("Delete the draft? yes / no?", OWNER, &eve_brain::telegram::ALLOW_DENY).await
+    });
+    settle(200).await;
+    assert!(rig.inlet.tt_awaiting_answer() && !rig.inlet.claude());
+    rig.inlet.tt_handle(&eve_brain::telegram::Inbound {
+        chat_id: OWNER,
+        user_id: OWNER,
+        text: String::new(),
+        image: Some(eve_telegram_images::Attachment::new("f")),
+        message_id: 9,
+        ..Default::default()
+    });
+    settle(200).await;
+    assert!(sent(&rig).last().unwrap().1.contains("answer the pending question"));
+    assert!(rig.create.requests.lock().is_empty());
+    ask.abort();
 }
 
 #[tokio::test]

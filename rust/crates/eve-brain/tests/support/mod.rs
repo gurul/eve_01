@@ -353,15 +353,18 @@ impl FakeCreate {
     }
 }
 
-/// A Responses API reply that only says `text`.
+/// A Responses API reply that only says `text` (test_telegram.py's `say`).
 pub fn reply(text: &str) -> Value {
-    json!({"output": [{"type": "message", "content": [{"type": "output_text", "text": text}]}]})
+    json!({"id": "resp", "output": [{"type": "message", "role": "assistant",
+                                     "content": [{"type": "output_text", "text": text}]}]})
 }
 
-/// A Responses API reply that calls one tool.
+/// A Responses API reply that calls one tool, its reasoning item first (test_telegram.py's `call`): a stateless
+/// round must carry both back.
 pub fn call(name: &str, args: Value, call_id: &str) -> Value {
-    json!({"output": [{"type": "function_call", "name": name, "call_id": call_id,
-                       "arguments": serde_json::to_string(&args).unwrap()}]})
+    json!({"id": "resp", "output": [{"type": "reasoning", "id": "rs_1", "encrypted_content": "opaque"},
+                                    {"type": "function_call", "name": name, "call_id": call_id,
+                                     "arguments": serde_json::to_string(&args).unwrap()}]})
 }
 
 // ---- FakeAgent ----------------------------------------------------------------------------------------------------

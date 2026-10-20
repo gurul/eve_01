@@ -82,7 +82,7 @@ impl TelegramInlet {
         }
         tracing::info!(
             "telegram: listening for {} owner id(s); text turns go to {} at {} effort",
-            self.config.owner_ids.len(),
+            self.config.owners().len(),
             self.config.model,
             self.config.effort
         );
@@ -261,10 +261,9 @@ impl TelegramInlet {
     pub(crate) async fn set_commands(self: &Arc<Self>) {
         let mut done = 0;
         let commands = self.menu_commands();
-        let mut owners = self.config.owner_ids.clone();
-        owners.sort_unstable();
-        owners.dedup();
-        for owner in owners {
+        let owners = self.config.owners(); // sorted(self.config.owner_ids): a frozenset, each id once
+        for owner in &owners {
+            let owner = *owner;
             if let Err(e) = self.api.set_commands(&commands, owner).await {
                 // One owner's refusal (a chat that never opened the bot: "chat not found") must not cost the
                 // owners after it their menu (review, 2026-09-23): log it and go on.
@@ -276,7 +275,7 @@ impl TelegramInlet {
             }
             done += 1;
         }
-        tracing::info!("telegram: / menu set for {} of {} owner chat(s)", done, self.config.owner_ids.len());
+        tracing::info!("telegram: / menu set for {} of {} owner chat(s)", done, owners.len());
     }
 
     /// py: telegram.py:3011 `def _keep_typing(self, chat_id: Optional[int], reason: str, secs: float) -> None:`
