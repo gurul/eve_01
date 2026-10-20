@@ -1,7 +1,6 @@
 //! A port of `telegram.py`, lines 2448-2883: the inlet's types and state, its constructor.
 //!
-//! Skeleton: constants and prompts are verbatim (generated from the Python values); bodies are
-//! `todo!()` until this file's unit fills them.
+//! The section files under this module add the inlet's methods, one `impl TelegramInlet` block each.
 
 pub mod call;
 pub mod chief;
@@ -35,7 +34,34 @@ use crate::telegram::*;
 
 /// py: telegram.py:2450 `def _same_folder(a: str, b: str) -> bool:`
 pub(crate) fn same_folder(a: &str, b: &str) -> bool {
-    todo!("telegram.py:2450 _same_folder")
+    match (resolve(Path::new(a)), resolve(Path::new(b))) {
+        (Some(x), Some(y)) => x == y,
+        _ => a == b,
+    }
+}
+
+/// Python's `Path(raw).resolve()` (strict=False): absolute, every symlink of the part that exists followed, and
+/// the rest taken as written, `.` dropped and `..` stepping up. None where Python raises (no working folder).
+fn resolve(path: &Path) -> Option<PathBuf> {
+    use std::path::Component;
+    let absolute = if path.is_absolute() { path.to_path_buf() } else { std::env::current_dir().ok()?.join(path) };
+    let parts: Vec<Component<'_>> = absolute.components().collect();
+    for cut in (1..=parts.len()).rev() {
+        let head: PathBuf = parts[..cut].iter().collect();
+        if let Ok(mut out) = std::fs::canonicalize(&head) {
+            for part in &parts[cut..] {
+                match part {
+                    Component::ParentDir => {
+                        out.pop();
+                    }
+                    Component::Normal(name) => out.push(name),
+                    _ => {}
+                }
+            }
+            return Some(out);
+        }
+    }
+    Some(absolute)
 }
 
 /// py: telegram.py:2457 `def _folder_label(entry: str) -> str:`
@@ -43,7 +69,26 @@ pub(crate) fn same_folder(a: &str, b: &str) -> bool {
 /// A Codex folder menu entry as a button label: a bare name as it is, a full path (two folders share
 /// the name) with ~ for the home folder and, when still too long, its end kept, where the names differ.
 pub(crate) fn folder_label(entry: &str) -> String {
-    todo!("telegram.py:2457 _folder_label")
+    if !entry.contains('/') {
+        return entry.to_string();
+    }
+    let home = home().to_string_lossy().into_owned();
+    let label = match entry.strip_prefix(&format!("{home}/")) {
+        Some(_) => format!("~{}", &entry[home.len()..]),
+        None => entry.to_string(),
+    };
+    let n = label.chars().count();
+    if n <= MAX_BUTTON_CHARS {
+        return label;
+    }
+    let tail: String = label.chars().skip(n - (MAX_BUTTON_CHARS - 1)).collect();
+    format!("…{tail}")
+}
+
+/// `secrets.token_hex(n)`: `n` random bytes as hex (the tap keys' generation).
+fn token_hex(n: usize) -> String {
+    let bytes: Vec<u8> = (0..n).map(|_| rand::random::<u8>()).collect();
+    hex::encode(bytes)
 }
 
 // py: telegram.py:2467 `Create` (_CallableGenericAlias): `seams::Create`.
@@ -149,7 +194,12 @@ pub struct ProgressState {
 impl _Progress {
     /// py: telegram.py:2533 `def text(self) -> str:`
     pub fn text(&self) -> String {
-        todo!("telegram.py:2533 _Progress.text")
+        let st = self.st.lock();
+        let mut parts = vec![st.head.clone()];
+        if !st.steps.is_empty() {
+            parts.push(st.steps.iter().map(|s| format!("- {s}")).collect::<Vec<_>>().join("\n"));
+        }
+        parts.join("\n\n")
     }
 }
 
@@ -524,7 +574,227 @@ pub(crate) struct TelegramInletState {
 impl TelegramInlet {
     /// py: telegram.py:2610 `def __init__(self, config: TelegramConfig, api: Any, create: Create, *, stream_create: Optional[Callable[[dict[str, Any], Callable[[str], None]], Awaitable[dict[str, Any]]]] = None, agent_factory: Optional[Callable[..., Any]] = None, agent_enabled: bool = True, busy: Callable[[], bool] = lambda: False, brief: Callable[[], str] = lambda: "", on_photo: Optional[Callable[[str], Awaitable[dict[str, Any]]]] = None, thinker: Optional[Callable[..., Awaitable[dict[str, Any]]]] = None, on_state: Callable[[str], None] = lambda state: None, memory: Optional[Memory] = None, apps: Any = None, direct: Any = None, vault: Any = None, chat_log: Optional[chat_log.ChatLog] = None, watcher: Optional[watch.Watcher] = None, chief: Optional[chief_mod.Chief] = None, meeter: Optional[meet.Meeter] = None, canvas: Optional[canvas.Canvas] = None, agentcard: Any = None, america: Any = None, opentable_enabled: bool = False, share: Any = None, toolset_mode: Optional[str] = None, toolset_route: Any = _FROM_ENV, grader: Any = _FROM_ENV, small_talk_ask: Any = _FROM_ENV, screen: Callable[[], Optional[Path]] = capture_screen, scene: Any = None, head: Any = None, on_explore: Optional[Callable[[], Any]] = None, on_sound: Optional[Callable[[bool], None]] = None, on_caption: Optional[Callable[[dict[str, Any]], None]] = None, notes: Optional[Callable[[], Any]] = None, terminal: Optional[Callable[[str, str], Awaitable[str]]] = None, launcher: Callable[[Path, str], Awaitable[str]] = claude_launch.open_session, launch_root: Optional[Path] = None, launch_recent: Callable[[], list[claude_launch.Recent]] = claude_launch.load_recent, claude_sessions: Callable[[], Any] = lambda: [], codex: Optional[codex_chat.CodexChat] = None, codex_folders: Callable[[], list[Path]] = codex_chat.accessible_folders, permission_timeout_secs: float = DEFAULT_PERMISSION_TIMEOUT_SECS, clock: Callable[[], float] = time.monotonic, wall: Callable[[], float] = time.time, sleep: Callable[[float], Awaitable[None]] = asyncio.sleep, **app_hubs: Any) -> None:`
     pub fn new(config: TelegramConfig, api: Arc<dyn TelegramApi>, create: Create, options: InletOptions) -> Arc<Self> {
-        todo!("telegram.py:2610 TelegramInlet.__init__")
+        use futures::FutureExt;
+
+        let InletOptions {
+            stream_create,
+            agent_factory,
+            agent_enabled,
+            busy,
+            brief,
+            on_photo,
+            thinker,
+            on_state,
+            memory,
+            apps,
+            direct,
+            vault,
+            chat_log,
+            watcher,
+            chief,
+            meeter,
+            canvas,
+            agentcard,
+            america,
+            opentable_enabled,
+            share,
+            toolset_mode,
+            toolset_route,
+            grader,
+            small_talk_ask,
+            screen,
+            scene,
+            head,
+            on_explore,
+            on_sound,
+            on_caption,
+            notes,
+            terminal,
+            launcher,
+            launch_root,
+            launch_recent,
+            claude_sessions,
+            codex,
+            codex_folders,
+            permission_timeout_secs,
+            clock,
+            wall,
+            sleep,
+            app_hubs,
+            environ,
+        } = options;
+        let env: &dyn eve_toolset_router::Env = match &environ {
+            Some(map) => map,
+            None => &eve_toolset_router::ProcessEnv,
+        };
+        // Which toolsets a turn starts with (toolset_router.py, 2026-10-05): "off" lends every enabled toolset on every
+        // turn, as before the router; otherwise keywords, plus Jev when a route is configured (None: keywords).
+        let toolset_mode = toolset_mode.unwrap_or_else(|| eve_toolset_router::mode(env).to_string());
+        let toolset_route = match toolset_route {
+            Lent::FromEnv => {
+                if toolset_mode != "off" {
+                    eve_toolset_router::make_router(env)
+                } else {
+                    None
+                }
+            }
+            Lent::Given(route) => route,
+        };
+        // Jev's grade of an "auto" app turn (grade_router.py): made once here; None (EVE_GRADE_ROUTER=off, or no Jev
+        // route) leaves every auto turn as it was.
+        let grader = match grader {
+            Lent::FromEnv => eve_grade_router::make_grader(env),
+            Lent::Given(grader) => grader,
+        };
+        // Small talk answered fast by Haiku (small_talk.py, EVE_SMALL_TALK): its one call, or None (off: every turn
+        // goes to the brain, today's behaviour). Tests lend a fake.
+        let small_talk_ask = match small_talk_ask {
+            Lent::FromEnv => {
+                if eve_small_talk::enabled(environ.as_ref()) {
+                    let lent_env = environ.clone();
+                    let ask: SmallTalkAsk = Arc::new(move |text: String, owner_voice: String| {
+                        let opts = eve_small_talk::AskOptions { env: lent_env.clone(), ..Default::default() };
+                        async move { Ok(eve_small_talk::ask(&text, &owner_voice, opts).await) }.boxed()
+                    });
+                    Some(ask)
+                } else {
+                    None
+                }
+            }
+            Lent::Given(ask) => ask,
+        };
+        let app_policy = eve_composio_tools::toolkit_policy(environ.as_ref());
+        // Concerts, games and shows by place and date (events.py): lent while TICKETMASTER_API_KEY is set, its
+        // requests counted by the watcher's limiter when one runs (the same key's quota).
+        let limiter_watcher = watcher.clone();
+        let limiter: eve_events::LimiterFn = Arc::new(move || {
+            Ok(limiter_watcher.as_ref().map(|w| w.limiter.clone() as Arc<dyn eve_events::Limiter>))
+        });
+        let events = eve_events::Events::new(eve_events::EventsOptions {
+            limiter: Some(limiter),
+            environ: environ.clone(),
+            ..Default::default()
+        });
+        let quick = eve_quick_answers::QuickAnswers::new(environ.clone());
+        let purchases = agentcard.as_ref().map(|card| eve_agentcard_tools::AgentCardTools::new(card.clone()));
+        let opentable_enabled = opentable_enabled && agent_enabled && agent_factory.is_some();
+        let chat_id = config.owner_ids.iter().copied().min();
+        let drafts_ok = config.drafts;
+
+        let inlet = Arc::new_cyclic(|me: &std::sync::Weak<TelegramInlet>| {
+            let codex = codex.unwrap_or_else(|| {
+                let asker = me.clone();
+                let ask_user = Arc::new(move |question: String| {
+                    let asker = asker.clone();
+                    async move {
+                        let inlet = asker.upgrade().ok_or_else(|| anyhow::anyhow!("the chat has stopped"))?;
+                        let chat = inlet.st.lock().codex_chat.unwrap_or(0);
+                        Ok(inlet.ask_user(&question, chat, TASK_ASKS_TITLE, None, None, false, false, None, true).await)
+                    }
+                    .boxed()
+                });
+                Arc::new(eve_codex_chat::CodexChat::new(ask_user, Default::default()))
+            });
+            TelegramInlet {
+                config,
+                api,
+                create,
+                agent_factory,
+                agent_enabled,
+                busy: busy.unwrap_or_else(|| Arc::new(|| false)),
+                brief: brief.unwrap_or_else(|| Arc::new(String::new)),
+                memory,
+                on_photo,
+                thinker,
+                on_state: on_state.unwrap_or_else(|| Arc::new(|_state: &str| {})),
+                apps,
+                direct,
+                app_policy,
+                vault,
+                watcher,
+                meeter,
+                canvas,
+                agentcard,
+                purchases,
+                america,
+                opentable_enabled,
+                share,
+                toolset_mode,
+                toolset_route,
+                grader,
+                small_talk_ask,
+                events,
+                quick,
+                stream_create,
+                screen: screen.unwrap_or_else(|| Arc::new(capture_screen)),
+                scene,
+                head,
+                on_explore,
+                on_sound,
+                on_caption,
+                notes,
+                codex,
+                codex_folders: codex_folders
+                    .unwrap_or_else(|| Arc::new(|| eve_codex_chat::accessible_folders(None).unwrap_or_default())),
+                codex_lock: tokio::sync::Mutex::new(()),
+                terminal,
+                launcher: launcher.unwrap_or_else(|| {
+                    Arc::new(|folder: PathBuf, harness: String| {
+                        async move {
+                            eve_claude_launch::open_session(&folder, &harness, Default::default())
+                                .await
+                                .map_err(anyhow::Error::from)
+                        }
+                        .boxed()
+                    })
+                }),
+                launch_root,
+                launch_recent: launch_recent.unwrap_or_else(|| Arc::new(eve_claude_launch::load_recent_default)),
+                claude_sessions: claude_sessions.unwrap_or_else(|| Arc::new(|| Ok(Sessions::Now(Vec::new())))),
+                permission_timeout: permission_timeout_secs,
+                clock: clock.unwrap_or_else(|| Arc::new(monotonic)),
+                wall: wall.unwrap_or_else(|| Arc::new(crate::prelude::wall)),
+                sleep: sleep.unwrap_or_else(|| {
+                    Arc::new(|secs: f64| {
+                        let wait = std::time::Duration::try_from_secs_f64(secs.max(0.0))
+                            .unwrap_or(std::time::Duration::MAX);
+                        tokio::time::sleep(wait).boxed()
+                    })
+                }),
+                turn_lock: tokio::sync::Mutex::new(()),
+                tap_gen: token_hex(3),
+                app_reactions: Arc::new(eve_link_reactions::Reactions::new(None)),
+                me: me.clone(),
+                environ,
+                chief: Mutex::new(chief),
+                // eve's apps (app_registry.APPS: lights, spotify, firetv, obsbot, ...): each hub by its slot, or none
+                // when it is off or not set up on this Mac. Read on every call (_live_apps), so a test may set one.
+                hubs: Mutex::new(app_hubs),
+                maker: Mutex::new(None),
+                phone_notes: Mutex::new(None),
+                app_out: Mutex::new(None),
+                link_uploads: Mutex::new(None),
+                st: Mutex::new(TelegramInletState {
+                    // The chat log (chat_log.py), or None (EVE_CHAT_LOG=0): with it the history survives a quiet
+                    // spell and a restart, hand-offs are notes in it, and recent_messages reads it.
+                    chat_log,
+                    window_gen: -1,
+                    chat_id,
+                    last_ask_at: f64::NEG_INFINITY,
+                    drafts_ok,
+                    ..TelegramInletState::default()
+                }),
+            }
+        });
+        inlet.sync_turns(); // a restart resumes the chat from the log
+        // Reactions on the owner's messages in the Eve Link app (link_reactions.py), kept beside the transcripts
+        // when memory is on, so the app's history shows them after a restart.
+        if let Some(store) = inlet.transcripts() {
+            if store.enabled {
+                inlet.app_reactions.attach(&store.root.join(eve_link_reactions::FILE_NAME));
+            }
+        }
+        inlet
     }
 
     /// `self.stealth`.
@@ -549,7 +819,7 @@ impl TelegramInlet {
 
     /// py: telegram.py:2875 `def task_running(self) -> bool:`
     pub fn task_running(self: &Arc<Self>) -> bool {
-        todo!("telegram.py:2875 TelegramInlet.task_running")
+        self.st.lock().agent_task.as_ref().is_some_and(|task| !task.done())
     }
 
     /// py: telegram.py:2879 `def _awaiting_answer(self) -> bool:`
@@ -557,6 +827,6 @@ impl TelegramInlet {
     /// A question (a task's, or a permission yes/no) is waiting. Whether a given text answers it is
     /// ``_answers_pending``: any text for a task's question, only a clear yes/no for a prompt with buttons.
     pub(crate) fn awaiting_answer(self: &Arc<Self>) -> bool {
-        todo!("telegram.py:2879 TelegramInlet._awaiting_answer")
+        self.st.lock().pending_answer.as_ref().is_some_and(|future| !future.done())
     }
 }
