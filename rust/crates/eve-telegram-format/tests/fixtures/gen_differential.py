@@ -58,6 +58,45 @@ def counted_open_tags(piece: str) -> list[tuple[str, str]]:
 fmt._open_tags = counted_open_tags
 
 
+# Where engines and tables part: letters and digits Unicode 16 added (Python 3.13 knows Unicode 15.1),
+# Python's other whitespace, the html.unescape corners, and tags and entities packed around a cut.
+EDGE = [
+    "\U00010D50", "\U00010D40", "\U00010D41", "\u1C89", "\u0B55", "\x85", "\u2028", "\u2029", "\x0b", "\x0c",
+    "\x1f", "\u3000", "\u200b", "\u00a0", "&amp", "&ampx", "&notin", "&notit", "&#0;", "&#13;", "&#x80;", "&#x9F",
+    "&#65534;", "&#xD800;", "&#99999999999;", "&#x110000;", "&#1;", "&#x7f;", "&AElig", "&lt", "&gt;x", "&#;", "&#x;",
+    "&" + "a" * 40 + ";", '<a href="https://e.com/?a=1&amp;b=2">', "<b>", "</b>", "<i>", "</i>", "<s>", "</s>",
+    "<u>", "</u>", "<pre>", "</pre>", "<code>", "</code>", "</a>", "<blockquote>", "<b\tx>", "<bx>", "< b>",
+    "_x_", "*y*", "**z**", "~~w~~", "`c`", "1) ", "\U00010D40) ", "\n", "\n\n", " ", "word", "longerword",
+]
+
+
+def edge_text(rng: random.Random, n: int) -> str:
+    pool = EDGE + TOKENS
+    return "".join(rng.choice(pool) + (" " if rng.random() < 0.3 else "") for _ in range(n))
+
+
+def adversarial(cases: list[dict]) -> None:
+    rng = random.Random(20261020)
+    for k in range(600):
+        body = edge_text(rng, rng.randint(0, 60))
+        cases.append({"fn": "plain", "in": body, "out": fmt.plain(body)})
+        cases.append({"fn": "inline", "in": body, "out": fmt.inline(body)})
+        cases.append({"fn": "render_body", "in": body, "out": fmt.render_body(body)})
+        cases.append({"fn": "visible", "in": body, "out": fmt.visible(body)})
+        title = rng.choice([None, edge_text(rng, rng.randint(1, 40))])
+        subtitle = rng.choice([None, edge_text(rng, rng.randint(1, 60))])
+        cases.append({"fn": "compose", "in": body, "title": title, "subtitle": subtitle,
+                      "out": fmt.compose(body, title, subtitle)})
+        raw = edge_text(rng, rng.randint(50, 400))         # raw HTML-ish text straight into split
+        limit = rng.choice([20, 33, 50, 64, 65, 66, 100, 128, 129, 200, 500])
+        _calls[:] = [0, 4 * len(raw) + 16]
+        try:
+            pieces = fmt.split(raw, limit)
+        except Hang:
+            continue
+        cases.append({"fn": "split", "in": raw, "limit": limit, "out": pieces})
+
+
 def main() -> None:
     rng = random.Random(20261019)
     cases: list[dict] = []
@@ -84,6 +123,7 @@ def main() -> None:
         except Hang:
             continue
         cases.append({"fn": "split", "in": long, "limit": limit, "out": pieces})
+    adversarial(cases)
     (HERE / "differential.json").write_text(json.dumps(cases, ensure_ascii=True, indent=0) + "\n")
     print(len(cases), "cases")
 

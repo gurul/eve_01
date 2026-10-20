@@ -380,6 +380,16 @@ fn test_python_whitespace_is_whitespace() {
 }
 
 #[test]
+fn test_letters_and_digits_follow_pythons_unicode() {
+    // U+10D50 (a Garay letter) and U+10D40 (a Garay digit) arrived in Unicode 16; CPython 3.13 reads Unicode
+    // 15.1, so to Python they are no word and no digit, whatever the regex crate's tables say
+    assert_eq!(render_body("\u{10D50}_x_ y"), "\u{10D50}<i>x</i> y");
+    assert_eq!(render_body("\u{10D40}) item"), "\u{10D40}) item");
+    assert_eq!(render_body("é_x_ 1) item"), "é_x_ 1) item");
+    assert_eq!(render_body("12) item"), "12. item");
+}
+
+#[test]
 fn test_table_blocks_of_nothing_is_nothing() {
     let none: [&str; 0] = [];
     assert!(table_blocks(&none).is_empty());
@@ -391,7 +401,9 @@ fn test_a_cut_that_cannot_progress_stops_instead_of_looping() {
     // Python loops forever here: the reopened tags fill the whole window at every cut
     let text = format!("<i><b><s>{}</s></b></i>", "x".repeat(40));
     let pieces = split(&text, 10);
-    assert!(!pieces.is_empty());
+    assert_eq!(pieces, vec!["<i></i>".to_string(), text.clone()]);
+    assert_eq!(pieces.iter().map(|p| visible(p)).collect::<String>(), "x".repeat(40));
+    assert!(split("<b>x</b>", 0).iter().all(|p| balanced(p)));
 }
 
 // ---- differential: what Python's telegram_format returned for random inputs ----------------------

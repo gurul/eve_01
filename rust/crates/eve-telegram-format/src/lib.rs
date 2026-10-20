@@ -22,13 +22,13 @@
 //!
 //! Lengths and positions are counted in characters (Unicode code points), as Python's `len` and
 //! slicing count them. The regexes keep Python's character classes: `\s` is `str.isspace` (which,
-//! unlike Rust's `\s`, includes U+001C..U+001F) and `\w` is letters, numbers and `_`.
+//! unlike Rust's `\s`, includes U+001C..U+001F), and `\w` and `\d` are read from CPython's
+//! Unicode tables (`py_unicode.rs`).
 
 mod html;
 mod html5_entities;
+mod py_unicode;
 
-use std::collections::HashSet;
-use std::hash::{DefaultHasher, Hash, Hasher};
 use std::sync::LazyLock;
 
 use regex::{Captures, Regex};
@@ -43,8 +43,9 @@ const TAG_HEADROOM: usize = 64;
 
 /// Python's `str.isspace` set, as the inside of a regex character class (`\s` in a `str` pattern).
 const WS: &str = r"\t\n\x0B\x0C\r\x1C-\x20\x{85}\x{A0}\x{1680}\x{2000}-\x{200A}\x{2028}\x{2029}\x{202F}\x{205F}\x{3000}";
-/// Python's `\w` in a `str` pattern: `str.isalnum()` or `_`, which is exactly letters, numbers and `_`.
-const WORD: &str = r"\p{L}\p{N}_";
+/// Python's `\w` and `\d` in a `str` pattern, from CPython's own Unicode tables (`py_unicode.rs`): the
+/// `regex` crate's `\p{L}\p{N}` and `\d` follow a newer Unicode and would count letters Python does not.
+use py_unicode::{DIGIT, WORD};
 
 /// `str.isspace` for one character.
 fn py_space(c: char) -> bool {
@@ -137,7 +138,7 @@ pub fn escape(text: &str) -> String {
 
 static FENCE: LazyLock<Regex> = LazyLock::new(|| re(&format!("^[{WS}]*(```|~~~)")));
 static HEADING: LazyLock<Regex> = LazyLock::new(|| re(&format!(r"^#{{1,6}}[{WS}]+(.*?)[{WS}]*#*$")));
-static NUMBERED: LazyLock<Regex> = LazyLock::new(|| re(&format!(r"^(\d{{1,3}})[.)][{WS}]+(.*)$")));
+static NUMBERED: LazyLock<Regex> = LazyLock::new(|| re(&format!(r"^([{DIGIT}]{{1,3}})[.)][{WS}]+(.*)$")));
 static BULLET: LazyLock<Regex> = LazyLock::new(|| re(&format!("^(?:[-*+\u{2022}\u{25e6}])[{WS}]+(.*)$")));
 static RULE: LazyLock<Regex> = LazyLock::new(|| re(&format!("^(?:[-*_][{WS}]*){{3,}}$")));
 static QUOTE: LazyLock<Regex> = LazyLock::new(|| re(&format!("^>[{WS}]?(.*)$")));
@@ -462,16 +463,7 @@ fn slice(paragraph: &str, limit: usize) -> Vec<String> {
     // At a limit of 0 or 1 Python's window is 0 and the loop never ends; one character is the least cut.
     let window = limit.saturating_sub(TAG_HEADROOM).max(limit / 2).max(1);
     let half = window / 2;
-    // Python loops forever when the reopened tags fill the whole window (a tiny limit and nested tags):
-    // every cut gives back the same rest. A rest seen before means that loop, so it goes out as it is.
-    let mut seen: HashSet<u64> = HashSet::new();
     while rest.len() > limit {
-        let mut state = DefaultHasher::new();
-        rest.hash(&mut state);
-        if !seen.insert(state.finish()) {
-            tracing::warn!("telegram_format: a paragraph cannot be cut to {limit} characters; sent as it is");
-            break;
-        }
         // a line end in the second half of the window first, then a space there, else the window as it is
         let mut found = rfind(&rest, '\n', 0, window).filter(|&c| c >= half);
         if found.is_none() {
@@ -491,8 +483,16 @@ fn slice(paragraph: &str, limit: usize) -> Vec<String> {
         }
         let mut reopened: String = open.iter().map(|(name, attrs)| format!("<{name}{attrs}>")).collect();
         reopened.push_str(tail.trim_start_matches(' '));
-        rest = reopened.chars().collect();
+        let next: Vec<char> = reopened.chars().collect();
         out.push(closed);
+        // The reopened tags are at most the piece they came from, so a cut either shortens the rest or, when
+        // the piece was nothing but those tags (a tiny limit under nested tags), gives the same rest back.
+        // Python loops forever there; the rest goes out as it is.
+        if next == rest {
+            tracing::warn!("telegram_format: a paragraph cannot be cut to {limit} characters; sent as it is");
+            break;
+        }
+        rest = next;
     }
     if !rest.is_empty() {
         out.push(rest.into_iter().collect());
