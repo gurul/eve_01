@@ -139,8 +139,9 @@ pub fn py_int(v: &PyValue) -> Result<PyInt, IntError> {
                 return Err(IntError::Overflow("cannot convert float infinity to integer".into()));
             }
             let t = f.trunc();
-            // `as` saturates at the i64 bounds; the float keeps the exact truncated value.
-            Ok(PyInt { value: t as i64, float: t })
+            // `as` saturates at the i64 bounds; the float keeps the exact truncated value (`float(int(-0.5))` is
+            // 0.0, not -0.0).
+            Ok(PyInt { value: t as i64, float: if t == 0.0 { 0.0 } else { t } })
         }
         PyValue::Str(s) => parse_int_str(s),
         PyValue::List(_) | PyValue::Dict(_) => Err(IntError::Type(format!(

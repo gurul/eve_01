@@ -10,7 +10,7 @@ use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::time::Duration;
 
 use chrono::{SecondsFormat, Utc};
-use serde_json::json;
+use serde_json::{json, Value};
 
 // ---- helpers ---------------------------------------------------------------------------------------------------
 
@@ -832,4 +832,30 @@ fn cost_totals_add_like_python_sum() {
 fn new_defaults_to_transcript_roots() {
     let t = JsonlTailer::new(noop_update(), Some(Vec::new()), None).unwrap();
     assert_eq!(t.roots(), eve_claude_home::transcript_roots(None).unwrap().as_slice());
+}
+
+/// Counts past `i64` still cost what Python's unbounded ints cost (values from CPython 3.13 `pricing.estimate_cost`).
+#[tokio::test]
+async fn huge_counts_cost_like_python() {
+    let cases: [(&str, u64); 3] = [
+        (r#"{"message": {"model": "claude-sonnet-4-6", "usage": {"input_tokens": 100000000000000000000, "output_tokens": 1}}}"#, 4823651601286430720),
+        (
+            &format!(
+                r#"{{"message": {{"model": "claude-opus-5-5", "usage": {{"output_tokens": "1{}", "cache_creation": {{"ephemeral_1h_input_tokens": 18446744073709551617}}}}}}}}"#,
+                "0".repeat(300)
+            ),
+            9025020879659135481,
+        ),
+        (
+            r#"{"message": {"usage": {"output_tokens": 3, "cache_read_input_tokens": -10000000000000000007, "cache_creation_input_tokens": 12345678901234567890123}}}"#,
+            4856163460662977896,
+        ),
+    ];
+    for (line, bits) in cases {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("s.jsonl");
+        std::fs::write(&path, format!("{line}\n")).unwrap();
+        let t = sync_sweep(dir.path()).await;
+        assert_eq!(t.totals().2.to_bits(), bits, "{line}");
+    }
 }

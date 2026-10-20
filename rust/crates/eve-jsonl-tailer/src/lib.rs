@@ -20,7 +20,6 @@ use std::sync::Arc;
 use futures::future::BoxFuture;
 use indexmap::IndexMap;
 use parking_lot::Mutex;
-use serde_json::{json, Value};
 
 pub use isotime::{LocalZone, SystemZone, TimeError};
 pub use py::{PyDict, PyValue};
@@ -456,18 +455,20 @@ fn usage_tokens_and_cost(model: Option<&PyValue>, usage: &PyDict) -> Result<Opti
     if [inp, out, cache_read, cw5, cw1h, flat].iter().any(|i| i.float_overflows()) {
         return Err(());
     }
-    // Every field is now a plain integer, so eve-pricing reads exactly the values Python's int() produced.
-    let normalized: Value = json!({
-        "input_tokens": inp.value,
-        "output_tokens": out.value,
-        "cache_read_input_tokens": cache_read.value,
-        "cache_creation": {
-            "ephemeral_5m_input_tokens": cw5.value,
-            "ephemeral_1h_input_tokens": cw1h.value,
-        },
-        "cache_creation_input_tokens": flat.value,
-    });
-    Ok(Some((out.value, eve_pricing::estimate_cost(model, &normalized))))
+    // `pricing.estimate_cost` on exactly these counts. eve-pricing's `estimate_cost` reads counts from JSON as
+    // `i64`, while Python's are unbounded and each enters the sum as `float(n)`; so the rate row comes from
+    // eve-pricing and the sum is taken over the correctly rounded floats, term for term in Python's order.
+    let r = eve_pricing::anthropic_named(model)
+        .or_else(|| eve_pricing::family_rates(eve_pricing::family_of(model)))
+        .or_else(|| eve_pricing::family_rates(eve_pricing::DEFAULT_FAMILY))
+        .ok_or(())?;
+    let cache_write_5m = if cw5.value == 0 && cw1h.value == 0 { flat } else { cw5 };
+    let total = inp.float * r.input
+        + out.float * r.output
+        + cache_read.float * r.cache_read
+        + cache_write_5m.float * r.cache_write_5m
+        + cw1h.float * r.cache_write_1h;
+    Ok(Some((out.value, total / 1_000_000.0)))
 }
 
 /// `Path(root).rglob("*.jsonl")` as CPython 3.13 walks it: the root's matches first, then a stack of
