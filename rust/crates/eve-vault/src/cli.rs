@@ -200,13 +200,25 @@ fn parse(parser: &Parser, argv: &[String], subcommand: bool) -> Result<Parsed, E
     }
     let mut out = Parsed::default();
     let mut i = 0;
+    // Whether the argument just before was the one the positional took.
+    let mut prev_filled_positional = false;
     while i < argv.len() {
         let arg = &argv[i];
         let Some(kind) = kinds[i].take() else {
+            // The first `--`. argparse drops it only when the positional's match (`-*A-*`) takes it in: right
+            // before the positional's value, or right after it. Otherwise it is an unrecognized argument
+            // (`list --`, `add login --label x --`).
+            let absorbed = parser.positional.is_some()
+                && ((out.positional.is_none() && i + 1 < argv.len()) || prev_filled_positional);
+            if !absorbed {
+                out.extras.push(arg.clone());
+            }
+            prev_filled_positional = false;
             i += 1;
             continue;
         };
         i += 1;
+        prev_filled_positional = false;
         match kind {
             Arg::Positional => match parser.positional {
                 Some((name, choices)) if out.positional.is_none() => {
@@ -214,6 +226,7 @@ fn parse(parser: &Parser, argv: &[String], subcommand: bool) -> Result<Parsed, E
                         return Err(choice_error(parser, name, arg, choices));
                     }
                     out.positional = Some(arg.clone());
+                    prev_filled_positional = true;
                     if subcommand {
                         out.rest = argv[i..].to_vec();
                         break;
@@ -396,69 +409,85 @@ pub fn input(prompt: &str) -> io::Result<String> {
     Ok(line)
 }
 
-/// Python's `getpass.getpass(prompt)`: the prompt and the reply on the controlling terminal with echo off;
-/// without a terminal, a warning and a plain read from stdin.
+/// Python's `getpass.getpass(prompt)` (CPython's `unix_getpass`): `/dev/tty` with echo off, the prompt on
+/// it; without `/dev/tty`, stdin with echo off and the prompt on stderr; when echo cannot be turned off,
+/// a warning and a plain read from stdin. A newline goes to the prompt's stream after a reply.
 pub fn getpass(prompt: &str) -> io::Result<String> {
     #[cfg(unix)]
     {
-        if let Ok(tty) = std::fs::OpenOptions::new().read(true).write(true).open("/dev/tty") {
-            return getpass_tty(tty, prompt);
-        }
+        unix_getpass(prompt)
     }
+    #[cfg(not(unix))]
     {
-        let mut e = io::stderr().lock();
-        let _ = writeln!(e, "Warning: Password input may be echoed.");
-        let _ = e.write_all(prompt.as_bytes());
-        let _ = e.flush();
+        let mut stream = io::stderr();
+        let passwd = fallback_getpass(prompt, &mut stream)?;
+        let _ = stream.write_all(b"\n");
+        Ok(passwd)
     }
-    let mut line = String::new();
-    if io::stdin().lock().read_line(&mut line)? == 0 {
+}
+
+/// `getpass._raw_input`: the prompt on `stream`, one line from `input` without its newline; EOF is an error.
+fn raw_input(prompt: &str, stream: &mut dyn Write, input: &mut dyn BufRead) -> io::Result<String> {
+    if !prompt.is_empty() {
+        stream.write_all(prompt.as_bytes())?;
+        stream.flush()?;
+    }
+    let mut line = Vec::new();
+    if input.read_until(b'\n', &mut line)? == 0 {
         return Err(io::Error::new(io::ErrorKind::UnexpectedEof, "EOF"));
     }
-    if line.ends_with('\n') {
+    if line.last() == Some(&b'\n') {
         line.pop();
     }
-    Ok(line)
+    String::from_utf8(line).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+}
+
+/// `getpass.fallback_getpass`: echo cannot be controlled, so say so and read stdin.
+fn fallback_getpass(prompt: &str, stream: &mut dyn Write) -> io::Result<String> {
+    let _ = writeln!(stream, "Warning: Password input may be echoed.");
+    raw_input(prompt, stream, &mut io::stdin().lock())
 }
 
 #[cfg(unix)]
-fn getpass_tty(tty: std::fs::File, prompt: &str) -> io::Result<String> {
-    use std::io::Read;
+fn unix_getpass(prompt: &str) -> io::Result<String> {
+    use std::os::unix::fs::OpenOptionsExt;
     use std::os::unix::io::AsRawFd;
-    let fd = tty.as_raw_fd();
-    // SAFETY: `fd` is an open terminal for the life of `tty`; termios is plain data.
+    let tty = std::fs::OpenOptions::new().read(true).write(true).custom_flags(libc::O_NOCTTY).open("/dev/tty").ok();
+    let (fd, mut stream): (i32, Box<dyn Write>) = match &tty {
+        Some(t) => (t.as_raw_fd(), Box::new(t.try_clone()?)),
+        None => (libc::STDIN_FILENO, Box::new(io::stderr())),
+    };
+    // Python adds TCSASOFT where termios has it (macOS: 0x10), so the line discipline's other settings stay.
+    #[cfg(any(target_os = "macos", target_os = "ios", target_os = "freebsd", target_os = "dragonfly"))]
+    const FLAGS: libc::c_int = libc::TCSAFLUSH | 0x10;
+    #[cfg(not(any(target_os = "macos", target_os = "ios", target_os = "freebsd", target_os = "dragonfly")))]
+    const FLAGS: libc::c_int = libc::TCSAFLUSH;
+    // SAFETY: `fd` is an open descriptor for the life of this call; termios is plain data.
     let mut old: libc::termios = unsafe { std::mem::zeroed() };
-    let have_termios = unsafe { libc::tcgetattr(fd, &mut old) } == 0;
-    let mut writer = &tty;
-    writer.write_all(prompt.as_bytes())?;
-    writer.flush()?;
-    if have_termios {
+    let passwd = if unsafe { libc::tcgetattr(fd, &mut old) } == 0 {
         let mut new = old;
         new.c_lflag &= !libc::ECHO;
         // SAFETY: as above.
-        unsafe { libc::tcsetattr(fd, libc::TCSAFLUSH, &new) };
-    }
-    let mut line = Vec::new();
-    let mut byte = [0u8; 1];
-    let mut reader = &tty;
-    let read = loop {
-        match reader.read(&mut byte) {
-            Ok(0) => break Ok(()),
-            Ok(_) if byte[0] == b'\n' => break Ok(()),
-            Ok(_) => line.push(byte[0]),
-            Err(e) if e.kind() == io::ErrorKind::Interrupted => continue,
-            Err(e) => break Err(e),
+        let set = unsafe { libc::tcsetattr(fd, FLAGS, &new) } == 0;
+        let read = if set {
+            match &tty {
+                Some(t) => raw_input(prompt, &mut *stream, &mut io::BufReader::new(t)),
+                None => raw_input(prompt, &mut *stream, &mut io::stdin().lock()),
+            }
+        } else {
+            // termios.error before anything was read: Python falls back to the echoing read.
+            fallback_getpass(prompt, &mut *stream)
+        };
+        if set {
+            // SAFETY: as above.
+            unsafe { libc::tcsetattr(fd, FLAGS, &old) };
         }
+        let _ = stream.flush();
+        read?
+    } else {
+        fallback_getpass(prompt, &mut *stream)?
     };
-    if have_termios {
-        // SAFETY: as above.
-        unsafe { libc::tcsetattr(fd, libc::TCSAFLUSH, &old) };
-    }
-    let _ = writer.write_all(b"\n");
-    let _ = writer.flush();
-    read?;
-    if line.is_empty() && byte[0] != b'\n' {
-        return Err(io::Error::new(io::ErrorKind::UnexpectedEof, "EOF"));
-    }
-    Ok(String::from_utf8_lossy(&line).into_owned())
+    let _ = stream.write_all(b"\n");
+    let _ = stream.flush();
+    Ok(passwd)
 }

@@ -21,6 +21,7 @@ thiserror.workspace = true
 # 0.10, not the newest 0.11: it must share `digest` 0.10 with the workspace's hmac 0.12.
 sha1 = "0.10"
 unicode-normalization = "0.1.26"
+unicode-general-category = "1.1.0"
 
 [dev-dependencies]
 tempfile.workspace = true

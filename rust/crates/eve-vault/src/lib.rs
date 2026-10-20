@@ -411,7 +411,8 @@ impl Runner for SubprocessRunner {
         let (program, args) = argv.split_first().ok_or_else(|| io::Error::other("empty argv"))?;
         let mut child = Command::new(program)
             .args(args)
-            .stdin(if input.is_some() { Stdio::piped() } else { Stdio::null() })
+            // subprocess.run without `input` leaves stdin inherited.
+            .stdin(if input.is_some() { Stdio::piped() } else { Stdio::inherit() })
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()?;

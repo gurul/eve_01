@@ -208,6 +208,11 @@ fn sites_match_python_on_odd_inputs() {
     assert_eq!(canonical_origin("  ").unwrap_err().message(), "a login or 2FA item needs the site it is for");
     assert!(canonical_origin("https://chase.com:99999").is_err());
     assert!(!site_allows("chase.com", "https://chase.com:x/"));
+    // Python 3.13's bracketed-host check: an empty or doubled IPv6 scope is not a site
+    for bad in ["https://[::1%]", "https://[::1%a%b]", "https://[1.2.3.4]"] {
+        assert_eq!(canonical_origin(bad).unwrap_err().message(), format!("not a site: '{bad}'"));
+    }
+    assert_eq!(canonical_origin("https://[::1%eth0]:8443").unwrap(), "https://::1%eth0:8443");
 }
 
 // ---- the Keychain wrapper and the index ----------------------------------------------------------------------
@@ -541,6 +546,10 @@ fn the_cli_parses_arguments_as_argparse_does() {
         &["add", "login", "--label", "X", "--s="],
         &["-h=x"],
         &["--help="],
+        // a `--` the positional's match does not take in is an unrecognized argument (Python 3.13)
+        &["list", "--"],
+        &["add", "login", "--label", "X", "--site", "a.example", "--"],
+        &["remove", "x", "--", "--"],
     ] {
         assert_eq!(run(bad), 2, "{bad:?}");
     }
@@ -552,8 +561,11 @@ fn the_cli_parses_arguments_as_argparse_does() {
     // abbreviations, --opt=value, options before the kind, the last of a repeated option
     assert_eq!(run(&["add", "--lab", "First", "--label=Second", "login", "--si=a.example"]), 0);
     assert_eq!(v.items()[0].line(), format!("{} login \"Second\" for a.example", v.items()[0].handle));
-    // `--` makes what follows positional
+    // `--` makes what follows positional, and is dropped beside the positional
     assert_eq!(run(&["remove", "--", "-x"]), 1);
+    assert_eq!(run(&["remove", "v_zzzzzzzz", "--"]), 1);
+    assert_eq!(run(&["add", "--label", "Third", "--site", "b.example", "--", "login"]), 0);
+    assert_eq!(v.items().len(), 2);
     // a negative number is a value, not an option
     assert_eq!(run(&["add", "card", "--label", "-5"]), 1); // reaches the vault: "me" is no card number
 }

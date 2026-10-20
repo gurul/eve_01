@@ -31,14 +31,24 @@ pub fn head(s: &str, n: usize) -> String {
     s.chars().take(n).collect()
 }
 
+/// `str.isprintable()` for one character: everything but the "Other" and "Separator" categories (Cc, Cf,
+/// Cs, Co, Cn, Zl, Zp, Zs), except the ASCII space.
 fn is_printable(c: char) -> bool {
+    use unicode_general_category::{get_general_category, GeneralCategory as G};
     if c == ' ' {
         return true;
     }
-    !(c.is_control()
-        || c.is_whitespace()
-        || matches!(c, '\u{ad}' | '\u{200b}'..='\u{200f}' | '\u{202a}'..='\u{202e}'
-            | '\u{2060}'..='\u{2064}' | '\u{feff}' | '\u{e000}'..='\u{f8ff}'))
+    !matches!(
+        get_general_category(c),
+        G::Control
+            | G::Format
+            | G::Surrogate
+            | G::PrivateUse
+            | G::Unassigned
+            | G::LineSeparator
+            | G::ParagraphSeparator
+            | G::SpaceSeparator
+    )
 }
 
 /// `repr(s)` for a `str`: single quotes unless the text holds a single quote and no double quote.
@@ -178,16 +188,21 @@ pub fn int_of_str(text: &str) -> Option<i128> {
     Some(if neg { -n } else { n })
 }
 
-/// The value of a non-ASCII Unicode decimal digit (Nd), which Python's `int()` accepts. The Nd blocks are
-/// runs of ten starting at a code point ending in 0 (or 6 for a few); this covers the common scripts.
+/// The value of a non-ASCII Unicode decimal digit (Nd), which Python's `int()` accepts. Unicode encodes
+/// every decimal digit set as a contiguous run 0..9, and adjacent sets (the mathematical digits) follow one
+/// another in whole runs of ten, so a digit's value is its distance from the start of its Nd run, mod 10.
 fn unicode_decimal(c: char) -> Option<u32> {
-    const ZEROS: &[u32] = &[
-        0x0660, 0x06F0, 0x07C0, 0x0966, 0x09E6, 0x0A66, 0x0AE6, 0x0B66, 0x0BE6, 0x0C66, 0x0CE6, 0x0D66,
-        0x0DE6, 0x0E50, 0x0ED0, 0x0F20, 0x1040, 0x1090, 0x17E0, 0x1810, 0x1946, 0x19D0, 0x1A80, 0x1A90,
-        0x1B50, 0x1BB0, 0x1C40, 0x1C50, 0xA620, 0xA8D0, 0xA900, 0xA9D0, 0xA9F0, 0xAA50, 0xABF0, 0xFF10,
-    ];
+    use unicode_general_category::{get_general_category, GeneralCategory};
+    let is_nd = |u: u32| char::from_u32(u).is_some_and(|c| get_general_category(c) == GeneralCategory::DecimalNumber);
     let u = c as u32;
-    ZEROS.iter().find(|&&z| (z..z + 10).contains(&u)).map(|z| u - z)
+    if !is_nd(u) {
+        return None;
+    }
+    let mut start = u;
+    while start > 0 && is_nd(start - 1) {
+        start -= 1;
+    }
+    Some((u - start) % 10)
 }
 
 /// `int(v)` for a JSON value: ints as they are, floats truncated, bools as 0/1, strings parsed.
@@ -233,6 +248,8 @@ mod tests {
         assert_eq!(repr("it's"), "\"it's\"");
         assert_eq!(repr("a'b\"c"), "'a\\'b\"c'");
         assert_eq!(repr("a\\b\n\x01\u{a0}é"), "'a\\\\b\\n\\x01\\xa0é'");
+        // Python 3.13: unassigned (U+0378, U+D7FF) and format (U+E0001) characters are escaped
+        assert_eq!(repr("\u{378}\u{d7ff}\u{e0001}😀"), "'\\u0378\\ud7ff\\U000e0001😀'");
     }
 
     #[test]
@@ -270,6 +287,10 @@ mod tests {
         assert_eq!(int_of_str("x"), None);
         assert_eq!(int_of_str(""), None);
         assert_eq!(int_of_str("٣"), Some(3));
+        assert_eq!(int_of_str("𝟖"), Some(8)); // MATHEMATICAL BOLD DIGIT EIGHT, the first of five runs
+        assert_eq!(int_of_str("𝟿"), Some(9)); // MATHEMATICAL MONOSPACE DIGIT NINE, the last
+        assert_eq!(int_of_str("𑁩"), Some(3)); // BRAHMI DIGIT THREE
+        assert_eq!(int_of_str("²"), None); // a digit (isdigit) but not a decimal: int() refuses it
     }
 
     #[test]

@@ -86,32 +86,49 @@ fn check_netloc(netloc: &str) -> Result<(), UrlError> {
     Ok(())
 }
 
-/// `_check_bracketed_netloc` and `_check_bracketed_host`.
+/// `_check_bracketed_netloc`: it mirrors the splitting `_hostinfo` does, and checks the host it finds even
+/// when the brackets sit only in the userinfo.
 fn check_bracketed_netloc(netloc: &str) -> Result<(), UrlError> {
     let host_and_port = netloc.rsplit_once('@').map_or(netloc, |(_, h)| h);
-    let Some((before, bracketed)) = host_and_port.split_once('[') else {
-        return Ok(());
-    };
-    if !before.is_empty() {
-        return Err(UrlError("Invalid IPv6 URL".into()));
-    }
-    let (host, port) = bracketed.split_once(']').unwrap_or((bracketed, ""));
-    if !port.is_empty() && !port.starts_with(':') {
-        return Err(UrlError("Invalid IPv6 URL".into()));
-    }
-    if let Some(future) = host.strip_prefix('v') {
-        // IPvFuture: v<hex>.<anything>
-        let ok = future
-            .split_once('.')
-            .is_some_and(|(hex, tail)| !hex.is_empty() && hex.chars().all(|c| c.is_ascii_hexdigit()) && !tail.is_empty());
-        if !ok {
-            return Err(UrlError(format!("IPvFuture address is invalid: {host}")));
+    let hostname = match host_and_port.split_once('[') {
+        Some((before, bracketed)) => {
+            // No data is allowed before a bracket.
+            if !before.is_empty() {
+                return Err(UrlError("Invalid IPv6 URL".into()));
+            }
+            let (host, port) = bracketed.split_once(']').unwrap_or((bracketed, ""));
+            // No data is allowed after the bracket but before the port delimiter.
+            if !port.is_empty() && !port.starts_with(':') {
+                return Err(UrlError("Invalid IPv6 URL".into()));
+            }
+            host
         }
-        return Ok(());
+        None => host_and_port.split_once(':').map_or(host_and_port, |(h, _)| h),
+    };
+    check_bracketed_host(hostname)
+}
+
+/// `_check_bracketed_host`: an IPvFuture literal (`v<hex>.<anything>`) or an IPv6 address, which
+/// `ipaddress.ip_address` must accept (an IPv4 address is refused in brackets).
+fn check_bracketed_host(hostname: &str) -> Result<(), UrlError> {
+    if let Some(future) = hostname.strip_prefix('v') {
+        let ok = future.split_once('.').is_some_and(|(hex, tail)| {
+            !hex.is_empty() && hex.chars().all(|c| c.is_ascii_hexdigit()) && !tail.is_empty()
+        });
+        return if ok { Ok(()) } else { Err(UrlError("IPvFuture address is invalid".into())) };
     }
-    let addr = host.split_once('%').map_or(host, |(a, _)| a);
+    if hostname.parse::<std::net::Ipv4Addr>().is_ok() {
+        return Err(UrlError("An IPv4 address cannot be in brackets".into()));
+    }
+    let not_an_address = || UrlError(format!("{} does not appear to be an IPv4 or IPv6 address", crate::pystr::repr(hostname)));
+    // `IPv6Address._split_scope_id`: a `%` must be followed by a scope that holds no further `%`.
+    let addr = match hostname.split_once('%') {
+        Some((_, scope)) if scope.is_empty() || scope.contains('%') => return Err(not_an_address()),
+        Some((addr, _)) => addr,
+        None => hostname,
+    };
     if addr.parse::<Ipv6Addr>().is_err() {
-        return Err(UrlError("'".to_string() + host + "' does not appear to be an IPv4 or IPv6 address"));
+        return Err(not_an_address());
     }
     Ok(())
 }
@@ -256,6 +273,13 @@ mod tests {
         assert!(urlsplit("https://[nothost]/").is_err());
         assert!(urlsplit("https://evil\u{ff0f}.com/").is_err());
         assert!(!urlsplit("https://@chase.com/").unwrap().has_credentials());
+        // `_check_bracketed_host` on what Python 3.13 refuses: an empty or doubled scope, IPv4 in brackets,
+        // a bad IPvFuture, and brackets only in the userinfo (the plain host is then checked as an address).
+        for bad in ["https://[::1%]/", "https://[::1%a%b]/", "https://[1.2.3.4]/", "https://[v1]/", "https://a[b]@chase.com/"] {
+            assert!(urlsplit(bad).is_err(), "{bad}");
+        }
+        assert_eq!(urlsplit("https://[::1%]/").unwrap_err().0, "'::1%' does not appear to be an IPv4 or IPv6 address");
+        assert!(urlsplit("https://[::1%eth0]/").is_ok() && urlsplit("https://[v1.x]/").is_ok());
         assert!(urlsplit("https://user@chase.com/").unwrap().has_credentials());
     }
 
