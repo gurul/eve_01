@@ -5,16 +5,16 @@
 //! happens (owner, 2026-09-25). Four kinds of watch:
 //!
 //! * `quote`    — a stock, fund, index or crypto pair by its Yahoo Finance symbol (AAPL, VOO, BTC-USD): the
-//!                chart endpoint's `regularMarketPrice`. No key, no model call.
+//!   chart endpoint's `regularMarketPrice`. No key, no model call.
 //! * `page`     — a URL. The price and whether it can be bought come from the page's own structured data first
-//!                (JSON-LD offers, product/og price meta tags, itemprop price), with no model call. Only a page
-//!                with none of it goes to a cheap model once, over its visible text, and the model's JSON is
-//!                checked. A phrase condition ("appears") is decided by code on the visible text. A page that
-//!                refuses automated reads (401/403, as most ticket sites do) falls back to a search check.
+//!   (JSON-LD offers, product/og price meta tags, itemprop price), with no model call. Only a page
+//!   with none of it goes to a cheap model once, over its visible text, and the model's JSON is
+//!   checked. A phrase condition ("appears") is decided by code on the visible text. A page that
+//!   refuses automated reads (401/403, as most ticket sites do) falls back to a search check.
 //! * `search`   — no URL yet ("tickets for <artist> in <city> on sale"): one OpenRouter call with its web search
-//!                server tool, asked for JSON (on sale or not, the lowest price, a link).
+//!   server tool, asked for JSON (on sale or not, the lowest price, a link).
 //! * `ticketmaster` — an artist, team or show on Ticketmaster's Discovery API, for on-sale alerts. Offered only
-//!                when `TICKETMASTER_API_KEY` is set.
+//!   when `TICKETMASTER_API_KEY` is set.
 //!
 //! Everything that leaves the Mac goes through ONE `RateLimiter`: a global token bucket, a minimum gap between
 //! two requests to the same host, a per-host backoff after a 429 or 503 that honours Retry-After and doubles on a

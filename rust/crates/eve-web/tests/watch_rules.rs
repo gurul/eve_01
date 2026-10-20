@@ -2,9 +2,7 @@
 //! test_watch_lean_ticketmaster.py, plus the pure-function cases of test_watch.py that cover this unit (the
 //! limiter, conditions, the store's defensive load, quotes, Ticketmaster's rules, config) and the rest of its API.
 //!
-//! Tests that drive a whole `Watcher` (its add, tick and read) are here as Python wrote them, ignored until the
-//! watcher unit's bodies land; tests whose readings go through the page reader's price parser are ignored until the
-//! watch-pages unit lands.
+//! Tests that drive a whole `Watcher` (its add, tick and read) are here as Python wrote them.
 
 use std::sync::Arc;
 
@@ -598,7 +596,6 @@ fn test_quotes_read_minor_units_inside_the_session() {
 }
 
 #[test]
-#[ignore = "fulldayPrice goes through page::price: needs the watch-pages unit's bodies"]
 fn test_quotes_read_minor_units_and_unknown_symbols() {
     let now = T0;
     let mut meta = obj(json!({"symbol": "VOD.L", "currency": "GBp", "regularMarketPrice": 7250,
@@ -641,7 +638,6 @@ fn test_ticketmaster_statuses_follow_its_own_definitions() {
 }
 
 #[test]
-#[ignore = "priceRanges' min goes through page::price: needs the watch-pages unit's bodies"]
 fn test_ticketmaster_takes_the_lowest_listed_price() {
     let now = T0;
     let events = [tm_event("onsale", None, None, Some(89.5)), tm_event("onsale", None, None, Some(45.0))];
@@ -898,7 +894,6 @@ fn test_expand_user() {
 }
 
 #[test]
-#[ignore = "configured reads websearch::configured, tinyfish::api_key and tls_available: needs the search-router, reader-providers and watch-pages units' bodies"]
 fn test_the_switch_reads_the_environment() {
     let off_extras = [("EVE_WATCH_TLS", "0"), ("EVE_WATCH_BROWSER", "0")];
     let cfg = |pairs: &[(&str, &str)]| {
@@ -973,7 +968,6 @@ mod watcher_driven {
     }
 
     #[tokio::test]
-    #[ignore = "drives Watcher.tick: needs the watcher unit's bodies"]
     async fn test_a_zero_baseline_does_not_stop_the_other_watches() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("w.json");
@@ -1006,7 +1000,6 @@ mod watcher_driven {
     }
 
     #[tokio::test]
-    #[ignore = "drives Watcher.add and tick: needs the watcher unit's bodies"]
     async fn test_a_sale_open_at_the_first_background_check_is_texted() {
         let dir = tempfile::tempdir().unwrap();
         let clock = TestClock::new(T0);
@@ -1034,13 +1027,13 @@ mod watcher_driven {
         rig.watcher.limiter.lock().clear(eve_web::watch::TM_HOST);
         clock.set(item.lock().next_at + 1.0);
         rig.watcher.tick().await;
-        assert_eq!((item.lock().checks, item.lock().last_available), (1, Some(true)));
+        let got = { let w = item.lock(); (w.checks, w.last_available) };
+        assert_eq!(got, (1, Some(true)));
         let sent = rig.sent.lock();
         assert!(sent.len() == 1 && sent[0].starts_with("Big Band is available now."), "{sent:?}");
     }
 
     #[tokio::test]
-    #[ignore = "drives Watcher.add and tick: needs the watcher unit's bodies"]
     async fn test_a_reading_shown_in_the_add_reply_still_never_texts() {
         let dir = tempfile::tempdir().unwrap();
         let clock = TestClock::new(T0);
@@ -1063,7 +1056,6 @@ mod watcher_driven {
     }
 
     #[tokio::test]
-    #[ignore = "drives Watcher.read: needs the watcher unit's bodies"]
     async fn test_the_keyword_search_keeps_games() {
         let dir = tempfile::tempdir().unwrap();
         let clock = TestClock::new(T0);

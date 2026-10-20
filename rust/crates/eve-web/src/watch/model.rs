@@ -119,7 +119,9 @@ pub fn json_object(text: &str) -> Result<Map<String, Value>, FetchError> {
                 depth -= 1;
                 if depth == 0 {
                     let end = start + i + 1;
-                    if let Ok(Value::Object(map)) = serde_json::from_str::<Value>(&text[start..end]) {
+                    // Python's json.loads: NaN, Infinity and an integer past a float parse (and later read as no price),
+                    // where serde_json would refuse the whole answer
+                    if let Ok(Value::Object(map)) = super::watcher::pyjson::loads(&text[start..end]) {
                         return Ok(map);
                     }
                     break;

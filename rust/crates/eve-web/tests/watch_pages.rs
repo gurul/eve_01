@@ -863,7 +863,6 @@ fn yes(_: &str) -> bool {
 }
 
 #[test]
-#[ignore = "cross-unit: tinyfish::fetch belongs to another unit (still a stub in the skeleton); un-ignore at integration"]
 fn hosted_it_asks_for_a_fresh_page() {
     let (sent, ctx) = sent();
     let (status, html) = fetch_hosted(&ctx, URL, 70.0, Some(&yes)).unwrap();
@@ -878,7 +877,6 @@ fn hosted_it_asks_for_a_fresh_page() {
 }
 
 #[test]
-#[ignore = "cross-unit: tinyfish::fetch belongs to another unit (still a stub in the skeleton); un-ignore at integration"]
 fn hosted_the_pages_own_refusal_moves_the_ladder_tinyfishs_never_does() {
     let (sent, ctx) = sent();
     let host = eve_web::tinyfish::FETCH_HOST;
@@ -912,7 +910,6 @@ fn hosted_the_pages_own_refusal_moves_the_ladder_tinyfishs_never_does() {
 }
 
 #[test]
-#[ignore = "cross-unit: tinyfish::fetch belongs to another unit (still a stub in the skeleton); un-ignore at integration"]
 fn hosted_a_redirected_or_renamed_single_result_still_counts() {
     let (sent, ctx) = sent();
     *sent.reply.lock().unwrap() = Ok(json!({"results": [{"url": format!("{URL}/"), "text": "<p>ok</p>"}], "errors": []}));
@@ -920,7 +917,6 @@ fn hosted_a_redirected_or_renamed_single_result_still_counts() {
 }
 
 #[test]
-#[ignore = "cross-unit: tinyfish::fetch belongs to another unit (still a stub in the skeleton); un-ignore at integration"]
 fn hosted_no_key_no_request() {
     let (sent, ctx) = sent();
     let ctx = ctx.with_env(HashMap::new());
@@ -942,7 +938,7 @@ fn hosted_a_private_link_is_never_sent_to_tinyfish() {
 /// Pages and Python's readings of them (structured, main_text, visible_text, _microdata), as a JSON list at
 /// EVE_WATCH_PAGES_DIFF (made by running watch.py over generated pages); every reading must match.
 #[test]
-#[ignore = "differential: needs EVE_WATCH_PAGES_DIFF, a case file made with Python's watch.py"]
+#[ignore = "differential: needs EVE_WATCH_PAGES_DIFF, a case file made by tests/gen_watch_pages.py with Python's watch.py"]
 fn the_page_readers_match_python() {
     use eve_web::watch::page::{microdata, visible_text};
     let path = std::env::var("EVE_WATCH_PAGES_DIFF").expect("EVE_WATCH_PAGES_DIFF");

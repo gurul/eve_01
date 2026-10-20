@@ -116,6 +116,17 @@ impl Swap {
     }
 }
 
+impl Swap {
+    /// As a `PageFn` (Python's `w._tls = ...` / `w._crawl = ...`): the same swappable fake, by URL alone.
+    fn page(&self) -> eve_web::watch::watcher::PageFn {
+        let me = self.clone();
+        Arc::new(move |url: &str| {
+            let f = me.0.lock().clone();
+            f(url, &HttpOptions::default())
+        })
+    }
+}
+
 impl Http for Swap {
     fn request(&self, url: &str, opts: &HttpOptions) -> Result<(u16, String), FetchError> {
         let f = self.0.lock().clone();
@@ -174,6 +185,9 @@ struct Make {
     limiter: Option<RateLimiter>,
     shared_limiter: Option<Arc<Mutex<RateLimiter>>>,
     evaluate: Option<Evaluate>,
+    tls: Option<Swap>,
+    crawl: Option<Swap>,
+    ledger: Option<PathBuf>,
     cfg: Box<dyn FnOnce(&mut WatchConfig)>,
 }
 
@@ -190,6 +204,9 @@ impl Make {
             limiter: None,
             shared_limiter: None,
             evaluate: None,
+            tls: None,
+            crawl: None,
+            ledger: None,
             cfg: Box::new(|_| {}),
         }
     }
@@ -231,7 +248,7 @@ impl Make {
         let ctx = Ctx::global()
             .clone()
             .with_env(self.env)
-            .with_ledger(eve_spend::Ledger::at(spend_dir()))
+            .with_ledger(eve_spend::Ledger::at(self.ledger.clone().unwrap_or_else(spend_dir)))
             .with_http(Arc::new(self.fetch.clone()));
         let mut deps = WatcherDeps::new(ctx);
         deps.fetch = Arc::new(self.fetch.clone());
@@ -254,6 +271,8 @@ impl Make {
         if let Some(e) = self.evaluate {
             deps.evaluate = e;
         }
+        deps.tls = self.tls.map(|s| s.page());
+        deps.crawl = self.crawl.map(|s| s.page());
         let mut cfg = config(path);
         (self.cfg)(&mut cfg);
         Watcher::new(cfg, deps)
@@ -2311,4 +2330,540 @@ fn test_an_overlay_button_that_navigates_is_undone() {
     // a button that reloads the same page with a query (LEGO's "Continue") is not another page: kept
     let (html, _) = eve_web::watch::render::render_here(&format!("http://127.0.0.1:{port}/reload"), 15.0, &rules).unwrap();
     assert!(html.contains("$49.00") && html.contains("entered"));
+}
+
+// ---- test_watch_tls.py: where the Chrome-like read sits on the ladder ------------------------------------------
+
+/// test_watch_tls.py / test_watch_tinyfish.py's `refused(status)`: every read answers HTTP `status`.
+fn refused(status: u16) -> impl Fn(&str, &HttpOptions) -> Result<(u16, String), FetchError> + Send + Sync + 'static {
+    move |_, _| Err(FetchError::with_status(format!("the site answered HTTP {status}"), status))
+}
+
+/// A fake reader that records each URL and answers JSON_LD_EVENT (Python's `crawler(pages)` and the tls lambdas).
+fn recording(seen: &Arc<Mutex<Vec<String>>>) -> impl Fn(&str, &HttpOptions) -> Result<(u16, String), FetchError> + Send + Sync + 'static {
+    let seen = seen.clone();
+    move |url, _| {
+        seen.lock().push(url.to_string());
+        Ok((200, JSON_LD_EVENT.to_string()))
+    }
+}
+
+fn below_100(target: &str) -> Map<String, Value> {
+    args(json!({"target": target, "condition": "below", "value": 100}))
+}
+
+#[test]
+fn test_a_refused_page_is_read_as_chrome_would_and_remembered() {
+    let dir = tmp();
+    let path = dir.path().join("w.json");
+    let tls_calls: Arc<Mutex<Vec<String>>> = Arc::default();
+    let mut make = Make::new().fetch(refused(403)).cfg(|c| c.tls = true);
+    make.tls = Some(Swap::new(recording(&tls_calls)));
+    let fetch = make.fetch.clone();
+    let w = make.build(&path);
+    let out = run(w.add(&below_100("https://shop.example/p")));
+    assert!(out["ok"] == json!(true) && out["now"].as_str().unwrap().contains("85"), "{out}");
+    assert_eq!(*tls_calls.lock(), vec!["https://shop.example/p".to_string()]);
+    let item = w.watches()[0].clone();
+    {
+        let g = item.lock();
+        // no browser floor
+        assert!(g.via == "tls" && g.every_secs == watch::default_every_secs("page"), "{} {}", g.via, g.every_secs);
+    }
+    // from now on straight to the Chrome-like read: the plain read is not tried again
+    fetch.set(|_, _| panic!("a tls page is not fetched plainly"));
+    run(w.read(&item)).unwrap();
+    assert_eq!(tls_calls.lock().len(), 2);
+    // and it survives a restart
+    let again = Make::new().cfg(|c| c.tls = true).build(&path);
+    assert_eq!(again.snapshot()[0].via, "tls");
+}
+
+#[test]
+fn test_a_site_that_never_answers_is_read_as_chrome_would() {
+    let dir = tmp();
+    let mut make = Make::new().fetch(|_, _| Err(FetchError::new(watch::tls::TOO_LONG))).cfg(|c| c.tls = true);
+    make.tls = Some(Swap::new(|_, _| Ok((200, JSON_LD_EVENT.to_string()))));
+    let w = make.build(&dir.path().join("w.json"));
+    assert_eq!(run(w.add(&below_100("https://shop.example/p")))["ok"], json!(true));
+    assert_eq!(w.snapshot()[0].via, "tls");
+}
+
+#[test]
+fn test_a_rate_limit_is_honoured_not_dodged() {
+    let dir = tmp();
+    let mut make = Make::new().fetch(refused(429)).cfg(|c| c.tls = true);
+    make.tls = Some(Swap::new(|_, _| panic!("a 429 is not retried another way")));
+    let w = make.build(&dir.path().join("w.json"));
+    let out = run(w.add(&below_100("https://shop.example/p")));
+    assert!(out["now"].as_str().unwrap().contains("first check failed"), "{out}");
+    assert_eq!(w.snapshot()[0].via, "");
+}
+
+#[test]
+fn test_when_the_chrome_like_read_is_refused_too_the_browser_comes_next() {
+    let dir = tmp();
+    let renders: Arc<Mutex<Vec<String>>> = Arc::default();
+    let mut make = Make::new().fetch(refused(403)).cfg(|c| {
+        c.tls = true;
+        c.browser = true;
+    });
+    make.tls = Some(Swap::new(refused(403)));
+    let r = renders.clone();
+    make.render = SwapRender::new(move |url| {
+        r.lock().push(url.to_string());
+        Ok((JSON_LD_EVENT.to_string(), Vec::new()))
+    });
+    let w = make.build(&dir.path().join("w.json"));
+    let out = run(w.add(&below_100("https://shop.example/p")));
+    assert_eq!(out["ok"], json!(true), "{out}");
+    assert_eq!(*renders.lock(), vec!["https://shop.example/p".to_string()]);
+    assert_eq!(w.snapshot()[0].via, "browser");
+}
+
+#[test]
+fn test_off_means_off() {
+    let dir = tmp();
+    let mut make = Make::new().fetch(refused(403)).cfg(|c| c.tls = false);
+    make.tls = Some(Swap::new(|_, _| panic!("the Chrome-like read is off")));
+    let w = make.build(&dir.path().join("w.json"));
+    run(w.add(&below_100("https://shop.example/p")));
+    let via = w.snapshot()[0].via.clone();
+    assert!(via.is_empty() || via == "search", "{via}");
+    // make_watcher lends the real reader; the Watcher alone lends none: with tls on in the config and no reader
+    // lent, a refused page skips the Chrome-like rung
+    let bare_deps = Make::new().fetch(refused(403)).cfg(|c| c.tls = true);
+    let w = bare_deps.build(&dir.path().join("x.json"));
+    run(w.add(&below_100("https://shop.example/p")));
+    assert_ne!(w.snapshot()[0].via, "tls");
+}
+
+#[test]
+fn test_the_tls_switch() {
+    // test_watch_tls.py's test_the_switch: `_tls_on` is auto by default (on when the reader is here), "0" is off
+    let ctx = |pairs: &[(&str, &str)]| {
+        let env: Environ = pairs.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect();
+        Ctx::global().clone().with_env(env)
+    };
+    assert_eq!(watch::config::tls_on(&ctx(&[])), watch::tls_available());
+    assert!(!watch::config::tls_on(&ctx(&[("EVE_WATCH_TLS", "0")])));
+    assert!(!watch::config::tls_on(&ctx(&[("EVE_WATCH_TLS", "off")])));
+    if !watch::tls_available() {
+        // Python patches tls_available to False: on means off when the reader is missing
+        assert!(!watch::config::tls_on(&ctx(&[("EVE_WATCH_TLS", "1")])));
+    } else {
+        assert!(watch::config::tls_on(&ctx(&[("EVE_WATCH_TLS", "1")])));
+    }
+}
+
+// ---- test_watch_tinyfish.py: the hosted rung on the watcher's ladder -------------------------------------------
+
+/// Every spend line the test's own ledger holds (Python's `spent` fixture).
+fn spent_rows(dir: &Path) -> Vec<Map<String, Value>> {
+    let mut rows = Vec::new();
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for e in entries.flatten() {
+            for line in std::fs::read_to_string(e.path()).unwrap_or_default().lines() {
+                if let Ok(Value::Object(m)) = serde_json::from_str::<Value>(line) {
+                    rows.push(m);
+                }
+            }
+        }
+    }
+    rows
+}
+
+/// `make_watcher(path, fetch=refused(403), hosted=True, ...)` with its own ledger in `dir/spend`.
+fn hosted_make(dir: &Path, crawl: Swap) -> Make {
+    let mut make = Make::new().fetch(refused(403)).cfg(|c| c.hosted = true);
+    make.crawl = Some(crawl);
+    make.ledger = Some(dir.join("spend"));
+    make
+}
+
+#[test]
+fn test_a_page_every_local_reader_is_refused_is_read_through_tinyfish() {
+    let dir = tmp();
+    let crawled: Arc<Mutex<Vec<String>>> = Arc::default();
+    let mut make = hosted_make(dir.path(), Swap::new(recording(&crawled))).cfg(|c| {
+        c.hosted = true;
+        c.tls = true;
+        c.browser = true;
+    });
+    make.tls = Some(Swap::new(refused(403)));
+    make.render = SwapRender::new(|_| Err(FetchError::with_status("the page shows a bot check", 403)));
+    let (fetch, tls, render) = (make.fetch.clone(), make.tls.clone().unwrap(), make.render.clone());
+    let w = make.build(&dir.path().join("w.json"));
+    let out = run(w.add(&below_100("https://shop.example/p")));
+    let item = w.watches()[0].clone();
+    assert!(out["ok"] == json!(true) && out["now"].as_str().unwrap().contains("85"), "{out}");
+    assert!(out["note"].as_str().unwrap_or("").contains("TinyFish"), "{out}");
+    {
+        let g = item.lock();
+        assert!(g.via == "hosted" && g.every_secs >= watch::floor_secs("hosted"), "{} {}", g.via, g.every_secs);
+    }
+    assert_eq!(*crawled.lock(), vec!["https://shop.example/p".to_string()]);
+    let rows = spent_rows(&dir.path().join("spend"));
+    assert!(!rows.is_empty(), "no spend line");
+    let first = &rows[0];
+    assert_eq!(
+        (first["p"].as_str(), first["m"].as_str(), first["f"].as_str(), first["usd"].as_f64()),
+        (Some("tinyfish"), Some("fetch"), Some(eve_spend::WATCH), Some(0.0))
+    );
+    // from now on straight to TinyFish; nothing local is tried
+    fetch.set(|_, _| panic!("a hosted page is not read locally"));
+    tls.set(|_, _| panic!("a hosted page is not read locally"));
+    render.set(|_| panic!("a hosted page is not rendered"));
+    run(w.read(&item)).unwrap();
+    assert_eq!(crawled.lock().len(), 2);
+    assert!(w.listing().contains("(through TinyFish)"), "{}", w.listing());
+}
+
+#[test]
+fn test_without_the_browser_tinyfish_comes_straight_after_the_chrome_like_read() {
+    let dir = tmp();
+    let crawled: Arc<Mutex<Vec<String>>> = Arc::default();
+    let mut make = hosted_make(dir.path(), Swap::new(recording(&crawled))).cfg(|c| {
+        c.hosted = true;
+        c.tls = true;
+        c.browser = false;
+    });
+    make.tls = Some(Swap::new(refused(403)));
+    let w = make.build(&dir.path().join("w.json"));
+    assert_eq!(run(w.add(&below_100("https://shop.example/p")))["ok"], json!(true));
+    assert_eq!(w.snapshot()[0].via, "hosted");
+    assert_eq!(crawled.lock().len(), 1);
+}
+
+#[test]
+fn test_a_page_tinyfish_is_refused_too_goes_to_search() {
+    let dir = tmp();
+    let w = hosted_make(dir.path(), Swap::new(refused(403))).build(&dir.path().join("w.json"));
+    run(w.add(&below_100("https://shop.example/p")));
+    assert_eq!(w.snapshot()[0].via, "search");
+}
+
+#[test]
+fn test_tinyfishs_own_trouble_never_moves_the_watch() {
+    let dir = tmp();
+    let rate_limited = Swap::new(|_, _| {
+        Err(FetchError {
+            status: 429,
+            ..FetchError::with_host("TinyFish: the site answered HTTP 429", eve_web::tinyfish::FETCH_HOST)
+        })
+    });
+    let w = hosted_make(dir.path(), rate_limited).build(&dir.path().join("w.json"));
+    run(w.add(&below_100("https://shop.example/p")));
+    let item = w.snapshot()[0].clone();
+    assert!(item.via == "hosted" && item.errors == 1 && item.last_error.contains("429"), "{} {} {}", item.via, item.errors, item.last_error);
+}
+
+#[test]
+fn test_the_daily_cap() {
+    let dir = tmp();
+    let crawled: Arc<Mutex<Vec<String>>> = Arc::default();
+    let clock = TClock::new();
+    let w = hosted_make(dir.path(), Swap::new(recording(&crawled)))
+        .clock(&clock)
+        .cfg(|c| {
+            c.hosted = true;
+            c.hosted_calls_per_day = 2;
+        })
+        .build(&dir.path().join("w.json"));
+    run(w.add(&below_100("https://shop.example/p")));
+    let item = w.watches()[0].clone();
+    run(w.read(&item)).unwrap();
+    let e = run(w.read(&item)).unwrap_err();
+    assert!(e.reason.contains("TinyFish reads are used up"), "{}", e.reason);
+    assert_eq!(e.host, eve_web::tinyfish::FETCH_HOST);
+    assert_eq!(crawled.lock().len(), 2);
+    clock.add(86400.0); // the next day
+    run(w.read(&item)).unwrap();
+    assert_eq!(crawled.lock().len(), 3);
+}
+
+#[test]
+fn test_off_without_a_key() {
+    let dir = tmp();
+    let mut make = Make::new().fetch(refused(403)).cfg(|c| c.hosted = false);
+    make.crawl = Some(Swap::new(|_, _| panic!("TinyFish is off")));
+    let w = make.build(&dir.path().join("w.json"));
+    run(w.add(&below_100("https://shop.example/p")));
+    assert_eq!(w.snapshot()[0].via, "search");
+    // the Watcher alone lends no hosted reader: hosted on in the config, none lent, and a refused page goes to search
+    let w = Make::new().fetch(refused(403)).cfg(|c| c.hosted = true).build(&dir.path().join("x.json"));
+    run(w.add(&below_100("https://shop.example/p")));
+    assert_eq!(w.snapshot()[0].via, "search");
+}
+
+#[test]
+fn test_a_hosted_page_moves_to_search_when_tinyfish_is_turned_off() {
+    let dir = tmp();
+    let path = dir.path().join("w.json");
+    let w = hosted_make(dir.path(), Swap::new(recording(&Arc::default()))).build(&path);
+    run(w.add(&below_100("https://shop.example/p")));
+    assert_eq!(w.snapshot()[0].via, "hosted");
+    // the key removed, the daemon restarted
+    let searched: Arc<Mutex<Vec<Value>>> = Arc::default();
+    let s = searched.clone();
+    let mut later = Make::new().cfg(|c| c.hosted = false).ask(move |body| {
+        s.lock().push(body.clone());
+        Ok(reply(json!({"price": 80.0, "currency": "USD", "available": null, "note": ""})))
+    });
+    later.crawl = Some(Swap::new(|_, _| panic!("TinyFish is off")));
+    let later = later.build(&path);
+    let item = later.watches()[0].clone();
+    let r = run(later.read(&item)).unwrap();
+    assert_eq!(r.value, Some(80.0));
+    let g = item.lock();
+    assert!(g.via == "search" && g.every_secs >= watch::floor_secs("search"), "{} {}", g.via, g.every_secs);
+    let asks = searched.lock();
+    // one search: the model call that carries the web search tool
+    assert!(asks.len() == 1 && asks[0]["tools"][0]["type"] == json!("openrouter:web_search"), "{asks:?}");
+}
+
+#[test]
+fn test_the_via_survives_a_restart() {
+    let dir = tmp();
+    let path = dir.path().join("w.json");
+    let w = hosted_make(dir.path(), Swap::new(recording(&Arc::default()))).build(&path);
+    run(w.add(&below_100("https://shop.example/p")));
+    let again = Make::new().cfg(|c| c.hosted = true).build(&path);
+    let item = again.snapshot()[0].clone();
+    assert!(item.via == "hosted" && item.every_secs >= watch::floor_secs("hosted"), "{} {}", item.via, item.every_secs);
+}
+
+#[test]
+fn test_the_hosted_switches() {
+    // test_watch_tinyfish.py's test_the_switches
+    let ctx = |pairs: &[(&str, &str)]| {
+        let env: Environ = pairs.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect();
+        Ctx::global().clone().with_env(env)
+    };
+    assert!(!watch::configured(&ctx(&[])).hosted);
+    let on = watch::configured(&ctx(&[("TINYFISH_API_KEY", "tf-x")]));
+    assert!(on.hosted && on.hosted_calls_per_day == watch::DEFAULT_HOSTED_CALLS_PER_DAY);
+    assert!(!watch::configured(&ctx(&[("TINYFISH_API_KEY", "tf-x"), ("EVE_WATCH_HOSTED", "0")])).hosted);
+    assert_eq!(watch::configured(&ctx(&[("EVE_WATCH_HOSTED_CALLS", "5")])).hosted_calls_per_day, 5);
+}
+
+// ---- test_watch_shapes_replay.py and test_watch_security.py: the Watcher halves -----------------------------------
+
+/// A JSON integer literal no float can hold (Python's `"1" + "0" * 400`).
+static HUGE: std::sync::LazyLock<String> = std::sync::LazyLock::new(|| format!("1{}", "0".repeat(400)));
+
+fn no_price() -> impl Fn(&Value) -> Result<Value, FetchError> + Send + Sync + 'static {
+    |_| Ok(json!({"choices": [{"message": {"content": "{\"price\": null, \"available\": null, \"note\": \"\"}"}}]}))
+}
+
+#[test]
+fn test_one_page_with_a_huge_price_does_not_starve_the_other_watches() {
+    assert_eq!(HUGE.len(), 401);
+    let dir = tmp();
+    let clock = TClock::new();
+    let page = format!(
+        r#"<script type="application/ld+json">{{"@type":"Product","name":"X","offers":{{"price":{}}}}}</script>"#,
+        *HUGE
+    );
+    let fetched: Arc<Mutex<Vec<String>>> = Arc::default();
+    let f = fetched.clone();
+    let w = Make::new()
+        .fetch(move |url, _| {
+            f.lock().push(url.to_string());
+            Ok((200, if url.contains("yahoo") { quote(250.0, "USD") } else { page.clone() }))
+        })
+        .ask(no_price())
+        .clock(&clock)
+        .build(&dir.path().join("w.json"));
+    let mut x = mk("w1", "page", "https://shop.example/x", "X", "below");
+    x.value = Some(100.0);
+    x.every_secs = 1800;
+    x.next_at = clock.t() - 10.0;
+    let mut a = mk("w2", "quote", "AAPL", "Apple", "below");
+    a.value = Some(300.0);
+    a.every_secs = 900;
+    a.next_at = clock.t() - 5.0;
+    w.push(x);
+    let apple = w.push(a);
+    run(ticks_like_the_loop(&w, &clock, 4));
+    assert!(apple.lock().checks >= 1, "the quote watch was never checked");
+    let shop = fetched.lock().iter().filter(|u| u.contains("shop.example")).count();
+    assert_eq!(shop, 1, "{:?}", fetched.lock());
+}
+
+#[test]
+fn test_a_page_that_never_states_its_price_is_reported_not_silent() {
+    let dir = tmp();
+    let clock = TClock::new();
+    let (told, notify) = sink();
+    let page = "<html><body><main><h1>Widget</h1><p>Call for price</p></main></body></html>";
+    let w = Make::new()
+        .fetch(move |_, _| Ok((200, page.to_string())))
+        .ask(no_price())
+        .clock(&clock)
+        .notify(notify)
+        .cfg(|c| c.browser = false)
+        .build(&dir.path().join("w.json"));
+    let mut widget = mk("w1", "page", "https://shop.example/x", "Widget", "below");
+    widget.value = Some(50.0);
+    widget.every_secs = 300;
+    widget.next_at = clock.t();
+    let item = w.push(widget);
+    for _ in 0..(watch::TELL_AFTER_ERRORS + 4) {
+        run(w.tick());
+        let next = item.lock().next_at;
+        clock.set((clock.t() + 60.0).max(next));
+    }
+    assert!(item.lock().errors >= watch::TELL_AFTER_ERRORS, "errors {}", item.lock().errors);
+    assert!(told.lock().iter().any(|t| t.starts_with("I can't read Widget right now")), "{:?}", told.lock());
+}
+
+#[test]
+fn test_money_never_prints_scientific_notation() {
+    assert_eq!(watch::money(Some(0.00001234), "USD"), "$0.00001234");
+    assert_eq!(watch::money(Some(0.5), "USD"), "$0.5");
+    assert_eq!(watch::money(Some(12.5), "USD"), "$12.50");
+    let mut w = mk("w1", "quote", "SHIB-USD", "Shiba", "below");
+    w.value = Some(0.00001);
+    w.currency = "USD".to_string();
+    assert!(!watch::describe(&w).contains("e-"), "{}", watch::describe(&w));
+}
+
+#[test]
+fn test_the_huge_price_in_a_model_answer_is_dropped_not_raised() {
+    // test_a_huge_integer_price_is_dropped_not_raised's model_reading half (the structured half is in watch_pages)
+    let payload = json!({"choices": [{"message": {"content": format!("{{\"price\": {}, \"available\": true}}", *HUGE)}}]});
+    assert_eq!(watch::model_reading(&payload, "model").unwrap().value, None);
+}
+
+#[test]
+fn test_one_watch_whose_read_crashes_never_starves_the_others() {
+    let dir = tmp();
+    let clock = TClock::new();
+    // Python's fetch raises LookupError (no FetchError); the Rust reader's equivalent is a panic
+    let w = Make::new()
+        .fetch(|url, _| {
+            if url.contains("bad.example") {
+                panic!("unknown encoding: bogus-8");
+            }
+            Ok((200, r#"<meta property="product:price:amount" content="50">"#.to_string()))
+        })
+        .clock(&clock)
+        .cfg(|c| {
+            c.browser = false;
+            c.host_gap_secs = 0.0;
+        })
+        .build(&dir.path().join("w.json"));
+    let mut a = mk("w1", "page", "https://bad.example/", "A", "below");
+    a.value = Some(5.0);
+    a.every_secs = 300;
+    a.next_at = clock.t() - 10.0;
+    let mut b = mk("w2", "page", "https://good.example/", "B", "below");
+    b.value = Some(5.0);
+    b.every_secs = 300;
+    b.next_at = clock.t() - 5.0;
+    let a = w.push(a);
+    let b = w.push(b);
+    run(ticks_like_the_loop(&w, &clock, 10));
+    assert!(b.lock().checks >= 1, "the healthy watch was never checked");
+    let (errors, next_at) = {
+        let g = a.lock();
+        (g.errors, g.next_at)
+    };
+    assert!(errors >= 1 && next_at > clock.t() - 600.0, "the broken watch was never counted or rescheduled");
+}
+
+#[test]
+fn test_a_page_alert_links_only_the_page_the_owner_gave() {
+    let dir = tmp();
+    let (sent, notify) = sink();
+    let answers = Arc::new(Mutex::new(VecDeque::from(vec![
+        reply(json!({"available": false, "note": "Sold out."})),
+        reply(json!({"available": true, "note": "Back.", "url": "https://kettle-restock.example/login"})),
+    ])));
+    let a = answers.clone();
+    let clock = TClock::new();
+    let w = Make::new()
+        .fetch(|_, _| Ok((200, "<p>Kettle</p>".to_string())))
+        .ask(move |_| Ok(a.lock().pop_front().expect("only two answers")))
+        .notify(notify)
+        .clock(&clock)
+        .cfg(|c| c.browser = false)
+        .build(&dir.path().join("w.json"));
+    let out = run(w.add(&obj(json!({"kind": "page", "target": "https://shop.example/kettle", "label": "Blue Kettle",
+                                     "condition": "available", "value": null, "text": null, "city": null,
+                                     "every_minutes": null}))));
+    assert_eq!(out["ok"], json!(true), "{out}");
+    {
+        // the page changed: a fresh model reading, due now
+        let wt = w.watches()[0].clone();
+        let mut g = wt.lock();
+        g.digest.clear();
+        g.next_at = 0.0;
+    }
+    w.limiter.lock().clear("shop.example");
+    run(w.tick());
+    let sent = sent.lock();
+    assert!(!sent.is_empty(), "the second reading should have fired");
+    let last = sent.last().unwrap();
+    assert!(!last.contains("kettle-restock.example"), "{last}");
+    assert!(last.trim_end().ends_with("https://shop.example/kettle"), "{last}");
+}
+
+#[test]
+fn test_a_search_note_cannot_hide_a_link_behind_words() {
+    let mut wt = mk("w1", "search", "tickets for X in Seattle", "X in Seattle", "available");
+    wt.checks = 1;
+    wt.armed = true;
+    let reading = watch::model_reading(
+        &reply(json!({"available": true, "note": "[Presale code: claim here](https://tix-claim.example/sso)"})),
+        "search",
+    )
+    .unwrap();
+    let alert = watch::evaluate(&mut wt, &reading, true).expect("an alert");
+    let composed = eve_telegram_format::compose(&alert, Some("Watching"), None);
+    assert!(!composed.contains("<a href"), "{composed}");
+}
+
+// ---- test_watch_reverify.py: the render child dies with its parent ------------------------------------------------
+
+/// render_watchdog ends the process (`_exit(3)`), so it runs in a child: this test binary again, running only this
+/// test with EVE_WEB_WATCHDOG_CHILD set. The child starts a grandchild (`sleep 60`), prints its pid, and runs the
+/// watchdog with a parent pid that is not its parent (Python's `parent=-12345`: the parent is gone). The watchdog
+/// must kill everything below the child and exit 3.
+#[test]
+fn test_the_render_child_dies_with_its_parent() {
+    if std::env::var_os("EVE_WEB_WATCHDOG_CHILD").is_some() {
+        // never waited on: render_watchdog kills it and ends this process, as the test means it to
+        #[allow(clippy::zombie_processes)]
+        let grandchild = std::process::Command::new("sleep").arg("60").spawn().expect("sleep");
+        println!("GRANDCHILD {}", grandchild.id());
+        std::io::Write::flush(&mut std::io::stdout()).ok();
+        let deadline = Instant::now() + Duration::from_secs(3600);
+        watch::render::render_watchdog(u32::MAX - 12344, deadline, 0.01);
+        unreachable!("render_watchdog returned");
+    }
+    let me = std::env::current_exe().expect("the test binary");
+    let out = std::process::Command::new(me)
+        .args(["--exact", "test_the_render_child_dies_with_its_parent", "--nocapture", "--test-threads=1"])
+        .env("EVE_WEB_WATCHDOG_CHILD", "1")
+        .output()
+        .expect("the child ran");
+    assert_eq!(out.status.code(), Some(3), "{out:?}");
+    let text = String::from_utf8_lossy(&out.stdout);
+    let pid: i32 = text
+        .lines()
+        .find_map(|l| l.split("GRANDCHILD ").nth(1))
+        .and_then(|p| p.split_whitespace().next()?.parse().ok())
+        .unwrap_or_else(|| panic!("no grandchild pid in {text}"));
+    // the grandchild was killed (it is the child's orphan now; launchd reaps it)
+    let gone = (0..200).any(|_| {
+        // SAFETY: signal 0 only asks whether the process exists.
+        let alive = unsafe { libc::kill(pid, 0) } == 0;
+        if alive {
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        !alive
+    });
+    assert!(gone, "the render child's own child outlived it");
 }
