@@ -812,3 +812,43 @@ fn sums_like_python() {
     assert_eq!(py_sum(&[0.1; 10]), 1.0);
     assert_eq!(py_sum(&[]), 0.0);
 }
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn a_clock_answering_nan_drops_the_turn_as_int_raises() {
+    let (send, sent) = recorder(true);
+    let service = Arc::new(LiveExpressions::new(
+        send,
+        Options {
+            enabled: Some(true),
+            model_factory: model_factory(),
+            clock: Arc::new(|| f64::NAN),
+            env: quiet_env(),
+            ..Options::default()
+        },
+    ));
+    let task = spawn(&service);
+    service.offer("user", "hi");
+    until(|| service.dropped() == 1).await;
+    assert_eq!(service.error(), "ValueError: cannot convert float NaN to integer");
+    assert!(sent.lock().is_empty());
+    stop(task).await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn an_endless_gap_sleeps_instead_of_panicking() {
+    // last_sent_at in the far future: delay is inf; asyncio.sleep(inf) just waits.
+    let (clock, now) = manual_clock(0.0);
+    let (send, sent) = recorder(true);
+    let service = Arc::new(LiveExpressions::new(
+        send,
+        Options { enabled: Some(true), model_factory: model_factory(), clock, env: quiet_env(), ..Options::default() },
+    ));
+    service.state().last_sent_at = f64::INFINITY;
+    *now.lock() = f64::NEG_INFINITY;
+    let task = spawn(&service);
+    service.offer("user", "hi");
+    tokio::time::sleep(Duration::from_millis(200)).await;
+    assert!(!task.is_finished());
+    assert!(sent.lock().is_empty() && service.pending().is_some());
+    stop(task).await;
+}

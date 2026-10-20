@@ -567,7 +567,10 @@ impl LiveExpressions {
                 Step::Load => self.load_model().await,
                 Step::Wait => self.wake.notified().await,
                 // take the newest pending event after the delay
-                Step::Sleep(delay) => tokio::time::sleep(Duration::from_secs_f64(delay)).await,
+                // asyncio.sleep(inf) never returns; tokio clamps Duration::MAX to its far future.
+                Step::Sleep(delay) => {
+                    tokio::time::sleep(Duration::try_from_secs_f64(delay).unwrap_or(Duration::MAX)).await
+                }
                 Step::Work(item, model) => self.work(item, model).await,
             }
         }
@@ -642,6 +645,14 @@ impl LiveExpressions {
         };
         if !enabled || item.generation != generation || age > MAX_AGE_S || !self.connected() {
             return Ok(false);
+        }
+        // int() of a non-finite hold (only a clock answering nan or inf gets here) raises, and the turn is dropped.
+        let hold = ttl_ms(label).unwrap_or(TTL_MIN_MS) as f64 - age * 1000.0;
+        if hold.is_nan() {
+            return Err(Raised::new("ValueError", "cannot convert float NaN to integer"));
+        }
+        if hold.is_infinite() {
+            return Err(Raised::new("OverflowError", "cannot convert float infinity to integer"));
         }
         let ttl = expression_ttl_ms(label, age);
         let cmd = json!({"cmd": "expression", "id": item.event, "label": label, "ttl_ms": ttl, "chirp": false});
