@@ -592,9 +592,11 @@ pub fn check_in(app: &App, src: &dyn ModuleSource) -> Vec<String> {
         problems.push("a stream app's hub needs stream(writer)".to_string());
     }
     if !app.cli.is_empty() {
-        let has_cli = app.cli_module_in(src).is_some_and(|m| m.callable("cli"));
-        if !has_cli {
-            problems.push(format!("{}.cli is missing", app.cli_module_name()));
+        match app.cli_module_in(src) {
+            // Python's import of the CLI module would raise here
+            None => problems.push(format!("eve_bridge.{} is not registered", app.cli_module_name())),
+            Some(m) if !m.callable("cli") => problems.push(format!("{}.cli is missing", app.cli_module_name())),
+            Some(_) => {}
         }
     }
     problems
@@ -837,7 +839,7 @@ pub fn py_str_repr(s: &str) -> String {
                 out.push('\\');
                 out.push(c);
             }
-            c if c.is_control() => {
+            c if !py_printable(c) => {
                 let code = c as u32;
                 if code <= 0xff {
                     out.push_str(&format!("\\x{code:02x}"));
@@ -852,6 +854,46 @@ pub fn py_str_repr(s: &str) -> String {
     }
     out.push(quote);
     out
+}
+
+/// Python's `str.isprintable()` for one character, which `repr()` escapes when false: not a control (Cc), format
+/// (Cf), private-use (Co), surrogate, noncharacter, or separator other than the space (Zs, Zl, Zp). Unassigned code
+/// points (Cn) beyond the noncharacters need Unicode's tables and print as themselves.
+fn py_printable(c: char) -> bool {
+    let u = c as u32;
+    if c == ' ' {
+        return true;
+    }
+    if c.is_control() {
+        return false; // Cc
+    }
+    let separator = matches!(u, 0xa0 | 0x1680 | 0x2000..=0x200a | 0x2028 | 0x2029 | 0x202f | 0x205f | 0x3000);
+    let format = matches!(
+        u,
+        0xad | 0x600..=0x605
+            | 0x61c
+            | 0x6dd
+            | 0x70f
+            | 0x890..=0x891
+            | 0x8e2
+            | 0x180e
+            | 0x200b..=0x200f
+            | 0x202a..=0x202e
+            | 0x2060..=0x2064
+            | 0x2066..=0x206f
+            | 0xfeff
+            | 0xfff9..=0xfffb
+            | 0x110bd
+            | 0x110cd
+            | 0x13430..=0x1343f
+            | 0x1bca0..=0x1bca3
+            | 0x1d173..=0x1d17a
+            | 0xe0001
+            | 0xe0020..=0xe007f
+    );
+    let private = matches!(u, 0xe000..=0xf8ff | 0xf0000..=0xffffd | 0x100000..=0x10fffd);
+    let nonchar = matches!(u, 0xfdd0..=0xfdef) || (u & 0xfffe) == 0xfffe;
+    !(separator || format || private || nonchar)
 }
 
 fn py_list_repr(items: &[&str]) -> String {

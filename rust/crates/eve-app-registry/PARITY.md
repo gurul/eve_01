@@ -51,7 +51,7 @@ Status: complete
 | `SITES` | `SITES` | |
 | `site_names` | `site_names()` / `site_names_in(dir)` | same three regexes over the Python wiring sites' source (`site_dir()` = `bridge/src/eve_bridge`); output checked identical to Python's (1211 names, same SHA-256) |
 | `name_problem` | `name_problem(name, own_prefixes, labels)` / `name_problem_in(..., src, sites_dir)` | Python 3.13 `keyword.kwlist` and `softkwlist` |
-| (repr helpers) | `py_repr`, `py_str_repr` | Python `repr()` for messages |
+| (repr helpers) | `py_repr`, `py_str_repr`, `py_printable` | Python `repr()` for messages; escapes what `str.isprintable()` rejects (Cc, Cf, Co, Zs/Zl/Zp but space, noncharacters) |
 | (module seam) | `ModuleInfo`, `ClassInfo`, `ModuleSource`, `Modules`, `Registered`, `register_module` | see Boundaries |
 
 ## Tests
@@ -76,9 +76,12 @@ Status: complete
 
 ## Differences
 - A module that no app crate registered: Python's import would raise. `check` reports
-  `eve_bridge.<module> is not registered` and stops; `owner` and `name_problem` skip that app's tool names and log a
-  warning.
+  `eve_bridge.<module> is not registered` and stops (and, for a CLI module such as `obsbot` that is not
+  registered, `eve_bridge.<cli_module> is not registered`); `owner` and `name_problem` skip that app's tool names and
+  log a warning.
 - `site_names` skips a site file it cannot read (logged); Python would raise on a decode error.
 - `check_panel`: an unhashable control id (a list or object) makes Python's `in ids` raise; Rust treats it as unseen.
 - Python's `str.isidentifier()` / `str.islower()` use Unicode XID / cased tables; Rust approximates with
   `char::is_alphabetic` / `is_alphanumeric` / `is_lowercase` / `is_uppercase`. ASCII slots behave identically.
+- `repr()` of a string escapes what Python's `str.isprintable()` rejects from a fixed list of those categories;
+  other unassigned code points (Cn), which Python also escapes, print as themselves.

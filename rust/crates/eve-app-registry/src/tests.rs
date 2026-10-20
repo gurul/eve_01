@@ -184,6 +184,9 @@ fn test_an_unregistered_module_holds_no_tools() {
     let none = Modules::new();
     assert!(owner_in("lights_set", false, &none).is_none());
     assert_eq!(check_in(get("lights").expect("lights"), &none), vec!["eve_bridge.lights is not registered"]);
+    // the camera's CLI lives in another module; without it, check names that module
+    let only_panel = Modules::new().with((*today_modules().module("obsbot_panel").expect("panel")).clone());
+    assert_eq!(check_in(get("obsbot").expect("obsbot"), &only_panel), vec!["eve_bridge.obsbot is not registered"]);
 }
 
 #[test]
@@ -421,6 +424,27 @@ fn test_py_repr_matches_python() {
     assert_eq!(py_repr(&json!("it's")), "\"it's\"");
     assert_eq!(py_repr(&json!("a'\"b\n")), "'a\\'\"b\\n'");
     assert_eq!(py_repr(&json!(["a", {"k": 1}])), "['a', {'k': 1}]");
+    // what str.isprintable() rejects is escaped; the rest prints as itself (values from Python 3.13's repr)
+    for (s, want) in [
+        ("a\u{a0}b", "'a\\xa0b'"),
+        ("\u{200b}", "'\\u200b'"),
+        ("\u{e000}", "'\\ue000'"),
+        ("é", "'é'"),
+        ("\u{7f}", "'\\x7f'"),
+        ("\u{e0001}", "'\\U000e0001'"),
+        ("\u{3000}", "'\\u3000'"),
+        ("\u{fffe}", "'\\ufffe'"),
+        ("\u{85}", "'\\x85'"),
+        ("日本", "'日本'"),
+    ] {
+        assert_eq!(py_str_repr(s), want, "{s:?}");
+    }
+    // a duplicate id with a no-break space is named as Python names it
+    let dup = json!({"type": "button", "id": "a\u{a0}b", "label": "x", "action": "y"});
+    assert_eq!(
+        check_panel(&json!({"ok": true, "ui": 1, "controls": [dup.clone(), dup]})),
+        vec!["controls[1]: id 'a\\xa0b' is used twice"]
+    );
 }
 
 // ---- the docs -------------------------------------------------------------------------------------------------------
