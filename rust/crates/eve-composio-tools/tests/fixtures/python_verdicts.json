@@ -1,0 +1,9633 @@
+{
+ "policies": {
+  "default": "",
+  "gmail_auto": "gmail=auto",
+  "strict": "googlecalendar=ask,googledrive=read,slack=ask",
+  "loose": "gmail=ask,slack=write,notion=write,linear=write"
+ },
+ "cases": [
+  {
+   "name": "COMPOSIO_SEARCH_TOOLS",
+   "args": {
+    "queries": [
+     {
+      "use_case": "post a formatted message to slack channel",
+      "known_fields": "channel_name:design"
+     }
+    ]
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_SEARCH_TOOLS with queries: [{\"use_case\": \"post a formatted message to slack channel\",…?",
+   "whole_1500": "Run COMPOSIO_SEARCH_TOOLS with queries: [{\"use_case\": \"post a formatted message to slack channel\", \"known_fields\": \"channel_name:design\"}]?",
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "search tools"
+  },
+  {
+   "name": "COMPOSIO_GET_TOOL_SCHEMAS",
+   "args": {
+    "tool_slugs": [
+     "SLACK_SEND_MESSAGE"
+    ]
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_GET_TOOL_SCHEMAS with tool_slugs: [\"SLACK_SEND_MESSAGE\"]?",
+   "whole_1500": "Run COMPOSIO_GET_TOOL_SCHEMAS with tool_slugs: [\"SLACK_SEND_MESSAGE\"]?",
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "tool schemas"
+  },
+  {
+   "name": "COMPOSIO_MANAGE_CONNECTIONS",
+   "args": {
+    "toolkits": [
+     "gmail"
+    ]
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_MANAGE_CONNECTIONS with toolkits: [\"gmail\"]?",
+   "whole_1500": "Run COMPOSIO_MANAGE_CONNECTIONS with toolkits: [\"gmail\"]?",
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": false,
+   "key": "connections, link"
+  },
+  {
+   "name": "COMPOSIO_MANAGE_CONNECTIONS",
+   "args": {
+    "toolkits": [
+     "gmail",
+     "slack"
+    ],
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_MANAGE_CONNECTIONS with toolkits: [\"gmail\", \"slack\"], session_id: s?",
+   "whole_1500": "Run COMPOSIO_MANAGE_CONNECTIONS with toolkits: [\"gmail\", \"slack\"], session_id: s?",
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": false,
+   "key": "connections, two apps"
+  },
+  {
+   "name": "COMPOSIO_MANAGE_CONNECTIONS",
+   "args": {
+    "toolkits": [
+     "gmail"
+    ],
+    "reinitiate_all": true
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_MANAGE_CONNECTIONS"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_MANAGE_CONNECTIONS"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_MANAGE_CONNECTIONS"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_MANAGE_CONNECTIONS"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_MANAGE_CONNECTIONS with toolkits: [\"gmail\"], reinitiate_all: true?",
+   "whole_1500": "Run COMPOSIO_MANAGE_CONNECTIONS with toolkits: [\"gmail\"], reinitiate_all: true?",
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "connections, reinitiate"
+  },
+  {
+   "name": "COMPOSIO_WAIT_FOR_CONNECTIONS",
+   "args": {
+    "toolkits": [
+     "gmail"
+    ],
+    "mode": "any"
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_WAIT_FOR_CONNECTIONS with toolkits: [\"gmail\"], mode: any?",
+   "whole_1500": "Run COMPOSIO_WAIT_FOR_CONNECTIONS with toolkits: [\"gmail\"], mode: any?",
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "connections, wait"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_BASH_TOOL",
+   "args": {
+    "command": "ls"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_BASH_TOOL"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_BASH_TOOL"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_BASH_TOOL"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_BASH_TOOL"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_BASH_TOOL"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_BASH_TOOL"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_BASH_TOOL"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_BASH_TOOL"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_BASH_TOOL with command: ls?",
+   "whole_1500": "Run COMPOSIO_REMOTE_BASH_TOOL with command: ls?",
+   "consequential": [
+    "COMPOSIO_REMOTE_BASH_TOOL"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "remote bash"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {},
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH?",
+   "whole_1500": null,
+   "consequential": [
+    "COMPOSIO_REMOTE_WORKBENCH"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": null,
+   "reaches_out_lite": true,
+   "key": "workbench, no code"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "\nimport json\nx = json.load(open('/mnt/files/mex/mine.json'))['items']\nnlp = [e for e in x if 'natural language' in (e.get('summary') or '').lower()]\nprint(json.dumps([{'start': e['start'], 'where': e.get('location')} for e in nlp[:5]]))\n",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: import json x = json.load(open('/mnt/files/mex/mine.json'))…, thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [],
+   "reaches_out_lite": false,
+   "key": "workbench, computes"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "import pandas as pd\ndf = pd.DataFrame([{'a': 1}])\nprint(df.describe())",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: import pandas as pd df = pd.DataFrame([{'a': 1}]) print(df.…, thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [],
+   "reaches_out_lite": false,
+   "key": "workbench, pandas"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "r = run_composio_tool('NOTION_SEARCH_NOTION_PAGE', {'query': 'trip'})\nprint(len(r['data']))",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: r = run_composio_tool('NOTION_SEARCH_NOTION_PAGE', {'query'…, thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "NOTION_SEARCH_NOTION_PAGE"
+   ],
+   "reaches_out_lite": false,
+   "key": "workbench, notion read"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "r = run_composio_tool('GMAIL_FETCH_EMAILS', {})\nprint(len(r))",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "refuse",
+     [
+      "GMAIL_FETCH_EMAILS"
+     ],
+     "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""
+    ],
+    "gmail_auto": [
+     "refuse",
+     [
+      "GMAIL_FETCH_EMAILS"
+     ],
+     "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""
+    ],
+    "strict": [
+     "refuse",
+     [
+      "GMAIL_FETCH_EMAILS"
+     ],
+     "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""
+    ],
+    "loose": [
+     "refuse",
+     [
+      "GMAIL_FETCH_EMAILS"
+     ],
+     "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: r = run_composio_tool('GMAIL_FETCH_EMAILS', {}) print(len(r…, thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "GMAIL_FETCH_EMAILS"
+   ],
+   "reaches_out_lite": true,
+   "key": "workbench, gmail read"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "run_composio_tool('GMAIL_SEND_EMAIL', {'to': 'reader@example.org'})",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "refuse",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""
+    ],
+    "gmail_auto": [
+     "refuse",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""
+    ],
+    "strict": [
+     "refuse",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""
+    ],
+    "loose": [
+     "refuse",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""
+    ]
+   },
+   "lite": {
+    "default": [
+     "refuse",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     "gmail is read only here; GMAIL_SEND_EMAIL will not run"
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     ""
+    ],
+    "strict": [
+     "refuse",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     "gmail is read only here; GMAIL_SEND_EMAIL will not run"
+    ],
+    "loose": [
+     "ask",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run GMAIL_SEND_EMAIL from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "GMAIL_SEND_EMAIL"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "GMAIL_SEND_EMAIL"
+   ],
+   "reaches_out_lite": true,
+   "key": "workbench, gmail send"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "run_composio_tool(tool_slug='GOOGLEDRIVE_UPLOAD_FILE', arguments={})",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "GOOGLEDRIVE_UPLOAD_FILE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "GOOGLEDRIVE_UPLOAD_FILE"
+     ],
+     ""
+    ],
+    "strict": [
+     "refuse",
+     [
+      "GOOGLEDRIVE_UPLOAD_FILE"
+     ],
+     "googledrive is read only here; GOOGLEDRIVE_UPLOAD_FILE will not run"
+    ],
+    "loose": [
+     "ask",
+     [
+      "GOOGLEDRIVE_UPLOAD_FILE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "GOOGLEDRIVE_UPLOAD_FILE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "GOOGLEDRIVE_UPLOAD_FILE"
+     ],
+     ""
+    ],
+    "strict": [
+     "refuse",
+     [
+      "GOOGLEDRIVE_UPLOAD_FILE"
+     ],
+     "googledrive is read only here; GOOGLEDRIVE_UPLOAD_FILE will not run"
+    ],
+    "loose": [
+     "ask",
+     [
+      "GOOGLEDRIVE_UPLOAD_FILE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run GOOGLEDRIVE_UPLOAD_FILE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "GOOGLEDRIVE_UPLOAD_FILE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "GOOGLEDRIVE_UPLOAD_FILE"
+   ],
+   "reaches_out_lite": false,
+   "key": "workbench, drive upload"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "run_composio_tool('SLACK_SEND_MESSAGE', {'channel': 'design', 'text': 'hi'})",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run SLACK_SEND_MESSAGE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "SLACK_SEND_MESSAGE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "SLACK_SEND_MESSAGE"
+   ],
+   "reaches_out_lite": false,
+   "key": "workbench, slack send"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "run_composio_tool('GOOGLEDRIVE_UPLOAD_FILE', arguments)",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "GOOGLEDRIVE_UPLOAD_FILE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "GOOGLEDRIVE_UPLOAD_FILE"
+     ],
+     ""
+    ],
+    "strict": [
+     "refuse",
+     [
+      "GOOGLEDRIVE_UPLOAD_FILE"
+     ],
+     "googledrive is read only here; GOOGLEDRIVE_UPLOAD_FILE will not run"
+    ],
+    "loose": [
+     "ask",
+     [
+      "GOOGLEDRIVE_UPLOAD_FILE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "GOOGLEDRIVE_UPLOAD_FILE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "GOOGLEDRIVE_UPLOAD_FILE"
+     ],
+     ""
+    ],
+    "strict": [
+     "refuse",
+     [
+      "GOOGLEDRIVE_UPLOAD_FILE"
+     ],
+     "googledrive is read only here; GOOGLEDRIVE_UPLOAD_FILE will not run"
+    ],
+    "loose": [
+     "ask",
+     [
+      "GOOGLEDRIVE_UPLOAD_FILE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run GOOGLEDRIVE_UPLOAD_FILE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "GOOGLEDRIVE_UPLOAD_FILE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "GOOGLEDRIVE_UPLOAD_FILE"
+   ],
+   "reaches_out_lite": false,
+   "key": "workbench, unknown arguments"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "import requests\nrequests.post('https://x.example', data='hi')",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: import requests requests.post('https://x.example', data='hi…, thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [
+    "COMPOSIO_REMOTE_WORKBENCH"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": null,
+   "reaches_out_lite": true,
+   "key": "workbench, network"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "f = run_composio_tool\nf('GMAIL_SEND_EMAIL', {})",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: f = run_composio_tool f('GMAIL_SEND_EMAIL', {}), thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [
+    "COMPOSIO_REMOTE_WORKBENCH"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": null,
+   "reaches_out_lite": true,
+   "key": "workbench, aliased helper"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "this is not python (",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: this is not python (, thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [
+    "COMPOSIO_REMOTE_WORKBENCH"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": null,
+   "reaches_out_lite": true,
+   "key": "workbench, not python"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": null,
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run ?",
+   "whole_1500": "Run ?",
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "multi, no arguments"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": "opaque"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run ?",
+   "whole_1500": "Run ?",
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "multi, opaque tools"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {}
+    ]
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run a tool?",
+   "whole_1500": "Run a tool?",
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "multi, empty item"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": ""
+     }
+    ]
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run a tool?",
+   "whole_1500": "Run a tool?",
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "multi, blank slug"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": "GMAIL_FETCH_EMAILS",
+      "arguments": {}
+     },
+     {
+      "tool_slug": "SLACK_SEARCH_MESSAGES",
+      "arguments": {}
+     }
+    ],
+    "thought": "t",
+    "sync_response_to_workbench": false
+   },
+   "verdicts": {
+    "default": [
+     "refuse",
+     [
+      "GMAIL_FETCH_EMAILS"
+     ],
+     "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""
+    ],
+    "gmail_auto": [
+     "refuse",
+     [
+      "GMAIL_FETCH_EMAILS"
+     ],
+     "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""
+    ],
+    "strict": [
+     "refuse",
+     [
+      "GMAIL_FETCH_EMAILS"
+     ],
+     "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""
+    ],
+    "loose": [
+     "refuse",
+     [
+      "GMAIL_FETCH_EMAILS"
+     ],
+     "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run GMAIL_FETCH_EMAILS; and SLACK_SEARCH_MESSAGES?",
+   "whole_1500": "Run GMAIL_FETCH_EMAILS; and SLACK_SEARCH_MESSAGES?",
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "multi, gmail read, no account"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": "GMAIL_FETCH_EMAILS",
+      "arguments": {},
+      "account": "Personal"
+     }
+    ],
+    "thought": "t",
+    "sync_response_to_workbench": false
+   },
+   "verdicts": {
+    "default": [
+     "refuse",
+     [
+      "GMAIL_FETCH_EMAILS"
+     ],
+     "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""
+    ],
+    "gmail_auto": [
+     "refuse",
+     [
+      "GMAIL_FETCH_EMAILS"
+     ],
+     "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""
+    ],
+    "strict": [
+     "refuse",
+     [
+      "GMAIL_FETCH_EMAILS"
+     ],
+     "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""
+    ],
+    "loose": [
+     "refuse",
+     [
+      "GMAIL_FETCH_EMAILS"
+     ],
+     "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run GMAIL_FETCH_EMAILS on Personal?",
+   "whole_1500": "Run GMAIL_FETCH_EMAILS on Personal?",
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "multi, gmail read, personal"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": "GMAIL_FETCH_EMAILS",
+      "arguments": {
+       "max_results": 5
+      },
+      "account": "work"
+     }
+    ],
+    "thought": "t",
+    "sync_response_to_workbench": false
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run GMAIL_FETCH_EMAILS on work with max_results: 5?",
+   "whole_1500": "Run GMAIL_FETCH_EMAILS on work with max_results: 5?",
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "multi, gmail read, work"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": "GMAIL_GET_LABEL",
+      "arguments": {
+       "label_id": "INBOX"
+      },
+      "account": "work"
+     }
+    ],
+    "thought": "t",
+    "sync_response_to_workbench": false
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run GMAIL_GET_LABEL on work with label_id: INBOX?",
+   "whole_1500": "Run GMAIL_GET_LABEL on work with label_id: INBOX?",
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "multi, gmail label"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": "GMAIL_SEND_EMAIL",
+      "arguments": {
+       "to": "reader@example.org",
+       "subject": "Hello",
+       "body": "Hi"
+      },
+      "account": "work"
+     }
+    ],
+    "thought": "t",
+    "sync_response_to_workbench": false
+   },
+   "verdicts": {
+    "default": [
+     "refuse",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     "gmail is read only here; GMAIL_SEND_EMAIL will not run"
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     ""
+    ],
+    "strict": [
+     "refuse",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     "gmail is read only here; GMAIL_SEND_EMAIL will not run"
+    ],
+    "loose": [
+     "ask",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "refuse",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     "gmail is read only here; GMAIL_SEND_EMAIL will not run"
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     ""
+    ],
+    "strict": [
+     "refuse",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     "gmail is read only here; GMAIL_SEND_EMAIL will not run"
+    ],
+    "loose": [
+     "ask",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run GMAIL_SEND_EMAIL on work with to: reader@example.org, subject: Hello, body: Hi?",
+   "whole_1500": "Run GMAIL_SEND_EMAIL on work with to: reader@example.org, subject: Hello, body: Hi?",
+   "consequential": [
+    "GMAIL_SEND_EMAIL"
+   ],
+   "sends_mail": true,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "multi, gmail send"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": "GMAIL_CREATE_EMAIL_DRAFT",
+      "arguments": {
+       "to": "reader@example.org",
+       "subject": "Hello",
+       "body": "Hi"
+      },
+      "account": "work"
+     }
+    ],
+    "thought": "t",
+    "sync_response_to_workbench": false
+   },
+   "verdicts": {
+    "default": [
+     "refuse",
+     [
+      "GMAIL_CREATE_EMAIL_DRAFT"
+     ],
+     "gmail is read only here; GMAIL_CREATE_EMAIL_DRAFT will not run"
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     "allowed to write: GMAIL_CREATE_EMAIL_DRAFT"
+    ],
+    "strict": [
+     "refuse",
+     [
+      "GMAIL_CREATE_EMAIL_DRAFT"
+     ],
+     "gmail is read only here; GMAIL_CREATE_EMAIL_DRAFT will not run"
+    ],
+    "loose": [
+     "ask",
+     [
+      "GMAIL_CREATE_EMAIL_DRAFT"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "refuse",
+     [
+      "GMAIL_CREATE_EMAIL_DRAFT"
+     ],
+     "gmail is read only here; GMAIL_CREATE_EMAIL_DRAFT will not run"
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     "allowed to write: GMAIL_CREATE_EMAIL_DRAFT"
+    ],
+    "strict": [
+     "refuse",
+     [
+      "GMAIL_CREATE_EMAIL_DRAFT"
+     ],
+     "gmail is read only here; GMAIL_CREATE_EMAIL_DRAFT will not run"
+    ],
+    "loose": [
+     "ask",
+     [
+      "GMAIL_CREATE_EMAIL_DRAFT"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run GMAIL_CREATE_EMAIL_DRAFT on work with to: reader@example.org, subject: Hello, body: Hi?",
+   "whole_1500": "Run GMAIL_CREATE_EMAIL_DRAFT on work with to: reader@example.org, subject: Hello, body: Hi?",
+   "consequential": [
+    "GMAIL_CREATE_EMAIL_DRAFT"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "multi, gmail draft"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": "GMAIL_GET_AND_DELETE_MESSAGE",
+      "arguments": {
+       "message_id": "m1"
+      },
+      "account": "work"
+     }
+    ],
+    "thought": "t",
+    "sync_response_to_workbench": false
+   },
+   "verdicts": {
+    "default": [
+     "refuse",
+     [
+      "GMAIL_GET_AND_DELETE_MESSAGE"
+     ],
+     "gmail is read only here; GMAIL_GET_AND_DELETE_MESSAGE will not run"
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "GMAIL_GET_AND_DELETE_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "refuse",
+     [
+      "GMAIL_GET_AND_DELETE_MESSAGE"
+     ],
+     "gmail is read only here; GMAIL_GET_AND_DELETE_MESSAGE will not run"
+    ],
+    "loose": [
+     "ask",
+     [
+      "GMAIL_GET_AND_DELETE_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "refuse",
+     [
+      "GMAIL_GET_AND_DELETE_MESSAGE"
+     ],
+     "gmail is read only here; GMAIL_GET_AND_DELETE_MESSAGE will not run"
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "GMAIL_GET_AND_DELETE_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "refuse",
+     [
+      "GMAIL_GET_AND_DELETE_MESSAGE"
+     ],
+     "gmail is read only here; GMAIL_GET_AND_DELETE_MESSAGE will not run"
+    ],
+    "loose": [
+     "ask",
+     [
+      "GMAIL_GET_AND_DELETE_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run GMAIL_GET_AND_DELETE_MESSAGE on work with message_id: m1?",
+   "whole_1500": "Run GMAIL_GET_AND_DELETE_MESSAGE on work with message_id: m1?",
+   "consequential": [
+    "GMAIL_GET_AND_DELETE_MESSAGE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "multi, gmail read and delete"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": "GOOGLECALENDAR_CREATE_EVENT",
+      "arguments": {
+       "summary": "Focus"
+      },
+      "account": "work"
+     }
+    ],
+    "thought": "t",
+    "sync_response_to_workbench": false
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     "allowed to write: GOOGLECALENDAR_CREATE_EVENT"
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     "allowed to write: GOOGLECALENDAR_CREATE_EVENT"
+    ],
+    "strict": [
+     "ask",
+     [
+      "GOOGLECALENDAR_CREATE_EVENT"
+     ],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     "allowed to write: GOOGLECALENDAR_CREATE_EVENT"
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     "allowed to write: GOOGLECALENDAR_CREATE_EVENT"
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     "allowed to write: GOOGLECALENDAR_CREATE_EVENT"
+    ],
+    "strict": [
+     "ask",
+     [
+      "GOOGLECALENDAR_CREATE_EVENT"
+     ],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     "allowed to write: GOOGLECALENDAR_CREATE_EVENT"
+    ]
+   },
+   "ask_line": "Run GOOGLECALENDAR_CREATE_EVENT on work with summary: Focus?",
+   "whole_1500": "Run GOOGLECALENDAR_CREATE_EVENT on work with summary: Focus?",
+   "consequential": [
+    "GOOGLECALENDAR_CREATE_EVENT"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "multi, calendar private event"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": "GOOGLECALENDAR_CREATE_EVENT",
+      "arguments": {
+       "summary": "Sync",
+       "attendees": [
+        "reader@example.org"
+       ]
+      },
+      "account": "work"
+     }
+    ],
+    "thought": "t",
+    "sync_response_to_workbench": false
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "GOOGLECALENDAR_CREATE_EVENT"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "GOOGLECALENDAR_CREATE_EVENT"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "GOOGLECALENDAR_CREATE_EVENT"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "GOOGLECALENDAR_CREATE_EVENT"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "GOOGLECALENDAR_CREATE_EVENT"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "GOOGLECALENDAR_CREATE_EVENT"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "GOOGLECALENDAR_CREATE_EVENT"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "GOOGLECALENDAR_CREATE_EVENT"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run GOOGLECALENDAR_CREATE_EVENT on work with summary: Sync, attendees: [\"reader@example.org\"]?",
+   "whole_1500": "Run GOOGLECALENDAR_CREATE_EVENT on work with summary: Sync, attendees: [\"reader@example.org\"]?",
+   "consequential": [
+    "GOOGLECALENDAR_CREATE_EVENT"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "multi, calendar invite"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": "GOOGLECALENDAR_UPDATE_EVENT",
+      "arguments": {
+       "event_id": "e1",
+       "send_updates": "none"
+      },
+      "account": "work"
+     }
+    ],
+    "thought": "t",
+    "sync_response_to_workbench": false
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     "allowed to write: GOOGLECALENDAR_UPDATE_EVENT"
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     "allowed to write: GOOGLECALENDAR_UPDATE_EVENT"
+    ],
+    "strict": [
+     "ask",
+     [
+      "GOOGLECALENDAR_UPDATE_EVENT"
+     ],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     "allowed to write: GOOGLECALENDAR_UPDATE_EVENT"
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     "allowed to write: GOOGLECALENDAR_UPDATE_EVENT"
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     "allowed to write: GOOGLECALENDAR_UPDATE_EVENT"
+    ],
+    "strict": [
+     "ask",
+     [
+      "GOOGLECALENDAR_UPDATE_EVENT"
+     ],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     "allowed to write: GOOGLECALENDAR_UPDATE_EVENT"
+    ]
+   },
+   "ask_line": "Run GOOGLECALENDAR_UPDATE_EVENT on work with event_id: e1, send_updates: none?",
+   "whole_1500": "Run GOOGLECALENDAR_UPDATE_EVENT on work with event_id: e1, send_updates: none?",
+   "consequential": [
+    "GOOGLECALENDAR_UPDATE_EVENT"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "multi, calendar quiet edit"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": "GOOGLECALENDAR_UPDATE_EVENT",
+      "arguments": {
+       "event_id": "e1"
+      },
+      "account": "work"
+     }
+    ],
+    "thought": "t",
+    "sync_response_to_workbench": false
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "GOOGLECALENDAR_UPDATE_EVENT"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "GOOGLECALENDAR_UPDATE_EVENT"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "GOOGLECALENDAR_UPDATE_EVENT"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "GOOGLECALENDAR_UPDATE_EVENT"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "GOOGLECALENDAR_UPDATE_EVENT"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "GOOGLECALENDAR_UPDATE_EVENT"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "GOOGLECALENDAR_UPDATE_EVENT"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "GOOGLECALENDAR_UPDATE_EVENT"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run GOOGLECALENDAR_UPDATE_EVENT on work with event_id: e1?",
+   "whole_1500": "Run GOOGLECALENDAR_UPDATE_EVENT on work with event_id: e1?",
+   "consequential": [
+    "GOOGLECALENDAR_UPDATE_EVENT"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "multi, calendar edit"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": "GOOGLECALENDAR_EVENTS_LIST_ALL_CALENDARS",
+      "arguments": {},
+      "account": "work"
+     }
+    ],
+    "thought": "t",
+    "sync_response_to_workbench": false
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run GOOGLECALENDAR_EVENTS_LIST_ALL_CALENDARS on work?",
+   "whole_1500": "Run GOOGLECALENDAR_EVENTS_LIST_ALL_CALENDARS on work?",
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "multi, calendar read"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": "GOOGLEDRIVE_UPLOAD_FILE",
+      "arguments": {
+       "file_to_upload": "notes.txt"
+      },
+      "account": "work"
+     }
+    ],
+    "thought": "t",
+    "sync_response_to_workbench": false
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     "allowed to write: GOOGLEDRIVE_UPLOAD_FILE"
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     "allowed to write: GOOGLEDRIVE_UPLOAD_FILE"
+    ],
+    "strict": [
+     "refuse",
+     [
+      "GOOGLEDRIVE_UPLOAD_FILE"
+     ],
+     "googledrive is read only here; GOOGLEDRIVE_UPLOAD_FILE will not run"
+    ],
+    "loose": [
+     "run",
+     [],
+     "allowed to write: GOOGLEDRIVE_UPLOAD_FILE"
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     "allowed to write: GOOGLEDRIVE_UPLOAD_FILE"
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     "allowed to write: GOOGLEDRIVE_UPLOAD_FILE"
+    ],
+    "strict": [
+     "refuse",
+     [
+      "GOOGLEDRIVE_UPLOAD_FILE"
+     ],
+     "googledrive is read only here; GOOGLEDRIVE_UPLOAD_FILE will not run"
+    ],
+    "loose": [
+     "run",
+     [],
+     "allowed to write: GOOGLEDRIVE_UPLOAD_FILE"
+    ]
+   },
+   "ask_line": "Run GOOGLEDRIVE_UPLOAD_FILE on work with file_to_upload: notes.txt?",
+   "whole_1500": "Run GOOGLEDRIVE_UPLOAD_FILE on work with file_to_upload: notes.txt?",
+   "consequential": [
+    "GOOGLEDRIVE_UPLOAD_FILE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "multi, drive new file"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": "GOOGLEDRIVE_UPLOAD_FILE",
+      "arguments": {
+       "file_to_upload": "notes.txt",
+       "folder_id": "shared"
+      },
+      "account": "work"
+     }
+    ],
+    "thought": "t",
+    "sync_response_to_workbench": false
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "GOOGLEDRIVE_UPLOAD_FILE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "GOOGLEDRIVE_UPLOAD_FILE"
+     ],
+     ""
+    ],
+    "strict": [
+     "refuse",
+     [
+      "GOOGLEDRIVE_UPLOAD_FILE"
+     ],
+     "googledrive is read only here; GOOGLEDRIVE_UPLOAD_FILE will not run"
+    ],
+    "loose": [
+     "ask",
+     [
+      "GOOGLEDRIVE_UPLOAD_FILE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "GOOGLEDRIVE_UPLOAD_FILE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "GOOGLEDRIVE_UPLOAD_FILE"
+     ],
+     ""
+    ],
+    "strict": [
+     "refuse",
+     [
+      "GOOGLEDRIVE_UPLOAD_FILE"
+     ],
+     "googledrive is read only here; GOOGLEDRIVE_UPLOAD_FILE will not run"
+    ],
+    "loose": [
+     "ask",
+     [
+      "GOOGLEDRIVE_UPLOAD_FILE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run GOOGLEDRIVE_UPLOAD_FILE on work with file_to_upload: notes.txt, folder_id: shared?",
+   "whole_1500": "Run GOOGLEDRIVE_UPLOAD_FILE on work with file_to_upload: notes.txt, folder_id: shared?",
+   "consequential": [
+    "GOOGLEDRIVE_UPLOAD_FILE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "multi, drive into a folder"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": "GOOGLEDOCS_CREATE_DOCUMENT",
+      "arguments": {
+       "title": "Private draft"
+      },
+      "account": "work"
+     }
+    ],
+    "thought": "t",
+    "sync_response_to_workbench": false
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     "allowed to write: GOOGLEDOCS_CREATE_DOCUMENT"
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     "allowed to write: GOOGLEDOCS_CREATE_DOCUMENT"
+    ],
+    "strict": [
+     "run",
+     [],
+     "allowed to write: GOOGLEDOCS_CREATE_DOCUMENT"
+    ],
+    "loose": [
+     "run",
+     [],
+     "allowed to write: GOOGLEDOCS_CREATE_DOCUMENT"
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     "allowed to write: GOOGLEDOCS_CREATE_DOCUMENT"
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     "allowed to write: GOOGLEDOCS_CREATE_DOCUMENT"
+    ],
+    "strict": [
+     "run",
+     [],
+     "allowed to write: GOOGLEDOCS_CREATE_DOCUMENT"
+    ],
+    "loose": [
+     "run",
+     [],
+     "allowed to write: GOOGLEDOCS_CREATE_DOCUMENT"
+    ]
+   },
+   "ask_line": "Run GOOGLEDOCS_CREATE_DOCUMENT on work with title: Private draft?",
+   "whole_1500": "Run GOOGLEDOCS_CREATE_DOCUMENT on work with title: Private draft?",
+   "consequential": [
+    "GOOGLEDOCS_CREATE_DOCUMENT"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "multi, docs new document"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": "GITHUB_CREATE_REPOSITORY",
+      "arguments": {
+       "name": "notes",
+       "private": true
+      },
+      "account": "work"
+     }
+    ],
+    "thought": "t",
+    "sync_response_to_workbench": false
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     "allowed to write: GITHUB_CREATE_REPOSITORY"
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     "allowed to write: GITHUB_CREATE_REPOSITORY"
+    ],
+    "strict": [
+     "run",
+     [],
+     "allowed to write: GITHUB_CREATE_REPOSITORY"
+    ],
+    "loose": [
+     "run",
+     [],
+     "allowed to write: GITHUB_CREATE_REPOSITORY"
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     "allowed to write: GITHUB_CREATE_REPOSITORY"
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     "allowed to write: GITHUB_CREATE_REPOSITORY"
+    ],
+    "strict": [
+     "run",
+     [],
+     "allowed to write: GITHUB_CREATE_REPOSITORY"
+    ],
+    "loose": [
+     "run",
+     [],
+     "allowed to write: GITHUB_CREATE_REPOSITORY"
+    ]
+   },
+   "ask_line": "Run GITHUB_CREATE_REPOSITORY on work with name: notes, private: true?",
+   "whole_1500": "Run GITHUB_CREATE_REPOSITORY on work with name: notes, private: true?",
+   "consequential": [
+    "GITHUB_CREATE_REPOSITORY"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "multi, github private repo"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": "SLACK_SEARCH_MESSAGES",
+      "arguments": {
+       "query": "design"
+      },
+      "account": "work"
+     }
+    ],
+    "thought": "t",
+    "sync_response_to_workbench": false
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run SLACK_SEARCH_MESSAGES on work with query: design?",
+   "whole_1500": "Run SLACK_SEARCH_MESSAGES on work with query: design?",
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "multi, slack read"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": "SLACK_SEND_MESSAGE",
+      "arguments": {
+       "channel": "design",
+       "text": "hi"
+      },
+      "account": "work"
+     }
+    ],
+    "thought": "t",
+    "sync_response_to_workbench": false
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run SLACK_SEND_MESSAGE on work with channel: design, text: hi?",
+   "whole_1500": "Run SLACK_SEND_MESSAGE on work with channel: design, text: hi?",
+   "consequential": [
+    "SLACK_SEND_MESSAGE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "multi, slack send"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": "NOTION_FETCH_ROW",
+      "arguments": {
+       "id": "p1"
+      },
+      "account": "work"
+     }
+    ],
+    "thought": "t",
+    "sync_response_to_workbench": false
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run NOTION_FETCH_ROW on work with id: p1?",
+   "whole_1500": "Run NOTION_FETCH_ROW on work with id: p1?",
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "multi, notion read"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": "LINEAR_CREATE_LINEAR_ISSUE",
+      "arguments": {
+       "title": "Login bug"
+      },
+      "account": "work"
+     }
+    ],
+    "thought": "t",
+    "sync_response_to_workbench": false
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "LINEAR_CREATE_LINEAR_ISSUE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "LINEAR_CREATE_LINEAR_ISSUE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "LINEAR_CREATE_LINEAR_ISSUE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "LINEAR_CREATE_LINEAR_ISSUE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "LINEAR_CREATE_LINEAR_ISSUE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "LINEAR_CREATE_LINEAR_ISSUE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "LINEAR_CREATE_LINEAR_ISSUE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "LINEAR_CREATE_LINEAR_ISSUE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run LINEAR_CREATE_LINEAR_ISSUE on work with title: Login bug?",
+   "whole_1500": "Run LINEAR_CREATE_LINEAR_ISSUE on work with title: Login bug?",
+   "consequential": [
+    "LINEAR_CREATE_LINEAR_ISSUE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "multi, linear issue"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": "GOOGLECALENDAR_CREATE_EVENT",
+      "arguments": {
+       "summary": "Focus"
+      },
+      "account": "work"
+     },
+     {
+      "tool_slug": "SLACK_SEND_MESSAGE",
+      "arguments": {
+       "channel": "design",
+       "text": "hi"
+      },
+      "account": "work"
+     },
+     {
+      "tool_slug": "GMAIL_SEND_EMAIL",
+      "arguments": {
+       "to": "reader@example.org"
+      },
+      "account": "work"
+     }
+    ],
+    "thought": "t",
+    "sync_response_to_workbench": false
+   },
+   "verdicts": {
+    "default": [
+     "refuse",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     "gmail is read only here; GMAIL_SEND_EMAIL will not run"
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "GMAIL_SEND_EMAIL"
+     ],
+     ""
+    ],
+    "strict": [
+     "refuse",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     "gmail is read only here; GMAIL_SEND_EMAIL will not run"
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "GMAIL_SEND_EMAIL"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "refuse",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     "gmail is read only here; GMAIL_SEND_EMAIL will not run"
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "GMAIL_SEND_EMAIL"
+     ],
+     ""
+    ],
+    "strict": [
+     "refuse",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     "gmail is read only here; GMAIL_SEND_EMAIL will not run"
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "GMAIL_SEND_EMAIL"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run GOOGLECALENDAR_CREATE_EVENT on work with summary: Focus; and SLACK_SEND_MESSAGE on work with channel: design, text: hi; and GMAIL_SEND_EMAIL on work with to: reader@example.org?",
+   "whole_1500": "Run GOOGLECALENDAR_CREATE_EVENT on work with summary: Focus; and SLACK_SEND_MESSAGE on work with channel: design, text: hi; and GMAIL_SEND_EMAIL on work with to: reader@example.org?",
+   "consequential": [
+    "GOOGLECALENDAR_CREATE_EVENT",
+    "SLACK_SEND_MESSAGE",
+    "GMAIL_SEND_EMAIL"
+   ],
+   "sends_mail": true,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "multi, mixed"
+  },
+  {
+   "name": "gmail__send_message",
+   "args": {
+    "to": "reader@example.org"
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run gmail__send_message with to: reader@example.org?",
+   "whole_1500": "Run gmail__send_message with to: reader@example.org?",
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "not a composio tool"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "for p in ids:\n    run_composio_tool('SLACK_SEND_MESSAGE', {'id': p})\nx = run_composio_tool('NOTION_CREATE_PAGE', {})",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE",
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE",
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE",
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE",
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE",
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE",
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE",
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE",
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run NOTION_CREATE_PAGE, SLACK_SEND_MESSAGE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "NOTION_CREATE_PAGE",
+    "SLACK_SEND_MESSAGE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "NOTION_CREATE_PAGE",
+    "SLACK_SEND_MESSAGE"
+   ],
+   "reaches_out_lite": false,
+   "key": "script 0"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "x = f(run_composio_tool('LINEAR_CREATE_ISSUE', {}))\nrun_composio_tool('SLACK_SEND_MESSAGE', {})",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "LINEAR_CREATE_ISSUE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "LINEAR_CREATE_ISSUE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "LINEAR_CREATE_ISSUE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "LINEAR_CREATE_ISSUE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "LINEAR_CREATE_ISSUE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "LINEAR_CREATE_ISSUE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "LINEAR_CREATE_ISSUE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "LINEAR_CREATE_ISSUE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run SLACK_SEND_MESSAGE, LINEAR_CREATE_ISSUE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "SLACK_SEND_MESSAGE",
+    "LINEAR_CREATE_ISSUE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "SLACK_SEND_MESSAGE",
+    "LINEAR_CREATE_ISSUE"
+   ],
+   "reaches_out_lite": false,
+   "key": "script 1"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "run_composio_tool('SLACK_SEND_MESSAGE', run_composio_tool('NOTION_CREATE_PAGE', {}))",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run SLACK_SEND_MESSAGE, NOTION_CREATE_PAGE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "SLACK_SEND_MESSAGE",
+    "NOTION_CREATE_PAGE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "SLACK_SEND_MESSAGE",
+    "NOTION_CREATE_PAGE"
+   ],
+   "reaches_out_lite": false,
+   "key": "script 2"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "if a:\n    run_composio_tool('SLACK_SEND_MESSAGE', {})\nelif b:\n    run_composio_tool('NOTION_CREATE_PAGE', {})\nelse:\n    run_composio_tool('LINEAR_CREATE_ISSUE', {})\nrun_composio_tool('SLACK_ADD_REACTION', {})",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "SLACK_ADD_REACTION",
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE",
+      "LINEAR_CREATE_ISSUE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_ADD_REACTION",
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE",
+      "LINEAR_CREATE_ISSUE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_ADD_REACTION",
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE",
+      "LINEAR_CREATE_ISSUE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_ADD_REACTION",
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE",
+      "LINEAR_CREATE_ISSUE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "SLACK_ADD_REACTION",
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE",
+      "LINEAR_CREATE_ISSUE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_ADD_REACTION",
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE",
+      "LINEAR_CREATE_ISSUE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_ADD_REACTION",
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE",
+      "LINEAR_CREATE_ISSUE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_ADD_REACTION",
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE",
+      "LINEAR_CREATE_ISSUE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run SLACK_ADD_REACTION, SLACK_SEND_MESSAGE, NOTION_CREATE_PAGE, LINEAR_CREATE_ISSUE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "SLACK_ADD_REACTION",
+    "SLACK_SEND_MESSAGE",
+    "NOTION_CREATE_PAGE",
+    "LINEAR_CREATE_ISSUE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "SLACK_ADD_REACTION",
+    "SLACK_SEND_MESSAGE",
+    "NOTION_CREATE_PAGE",
+    "LINEAR_CREATE_ISSUE"
+   ],
+   "reaches_out_lite": false,
+   "key": "script 3"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "def f(x=run_composio_tool('SLACK_SEND_MESSAGE', {})):\n    return run_composio_tool('NOTION_CREATE_PAGE', {})\n@d(run_composio_tool('LINEAR_CREATE_ISSUE', {}))\ndef g(): pass",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE",
+      "LINEAR_CREATE_ISSUE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE",
+      "LINEAR_CREATE_ISSUE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE",
+      "LINEAR_CREATE_ISSUE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE",
+      "LINEAR_CREATE_ISSUE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE",
+      "LINEAR_CREATE_ISSUE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE",
+      "LINEAR_CREATE_ISSUE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE",
+      "LINEAR_CREATE_ISSUE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE",
+      "LINEAR_CREATE_ISSUE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run SLACK_SEND_MESSAGE, NOTION_CREATE_PAGE, LINEAR_CREATE_ISSUE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "SLACK_SEND_MESSAGE",
+    "NOTION_CREATE_PAGE",
+    "LINEAR_CREATE_ISSUE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "SLACK_SEND_MESSAGE",
+    "NOTION_CREATE_PAGE",
+    "LINEAR_CREATE_ISSUE"
+   ],
+   "reaches_out_lite": false,
+   "key": "script 4"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "d = {run_composio_tool('SLACK_SEND_MESSAGE', {}): 1, **e, 'k': run_composio_tool('NOTION_CREATE_PAGE', {})}",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run SLACK_SEND_MESSAGE, NOTION_CREATE_PAGE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "SLACK_SEND_MESSAGE",
+    "NOTION_CREATE_PAGE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "SLACK_SEND_MESSAGE",
+    "NOTION_CREATE_PAGE"
+   ],
+   "reaches_out_lite": false,
+   "key": "script 5"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "y = [run_composio_tool('SLACK_SEND_MESSAGE', {}) for i in run_composio_tool('NOTION_FETCH_ROW', {}) if i]",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run SLACK_SEND_MESSAGE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "SLACK_SEND_MESSAGE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "SLACK_SEND_MESSAGE",
+    "NOTION_FETCH_ROW"
+   ],
+   "reaches_out_lite": false,
+   "key": "script 6"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "s = f\"{run_composio_tool('SLACK_SEND_MESSAGE', {})!r:{w}}\" 'tail'",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run SLACK_SEND_MESSAGE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "SLACK_SEND_MESSAGE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "SLACK_SEND_MESSAGE"
+   ],
+   "reaches_out_lite": false,
+   "key": "script 7"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "with open('a') as f, g(run_composio_tool('NOTION_CREATE_PAGE', {})):\n    run_composio_tool('SLACK_SEND_MESSAGE', {})",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run SLACK_SEND_MESSAGE, NOTION_CREATE_PAGE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "SLACK_SEND_MESSAGE",
+    "NOTION_CREATE_PAGE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "SLACK_SEND_MESSAGE",
+    "NOTION_CREATE_PAGE"
+   ],
+   "reaches_out_lite": false,
+   "key": "script 8"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "try:\n    run_composio_tool('SLACK_SEND_MESSAGE', {})\nexcept E as e:\n    run_composio_tool('NOTION_CREATE_PAGE', {})\nfinally:\n    pass",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run SLACK_SEND_MESSAGE, NOTION_CREATE_PAGE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "SLACK_SEND_MESSAGE",
+    "NOTION_CREATE_PAGE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "SLACK_SEND_MESSAGE",
+    "NOTION_CREATE_PAGE"
+   ],
+   "reaches_out_lite": false,
+   "key": "script 9"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "match x:\n    case {'a': 1, **rest} if run_composio_tool('SLACK_SEND_MESSAGE', {}):\n        pass\n    case P(a, b=1):\n        run_composio_tool('NOTION_CREATE_PAGE', {})",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run SLACK_SEND_MESSAGE, NOTION_CREATE_PAGE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "SLACK_SEND_MESSAGE",
+    "NOTION_CREATE_PAGE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "SLACK_SEND_MESSAGE",
+    "NOTION_CREATE_PAGE"
+   ],
+   "reaches_out_lite": false,
+   "key": "script 10"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "class C(B, metaclass=run_composio_tool('SLACK_SEND_MESSAGE', {})):\n    x: int = run_composio_tool('NOTION_CREATE_PAGE', {})",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run SLACK_SEND_MESSAGE, NOTION_CREATE_PAGE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "SLACK_SEND_MESSAGE",
+    "NOTION_CREATE_PAGE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "SLACK_SEND_MESSAGE",
+    "NOTION_CREATE_PAGE"
+   ],
+   "reaches_out_lite": false,
+   "key": "script 11"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "lam = lambda a, *b, c=run_composio_tool('SLACK_SEND_MESSAGE', {}), **d: a\nprint(lam)",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run SLACK_SEND_MESSAGE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "SLACK_SEND_MESSAGE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "SLACK_SEND_MESSAGE"
+   ],
+   "reaches_out_lite": false,
+   "key": "script 12"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "run_composio_tool('GMAIL_' 'SEND_EMAIL', {})",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "refuse",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""
+    ],
+    "gmail_auto": [
+     "refuse",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""
+    ],
+    "strict": [
+     "refuse",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""
+    ],
+    "loose": [
+     "refuse",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     "that is the owner's own account, reached with its own tools; through COMPOSIO only their other account runs, named in \"account\""
+    ]
+   },
+   "lite": {
+    "default": [
+     "refuse",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     "gmail is read only here; GMAIL_SEND_EMAIL will not run"
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     ""
+    ],
+    "strict": [
+     "refuse",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     "gmail is read only here; GMAIL_SEND_EMAIL will not run"
+    ],
+    "loose": [
+     "ask",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run GMAIL_SEND_EMAIL from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "GMAIL_SEND_EMAIL"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "GMAIL_SEND_EMAIL"
+   ],
+   "reaches_out_lite": true,
+   "key": "script 13"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "run_composio_tool(f'GMAIL_SEND_EMAIL', {})",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: run_composio_tool(f'GMAIL_SEND_EMAIL', {}), thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [
+    "COMPOSIO_REMOTE_WORKBENCH"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": null,
+   "reaches_out_lite": true,
+   "key": "script 14"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "run_composio_tool(b'GMAIL_SEND_EMAIL', {})",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: run_composio_tool(b'GMAIL_SEND_EMAIL', {}), thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [
+    "COMPOSIO_REMOTE_WORKBENCH"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": null,
+   "reaches_out_lite": true,
+   "key": "script 15"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "run_composio_tool('   ', {})",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: run_composio_tool(' ', {}), thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [
+    "COMPOSIO_REMOTE_WORKBENCH"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": null,
+   "reaches_out_lite": true,
+   "key": "script 16"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "run_composio_tool(  ' SLACK_SEND_MESSAGE ', {})",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run SLACK_SEND_MESSAGE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "SLACK_SEND_MESSAGE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "SLACK_SEND_MESSAGE"
+   ],
+   "reaches_out_lite": false,
+   "key": "script 17"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "run_composio_tool(action='SLACK_SEND_MESSAGE')",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run SLACK_SEND_MESSAGE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "SLACK_SEND_MESSAGE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "SLACK_SEND_MESSAGE"
+   ],
+   "reaches_out_lite": false,
+   "key": "script 18"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "run_composio_tool(arguments={}, slug='SLACK_SEND_MESSAGE')",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run SLACK_SEND_MESSAGE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "SLACK_SEND_MESSAGE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "SLACK_SEND_MESSAGE"
+   ],
+   "reaches_out_lite": false,
+   "key": "script 19"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "run_composio_tool(*args)",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: run_composio_tool(*args), thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [
+    "COMPOSIO_REMOTE_WORKBENCH"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": null,
+   "reaches_out_lite": true,
+   "key": "script 20"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "run_composio_tool()",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: run_composio_tool(), thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [
+    "COMPOSIO_REMOTE_WORKBENCH"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": null,
+   "reaches_out_lite": true,
+   "key": "script 21"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "x.run_composio_tool('SLACK_LIST_MESSAGES', {})",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: x.run_composio_tool('SLACK_LIST_MESSAGES', {}), thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [
+    "COMPOSIO_REMOTE_WORKBENCH"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": null,
+   "reaches_out_lite": true,
+   "key": "script 22"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "import json, os.path",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: import json, os.path, thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [
+    "COMPOSIO_REMOTE_WORKBENCH"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": null,
+   "reaches_out_lite": true,
+   "key": "script 23"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "import json.decoder as jd\nfrom collections import abc",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: import json.decoder as jd from collections import abc, thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [],
+   "reaches_out_lite": false,
+   "key": "script 24"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "from collections.abc import Mapping as _M",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: from collections.abc import Mapping as _M, thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [],
+   "reaches_out_lite": false,
+   "key": "script 25"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "import numpy as np\nnp.load('x.npy', allow_pickle=True)",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: import numpy as np np.load('x.npy', allow_pickle=True), thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [
+    "COMPOSIO_REMOTE_WORKBENCH"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": null,
+   "reaches_out_lite": true,
+   "key": "script 26"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "import pandas as pd\npd.read_pickle('p.pkl')",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: import pandas as pd pd.read_pickle('p.pkl'), thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [
+    "COMPOSIO_REMOTE_WORKBENCH"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": null,
+   "reaches_out_lite": true,
+   "key": "script 27"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "data = cPickle_like = 1",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: data = cPickle_like = 1, thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [
+    "COMPOSIO_REMOTE_WORKBENCH"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": null,
+   "reaches_out_lite": true,
+   "key": "script 28"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "x = obj.__class__",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: x = obj.__class__, thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [
+    "COMPOSIO_REMOTE_WORKBENCH"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": null,
+   "reaches_out_lite": true,
+   "key": "script 29"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "print(ｅｖａｌ('1'))",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: print(ｅｖａｌ('1')), thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [
+    "COMPOSIO_REMOTE_WORKBENCH"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": null,
+   "reaches_out_lite": true,
+   "key": "script 30"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "def f[T](x: T) -> T:\n    return x\nprint(f(1))",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: def f[T](x: T) -> T: return x print(f(1)), thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [],
+   "reaches_out_lite": false,
+   "key": "script 31"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "type Alias = list[int]\nprint(1)",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: type Alias = list[int] print(1), thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [],
+   "reaches_out_lite": false,
+   "key": "script 32"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "print(f\"{'a'}\" + f\"{x['k']}\")",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: print(f\"{'a'}\" + f\"{x['k']}\"), thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [],
+   "reaches_out_lite": false,
+   "key": "script 33"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "print(f\"{x[\"k\"]}\")",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: print(f\"{x[\"k\"]}\"), thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [],
+   "reaches_out_lite": false,
+   "key": "script 34"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "global os\nprint(1)",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: global os print(1), thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [],
+   "reaches_out_lite": false,
+   "key": "script 35"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "except_ = 1\ntry:\n    pass\nexcept* ValueError:\n    pass",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: except_ = 1 try: pass except* ValueError: pass, thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [],
+   "reaches_out_lite": false,
+   "key": "script 36"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "t = t'hi {name}'",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: t = t'hi {name}', thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [
+    "COMPOSIO_REMOTE_WORKBENCH"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": null,
+   "reaches_out_lite": true,
+   "key": "script 37"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "try:\n    pass\nexcept A, B:\n    pass",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: try: pass except A, B: pass, thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [
+    "COMPOSIO_REMOTE_WORKBENCH"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": null,
+   "reaches_out_lite": true,
+   "key": "script 38"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "x = 1\u0000",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: x = 1\u0000, thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [
+    "COMPOSIO_REMOTE_WORKBENCH"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": null,
+   "reaches_out_lite": true,
+   "key": "script 39"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "async def f():\n    async with a as b:\n        await run_composio_tool('SLACK_SEND_MESSAGE', {})\n    async for i in run_composio_tool('NOTION_FETCH_ROW', {}):\n        pass",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run SLACK_SEND_MESSAGE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "SLACK_SEND_MESSAGE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "NOTION_FETCH_ROW",
+    "SLACK_SEND_MESSAGE"
+   ],
+   "reaches_out_lite": false,
+   "key": "script 40"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "x = (yield)\nnonlocal_ = 2",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: x = (yield) nonlocal_ = 2, thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [],
+   "reaches_out_lite": false,
+   "key": "script 41"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "print(*[1], sep='')\nprint(x[1:2:3, ...])",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: print(*[1], sep='') print(x[1:2:3, ...]), thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [],
+   "reaches_out_lite": false,
+   "key": "script 42"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "def g(a, /, b, *, c, d=run_composio_tool('SLACK_SEND_MESSAGE', {})): pass",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run SLACK_SEND_MESSAGE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "SLACK_SEND_MESSAGE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "SLACK_SEND_MESSAGE"
+   ],
+   "reaches_out_lite": false,
+   "key": "script 43"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "import operator\noperator.itemgetter('a')",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: import operator operator.itemgetter('a'), thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [],
+   "reaches_out_lite": false,
+   "key": "script 44"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "from operator import attrgetter",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: from operator import attrgetter, thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [
+    "COMPOSIO_REMOTE_WORKBENCH"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": null,
+   "reaches_out_lite": true,
+   "key": "script 45"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "import functools\nfunctools.reduce(lambda a, b: a + b, [1, 2])",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: import functools functools.reduce(lambda a, b: a + b, [1, 2…, thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [],
+   "reaches_out_lite": false,
+   "key": "script 46"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "import requests.adapters",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: import requests.adapters, thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [
+    "COMPOSIO_REMOTE_WORKBENCH"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": null,
+   "reaches_out_lite": true,
+   "key": "script 47"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "from typing import get_type_hints as g",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: from typing import get_type_hints as g, thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [
+    "COMPOSIO_REMOTE_WORKBENCH"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": null,
+   "reaches_out_lite": true,
+   "key": "script 48"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "import base64\nbase64.b64decode('aGk=')",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: import base64 base64.b64decode('aGk='), thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [],
+   "reaches_out_lite": false,
+   "key": "script 49"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "q = df.query('a > 1')",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_WORKBENCH"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: q = df.query('a > 1'), thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [
+    "COMPOSIO_REMOTE_WORKBENCH"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": null,
+   "reaches_out_lite": true,
+   "key": "script 50"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "w = web_search('x')\ninvoke_llm(w)",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_WORKBENCH with code_to_execute: w = web_search('x') invoke_llm(w), thought: t, current_step: S, session_id: s?",
+   "whole_1500": null,
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [],
+   "reaches_out_lite": false,
+   "key": "script 51"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "while run_composio_tool('SLACK_FETCH_HISTORY', {}):\n    break\nelse:\n    run_composio_tool('SLACK_SEND_MESSAGE', {})",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run SLACK_SEND_MESSAGE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "SLACK_SEND_MESSAGE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "SLACK_FETCH_HISTORY",
+    "SLACK_SEND_MESSAGE"
+   ],
+   "reaches_out_lite": false,
+   "key": "script 52"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "del x[run_composio_tool('SLACK_SEND_MESSAGE', {})]",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run SLACK_SEND_MESSAGE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "SLACK_SEND_MESSAGE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "SLACK_SEND_MESSAGE"
+   ],
+   "reaches_out_lite": false,
+   "key": "script 53"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "assert run_composio_tool('SLACK_SEND_MESSAGE', {}), run_composio_tool('NOTION_CREATE_PAGE', {})",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run SLACK_SEND_MESSAGE, NOTION_CREATE_PAGE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "SLACK_SEND_MESSAGE",
+    "NOTION_CREATE_PAGE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "SLACK_SEND_MESSAGE",
+    "NOTION_CREATE_PAGE"
+   ],
+   "reaches_out_lite": false,
+   "key": "script 54"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "raise E(run_composio_tool('SLACK_SEND_MESSAGE', {})) from run_composio_tool('NOTION_CREATE_PAGE', {})",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE",
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE",
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE",
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE",
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE",
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE",
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE",
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE",
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run NOTION_CREATE_PAGE, SLACK_SEND_MESSAGE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "NOTION_CREATE_PAGE",
+    "SLACK_SEND_MESSAGE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "NOTION_CREATE_PAGE",
+    "SLACK_SEND_MESSAGE"
+   ],
+   "reaches_out_lite": false,
+   "key": "script 55"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "z = {run_composio_tool('SLACK_SEND_MESSAGE', {}): v for v in run_composio_tool('NOTION_FETCH_ROW', {})}",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run SLACK_SEND_MESSAGE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "SLACK_SEND_MESSAGE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "SLACK_SEND_MESSAGE",
+    "NOTION_FETCH_ROW"
+   ],
+   "reaches_out_lite": false,
+   "key": "script 56"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "(a := run_composio_tool('SLACK_SEND_MESSAGE', {}))",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run SLACK_SEND_MESSAGE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "SLACK_SEND_MESSAGE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "SLACK_SEND_MESSAGE"
+   ],
+   "reaches_out_lite": false,
+   "key": "script 57"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "x = a if run_composio_tool('SLACK_SEND_MESSAGE', {}) else run_composio_tool('NOTION_CREATE_PAGE', {})",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run SLACK_SEND_MESSAGE, NOTION_CREATE_PAGE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "SLACK_SEND_MESSAGE",
+    "NOTION_CREATE_PAGE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "SLACK_SEND_MESSAGE",
+    "NOTION_CREATE_PAGE"
+   ],
+   "reaches_out_lite": false,
+   "key": "script 58"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "x = not run_composio_tool('SLACK_SEND_MESSAGE', {}) or (1 < run_composio_tool('NOTION_CREATE_PAGE', {}) <= 3)",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE",
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run SLACK_SEND_MESSAGE, NOTION_CREATE_PAGE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "SLACK_SEND_MESSAGE",
+    "NOTION_CREATE_PAGE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "SLACK_SEND_MESSAGE",
+    "NOTION_CREATE_PAGE"
+   ],
+   "reaches_out_lite": false,
+   "key": "script 59"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_WORKBENCH",
+   "args": {
+    "code_to_execute": "x = {*run_composio_tool('SLACK_SEND_MESSAGE', {})}\ny = (*a, run_composio_tool('NOTION_CREATE_PAGE', {}))",
+    "thought": "t",
+    "current_step": "S",
+    "session_id": "s"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE",
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE",
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE",
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE",
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE",
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE",
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE",
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE",
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run NOTION_CREATE_PAGE, SLACK_SEND_MESSAGE from a workbench script?",
+   "whole_1500": null,
+   "consequential": [
+    "NOTION_CREATE_PAGE",
+    "SLACK_SEND_MESSAGE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "workbench_slugs": [
+    "NOTION_CREATE_PAGE",
+    "SLACK_SEND_MESSAGE"
+   ],
+   "reaches_out_lite": false,
+   "key": "script 60"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": null,
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run ?",
+   "whole_1500": "Run ?",
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "extra 0"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": "opaque",
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run ?",
+   "whole_1500": "Run ?",
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "extra 1"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": null
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run ?",
+   "whole_1500": "Run ?",
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "extra 2"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {}
+    ]
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run a tool?",
+   "whole_1500": "Run a tool?",
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "extra 3"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     null
+    ]
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run ?",
+   "whole_1500": "Run ?",
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "extra 4"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": ""
+     }
+    ]
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run a tool?",
+   "whole_1500": "Run a tool?",
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "extra 5"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": 7
+     }
+    ]
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_MULTI_EXECUTE_TOOL"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run 7?",
+   "whole_1500": "Run 7?",
+   "consequential": [
+    "7"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "extra 6"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": []
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run ?",
+   "whole_1500": "Run ?",
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "extra 7"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": "GMAIL_FETCH_EMAILS",
+      "account": 5
+     }
+    ]
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run GMAIL_FETCH_EMAILS on 5?",
+   "whole_1500": "Run GMAIL_FETCH_EMAILS on 5?",
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "extra 8"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": "GMAIL_FETCH_EMAILS",
+      "account": " Work "
+     },
+     {
+      "tool_slug": "SLACK_SEND_MESSAGE",
+      "arguments": {
+       "text": "x‮y",
+       "n": 1.5,
+       "big": 1e+20,
+       "none": null,
+       "nested": {
+        "a": [
+         "é",
+         2
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "SLACK_SEND_MESSAGE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run SLACK_SEND_MESSAGE with text: x‮y, n: 1.5, big: 1e+20, none: null, nested: {\"a\": [\"é\", 2]}?",
+   "whole_1500": "Run SLACK_SEND_MESSAGE with text: x[U+202E]y, n: 1.5, big: 1e+20, none: null, nested: {\"a\": [\"é\", 2]}?",
+   "consequential": [
+    "SLACK_SEND_MESSAGE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "extra 9"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": "GMAIL_SEND_EMAIL\n",
+      "arguments": {},
+      "account": "work"
+     }
+    ]
+   },
+   "verdicts": {
+    "default": [
+     "refuse",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     "gmail is read only here; GMAIL_SEND_EMAIL will not run"
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     ""
+    ],
+    "strict": [
+     "refuse",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     "gmail is read only here; GMAIL_SEND_EMAIL will not run"
+    ],
+    "loose": [
+     "ask",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "refuse",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     "gmail is read only here; GMAIL_SEND_EMAIL will not run"
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     ""
+    ],
+    "strict": [
+     "refuse",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     "gmail is read only here; GMAIL_SEND_EMAIL will not run"
+    ],
+    "loose": [
+     "ask",
+     [
+      "GMAIL_SEND_EMAIL"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run GMAIL_SEND_EMAIL\n on work?",
+   "whole_1500": "Run GMAIL_SEND_EMAIL on work?",
+   "consequential": [
+    "GMAIL_SEND_EMAIL"
+   ],
+   "sends_mail": true,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "extra 10"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": "  NOTION_CREATE_PAGE  ",
+      "arguments": {
+       "title": "   spaced\t\tout  "
+      }
+     }
+    ]
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "NOTION_CREATE_PAGE"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run   NOTION_CREATE_PAGE   with title: spaced out?",
+   "whole_1500": "Run NOTION_CREATE_PAGE with title: spaced out ?",
+   "consequential": [
+    "NOTION_CREATE_PAGE"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "extra 11"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": "APP_CREATE_THING_0",
+      "arguments": {
+       "v": "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww"
+      }
+     },
+     {
+      "tool_slug": "APP_CREATE_THING_1",
+      "arguments": {
+       "v": "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww"
+      }
+     },
+     {
+      "tool_slug": "APP_CREATE_THING_2",
+      "arguments": {
+       "v": "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww"
+      }
+     },
+     {
+      "tool_slug": "APP_CREATE_THING_3",
+      "arguments": {
+       "v": "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww"
+      }
+     },
+     {
+      "tool_slug": "APP_CREATE_THING_4",
+      "arguments": {
+       "v": "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww"
+      }
+     },
+     {
+      "tool_slug": "APP_CREATE_THING_5",
+      "arguments": {
+       "v": "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww"
+      }
+     },
+     {
+      "tool_slug": "APP_CREATE_THING_6",
+      "arguments": {
+       "v": "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww"
+      }
+     },
+     {
+      "tool_slug": "APP_CREATE_THING_7",
+      "arguments": {
+       "v": "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww"
+      }
+     },
+     {
+      "tool_slug": "APP_CREATE_THING_8",
+      "arguments": {
+       "v": "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww"
+      }
+     },
+     {
+      "tool_slug": "APP_CREATE_THING_9",
+      "arguments": {
+       "v": "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww"
+      }
+     },
+     {
+      "tool_slug": "APP_CREATE_THING_10",
+      "arguments": {
+       "v": "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww"
+      }
+     },
+     {
+      "tool_slug": "APP_CREATE_THING_11",
+      "arguments": {
+       "v": "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww"
+      }
+     }
+    ]
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "APP_CREATE_THING_0",
+      "APP_CREATE_THING_1",
+      "APP_CREATE_THING_2",
+      "APP_CREATE_THING_3",
+      "APP_CREATE_THING_4",
+      "APP_CREATE_THING_5",
+      "APP_CREATE_THING_6",
+      "APP_CREATE_THING_7",
+      "APP_CREATE_THING_8",
+      "APP_CREATE_THING_9",
+      "APP_CREATE_THING_10",
+      "APP_CREATE_THING_11"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "APP_CREATE_THING_0",
+      "APP_CREATE_THING_1",
+      "APP_CREATE_THING_2",
+      "APP_CREATE_THING_3",
+      "APP_CREATE_THING_4",
+      "APP_CREATE_THING_5",
+      "APP_CREATE_THING_6",
+      "APP_CREATE_THING_7",
+      "APP_CREATE_THING_8",
+      "APP_CREATE_THING_9",
+      "APP_CREATE_THING_10",
+      "APP_CREATE_THING_11"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "APP_CREATE_THING_0",
+      "APP_CREATE_THING_1",
+      "APP_CREATE_THING_2",
+      "APP_CREATE_THING_3",
+      "APP_CREATE_THING_4",
+      "APP_CREATE_THING_5",
+      "APP_CREATE_THING_6",
+      "APP_CREATE_THING_7",
+      "APP_CREATE_THING_8",
+      "APP_CREATE_THING_9",
+      "APP_CREATE_THING_10",
+      "APP_CREATE_THING_11"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "APP_CREATE_THING_0",
+      "APP_CREATE_THING_1",
+      "APP_CREATE_THING_2",
+      "APP_CREATE_THING_3",
+      "APP_CREATE_THING_4",
+      "APP_CREATE_THING_5",
+      "APP_CREATE_THING_6",
+      "APP_CREATE_THING_7",
+      "APP_CREATE_THING_8",
+      "APP_CREATE_THING_9",
+      "APP_CREATE_THING_10",
+      "APP_CREATE_THING_11"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "APP_CREATE_THING_0",
+      "APP_CREATE_THING_1",
+      "APP_CREATE_THING_2",
+      "APP_CREATE_THING_3",
+      "APP_CREATE_THING_4",
+      "APP_CREATE_THING_5",
+      "APP_CREATE_THING_6",
+      "APP_CREATE_THING_7",
+      "APP_CREATE_THING_8",
+      "APP_CREATE_THING_9",
+      "APP_CREATE_THING_10",
+      "APP_CREATE_THING_11"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "APP_CREATE_THING_0",
+      "APP_CREATE_THING_1",
+      "APP_CREATE_THING_2",
+      "APP_CREATE_THING_3",
+      "APP_CREATE_THING_4",
+      "APP_CREATE_THING_5",
+      "APP_CREATE_THING_6",
+      "APP_CREATE_THING_7",
+      "APP_CREATE_THING_8",
+      "APP_CREATE_THING_9",
+      "APP_CREATE_THING_10",
+      "APP_CREATE_THING_11"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "APP_CREATE_THING_0",
+      "APP_CREATE_THING_1",
+      "APP_CREATE_THING_2",
+      "APP_CREATE_THING_3",
+      "APP_CREATE_THING_4",
+      "APP_CREATE_THING_5",
+      "APP_CREATE_THING_6",
+      "APP_CREATE_THING_7",
+      "APP_CREATE_THING_8",
+      "APP_CREATE_THING_9",
+      "APP_CREATE_THING_10",
+      "APP_CREATE_THING_11"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "APP_CREATE_THING_0",
+      "APP_CREATE_THING_1",
+      "APP_CREATE_THING_2",
+      "APP_CREATE_THING_3",
+      "APP_CREATE_THING_4",
+      "APP_CREATE_THING_5",
+      "APP_CREATE_THING_6",
+      "APP_CREATE_THING_7",
+      "APP_CREATE_THING_8",
+      "APP_CREATE_THING_9",
+      "APP_CREATE_THING_10",
+      "APP_CREATE_THING_11"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run APP_CREATE_THING_0 with v: wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww…; and APP_CREATE_THING_1 with v: wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww…; and APP_CREATE_THING_2 with v: wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww…; and APP_CREATE_THIN…?",
+   "whole_1500": "Run APP_CREATE_THING_0 with v: wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww; and APP_CREATE_THING_1 with v: wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww; and APP_CREATE_THING_2 with v: wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww; and APP_CREATE_THING_3 with v: wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww; and APP_CREATE_THING_4 with v: wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww; and APP_CREATE_THING_5 with v: wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww; and APP_CREATE_THING_6 with v: wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww; and APP_CREATE_THING_7 with v: wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww; and APP_CREATE_THING_8 with v: wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww; and APP_CREATE_THING_9 with v: wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww; and APP_CREATE_THING_10 with v: wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww; and APP_CREATE_THING_11 with v: wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww?",
+   "consequential": [
+    "APP_CREATE_THING_0",
+    "APP_CREATE_THING_1",
+    "APP_CREATE_THING_2",
+    "APP_CREATE_THING_3",
+    "APP_CREATE_THING_4",
+    "APP_CREATE_THING_5",
+    "APP_CREATE_THING_6",
+    "APP_CREATE_THING_7",
+    "APP_CREATE_THING_8",
+    "APP_CREATE_THING_9",
+    "APP_CREATE_THING_10",
+    "APP_CREATE_THING_11"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "extra 12"
+  },
+  {
+   "name": "COMPOSIO_MULTI_EXECUTE_TOOL",
+   "args": {
+    "tools": [
+     {
+      "tool_slug": "EXA_SEARCH"
+     },
+     {
+      "tool_slug": "tavily_mcp_search"
+     }
+    ]
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run EXA_SEARCH; and tavily_mcp_search?",
+   "whole_1500": "Run EXA_SEARCH; and tavily_mcp_search?",
+   "consequential": [],
+   "sends_mail": false,
+   "web": [
+    "EXA_SEARCH",
+    "TAVILY_MCP_SEARCH"
+   ],
+   "manage_needs_yes": true,
+   "key": "extra 13"
+  },
+  {
+   "name": "COMPOSIO_REMOTE_BASH_TOOL",
+   "args": {
+    "command": "ls\n-la"
+   },
+   "verdicts": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_BASH_TOOL"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_BASH_TOOL"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_BASH_TOOL"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_BASH_TOOL"
+     ],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_BASH_TOOL"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_BASH_TOOL"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_BASH_TOOL"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_REMOTE_BASH_TOOL"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_REMOTE_BASH_TOOL with command: ls -la?",
+   "whole_1500": "Run COMPOSIO_REMOTE_BASH_TOOL with command: ls -la?",
+   "consequential": [
+    "COMPOSIO_REMOTE_BASH_TOOL"
+   ],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "extra 14"
+  },
+  {
+   "name": "COMPOSIO_SEARCH_TOOLS",
+   "args": [
+    "not",
+    "a",
+    "mapping"
+   ],
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_SEARCH_TOOLS?",
+   "whole_1500": "Run COMPOSIO_SEARCH_TOOLS?",
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "extra 15"
+  },
+  {
+   "name": "COMPOSIO_MANAGE_CONNECTIONS",
+   "args": {
+    "toolkits": [
+     "gmail"
+    ],
+    "reinitiate_all": false,
+    "session_id": null
+   },
+   "verdicts": {
+    "default": [
+     "run",
+     [],
+     ""
+    ],
+    "gmail_auto": [
+     "run",
+     [],
+     ""
+    ],
+    "strict": [
+     "run",
+     [],
+     ""
+    ],
+    "loose": [
+     "run",
+     [],
+     ""
+    ]
+   },
+   "lite": {
+    "default": [
+     "ask",
+     [
+      "COMPOSIO_MANAGE_CONNECTIONS"
+     ],
+     ""
+    ],
+    "gmail_auto": [
+     "ask",
+     [
+      "COMPOSIO_MANAGE_CONNECTIONS"
+     ],
+     ""
+    ],
+    "strict": [
+     "ask",
+     [
+      "COMPOSIO_MANAGE_CONNECTIONS"
+     ],
+     ""
+    ],
+    "loose": [
+     "ask",
+     [
+      "COMPOSIO_MANAGE_CONNECTIONS"
+     ],
+     ""
+    ]
+   },
+   "ask_line": "Run COMPOSIO_MANAGE_CONNECTIONS with toolkits: [\"gmail\"], reinitiate_all: false, session_id: null?",
+   "whole_1500": "Run COMPOSIO_MANAGE_CONNECTIONS with toolkits: [\"gmail\"], reinitiate_all: false, session_id: null?",
+   "consequential": [],
+   "sends_mail": false,
+   "web": [],
+   "manage_needs_yes": true,
+   "key": "extra 16"
+  }
+ ]
+}
