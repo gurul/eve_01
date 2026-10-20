@@ -40,6 +40,12 @@ are the spec.
   A dependency that isn't listed there goes in your own crate's `Cargo.toml`
   with an explicit version. **Never edit `rust/Cargo.toml`.**
 - Depend on another eve crate by path: `eve-spend = { path = "../eve-spend" }`.
+- **One version per external crate.** Before adding an external dependency
+  that isn't in the workspace list, check whether another crate already uses it
+  (`grep -h '^<crate> *=' crates/*/Cargo.toml`) and copy that exact version
+  requirement. If none does, take the newest release from
+  `cargo search <crate> --limit 1`. The point is that `objc2`, `btleplug` and
+  the others resolve once and their types can cross crate boundaries.
 - Write `src/lib.rs` before `Cargo.toml`, so that the workspace never holds a
   manifest that has no target, because that breaks every other agent's build.
 
