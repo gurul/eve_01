@@ -1,0 +1,208 @@
+[
+ {
+  "src": "NONE, ASK = \"none\", \"ask\"\nLABELS = (\"a\", \"b\") + x.labels() + (\"c\",)\n",
+  "ok": [
+   "a",
+   "b",
+   "c"
+  ]
+ },
+ {
+  "src": "TOOL_LABELS: dict[str, str] = {\"k\": \"v\", **dict.fromkeys((\"n1\", \"n2\"), \"n\")}\n",
+  "ok": [
+   "n",
+   "n1",
+   "n2",
+   "v"
+  ]
+ },
+ {
+  "src": "CODE_ACTING = frozenset({\"s\", \"t\"}) | {a.label for a in apps if a.x == \"q\"}\n",
+  "ok": [
+   "q",
+   "s",
+   "t"
+  ]
+ },
+ {
+  "src": "LABELS = {\"k\": \"v\" for k in y}\n",
+  "ok": [
+   "k",
+   "v"
+  ]
+ },
+ {
+  "src": "LABELS = \"a\" 'b' \"\"\"c\"\"\"\n",
+  "ok": [
+   "abc"
+  ]
+ },
+ {
+  "src": "LABELS = ''\n",
+  "ok": [
+   ""
+  ]
+ },
+ {
+  "src": "LABELS = b'x', r'\\n', '\\x41\\101\\u00e9\\N{bullet}\\N{LATIN SMALL LETTER A}\\q'\n",
+  "ok": [
+   "AAé•a\\q",
+   "\\n"
+  ]
+ },
+ {
+  "src": "LABELS = f'a{x!r:>{w}}b' 'c' f'{y=}'\n",
+  "ok": [
+   ">",
+   "a",
+   "bcy="
+  ]
+ },
+ {
+  "src": "if x: LABELS = ('no',)\nclass A:\n    LABELS = ('no',)\nx = 1; ASK = 'yes'\n",
+  "ok": [
+   "yes"
+  ]
+ },
+ {
+  "src": "x = LABELS = 'no'\nLABELS = y = 'yes'\nLABELS += ('no',)\n(NONE) = 'p'\n",
+  "ok": [
+   "p",
+   "yes"
+  ]
+ },
+ {
+  "src": "S = '''\nLABELS = ('no',)\n'''\n# LABELS = 'no'\nLABELS = \\\n  'cont'\n",
+  "ok": [
+   "cont"
+  ]
+ },
+ {
+  "src": "LABELS = {lambda: 'l': 'v', 'k2': lambda x='d': 'w'}\n",
+  "ok": [
+   "d",
+   "v",
+   "w"
+  ]
+ },
+ {
+  "src": "TOOL_LABELS = {\"a\": \"b\", (\"k1\", \"k2\"): [\"v1\", {\"nk\": \"nv\"}], \"c\": None}\n",
+  "ok": [
+   "b",
+   "nk",
+   "nv",
+   "v1"
+  ]
+ },
+ {
+  "src": "TOOL_LABELS = {\"a\": \"b\"} | {\"c\": \"d\"}\n",
+  "ok": [
+   "a",
+   "b",
+   "c",
+   "d"
+  ]
+ },
+ {
+  "src": "TOOL_LABELS = {\"a\", \"b\"}\n",
+  "ok": [
+   "a",
+   "b"
+  ]
+ },
+ {
+  "src": "TOOL_LABELS = {}\nLABELS = ()\n",
+  "ok": []
+ },
+ {
+  "src": "LABELS = f\"{x[\"k\"]}\" f\"{f\"{y:{\"w\"}}\"}\"\n",
+  "ok": [
+   "k",
+   "w"
+  ]
+ },
+ {
+  "src": "LABELS = f\"{x = }\" f\"{x:=10}\" f\"{a!=b}\" f\"{{lit}}\" rf\"\\{z}\\d\"\n",
+  "ok": [
+   "=10",
+   "\\d",
+   "x = ",
+   "{lit}\\"
+  ]
+ },
+ {
+  "src": "LABELS = f\"\"\"multi\n{x}\nline\"\"\"\n",
+  "ok": [
+   "\nline",
+   "multi\n"
+  ]
+ },
+ {
+  "src": "LABELS = (\"x\" # comment\n  \"y\",\n  # LABELS = \"no\"\n  \"z\")\n",
+  "ok": [
+   "xy",
+   "z"
+  ]
+ },
+ {
+  "src": "@dec\ndef f():\n    LABELS = \"no\"\n    return \"no\"\nASK: str = \"typed\"\n",
+  "ok": [
+   "typed"
+  ]
+ },
+ {
+  "src": "NONE = ASK = \"both\"\nCODE_ACTING = sorted([\"s1\"], key=lambda s: \"k\")\n",
+  "ok": [
+   "both",
+   "k",
+   "s1"
+  ]
+ },
+ {
+  "src": "LABELS = \"é\\t\\\\\" \"\\\n\"\n",
+  "ok": [
+   "é\t\\"
+  ]
+ },
+ {
+  "src": "try:\n    LABELS = \"no\"\nexcept Exception:\n    LABELS = \"no2\"\nLABELS = U\"upper\" Rb\"raw\"\n",
+  "error": "SyntaxError"
+ },
+ {
+  "src": "LABELS = x if \"c\" else {\"k\": \"v\"}\nTOOL_LABELS = {**base, \"k\": \"v2\"}\n",
+  "ok": [
+   "c",
+   "k",
+   "v",
+   "v2"
+  ]
+ },
+ {
+  "src": "LABELS = (\"\\0\", \"\\777\", \"\\x7f\")\n",
+  "ok": [
+   "\u0000",
+   "",
+   "ǿ"
+  ]
+ },
+ {
+  "src": "def g(): pass; LABELS = \"no\"\nwith x: LABELS = \"no\"\nLABELS = \"after\"\n",
+  "ok": [
+   "after"
+  ]
+ },
+ {
+  "src": "LABELS = \"a\" f\"\" \"b\"\nASK = \"\" f\"\" \"\"\nNONE = f\"\"\n",
+  "ok": [
+   "ab"
+  ]
+ },
+ {
+  "src": "LABELS = [*(\"a\",), *b]\nTOOL_LABELS = {\"k\": f\"v{1}w\"}\n",
+  "ok": [
+   "a",
+   "v",
+   "w"
+  ]
+ }
+]

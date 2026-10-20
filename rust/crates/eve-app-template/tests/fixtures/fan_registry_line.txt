@@ -1,0 +1,6 @@
+    # fan: set symbol (an SF Symbol) and detail (the phone row's subtitle); if you change its tools, change
+    # acting and clean to match (docs/adding-an-app.md, "Change the tools")
+    App(slot="fan", module="fan", make="make", switch="EVE_FAN", default_on=False,
+        title="Fan", symbol="square.grid.2x2", detail="", doc="docs/fan.md",
+        no_control="Fan is off on this Mac (EVE_FAN).", label="fan", tool_prefix="fan_",
+        acting=frozenset({"fan_set"}), clean=frozenset({"fan_status"})),
