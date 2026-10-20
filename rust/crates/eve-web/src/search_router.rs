@@ -31,16 +31,22 @@
 //! `EVE_SEARCH_ROUTER=auto` routes whenever a second provider is usable. `off` leaves every search exactly as it
 //! was: the brain on websearch's engine, the web reader on TinyFish.
 
-use std::collections::HashSet;
-use std::sync::{Arc, LazyLock};
+use std::collections::{HashMap, HashSet};
+use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{mpsc, Arc, LazyLock};
+use std::time::Duration;
 
 use eve_decider::Predict;
-use serde_json::{json, Value};
+use eve_spend::RecordOpts;
+use parking_lot::Mutex;
+use regex::Regex;
+use serde_json::{json, Map, Value};
 
-use crate::firecrawl::{Found, Ran, ToolCall};
+use crate::firecrawl;
 use crate::watch::FetchError;
-use crate::web_reader::Page;
-use crate::websearch::{Opener, SearchConfig};
+use crate::web_reader::{self, FirecrawlSearchFn, Page, ReadFn, ToolResult, ToolRunFn};
+use crate::websearch::{self, py_g, py_round, py_round_int, py_strip, py_str_value, take_chars, truthy, words, EngineOpts, Opener, SearchConfig};
 use crate::{Ask, Clock, Ctx};
 
 pub const TINYFISH: &str = "tinyfish";
@@ -112,7 +118,32 @@ eve wrote while talking with the owner, or the owner's own words; judge what ans
 /// The Choice over ALL THREE providers and the four Nouls: the same question on every Mac, whichever keys it
 /// holds (a pick that is not available is masked in make_router, never hidden from Jev), so fitted gates hold.
 pub fn questions() -> Value {
-    todo!("search_router.questions")
+    let mut criteria = Map::new();
+    for p in PROVIDERS {
+        let option = provider_to_option(p).unwrap_or_default();
+        criteria.insert(option.into(), OPTIONS.get(option).cloned().unwrap_or(Value::Null));
+    }
+    json!({
+        "provider": {"type": "choice", "instructions": "Which of these should answer the request?",
+                     "criteria": Value::Object(criteria)},
+        "needs_live_structured_data": {"type": "noul", "instructions":
+            "Does answering need live data that a booking, fare-comparison or official records service holds and \
+             would be asked with specific fields: flight or train fares or schedules between two places, hotel or \
+             ticket prices for given dates, or a lookup in a government or official register? Answer no for \
+             facts, prices, hours or news that an ordinary web page states."},
+        "answer_changes_over_time": {"type": "noul", "instructions":
+            "Does the correct answer change over time, or depend on news or events of the last few weeks, so that \
+             a web page written some months ago could now give a wrong answer? Yes for who holds a job or title \
+             now, the latest version, result or standing, and current events. No for a settled fact that stays \
+             the same, such as a definition, a date in history, or what a named document says."},
+        "needs_many_sources_or_searches": {"type": "noul", "instructions":
+            "Does answering need many sources weighed together (reviews, recommendations, pros and cons, 'best' \
+             lists), or several searches one after another, each depending on what the last one found?"},
+        "single_lookup_or_page_read": {"type": "noul", "instructions":
+            "Can the whole answer come from one or two ordinary public web pages: a single fact, number, date, \
+             definition, opening hours, phone number, a price shown on a page, or what one specific named page or \
+             document says?"},
+    })
 }
 
 /// Jev's answers to `questions()`.
@@ -190,21 +221,77 @@ pub struct RouteError {
 /// Jev's answers to questions(), always the full three-option question. A predict that fails abstains:
 /// perplexity, the safe default, with `error` `"{kind}: {message}"` (at most 160 characters).
 pub fn ask(predict: &Predict, text: &str, clock: &Clock) -> SearchAnswer {
-    let _ = (predict, text, clock);
-    todo!("search_router.ask")
+    let t0 = clock();
+    let state = json!({"about": ABOUT, "request": take_chars(&words(text), 500)});
+    let failed = |error: String| SearchAnswer {
+        p_tinyfish: 0.0,
+        p_perplexity: 1.0,
+        p_firecrawl: 0.0,
+        structured: 0.0,
+        many: 1.0,
+        single: 0.0,
+        changes: 1.0,
+        ms: (clock() - t0) * 1000.0,
+        error: take_chars(&error, 160),
+    };
+    // a model that fails abstains: perplexity, the safe default
+    let result = match predict(&state, &questions()) {
+        Ok(r) => r,
+        Err(e) => return failed(format!("{}: {}", e.kind, e.message)),
+    };
+    // `result.get("answers") or {}`: a reply that is not a dict has no .get
+    let answers = match &result {
+        Value::Object(m) => m.get("answers").filter(|v| truthy(v)).and_then(Value::as_object).cloned().unwrap_or_default(),
+        other => {
+            return failed(format!("AttributeError: '{}' object has no attribute 'get'", websearch::py_type_name(other)))
+        }
+    };
+    let number = |v: Option<&Value>| -> f64 {
+        match v {
+            Some(Value::Number(n)) => n.as_f64().unwrap_or(0.0),
+            _ => 0.0,
+        }
+    };
+    let noul = |key: &str| number(answers.get(key).and_then(Value::as_object).and_then(|a| a.get("noul")));
+    let probs = answers
+        .get("provider")
+        .and_then(Value::as_object)
+        .and_then(|a| a.get("probabilities"))
+        .and_then(Value::as_object)
+        .cloned()
+        .unwrap_or_default();
+    let p = |provider: &str| number(provider_to_option(provider).and_then(|o| probs.get(o)));
+    SearchAnswer {
+        p_tinyfish: p(TINYFISH),
+        p_perplexity: p(PERPLEXITY),
+        p_firecrawl: p(FIRECRAWL),
+        structured: noul("needs_live_structured_data"),
+        many: noul("needs_many_sources_or_searches"),
+        single: noul("single_lookup_or_page_read"),
+        changes: noul("answer_changes_over_time"),
+        ms: (clock() - t0) * 1000.0,
+        error: String::new(),
+    }
 }
 
 /// FIRECRAWL or TINYFISH only when their conditions hold; anything else, including an error, is PERPLEXITY.
 pub fn decide(a: &SearchAnswer, g: &SearchGates) -> &'static str {
-    let _ = (a, g);
-    todo!("search_router.decide")
+    if !a.error.is_empty() {
+        return PERPLEXITY;
+    }
+    if a.p_firecrawl >= g.firecrawl && a.structured >= g.structured {
+        return FIRECRAWL;
+    }
+    if a.p_tinyfish >= g.tinyfish && a.single >= g.single && a.many <= g.many_max && a.changes <= g.changes_max {
+        return TINYFISH;
+    }
+    PERPLEXITY
 }
 
 /// A route that costs: a request that is not a quick read sent to the reader, or anything that does not need a
 /// data service sent to the paid one. Sending anything to perplexity is never wrong, only slower or dearer.
 pub fn wrong(said: &str, truth: &str) -> bool {
-    let _ = (said, truth);
-    todo!("search_router.wrong")
+    (said == TINYFISH && truth != TINYFISH) || (said == FIRECRAWL && truth != FIRECRAWL)
 }
 
 pub const GRID: [f64; 6] = [0.5, 0.6, 0.7, 0.8, 0.9, 0.95];
@@ -214,8 +301,61 @@ pub const MAX_GRID: [f64; 5] = [0.05, 0.1, 0.2, 0.3, 0.5];
 /// wrong routes. Ties go to the stricter setting. Firecrawl is fitted first and tinyfish under it. Panics where
 /// Python's `zip(strict=True)` raises (answers and truths of different lengths).
 pub fn fit(answers: &[SearchAnswer], truths: &[&str]) -> SearchGates {
-    let _ = (answers, truths);
-    todo!("search_router.fit")
+    assert_eq!(answers.len(), truths.len(), "zip() arguments have different lengths");
+    let routes = |g: &SearchGates| -> Option<Vec<&'static str>> {
+        let said: Vec<&'static str> = answers.iter().map(|a| decide(a, g)).collect();
+        if said.iter().zip(truths).any(|(s, t)| wrong(s, t)) {
+            None
+        } else {
+            Some(said)
+        }
+    };
+    // tuples compare left to right: the most right routes first, then the stricter setting
+    let better = |key: &[f64], best: &Option<Vec<f64>>| match best {
+        None => true,
+        Some(b) => key.partial_cmp(b.as_slice()) == Some(std::cmp::Ordering::Greater),
+    };
+    let mut fc_best: Option<Vec<f64>> = None;
+    let mut fc = (1.01, 1.01);
+    for p_fc in GRID {
+        for structured in GRID {
+            let g = SearchGates { firecrawl: p_fc, structured, ..SearchGates::default() };
+            let Some(said) = routes(&g) else { continue };
+            let right = said.iter().zip(truths).filter(|(s, t)| **s == **t && **s == FIRECRAWL).count() as f64;
+            let key = vec![right, p_fc, structured];
+            if better(&key, &fc_best) {
+                fc_best = Some(key);
+                fc = (p_fc, structured);
+            }
+        }
+    }
+    let mut best: Option<Vec<f64>> = None;
+    let mut chosen = SearchGates { firecrawl: fc.0, structured: fc.1, ..SearchGates::default() };
+    for p_tf in GRID {
+        for single in GRID {
+            for many in MAX_GRID {
+                for changes in MAX_GRID {
+                    let g = SearchGates {
+                        firecrawl: fc.0,
+                        structured: fc.1,
+                        tinyfish: p_tf,
+                        single,
+                        many_max: many,
+                        changes_max: changes,
+                    };
+                    let Some(said) = routes(&g) else { continue };
+                    let right =
+                        said.iter().zip(truths).filter(|(s, t)| **s == **t && **s != PERPLEXITY).count() as f64;
+                    let key = vec![right, p_tf, single, -many, -changes];
+                    if better(&key, &best) {
+                        best = Some(key);
+                        chosen = g;
+                    }
+                }
+            }
+        }
+    }
+    chosen
 }
 
 // History (2026-09-29): a first fit on search_tuning.json alone, scored once on the blind search_holdout.json
@@ -255,22 +395,73 @@ pub const SHIPPED: bool = true;
 /// given), then masked: a pick that is not `available` is perplexity (the question itself never changes with the
 /// keys, so the fitted gates hold on every Mac).
 pub fn make_router(predict: Arc<Predict>, clock: Clock, gates: Option<SearchGates>) -> RouteFn {
-    let _ = (predict, clock, gates);
-    todo!("search_router.make_router")
+    Arc::new(move |text: &str, available: &[String]| -> Result<Route, RouteError> {
+        let a = ask(&*predict, text, &clock);
+        let mut said = decide(&a, &gates.unwrap_or(GATES));
+        let mut error = a.error.clone();
+        if !available.iter().any(|p| p == said) {
+            if error.is_empty() {
+                error = format!("{said} is not available");
+            }
+            said = PERPLEXITY;
+        }
+        let p = match said {
+            TINYFISH => a.p_tinyfish,
+            FIRECRAWL => a.p_firecrawl,
+            _ => a.p_perplexity,
+        };
+        Ok(Route { provider: said.to_string(), p, ms: a.ms, error })
+    })
 }
+
+/// `_JEV`: the router made once a process, with the route (url, model) it was made for.
+type JevCache = Option<((String, String), RouteFn)>;
+static JEV: LazyLock<Mutex<JevCache>> = LazyLock::new(|| Mutex::new(None));
 
 /// Jev over EVE_JEV_ROUTE (2 s timeout), made once a process (remade when the route's url or model changes), or
 /// None (no route: every search stays on perplexity).
 pub fn jev_router(ctx: &Ctx) -> Option<RouteFn> {
-    let _ = ctx;
-    todo!("search_router.jev_router")
+    let (url, key, model) = eve_jev::route_config(ctx, "").ok()?;
+    let mut cached = JEV.lock();
+    if let Some((route, router)) = cached.as_ref() {
+        if route.0 == url && route.1 == model {
+            return Some(router.clone());
+        }
+    }
+    let predict = eve_jev::make_predict(
+        &url,
+        &key,
+        &model,
+        eve_jev::PredictOptions {
+            timeout_s: JEV_TIMEOUT_S,
+            ledger: Some(ctx.ledger.clone()),
+            ..eve_jev::PredictOptions::default()
+        },
+    );
+    let router = make_router(Arc::new(predict.decider_fn()), crate::perf_clock(), None);
+    *cached = Some(((url, model), router.clone()));
+    Some(router)
 }
 
 /// EVE_SEARCH_ROUTER = auto (the default: on when SHIPPED) | on (on before the fit, for a live trial) | off
 /// (websearch's engine and the TinyFish reader, exactly as before the router). 1/true/yes are on, 0/false/no off.
 pub fn mode(ctx: &Ctx) -> String {
-    let _ = ctx;
-    todo!("search_router.mode")
+    let given = ctx.get("EVE_SEARCH_ROUTER");
+    let mut raw = py_strip(if given.is_empty() { "auto" } else { &given }).to_lowercase();
+    if ["1", "true", "yes"].contains(&raw.as_str()) {
+        raw = "on".into();
+    }
+    if ["0", "false", "no"].contains(&raw.as_str()) {
+        raw = "off".into();
+    }
+    if !MODES.contains(&raw.as_str()) {
+        tracing::warn!(
+            "search router: EVE_SEARCH_ROUTER={} is not one of ('auto', 'on', 'off'); auto",
+            eve_decider::py_str_repr(&raw)
+        );
+        raw = "auto".into();
+    }
+    raw
 }
 
 /// The providers routing may use, perplexity first, or empty when routing is off. On only when the mode allows it,
@@ -283,8 +474,28 @@ pub fn available(ctx: &Ctx, engine: &str) -> Vec<String> {
 
 /// `available` with SHIPPED as a parameter (Python's tests patch the module constant).
 pub fn available_shipped(ctx: &Ctx, engine: &str, shipped: bool) -> Vec<String> {
-    let _ = (ctx, engine, shipped);
-    todo!("search_router.available")
+    let m = mode(ctx);
+    if m == "off" || (m == "auto" && !shipped) {
+        return Vec::new();
+    }
+    if websearch::openrouter_engine(engine).is_none() || py_strip(&ctx.get("OPENROUTER_API_KEY")).is_empty() {
+        return Vec::new();
+    }
+    if eve_jev::route_config(ctx, "").is_err() {
+        return Vec::new();
+    }
+    let mut found = vec![PERPLEXITY.to_string()];
+    if !crate::tinyfish::api_key(ctx).is_empty() {
+        found.push(TINYFISH.to_string());
+    }
+    if !firecrawl::api_key(ctx).is_empty() {
+        found.push(FIRECRAWL.to_string());
+    }
+    if found.len() > 1 {
+        found
+    } else {
+        Vec::new()
+    }
 }
 
 // ---- the one routed entry point -----------------------------------------------------------------------------
@@ -298,11 +509,11 @@ pub struct Paths {
     /// (query, system, feature) -> result
     pub perplexity: Option<PerplexityFn>,
     /// web_reader::search_and_read
-    pub read: Option<Arc<dyn Fn(&str) -> Result<Vec<Page>, FetchError> + Send + Sync>>,
+    pub read: Option<ReadFn>,
     /// firecrawl::search, with tools
-    pub firecrawl_search: Option<Arc<dyn Fn(&str) -> Result<Found, FetchError> + Send + Sync>>,
+    pub firecrawl_search: Option<FirecrawlSearchFn>,
     /// firecrawl::run_tool
-    pub run_tool: Option<Arc<dyn Fn(&ToolCall) -> Result<Ran, FetchError> + Send + Sync>>,
+    pub run_tool: Option<ToolRunFn>,
     /// watch::openrouter
     pub ask: Option<Ask>,
 }
@@ -321,23 +532,82 @@ pub const LINK: &str = r"(?i)(?:https?://|www\.)\S+";
 /// a link a data tool returned); any other becomes "(link removed)" (WatchLink.lean, the watcher's lesson).
 /// Whitespace is collapsed.
 pub fn keep_read_links(text: &str, read: &HashSet<String>) -> String {
-    let _ = (text, read);
-    todo!("search_router.keep_read_links")
+    // LINK, with `\S` spelled as Python's: not str.isspace(), which also counts the separators \x1c-\x1f
+    static RE: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(&LINK.replace(r"\S+", r"[^\s\x1c-\x1f]+")).expect("the link pattern compiles")
+    });
+    let kept = RE.replace_all(text, |c: &regex::Captures<'_>| {
+        let link = &c[0];
+        if read.contains(link.trim_end_matches(['.', ',', ';', ':', '!', '?'])) {
+            link.to_string()
+        } else {
+            "(link removed)".to_string()
+        }
+    });
+    words(&kept)
 }
 
 /// `_usage`: the answer model's usage over its calls, websearch::parse's shape; `cost` only when every call
 /// reported one.
 pub fn usage(payloads: &[Value]) -> Value {
-    let _ = payloads;
-    todo!("search_router._usage")
+    let (mut tin, mut tout) = (0i64, 0i64);
+    let mut costs: Vec<f64> = Vec::new();
+    for p in payloads {
+        let Some(u) = p.as_object().and_then(|o| o.get("usage")).and_then(Value::as_object) else { continue };
+        tin = tin.saturating_add(websearch::py_int_or_zero(u.get("prompt_tokens")).unwrap_or(0));
+        tout = tout.saturating_add(websearch::py_int_or_zero(u.get("completion_tokens")).unwrap_or(0));
+        // a JSON bool is its own variant, so `not isinstance(cost, bool)` holds by construction
+        if let Some(Value::Number(n)) = u.get("cost") {
+            costs.push(n.as_f64().unwrap_or(0.0));
+        }
+    }
+    let mut out = Map::new();
+    out.insert("in".into(), json!(tin));
+    out.insert("out".into(), json!(tout));
+    if !payloads.is_empty() && costs.len() == payloads.len() {
+        out.insert("cost".into(), json!(py_round(costs.iter().sum::<f64>(), 6)));
+    }
+    Value::Object(out)
 }
 
 /// `_result`: websearch's result shape from a page-reading provider: the pages the answer used become its
 /// sources. `cost_usd` is the answer model's reported cost plus `extra_usd` (a Firecrawl route's credits, default
 /// 0.0), or None when either is unknown.
 pub fn result(answer: &str, pages: &[Page], used: &[String], payloads: &[Value], extra_usd: Option<f64>) -> Value {
-    let _ = (answer, pages, used, payloads, extra_usd);
-    todo!("search_router._result")
+    // `{p["url"]: p for p in pages}`: a later page with the same link wins
+    let by_url: HashMap<&str, &Page> = pages.iter().map(|p| (p.url.as_str(), p)).collect();
+    let sources: Vec<Value> = used
+        .iter()
+        .filter_map(|u| by_url.get(u.as_str()).map(|p| (u, p)))
+        .map(|(u, p)| {
+            json!({"title": take_chars(&words(&p.title), 120), "url": take_chars(u, 500),
+                   "snippet": take_chars(&words(&p.markdown), websearch::MAX_SNIPPET_CHARS)})
+        })
+        .take(websearch::MAX_SOURCES)
+        .collect();
+    let usage = usage(payloads);
+    let cost = usage.get("cost").and_then(Value::as_f64);
+    let cost_usd = match (cost, extra_usd) {
+        (Some(c), Some(x)) => json!(py_round(c + x, 4)),
+        _ => Value::Null,
+    };
+    json!({"ok": true, "answer": take_chars(answer, websearch::MAX_ANSWER_CHARS), "sources": sources,
+           "usage": usage, "cost_usd": cost_usd})
+}
+
+/// `{"ok": False, "reason": reason}`.
+fn failure(reason: impl Into<String>) -> Value {
+    json!({"ok": false, "reason": reason.into()})
+}
+
+/// `out.get(name)` of a result object.
+fn field<'a>(out: &'a Value, name: &str) -> Option<&'a Value> {
+    out.as_object().and_then(|o| o.get(name))
+}
+
+/// `out.get("ok")`, as Python's truthiness.
+fn is_ok(out: &Value) -> bool {
+    field(out, "ok").is_some_and(truthy)
 }
 
 /// The keyword arguments `via` and `answer` share. `Default` is Python's defaults: `reader=False`, `Paths()`,
@@ -377,34 +647,216 @@ impl Default for AnswerOpts {
 /// One provider, no fallback: websearch's result shape, or {"ok": False, "reason"}. Errs only with what the
 /// provider's own code raises past FetchError (`answer` catches everything), as the exception's class name.
 pub fn via(ctx: &Ctx, provider: &str, query: &str, config: &SearchConfig, opts: &AnswerOpts) -> Result<Value, String> {
-    let _ = (ctx, provider, query, config, opts);
-    todo!("search_router.via")
+    // `paths.ask or watch.openrouter`, resolved only by the providers that ask a model
+    let ask = || -> Ask { opts.paths.ask.clone().unwrap_or_else(|| crate::watch::model::openrouter_ask(ctx)) };
+    let feature = opts.feature.as_str();
+    if provider == TINYFISH {
+        let found = match &opts.paths.read {
+            Some(read) => read(query),
+            None => web_reader::search_and_read(ctx, query, web_reader::RESULTS),
+        };
+        let pages = match found {
+            Ok(pages) => pages,
+            Err(e) => {
+                let reason = if e.reason.starts_with("TinyFish") { e.reason } else { format!("TinyFish: {}", e.reason) };
+                return Ok(failure(reason));
+            }
+        };
+        ctx.ledger.record(
+            "tinyfish",
+            "search+fetch",
+            feature,
+            Some(0.0),
+            RecordOpts::new().note(&format!("{} pages, free", pages.len())),
+        );
+        if (opts.cancelled)() {
+            return Ok(failure("stopped"));
+        }
+        if pages.is_empty() {
+            return Ok(failure("TinyFish found no readable pages"));
+        }
+        let (text, used, payload) =
+            web_reader::answer_parts(query, &pages, &ask(), None, None, None).map_err(|_| "FetchError".to_string())?;
+        ctx.ledger.record_chat_completion(feature, &payload, web_reader::MODEL, "openrouter");
+        if text.is_empty() {
+            return Ok(failure(format!("the {} pages did not answer it", pages.len())));
+        }
+        return Ok(result(&text, &pages, &used, &[payload], Some(0.0)));
+    }
+    if provider == FIRECRAWL {
+        return via_firecrawl(ctx, query, &ask(), opts);
+    }
+    // perplexity: today's websearch code, with the reader's answered-or-not rule when the reader asks
+    let system = if opts.reader { READER_SYSTEM } else { websearch::SYSTEM };
+    let mut out = match &opts.paths.perplexity {
+        Some(perplexity) => perplexity(query, system, feature),
+        None => {
+            // the reader needs an answer to ITS question or NOT_FOUND; Monid's raw Google snippets are neither, so
+            // the reader never pays for them (review, 2026-10-08)
+            let engine = EngineOpts {
+                key: opts.key.clone(),
+                opener: opts.opener.clone(),
+                clock: opts.clock.clone(),
+                system: system.to_string(),
+                feature: feature.to_string(),
+                monid_ok: !opts.reader,
+                ..EngineOpts::default()
+            };
+            websearch::engine_search(ctx, query, Some(config), &engine)
+        }
+    };
+    let answer_text = || field(&out, "answer").map(py_str_value).unwrap_or_default();
+    if opts.reader && is_ok(&out) && py_strip(&answer_text()).to_uppercase().starts_with(NOT_FOUND) {
+        return Ok(failure("the search did not answer it"));
+    }
+    if is_ok(&out) {
+        let read: HashSet<String> = field(&out, "sources")
+            .and_then(Value::as_array)
+            .map(|sources| {
+                sources.iter().filter_map(|s| s.get("url").map(py_str_value)).collect::<HashSet<String>>()
+            })
+            .unwrap_or_default();
+        let kept = keep_read_links(&answer_text(), &read);
+        if let Some(o) = out.as_object_mut() {
+            o.insert("answer".into(), Value::String(kept));
+        }
+    }
+    Ok(out)
 }
 
 /// `_firecrawl`: Firecrawl search with Alexandria's tools; the model answers from the pages or picks ONE tool,
 /// which eve runs and the model answers from. A tool that fails (or needs terms eve never accepts) leaves the
 /// pages.
 pub fn via_firecrawl(ctx: &Ctx, query: &str, ask: &Ask, opts: &AnswerOpts) -> Result<Value, String> {
-    let _ = (ctx, query, ask, opts);
-    todo!("search_router._firecrawl")
+    let feature = opts.feature.as_str();
+    let fetch_error = |_: FetchError| "FetchError".to_string();
+    let price = firecrawl::usd_per_credit(ctx);
+    let found = match &opts.paths.firecrawl_search {
+        Some(search) => search(query),
+        None => firecrawl::search(ctx, query, firecrawl::RESULTS, firecrawl::SEARCH_TIMEOUT_SECS, true),
+    };
+    let found = match found {
+        Ok(found) => found,
+        Err(e) => {
+            let reason = if e.reason.starts_with("Firecrawl") { e.reason } else { format!("Firecrawl: {}", e.reason) };
+            return Ok(failure(reason));
+        }
+    };
+    firecrawl::meter(ctx, "search", found.credits.as_ref(), feature, price);
+    // None: Firecrawl did not say what the call cost
+    let mut credits_used = credits(found.credits.as_ref());
+    let (pages, tools) = (found.pages, found.tools);
+    if (opts.cancelled)() {
+        return Ok(failure("stopped"));
+    }
+    if pages.is_empty() && tools.is_empty() {
+        return Ok(failure("Firecrawl found no readable pages"));
+    }
+    let (mut text, mut used, payload) =
+        web_reader::answer_parts(query, &pages, ask, None, Some(&tools), None).map_err(fetch_error)?;
+    ctx.ledger.record_chat_completion(feature, &payload, web_reader::MODEL, "openrouter");
+    let call = if !tools.is_empty() && text.is_empty() {
+        firecrawl::pick_tool(&payload, &tools).map_err(fetch_error)?
+    } else {
+        None
+    };
+    let mut payloads = vec![payload];
+    if let Some(call) = call.filter(|_| !(opts.cancelled)()) {
+        let name = call.name.clone();
+        tracing::info!("search router: Alexandria {}/{}", call.provider, call.capability);
+        (opts.progress)(&format!("Checking {name}…"));
+        let ran = match &opts.paths.run_tool {
+            Some(run) => run(&call),
+            None => firecrawl::run_tool(ctx, &call, firecrawl::TOOL_TIMEOUT_SECS),
+        };
+        let ran = match ran {
+            Ok(ran) => Some(ran),
+            Err(e) => {
+                tracing::info!("search router: {}; the pages answer instead", e.reason);
+                None
+            }
+        };
+        if let Some(ran) = &ran {
+            firecrawl::meter(ctx, &format!("alexandria {}", call.provider), ran.credits.as_ref(), feature, price);
+            let more = credits(ran.credits.as_ref());
+            credits_used = match (credits_used, more) {
+                (Some(a), Some(b)) => Some(a + b),
+                _ => None,
+            };
+        }
+        if (opts.cancelled)() {
+            return Ok(failure("stopped"));
+        }
+        let tool_result = ran.map(|ran| ToolResult { name, data: ran.data });
+        if tool_result.is_some() || !pages.is_empty() {
+            let (t, u, payload) =
+                web_reader::answer_parts(query, &pages, ask, None, None, tool_result.as_ref()).map_err(fetch_error)?;
+            ctx.ledger.record_chat_completion(feature, &payload, web_reader::MODEL, "openrouter");
+            text = t;
+            used = u;
+            payloads.push(payload);
+        }
+    }
+    if text.is_empty() {
+        return Ok(failure(format!("the {} pages did not answer it", pages.len())));
+    }
+    // Credits with no price on this plan (EVE_FIRECRAWL_USD unset), or credits Firecrawl did not report:
+    // the route's cost is unknown, so cost_usd is None rather than the answer model's share passed off as all of it.
+    let extra = match credits_used {
+        None => None,
+        Some(c) if price.is_none() && c != 0.0 => None,
+        Some(c) => Some(c * price.unwrap_or(0.0)),
+    };
+    Ok(result(&text, &pages, &used, &payloads, extra))
 }
 
 /// `_credits`: a reply's `credits` as a float, None when it is not a number.
 pub fn credits(reply: Option<&serde_json::Number>) -> Option<f64> {
-    let _ = reply;
-    todo!("search_router._credits")
+    reply.and_then(serde_json::Number::as_f64)
 }
+
+/// `abandoned()`: true once `bounded` stopped waiting.
+pub type Abandoned = Arc<dyn Fn() -> bool + Send + Sync>;
+/// `bounded`'s work: `work(abandoned)`, Err the class name of what it raised.
+pub type Work = Box<dyn FnOnce(Abandoned) -> Result<Value, String> + Send>;
 
 /// `work(abandoned)` in a worker thread (carrying the caller's spend job, eve_spend::carry), waited on for
 /// `budget` seconds at most: its result, or {"ok": False, "reason": "no answer within {budget:g} s"} once the
 /// budget is spent; `abandoned()` then turns true so the worker stops at its next step, and its result is
 /// dropped. A worker that panics or errs is {"ok": False, "reason": its class name}.
-pub fn bounded(
-    work: Box<dyn FnOnce(Arc<dyn Fn() -> bool + Send + Sync>) -> Result<Value, String> + Send>,
-    budget: f64,
-) -> Value {
-    let _ = (work, budget);
-    todo!("search_router.bounded")
+pub fn bounded(work: Work, budget: f64) -> Value {
+    let gone = Arc::new(AtomicBool::new(false));
+    let abandoned: Abandoned = {
+        let gone = gone.clone();
+        Arc::new(move || gone.load(Ordering::SeqCst))
+    };
+    let (tx, rx) = mpsc::channel::<Value>();
+    // The caller's context goes with the work: the spend rows a chief card's search writes keep its card id
+    // (spend.job; a bare Thread starts with an empty context, 2026-09-29).
+    let run = eve_spend::carry(move || {
+        let out = match catch_unwind(AssertUnwindSafe(|| work(abandoned))) {
+            Ok(Ok(out)) => out,
+            // anything at all: the next provider
+            Ok(Err(kind)) => failure(kind),
+            Err(_) => failure("panic"),
+        };
+        let _ = tx.send(out);
+    });
+    if std::thread::Builder::new().name("search-router".into()).spawn(run).is_err() {
+        return failure("no answer");
+    }
+    let waited = match Duration::try_from_secs_f64(budget.max(0.0)) {
+        Ok(d) => rx.recv_timeout(d).map_err(|e| matches!(e, mpsc::RecvTimeoutError::Timeout)),
+        Err(_) => rx.recv().map_err(|_| false),
+    };
+    match waited {
+        Ok(out) if truthy(&out) => out,
+        Ok(_) | Err(false) => failure("no answer"),
+        Err(true) => {
+            gone.store(true, Ordering::SeqCst);
+            failure(format!("no answer within {} s", py_g(budget)))
+        }
+    }
 }
 
 /// THE routed search, for both surfaces: websearch's result shape ({"ok", "answer", "sources", "usage", "ms",
@@ -414,6 +866,80 @@ pub fn bounded(
 /// nothing, runs out of its budget or would pass today's Firecrawl cap is followed by one perplexity search.
 /// Logs one line per routed search: the provider, the Choice's probability and Jev's milliseconds, never the query.
 pub fn answer(ctx: &Ctx, query: &str, config: &SearchConfig, opts: &AnswerOpts) -> Value {
-    let _ = (ctx, query, config, opts);
-    todo!("search_router.answer")
+    let clock = opts.clock.clone();
+    let t0 = clock();
+    let providers = config.providers.clone();
+    let order: Vec<String> = if providers.is_empty() {
+        vec![(if opts.reader { TINYFISH } else { PERPLEXITY }).to_string()]
+    } else {
+        let router = opts.route.clone().or_else(|| jev_router(ctx));
+        let mut r = match router {
+            None => Route { error: "no Jev route".into(), ..Route::new(PERPLEXITY) },
+            // a router that fails is a perplexity search
+            Some(router) => match catch_unwind(AssertUnwindSafe(|| router(query, &providers))) {
+                Ok(Ok(r)) => r,
+                Ok(Err(e)) => Route { error: e.kind, ..Route::new(PERPLEXITY) },
+                Err(_) => Route { error: "panic".into(), ..Route::new(PERPLEXITY) },
+            },
+        };
+        if !providers.contains(&r.provider) {
+            let error = if r.error.is_empty() { format!("{} is not available", r.provider) } else { r.error.clone() };
+            r = Route { provider: PERPLEXITY.into(), p: r.p, ms: r.ms, error };
+        }
+        if r.provider == FIRECRAWL && firecrawl::left(ctx, None) <= 0 {
+            r = Route {
+                provider: PERPLEXITY.into(),
+                p: r.p,
+                ms: r.ms,
+                error: format!("today's {} Firecrawl calls are used up", firecrawl::per_day(ctx)),
+            };
+        }
+        let error = if r.error.is_empty() { String::new() } else { format!(", {}", r.error) };
+        tracing::info!("search router: {} (p={:.2}, jev {:.0} ms{error})", r.provider, r.p, r.ms);
+        let mut order = vec![r.provider.clone()];
+        if r.provider != PERPLEXITY {
+            order.push(PERPLEXITY.into());
+        }
+        order
+    };
+    let budget = if opts.reader { config.routed_secs.max(READER_ROUTED_SECS) } else { config.routed_secs };
+    let mut out = failure("no provider ran");
+    for provider in &order {
+        (opts.tried)(provider);
+        let attempt = {
+            let (ctx, query, config, opts, provider) =
+                (ctx.clone(), query.to_string(), config.clone(), opts.clone(), provider.clone());
+            move |abandoned: Abandoned| -> Result<Value, String> {
+                let outer = opts.cancelled.clone();
+                let opts = AnswerOpts { cancelled: Arc::new(move || outer() || abandoned()), ..opts };
+                via(&ctx, &provider, &query, &config, &opts)
+            }
+        };
+        out = if !providers.is_empty() && provider != PERPLEXITY {
+            // a routed provider: never past its budget
+            bounded(Box::new(attempt), budget)
+        } else {
+            // perplexity, or routing off: its own timeouts, as before
+            match catch_unwind(AssertUnwindSafe(|| attempt(Arc::new(|| false)))) {
+                Ok(Ok(out)) => out,
+                // anything at all: the next provider, or the caller's fallback
+                Ok(Err(kind)) => failure(format!("{provider}: {kind}")),
+                Err(_) => failure(format!("{provider}: panic")),
+            }
+        };
+        let stopped = field(&out, "reason").and_then(Value::as_str) == Some("stopped");
+        if is_ok(&out) || stopped || (opts.cancelled)() {
+            break;
+        }
+        if order.len() > 1 {
+            let reason = field(&out, "reason").map(py_str_value).unwrap_or_else(|| "None".into());
+            tracing::info!("search router: {provider} did not answer ({reason}); perplexity takes it");
+        }
+    }
+    if is_ok(&out) && field(&out, "ms").is_none() {
+        if let Some(o) = out.as_object_mut() {
+            o.insert("ms".into(), json!(py_round_int((clock() - t0) * 1000.0)));
+        }
+    }
+    out
 }
