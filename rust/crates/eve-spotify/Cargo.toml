@@ -1,0 +1,30 @@
+[package]
+name = "eve-spotify"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+async-trait.workspace = true
+base64.workspace = true
+clap.workspace = true
+fancy-regex = "0.19.2"
+futures.workspace = true
+indexmap.workspace = true
+parking_lot.workspace = true
+rand.workspace = true
+regex.workspace = true
+reqwest.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+url.workspace = true
+which.workspace = true
+eve-music-mode = { path = "../eve-music-mode" }
+
+[dev-dependencies]
+tempfile.workspace = true
