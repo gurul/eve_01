@@ -1531,6 +1531,39 @@ async fn test_close_stops_the_tries() {
     assert!(bridge.start_runs() == 1 && !bridge.starting()); // closed: never starts again
 }
 
+/// Python's close() closes the three httpx clients: a call after it sends nothing and is httpx's RuntimeError.
+#[tokio::test]
+async fn test_a_call_after_close_sends_nothing_and_says_the_client_is_closed() {
+    let dir = tmp();
+    let fake = Composio::new();
+    let bridge = connect(dir.path(), &fake).await;
+    bridge.close().await;
+    let sent = fake.sent();
+    let out = bridge.execute(SEARCH_TOOLS, &Obj::new()).await;
+    assert_eq!(out, failed("RuntimeError: Cannot send a request, as the client has been closed."));
+    assert_eq!(bridge.connect_link("gmail").await, None);
+    assert_eq!(bridge.connections(&cc::app_slugs(), 0.0).await, apps_all(false));
+    assert_eq!(fake.sent(), sent);
+}
+
+/// start() called outside any tokio runtime runs its attempts on a thread of its own, as Python's daemon thread.
+#[test]
+fn test_start_outside_a_runtime_keeps_trying_on_its_own_thread() {
+    let dir = tmp();
+    let fake = Composio::new();
+    let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
+    let bridge = runtime.block_on(connect_with(dir.path(), &fake, true, false, None, |o| o.backoff = vec![0.01])).bridge;
+    drop(runtime);
+    bridge.start();
+    assert_eq!(bridge.start_runs(), 1);
+    let deadline = Instant::now() + Duration::from_secs(5);
+    while !bridge.started() && Instant::now() < deadline {
+        std::thread::sleep(Duration::from_millis(10));
+    }
+    assert!(bridge.started());
+    assert_eq!(bridge.names(), META_TOOLS.iter().map(|s| s.to_string()).collect());
+}
+
 // ---- Settings → Apps: Connect Links and the connected apps -----------------------------------------------------
 
 /// COMPOSIO_MANAGE_CONNECTIONS's documented envelope (docs.composio.dev meta-tools page, 2026-10-13). Composio

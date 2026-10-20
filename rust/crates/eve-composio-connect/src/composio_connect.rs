@@ -1159,15 +1159,23 @@ struct Seen {
     token: Mutex<Option<String>>,
 }
 
-/// A transport that notes each response's status.
+/// What httpx raises for a request on a client that `close()` closed.
+const CLOSED_CLIENT: &str = "Cannot send a request, as the client has been closed.";
+
+/// A transport that notes each response's status (Python's `_saw` response hook). Once the bridge is closed
+/// (`shut`), it sends nothing and fails as a closed httpx client does: RuntimeError.
 struct SeeingTransport {
     inner: Arc<dyn Transport>,
     seen: Arc<Seen>,
+    shut: Arc<AtomicBool>,
 }
 
 #[async_trait]
 impl Transport for SeeingTransport {
     async fn send(&self, request: HttpRequest) -> Result<HttpResponse, TransportError> {
+        if self.shut.load(Ordering::SeqCst) {
+            return Err(TransportError::new("RuntimeError", CLOSED_CLIENT));
+        }
         let response = self.inner.send(request).await?;
         *self.seen.status.lock() = Some(response.status);
         Ok(response)
@@ -1198,9 +1206,10 @@ struct Lane {
 }
 
 impl Lane {
-    fn new(url: &str, tokens: &Arc<dyn ConnectTokens>, transport: Arc<dyn Transport>) -> Self {
+    fn new(url: &str, tokens: &Arc<dyn ConnectTokens>, transport: Arc<dyn Transport>, shut: &Arc<AtomicBool>) -> Self {
         let seen = Arc::new(Seen::default());
-        let http: Arc<dyn Transport> = Arc::new(SeeingTransport { inner: transport, seen: seen.clone() });
+        let http: Arc<dyn Transport> =
+            Arc::new(SeeingTransport { inner: transport, seen: seen.clone(), shut: shut.clone() });
         let client = McpClient::with_transport(
             url,
             SeeingToken { tokens: tokens.clone(), seen: seen.clone() },
@@ -1261,6 +1270,29 @@ impl Default for BridgeOptions {
     }
 }
 
+/// The start attempts: a task on the caller's runtime, or a thread of their own when there is none.
+enum StartTask {
+    Task(tokio::task::JoinHandle<()>),
+    Thread(std::thread::JoinHandle<()>),
+}
+
+impl StartTask {
+    fn is_finished(&self) -> bool {
+        match self {
+            StartTask::Task(t) => t.is_finished(),
+            StartTask::Thread(t) => t.is_finished(),
+        }
+    }
+
+    /// Ends a task at its next await. A thread ends at its next wait on the stop signal; its requests fail at once
+    /// once the connections are closed.
+    fn abort(&self) {
+        if let StartTask::Task(t) = self {
+            t.abort();
+        }
+    }
+}
+
 #[derive(Default)]
 struct Up {
     tools: Vec<Obj>,
@@ -1293,8 +1325,10 @@ pub struct ConnectBridge {
     looks: Mutex<Looks>,
     /// one read of the connected apps at a time
     looking: tokio::sync::Mutex<()>,
+    /// the three sessions' connections are closed (`close()`): nothing more is sent
+    shut: Arc<AtomicBool>,
     stop: tokio::sync::watch::Sender<bool>,
-    task: Mutex<Option<tokio::task::JoinHandle<()>>>,
+    task: Mutex<Option<StartTask>>,
     starts: AtomicUsize,
     closed: AtomicBool,
     last_failure: Mutex<String>,
@@ -1317,12 +1351,13 @@ impl ConnectBridge {
     pub fn with_options(tokens: Arc<dyn ConnectTokens>, options: BridgeOptions) -> Self {
         let BridgeOptions { url, transport, backoff, clock, readers } = options;
         let backoff = if backoff.is_empty() { START_BACKOFF.to_vec() } else { backoff };
+        let shut = Arc::new(AtomicBool::new(false));
         let lane = |read_secs: f64| {
             let http: Arc<dyn Transport> = match &transport {
                 Some(t) => t.clone(),
                 None => Arc::new(ConnectTransport::new(read_secs, CONNECT_TIMEOUT_SECS)),
             };
-            Lane::new(&url, &tokens, http)
+            Lane::new(&url, &tokens, http, &shut)
         };
         let (brain, linker, looker) = (lane(CALL_TIMEOUT_SECS), lane(OWN_TIMEOUT_SECS), lane(OWN_TIMEOUT_SECS));
         Self {
@@ -1340,6 +1375,7 @@ impl ConnectBridge {
                 look_retry_at: f64::NEG_INFINITY,
             }),
             looking: tokio::sync::Mutex::new(()),
+            shut,
             stop: tokio::sync::watch::channel(false).0,
             task: Mutex::new(None),
             starts: AtomicUsize::new(0),
@@ -1398,8 +1434,9 @@ impl ConnectBridge {
     // -- starting --
 
     /// List the tools on a task, trying again with backoff (START_BACKOFF, its last step repeating) until it works
-    /// or `close()`. Returns at once; a call while that task runs, or once the tools are up, does nothing. Needs a
-    /// tokio runtime.
+    /// or `close()`. Returns at once; a call while that task runs, or once the tools are up, does nothing. Inside a
+    /// tokio runtime the attempts run as a task on it; called from outside one, on a thread of their own (Python's
+    /// daemon thread), with a runtime of its own.
     pub fn start(self: &Arc<Self>) {
         let mut task = self.task.lock();
         if self.started()
@@ -1408,9 +1445,23 @@ impl ConnectBridge {
         {
             return;
         }
-        self.starts.fetch_add(1, Ordering::SeqCst);
         let me = self.clone();
-        *task = Some(tokio::spawn(async move { me.keep_starting().await }));
+        let spawned = match tokio::runtime::Handle::try_current() {
+            Ok(handle) => Some(StartTask::Task(handle.spawn(async move { me.keep_starting().await }))),
+            Err(_) => std::thread::Builder::new()
+                .name("composio-connect".into())
+                .spawn(move || match tokio::runtime::Builder::new_current_thread().enable_all().build() {
+                    Ok(runtime) => runtime.block_on(me.keep_starting()),
+                    Err(e) => tracing::warn!("composio connect: the apps are not up yet ({})", os_error_name(&e)),
+                })
+                .map(StartTask::Thread)
+                .map_err(|e| tracing::warn!("composio connect: the apps are not up yet ({})", os_error_name(&e)))
+                .ok(),
+        };
+        if spawned.is_some() {
+            self.starts.fetch_add(1, Ordering::SeqCst);
+            *task = spawned;
+        }
     }
 
     /// How many start tasks this bridge has spawned (Python's `_thread` identity, for tests).
@@ -1504,8 +1555,9 @@ impl ConnectBridge {
         *last = why.to_string();
     }
 
-    /// Stop the start task (waiting up to 2 s for it, as Python joins its thread) and close the connections. The
-    /// bridge is not used after this.
+    /// Stop the start task (waiting up to 2 s for it, as Python joins its thread) and close the connections: a call
+    /// after this sends nothing and fails as one on a closed httpx client does (RuntimeError). The bridge is not
+    /// used after this.
     pub async fn close(&self) {
         self.closed.store(true, Ordering::SeqCst);
         self.stop.send_replace(true);
@@ -1524,6 +1576,7 @@ impl ConnectBridge {
             }
             tokio::time::sleep(Duration::from_millis(5)).await;
         }
+        self.shut.store(true, Ordering::SeqCst);
     }
 
     // -- calls --
