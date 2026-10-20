@@ -219,7 +219,7 @@ pub(crate) fn expand_user(p: &Path) -> PathBuf {
 pub fn load(path: Option<&Path>) -> Option<PikaConfig> {
     let p = expand_user(path.unwrap_or(Path::new(CONFIG_PATH)));
     let text = std::fs::read_to_string(&p).ok()?;
-    let raw: Value = serde_json::from_str(&text).ok()?;
+    let raw: Value = serde_json::from_str(&py_json_text(&text)).ok()?;
     let raw = raw.as_object()?;
 
     let number = |key: &str, default: i64, lo: i64, hi: i64| -> i64 {
@@ -255,6 +255,73 @@ pub fn load(path: Option<&Path>) -> Option<PikaConfig> {
         speed: number("speed", DEFAULT_SPEED, 0, 255),
         turn_speed: number("turn_speed", DEFAULT_TURN_SPEED, 0, 255),
     })
+}
+
+/// The text `json.loads` accepts, made readable by serde_json without changing what `load` decides. Outside strings,
+/// the bare `NaN`, `Infinity` and `-Infinity` tokens become `null`; inside strings, a `\uXXXX` surrogate escape that
+/// is not half of a pair becomes `�`. Every key `load` reads treats a float and a null alike (the default), and
+/// no host or STUN value with either character passes its check, so the result is Python's for every file.
+pub(crate) fn py_json_text(text: &str) -> String {
+    let b = text.as_bytes();
+    let mut out = String::with_capacity(text.len());
+    let mut i = 0;
+    let hex4 = |at: usize| -> Option<u32> {
+        let s = text.get(at..at + 4)?;
+        if s.bytes().all(|c| c.is_ascii_hexdigit()) {
+            u32::from_str_radix(s, 16).ok()
+        } else {
+            None
+        }
+    };
+    let mut in_str = false;
+    while i < b.len() {
+        let c = b[i];
+        if in_str {
+            if c == b'"' {
+                in_str = false;
+            } else if c == b'\\' && i + 1 < b.len() {
+                if b[i + 1] == b'u' {
+                    if let Some(u) = hex4(i + 2) {
+                        let pair_low = |at: usize| {
+                            text.get(at..at + 2) == Some("\\u") && hex4(at + 2).is_some_and(|l| (0xdc00..0xe000).contains(&l))
+                        };
+                        if (0xd800..0xdc00).contains(&u) && pair_low(i + 6) {
+                            out.push_str(&text[i..i + 12]);
+                            i += 12;
+                            continue;
+                        }
+                        if (0xd800..0xe000).contains(&u) {
+                            out.push_str("\\ufffd");
+                            i += 6;
+                            continue;
+                        }
+                    }
+                }
+                out.push('\\');
+                i += 1;
+                // the escaped character is copied below, whole
+                let ch = text[i..].chars().next().unwrap_or('\u{fffd}');
+                out.push(ch);
+                i += ch.len_utf8();
+                continue;
+            }
+        } else if c == b'"' {
+            in_str = true;
+        } else {
+            let rest = &text[i..];
+            let token = ["-Infinity", "Infinity", "NaN"].into_iter().find(|t| rest.starts_with(t));
+            if let Some(t) = token {
+                out.push_str("null");
+                i += t.len();
+                continue;
+            }
+        }
+        // copy one whole character (the text is valid UTF-8)
+        let ch = text[i..].chars().next().unwrap_or('\u{fffd}');
+        out.push(ch);
+        i += ch.len_utf8();
+    }
+    out
 }
 
 /// The car's panel, or None when EVE_PIKA is off or there is no config (then the app shows no Pika). Making it
@@ -1752,6 +1819,28 @@ mod tests {
         assert!(!STUN_RE.is_match("stun:host\n\n"));
         assert!(!STUN_RE.is_match("turn:evil.example:3478?transport=tcp"));
         assert!(HOST_RE.is_match("elegoo-car.local") && !HOST_RE.is_match("bad host!"));
+    }
+
+    #[test]
+    fn the_config_reads_what_json_loads_reads() {
+        let dir = tempfile::tempdir().unwrap();
+        let cfg = dir.path().join("pika.json");
+        // json.loads takes NaN and Infinity; each is a float, so that key falls back
+        std::fs::write(&cfg, r#"{"host": "car.lan", "speed": NaN, "turn_speed": -Infinity, "port": Infinity, "video_port": 8081}"#)
+            .unwrap();
+        assert_eq!(
+            load(Some(&cfg)),
+            Some(PikaConfig { host: "car.lan".into(), video_port: 8081, ..Default::default() })
+        );
+        // a lone surrogate is a str that fails the host check; a real pair or a text "NaN" is kept as is
+        std::fs::write(&cfg, r#"{"host": "\ud800x", "stun": "", "rtc": false, "speed": 7}"#).unwrap();
+        assert_eq!(
+            load(Some(&cfg)),
+            Some(PikaConfig { stun: String::new(), rtc: false, speed: 7, ..Default::default() })
+        );
+        assert_eq!(py_json_text(r#"["NaN \ud83d\ude00 \\ é\"", NaN]"#), r#"["NaN \ud83d\ude00 \\ é\"", null]"#);
+        std::fs::write(&cfg, "NaN").unwrap();
+        assert_eq!(load(Some(&cfg)), None);
     }
 
     #[test]

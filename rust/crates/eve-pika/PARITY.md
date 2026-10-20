@@ -12,7 +12,7 @@ Status: complete
 |---|---|---|
 | `pika.PikaConfig` | `pika::PikaConfig` | Same fields and defaults (`Default`). Ports are `u16`, speeds `i64`. |
 | `pika.enabled(environ)` | `pika::enabled(Option<&HashMap>)` | `None` reads the process env. Same truthy set, Python `strip()` white space. |
-| `pika.load(path)` | `pika::load(Option<&Path>)` | Same file (`~/.config/eve-bridge/pika.json`), same fallbacks: a float, bool or out-of-range number takes the default; the host is stripped; `stun` keeps Python's `$` (one trailing newline allowed). |
+| `pika.load(path)` | `pika::load(Option<&Path>)` | Same file (`~/.config/eve-bridge/pika.json`), same fallbacks: a float, bool or out-of-range number takes the default; the host is stripped; `stun` keeps Python's `$` (one trailing newline allowed). Reads what `json.loads` reads: bare `NaN`/`Infinity` tokens and lone surrogate escapes are normalised first (`py_json_text`) so they fall back per key as in Python instead of failing the whole file. |
 | `pika.make_pika(path, environ)` | `pika::make_pika` | Same log lines; attaches `PikaRtc` when `rtc` is on. |
 | `pika.frame(tag, **fields)` | `pika::frame(tag, &[(k, v)])` | Compact JSON, `"H"` first, byte-identical. |
 | `pika.drive_frame` | `pika::drive_frame(tag, dir, speed, ms)` | `ms` explicit (Python default `PULSE_MS`). |
@@ -57,7 +57,7 @@ Status: complete
 | `bridge/tests/test_pika_rtc.py` | test_frames_arrive_byte_for_byte_with_the_macs_stamp, test_the_slot_is_shared_with_the_tunnel_stream_and_the_newest_wins, test_close_ends_the_peer_and_the_camera_socket, test_a_newer_offer_replaces_the_older_peer, test_a_camera_that_is_off_is_a_line_on_the_channel, test_a_bad_offer_or_no_webrtc_sends_the_app_to_the_tunnel, test_stats_are_logged_per_path_and_bad_ones_refused, test_the_config_turns_webrtc_off_and_checks_the_stun_server, test_the_frame_message_is_stamp_then_jpeg | `tests/pika_rtc.rs`: same names (a real webrtc-rs peer plays the phone, both on loopback), plus `#[ignore]` live test_the_default_bind_reaches_a_phone_on_the_lan | None. |
 | `bridge/tests/test_obsbot_panel.py` (tests_ref) | uses `pika._body` and `pika.split_jpegs` as stream-reading helpers | covered by test_the_chunked_body_is_dechunked and test_split_jpegs_keeps_a_partial_frame | The OBSBOT panel tests themselves belong to the obsbot_panel port. |
 
-Unit tests in `src/`: `py_json_dumps` matches `json.dumps` (DEL escaped too), a huge chunk size ends the body without allocating it, a header past the limit is a `LimitOverrunError`, the camera's status line splits on Python's white space, chunk sizes parse as `int(x, 16)`, the stats line formats as `%d`/`%.0f`/`%.1f`, `STUN_RE` keeps Python's `$`, `strip()` uses Python's white-space set, and the frame message layout.
+Unit tests in `src/`: `py_json_dumps` matches `json.dumps` (DEL escaped too), a huge chunk size ends the body without allocating it, a header past the limit is a `LimitOverrunError`, the camera's status line splits on Python's white space, chunk sizes parse as `int(x, 16)`, the config reads what `json.loads` reads (NaN, Infinity, lone surrogates), the stats line formats as `%d`/`%.0f`/`%.1f`, `STUN_RE` keeps Python's `$`, `strip()` uses Python's white-space set, and the frame message layout.
 
 ## Boundaries
 None. WebRTC uses `webrtc` 0.21.1 (webrtc-rs) in process, where the Python imported aiortc.
@@ -68,4 +68,3 @@ None. WebRTC uses `webrtc` 0.21.1 (webrtc-rs) in process, where the Python impor
 - `PikaRtc` is always available (the stack is compiled in), so with `rtc` on the panel always offers WebRTC. In Python it was offered only when aiortc was installed.
 - A new connection to the car closes any previous, already-failed socket explicitly; Python left it to garbage collection. No working path changes.
 - The log lines naming an error class use the Python class name mapped from the I/O error kind (`ConnectionRefusedError`, `gaierror`, `TimeoutError`, ...); a WebRTC answer error names the webrtc-rs error variant.
-- `load` parses the file with serde_json, which rejects the bare `NaN`, `Infinity` and `-Infinity` tokens that Python's `json.loads` accepts. A hand-written `pika.json` holding one of them is read as no config (Pika off) where Python fell back to the default for that key. `json.dumps` never writes those tokens for this file's values, so a file Python wrote is unaffected.
