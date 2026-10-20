@@ -104,3 +104,6 @@ None
 - A pack scalar of digits is an integer only for ASCII digits within i64; Python also accepts other Unicode decimal digits and unbounded integers (those stay strings here).
 - The regex `\s` class is Unicode White_Space, which leaves out U+001C..U+001F that Python's `\s` includes; `strip`/`split`/`splitlines` do follow Python exactly.
 - `repr()` in error messages escapes the common non-printable characters; Python's full Unicode printability table is not reproduced for rare format characters.
+
+## Upstream edits (by dependents)
+- For `eve-link-notes` (link_notes.py's `_read` calls `_resolve`, `_rel`, `_revision`, `_latest_edit`): those four, the `py` module (`#[doc(hidden)]`) and the `str(x or "")` helpers `value_str` and `truthy` are now `pub`. Visibility only; no behavior changed, tests re-run green.

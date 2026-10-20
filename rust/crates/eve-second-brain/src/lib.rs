@@ -38,7 +38,10 @@
 //! It ships OFF ([`SECOND_BRAIN_DEFAULT`]): the text brain gains nine tools when it is on, and a vault skeleton is
 //! written on first use.
 
-mod py;
+/// Python's string, path and file semantics this module relies on; public so link_notes (the Notes app panel)
+/// reads notes exactly as this module does.
+#[doc(hidden)]
+pub mod py;
 mod texts;
 
 use std::collections::HashMap;
@@ -361,7 +364,7 @@ pub fn ensure_vault(root: &Path) -> Result<Vec<String>, BrainError> {
 // ---- paths and frontmatter -----------------------------------------------------------------------
 
 /// The absolute path for a relative one, or ValueError when it leaves the root or enters a hidden folder.
-fn resolve(root: &Path, rel_path: &str) -> Result<PathBuf, BrainError> {
+pub fn resolve(root: &Path, rel_path: &str) -> Result<PathBuf, BrainError> {
     let rel = py::strip(rel_path).replace('\\', "/");
     if rel.is_empty() || rel.starts_with('/') || rel.starts_with('~') {
         return value_err("path must be relative to the vault");
@@ -383,7 +386,7 @@ fn resolve(root: &Path, rel_path: &str) -> Result<PathBuf, BrainError> {
 }
 
 /// `_rel`: the vault-relative posix path of a path, resolved; ValueError when it resolves outside the root.
-fn rel(root: &Path, path: &Path) -> Result<String, BrainError> {
+pub fn rel(root: &Path, path: &Path) -> Result<String, BrainError> {
     let rel = py::relative_to(&py::resolve(path), &py::resolve(root))?;
     Ok(py::posix(&rel))
 }
@@ -707,7 +710,8 @@ pub fn read_note(root: &Path, rel_path: &str, max_chars: usize) -> Result<Value,
 
 // ---- editing -------------------------------------------------------------------------------------
 
-fn revision(text: &str) -> String {
+/// `_revision`: the sha256 hex of a note's text, the token an edit must quote.
+pub fn revision(text: &str) -> String {
     hex::encode(Sha256::digest(text.as_bytes()))
 }
 
@@ -721,7 +725,8 @@ fn history_dir(root: &Path, rel_path: &str) -> Result<PathBuf, BrainError> {
     Ok(folder)
 }
 
-fn latest_edit(root: &Path, rel_path: &str, text: &str) -> Result<Option<String>, BrainError> {
+/// `_latest_edit`: the undo id of the change that produced `text`, if one is recorded.
+pub fn latest_edit(root: &Path, rel_path: &str, text: &str) -> Result<Option<String>, BrainError> {
     let folder = history_dir(root, rel_path)?;
     let rev = revision(text);
     let mut records = py::glob(&folder, "*.json")?;
@@ -1663,7 +1668,7 @@ fn clip_text(text: &str, limit: usize) -> String {
 }
 
 /// `str(value)` for a JSON value, as Python's `str()` renders what json.loads gave it.
-fn value_str(v: &Value) -> String {
+pub fn value_str(v: &Value) -> String {
     fn repr(v: &Value) -> String {
         match v {
             Value::String(s) => py::repr(s),
@@ -1690,7 +1695,8 @@ fn value_str(v: &Value) -> String {
     }
 }
 
-fn truthy(v: &Value) -> bool {
+/// Python truthiness of a JSON value.
+pub fn truthy(v: &Value) -> bool {
     match v {
         Value::Null => false,
         Value::Bool(b) => *b,
