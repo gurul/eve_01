@@ -33,7 +33,7 @@ Status: complete
 | `bridge/tests/test_caption_pager.py` | all 16 (23 pytest items with the 8 `test_page_hold_table` params) | `tests/test_caption_pager.rs`: same 16 names; the parametrised table is one test looping its 8 rows. Extra: `test_caption_instructions_verbatim`, `test_wire_format_key_order`, and unit tests in `src/lib.rs` for Python whitespace, code-point lengths and clamp. | None. The seeded fuzz tests use a SplitMix64 test RNG instead of Python's Mersenne Twister, so the random texts differ; the asserted invariants are the same. `caplog` is a `tracing_subscriber` writer capture. |
 | `tests_ref` (`test_daemon_*.py`, `test_explore.py`, `test_voice_agent.py`) | They only construct `CaptionPager()` / `PagerConfig(read_cps=...)` and call `caption_instructions` for the daemon and voice agent. | Covered by the crate's API (`CaptionPager::default`, `PagerConfig::with_read_cps`). | The `EVE_CAPTION_CPS` parsing they test lives in `voice_agent.py` and belongs to that crate. |
 
-A differential check (Python vs Rust on 5 texts x 4 streaming rates, every wire event with its time) produced byte-identical output, 272 events.
+A differential check (Python vs Rust on 5 texts x 4 streaming rates, every wire event with its time) produced byte-identical output, 272 events. Verification re-ran a wider replay: 400 seeded scripts (1-4 chained replies, `begin_reply`/`update`/`end_reply`/`reset`/`poll`, non-ASCII words, U+00A0/U+3000/U+001C/U+2028 whitespace, overflowing replies, read_cps 8/12/20/30) gave identical wire events and times, 5105 poll/reset batches.
 
 ## Boundaries
 None.

@@ -544,9 +544,12 @@ fn test_geometry_matches_firmware() {
     };
     let cols = int_after(&main, "CAP_COLS = ");
     let lines = int_after(&main, "CAP_LINES = ");
+    // Python: re.search(r"CAP_MAX_LINES = (\d+), CAP_MAX_COLS = (\d+)", data)
     let max_lines = int_after(&data, "CAP_MAX_LINES = ");
-    let max_cols = int_after(&data, "CAP_MAX_LINES = 6, CAP_MAX_COLS = ");
-    assert_eq!(max_lines, 6);
+    let after = &data[data.find("CAP_MAX_LINES = ").unwrap()..];
+    let tail = format!("CAP_MAX_LINES = {max_lines}, CAP_MAX_COLS = ");
+    assert!(after.starts_with(&tail), "CAP_MAX_LINES = N, CAP_MAX_COLS = M not found");
+    let max_cols = int_after(after, &tail);
     let c = cfg();
     assert_eq!((c.cols, c.lines), (cols, lines));
     assert!(c.lines <= max_lines && c.cols <= max_cols);
