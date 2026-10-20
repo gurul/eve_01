@@ -27,7 +27,7 @@
 //! from before the move is never reported as the view at the new pose.
 
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use futures::future::BoxFuture;
 use parking_lot::Mutex;
@@ -154,11 +154,18 @@ pub struct Head {
     on_move: Mutex<Option<OnMove>>,
 }
 
-static MONO_START: std::sync::LazyLock<Instant> = std::sync::LazyLock::new(Instant::now);
-
-/// `time.monotonic` stand-in: seconds since first use in this process.
+/// `time.monotonic()`: the system's monotonic clock in seconds, the one CPython reads (mach_absolute_time,
+/// i.e. `CLOCK_UPTIME_RAW`, on macOS; `CLOCK_MONOTONIC` elsewhere). A system clock, not a per-process
+/// epoch, so `moved_at` stamps compare with the scene's frame times whichever crate took them.
 pub fn monotonic() -> f64 {
-    MONO_START.elapsed().as_secs_f64()
+    #[cfg(target_vendor = "apple")]
+    let clock = libc::CLOCK_UPTIME_RAW;
+    #[cfg(not(target_vendor = "apple"))]
+    let clock = libc::CLOCK_MONOTONIC;
+    let mut ts = libc::timespec { tv_sec: 0, tv_nsec: 0 };
+    // SAFETY: `ts` is a valid out-parameter for the call.
+    unsafe { libc::clock_gettime(clock, &mut ts) };
+    ts.tv_sec as f64 + ts.tv_nsec as f64 / 1e9
 }
 
 /// `asyncio.sleep` stand-in.
@@ -326,6 +333,27 @@ fn py_float(v: Option<&Value>, default: f64) -> f64 {
     }
 }
 
+/// Python's `str.isspace` for one character: Rust's `char::is_whitespace` plus the four information
+/// separators U+001C..U+001F, which `str.split()` also splits on.
+fn py_is_space(c: char) -> bool {
+    c.is_whitespace() || ('\u{1c}'..='\u{1f}').contains(&c)
+}
+
+/// Python's `str.split()` with no separator: runs of whitespace split, empty pieces dropped.
+fn py_split(s: &str) -> Vec<&str> {
+    s.split(py_is_space).filter(|w| !w.is_empty()).collect()
+}
+
+/// A located `yaw`/`pitch` as Python's arithmetic reads it: a number (a bool counts as 0 or 1);
+/// missing, `None` or anything else falls back to the head's own pose.
+fn py_pose_num(v: Option<&Value>, fallback: impl FnOnce() -> f64) -> f64 {
+    match v {
+        Some(Value::Number(n)) => n.as_f64().unwrap_or_else(fallback),
+        Some(Value::Bool(b)) => f64::from(u8::from(*b)),
+        _ => fallback(),
+    }
+}
+
 fn with_key(r: &Value, key: &str, v: Value) -> Value {
     let mut m: Map<String, Value> = r.as_object().cloned().unwrap_or_default();
     m.insert(key.to_string(), v);
@@ -371,7 +399,7 @@ pub async fn find(
     settle: f64,
     hold_secs: f64,
 ) -> Value {
-    let joined = target.split_whitespace().collect::<Vec<_>>().join(" ");
+    let joined = py_split(target).join(" ");
     let target: String = joined.chars().take(80).collect();
     if target.is_empty() {
         return json!({"ok": false, "reason": "no target given"});
@@ -398,8 +426,8 @@ pub async fn find(
             continue;
         }
         if truthy(loc.get("visible")) {
-            let py = loc.get("yaw").and_then(Value::as_f64).unwrap_or_else(|| head.yaw());
-            let pp = loc.get("pitch").and_then(Value::as_f64).unwrap_or_else(|| head.pitch());
+            let py = py_pose_num(loc.get("yaw"), || head.yaw());
+            let pp = py_pose_num(loc.get("pitch"), || head.pitch());
             let (ty, tp, _) = target_pose(py, pp, py_float(loc.get("x"), 0.0), py_float(loc.get("y"), 0.0));
             let r = head.move_to(Some(ty as f64), Some(tp as f64), false, hold_secs).await;
             let what = if truthy(loc.get("what")) { loc["what"].clone() } else { Value::String(target.clone()) };

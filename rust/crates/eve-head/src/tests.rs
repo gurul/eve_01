@@ -147,7 +147,68 @@ fn test_on_move_is_told_the_hold() {
         h.set_on_move(Some(Arc::new(move |hold| hs.lock().push(hold))));
         assert_eq!(h.move_to(Some(-60.0), Some(45.0), false, 15.0).await["ok"], json!(true));
         assert_eq!(*holds.lock(), vec![15.0]);
+        // A move that did not land is not a hold.
+        let lost = Wire::new(false);
+        let failing = head(Some(&lost), None, true);
+        let hs = holds.clone();
+        failing.set_on_move(Some(Arc::new(move |hold| hs.lock().push(hold))));
+        assert_eq!(failing.move_to(Some(10.0), Some(45.0), false, DEFAULT_HOLD_SECS).await["ok"], json!(false));
+        assert_eq!(*holds.lock(), vec![15.0]);
     });
+}
+
+#[test]
+fn test_find_collapses_whitespace_like_python_split_and_caps_the_target() {
+    run(async {
+        let h = head(None, None, true);
+        let scene = FakeScene::new(&h, vec![], Some(50), false);
+        find(&h, &scene, " my\u{1c}green\u{3000} \tmug ", SWEEP, SETTLE_SECS, DEFAULT_HOLD_SECS).await;
+        assert_eq!(scene.locates.lock()[0].0, "my green mug");
+        let long = "é".repeat(100);
+        let scene = FakeScene::new(&h, vec![], Some(50), false);
+        find(&h, &scene, &long, SWEEP, SETTLE_SECS, DEFAULT_HOLD_SECS).await;
+        assert_eq!(scene.locates.lock()[0].0.chars().count(), 80);
+        let blank = find(&h, &scene, "\u{1d}\u{1f}", SWEEP, SETTLE_SECS, DEFAULT_HOLD_SECS).await;
+        assert_eq!(blank, json!({"ok": false, "reason": "no target given"}));
+    });
+}
+
+struct OddScene;
+
+#[async_trait::async_trait]
+impl Scene for OddScene {
+    async fn look(&self, _fresh_secs: f64, _newer_than: Option<f64>) -> Value {
+        json!({"ok": false})
+    }
+    async fn locate(&self, _target: &str, _newer_than: Option<f64>) -> Value {
+        // A null yaw falls back to the head's pose; a bool pitch is 1 in Python's arithmetic.
+        json!({"ok": true, "visible": true, "x": 0, "y": 0, "what": "", "yaw": null, "pitch": true})
+    }
+}
+
+#[test]
+fn test_find_reads_a_located_pose_as_python_arithmetic_does() {
+    run(async {
+        let h = head(None, None, true);
+        h.observe(&json!(30), &Value::Null);
+        let out = find(&h, &OddScene, "mug", SWEEP, SETTLE_SECS, DEFAULT_HOLD_SECS).await;
+        assert_eq!(
+            out,
+            json!({"ok": true, "found": true, "what": "mug", "facing": "a little to my right", "yaw": 30, "pitch": 5})
+        );
+        let out = look_around(&h, &OddScene, &[(0, 50)], SETTLE_SECS).await;
+        assert_eq!(out["views"][0], json!({"direction": "straight ahead", "yaw": 0, "view": null, "reason": "no clear view"}));
+    });
+}
+
+#[test]
+fn test_default_clock_is_the_system_monotonic_clock() {
+    // A system clock (uptime), not seconds since this process started using it.
+    let a = monotonic();
+    assert!(a > 0.0);
+    std::thread::sleep(std::time::Duration::from_millis(5));
+    assert!(monotonic() >= a + 0.004);
+    assert!(Head::new(Wire::new(true).send()).now() >= a);
 }
 
 #[test]
