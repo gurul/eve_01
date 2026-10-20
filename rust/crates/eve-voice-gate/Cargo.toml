@@ -1,0 +1,11 @@
+[package]
+name = "eve-voice-gate"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+libc.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+# The k2-fsa crate at the Python wheel's release; static by default, so no rpath to dylibs.
+sherpa-onnx = "1.13.8"
