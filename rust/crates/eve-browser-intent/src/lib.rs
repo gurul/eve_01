@@ -81,11 +81,17 @@ fn casefold(text: &str) -> String {
     out
 }
 
+/// A pattern with no backtracking limit: Python's `re` has none, so a long request that needs many steps still
+/// matches as it does there (fancy-regex's default limit of one million steps silently lost the site in a
+/// request a few thousand words long).
 fn re(pattern: &str) -> Regex {
-    Regex::new(pattern).unwrap_or_else(|e| panic!("browser_intent pattern {pattern:?}: {e}"))
+    fancy_regex::RegexBuilder::new(pattern)
+        .backtrack_limit(usize::MAX)
+        .build()
+        .unwrap_or_else(|e| panic!("browser_intent pattern {pattern:?}: {e}"))
 }
 
-/// The first match, treating a backtracking-limit error as no match.
+/// The first match. With no backtracking limit the matcher cannot fail; an error would read as no match.
 fn find<'t>(regex: &Regex, text: &'t str) -> Option<fancy_regex::Match<'t>> {
     regex.find(text).ok().flatten()
 }
@@ -945,6 +951,26 @@ fn probability(value: &Value) -> Option<f64> {
     (v.is_finite() && (0.0..=1.0).contains(&v)).then_some(v)
 }
 
+/// Python's `sum()` over floats, which (3.12 and later, the bridge runs 3.13) adds with Neumaier compensation.
+fn py_fsum(values: &[f64]) -> f64 {
+    let mut total = 0.0f64;
+    let mut compensation = 0.0f64;
+    for &x in values {
+        let t = total + x;
+        if total.abs() >= x.abs() {
+            compensation += (total - t) + x;
+        } else {
+            compensation += (x - t) + total;
+        }
+        total = t;
+    }
+    if compensation != 0.0 && compensation.is_finite() {
+        total + compensation
+    } else {
+        total
+    }
+}
+
 /// (option, top probability) when the answer is a well-formed choice that clears the gate, else Abstain.
 /// Mirrors LayaBrowse goal_engine.validate_choice: schema integrity, then 0.50 top and 0.10 margin.
 pub fn validate_choice(answer: &Value, options: &[(&str, &str)]) -> Result<(String, f64), Abstain> {
@@ -958,7 +984,7 @@ pub fn validate_choice(answer: &Value, options: &[(&str, &str)]) -> Result<(Stri
     let valid = option_keys.contains(choice)
         && answered == option_keys
         && !values.is_empty()
-        && ((values.iter().sum::<f64>()) - 1.0).abs() < 0.02
+        && (py_fsum(&values) - 1.0).abs() < 0.02
         && probabilities.get(choice).and_then(Value::as_f64).is_some_and(|p| p >= max - 0.0002);
     if !valid {
         return Err(malformed());
@@ -974,8 +1000,17 @@ pub fn validate_choice(answer: &Value, options: &[(&str, &str)]) -> Result<(Stri
 
 pub const IDLE_DEFAULT_S: f64 = 600.0;
 
-/// Python's `float()` on an already-stripped string: Rust's float grammar plus digit-separating underscores.
+/// Python's `float()` on an already-stripped string: Rust's float grammar plus digit-separating underscores and
+/// non-ASCII decimal digits (`float("١٢")` is 12.0).
 fn py_float(raw: &str) -> Option<f64> {
+    let ascii: String = raw
+        .chars()
+        .map(|c| match digit_value(c) {
+            Some(d) if !c.is_ascii_digit() => char::from_digit(d, 10).unwrap_or(c),
+            _ => c,
+        })
+        .collect();
+    let raw = ascii.as_str();
     let cleaned = if raw.contains('_') {
         let chars: Vec<char> = raw.chars().collect();
         for (i, c) in chars.iter().enumerate() {
@@ -1366,7 +1401,9 @@ impl EngineInner {
         let id = state.timer_seq;
         let (cancel, cancelled) = mpsc::channel::<()>();
         let weak: Weak<EngineInner> = Arc::downgrade(this);
-        let delay = Duration::from_secs_f64(delay.max(0.0));
+        // An idle period too long for a Duration (an explicit infinity) never fires, as Python's Timer thread
+        // dies on it: the channel then blocks until the handle is dropped.
+        let delay = Duration::try_from_secs_f64(delay.max(0.0)).unwrap_or(Duration::MAX);
         let spawned = std::thread::Builder::new().name("browser-intent-idle".into()).spawn(move || {
             // A send or a dropped handle (unload, a newer timer) cancels; only a timeout fires.
             if let Err(mpsc::RecvTimeoutError::Timeout) = cancelled.recv_timeout(delay) {

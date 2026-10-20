@@ -14,7 +14,7 @@ Status: complete
 | `SITE_CUES`, `EVERYDAY_CUES`, `_GOING`, `_DOMAIN` | `SITE_CUES`, `EVERYDAY_CUES`, `GOING`, `DOMAIN` | |
 | `def _spoken` | `fn spoken` | |
 | `def _host_label` | `fn host_label` | |
-| `_SPLITS`, `_SPLIT_RE`, `_BY_FORM`, `_AMBIGUOUS`, `_NAMES`, `_NAME_FORMS`, `_NAME_ALT`, `_NAME_RE` | `struct Table` in `static TABLE: LazyLock` | Same construction order (stable sort by descending length, `setdefault` for names, last-wins for split forms). Patterns use `fancy-regex` for the look-arounds. |
+| `_SPLITS`, `_SPLIT_RE`, `_BY_FORM`, `_AMBIGUOUS`, `_NAMES`, `_NAME_FORMS`, `_NAME_ALT`, `_NAME_RE` | `struct Table` in `static TABLE: LazyLock` | Same construction order (stable sort by descending length, `setdefault` for names, last-wins for split forms). Patterns use `fancy-regex` for the look-arounds, built with no backtracking limit (Python's `re` has none). |
 | `def _cued` | `fn cued` | Byte offsets on the same text: `text[..start]` is Python's `text[:start]`. |
 | `def join_site_names` | `pub fn join_site_names` | |
 | `def site_for` | `pub fn site_for` | Returns `Option<&'static Site>`. |
@@ -37,10 +37,10 @@ Status: complete
 | `def mode` | `pub fn mode(environ: Option<&HashMap>)` | `None` reads the process environment. |
 | `def recent_latencies` | `pub fn recent_latencies` | |
 | `class Abstain` | `struct Abstain(String)` (`thiserror`) | Carried through `anyhow::Error`; `expected_outcome` downcasts to log at debug, like the Python `except Abstain`. |
-| `def validate_choice` | `pub fn validate_choice` | Same schema check: choice in options, keys == options, every value an int/float (not bool) finite in [0, 1], sum within 0.02 of 1, choice within 0.0002 of the top; then the 0.50 / 0.10 gate. |
+| `def validate_choice` | `pub fn validate_choice` | Same schema check: choice in options, keys == options, every value an int/float (not bool) finite in [0, 1], sum within 0.02 of 1 (summed by `py_fsum`, Python 3.12+'s compensated `sum()`), choice within 0.0002 of the top; then the 0.50 / 0.10 gate. Differentially checked against the Python on 20,000 generated answers. |
 | `def _cached_checkpoint` | `pub fn cached_checkpoint`, `LayaSubprocess::cached_checkpoint` | Runs the same `huggingface_hub.snapshot_download(..., local_files_only=True, allow_patterns=["v10s/*"])` in the helper (`locate` mode). |
 | `IDLE_DEFAULT_S` | `IDLE_DEFAULT_S` | |
-| `def idle_seconds` | `pub fn idle_seconds` | Python `float()` grammar incl. `1_000`, `inf`, `1e3`; non-finite or negative → 600. |
+| `def idle_seconds` | `pub fn idle_seconds` | Python `float()` grammar incl. `1_000`, `inf`, `1e3` and non-ASCII decimal digits; non-finite or negative → 600. |
 | `class LayaKindEngine` | `struct LayaKindEngine` + `EngineOptions` | `__init__(idle_s, clock, timer)` → `LayaKindEngine::new(EngineOptions { idle_s, clock, timer, runtime })`. `loaded` → `loaded()`, `warm` → `warm()`, `unload_if_idle`, `unload`, `ask` (trait `IntentAsker`). `_load_locked`, `_touch_locked`, `_schedule_locked`, `_on_timer`, `_drop_locked` keep their names on `EngineInner`. `_prefix_fits` runs in the helper (`LayaAgent::prefix_fits`), verbatim. The idle timer is a named thread (`browser-intent-idle`) cancelled through a channel. Failure messages identical: `laya-mlx unavailable: …`, `cklxx/laya-browser@8a7e625 is not cached`, `load failed: …`, `request exceeds the checkpoint's question budget`. |
 | `_ENGINE`, `_ENGINE_LOCK`, `def shared_engine` | `static ENGINE: OnceLock`, `pub fn shared_engine` | |
 | `def offered` | `pub fn offered -> Vec<(&str, &str)>` | Same order: open_site, search, open_result, then unsupported. |
@@ -56,7 +56,9 @@ Status: complete
 | `bridge/tests/test_site_names.py` (tests_ref) | `test_split_site_names_are_joined`, `test_ordinary_words_are_not_joined`, `test_hacker_news_stays_two_words_but_maps_to_its_host`, `test_the_table_maps_names_to_hosts_and_search_urls`, `test_mentioned_site_is_found_after_joining` | same names | `test_the_router_sees_joined_names` tests `task_router.classify` (crate eve-task-router's concern). |
 | `bridge/tests/test_plan_success_guard.py` (tests_ref) | uses `expected_outcome` with a fake engine and constructs `RequestOutcome` | covered by the outcome tests above | Its assertions are about `plan_contract` (crate eve-plan-contract). |
 
-Extra Rust tests: `test_offered_keeps_laya_browse_order_and_text`, `test_validate_choice_schema_checks`, `test_result_number_zero_and_numerals`, `test_unload_stops_the_timer_and_drops_the_model`, `test_helper_answers_and_unloads`, `test_helper_refuses_a_question_over_the_head_budget`, `test_helper_that_dies_is_reloaded_on_the_next_question`, `test_helper_locates_the_cached_checkpoint`, `test_missing_interpreter_is_unavailable`, `test_helper_args`, `test_the_real_checkpoint_is_located` (live), `test_search_url_encodes_like_python_quote`.
+Extra Rust tests: `test_offered_keeps_laya_browse_order_and_text`, `test_validate_choice_schema_checks`, `test_result_number_zero_and_numerals`, `test_unload_stops_the_timer_and_drops_the_model`, `test_helper_answers_and_unloads`, `test_helper_refuses_a_question_over_the_head_budget`, `test_helper_that_dies_is_reloaded_on_the_next_question`, `test_helper_locates_the_cached_checkpoint`, `test_missing_interpreter_is_unavailable`, `test_helper_args`, `test_the_real_checkpoint_is_located` (live), `test_search_url_encodes_like_python_quote`, `test_a_long_request_still_names_its_site`, `test_idle_seconds_reads_non_ascii_digits_like_python_float`, `test_an_infinite_idle_period_never_fires_and_does_not_panic`, `test_probabilities_are_summed_like_python_sum`. `test_no_prompt_cache_that_every_request_would_miss` is also its own test against the helper.
+
+Verification also ran `literal_arguments`, `join_site_names`, `mentioned_site`, `site_for`, `search_url`, `laya_goal`, `offered`, `mode` and `idle_seconds` side by side with the Python (3.13, three hash seeds) on about 6,200 generated and test requests, including Unicode and multi-thousand-word ones: no differences.
 
 ## Boundaries
 - **laya-mlx (Python-only MLX runtime).** The loaded model lives in a helper Python process running
@@ -75,6 +77,10 @@ Extra Rust tests: `test_offered_keeps_laya_browse_order_and_text`, `test_validat
 ## Differences
 - Unloading kills the helper process, which frees the model and MLX's buffer cache entirely; Python drops the
   reference, runs `gc.collect()` and `mx.clear_cache()`. Same effect, same log line.
+- Probabilities cross the helper boundary as JSON; Python's `json.dumps` writes the shortest round-trip repr and
+  serde_json's `float_roundtrip` feature (enabled in this crate's manifest) parses it back to the same f64.
+- An idle period too large for a `Duration` (only an explicit `EngineOptions { idle_s: Some(inf) }`) schedules a
+  timer that never fires, as Python's `threading.Timer` thread dies on it.
 - If the helper process dies mid-question, the engine drops it so the next question loads a fresh one (Python's
   in-process agent cannot die separately from the daemon). A failed *load* is still remembered and not retried.
 - `str.casefold()` is ported as lowercasing plus the Latin/Greek full foldings (ß, ẞ, ſ, ς, the ﬀ–ﬆ ligatures);

@@ -873,6 +873,19 @@ fn test_helper_failed_load_is_not_retried_every_call() {
 }
 
 #[test]
+fn test_no_prompt_cache_that_every_request_would_miss() {
+    let Some(python) = python3() else { return };
+    let fakes = FakeModules::new(true);
+    let engine = subprocess_engine(fakes.runtime(python, &[("FAKE_SNAPSHOT", "/cached")]));
+    expected_outcome("search for lofi beats", Some(&engine), Some(&no_env()));
+    let record = fakes.record();
+    let load = record.iter().find(|r| r.get("load").is_some()).expect("loaded once");
+    // Python: `fake_mlx["loads"][0].get("cache_prompts", False) is False`
+    assert!(matches!(load["kwargs"].get("cache_prompts"), None | Some(Value::Bool(false))));
+    engine.unload();
+}
+
+#[test]
 fn test_helper_not_cached_abstains_without_the_network() {
     let Some(python) = python3() else { return };
     let fakes = FakeModules::new(true);
@@ -1079,4 +1092,39 @@ fn test_search_url_encodes_like_python_quote() {
     // query string: quote_plus
     assert_eq!(site_for("Bing").unwrap().search_url("a/b é~"), "https://www.bing.com/search?q=a%2Fb+%C3%A9~");
     assert_eq!(site_for("Expedia").unwrap().search_url("x"), "");
+}
+
+// ---- parity details found in verification ----
+
+#[test]
+fn test_a_long_request_still_names_its_site() {
+    // fancy-regex's default backtracking limit lost the site here; Python's re has no limit.
+    let request = format!("find {}lamp on ikea and open it", "word on the ".repeat(3000));
+    assert_eq!(mentioned_site(&request).map(|s| s.host), Some("ikea.com"));
+}
+
+#[test]
+fn test_idle_seconds_reads_non_ascii_digits_like_python_float() {
+    let env = |v: &str| -> HashMap<String, String> { [("EVE_BROWSER_INTENT_IDLE_S".to_string(), v.to_string())].into() };
+    assert_eq!(idle_seconds(Some(&env("١٢"))), 12.0);
+    assert_eq!(idle_seconds(Some(&env("1__0"))), 600.0);
+    assert_eq!(idle_seconds(Some(&env("nan"))), 600.0);
+}
+
+#[test]
+fn test_an_infinite_idle_period_never_fires_and_does_not_panic() {
+    let runtime = FakeRuntime::default();
+    let engine = engine_with(&runtime, Some(f64::INFINITY), None, true);
+    assert!(expected_outcome("search for lofi beats", Some(&engine), Some(&no_env())).is_some());
+    assert!(engine.loaded());
+    engine.unload();
+    assert!(!engine.loaded());
+}
+
+#[test]
+fn test_probabilities_are_summed_like_python_sum() {
+    // Python 3.12+ sum() is compensated: [0.1] * 10 sums to exactly 1.0 there, 0.9999999999999999 naively.
+    assert_eq!(py_fsum(&[0.1; 10]), 1.0);
+    assert_eq!(py_fsum(&[1e100, 1.0, -1e100]), 1.0);
+    assert_eq!(py_fsum(&[]), 0.0);
 }
