@@ -612,7 +612,7 @@ impl LaunchFlow {
         match relative_parts(folder, &self.root) {
             Some(parts) if parts.len() > 1 => format!("{} ({})", parts[parts.len() - 1], parts[0]),
             Some(parts) if parts.len() == 1 => format!("{} (general)", parts[0]),
-            _ => folder.to_string_lossy().into_owned(),
+            _ => py_str(folder),
         }
     }
 
@@ -647,7 +647,7 @@ impl LaunchFlow {
     fn ask_area(&mut self) -> Step {
         let areas = self.existing_areas();
         if areas.is_empty() {
-            return Step::new(format!("I can't find {} under {}.", self.areas.join(", "), self.root.display()))
+            return Step::new(format!("I can't find {} under {}.", self.areas.join(", "), py_str(&self.root)))
                 .done();
         }
         self.area = None;

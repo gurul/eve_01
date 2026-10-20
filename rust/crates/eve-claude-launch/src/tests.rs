@@ -616,3 +616,15 @@ fn more_phrasings_match_python() {
         vec![("a".to_string(), 1), ("b-2".to_string(), 0), ("b-x".to_string(), 1), ("c-01".to_string(), 0)]
     );
 }
+
+#[test]
+fn paths_in_owner_text_are_written_as_python_writes_them() {
+    // `str(Path(...))`: a trailing slash or a `.` part is not part of the path Python prints.
+    let empty = tempfile::tempdir().unwrap();
+    let loose = format!("{}/./", empty.path().display());
+    let step = LaunchFlow::new(&loose).start("");
+    assert_eq!(step.text, format!("I can't find personal, work under {}.", empty.path().display()));
+    let (_d, root) = root();
+    let f = flow(&root);
+    assert_eq!(f.label(Path::new("/elsewhere//x/")), "/elsewhere/x");
+}
