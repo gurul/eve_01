@@ -1,0 +1,30 @@
+[package]
+name = "eve-diary"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+eve-explore = { path = "../eve-explore" }
+eve-openrouter = { path = "../eve-openrouter" }
+eve-photos = { path = "../eve-photos" }
+eve-spend = { path = "../eve-spend" }
+eve-thought-screen = { path = "../eve-thought-screen" }
+eve-vision = { path = "../eve-vision" }
+anyhow.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+futures.workspace = true
+serde_json.workspace = true
+base64.workspace = true
+tracing.workspace = true
+chrono.workspace = true
+parking_lot.workspace = true
+regex.workspace = true
+indexmap.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+tracing-subscriber.workspace = true
+axum.workspace = true
