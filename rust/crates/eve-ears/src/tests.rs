@@ -767,6 +767,14 @@ fn python_formatting_helpers_match() {
         ("١٢", Some(12.0)),
         ("1_", None),
         ("hot", None),
+        // float() strips only ASCII whitespace after mapping non-ASCII spaces to " ": U+001C..U+001F,
+        // which str.strip removes, are invalid here (checked against CPython 3.13).
+        ("\u{1c}5", None),
+        ("0\u{1f}", None),
+        ("\u{2028}5\u{a0}", Some(5.0)),
+        ("\u{3000}\u{967}", Some(1.0)),
+        ("1 2", None),
+        ("5\u{7f}", None),
     ] {
         assert_eq!(py::parse_float(raw), want, "{raw:?}");
     }

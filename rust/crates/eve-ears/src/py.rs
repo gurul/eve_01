@@ -29,25 +29,29 @@ fn unicode_decimal(c: char) -> Option<u8> {
     ND_ZEROS.iter().find(|&&z| (z..z + 10).contains(&cp)).map(|&z| (cp - z) as u8)
 }
 
-/// `float(s)` on an already stripped string: decimal or exponent forms, `inf`/`infinity`/`nan` in any
+/// `float(s)`: decimal or exponent forms, `inf`/`infinity`/`nan` in any
 /// case with a sign, and single underscores between digits.
 pub fn parse_float(s: &str) -> Option<f64> {
-    let s = strip(s);
-    if s.is_empty() {
-        return None;
-    }
-    // Python first maps every Unicode decimal digit to its ASCII digit (anything else non-ASCII is
-    // invalid), then checks the underscores, so "١_7" is 17.0.
-    let mut ascii: Vec<char> = Vec::with_capacity(s.len());
+    // Python first maps every non-ASCII whitespace character to a space and every Unicode decimal digit
+    // to its ASCII digit (anything else non-ASCII is invalid; ASCII is kept as it is), then strips only
+    // the ASCII whitespace " \t\n\v\f\r" — so U+001C..U+001F, which `str.strip` removes, make `float()`
+    // fail — and then checks the underscores, so "١_7" is 17.0.
+    let mut mapped: Vec<char> = Vec::with_capacity(s.len());
     for c in s.chars() {
-        if c.is_ascii() {
-            ascii.push(c);
+        if (c as u32) < 127 {
+            mapped.push(c);
+        } else if is_py_space(c) {
+            mapped.push(' ');
         } else if let Some(d) = unicode_decimal(c) {
-            ascii.push(char::from(b'0' + d));
+            mapped.push(char::from(b'0' + d));
         } else {
             return None;
         }
     }
+    let is_ascii_space = |c: &char| matches!(c, ' ' | '\t' | '\n' | '\u{b}' | '\u{c}' | '\r');
+    let start = mapped.iter().position(|c| !is_ascii_space(c))?;
+    let end = mapped.iter().rposition(|c| !is_ascii_space(c)).map_or(start, |e| e + 1);
+    let ascii = &mapped[start..end];
     let mut cleaned = String::with_capacity(ascii.len());
     for (i, &c) in ascii.iter().enumerate() {
         if c == '_' {
