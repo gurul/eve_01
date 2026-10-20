@@ -88,6 +88,71 @@ fn write_str(out: &mut String, s: &str, ensure_ascii: bool) {
     out.push('"');
 }
 
+/// `json.loads(bytes)` (what httpx's `Response.json()` calls): the encoding
+/// is detected as `json.detect_encoding` does (UTF-8 with or without BOM,
+/// UTF-16 and UTF-32 by BOM or by the position of zero bytes).
+pub fn json_loads_bytes(b: &[u8]) -> Option<Value> {
+    let text = if b.starts_with(&[0, 0, 0xFE, 0xFF]) || b.starts_with(&[0xFF, 0xFE, 0, 0]) {
+        decode_utf32(&b[4..], b[0] == 0)?
+    } else if b.starts_with(&[0xFE, 0xFF]) || b.starts_with(&[0xFF, 0xFE]) {
+        decode_utf16(&b[2..], b[0] == 0xFE)?
+    } else if b.starts_with(&[0xEF, 0xBB, 0xBF]) {
+        std::str::from_utf8(&b[3..]).ok()?.to_string()
+    } else if b.len() >= 4 && b[0] == 0 {
+        if b[1] != 0 {
+            decode_utf16(b, true)?
+        } else {
+            decode_utf32(b, true)?
+        }
+    } else if b.len() >= 4 && b[1] == 0 {
+        if b[2] != 0 || b[3] != 0 {
+            decode_utf16(b, false)?
+        } else {
+            decode_utf32(b, false)?
+        }
+    } else if b.len() == 2 && b[0] == 0 {
+        decode_utf16(b, true)?
+    } else if b.len() == 2 && b[1] == 0 {
+        decode_utf16(b, false)?
+    } else {
+        std::str::from_utf8(b).ok()?.to_string()
+    };
+    serde_json::from_str(&text).ok()
+}
+
+fn decode_utf16(b: &[u8], big_endian: bool) -> Option<String> {
+    if !b.len().is_multiple_of(2) {
+        return None;
+    }
+    let units: Vec<u16> = b
+        .chunks_exact(2)
+        .map(|c| {
+            if big_endian {
+                u16::from_be_bytes([c[0], c[1]])
+            } else {
+                u16::from_le_bytes([c[0], c[1]])
+            }
+        })
+        .collect();
+    String::from_utf16(&units).ok()
+}
+
+fn decode_utf32(b: &[u8], big_endian: bool) -> Option<String> {
+    if !b.len().is_multiple_of(4) {
+        return None;
+    }
+    b.chunks_exact(4)
+        .map(|c| {
+            let arr = [c[0], c[1], c[2], c[3]];
+            char::from_u32(if big_endian {
+                u32::from_be_bytes(arr)
+            } else {
+                u32::from_le_bytes(arr)
+            })
+        })
+        .collect()
+}
+
 /// Python `repr(float)`, as `json.dumps` writes it.
 pub fn float_repr(f: f64) -> String {
     if f.is_nan() {
@@ -141,7 +206,20 @@ pub fn float_repr(f: f64) -> String {
 
 /// Python `float(str)`: surrounding whitespace allowed, `_` only between digits.
 pub fn parse_float(text: &str) -> Option<f64> {
-    let s = text.trim();
+    // CPython first maps every non-ASCII whitespace to a space and every
+    // Unicode decimal digit to its ASCII digit; any other non-ASCII
+    // character makes the string invalid.
+    let mut ascii = String::with_capacity(text.len());
+    for c in text.chars() {
+        if c.is_ascii() {
+            ascii.push(c);
+        } else if is_space(c) {
+            ascii.push(' ');
+        } else {
+            ascii.push(char::from(b'0' + decimal_value(c)?));
+        }
+    }
+    let s = ascii.trim_matches(|c: char| matches!(c, ' ' | '\t' | '\n' | '\x0b' | '\x0c' | '\r'));
     if s.is_empty() {
         return None;
     }
@@ -183,6 +261,39 @@ pub fn parse_float(text: &str) -> Option<f64> {
         }
     }
     cleaned.parse::<f64>().ok()
+}
+
+/// Python `str.isspace()` for a non-ASCII character (the same set as
+/// Unicode `White_Space` outside ASCII).
+fn is_space(c: char) -> bool {
+    c.is_whitespace()
+}
+
+/// Python `unicodedata.decimal(c)`: the value of a `Nd` digit. Unicode lays
+/// every `Nd` digit out in contiguous runs that start at zero, so the value is
+/// the distance from the run's start, modulo ten.
+fn decimal_value(c: char) -> Option<u8> {
+    static ND: std::sync::LazyLock<Regex> =
+        std::sync::LazyLock::new(|| Regex::new(r"\A\p{Nd}\z").expect("valid regex"));
+    let is_nd = |c: char| {
+        let mut buf = [0u8; 4];
+        ND.is_match(c.encode_utf8(&mut buf))
+    };
+    if !is_nd(c) {
+        return None;
+    }
+    let mut offset = 0u32;
+    let mut cp = c as u32;
+    while cp > 0 {
+        match char::from_u32(cp - 1) {
+            Some(prev) if is_nd(prev) => {
+                offset += 1;
+                cp -= 1;
+            }
+            _ => break,
+        }
+    }
+    Some((offset % 10) as u8)
 }
 
 /// Python truthiness of an optional JSON value (`None`/missing is falsy).
@@ -509,6 +620,24 @@ mod tests {
     }
 
     #[test]
+    fn json_loads_bytes_detects_encoding_like_python() {
+        let want = json!({"a": "é"});
+        assert_eq!(json_loads_bytes("{\"a\": \"é\"}".as_bytes()), Some(want.clone()));
+        let mut bom = vec![0xEF, 0xBB, 0xBF];
+        bom.extend_from_slice("{\"a\": \"é\"}".as_bytes());
+        assert_eq!(json_loads_bytes(&bom), Some(want.clone()));
+        let le: Vec<u8> = "{\"a\": \"é\"}".encode_utf16().flat_map(u16::to_le_bytes).collect();
+        assert_eq!(json_loads_bytes(&le), Some(want.clone()));
+        let mut be = vec![0xFE, 0xFF];
+        be.extend("{\"a\": \"é\"}".encode_utf16().flat_map(u16::to_be_bytes));
+        assert_eq!(json_loads_bytes(&be), Some(want.clone()));
+        let le32: Vec<u8> = "{\"a\": \"é\"}".chars().flat_map(|c| (c as u32).to_le_bytes()).collect();
+        assert_eq!(json_loads_bytes(&le32), Some(want));
+        assert_eq!(json_loads_bytes(b"\xff"), None);
+        assert_eq!(json_loads_bytes(b"[]"), Some(json!([])));
+    }
+
+    #[test]
     fn float_repr_matches_python() {
         assert_eq!(float_repr(180.0), "180.0");
         assert_eq!(float_repr(1e16), "1e+16");
@@ -528,6 +657,12 @@ mod tests {
         assert_eq!(parse_float("inf"), Some(f64::INFINITY));
         assert_eq!(parse_float("-1"), Some(-1.0));
         assert_eq!(parse_float("1e3"), Some(1000.0));
+        assert_eq!(parse_float("\u{661}\u{662}\u{660}"), Some(120.0));
+        assert_eq!(parse_float("\u{1d7d9}\u{1d7da}"), Some(12.0));
+        assert_eq!(parse_float("\u{2003}300\u{a0}"), Some(300.0));
+        assert_eq!(parse_float("\x0b120"), Some(120.0));
+        assert_eq!(parse_float("\x1c120"), None);
+        assert_eq!(parse_float("12\u{b2}"), None);
     }
 
     #[test]

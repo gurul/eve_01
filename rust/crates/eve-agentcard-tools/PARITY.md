@@ -15,7 +15,7 @@ Status: complete
 | `AskUser` | `AskUser` (boxed `Fn(String, String) -> Future<Result<String, AskError>>`) and the generic `F: FnOnce(String, String) -> Fut` that `handle` takes | Python's `TimeoutError` is `AskError::Timeout`; any other exception is `AskError::Failed` (text never shown) |
 | `Service` (Protocol) | `trait Service` with `type Snapshot` | `handle(&str, Value)`, `prepare_confirm(&str, &[String]) -> Prepared<Snapshot>`, `confirm(Snapshot, &Arc<AtomicBool>)`; blocking, run with `spawn_blocking` (Python `asyncio.to_thread`). `Err` or a panic is Python's `Exception` |
 | (prepare dict with `snapshot`) | `Prepared<S> { result, snapshot }` | The snapshot object is kept out of the JSON, as `eve_agentcard::Prepared` does |
-| (real client) | `impl Service for eve_agentcard::AgentCard` | Python passed the `AgentCard` instance directly; this impl is that binding |
+| (real client) | `impl Service for eve_agentcard::AgentCard` | Python passed the `AgentCard` instance directly; this impl is that binding. `confirm` calls `AgentCard::try_confirm`, so the client's one Python exception (`ConfirmRaised`) is an `Err`, answered as the unknown outcome like Python's `except Exception` |
 | `_Confirmation` | `Confirmation` (private) | `chat_id`, `cancelled: Arc<AtomicBool>` (the `threading.Event`), `phase` + question `AbortHandle` under one lock, `done` watch for `wait_idle` |
 | `_not_submitted` | `not_submitted(&str) -> Value` | Key order `ok`, `status`, `reason` |
 | `AgentCardTools` | `AgentCardTools<S: Service>` (`Clone`, shared `Arc` inner) | |

@@ -78,7 +78,8 @@ impl Service for eve_agentcard::AgentCard {
     }
 
     fn confirm(&self, snapshot: Self::Snapshot, cancelled: &Arc<AtomicBool>) -> anyhow::Result<Value> {
-        Ok(eve_agentcard::AgentCard::confirm(self, &snapshot, Some(cancelled.as_ref())))
+        // Python's client can raise before dispatch; the gateway reports that as an unknown outcome.
+        Ok(eve_agentcard::AgentCard::try_confirm(self, &snapshot, Some(cancelled.as_ref()))?)
     }
 }
 

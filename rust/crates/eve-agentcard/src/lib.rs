@@ -332,6 +332,23 @@ pub struct HttpTransport;
 
 impl Transport for HttpTransport {
     fn request(&self, request: HttpRequest) -> anyhow::Result<HttpResponse> {
+        // The client is blocking. Called from inside a tokio runtime (instead of
+        // a `spawn_blocking` worker), the request runs on its own thread so the
+        // caller blocks as Python's would rather than panicking.
+        if tokio::runtime::Handle::try_current().is_ok() {
+            return std::thread::scope(|scope| {
+                scope
+                    .spawn(|| Self::send(request))
+                    .join()
+                    .map_err(|_| anyhow::anyhow!("AgentCard request thread failed"))?
+            });
+        }
+        Self::send(request)
+    }
+}
+
+impl HttpTransport {
+    fn send(request: HttpRequest) -> anyhow::Result<HttpResponse> {
         let timeout = Duration::from_secs_f64(request.timeout.max(0.0));
         let runtime = tokio::runtime::Builder::new_current_thread()
             .enable_all()
@@ -414,6 +431,15 @@ impl Prepared {
 /// `_StateError`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct StateError;
+
+/// The exception Python's `confirm` lets escape: on a Vault retry whose fresh
+/// ledger read failed, `_failure("vault_retry_requires_reconciliation",
+/// **ledger_failure)` passes `reason` twice and raises `TypeError` before any
+/// dispatch. The owner-approval gateway turns it into its "outcome is
+/// unknown" answer.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
+#[error("AgentCard confirmation raised before dispatch")]
+pub struct ConfirmRaised;
 
 impl<E: std::error::Error> From<E> for StateError {
     fn from(_: E) -> Self {
@@ -1100,8 +1126,8 @@ Start a new shopping conversation after any placed or partially placed order."
         let Ok(response) = self.request.request(request) else {
             return (None, None);
         };
-        match serde_json::from_slice::<Value>(&response.body) {
-            Ok(Value::Object(body)) => (Some(i64::from(response.status)), Some(body)),
+        match py::json_loads_bytes(&response.body) {
+            Some(Value::Object(body)) => (Some(i64::from(response.status)), Some(body)),
             _ => (None, None),
         }
     }
@@ -2036,14 +2062,38 @@ Start a new shopping conversation after any placed or partially placed order."
 
     /// `confirm`: consume the snapshot, durably claim the carts, POST once,
     /// and journal the outcome. Never retries.
+    ///
+    /// Where Python's `confirm` raised (see [`ConfirmRaised`]), this returns
+    /// `vault_retry_requires_reconciliation` with the ledger failure's
+    /// `status` and `reconciliation_required`; callers that must see the
+    /// exception, as the owner-approval gateway does, use [`AgentCard::try_confirm`].
     pub fn confirm(&self, snapshot: &Snapshot, cancelled: Option<&AtomicBool>) -> Value {
+        self.try_confirm(snapshot, cancelled).unwrap_or_else(|_| {
+            failure_with(
+                "vault_retry_requires_reconciliation",
+                [
+                    ("status".into(), json!("uncertain")),
+                    ("reconciliation_required".into(), json!(true)),
+                ],
+            )
+        })
+    }
+
+    /// `confirm`, with Python's one escaping exception as `Err`. Nothing was
+    /// dispatched when it is returned.
+    pub fn try_confirm(
+        &self,
+        snapshot: &Snapshot,
+        cancelled: Option<&AtomicBool>,
+    ) -> Result<Value, ConfirmRaised> {
         if self.stopped(cancelled) {
-            return failure("cancelled_before_dispatch");
+            return Ok(failure("cancelled_before_dispatch"));
         }
         let mut result: Option<Map<String, Value>> = None;
         let mut dispatched = false;
-        match self.confirm_inner(snapshot, cancelled, &mut result, &mut dispatched) {
-            Ok(v) => v,
+        Ok(match self.confirm_inner(snapshot, cancelled, &mut result, &mut dispatched) {
+            Ok(Ok(v)) => v,
+            Ok(Err(raised)) => return Err(raised),
             Err(StateError) => {
                 if dispatched {
                     let mut out = result.unwrap_or_else(|| {
@@ -2063,7 +2113,7 @@ Start a new shopping conversation after any placed or partially placed order."
                     )
                 }
             }
-        }
+        })
     }
 
     fn confirm_inner(
@@ -2072,7 +2122,7 @@ Start a new shopping conversation after any placed or partially placed order."
         cancelled: Option<&AtomicBool>,
         result_slot: &mut Option<Map<String, Value>>,
         dispatched: &mut bool,
-    ) -> Result<Value, StateError> {
+    ) -> Result<Result<Value, ConfirmRaised>, StateError> {
         let snap = &snapshot.0;
         let cid = snap.conversation_id.as_str();
         let first = self.locked(|state, memory| {
@@ -2128,7 +2178,7 @@ Start a new shopping conversation after any placed or partially placed order."
         })?;
         let (address, merchants, retry, digests) = match first {
             Ok(v) => v,
-            Err(v) => return Ok(v),
+            Err(v) => return Ok(Ok(v)),
         };
         if retry {
             let (safe, body) = self.read_ledger(cid, address.as_ref());
@@ -2155,10 +2205,15 @@ Start a new shopping conversation after any placed or partially placed order."
                     && unchanged
             });
             if !ready {
-                return Ok(failure_with(
+                // Python spreads the ledger read into `_failure(...)`; a failed
+                // read already carries `reason`, so the call raised TypeError.
+                if safe.get("reason").is_some() {
+                    return Ok(Err(ConfirmRaised));
+                }
+                return Ok(Ok(failure_with(
                     "vault_retry_requires_reconciliation",
                     without_ok(&safe),
-                ));
+                )));
             }
         }
         let claimed = self.locked(|state, _| {
@@ -2195,11 +2250,11 @@ Start a new shopping conversation after any placed or partially placed order."
             Ok(None)
         })?;
         if let Some(refused) = claimed {
-            return Ok(refused);
+            return Ok(Ok(refused));
         }
         // No disk/process lock crosses the HTTP request. Other instances see the durable claimed barrier.
         if self.stopped(cancelled) {
-            return Ok(failure("cancelled_before_dispatch"));
+            return Ok(Ok(failure("cancelled_before_dispatch")));
         }
         let mut payload = Map::new();
         payload.insert("conversation_id".into(), json!(cid));
@@ -2233,7 +2288,7 @@ Start a new shopping conversation after any placed or partially placed order."
                 ids.push(id.to_string());
             }
         }
-        self.locked(|state, memory| {
+        let journaled = self.locked(|state, memory| {
             let mut result = result;
             let unchanged = state.conversations.get(cid).is_some_and(|conv| {
                 snap.cart_hashes.iter().all(|h| {
@@ -2280,7 +2335,8 @@ Start a new shopping conversation after any placed or partially placed order."
                 return Ok(Value::Object(result));
             }
             Ok(Value::Object(result))
-        })
+        })?;
+        Ok(Ok(journaled))
     }
 
     /// `_checkout_result`: the projected receipt and the durable stage it earns.
@@ -2444,15 +2500,25 @@ fn is_symlink(path: &Path) -> bool {
         .unwrap_or(false)
 }
 
+/// `Path.mkdir(mode=0o700, parents=True, exist_ok=True)`: missing parents get
+/// the default mode, only the leaf gets `0700`.
 fn create_private_dir(path: &Path) -> std::io::Result<()> {
+    if path.is_dir() {
+        return Ok(());
+    }
+    if let Some(parent) = path.parent().filter(|p| !p.as_os_str().is_empty()) {
+        fs::create_dir_all(parent)?;
+    }
     let mut builder = fs::DirBuilder::new();
-    builder.recursive(true);
     #[cfg(unix)]
     {
         use std::os::unix::fs::DirBuilderExt;
         builder.mode(0o700);
     }
-    builder.create(path)
+    match builder.create(path) {
+        Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists && path.is_dir() => Ok(()),
+        other => other,
+    }
 }
 
 fn set_mode(path: &Path, mode: u32) -> std::io::Result<()> {

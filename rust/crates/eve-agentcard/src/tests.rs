@@ -1510,3 +1510,165 @@ fn test_real_client_through_chat_waits_for_owner_then_sends_exact_vault_request(
     assert!(projection.contains("order-safe") && disk.contains("order-safe"));
     client.close();
 }
+
+/// Replays cases recorded from `agentcard.py` (projection, checkout stage
+/// ladder, ledger envelope, Vault pause, URL acceptance, redaction) and
+/// requires byte-identical output, key order included.
+fn replay_differential(cases: &str) -> usize {
+    let dir = tmp();
+    let (client, _) = service(dir.path());
+    let mut count = 0;
+    for (line_no, line) in cases.lines().enumerate().filter(|(_, l)| !l.trim().is_empty()) {
+        let row: Value = serde_json::from_str(line).unwrap();
+        let address = row["address"].as_object();
+        let got = match row["kind"].as_str().unwrap() {
+            "project" => Value::Object(client.project(row["body"].as_object().unwrap(), address)),
+            "checkout" => {
+                let merchants: Vec<String> = row["merchants"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|m| m.as_str().unwrap().to_string())
+                    .collect();
+                let code = row["code"].as_i64();
+                let (result, stage) =
+                    client.checkout_result(code, row["body"].as_object(), CID, &merchants, address);
+                json!([result, stage])
+            }
+            "ledger" => {
+                let body = row["body"].as_object().unwrap();
+                json!([AgentCard::ledger_safe(body, CID), AgentCard::vault_pause(body)])
+            }
+            "url" => json!([
+                client.url(Some(&row["value"]), address, false),
+                client.url(Some(&row["value"]), address, true)
+            ]),
+            "text" => json!(client.text(Some(&row["value"]), address, row.get("payment"), 4000)),
+            "config" => {
+                let env: HashMap<String, String> = row["env"]
+                    .as_object()
+                    .unwrap()
+                    .iter()
+                    .map(|(k, v)| (k.clone(), v.as_str().unwrap().to_string()))
+                    .collect();
+                match configured(Some(&env)) {
+                    Ok(c) if row["out"].get("enabled").is_some() => {
+                        json!({"enabled": c.enabled, "token": c.token, "timeout": c.timeout_secs})
+                    }
+                    Ok(c) => json!({"timeout": c.timeout_secs}),
+                    Err(e) => json!({"error": e.to_string()}),
+                }
+            }
+            "address" => match super::address(&row["value"]) {
+                Ok(a) => json!({"ok": a}),
+                Err(e) => json!({"error": e.to_string()}),
+            },
+            other => panic!("unknown case kind {other}"),
+        };
+        assert_eq!(
+            dumps(&got, false, false),
+            dumps(&row["out"], false, false),
+            "case {} ({}): {}",
+            line_no + 1,
+            row["kind"],
+            line
+        );
+        count += 1;
+    }
+    count
+}
+
+#[test]
+fn differential_cases_recorded_from_python_match() {
+    let cases = include_str!("../tests/data/differential.jsonl");
+    assert!(replay_differential(cases) >= 200);
+}
+
+/// A larger recorded set: `AGENTCARD_DIFF_CASES=/path/cases.jsonl cargo test -p eve-agentcard -- --ignored`.
+#[test]
+#[ignore = "needs AGENTCARD_DIFF_CASES pointing at a recorded case file"]
+fn differential_cases_from_file_match() {
+    let path = std::env::var("AGENTCARD_DIFF_CASES").expect("AGENTCARD_DIFF_CASES");
+    let cases = fs::read_to_string(path).unwrap();
+    assert!(replay_differential(&cases) > 0);
+}
+
+/// Python raises `TypeError` (two `reason`s) when the Vault retry's fresh
+/// ledger read fails; nothing is claimed or sent.
+#[test]
+fn vault_retry_with_unavailable_ledger_raises_before_dispatch() {
+    let dir = tmp();
+    let (client, server) = service(dir.path());
+    start(&client);
+    server.set_checkout(
+        200,
+        json!({"conversation_id": CID, "status": "declined", "decline_code": "vault_approval_required",
+               "charge_status": "none"}),
+    );
+    client.confirm(&snapshot(prepare(&client)), None);
+    server.set_ledger(ledger_with(
+        None,
+        json!({"last_checkout": {"status": "needs_approval", "charge_status": "none",
+                                 "decline_code": "vault_approval_required"}}),
+    ));
+    let snap = snapshot(prepare(&client));
+    *server.fail_when.lock() = Some(Arc::new(|r: &HttpRequest| r.method == "GET"));
+    assert_eq!(client.try_confirm(&snap, None), Err(ConfirmRaised));
+    assert_eq!(server.confirms().len(), 1);
+    assert_eq!(
+        journal(&client)["conversations"][CID]["attempts"][H1]["stage"],
+        json!("vault_pause")
+    );
+    // The Value-returning form folds the exception into a refusal.
+    let snap = {
+        *server.fail_when.lock() = None;
+        snapshot(prepare(&client))
+    };
+    *server.fail_when.lock() = Some(Arc::new(|r: &HttpRequest| r.method == "GET"));
+    let result = client.confirm(&snap, None);
+    assert!(not_ok(&result) && result["reason"] == json!("vault_retry_requires_reconciliation"));
+    assert_eq!(server.confirms().len(), 1);
+}
+
+#[test]
+fn state_directory_parents_keep_the_default_mode() {
+    let dir = tmp();
+    let server = Server::new();
+    let config = AgentCardConfig::new(true, TOKEN);
+    let transport: Arc<dyn Transport> = server.clone();
+    let client =
+        AgentCard::new(config, Some(transport), Some(dir.path().join("parent/agentcard"))).unwrap();
+    assert_eq!(client.handle("agentcard_status", &json!({"conversation_id": CID}))["ok"], json!(true));
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mode = |p: &Path| fs::metadata(p).unwrap().permissions().mode() & 0o777;
+        assert_eq!(mode(&dir.path().join("parent/agentcard")), 0o700);
+        assert_ne!(mode(&dir.path().join("parent")), 0o700);
+    }
+}
+
+#[tokio::test]
+async fn default_transport_called_inside_a_runtime_blocks_instead_of_panicking() {
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = listener.local_addr().unwrap().port();
+    let server = thread::spawn(move || {
+        let (mut stream, _) = listener.accept().unwrap();
+        let mut buf = [0u8; 4096];
+        let _ = stream.read(&mut buf).unwrap();
+        stream
+            .write_all(b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: 2\r\nConnection: close\r\n\r\n{}")
+            .unwrap();
+    });
+    let response = HttpTransport
+        .request(HttpRequest {
+            method: "GET".into(),
+            url: format!("http://127.0.0.1:{port}/buy/merchants"),
+            headers: vec![],
+            json: None,
+            timeout: 5.0,
+        })
+        .unwrap();
+    assert_eq!((response.status, response.body.as_slice()), (200, &b"{}"[..]));
+    server.join().unwrap();
+}
