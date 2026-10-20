@@ -248,6 +248,11 @@ fn brief_counts_unpriced_calls_partial_accounts_and_an_openrouter_error() {
     let err = json!({"openrouter": {"status": "error", "error": "HTTP 403"}});
     assert!(brief(&s, Some(&err)).ends_with("OpenRouter's own figure could not be read (HTTP 403)."));
     assert_eq!(brief(&s, None).lines().count(), 5);
+    // Python's `n == 1` holds for a float 1.0 too: "1.0 call", not "1.0 calls".
+    let f = json!({"today": {"usd": 0, "by_feature": {}, "unpriced": 1.0}, "yesterday": {"usd": 0}, "month": {"usd": 0}});
+    assert!(brief(&f, None).contains("\n1.0 call today had no price"));
+    let two = json!({"today": {"usd": 0, "by_feature": {}, "unpriced": 2}, "yesterday": {"usd": 0}, "month": {"usd": 0}});
+    assert!(brief(&two, None).contains("\n2 calls today had no price"));
 }
 
 // ---- the prices --------------------------------------------------------------------------------------------------

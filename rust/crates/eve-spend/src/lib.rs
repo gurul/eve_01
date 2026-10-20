@@ -1037,7 +1037,13 @@ pub fn brief(s: &Value, providers: Option<&Value>) -> String {
     }
     if let Some(n) = today.get("unpriced").filter(|v| truthy(v)) {
         let n_str = py_str(n);
-        let plural = if n.as_i64() == Some(1) { "" } else { "s" };
+        // `n == 1` in Python also holds for 1.0 and True.
+        let one = match n {
+            Value::Bool(b) => *b,
+            Value::Number(x) => x.as_f64() == Some(1.0),
+            _ => false,
+        };
+        let plural = if one { "" } else { "s" };
         lines.push(format!(
             "{n_str} call{plural} today had no price (Codex on the ChatGPT plan, or a model without a rate); not in \
              the totals."
