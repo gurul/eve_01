@@ -268,10 +268,11 @@ struct TestSources {
     vault: bool,
     records: bool,
     hidden: Option<String>,
+    chief: Option<Arc<dyn Chief>>,
 }
 
 fn sources_for(tmp: &Path, apps: Option<FakeApps>) -> TestSources {
-    TestSources { tmp: tmp.to_path_buf(), apps: apps.map(Arc::new), vault: true, records: true, hidden: None }
+    TestSources { tmp: tmp.to_path_buf(), apps: apps.map(Arc::new), vault: true, records: true, hidden: None, chief: None }
 }
 
 impl UpdateSources for TestSources {
@@ -293,7 +294,7 @@ impl UpdateSources for TestSources {
     }
 
     fn chief(&self) -> Option<Arc<dyn Chief>> {
-        None
+        self.chief.clone()
     }
 
     fn records_dir(&self) -> Option<PathBuf> {
@@ -464,6 +465,84 @@ fn test_chief_cards_open_ones_only() {
     assert!(rows[0]["body"].as_str().unwrap().contains("Waiting on the owner: yes"));
     assert_eq!(rows[0]["kind"], "chief");
     assert_eq!(rows[0]["title"], "Find a plumber");
+}
+
+/// A chief whose ledger holds the cards as the real chief leaves them; its acts are never called here.
+struct ListingChief(Vec<eve_link::seams::JobCard>);
+
+#[async_trait]
+impl Chief for ListingChief {
+    fn cards(&self) -> Vec<eve_link::seams::JobCard> {
+        self.0.clone()
+    }
+    fn card(&self, cid: &str) -> Option<eve_link::seams::JobCard> {
+        self.0.iter().find(|c| c.id == cid).cloned()
+    }
+    async fn approve(&self, cid: &str, _via: &str, _rev: Option<i64>) -> anyhow::Result<Obj> {
+        Err(anyhow::anyhow!("only lists ({cid})"))
+    }
+    async fn done(&self, cid: &str) -> anyhow::Result<Obj> {
+        Err(anyhow::anyhow!("only lists ({cid})"))
+    }
+    async fn drop_job(&self, cid: &str) -> anyhow::Result<Obj> {
+        Err(anyhow::anyhow!("only lists ({cid})"))
+    }
+    async fn happened(&self, cid: &str) -> anyhow::Result<Obj> {
+        Err(anyhow::anyhow!("only lists ({cid})"))
+    }
+    async fn didnt(&self, cid: &str) -> anyhow::Result<Obj> {
+        Err(anyhow::anyhow!("only lists ({cid})"))
+    }
+    async fn raise_budget(&self, cid: &str) -> anyhow::Result<Obj> {
+        Err(anyhow::anyhow!("only lists ({cid})"))
+    }
+}
+
+fn job_card(cid: &str, status: &str, waiting_for: Option<&str>, terminal: bool) -> eve_link::seams::JobCard {
+    use eve_link::seams::{JobCard, JobPhase};
+    let data = obj(json!({"id": cid, "kind": "task", "status": status, "title": format!("Job {cid}")}));
+    let phase = |n: i64, status: &str, door: &str, do_: &str| JobPhase {
+        n,
+        status: status.into(),
+        door: door.into(),
+        approval: None,
+        do_: do_.into(),
+    };
+    JobCard {
+        id: cid.into(),
+        kind: "task".into(),
+        status: status.into(),
+        waiting_for: waiting_for.map(str::to_string),
+        terminal,
+        rev: 1,
+        updated: 100.0,
+        phases: vec![phase(1, "ok", "two_way", "research"), phase(2, if terminal { "ok" } else { "queued" }, "one_way", "act")],
+        cue_at: None,
+        doubtful: false,
+        data,
+    }
+}
+
+/// The gather half of test_chief_cards_open_ones_only: through the real link_chat::list_jobs, the chief's source is
+/// "ok" and only its open card is an item.
+#[tokio::test]
+async fn test_chief_cards_open_ones_only_through_gather() {
+    let tmp = tempfile::tempdir().unwrap();
+    let mut src = sources_for(tmp.path(), None);
+    src.vault = false;
+    src.records = false;
+    src.chief = Some(Arc::new(ListingChief(vec![
+        job_card("c3", "waiting", Some("go"), false),
+        job_card("c2", "done", None, true),
+    ])));
+    let (snapshot, status) = run_gather(&src, gather_opts()).await;
+    assert_eq!(status.get("chief").map(String::as_str), Some("ok"));
+    assert_eq!(ids(&snapshot["items"]), vec!["chief:c3"]);
+    assert!(snapshot["items"][0]["body"].as_str().unwrap().contains("Waiting on the owner: yes"));
+    // positive control: with no chief the source is off and lists nothing
+    let (none, status) = run_gather(&sources_for(tmp.path(), None), gather_opts()).await;
+    assert_eq!(status.get("chief").map(String::as_str), Some("off"));
+    assert!(!ids(&none["items"]).iter().any(|i| i.starts_with("chief:")));
 }
 
 #[tokio::test]
