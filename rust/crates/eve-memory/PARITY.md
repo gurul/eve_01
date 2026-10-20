@@ -21,7 +21,7 @@ Status: complete
 | `memory_search_tool(hybrid, timeargs, retry, *, capped=True)` | `memory_search_tool(bool, bool, bool, capped: bool) -> Value` | All twelve distinct switch combinations hash equal to the Python's (`test_every_tool_schema_is_the_pythons_byte_for_byte`). Rust returns an equal value where Python returns the same object. |
 | `_split_frontmatter(text)` | private `split_frontmatter` | |
 | `_markdown_files(folder)` | private `markdown_files` | os.walk without following links: `.git` and symlinked folders not entered, symlinked files skipped, unreadable folders skipped. |
-| `_atomic_rewrite(path, text)` | `atomic_rewrite(&Path, &str) -> io::Result<()>` | Temp `.{name}.{pid}.{8 hex}.tmp`, `O_EXCL|O_NOFOLLOW|O_CLOEXEC`, 0600 then fchmod to the file's mode, plain `fsync(2)`, rename; the temp file removed on failure. |
+| `_atomic_rewrite(path, text)` | `atomic_rewrite(&Path, &str) -> io::Result<()>` | Temp `.{name}.{pid}.{8 hex}.tmp`, `O_EXCL|O_NOFOLLOW|O_CLOEXEC`, 0600 then fchmod to the file's mode, plain `fsync(2)`, rename; the temp file removed when a step after its creation fails (never when the exclusive open itself was refused, as in Python). |
 | `class MarkdownForgetError(OSError)` (`removed`) | `struct MarkdownForgetError { removed, failed }` (thiserror) | Same message: `{failed} markdown file(s) could not be rewritten`. |
 | `forget_markdown(folder, pred, dry_run=False)` | `forget_markdown(&Path, &dyn Fn(&str)->bool, bool) -> Result<usize, MarkdownForgetError>`, and `forget_markdown_with(…, rewrite)` | Files read as text mode reads them (`errors="replace"`, universal newlines); rows split with `splitlines(keepends=True)`'s boundaries. `forget_markdown_with` is the seam the Python test patches `_atomic_rewrite` through. |
 | `class _Pending` | private `struct Pending { query, expires }` | Held in an `IndexMap` so the oldest token is evicted first, as dict order does. |
@@ -44,7 +44,7 @@ Status: complete
 | `Memory._not_covered` | private `not_covered` | |
 | `Memory._follow_sources` | private `follow_sources` | `src: YYYY-MM-DD HH:MM` of each matching line's own wall time (`datetime.fromisoformat`, `eve_transcripts::py::fromisoformat`), plus `reworded`. |
 | `Memory.forget_preview(query)` | `forget_preview(&str) -> Value` | Token = `secrets.token_urlsafe(12)` (12 random bytes, base64url, no padding: 16 characters). |
-| `Memory.forget_apply(token)` | `forget_apply(&str) -> Value` | Same layer order, failure list, history squash only when something went, and the same `reason` text. A ranked-index failure logs `IndexForgetError` with the SQLite class it carries. |
+| `Memory.forget_apply(token)` | `forget_apply(&str) -> Value` | Same layer order, failure list, history squash only when something went, and the same `reason` text. A ranked-index failure logs `(IndexForgetError)`, the class name only, as Python does. |
 | `_file_count(path)` | private `file_count` | |
 | `_same(a, b)` | private `same` | `os.path.realpath` is `eve_transcripts::py::resolve` (non-strict), falling back to the path as given. |
 | `_private_dir(path)` | private `private_dir -> io::Result<()>` | mkdir -p, then chmod 0700 with its error ignored. |

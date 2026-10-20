@@ -366,13 +366,15 @@ pub fn atomic_rewrite(path: &Path, text: &str) -> io::Result<()> {
     tmp_name.push(path.file_name().unwrap_or_else(|| OsStr::new("")));
     tmp_name.push(format!(".{}.{}.tmp", std::process::id(), token_hex(4)));
     let tmp = path.with_file_name(tmp_name);
+    // The open is outside the cleanup, as in Python: a name this call did not create (O_EXCL refused it) is
+    // never removed.
+    let mut f = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .mode(0o600)
+        .custom_flags(libc::O_NOFOLLOW | libc::O_CLOEXEC)
+        .open(&tmp)?;
     let written = (|| -> io::Result<()> {
-        let mut f = OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .mode(0o600)
-            .custom_flags(libc::O_NOFOLLOW | libc::O_CLOEXEC)
-            .open(&tmp)?;
         f.set_permissions(fs::Permissions::from_mode(mode))?;
         f.write_all(text.as_bytes())?;
         // os.fsync: plain fsync(2) (std's sync_all is F_FULLFSYNC on macOS)
@@ -1279,12 +1281,13 @@ before you say it is not in your memory"
         if let Some(ranked) = ranked {
             match ranked.forget(&*pred) {
                 Ok(n) => done["index"] += n,
-                Err(e) => {
-                    // IndexForgetError: the words may remain; say so
+                Err(_) => {
+                    // IndexForgetError: the words may remain; say so. The log names the class only, as Python's
+                    // type(e).__name__ does.
                     if !failed.contains(&"index") {
                         failed.push("index");
                     }
-                    warn!("memory: forget failed in the search index (IndexForgetError: {})", e.0);
+                    warn!("memory: forget failed in the search index (IndexForgetError)");
                 }
             }
             if opened {
