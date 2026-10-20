@@ -1,0 +1,896 @@
+//! A port of `apps_maker.py`, lines 1-1126: the maker's prompt, the skeleton app, the owner's context, the app store.
+//!
+//! Skeleton: constants and prompts are verbatim (generated from the Python values); bodies are
+//! `todo!()` until this file's unit fills them.
+
+pub mod maker;
+pub use maker::*;
+
+#[allow(unused_imports)]
+use crate::prelude::*;
+
+// py: apps_maker.py:47 `log` (Logger): ported by this file's unit.
+
+// py: apps_maker.py:49 `DEFAULT_ROOT` (PosixPath): ported by this file's unit.
+
+/// py: apps_maker.py:50 `MAX_DATA_BYTES`
+pub const MAX_DATA_BYTES: usize = 1000000;
+
+/// py: apps_maker.py:51 `MAX_APP_BYTES`
+pub const MAX_APP_BYTES: usize = 600000;
+
+/// py: apps_maker.py:52 `MAKE_MAX_TOKENS`
+/// thinking counts toward it too; a whole app is ~10-25k tokens of text
+pub const MAKE_MAX_TOKENS: usize = 96000;
+
+/// py: apps_maker.py:53 `SYSTEM_CACHE_TTL`
+pub const SYSTEM_CACHE_TTL: &str = "1h";
+
+/// py: apps_maker.py:54 `MAX_VERSIONS`
+pub const MAX_VERSIONS: usize = 10;
+
+/// py: apps_maker.py:55 `MAX_REQUESTS`
+/// the newest requests kept in meta.json
+pub const MAX_REQUESTS: usize = 30;
+
+/// py: apps_maker.py:56 `MAX_BUILDS`
+pub const MAX_BUILDS: usize = 30;
+
+/// py: apps_maker.py:57 `DATA_SAMPLE_CHARS`
+pub const DATA_SAMPLE_CHARS: usize = 6000;
+
+/// py: apps_maker.py:58 `CHAT_PROGRESS_SECS`
+pub const CHAT_PROGRESS_SECS: f64 = 20.0;
+
+/// py: apps_maker.py:59 `SLUG_RE`
+/// Python flags 32.
+pub static SLUG_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r#"[a-z0-9][a-z0-9-]{0,47}"#).expect("SLUG_RE"));
+
+/// py: apps_maker.py:60 `ALLOWED_HOSTS`
+pub const ALLOWED_HOSTS: &[&str] = &["cdn.jsdelivr.net", "telegram.org"];
+
+/// py: apps_maker.py:64 `PINNED_LIB_RE`
+/// Python flags 34.
+pub static PINNED_LIB_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r#"(?i)/npm/(?:@[a-z0-9][\w.-]*/)?[a-z0-9][\w.-]*@\d+\.\d+\.\d+(?:-[\w.]+)?(?:/|(?:\n?\z))"#).expect("PINNED_LIB_RE"));
+
+/// py: apps_maker.py:65 `_JSDELIVR_URL`
+/// Python flags 34.
+pub(crate) static JSDELIVR_URL: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r#"(?i)(?:https?:)?//cdn\.jsdelivr\.net(/[^\s\"'`)<>\\]*)?"#).expect("JSDELIVR_URL"));
+
+/// py: apps_maker.py:66 `_FILLER`
+/// A Python set: sorted here; membership is what matters.
+pub(crate) const FILLER: &[&str] = &["a", "an", "app", "apps", "my", "one", "that", "the", "this"];
+
+/// py: apps_maker.py:67 `TRASH`
+pub const TRASH: &str = ".trash";
+
+/// py: apps_maker.py:68 `UNDO_REQUEST`
+/// the request an undo leaves in meta.json
+pub const UNDO_REQUEST: &str = "(undo)";
+
+/// py: apps_maker.py:69 `_TRASHED_RE`
+/// Python flags 32.
+pub(crate) static TRASHED_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r#"^([a-z0-9][a-z0-9-]{0,47})-(\d{8}-\d{6})(?:-\d+)?(?:\n?\z)"#).expect("TRASHED_RE"));
+
+/// py: apps_maker.py:70 `_DATA_V_RE`
+/// Python flags 32 (a bytes pattern).
+pub(crate) static DATA_V_RE: LazyLock<regex::bytes::Regex> =
+    LazyLock::new(|| regex::bytes::Regex::new(r#"(?-u)^\s*\{\s*"v"\s*:\s*(\d{1,9})\b"#).expect("DATA_V_RE"));
+
+/// py: apps_maker.py:73 `SKELETON_JOURNEYS`
+pub const SKELETON_JOURNEYS: &str = "[
+  {\"name\": \"Log two glasses\", \"steps\": [{\"do\": \"tap\", \"target\": \"Add a glass\"}, {\"do\": \"tap\", \"target\": \"Add a glass\"}],
+   \"expect\": [\"2 glasses\", \"6 glasses to go of 8\"]},
+  {\"name\": \"Lower the goal\", \"steps\": [{\"do\": \"type\", \"target\": \"Daily goal, in glasses\", \"value\": \"5\"},
+   {\"do\": \"tap\", \"target\": \"Add a glass\"}], \"expect\": [\"4 glasses to go of 5\"]},
+  {\"name\": \"See the week\", \"steps\": [{\"do\": \"tap\", \"target\": \"Add a glass\"},
+   {\"do\": \"tap\", \"target\": \"See the last 7 days ›\"}], \"expect\": [\"Last 7 days\", \"1 glass\"]}
+]";
+
+/// py: apps_maker.py:85 `SKELETON`
+pub const SKELETON: &str = "<!doctype html>
+<html lang=\"en\">
+<head>
+<meta charset=\"utf-8\">
+<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">
+<title>Water Log</title>
+<meta name=\"eve-icon\" content=\"💧\">
+<meta name=\"description\" content=\"Count glasses of water and see the week.\">
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: var(--tg-theme-secondary-bg-color, #f2f2f7); --card: var(--tg-theme-section-bg-color, #fff);
+  --text: var(--tg-theme-text-color, #000); --hint: var(--tg-theme-hint-color, #8e8e93);
+  --accent: var(--tg-theme-button-color, #2481cc); --on-accent: var(--tg-theme-button-text-color, #fff);
+  --danger: var(--tg-theme-destructive-text-color, #e53935); --sep: var(--tg-theme-section-separator-color, #c8c7cc);
+  --r: 12px; --pad: 16px;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); overflow-x: hidden; -webkit-tap-highlight-color: transparent;
+  font: 16px/1.4 -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif;
+  padding: calc(12px + var(--tg-safe-area-inset-top, 0px) + var(--tg-content-safe-area-inset-top, 0px)) var(--pad)
+    calc(24px + var(--tg-safe-area-inset-bottom, 0px) + var(--tg-content-safe-area-inset-bottom, 0px)); }
+h1 { font-size: 28px; margin: 4px 0 16px; } .hint { color: var(--hint); font-size: 14px; }
+.card { background: var(--card); border-radius: var(--r); padding: var(--pad); margin-bottom: 16px; }
+.big { font-size: 56px; font-weight: 700; font-variant-numeric: tabular-nums; } .unit { font-size: 20px; color: var(--hint); }
+.field { display: grid; gap: 8px; }
+.err { color: var(--danger); font-size: 14px; } .err:empty { display: none; }
+.row { display: flex; align-items: center; gap: 12px; min-height: 44px; border-top: 0.5px solid var(--sep); }
+.row:first-child { border-top: 0; } .row > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+button { font: inherit; min-height: 44px; padding: 0 16px; border: 0; border-radius: var(--r); background: var(--accent); color: var(--on-accent); }
+button.plain { background: none; color: var(--accent); padding: 0 8px; } button.danger { background: none; color: var(--danger); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input { font-size: 16px; min-height: 44px; width: 100%; padding: 0 12px; border: 1px solid var(--sep); border-radius: 10px; background: var(--card); color: var(--text); }
+.bar { height: 8px; border-radius: 4px; background: var(--accent); }
+.toast { position: fixed; left: 16px; right: 16px; bottom: calc(16px + var(--tg-safe-area-inset-bottom, 0px)); padding: 12px 16px;
+  border-radius: var(--r); background: var(--text); color: var(--card); opacity: 0; transition: opacity .2s; pointer-events: none; }
+.toast.show { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<section class=\"card\" id=\"unreadable\" role=\"alert\" hidden>Your saved data couldn't be read, so nothing is saved over it.
+  <button class=\"plain\" id=\"retry\">Try again</button></section>
+<main id=\"home\">
+  <h1>Water Log</h1>
+  <section class=\"card\"><div class=\"big\"><span id=\"count\">0</span> <span class=\"unit\">glasses</span></div>
+    <div class=\"hint\" id=\"goalLine\"></div></section>
+  <section class=\"card\" id=\"empty\">No glasses yet today. Tap <b>Add a glass</b> below to start.</section>
+  <section class=\"card field\">
+    <label for=\"goal\">Daily goal, in glasses</label>
+    <input id=\"goal\" type=\"number\" inputmode=\"numeric\" placeholder=\"e.g. 8\">
+    <div class=\"err\" id=\"goalErr\" aria-live=\"polite\"></div>
+  </section>
+  <button class=\"plain\" id=\"toHistory\">See the last 7 days ›</button>
+</main>
+<main id=\"history\" hidden>
+  <h1>Last 7 days</h1>
+  <section class=\"card\" id=\"week\"></section>
+  <button class=\"danger\" id=\"reset\">Reset today</button>
+</main>
+<div class=\"toast\" id=\"toast\" role=\"status\" aria-live=\"polite\"></div>
+<script>
+const tg = window.Telegram && window.Telegram.WebApp;
+const has = (v) => !!tg && tg.isVersionAtLeast(v);
+const buzz = (kind) => { if (!has(\"6.1\")) return; const h = tg.HapticFeedback;
+  kind === \"ok\" ? h.notificationOccurred(\"success\") : kind === \"warn\" ? h.notificationOccurred(\"warning\")
+    : kind === \"pick\" ? h.selectionChanged() : h.impactOccurred(\"light\"); };
+const ask = (msg) => new Promise((done) => (has(\"6.2\") ? tg.showConfirm(msg, done) : done(confirm(msg))));
+const dayKey = (d = new Date()) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, \"0\")}-${String(d.getDate()).padStart(2, \"0\")}`;
+const $ = (id) => document.getElementById(id);
+const glasses = (n) => `${n} ${n === 1 ? \"glass\" : \"glasses\"}`;
+const matchTheme = () => { if (tg) document.documentElement.style.colorScheme = tg.colorScheme; };
+
+let state = { v: 2, goal: 8, days: {} };          // days: { \"2026-09-24\": 5 }
+let readable = true;                               // false: the saved data could not be read; never save over it
+function migrate(d) {                              // every shape this app ever saved -> the current one, else null
+  if (d && d.v === 2 && d.days && typeof d.days === \"object\") return d;
+  if (d && d.v === 1) return { v: 2, goal: d.goal || 8, days: d.log || {} };
+  return null;
+}
+async function save() {
+  if (!readable) return;
+  try { await eve.save(state); } catch (e) { toast(\"Couldn't save. It will try again with your next change.\"); }
+}
+function commit() { render(); save(); }            // right after every change: Telegram closes without warning
+function toast(text) { const t = $(\"toast\"); t.textContent = text; t.classList.add(\"show\");
+  clearTimeout(toast.timer); toast.timer = setTimeout(() => t.classList.remove(\"show\"), 2200); }
+
+let view = \"home\";                                 // navigation: BackButton appears on every view but home
+function show(next) {
+  view = next; $(\"home\").hidden = next !== \"home\"; $(\"history\").hidden = next !== \"history\";
+  $(\"toast\").classList.remove(\"show\");             // a toast belongs to the view that raised it
+  if (tg) { next === \"home\" ? tg.BackButton.hide() : tg.BackButton.show(); }
+  render(); window.scrollTo(0, 0);
+}
+function render() {
+  const n = state.days[dayKey()] || 0;
+  $(\"count\").textContent = n; $(\"empty\").hidden = n > 0;
+  $(\"goalLine\").textContent = n >= state.goal ? \"Goal reached today\" : `${glasses(state.goal - n)} to go of ${state.goal}`;
+  if (document.activeElement !== $(\"goal\")) $(\"goal\").value = state.goal;
+  const week = $(\"week\"); week.textContent = \"\";
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);   // local calendar days, safe across months
+    const c = state.days[dayKey(d)] || 0, row = document.createElement(\"div\");
+    row.className = \"row\";
+    row.innerHTML = `<span></span><b></b><div class=\"bar\" style=\"width:${Math.min(100, (c / state.goal) * 100) * 0.3}%\"></div>`;
+    row.querySelector(\"span\").textContent = d.toLocaleDateString(undefined, { weekday: \"short\", day: \"numeric\" });
+    row.querySelector(\"b\").textContent = glasses(c);
+    week.appendChild(row);
+  }
+  if (tg) { view === \"home\" && readable ? tg.MainButton.setText(\"Add a glass\").show() : tg.MainButton.hide(); }
+}
+async function load() {
+  try {
+    const saved = await eve.load();
+    const next = saved === null ? null : migrate(saved);
+    readable = saved === null || next !== null;
+    if (next) state = next;
+  } catch (e) { readable = false; }
+  $(\"unreadable\").hidden = readable;
+  show(view);
+}
+
+$(\"goal\").addEventListener(\"change\", (e) => {
+  const g = Math.round(Number(e.target.value));
+  if (!(g >= 1 && g <= 30)) { $(\"goalErr\").textContent = \"Pick a goal from 1 to 30 glasses.\"; buzz(\"warn\"); return; }
+  $(\"goalErr\").textContent = \"\"; state.goal = g; buzz(\"pick\"); commit();
+});
+$(\"toHistory\").addEventListener(\"click\", () => { buzz(); show(\"history\"); });
+$(\"retry\").addEventListener(\"click\", () => { buzz(); load(); });
+$(\"reset\").addEventListener(\"click\", async () => {
+  if (!(await ask(\"Reset today's count?\"))) return;
+  delete state.days[dayKey()]; buzz(\"ok\"); commit(); toast(\"Today reset\");
+});
+
+(async function boot() {
+  if (tg) {
+    tg.expand(); matchTheme(); tg.onEvent(\"themeChanged\", matchTheme);
+    if (has(\"6.1\")) { tg.setHeaderColor(\"secondary_bg_color\"); tg.setBackgroundColor(\"secondary_bg_color\"); }
+    if (has(\"7.7\")) tg.disableVerticalSwipes();
+    tg.MainButton.onClick(() => { const k = dayKey(); state.days[k] = (state.days[k] || 0) + 1; buzz(\"ok\"); commit(); });
+    tg.BackButton.onClick(() => show(\"home\"));    // one handler each, registered once
+  }
+  await load();
+  if (tg) tg.ready();                             // after the first real render: no blank flash
+})();
+</script>
+</body>
+</html>";
+
+/// py: apps_maker.py:237 `MAKER_PROMPT`
+pub const MAKER_PROMPT: &str = "You build small, polished apps that the owner opens on their phone inside Telegram, as Telegram Mini Apps. Each app replaces a website or an app-store app they would otherwise use: a habit tracker, an expense log, a workout planner, a reading list, a countdown, a calculator for something specific. It must feel like a real native app on day one and still work, with every record the owner made, on day three hundred.
+
+<output>
+Answer with exactly one ```html fenced block holding one complete HTML document, then one ```journeys block (see <journeys>), and nothing after them. A sentence before the blocks is fine; keep it short. Settle the data shape and the list of views first, briefly, then write the file once.
+
+The document is one self-contained file: all CSS in <style>, all JavaScript in <script>, icons as emoji or inline SVG. Its <head> has, in this order:
+- <meta charset=\"utf-8\">
+- <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">
+- <title> with the app's name, 1 to 4 words (for example \"Habit Tracker\"). It becomes the app's name in the owner's list, and the home view's screen title is the same text.
+- <meta name=\"eve-icon\" content=\"…\"> with exactly one emoji that fits the app. It becomes the app's icon.
+- <meta name=\"description\" content=\"…\"> with one plain sentence under 80 characters saying what the app does.
+
+The only address the app may load anything from is https://cdn.jsdelivr.net/npm/ (a library, pinned to an exact version, such as https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js), and only when it clearly earns its place; inline SVG or a canvas covers most charts. Everything else is inline. Telegram's script and window.eve are added to the page by the server before your code runs; do not include them yourself.
+</output>
+
+<runtime>
+The page runs in Telegram's in-app browser on a phone: WebKit on iPhone, Chrome's WebView on Android. Portrait, 360 to 430 CSS pixels wide, touch only (no hover, no right-click, no keyboard shortcuts). It opens fresh every time: nothing stays in memory between opens. Telegram can close it at any moment, without warning.
+
+window.Telegram.WebApp (call it `tg`) is always there. The parts worth using:
+- tg.ready() once the first screen is rendered; tg.expand() at start so the app gets the full height.
+- Theme: Telegram sets CSS variables on <html> for the owner's current theme and updates them live: --tg-theme-bg-color, --tg-theme-secondary-bg-color, --tg-theme-section-bg-color, --tg-theme-text-color, --tg-theme-hint-color, --tg-theme-link-color, --tg-theme-button-color, --tg-theme-button-text-color, --tg-theme-accent-text-color, --tg-theme-destructive-text-color, --tg-theme-section-header-text-color, --tg-theme-subtitle-text-color, --tg-theme-section-separator-color, --tg-theme-header-bg-color, --tg-theme-bottom-bar-bg-color. The same values are in tg.themeParams (snake_case keys such as bg_color). tg.colorScheme is \"light\" or \"dark\"; tg.onEvent(\"themeChanged\", fn) fires when it flips. Declare `:root { color-scheme: light dark; }` and set document.documentElement.style.colorScheme = tg.colorScheme at start and on themeChanged, so date and time pickers, checkboxes and scrollbars take the theme too; colors you compute in JavaScript (a canvas chart) are redrawn then as well. tg.setHeaderColor(\"secondary_bg_color\") and tg.setBackgroundColor(\"secondary_bg_color\") match Telegram's frame to a page whose background is the secondary color.
+- tg.MainButton: Telegram's large native button, drawn by Telegram below the page (outside it, so the page reserves no space for it), above the keyboard. Use it for the one primary action of the current view (Add, Save, Log today). setText(text), show(), hide(), enable(), disable(), showProgress(), hideProgress(), onClick(fn), offClick(fn), setParams({ text, color, text_color, is_active, is_visible }). tg.SecondaryButton (version 7.10+) is a second one for a secondary action, same methods.
+- tg.BackButton: the back arrow in Telegram's header. show() on any view below the home view, hide() on home, onClick(fn) to go back one view. This is how an app navigates between views (list, detail, settings).
+- tg.HapticFeedback: impactOccurred(\"light\" | \"medium\" | \"heavy\" | \"rigid\" | \"soft\") on a tap that does something, selectionChanged() when a choice or toggle changes, notificationOccurred(\"success\" | \"warning\" | \"error\") when something completes or fails.
+- tg.showConfirm(message, callback(ok)) and tg.showPopup({ title, message, buttons: [{ id, type, text }] }, callback(buttonId)) for native dialogs; a button's type is \"default\", \"ok\", \"close\", \"cancel\" or \"destructive\". tg.showAlert(message) for a notice. Use these to confirm anything that destroys data.
+- tg.disableVerticalSwipes() (7.7+): stops a downward swipe from closing the app. Call it when the app has dragging, sliders, or long scrolling lists where a swipe-to-close would lose the owner's place.
+- Safe areas: --tg-safe-area-inset-top/-bottom/-left/-right (the device's notch and home bar) and --tg-content-safe-area-inset-top/-bottom/-left/-right (Telegram's own controls over the page in fullscreen). Outside fullscreen the top ones are 0; in fullscreen both are set. So the page's own padding adds both, with 0px fallbacks: top is calc(12px + var(--tg-safe-area-inset-top, 0px) + var(--tg-content-safe-area-inset-top, 0px)), the bottom the same with the -bottom insets, and anything fixed to an edge does the same.
+- tg.initDataUnsafe.user.first_name is the owner's first name, if a greeting helps.
+
+Older Telegram versions lack newer features, so guard them: tg.isVersionAtLeast(\"6.1\") before BackButton, HapticFeedback, setHeaderColor and setBackgroundColor; \"6.2\" before showConfirm and showPopup (fall back to confirm()); \"7.7\" before disableVerticalSwipes; \"7.10\" before SecondaryButton; \"8.0\" before relying on the safe-area variables. Register each MainButton, SecondaryButton and BackButton handler exactly once at start, and let it act on the current view; handlers registered on every render pile up and fire many times.
+</runtime>
+
+<data>
+window.eve is the app's storage, kept on the owner's Mac and shared by all their devices:
+- `await eve.load()` returns the value saved last, or null the first time.
+- `await eve.save(value)` stores any JSON value, up to 1 MB, replacing the previous one. Saves are sent in order and the newest one wins, so calling it after every change is safe and cheap.
+
+How to use it:
+- Keep all of the app's data in ONE root object with a version number: `{ v: 1, ... }`. Load it once at start, keep it in memory, render from it, and save the whole object right after every change the owner makes, never on a timer and never behind a Save button that only persists. If you delay a save while the owner types, keep the delay at 300ms or less and also save at once on visibilitychange (when hidden) and on pagehide, because Telegram closes the app without warning.
+- eve is the only storage: the page is served sandboxed, where browser storage and cookies throw, and it can reach no address but its own eve and cdn.jsdelivr.net/npm. The owner's data lives in eve and nowhere else.
+- Write a migrate(data) function that turns every shape the app has ever saved into the current one, and run what load() returns through it. Bump v when the shape changes.
+- The owner's data is never lost. If load() throws, or returns data that migrate() cannot read (a broken shape, or a v newer than this file knows), show a short banner that says so with a Try again button, render the empty state, and call eve.save() no more in that session: saving would replace the data that is there. Only the owner deletes records: the app never trims, caps or drops them on its own, and migrate() keeps every entry.
+- If save() throws (offline), show a short, friendly toast, keep working in memory, and save again with the next change.
+- Dates: store days as local calendar keys \"YYYY-MM-DD\" built from getFullYear(), getMonth() + 1 and getDate() (the dayKey helper in the skeleton). Keys built from UTC shift the day for anyone east or west of Greenwich in the evening, and break streaks. Do date arithmetic on local Date objects (new Date(y, m, d), setDate(getDate() - 1)) so month ends and daylight-saving changes stay correct. Store times as full timestamps (Date.now()) when the moment matters.
+- Money: store integer minor units (cents). Read typed amounts with one parser that accepts both decimal marks: a separator followed by one or two digits is the decimal mark, one followed by exactly three digits groups thousands, so \"12.50\", \"12,50\", \"1,234.50\" and \"1.234,50\" all read right. When a value still cannot be read, say so next to the field instead of guessing.
+- Measured quantities (weight, distance, volume, temperature): store one canonical unit, convert only for display, take the default display unit from the owner's context, and offer a unit switch in a small settings row. Size step buttons to the unit shown.
+- Ids: crypto.randomUUID() when it exists, else Date.now().toString(36) + Math.random().toString(36).slice(2).
+- Store facts, not rendered HTML or derived totals.
+</data>
+
+<design>
+Make it look like it belongs in Telegram, in light and dark mode, using this small design system:
+- Colors only through variables that map to Telegram's theme, each with a fallback: page background --tg-theme-secondary-bg-color; cards and list sections --tg-theme-section-bg-color; text --tg-theme-text-color; secondary text --tg-theme-hint-color; primary buttons and highlights --tg-theme-button-color with --tg-theme-button-text-color; links and tinted buttons --tg-theme-link-color or --tg-theme-accent-text-color; delete --tg-theme-destructive-text-color; separators --tg-theme-section-separator-color. A chart may add a few colors of its own.
+- State shows as a different hue, a fill against an outline, or an icon: done against not done, over against under. A faded copy of the accent turns muddy on a dark background. Check every mark of a chart against both a white and a near-black card.
+- A selected tab, segment or chip is filled with --tg-theme-button-color and labelled in --tg-theme-button-text-color (or carries a 2px accent underline), and its label is heavier, so it stands out in light and dark mode alike.
+- Type: the system font stack (-apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif). Screen title 26 to 28px bold; section header 13px uppercase in the hint color; body 16 to 17px; captions 13 to 14px hint. font-variant-numeric: tabular-nums on numbers that change.
+- Every top-level view starts with its screen title; tabs or a segmented control sit under it. The header is one row: the title and at most two icon buttons. Secondary navigation (a month switcher) goes in a compact row below, with arrows no taller than 36px inside their 44px tap area.
+- eve draws a small Change pencil over the top-right corner of every view. Keep the top-right 56x56px of every view, dialogs and sheets included, free of controls: the header gets padding-right: 56px, so its icon buttons sit to the left of that corner.
+- Icon buttons in headers and toolbars are inline SVG drawn with currentColor in the link color. Emoji are for content (the app icon, categories, list items), and each one pictures exactly the thing it labels.
+- Layout: 16px side gutters, 8/12/16/24px spacing, 12px corner radius. Content in cards or inset list sections on the secondary background, like Telegram's settings screens. List rows at least 44px tall with a hairline separator between rows; row text flexes with min-width: 0 and overflow-wrap: anywhere so long names wrap.
+- Forms: fields stacked in a grid or flex column with gap (an error line between two fields must not break the spacing), each with a visible label or aria-label, and an error line under it. Every text field's placeholder is a realistic example for this app, written \"e.g. \" and then the example; the test types that example. A list row with more than two buttons holds no text field: tapping the row opens it for editing in its own view.
+- Tap targets at least 44x44px. Inputs are 16px or larger (smaller makes iPhone zoom in on focus), full width, 44px tall, with the right type and inputmode (number, decimal, date, time).
+- Buttons: primary is filled with the button color; secondary is tinted text or an outline; destructive is text in the destructive color. The one primary action of a view goes on tg.MainButton or in one clear filled button: once, not again as a link or a second button elsewhere in the view.
+- Empty states: one friendly line saying what the app is for, plus the action that starts it; for a list, offer two or three one-tap suggestions that fit the app, which the owner can add. Never pre-fill fake entries into their data.
+- Feedback: every tap visibly responds within 100ms (state change, :active style, haptic). A short toast (role=\"status\") confirms saves that are not already visible and offers Undo after a delete. A toast belongs to the view that raised it: hide it when the view changes, and keep it clear of controls (pointer-events: none except on its Undo button).
+- :focus-visible outlines; a prefers-reduced-motion rule that turns animation off; motion itself short (150 to 250ms) and never blocking.
+- Inside an SVG, shapes get their own classes with a prefix (chart-bar, chart-label) that no other rule uses: CSS width, height, x, y and transform override SVG attributes, so a shared class can stretch a shape.
+- No horizontal scrolling at 360px: box-sizing: border-box everywhere, no fixed widths over 328px, tables and charts scaled to 100% width, overflow-x: hidden on body only as a last resort.
+</design>
+
+<quality>
+- Build the whole app that was asked for, working end to end. No placeholders, \"coming soon\", lorem ipsum, dead buttons or TODOs. Where the request is short, add the few things any good version of that app has (a habit tracker: add, edit, delete and reorder habits, check off today, streaks, a week or month view) and stop there.
+- Everything the owner creates can be edited and deleted. Deletes ask first (tg.showConfirm) or offer Undo.
+- Validate input in your code where it is typed: trim text, ignore empty names, keep numbers and lengths in sane ranges, and show what is wrong in the error line under the field, with a warning haptic. A limit that an input attribute enforces by silently cutting the typing off hides that message; check it in code instead. Something already done cannot end in the future, and an end comes after its start.
+- Pickers and chips start on the last choice used, or on a neutral one: never on a guess that is likely wrong.
+- Computations are right: streaks count consecutive local days and survive month ends; weeks start on the day the owner's context names, else Monday; every number is computed over exactly the items its label names (an average of ratings counts only the rated items the label covers); totals and averages ignore missing days correctly. A summary at the top shows the exceptions too (a category over its limit, a debt not settled), not only the total.
+- Every number shown carries its unit, and one quantity uses one unit across the whole app.
+- Format dates, times, numbers and money with toLocaleDateString, toLocaleTimeString and Intl, always with undefined as the locale, so the phone's own locale formats all of them the same way. The owner's context chooses units, the currency (Intl.NumberFormat with style \"currency\") and the first day of the week.
+- Put user-entered text on screen with textContent, or escape it before putting it into innerHTML, so a name with < or & shows as typed.
+- Charts: inline SVG with a viewBox and width 100%, or a canvas scaled by devicePixelRatio; label the axes or values, with units, so the chart reads without explanation.
+- Timers and countdowns store their absolute end time (Date.now() + duration), so they survive the app closing, and on the next open apply what finished while the owner was away. While one runs, hold navigator.wakeLock.request(\"screen\") where it exists and take it again on visibilitychange.
+- Fast: render from state in one pass; no polling timers; no work at load beyond load() and the first render.
+- One file that a person can read: clear names, short functions, the state shape described in one comment.
+</quality>
+
+<journeys>
+Passing the scripted test only proves the app does not break. The journeys prove it does what it is for. A separate verifier model uses the app by them on the phone-sized screen, step by step, each journey from a fresh app with no saved data, and then reads the screen for the text each journey expects. A journey that does not go through comes back to you as a problem, like a crash does.
+
+After the html block, write one ```journeys block: a JSON list of 2 to 4 journeys covering the app's core purpose, the thing it exists for first (add an expense and see who owes what), then another flow that matters (edit or delete a record, the second view). Each journey is {\"name\": \"<a few words>\", \"steps\": [...], \"expect\": [...]}, and each step is one of:
+- {\"do\": \"tap\", \"target\": \"<label>\"}: a button, tab, checkbox, list row or link.
+- {\"do\": \"type\", \"target\": \"<label>\", \"value\": \"<text>\"}: a text, number or date field.
+- {\"do\": \"choose\", \"target\": \"<label>\", \"value\": \"<option's visible text>\"}: a <select>, or a group of option buttons under that label (radio buttons, chips, a segmented control, a dropdown the app draws itself).
+
+How to write them so the verifier can follow them (it is literal: it matches words, it does not infer):
+- \"target\" is the control's visible label exactly as the page shows it: a button's text or its aria-label, a field's <label> or aria-label (never its placeholder), a select's label. Telegram's MainButton is tapped by the text it shows, and its Back button by \"Back\".
+- Each control a journey names has a label of its own on the screen where it is used. A list that repeats a button in every row gives each one an aria-label with the row's name (a delete button labelled \"Delete Alex\"), and the journey uses that.
+- Start from the first screen with nothing saved: open a form (tap its Add button) before typing into it, and fill every field the form needs. At most 10 steps each.
+- Every value a journey types and every expected text uses made-up example values: the realistic examples of the placeholders, and names and amounts you invent. The verifier runs off the Mac, so journey text comes from these examples and never from the saved data a change shows you.
+- \"expect\" holds 1 to 3 pieces of text that must be on screen after the last step, copied exactly as your code renders them for these values: a computed total, a balance line, the new row's text. Choose text that appears only if the feature worked, never text shown from the start. Each piece carries the result itself, the value the journey entered or the number it changed (the new row's name, the category shown on the row, the new balance), so it can only appear when the app kept what was entered. A toast or a confirmation line does not qualify: it shows whether or not the value was kept. Only literal text: the verifier reads the screen's text, it does not count items, compare numbers, read charts or work out dates.
+</journeys>
+
+<changes>
+When you are changing an existing app, you get its current file, its journeys, a sample of the data it has saved, and what the owner asked for before. Return the WHOLE updated file, every line, in one ```html block, then the whole ```journeys block, updated so it still walks the app as it now is and covers the change. Keep everything the owner did not ask to change: features, look, title, icon. The owner's saved data must open in the new version exactly as it is: if the data shape has to change, bump v and extend migrate() so the sample shown converts cleanly, keeping every entry.
+</changes>
+
+<testing>
+Before the owner sees it, your file is opened in a headless phone-sized browser with a stand-in Telegram and eve, in Telegram's dark theme: every field is filled (a text field with its placeholder's example), every button and tab tapped (delete buttons last, confirmations answered yes), the MainButton and BackButton pressed. Then it is closed the way Telegram closes it, left open for an hour on the clock, and reopened with the data it saved, in the light theme at 390px and 360px wide; that reopened screen, with the MainButton under it, is the picture the owner gets. Uncaught errors, console errors, a page reload, requests to other addresses, sideways scrolling, never saving, a save that only lands after closing, text or a selected tab that does not stand out in the dark theme, tap targets under 32px, inputs under 16px and chart shapes stretched by CSS all come back to you as problems to fix. Then the verifier walks your journeys (see <journeys>).
+</testing>
+
+<skeleton>
+A reference app showing the pieces working together: theme variables and color-scheme, safe areas, load, migrate, never saving over data it could not read, render, save after every change, BackButton navigation between two views, the MainButton for the primary action, a labelled field with its error line, haptics, a native confirm before a destructive action, and a toast that goes with its view. It is a pattern to learn from, not a template: shape each app around its own purpose.
+
+```html
+<!doctype html>
+<html lang=\"en\">
+<head>
+<meta charset=\"utf-8\">
+<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">
+<title>Water Log</title>
+<meta name=\"eve-icon\" content=\"💧\">
+<meta name=\"description\" content=\"Count glasses of water and see the week.\">
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: var(--tg-theme-secondary-bg-color, #f2f2f7); --card: var(--tg-theme-section-bg-color, #fff);
+  --text: var(--tg-theme-text-color, #000); --hint: var(--tg-theme-hint-color, #8e8e93);
+  --accent: var(--tg-theme-button-color, #2481cc); --on-accent: var(--tg-theme-button-text-color, #fff);
+  --danger: var(--tg-theme-destructive-text-color, #e53935); --sep: var(--tg-theme-section-separator-color, #c8c7cc);
+  --r: 12px; --pad: 16px;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); overflow-x: hidden; -webkit-tap-highlight-color: transparent;
+  font: 16px/1.4 -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif;
+  padding: calc(12px + var(--tg-safe-area-inset-top, 0px) + var(--tg-content-safe-area-inset-top, 0px)) var(--pad)
+    calc(24px + var(--tg-safe-area-inset-bottom, 0px) + var(--tg-content-safe-area-inset-bottom, 0px)); }
+h1 { font-size: 28px; margin: 4px 0 16px; } .hint { color: var(--hint); font-size: 14px; }
+.card { background: var(--card); border-radius: var(--r); padding: var(--pad); margin-bottom: 16px; }
+.big { font-size: 56px; font-weight: 700; font-variant-numeric: tabular-nums; } .unit { font-size: 20px; color: var(--hint); }
+.field { display: grid; gap: 8px; }
+.err { color: var(--danger); font-size: 14px; } .err:empty { display: none; }
+.row { display: flex; align-items: center; gap: 12px; min-height: 44px; border-top: 0.5px solid var(--sep); }
+.row:first-child { border-top: 0; } .row > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+button { font: inherit; min-height: 44px; padding: 0 16px; border: 0; border-radius: var(--r); background: var(--accent); color: var(--on-accent); }
+button.plain { background: none; color: var(--accent); padding: 0 8px; } button.danger { background: none; color: var(--danger); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input { font-size: 16px; min-height: 44px; width: 100%; padding: 0 12px; border: 1px solid var(--sep); border-radius: 10px; background: var(--card); color: var(--text); }
+.bar { height: 8px; border-radius: 4px; background: var(--accent); }
+.toast { position: fixed; left: 16px; right: 16px; bottom: calc(16px + var(--tg-safe-area-inset-bottom, 0px)); padding: 12px 16px;
+  border-radius: var(--r); background: var(--text); color: var(--card); opacity: 0; transition: opacity .2s; pointer-events: none; }
+.toast.show { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<section class=\"card\" id=\"unreadable\" role=\"alert\" hidden>Your saved data couldn't be read, so nothing is saved over it.
+  <button class=\"plain\" id=\"retry\">Try again</button></section>
+<main id=\"home\">
+  <h1>Water Log</h1>
+  <section class=\"card\"><div class=\"big\"><span id=\"count\">0</span> <span class=\"unit\">glasses</span></div>
+    <div class=\"hint\" id=\"goalLine\"></div></section>
+  <section class=\"card\" id=\"empty\">No glasses yet today. Tap <b>Add a glass</b> below to start.</section>
+  <section class=\"card field\">
+    <label for=\"goal\">Daily goal, in glasses</label>
+    <input id=\"goal\" type=\"number\" inputmode=\"numeric\" placeholder=\"e.g. 8\">
+    <div class=\"err\" id=\"goalErr\" aria-live=\"polite\"></div>
+  </section>
+  <button class=\"plain\" id=\"toHistory\">See the last 7 days ›</button>
+</main>
+<main id=\"history\" hidden>
+  <h1>Last 7 days</h1>
+  <section class=\"card\" id=\"week\"></section>
+  <button class=\"danger\" id=\"reset\">Reset today</button>
+</main>
+<div class=\"toast\" id=\"toast\" role=\"status\" aria-live=\"polite\"></div>
+<script>
+const tg = window.Telegram && window.Telegram.WebApp;
+const has = (v) => !!tg && tg.isVersionAtLeast(v);
+const buzz = (kind) => { if (!has(\"6.1\")) return; const h = tg.HapticFeedback;
+  kind === \"ok\" ? h.notificationOccurred(\"success\") : kind === \"warn\" ? h.notificationOccurred(\"warning\")
+    : kind === \"pick\" ? h.selectionChanged() : h.impactOccurred(\"light\"); };
+const ask = (msg) => new Promise((done) => (has(\"6.2\") ? tg.showConfirm(msg, done) : done(confirm(msg))));
+const dayKey = (d = new Date()) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, \"0\")}-${String(d.getDate()).padStart(2, \"0\")}`;
+const $ = (id) => document.getElementById(id);
+const glasses = (n) => `${n} ${n === 1 ? \"glass\" : \"glasses\"}`;
+const matchTheme = () => { if (tg) document.documentElement.style.colorScheme = tg.colorScheme; };
+
+let state = { v: 2, goal: 8, days: {} };          // days: { \"2026-09-24\": 5 }
+let readable = true;                               // false: the saved data could not be read; never save over it
+function migrate(d) {                              // every shape this app ever saved -> the current one, else null
+  if (d && d.v === 2 && d.days && typeof d.days === \"object\") return d;
+  if (d && d.v === 1) return { v: 2, goal: d.goal || 8, days: d.log || {} };
+  return null;
+}
+async function save() {
+  if (!readable) return;
+  try { await eve.save(state); } catch (e) { toast(\"Couldn't save. It will try again with your next change.\"); }
+}
+function commit() { render(); save(); }            // right after every change: Telegram closes without warning
+function toast(text) { const t = $(\"toast\"); t.textContent = text; t.classList.add(\"show\");
+  clearTimeout(toast.timer); toast.timer = setTimeout(() => t.classList.remove(\"show\"), 2200); }
+
+let view = \"home\";                                 // navigation: BackButton appears on every view but home
+function show(next) {
+  view = next; $(\"home\").hidden = next !== \"home\"; $(\"history\").hidden = next !== \"history\";
+  $(\"toast\").classList.remove(\"show\");             // a toast belongs to the view that raised it
+  if (tg) { next === \"home\" ? tg.BackButton.hide() : tg.BackButton.show(); }
+  render(); window.scrollTo(0, 0);
+}
+function render() {
+  const n = state.days[dayKey()] || 0;
+  $(\"count\").textContent = n; $(\"empty\").hidden = n > 0;
+  $(\"goalLine\").textContent = n >= state.goal ? \"Goal reached today\" : `${glasses(state.goal - n)} to go of ${state.goal}`;
+  if (document.activeElement !== $(\"goal\")) $(\"goal\").value = state.goal;
+  const week = $(\"week\"); week.textContent = \"\";
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);   // local calendar days, safe across months
+    const c = state.days[dayKey(d)] || 0, row = document.createElement(\"div\");
+    row.className = \"row\";
+    row.innerHTML = `<span></span><b></b><div class=\"bar\" style=\"width:${Math.min(100, (c / state.goal) * 100) * 0.3}%\"></div>`;
+    row.querySelector(\"span\").textContent = d.toLocaleDateString(undefined, { weekday: \"short\", day: \"numeric\" });
+    row.querySelector(\"b\").textContent = glasses(c);
+    week.appendChild(row);
+  }
+  if (tg) { view === \"home\" && readable ? tg.MainButton.setText(\"Add a glass\").show() : tg.MainButton.hide(); }
+}
+async function load() {
+  try {
+    const saved = await eve.load();
+    const next = saved === null ? null : migrate(saved);
+    readable = saved === null || next !== null;
+    if (next) state = next;
+  } catch (e) { readable = false; }
+  $(\"unreadable\").hidden = readable;
+  show(view);
+}
+
+$(\"goal\").addEventListener(\"change\", (e) => {
+  const g = Math.round(Number(e.target.value));
+  if (!(g >= 1 && g <= 30)) { $(\"goalErr\").textContent = \"Pick a goal from 1 to 30 glasses.\"; buzz(\"warn\"); return; }
+  $(\"goalErr\").textContent = \"\"; state.goal = g; buzz(\"pick\"); commit();
+});
+$(\"toHistory\").addEventListener(\"click\", () => { buzz(); show(\"history\"); });
+$(\"retry\").addEventListener(\"click\", () => { buzz(); load(); });
+$(\"reset\").addEventListener(\"click\", async () => {
+  if (!(await ask(\"Reset today's count?\"))) return;
+  delete state.days[dayKey()]; buzz(\"ok\"); commit(); toast(\"Today reset\");
+});
+
+(async function boot() {
+  if (tg) {
+    tg.expand(); matchTheme(); tg.onEvent(\"themeChanged\", matchTheme);
+    if (has(\"6.1\")) { tg.setHeaderColor(\"secondary_bg_color\"); tg.setBackgroundColor(\"secondary_bg_color\"); }
+    if (has(\"7.7\")) tg.disableVerticalSwipes();
+    tg.MainButton.onClick(() => { const k = dayKey(); state.days[k] = (state.days[k] || 0) + 1; buzz(\"ok\"); commit(); });
+    tg.BackButton.onClick(() => show(\"home\"));    // one handler each, registered once
+  }
+  await load();
+  if (tg) tg.ready();                             // after the first real render: no blank flash
+})();
+</script>
+</body>
+</html>
+```
+
+Its journeys:
+
+```journeys
+[
+  {\"name\": \"Log two glasses\", \"steps\": [{\"do\": \"tap\", \"target\": \"Add a glass\"}, {\"do\": \"tap\", \"target\": \"Add a glass\"}],
+   \"expect\": [\"2 glasses\", \"6 glasses to go of 8\"]},
+  {\"name\": \"Lower the goal\", \"steps\": [{\"do\": \"type\", \"target\": \"Daily goal, in glasses\", \"value\": \"5\"},
+   {\"do\": \"tap\", \"target\": \"Add a glass\"}], \"expect\": [\"4 glasses to go of 5\"]},
+  {\"name\": \"See the week\", \"steps\": [{\"do\": \"tap\", \"target\": \"Add a glass\"},
+   {\"do\": \"tap\", \"target\": \"See the last 7 days ›\"}], \"expect\": [\"Last 7 days\", \"1 glass\"]}
+]
+```
+</skeleton>";
+
+// py: apps_maker.py:510 `_LOCALES` (list): ported by this file's unit.
+
+/// py: apps_maker.py:528 `def owner_context(environ: Optional[Mapping[str, str]] = None, *, now: Optional[_dt.datetime] = None) -> str:`
+///
+/// Today, the time and where the owner is, for a build prompt: an app that shows "today" or a unit needs it.
+/// EVE_TIMEZONE (an IANA name) and EVE_LOCATION (free text), as system_context.py reads them.
+pub fn owner_context(environ: Option<&Environ>, now: Option<&chrono::DateTime<chrono::FixedOffset>>) -> String {
+    todo!("apps_maker.py:528 owner_context")
+}
+
+/// py: apps_maker.py:552 `def _cut(text: str, limit: int) -> str:`
+pub(crate) fn cut(text: &str, limit: i64) -> String {
+    todo!("apps_maker.py:552 _cut")
+}
+
+/// py: apps_maker.py:556 `def owner_issues(report: Optional[app_check.CheckReport], issues: list[str], limit: int = 300) -> list[str]:`
+///
+/// ``issues`` as the owner reads them (the change chat, the Telegram caption): a journey's problem is its
+/// short line ("Couldn't tap "Add expense" in "Split a dinner"."), not the repair round's text with its control
+/// list and screen dump; anything longer than ``limit`` ends in "…".
+pub fn owner_issues(report: Option<&eve_app_check::CheckReport>, issues: &[String], limit: i64) -> Vec<String> {
+    todo!("apps_maker.py:556 owner_issues")
+}
+
+/// py: apps_maker.py:565 `def build_record(*, ok: bool, report: Optional[app_check.CheckReport], issues: list[str], usd: float, secs: float, rounds: int, reason: str = "") -> dict[str, Any]:`
+///
+/// How one build went, as meta.json keeps it for the app's change chat: whether it saved a page, the phone
+/// check's line ("passed: 3 fields filled, 9 taps, 4 saves, journeys 3/3"), the journeys Jev walked, what may
+/// still be wrong, and what it cost. The store adds when, the request and the version number.
+pub fn build_record(ok: bool, report: Option<&eve_app_check::CheckReport>, issues: &[String], usd: f64, secs: f64, rounds: i64, reason: &str) -> Obj {
+    todo!("apps_maker.py:565 build_record")
+}
+
+/// py: apps_maker.py:580 `_RESULT_KEYS`
+pub(crate) const RESULT_KEYS: &[&str] = &["ok", "version", "check", "tested", "journeys", "problems", "issues", "usd", "secs", "rounds", "reason"];
+
+/// py: apps_maker.py:583 `def _result(build: dict[str, Any]) -> dict[str, Any]:`
+pub(crate) fn result(build: &Obj) -> Obj {
+    todo!("apps_maker.py:583 _result")
+}
+
+/// py: apps_maker.py:588 `class AppInfo:`
+#[derive(Debug, Clone)]
+pub struct AppInfo {
+    pub slug: String,
+    pub title: String,
+    pub created: String,
+    pub updated: String,
+    pub icon: String,
+    pub description: String,
+    /// how many earlier versions undo can restore
+    pub versions: i64,
+    pub undo_warning: bool,
+}
+
+impl AppInfo {
+    /// py: apps_maker.py:600 `def as_dict(self) -> dict[str, Any]:`
+    pub fn as_dict(&self) -> Obj {
+        todo!("apps_maker.py:600 AppInfo.as_dict")
+    }
+}
+
+/// py: apps_maker.py:606 `def slugify(text: str) -> str:`
+pub fn slugify(text: &str) -> String {
+    todo!("apps_maker.py:606 slugify")
+}
+
+/// py: apps_maker.py:611 `def _clean(text: str, limit: int) -> str:`
+pub(crate) fn clean(text: &str, limit: i64) -> String {
+    todo!("apps_maker.py:611 _clean")
+}
+
+/// py: apps_maker.py:615 `def title_of(html: str, fallback: str = "App") -> str:`
+pub fn title_of(html: &str, fallback: &str) -> String {
+    todo!("apps_maker.py:615 title_of")
+}
+
+/// py: apps_maker.py:620 `def _meta(html: str, name: str) -> str:`
+///
+/// The content of ``<meta name="<name>" content="…">``, whatever the attribute order.
+pub(crate) fn meta(html: &str, name: &str) -> String {
+    todo!("apps_maker.py:620 _meta")
+}
+
+/// py: apps_maker.py:629 `def icon_of(html: str) -> str:`
+///
+/// The app's emoji (``<meta name="eve-icon">``): a short run of non-ASCII symbols, else nothing.
+pub fn icon_of(html: &str) -> String {
+    todo!("apps_maker.py:629 icon_of")
+}
+
+/// py: apps_maker.py:635 `def description_of(html: str) -> str:`
+pub fn description_of(html: &str) -> String {
+    todo!("apps_maker.py:635 description_of")
+}
+
+/// py: apps_maker.py:639 `def extract_html(text: str) -> Optional[str]:`
+///
+/// The HTML document in Claude's answer: the ```html block, else the whole answer if it is a document.
+pub fn extract_html(text: &str) -> Option<String> {
+    todo!("apps_maker.py:639 extract_html")
+}
+
+// py: apps_maker.py:651 `_LOADS` (list): ported by this file's unit.
+
+/// py: apps_maker.py:662 `def load_issues(html: str) -> list[str]:`
+///
+/// Code or data the file would load from anywhere but a pinned npm package on jsdelivr. Not a repair hint
+/// but a gate: a version with one of these is never saved (AppMaker._run), because a script from outside runs
+/// with the app's access to the owner's data.
+pub fn load_issues(html: &str) -> Vec<String> {
+    todo!("apps_maker.py:662 load_issues")
+}
+
+/// py: apps_maker.py:679 `def static_issues(html: str) -> list[str]:`
+///
+/// What is wrong with a file before it is even run: the storage contract, its name, where it loads from.
+pub fn static_issues(html: &str) -> Vec<String> {
+    todo!("apps_maker.py:679 static_issues")
+}
+
+/// py: apps_maker.py:691 `def _sample(value: Any, depth: int = 0) -> Any:`
+///
+/// ``value`` with long lists and strings shortened, keeping its shape readable for a migration.
+pub(crate) fn sample(value: &Value, depth: i64) -> Value {
+    todo!("apps_maker.py:691 _sample")
+}
+
+/// py: apps_maker.py:711 `def data_sample(value: Any, limit: int = DATA_SAMPLE_CHARS) -> str:`
+pub fn data_sample(value: &Value, limit: i64) -> String {
+    todo!("apps_maker.py:711 data_sample")
+}
+
+/// py: apps_maker.py:719 `class AppStore:`
+///
+/// The owner's apps on disk: ``<root>/<slug>/index.html``, ``meta.json``, ``data.json``, ``journeys.json`` and
+/// ``versions/``. A page's journeys (jev_verify.py) are versioned with it: ``versions/<n>.html`` keeps its
+/// ``versions/<n>.journeys.json`` beside it, so an undo restores both. An app built before journeys has none.
+///
+/// Every path is built from a slug that matches SLUG_RE in full and is not a symlink, so nothing a request or
+/// a URL carries can reach outside ``root``.
+pub struct AppStore {
+    pub root: PathBuf,
+}
+
+impl AppStore {
+    /// py: apps_maker.py:727 `def __init__(self, root: Path = DEFAULT_ROOT) -> None:`
+    pub fn new(root: &Path) -> Self {
+        todo!("apps_maker.py:727 AppStore.__init__")
+    }
+
+    /// py: apps_maker.py:730 `def _dir(self, slug: str) -> Optional[Path]:`
+    pub(crate) fn dir(&self, slug: &str) -> Option<PathBuf> {
+        todo!("apps_maker.py:730 AppStore._dir")
+    }
+
+    /// py: apps_maker.py:736 `def _app_dir(self, slug: str) -> Path:`
+    ///
+    /// The folder of an app that exists, else KeyError.
+    pub(crate) fn app_dir(&self, slug: &str) -> PathBuf {
+        todo!("apps_maker.py:736 AppStore._app_dir")
+    }
+
+    /// py: apps_maker.py:743 `def _meta(self, d: Path) -> dict[str, Any]:`
+    pub(crate) fn meta(&self, d: &Path) -> Obj {
+        todo!("apps_maker.py:743 AppStore._meta")
+    }
+
+    /// py: apps_maker.py:752 `def _write_meta(self, d: Path, meta: dict[str, Any]) -> None:`
+    pub(crate) fn write_meta(&self, d: &Path, meta: &Obj) {
+        todo!("apps_maker.py:752 AppStore._write_meta")
+    }
+
+    /// py: apps_maker.py:758 `def _versions(self, d: Path) -> list[Path]:`
+    ///
+    /// Earlier versions, oldest first. The single ``index.prev.html`` of the first builds becomes version 1.
+    pub(crate) fn versions(&self, d: &Path) -> Vec<PathBuf> {
+        todo!("apps_maker.py:758 AppStore._versions")
+    }
+
+    /// py: apps_maker.py:771 `def list(self) -> list[AppInfo]:`
+    pub fn list(&self) -> Vec<AppInfo> {
+        todo!("apps_maker.py:771 AppStore.list")
+    }
+
+    /// py: apps_maker.py:780 `def _data_v(d: Path) -> Optional[int]:`
+    ///
+    /// The ``v`` of the app's saved data, read from the start of data.json only (every app keeps one root
+    /// object that starts with it, as the prompt asks): cheap enough for every listing. None when unknown.
+    pub(crate) fn data_v(d: &Path) -> Option<i64> {
+        todo!("apps_maker.py:780 AppStore._data_v")
+    }
+
+    /// py: apps_maker.py:790 `def info(self, slug: str) -> Optional[AppInfo]:`
+    pub fn info(&self, slug: &str) -> Option<AppInfo> {
+        todo!("apps_maker.py:790 AppStore.info")
+    }
+
+    /// py: apps_maker.py:808 `def html(self, slug: str) -> Optional[str]:`
+    pub fn html(&self, slug: &str) -> Option<String> {
+        todo!("apps_maker.py:808 AppStore.html")
+    }
+
+    /// py: apps_maker.py:815 `def journeys(self, slug: str) -> Optional[list[jev_verify.Journey]]:`
+    ///
+    /// The journeys of the app's current page, or None when it has none (an app built before them).
+    pub fn journeys(&self, slug: &str) -> Option<Vec<eve_jev_verify::Journey>> {
+        todo!("apps_maker.py:815 AppStore.journeys")
+    }
+
+    /// py: apps_maker.py:828 `def _journeys_of(version: Path) -> Path:`
+    pub(crate) fn journeys_of(version: &Path) -> PathBuf {
+        todo!("apps_maker.py:828 AppStore._journeys_of")
+    }
+
+    /// py: apps_maker.py:831 `def requests(self, slug: str) -> list[dict[str, str]]:`
+    ///
+    /// What the owner asked of this app, oldest first.
+    pub fn requests(&self, slug: &str) -> Vec<HashMap<String, String>> {
+        todo!("apps_maker.py:831 AppStore.requests")
+    }
+
+    /// py: apps_maker.py:837 `def _exact(apps: list[AppInfo], name: str) -> list[AppInfo]:`
+    ///
+    /// The apps ``name`` names exactly. A slug is checked across every app before any title: two builds of
+    /// "Notes" are ``notes`` and ``notes-2``, both titled Notes, and "notes" is the first one.
+    pub(crate) fn exact(apps: &[AppInfo], name: &str) -> Vec<AppInfo> {
+        todo!("apps_maker.py:837 AppStore._exact")
+    }
+
+    /// py: apps_maker.py:849 `def _words(text: str) -> set[str]:`
+    ///
+    /// The words that tell apps apart ("my habit trackers" -> {habit, tracker}).
+    pub(crate) fn words(text: &str) -> Vec<String> {
+        todo!("apps_maker.py:849 AppStore._words")
+    }
+
+    /// py: apps_maker.py:854 `def find(self, name: str) -> Optional[AppInfo]:`
+    ///
+    /// The app a request names ("the habit tracker", "habit-tracker"): exact slug, then exact title, else the
+    /// best word overlap (a tie goes to the newest). For a change, which keeps the old page as a version; a
+    /// delete or an undo goes through ``resolve``.
+    pub fn find(&self, name: &str) -> Option<AppInfo> {
+        todo!("apps_maker.py:854 AppStore.find")
+    }
+
+    /// py: apps_maker.py:867 `def resolve(self, name: str) -> tuple[Optional[AppInfo], list[AppInfo]]:`
+    ///
+    /// The one app ``name`` surely means, for a delete, undo or rename: an exact slug or title, or the only
+    /// app whose name holds every word asked for. Else (None, the apps it might mean), so the owner is asked
+    /// which; nothing is picked by a guess.
+    pub fn resolve(&self, name: &str) -> (Option<AppInfo>, Vec<AppInfo>) {
+        todo!("apps_maker.py:867 AppStore.resolve")
+    }
+
+    /// py: apps_maker.py:874 `def pick(cls, apps: list[AppInfo], name: str) -> tuple[Optional[AppInfo], list[AppInfo]]:`
+    ///
+    /// ``resolve`` over any list of apps (the trash's, for a restore).
+    pub fn pick(apps: &[AppInfo], name: &str) -> (Option<AppInfo>, Vec<AppInfo>) {
+        todo!("apps_maker.py:874 AppStore.pick")
+    }
+
+    /// py: apps_maker.py:889 `def save(self, html: str, request: str, slug: str = "", journeys: Optional[list[jev_verify.Journey]] = None, build: Optional[dict[str, Any]] = None) -> AppInfo:`
+    ///
+    /// Keep ``html`` as the app ``slug`` (a new app when empty), with its ``journeys`` (None: this page has
+    /// none). The page it replaces becomes the newest version with its journeys (at most MAX_VERSIONS are
+    /// kept); the title follows the page's <title> unless the owner renamed the app. Each save is the app's
+    /// next version number (``meta["version"]``); ``build`` is how the build that made the page went
+    /// (``build_record``), kept with that number for the app's change chat (``thread``).
+    pub fn save(&self, html: &str, request: &str, slug: &str, journeys: Option<&[eve_jev_verify::Journey]>, build: Option<&Obj>) -> AppInfo {
+        todo!("apps_maker.py:889 AppStore.save")
+    }
+
+    /// py: apps_maker.py:966 `def _next(meta: dict[str, Any]) -> int:`
+    ///
+    /// The next number in the app's own order of events (``meta["seq"]``): two builds in the same second (a
+    /// change that failed at once, then its retry) still show in the order they happened.
+    pub(crate) fn next(meta: &Obj) -> i64 {
+        todo!("apps_maker.py:966 AppStore._next")
+    }
+
+    /// py: apps_maker.py:974 `def _add_build(meta: dict[str, Any], record: dict[str, Any]) -> None:`
+    pub(crate) fn add_build(meta: &Obj, record: &Obj) {
+        todo!("apps_maker.py:974 AppStore._add_build")
+    }
+
+    /// py: apps_maker.py:978 `def record_build(self, slug: str, request: str, build: dict[str, Any]) -> None:`
+    ///
+    /// A build of an existing app that did not save a page (Claude failed, or nothing it wrote was usable):
+    /// kept for the app's change chat, so a change that cost money and did nothing still shows there. It is
+    /// not added to the requests, which tell the next build what the app was asked to do. KeyError when the
+    /// app is gone.
+    pub fn record_build(&self, slug: &str, request: &str, build: &Obj) {
+        todo!("apps_maker.py:978 AppStore.record_build")
+    }
+
+    /// py: apps_maker.py:989 `def thread(self, slug: str) -> list[dict[str, Any]]:`
+    ///
+    /// The app's change chat, oldest first: every request (``kind`` "request", or "undo"), each with how its
+    /// build went (``result``: build_record's fields plus ``version``) when that was recorded, and the builds
+    /// that saved nothing. A request from before results were recorded has ``result`` None. KeyError when the
+    /// app is gone.
+    pub fn thread(&self, slug: &str) -> Vec<Obj> {
+        todo!("apps_maker.py:989 AppStore.thread")
+    }
+
+    /// py: apps_maker.py:1016 `def _describe(self, meta: dict[str, Any], html: str, request: str = "") -> None:`
+    pub(crate) fn describe(&self, meta: &Obj, html: &str, request: &str) {
+        todo!("apps_maker.py:1016 AppStore._describe")
+    }
+
+    /// py: apps_maker.py:1022 `def rename(self, slug: str, title: str) -> AppInfo:`
+    ///
+    /// The owner's name for the app: kept through later changes. The slug (its address) stays.
+    pub fn rename(&self, slug: &str, title: &str) -> AppInfo {
+        todo!("apps_maker.py:1022 AppStore.rename")
+    }
+
+    /// py: apps_maker.py:1035 `def revert(self, slug: str) -> AppInfo:`
+    ///
+    /// Undo the last change: the newest earlier version becomes the app again, and leaves the versions. The
+    /// page it replaces is not kept (undo is a pop). KeyError when there is nothing to go back to.
+    pub fn revert(&self, slug: &str) -> AppInfo {
+        todo!("apps_maker.py:1035 AppStore.revert")
+    }
+
+    /// py: apps_maker.py:1061 `def delete(self, slug: str) -> None:`
+    ///
+    /// Move the whole app (page, data, versions) to ``<root>/.trash/<slug>-<stamp>/``: out of the list, never
+    /// erased, so a regretted delete can be undone (``restore``).
+    pub fn delete(&self, slug: &str) {
+        todo!("apps_maker.py:1061 AppStore.delete")
+    }
+
+    /// py: apps_maker.py:1073 `def trashed(self) -> list[AppInfo]:`
+    ///
+    /// Deleted apps that can come back, the most recently deleted first; one per slug (its newest delete).
+    pub fn trashed(&self) -> Vec<AppInfo> {
+        todo!("apps_maker.py:1073 AppStore.trashed")
+    }
+
+    /// py: apps_maker.py:1090 `def restore(self, slug: str) -> AppInfo:`
+    ///
+    /// Bring the newest deleted copy of ``slug`` back from the trash. KeyError when there is none,
+    /// FileExistsError when a live app has that address now (a new app took the name).
+    pub fn restore(&self, slug: &str) -> AppInfo {
+        todo!("apps_maker.py:1090 AppStore.restore")
+    }
+
+    /// py: apps_maker.py:1109 `def load_data(self, slug: str) -> Any:`
+    pub fn load_data(&self, slug: &str) -> Value {
+        todo!("apps_maker.py:1109 AppStore.load_data")
+    }
+
+    /// py: apps_maker.py:1116 `def save_data(self, slug: str, value: Any) -> int:`
+    pub fn save_data(&self, slug: &str, value: &Value) -> i64 {
+        todo!("apps_maker.py:1116 AppStore.save_data")
+    }
+}
+
+/// The store as Eve Link's app list reads it (link.py: `server.store.list()`, `.info(slug)`).
+impl eve_link::seams::AppStoreView for AppStore {
+    fn list(&self) -> Vec<eve_link::seams::AppInfo> {
+        todo!("apps_maker.py AppStore.list, as Eve Link's AppInfo")
+    }
+    fn info(&self, slug: &str) -> Option<eve_link::seams::AppInfo> {
+        todo!("apps_maker.py AppStore.info, as Eve Link's AppInfo")
+    }
+}
