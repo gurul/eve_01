@@ -19,7 +19,8 @@ use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
-use crate::watch::FetchError;
+use crate::firecrawl::{iter_list, or_str, py_split_join, py_str, py_strip, take_chars};
+use crate::watch::{FetchError, HttpOptions};
 use crate::Ctx;
 
 pub const SEARCH_URL: &str = "https://api.search.tinyfish.ai";
@@ -57,27 +58,115 @@ pub type Fetched = (IndexMap<String, Map<String, Value>>, IndexMap<String, Map<S
 
 /// `TINYFISH_API_KEY`, stripped; "" when unset.
 pub fn api_key(ctx: &Ctx) -> String {
-    let _ = ctx;
-    todo!("tinyfish.api_key")
+    py_strip(&ctx.get("TINYFISH_API_KEY")).to_string()
 }
 
 /// One TinyFish request: its JSON object. FetchError carrying `host` (prefixed "TinyFish: " when the request
 /// itself failed).
 pub fn call(ctx: &Ctx, url: &str, host: &str, data: Option<Vec<u8>>, timeout: f64) -> Result<Map<String, Value>, FetchError> {
-    let _ = (ctx, url, host, data, timeout);
-    todo!("tinyfish._call")
+    let key = api_key(ctx);
+    if key.is_empty() {
+        return Err(FetchError::with_host("TinyFish is not set up on this computer (TINYFISH_API_KEY)", host));
+    }
+    let mut headers = vec![("X-API-Key".to_string(), key), ("Accept".to_string(), "application/json".to_string())];
+    if data.is_some() {
+        headers.push(("Content-Type".to_string(), "application/json".to_string()));
+    }
+    let opts = HttpOptions { data, headers, timeout, ..HttpOptions::default() };
+    let (_, text) = ctx.http.request(url, &opts).map_err(|e| FetchError {
+        reason: format!("TinyFish: {}", e.reason),
+        status: e.status,
+        retry_after: e.retry_after,
+        host: host.to_string(),
+    })?;
+    match serde_json::from_str::<Value>(&text) {
+        Ok(Value::Object(m)) => Ok(m),
+        _ => Err(FetchError::with_host("TinyFish sent an unreadable answer", host)),
+    }
+}
+
+/// `urllib.parse.urlencode({"query": q})`'s value: quote_plus (letters, digits and `_.-~` kept, a space as `+`,
+/// every other UTF-8 byte as `%XX`).
+fn quote_plus(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    for b in s.bytes() {
+        match b {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'_' | b'.' | b'-' | b'~' => out.push(b as char),
+            b' ' => out.push('+'),
+            _ => out.push_str(&format!("%{b:02X}")),
+        }
+    }
+    out
+}
+
+/// `urllib.parse.urlsplit(url).scheme`: leading C0 controls and spaces stripped, tabs and newlines removed, then
+/// the letters before the first ":" when they make a scheme, lowercased; "" otherwise.
+pub(crate) fn url_scheme(url: &str) -> String {
+    let cleaned: String =
+        url.trim_start_matches(|c: char| c <= ' ').chars().filter(|c| !matches!(c, '\t' | '\r' | '\n')).collect();
+    let Some(i) = cleaned.find(':') else { return String::new() };
+    let scheme = &cleaned[..i];
+    let mut chars = scheme.chars();
+    match chars.next() {
+        Some(c) if c.is_ascii_alphabetic() => {}
+        _ => return String::new(),
+    }
+    if chars.all(|c| c.is_ascii_alphanumeric() || matches!(c, '+' | '-' | '.')) {
+        scheme.to_ascii_lowercase()
+    } else {
+        String::new()
+    }
 }
 
 /// Ranked results, at most `limit` (default 10, timeout 15 s). Only http(s) links are kept.
 pub fn search(ctx: &Ctx, query: &str, limit: usize, timeout: f64) -> Result<Vec<SearchResult>, FetchError> {
-    let _ = (ctx, query, limit, timeout);
-    todo!("tinyfish.search")
+    let q = take_chars(&py_split_join(query), 500);
+    let payload = call(ctx, &format!("{SEARCH_URL}?query={}", quote_plus(&q)), SEARCH_HOST, None, timeout)?;
+    let mut out = Vec::new();
+    for item in iter_list(payload.get("results")) {
+        let Some(item) = item.as_object() else { continue };
+        let Some(Value::String(url)) = item.get("url") else { continue };
+        if !matches!(url_scheme(url).as_str(), "http" | "https") {
+            continue; // a result is only ever a web page to read
+        }
+        out.push(SearchResult {
+            url: url.clone(),
+            title: take_chars(&or_str(item.get("title")), 200),
+            snippet: or_str(item.get("snippet")),
+        });
+        // Appended, then counted, as Python does: a limit of 0 still keeps the first result.
+        if out.len() >= limit {
+            break;
+        }
+    }
+    Ok(out)
 }
 
 /// Read `urls` (at most MAX_URLS) on TinyFish's side (`fmt` "markdown" by default, timeout 30 s). A result has
 /// `text` (markdown or cleaned HTML, never raw: scripts are stripped) and `title`; an error has `error`
 /// (TinyFish's code) and, for an HTTP error, `status`. FetchError when the whole request fails.
 pub fn fetch(ctx: &Ctx, urls: &[String], fmt: &str, ttl: Option<i64>, timeout: f64) -> Result<Fetched, FetchError> {
-    let _ = (ctx, urls, fmt, ttl, timeout);
-    todo!("tinyfish.fetch")
+    let mut body = Map::new();
+    body.insert("urls".into(), Value::from(urls.iter().take(MAX_URLS).cloned().collect::<Vec<_>>()));
+    body.insert("format".into(), Value::from(fmt));
+    body.insert("per_url_timeout_ms".into(), Value::from(((timeout - 5.0).clamp(1.0, 110.0) * 1000.0) as i64));
+    if let Some(ttl) = ttl {
+        body.insert("ttl".into(), Value::from(ttl));
+    }
+    let data = eve_jev::py_dumps(&Value::Object(body)).into_bytes();
+    let payload = call(ctx, FETCH_URL, FETCH_HOST, Some(data), timeout)?;
+    let keyed = |list: Option<&Value>| -> IndexMap<String, Map<String, Value>> {
+        let mut out = IndexMap::new();
+        for r in iter_list(list) {
+            let Value::Object(r) = r else { continue };
+            match r.get("url") {
+                Some(u) if crate::firecrawl::truthy(u) => {
+                    out.insert(py_str(u), r.clone());
+                }
+                _ => {}
+            }
+        }
+        out
+    };
+    Ok((keyed(payload.get("results")), keyed(payload.get("errors"))))
 }
