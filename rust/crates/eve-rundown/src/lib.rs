@@ -652,7 +652,7 @@ fn tzname(zone: Zone, utc_secs: i64) -> String {
 fn numeric_zone(secs: i32) -> String {
     let sign = if secs < 0 { '-' } else { '+' };
     let a = secs.unsigned_abs();
-    if a % 3600 == 0 {
+    if a.is_multiple_of(3600) {
         format!("{sign}{:02}", a / 3600)
     } else {
         format!("{sign}{:02}{:02}", a / 3600, (a % 3600) / 60)
