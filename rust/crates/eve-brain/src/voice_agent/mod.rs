@@ -356,7 +356,9 @@ pub const VOICE_FIRETV_NOTE: &str = "Out loud you can't see the TV's screen: whe
 pub const VOICE_OBSBOT_TOOLS: &[&str] = &["camera_status", "camera_control"];
 
 /// py: voice_agent.py:465 `_FIRETV_APP`: the TV's registry entry, which VOICE_FIRETV_TOOLS and VOICE_FIRETV_NOTE are
-/// read from (they are its tools but its voice_omit ones, and its voice_note).
+/// read from (they are its tools but its voice_omit ones, and its voice_note). Rust: the two are constants, and a test
+/// checks them against this entry.
+#[cfg_attr(not(test), allow(dead_code))]
 pub(crate) static FIRETV_APP: LazyLock<Option<&'static eve_app_registry::App>> =
     LazyLock::new(|| eve_app_registry::get("firetv"));
 
@@ -574,6 +576,7 @@ pub fn configured(environ: Option<&Environ>) -> VoiceConfig {
 ///
 /// Rust: no app hubs and the clock read now; [`session_config_with`] takes both (`**app_hubs`, and the
 /// `system_context.context()` the tests pin).
+#[allow(clippy::too_many_arguments)] // Python's keyword arguments
 pub fn session_config(config: &VoiceConfig, brief: &str, think_aloud: Option<&Obj>, profile: &str, backend_profile: &str, today: &str, backend_today: &str, memory_tools: Option<&[Obj]>, meet_tools: Option<&[Obj]>) -> Obj {
     session_config_with(
         config,
@@ -1070,6 +1073,20 @@ mod tests {
     fn app_voice_offers_nothing_without_hubs_or_in_a_lesson() {
         assert_eq!(app_voice(false, &AppHubs::default()), (Vec::new(), String::new()));
         assert_eq!(app_voice(true, &AppHubs::default()), (Vec::new(), String::new()));
+    }
+
+    #[test]
+    fn the_voice_firetv_names_and_note_are_the_registrys() {
+        let app = FIRETV_APP.expect("the firetv app is registered");
+        let mut want: Vec<&str> = eve_firetv::TOOL_NAMES.iter().copied().filter(|n| !app.voice_omit.contains(*n)).collect();
+        want.sort();
+        assert_eq!(VOICE_FIRETV_TOOLS, want.as_slice());
+        assert_eq!(VOICE_FIRETV_NOTE, app.voice_note);
+        let mut obsbot: Vec<&str> = eve_obsbot_panel::TOOL_NAMES.to_vec();
+        let mut ours: Vec<&str> = VOICE_OBSBOT_TOOLS.to_vec();
+        obsbot.sort();
+        ours.sort();
+        assert_eq!(ours, obsbot);
     }
 
     #[test]

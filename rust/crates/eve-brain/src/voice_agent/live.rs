@@ -245,17 +245,19 @@ impl Drop for SpeakerCloser {
 /// session to the daemon, so a toggle can switch or stop it while it runs.
 /// `memory` (with `conv`, `today`, `backend_today` from the daemon) is lent when
 /// memory is on; the session writes its own transcript lines and close marker.
-/// Rust: the session's own keyword arguments (config ... meeter, `**app_hubs`) are `options`. A connection that
-/// cannot be opened is logged and ends the call (Python raises it to the daemon). A hush is dropping this future:
-/// the session's own drop guard runs its cleanup, then the turns are handed on and the speaker closed.
-pub async fn open_session(mic: eve_ears::PcmQueue, on_state: OnState, agent_factory: AgentFactory, api_key: Option<&str>, on_closed: Option<OnClosed>, on_open: Option<OnOpenSession>, options: VoiceSessionOptions) {
+/// Rust: the session's own keyword arguments (config ... meeter, `**app_hubs`) are `options`. What Python raises to
+/// the daemon (a connection that cannot be opened, a session that cannot start: [`VoiceSession::try_run`]) is
+/// returned as `Err`, after the turns are handed on and the speaker closed; no key is `Ok`, with its warning. A hush
+/// is dropping this future: the session's own drop guard runs its cleanup, then the turns are handed on and the
+/// speaker closed.
+pub async fn open_session(mic: eve_ears::PcmQueue, on_state: OnState, agent_factory: AgentFactory, api_key: Option<&str>, on_closed: Option<OnClosed>, on_open: Option<OnOpenSession>, options: VoiceSessionOptions) -> anyhow::Result<()> {
     let mut options = options;
     let api_key = api_key.filter(|k| !k.is_empty());
     if api_key.is_none() && !live_available(None) {
         tracing::warn!(
             "voice: the desk voice is off: it still runs on OpenAI's Live API and OPENAI_API_KEY is not set (everything else runs on OPENROUTER_API_KEY; docs/openrouter.md)"
         );
-        return;
+        return Ok(());
     }
     let cfg = options.config.take().unwrap_or_else(|| configured(None));
     let speaker: Arc<dyn VoiceSpeaker> =
@@ -267,13 +269,7 @@ pub async fn open_session(mic: eve_ears::PcmQueue, on_state: OnState, agent_fact
     // watchdog named it, 2026-09-21): every wake of a fresh daemon sat silent that long.
     // A thread pays it instead, and the daemon warms it at start (warm_live_import).
     let _ = tokio::task::spawn_blocking(warm_live_import).await;
-    let socket = match LiveSocket::connect(api_key, None).await {
-        Ok(socket) => Arc::new(socket),
-        Err(e) => {
-            tracing::warn!("voice: could not open the Live session ({})", e);
-            return;
-        }
-    };
+    let socket = Arc::new(LiveSocket::connect(api_key, None).await?);
     options.config = Some(cfg);
     let session = VoiceSession::new(socket.clone(), mic, speaker.clone(), agent_factory, on_state, options);
     if let Some(on_open) = &on_open {
@@ -282,9 +278,10 @@ pub async fn open_session(mic: eve_ears::PcmQueue, on_state: OnState, agent_fact
     // Hand the turns on, on every exit path including a hush and an
     // exception. The transcript lines and the close marker are already written.
     let handoff = ClosedHandoff { session: session.clone(), on_closed };
-    session.run().await;
+    let result = session.try_run().await;
     drop(handoff);
-    socket.close().await;
+    socket.close().await; // `async with client.live.connect()`'s exit
+    result
 }
 
 /// `on_closed(turns)`: the conversation's (speaker, text) turns once it is over.

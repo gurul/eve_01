@@ -5,10 +5,9 @@
 //! The Live protocol has no transcript-done event, so a spoken turn closes on a silence gap; the fake clock is
 //! advanced past the gap to close one.
 //!
-//! What a run of the whole conversation needs beyond this unit — the event loop, the mic pump, the watchdog and the
-//! tools (events.rs, tools.rs) and what eve runs on (self_context.rs) — belongs to other units. The ports of the
-//! tests that drive those are here, faithful, and `#[ignore]`d with the unit they wait for; each is joined by a test
-//! of the same behaviour that reaches this unit's own code directly, and runs now.
+//! A run of the whole conversation also goes through the event loop, the mic pump, the watchdog and the tools
+//! (events.rs, tools.rs); those Python tests are ported here faithfully and run against the whole session, and
+//! several are joined by a test of the same behaviour that reaches this unit's own steps directly.
 
 mod support;
 
@@ -2130,8 +2129,29 @@ async fn test_open_session_without_a_key_is_off() {
         Some(Arc::new(move |_s: &Arc<VoiceSession>| o.store(true, Ordering::SeqCst))),
         VoiceSessionOptions::default(),
     )
-    .await;
+    .await
+    .unwrap(); // off is not a failure: Python returns None
     assert!(!opened.load(Ordering::SeqCst));
+}
+
+/// Python's `run()` raises what stops a session from opening (the daemon logs "voice: conversation failed" and shows
+/// the error state): a refused session.start is `try_run`'s `Err`, before anything is greeted, cleaned up or billed.
+#[tokio::test]
+async fn test_a_refused_session_start_is_an_error_out_of_run() {
+    let refused = FakeConn::new();
+    refused.push(json!({"type": "error", "error": {"message": "bad model"}}));
+    let v = voice(&refused, vec![PyAgent::plain()], |_| {});
+    let err = v.s.try_run().await.unwrap_err().to_string();
+    assert!(err.starts_with("live: session start rejected: ") && err.contains("bad model"), "{err}");
+    assert_eq!(kinds(&refused), ["session.start"]); // no greeting
+    assert!(!v.s.test_started());
+    assert!(v.rows().is_empty()); // Python's finally was never entered: no minutes
+    // run() is the same with the error logged
+    let again = FakeConn::new();
+    again.push(json!({"type": "error", "error": {"message": "bad model"}}));
+    let v = voice(&again, vec![PyAgent::plain()], |_| {});
+    v.s.run().await;
+    assert_eq!(kinds(&again), ["session.start"]);
 }
 
 /// The real socket against a local websocket server: the client events as JSON text frames, the bearer key, and a

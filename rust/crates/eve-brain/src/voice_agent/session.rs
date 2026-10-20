@@ -195,6 +195,8 @@ pub(crate) struct VoiceSessionState {
     /// the turn boundaries (`self._turns`, a `_Turns`)
     pub(crate) turn_marks: _Turns,
     pub(crate) turns: Vec<(String, String)>,
+    /// Python's `self._caption = ""`: set in `__init__` and never read there either
+    #[allow(dead_code)]
     pub(crate) caption: String,
     pub(crate) pager: eve_caption_pager::CaptionPager,
     pub(crate) state_after_captions: Option<String>,
@@ -489,14 +491,26 @@ impl VoiceSession {
 
     /// py: voice_agent.py:943 `async def run(self) -> None:`
     ///
-    /// The conversation, start to close. A failure to open it (session.start refused, the connection gone)
-    /// is logged and ends the call, where Python's `run()` raises before its `try`.
+    /// The conversation, start to close, for a caller that only logs a failure to open it: [`Self::try_run`]
+    /// with its error logged.
+    pub async fn run(self: &Arc<Self>) {
+        if let Err(e) = self.try_run().await {
+            tracing::warn!("voice: {}", e);
+        }
+    }
+
+    /// py: voice_agent.py:943 `async def run(self) -> None:` with what it raises.
+    ///
+    /// The conversation, start to close. A failure to open it (session.start refused, the server's `error`
+    /// before `session.started`, the connection gone, the greeting not sent) is returned as `Err`, as Python's
+    /// `run()` raises it before its `try` (nothing is cleaned up or billed then, as in Python), so the daemon can
+    /// log "voice: conversation failed" and show the error state.
     ///
     /// A hush is dropping this future: the drop guard then does what Python's `finally` does after a
     /// `CancelledError` — the board cleared at once, the cut-off turn kept, the task cancelled, the close
     /// marker and the minutes written — except the awaits (the jobs and the agent are cancelled, not waited
     /// for; the scene is stopped in the background; queued audio is dropped rather than drained).
-    pub async fn run(self: &Arc<Self>) {
+    pub async fn try_run(self: &Arc<Self>) -> anyhow::Result<()> {
         let listening = self.st.lock().think_aloud.is_some();
         self.set(if listening { "listening" } else { "wake" });
         {
@@ -551,14 +565,8 @@ impl VoiceSession {
             .and_then(Value::as_str)
             .map_or(0, |s| s.chars().count());
         tracing::info!("voice: prompt front {} chars, backend {} chars", front_chars, back_chars);
-        if let Err(e) = self.conn.session_start(Value::Object(cfg)).await {
-            tracing::warn!("voice: session.start failed: {}", e);
-            return;
-        }
-        if let Err(e) = self.await_started(15.0).await {
-            tracing::warn!("voice: {}", e);
-            return;
-        }
+        self.conn.session_start(Value::Object(cfg)).await?;
+        self.await_started(15.0).await?;
         self.started.set();
         // A fixed greeting needs no backend round-trip: commentary is context the
         // Live model speaks itself.
@@ -569,10 +577,7 @@ impl VoiceSession {
         } else {
             "The owner just said your wake word. Greet them in one or two words, like 'Yeah?'."
         };
-        if let Err(e) = self.conn.commentary_append(greeting, None).await {
-            tracing::warn!("voice: the greeting was not sent: {}", e);
-            return;
-        }
+        self.conn.commentary_append(greeting, None).await?;
         if listening {
             self.notify_think_aloud(true);
         }
@@ -656,6 +661,7 @@ impl VoiceSession {
         guard.armed = false;
         self.write_close();
         self.bill_live();
+        Ok(())
     }
 
     /// Python's `run()` after a `CancelledError` (the daemon's touch hush), without its awaits: see [`Self::run`].
@@ -892,7 +898,7 @@ impl VoiceSession {
             Ok(_) => obj(json!({"ok": false, "reason": format!("{name} failed")})),
         };
         let hits: usize = result.values().filter_map(Value::as_array).map(Vec::len).sum();
-        let ok = result.get("ok").map_or_else(|| "None".to_string(), eve_computer_agent::py::value_repr);
+        let ok = result.get("ok").map_or_else(|| "None".to_string(), eve_computer_agent::py::value_str);
         tracing::info!("voice: {} → ok={} hits={} in {} ms", name, ok, hits, t0.elapsed().as_millis());
         result
     }
