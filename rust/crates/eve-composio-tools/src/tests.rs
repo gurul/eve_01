@@ -1517,6 +1517,34 @@ fn test_strict_schema_matches_the_sdk() {
 }
 
 #[test]
+fn test_drop_empty_file_uploads_matches_the_sdk() {
+    let rows: Vec<Value> = serde_json::from_str(include_str!("../tests/fixtures/drop_empty_file_uploads.json")).unwrap();
+    assert!(rows.len() >= 19);
+    let mut failures = Vec::new();
+    for row in &rows {
+        let got = client::drop_empty_file_uploads(Some(&row["schema"]), row["arguments"].as_object().unwrap()).unwrap();
+        // key order too: the arguments are sent as JSON text
+        if serde_json::to_string(&got).unwrap() != serde_json::to_string(&row["sent"]).unwrap() {
+            failures.push(format!("{}\n  got    {}\n  python {}", row["schema"], Value::Object(got), row["sent"]));
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+    // no schema, or one with no file input: the arguments as they are
+    let args = obj(json!({"f": ""}));
+    assert_eq!(client::drop_empty_file_uploads(None, &args).unwrap(), args);
+    // a $ref chain past the SDK's cap is its JSONSchemaRefResolutionError
+    let mut defs = Map::new();
+    for i in 0..120 {
+        defs.insert(format!("D{i}"), json!({"$ref": format!("#/$defs/D{}", i + 1)}));
+    }
+    defs.insert("D120".into(), json!({"type": "string", "file_uploadable": true}));
+    let deep = json!({"type": "object", "properties": {"f": {"$ref": "#/$defs/D0"}}, "$defs": defs});
+    let err = client::drop_empty_file_uploads(Some(&deep), &args).unwrap_err();
+    assert_eq!(err.type_name(), "JSONSchemaRefResolutionError");
+    assert_eq!(err.message, "JSON Schema $ref chain exceeded depth cap (100): #/$defs/D100");
+}
+
+#[test]
 fn test_a_wrapped_tool_is_a_strict_responses_function() {
     let tool = obj(json!({"slug": "COMPOSIO_SEARCH_TOOLS", "description": "Search.", "input_parameters":
         {"type": "object", "properties": {"q": {"type": "string"}}, "required": ["q"]}}));
@@ -1649,6 +1677,9 @@ async fn test_the_http_client_speaks_composios_api() {
                      "next_cursor": null})),
         (200, json!({"data": {"hits": 1}, "log_id": "log_9", "extra": true})),
         (200, json!({"items": [{"toolkit": {"slug": "slack"}, "status": "ACTIVE", "id": "ca_1", "alias": null}]})),
+        (200, json!({"slug": "SLACK_SEARCH_MESSAGES", "toolkit": {"slug": "slack"},
+                     "input_parameters": {"type": "object", "properties": {"query": {"type": "string"},
+                                                                         "file": {"type": "string", "file_uploadable": true}}}})),
         (200, json!({"data": {"messages": []}, "error": null, "successful": true, "log_id": "l", "session_info": {}})),
         (200, json!({"session_id": "trs_1"})),
     ])
@@ -1671,13 +1702,16 @@ async fn test_the_http_client_speaks_composios_api() {
     assert_eq!(serde_json::to_string(&out).unwrap(), r#"{"data":{"hits":1},"error":null,"log_id":"log_9","extra":true}"#);
     let items = client.list_connected_accounts(&["telegram-7".to_string()]).await.unwrap();
     assert_eq!(items[0]["id"], "ca_1");
-    let ran = client.execute_tool("SLACK_SEARCH_MESSAGES", &obj(json!({"query": "x"})), "telegram-7", "ca_1").await.unwrap();
+    let ran = client
+        .execute_tool("SLACK_SEARCH_MESSAGES", &obj(json!({"query": "x", "file": ""})), "telegram-7", "ca_1")
+        .await
+        .unwrap();
     assert_eq!(ran, json!({"data": {"messages": []}, "error": null, "successful": true}));
     let used = client.use_session("trs_1").await.unwrap();
     assert_eq!(used.session_id(), "trs_1");
 
     let seen = seen.lock();
-    assert_eq!(seen.len(), 7);
+    assert_eq!(seen.len(), 8);
     assert_eq!((seen[0].method.as_str(), seen[0].target.as_str()), ("POST", "/api/v3.1/tool_router/session"));
     assert_eq!(
         seen[0].body,
@@ -1687,17 +1721,33 @@ async fn test_the_http_client_speaks_composios_api() {
     assert_eq!(header(&seen[0], "x-api-key"), Some("ak_live"));
     assert_eq!(header(&seen[0], "x-framework"), Some("openai_responses"));
     assert_eq!(header(&seen[0], "x-request-id").map(str::len), Some(32));
+    // the headers composio_client and the SDK put on every request
+    assert_eq!(header(&seen[0], "x-source"), Some("PYTHON_SDK"));
+    assert_eq!(header(&seen[0], "x-sdk-version"), Some("0.22.0"));
+    assert!(header(&seen[0], "x-runtime").is_some_and(|r| r.ends_with("_CPYTHON")));
+    assert_eq!(header(&seen[0], "user-agent"), Some("HttpClient/Python 1.43.0"));
+    assert_eq!(header(&seen[0], "x-stainless-lang"), Some("python"));
+    assert_eq!(header(&seen[0], "x-stainless-package-version"), Some("1.43.0"));
+    assert_eq!(header(&seen[0], "x-stainless-async"), Some("false"));
+    assert_eq!(header(&seen[0], "x-stainless-retry-count"), Some("0"));
+    assert_eq!(header(&seen[0], "x-stainless-read-timeout"), Some("30"));
     assert_eq!(seen[1].target, "/api/v3.1/tool_router/session/trs_1/tools?limit=500");
     assert_eq!(seen[2].target, "/api/v3.1/tool_router/session/trs_1/tools?cursor=c2&limit=500");
     assert_eq!(seen[3].target, "/api/v3.1/tool_router/session/trs_1/execute");
     assert_eq!(seen[3].body, json!({"tool_slug": "COMPOSIO_SEARCH_TOOLS", "arguments": {"queries": []}}));
     assert_eq!((seen[4].method.as_str(), seen[4].target.as_str()), ("GET", "/api/v3.1/connected_accounts?user_ids=telegram-7"));
-    assert_eq!(seen[5].target, "/api/v3.1/tools/execute/SLACK_SEARCH_MESSAGES");
+    // tools.execute reads the tool's schema first, with the pinned versions in Stainless's bracket form
     assert_eq!(
-        seen[5].body,
+        (seen[5].method.as_str(), seen[5].target.as_str()),
+        ("GET", "/api/v3.1/tools/SLACK_SEARCH_MESSAGES?toolkit_versions%5Bslack%5D=20250906_01")
+    );
+    assert_eq!(seen[6].target, "/api/v3.1/tools/execute/SLACK_SEARCH_MESSAGES");
+    // the empty file input is dropped, as the SDK's drop_empty_file_uploads does
+    assert_eq!(
+        seen[6].body,
         json!({"arguments": {"query": "x"}, "connected_account_id": "ca_1", "user_id": "telegram-7", "version": "20250906_01"})
     );
-    assert_eq!((seen[6].method.as_str(), seen[6].target.as_str()), ("GET", "/api/v3.1/tool_router/session/trs_1"));
+    assert_eq!((seen[7].method.as_str(), seen[7].target.as_str()), ("GET", "/api/v3.1/tool_router/session/trs_1"));
 }
 
 #[tokio::test]
@@ -1706,7 +1756,10 @@ async fn test_the_http_client_retries_a_server_error_and_reports_a_client_error(
         (503, json!({"error": "busy"})),
         (200, json!({"items": []})),
         (404, json!({"error": {"message": "Session not found"}})),
+        (200, json!({"slug": "SLACK_SEARCH_MESSAGES", "toolkit": {"slug": "slack"}, "input_parameters": {}})),
         (500, json!({"error": "boom"})),
+        (404, json!({"error": "no such tool"})),
+        (401, json!({"error": "bad key"})),
     ])
     .await;
     let client = HttpComposioClient::new("k", Some(&base), 30, &[]).unwrap();
@@ -1717,7 +1770,18 @@ async fn test_the_http_client_retries_a_server_error_and_reports_a_client_error(
     // a direct tool run is never retried: a read timeout must not run it twice
     let err = client.execute_tool("SLACK_SEARCH_MESSAGES", &Map::new(), "u", "ca").await.unwrap_err();
     assert_eq!(err.type_name(), "InternalServerError");
-    assert_eq!(seen.lock().len(), 4);
+    // an unknown slug is the SDK's ToolNotFoundError; any other failure of the schema read is itself
+    let err = client.execute_tool("SLACK_NOPE_GET", &Map::new(), "u", "ca").await.unwrap_err();
+    assert_eq!((err.type_name(), err.message.as_str()), ("ToolNotFoundError", "Tool with slug SLACK_NOPE_GET not found"));
+    let err = client.execute_tool("SLACK_SEARCH_MESSAGES", &Map::new(), "u", "ca").await.unwrap_err();
+    assert_eq!(err.type_name(), "AuthenticationError");
+    let seen = seen.lock();
+    assert_eq!(seen.len(), 7);
+    assert_eq!(seen[1].target, "/api/v3.1/connected_accounts?user_ids=u");
+    assert_eq!(header(&seen[1], "x-stainless-retry-count"), Some("1"));
+    // no version pinned: the global "latest"
+    assert_eq!(seen[3].target, "/api/v3.1/tools/SLACK_SEARCH_MESSAGES?toolkit_versions=latest");
+    assert_eq!(seen[4].body["version"], "latest");
 }
 
 #[tokio::test]

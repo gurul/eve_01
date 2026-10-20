@@ -7,6 +7,7 @@ Status: complete
 | `eve_bridge/composio_tools.py` | `src/lib.rs` (config, policy, gates, questions, state file, `ComposioBridge`) |
 | `composio` 0.22.0 SDK + `composio_client` 1.43 (the parts the module calls: `Composio`, `sessions.create/use`, `session.tools/execute`, `connected_accounts.list`, `tools.execute`) | `src/client.rs` (`ComposioClient` / `ComposioSession` traits, `HttpComposioClient`) |
 | `composio.utils.strict_schema.to_strict_json_schema` (used by `OpenAIResponsesProvider(strict=True).wrap_tool`) | `src/strict_schema.rs` |
+| `composio.core.models._files.FileHelper.drop_empty_file_uploads` + `composio.utils.json_schema.dereference_json_schema(on_unresolved="sentinel")` (what `tools.execute` does to a direct call's arguments) | `src/client.rs` (`drop_empty_file_uploads`) |
 | CPython `ast.parse` + `ast.walk` (as `workbench_slugs` reads them) | `src/pyast.rs` (ruff's Python parser, re-shaped to CPython's node fields and breadth-first walk) |
 
 ## API
@@ -60,15 +61,14 @@ Status: complete
 | `bridge/tests/test_suite_isolation.py` (ref) | `test_the_composio_session_file_is_this_tests_own` | `test_the_state_path_follows_the_setting` (explicit env, no process env) | - |
 | `bridge/tests/test_composio_connect.py` (ref) | `manage_needs_yes` controls | covered by `test_a_link_or_a_check_needs_no_yes`, `test_every_other_shape_asks` | The rest test composio_connect |
 | `bridge/tests/test_telegram_lite.py` (ref) | uses `MANAGE_CONNECTIONS` | constant exported | The rest test telegram |
-| (SDK) | - | `test_strict_schema_matches_the_sdk` replays `tests/fixtures/strict_schemas.json` (30 schemas, SDK's own answers incl. key order, from `make_strict_schemas.py`); `test_enhance_schema_descriptions_...`, `test_a_wrapped_tool_...`, `test_status_errors_...`, three local-HTTP-server tests of request shapes, retries and the bridge end to end | - |
+| (SDK) | - | `test_drop_empty_file_uploads_matches_the_sdk` replays `tests/fixtures/drop_empty_file_uploads.json` (19 schemas with `$ref`, variants, arrays, a ref cycle; the SDK's own answers from `make_drop_empty_file_uploads.py`) plus the ref-chain cap; `test_strict_schema_matches_the_sdk` replays `tests/fixtures/strict_schemas.json` (30 schemas, SDK's own answers incl. key order, from `make_strict_schemas.py`); `test_enhance_schema_descriptions_...`, `test_a_wrapped_tool_...`, `test_status_errors_...`, three local-HTTP-server tests of request shapes, retries and the bridge end to end | - |
 
 ## Boundaries
-None. The Composio Python SDK is replaced by `HttpComposioClient`, which speaks the same HTTP API the SDK calls (`/api/v3.1/tool_router/session`, `.../{id}`, `.../{id}/tools`, `.../{id}/execute`, `/api/v3.1/connected_accounts`, `/api/v3.1/tools/execute/{slug}`) with the SDK's headers, retry policy and error texts.
+None. The Composio Python SDK is replaced by `HttpComposioClient`, which speaks the same HTTP API the SDK calls (`/api/v3.1/tool_router/session`, `.../{id}`, `.../{id}/tools`, `.../{id}/execute`, `/api/v3.1/connected_accounts`, `/api/v3.1/tools/{slug}`, `/api/v3.1/tools/execute/{slug}`) with the SDK's headers, query encoding (lists comma-joined, version pins in brackets), retry policy and error texts.
 
 ## Differences
 - The bridge is async (`start`, `execute`, `read_tool`, `connected_accounts` are `async fn`); Python's were blocking and the daemon ran them in a thread.
-- The HTTP client identifies itself as the Python SDK does (`x-source: PYTHON_SDK`, `x-sdk-version: 0.22.0`, `x-framework: openai_responses`), so Composio sees the same client.
-- `read_tool` (SDK `tools.execute(..., dangerously_skip_version_check=True)`): the SDK first GETs the tool's schema to drop empty file-upload fields; the port sends the call directly (no file-upload tools are read here). Version is `COMPOSIO_TOOLKIT_VERSION_<TOOLKIT>` or `"latest"` as the SDK resolves it.
+- The HTTP client identifies itself as the Python SDK does (`x-source: PYTHON_SDK`, `x-sdk-version: 0.22.0`, `x-framework: openai_responses`, `x-runtime: <PLACE>_CPYTHON`, `User-Agent: HttpClient/Python 1.43.0`, the `X-Stainless-*` lang, package version, OS, arch, async, retry-count and read-timeout headers), so Composio sees the same client. `X-Stainless-Runtime` and `X-Stainless-Runtime-Version` (the interpreter's name and version) are not sent: there is no interpreter to name.
 - `enhance_schema_descriptions` on a property whose `description` is not a string: the SDK raises `AttributeError` (failing the tool listing); the port treats it as no description.
 - `workbench_slugs` parses with ruff's parser instead of CPython. Every script in the fixture corpus (61, incl. f-strings, match, PEP 695, t-strings, `except*`, null bytes) gives CPython's answer; any remaining divergence on exotic syntax yields `None`, i.e. "ask", never "run".
 - JSON edge cases outside the wire format (NaN/Infinity, integers beyond i64/u64) are not representable in `serde_json::Value`.
