@@ -26,9 +26,9 @@ Status: complete
 | `_device_public` | `device_public()` | |
 | `said_now` | `said_now()` | |
 | `_join` | `join()` | |
-| `_norm` | `norm()` | |
+| `_norm` | `norm()` | Python's `\w`, `\s` and `strip()` on Unicode |
 | `Command` | `struct Command` (`Command::new(action)`) | Fields `action, query, volume, change, device, on` |
-| `match` (module function) | `match_text(text)` | `match` is a Rust keyword. Patterns verbatim on `fancy-regex` (lookaheads), anchored at both ends like `re.fullmatch`; a volume in any Unicode decimal digits reads as `int()` reads it; cross-checked against Python on 75 phrases |
+| `match` (module function) | `match_text(text)` | `match` is a Rust keyword. Patterns verbatim on `fancy-regex` (lookaheads), anchored at both ends like `re.fullmatch`; a volume in any Unicode decimal digits reads as `int()` reads it; Python's `\w` / `\b` spelled out as `[\p{L}\p{N}_]` (Rust's own differ on combining marks and N* digits); cross-checked against Python on 80 phrases |
 | `Spotify.__init__` | `Spotify::new(api)` + `with_wake`, `with_sleep`, `with_wake_secs`, `with_colors` | `mode` is `set_mode(Option<Arc<dyn SpotifyMode>>)` / `mode()` |
 | `Spotify._run` | `Spotify::wake()` (private) | Only the blocking wake goes to `spawn_blocking`; the API calls are async already |
 | `Spotify.now_playing` | `Spotify::now_playing()` | `anyhow::Result<Dict>`; refusals and no network become `{"ok": false, "reason"}` |
@@ -56,7 +56,7 @@ Status: complete
 | `bridge/tests/test_spotify.py` | all 31 (`test_match` and `test_match_leaves_the_rest_to_the_model` parametrized) | `tests/test_spotify.rs`: the same 31 names, each parametrized case looped in one test | None |
 | `bridge/tests/test_music_mode.py` | `test_spotify_mode_by_words_and_by_the_tool` (the spotify half) | `tests/test_spotify.rs::test_spotify_mode_by_words_and_by_the_tool` with the real `eve_music_mode::MusicMode`; plus `test_the_panel_reports_the_mode` | The rest belongs to eve-music-mode |
 | `bridge/tests/test_app_registry.py`, `test_telegram.py`, `test_tool_gate.py`, `test_voice_agent.py` | use `spotify.TOOLS`, `INSTRUCTIONS`, `OFF_REASON`, `Spotify.match`, `handle` | covered by the tests above and `tests/parity_python.rs` | Their own behavior belongs to those crates |
-| (new) | | `tests/parity_python.rs`: TOOLS / INSTRUCTIONS / lines equal to the live Python; `match` on 75 phrases equal to Python's; the login file written by Rust is read and rewritten byte-identically by Python. Skips when python3 or the bridge source is absent | |
+| (new) | | `tests/parity_python.rs`: TOOLS / INSTRUCTIONS / lines equal to the live Python; `match` on 80 phrases equal to Python's; `Spotify.pick` on 13 names equal to Python's (marks, `²`, restricted, ambiguous); the login file written by Rust is read and rewritten byte-identically by Python. Skips when python3 or the bridge source is absent | |
 | (new) | | `src/lib.rs` unit tests: `py_dumps`, `py_repr`, `quote_plus`, `join`, `norm`; `test_the_colours_file_is_written_as_python_writes_it` | |
 
 ## Boundaries
@@ -69,4 +69,3 @@ Status: complete
 - `login` answers a non-GET request on the loopback with 501 and closes; the redirect page and its headers are otherwise the same, minus Python's `Server`/`Date` headers.
 - `cli logout` reports a delete that fails for a reason other than "not found" (Python would raise).
 - `login` reports a token call that gets no answer, or a login file it cannot write, as a line and exit code 1 (Python would raise).
-- `norm` and the code path follow Python's `\w` / `\s` / `\d` and `int()` on Unicode (cross-checked in `tests/parity_python.rs`), except that a combining mark Rust counts as alphabetic (Other_Alphabetic) is kept where Python's `isalnum()` turns it into a space.

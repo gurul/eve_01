@@ -336,19 +336,27 @@ fn dump_into(v: &Value, indent: Option<usize>, level: usize, out: &mut String) {
 }
 
 /// `Path.expanduser()`.
+/// `Path.expanduser()`: `$HOME` (else the account's home) with its trailing slashes dropped, `/` when that leaves
+/// nothing, as `os.path.expanduser` spells it.
 pub fn expanduser(p: &Path) -> PathBuf {
     let s = p.to_string_lossy();
-    let home = || std::env::var_os("HOME").map(PathBuf::from).or_else(dirs_home);
-    if s == "~" {
-        if let Some(h) = home() {
-            return h;
-        }
+    let rest = if s == "~" {
+        ""
     } else if let Some(rest) = s.strip_prefix("~/") {
-        if let Some(h) = home() {
-            return h.join(rest);
-        }
+        rest
+    } else {
+        return p.to_path_buf();
+    };
+    let Some(home) = std::env::var_os("HOME").map(PathBuf::from).or_else(dirs_home) else {
+        return p.to_path_buf();
+    };
+    let home = home.to_string_lossy().trim_end_matches('/').to_string();
+    let home = if home.is_empty() { "/".to_string() } else { home };
+    if rest.is_empty() {
+        PathBuf::from(home)
+    } else {
+        PathBuf::from(home).join(rest)
     }
-    p.to_path_buf()
 }
 
 fn dirs_home() -> Option<PathBuf> {
@@ -1097,9 +1105,25 @@ fn py_space(c: char) -> bool {
     c.is_whitespace() || ('\u{1c}'..='\u{1f}').contains(&c)
 }
 
-/// Python's `\w` in a str pattern: `str.isalnum()` or `_`.
+/// Python's `\w` as a character class: `str.isalnum()` (a letter, L*, or a character with a numeric value, N*)
+/// or `_`. Rust's own `\w` and `char::is_alphanumeric` differ: they take combining marks (a Devanagari vowel sign)
+/// and leave out N* digits such as `²`.
+const PY_W: &str = r"[\p{L}\p{N}_]";
+
+/// One character of Python's `\w`.
 fn py_word(c: char) -> bool {
-    c.is_alphanumeric() || c == '_'
+    static W: LazyLock<regex::Regex> = LazyLock::new(|| regex::Regex::new(&format!("^{PY_W}$")).expect("py \\w"));
+    c == '_' || (!c.is_ascii() && W.is_match(c.encode_utf8(&mut [0u8; 4]))) || c.is_ascii_alphanumeric()
+}
+
+/// Python's `\b` on Python's `\w`, for fancy-regex.
+fn py_boundary() -> String {
+    format!("(?:(?<={PY_W})(?!{PY_W})|(?<!{PY_W})(?={PY_W}))")
+}
+
+/// `str.strip()`: Python's whitespace, which takes in the separators \x1c-\x1f that `str::trim` leaves.
+pub fn py_strip(s: &str) -> &str {
+    s.trim_matches(py_space)
 }
 
 /// Lower case, curly apostrophes straight, punctuation out, one space between words. Python's
@@ -1233,12 +1257,13 @@ static PATTERNS: LazyLock<Vec<(fancy_regex::Regex, Make)>> = LazyLock::new(|| {
             |_| Some(Command { change: Some(-VOLUME_STEP), ..Command::new("volume") }),
         ),
         (
-            format!(r"(?:play|move|switch|send|put|transfer)\s+{m}\s+(?:on|to|onto)\s+(?:the\s+|my\s+)?(?!spotify\b)([\w' -]{{1,40}}?)"),
-            |c| Some(Command { device: c.get(1)?.as_str().trim().to_string(), ..Command::new("transfer") }),
+            // Python's `\w` and `\b` spelled out: Rust's differ on marks and N* digits
+            format!(r"(?:play|move|switch|send|put|transfer)\s+{m}\s+(?:on|to|onto)\s+(?:the\s+|my\s+)?(?!spotify(?!{PY_W}))([\p{{L}}\p{{N}}_' -]{{1,40}}?)"),
+            |c| Some(Command { device: py_strip(c.get(1)?.as_str()).to_string(), ..Command::new("transfer") }),
         ),
         (
             format!(r"play\s+(?!{m}\s+{os})(.{{1,80}}?)\s+{os}"),
-            |c| Some(Command { query: c.get(1)?.as_str().trim().to_string(), ..Command::new("play") }),
+            |c| Some(Command { query: py_strip(c.get(1)?.as_str()).to_string(), ..Command::new("play") }),
         ),
     ];
     raw.into_iter()
@@ -1448,10 +1473,12 @@ impl Spotify {
             "ipad" | "tablet" => "tablet",
             _ => "\0",
         };
-        let word = regex::Regex::new(&format!(r"\b{}\b", regex::escape(&n))).ok();
+        // `\b` and `\w` as Python's re has them
+        let b = py_boundary();
+        let word = fancy_regex::Regex::new(&format!("{b}{}{b}", fancy_regex::escape(&n))).ok();
         let tests: [&dyn Fn(&Value) -> bool; 3] = [
             &|d| dname(d) == n,
-            &|d| word.as_ref().is_some_and(|w| w.is_match(&dname(d))),
+            &|d| word.as_ref().is_some_and(|w| w.is_match(&dname(d)).unwrap_or(false)),
             &|d| or_empty(d.get("type")).to_lowercase() == kind,
         ];
         for test in tests {
@@ -1530,7 +1557,7 @@ impl Spotify {
     pub async fn control(&self, action: &str, args: ControlArgs) -> anyhow::Result<Dict> {
         let kind = if args.kind.is_empty() { "track".to_string() } else { args.kind.clone() };
         let r = self
-            .control_inner(action, args.query.trim(), &kind, args.volume, args.volume_change, args.device.trim())
+            .control_inner(action, py_strip(&args.query), &kind, args.volume, args.volume_change, py_strip(&args.device))
             .await;
         match r {
             Ok(d) => Ok(d),
@@ -1917,7 +1944,7 @@ pub fn enabled(environ: Option<&HashMap<String, String>>) -> bool {
         Some(env) => env.get("EVE_SPOTIFY").cloned().unwrap_or_default(),
         None => std::env::var("EVE_SPOTIFY").unwrap_or_default(),
     };
-    !matches!(v.trim().to_lowercase().as_str(), "0" | "false" | "no" | "off")
+    !matches!(py_strip(&v).to_lowercase().as_str(), "0" | "false" | "no" | "off")
 }
 
 fn colors_path(p: &Path) -> PathBuf {
@@ -1998,6 +2025,12 @@ async fn serve_callback(
         let _ = stream.write_all(b"HTTP/1.0 501 Unsupported method\r\nConnection: close\r\n\r\n").await;
         return false;
     }
+    // urlparse(self.path): the fragment is not the query, and an absolute-form target still has its path
+    let target = target.split_once('#').map_or(target, |(t, _)| t);
+    let target = match target.split_once("://") {
+        Some((_, after)) => after.find('/').map_or("", |i| &after[i..]),
+        None => target,
+    };
     let (path, query) = target.split_once('?').unwrap_or((target, ""));
     if path != "/callback" {
         let _ = stream.write_all(b"HTTP/1.0 404 Not Found\r\nConnection: close\r\n\r\n").await;
@@ -2005,7 +2038,7 @@ async fn serve_callback(
     }
     let first_of = |key: &str| -> String {
         url::form_urlencoded::parse(query.as_bytes())
-            .find(|(k, _)| k == key)
+            .find(|(k, v)| k == key && !v.is_empty()) // parse_qs drops blank values
             .map(|(_, v)| v.into_owned())
             .unwrap_or_default()
     };
@@ -2242,11 +2275,11 @@ pub async fn cli(argv: &[String], path: Option<&Path>, out: Out<'_>, http: Optio
         let secret = if sub.get_flag("secret-stdin") {
             let mut line = String::new();
             let _ = std::io::stdin().read_line(&mut line);
-            line.trim().to_string()
+            py_strip(&line).to_string()
         } else {
             String::new()
         };
-        return login(client_id.trim(), &secret, Some(&cfg_path), http, out, None, 300.0).await;
+        return login(py_strip(&client_id), &secret, Some(&cfg_path), http, out, None, 300.0).await;
     }
     if act == "logout" {
         match std::fs::remove_file(&cfg_path) {
@@ -2375,6 +2408,21 @@ mod tests {
         assert_eq!(norm("  What\u{2019}s   PLAYING?! "), "what's playing");
         assert_eq!(norm("hey eve, pause spotify"), "hey eve pause spotify");
         assert_eq!(norm("pause\u{1c}the music\u{b2}!"), "pause the music\u{b2}");
+    }
+
+    #[test]
+    fn the_off_switch_strips_as_python_strips() {
+        let env = |v: &str| HashMap::from([("EVE_SPOTIFY".to_string(), v.to_string())]);
+        assert!(!enabled(Some(&env(" Off\u{1c}"))));
+        assert!(!enabled(Some(&env("0"))));
+        assert!(enabled(Some(&env("1"))));
+        assert!(enabled(Some(&HashMap::new())));
+    }
+
+    #[test]
+    fn python_word_class_takes_n_digits_and_leaves_marks() {
+        assert!(py_word('\u{b2}') && py_word('a') && py_word('_') && py_word('\u{928}'));
+        assert!(!py_word('\u{94d}') && !py_word('\u{301}') && !py_word('-') && !py_word('\u{203f}'));
     }
 
     #[test]

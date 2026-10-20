@@ -72,6 +72,8 @@ const PHRASES: &[&str] = &[
     "play spotify on spotify", "move the music to spotify", "spotify volume 0", "music volume 100 %",
     "music volume \u{664}\u{660}", "spotify volume \u{1d7ce}\u{1d7d9}%", "music volume 4\u{b2}", "pause\u{1c}the music",
     "pause the music\u{a0}please", "play caf\u{e9} del mar on spotify", "move the music to the k\u{f6}k",
+    "send the music to kitchen\u{b2}", "move the music to the \u{928}\u{92e}\u{938}\u{94d}\u{924}\u{947}",
+    "play the music on spotifyx", "play the music on the spotify_box", "pause\u{1f}",
 ];
 
 fn cmd_json(c: &Option<S::Command>) -> Value {
@@ -117,4 +119,34 @@ fn the_login_file_reads_both_ways() {
     let py: Value = serde_json::from_str(&out).unwrap();
     assert_eq!(py[0], json!(true), "Python rewrote the file differently");
     assert_eq!(py[1], Value::Object(cfg));
+}
+
+#[test]
+fn picking_a_device_matches_the_python() {
+    let devices = json!([
+        {"id": "1", "name": "\u{928}\u{92e}\u{938}\u{94d}\u{924}\u{947} Speaker", "type": "Speaker"},
+        {"id": "2", "name": "Studio MacBook", "type": "Computer"},
+        {"id": "3", "name": "Kitchen\u{b2} Echo", "type": "Speaker"},
+        {"id": "4", "name": "Living Room TV", "type": "TV", "is_restricted": true},
+        {"id": "5", "name": "Bob's iPhone", "type": "Smartphone"},
+    ]);
+    let names = [
+        "\u{928}\u{92e}\u{938}\u{94d}\u{924}\u{947}", "\u{938}", "kitchen", "kitchen\u{b2}", "the mac", "speaker",
+        "living room tv", "garage", "bob's", "phone", "", "-", "echo device",
+    ];
+    let input = serde_json::to_string(&json!({"devices": devices, "names": names})).unwrap();
+    let Some(out) = python(
+        "import json, sys; from eve_bridge import spotify as S\n\
+         d = json.load(sys.stdin)\n\
+         print(json.dumps([list(S.Spotify.pick(d['devices'], n)) for n in d['names']]))",
+        &input,
+    ) else {
+        return;
+    };
+    let py: Vec<Value> = serde_json::from_str(&out).unwrap();
+    let devs = devices.as_array().unwrap().clone();
+    for (name, want) in names.iter().zip(py) {
+        let (found, why) = S::Spotify::pick(&devs, name);
+        assert_eq!(json!([found, why]), want, "{name:?}");
+    }
 }
