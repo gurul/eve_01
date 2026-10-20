@@ -344,3 +344,59 @@ fn real_pgrep_reports_a_missing_process() {
     let running = rt.block_on(app_running("eve-no-such-process-xyz")).unwrap();
     assert!(!running);
 }
+
+/// Every AppleScript constant is byte-identical to the Python module's.
+#[test]
+fn scripts_are_verbatim_from_python() {
+    let py = include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../../bridge/src/eve_bridge/focus_terminal.py"
+    ));
+    for (name, rust) in [
+        ("_ITERM_SCRIPT", ITERM_SCRIPT),
+        ("_ACTIVATE_SCRIPT", ACTIVATE_SCRIPT),
+        ("_ACTIVATE_BY_NAME_SCRIPT", ACTIVATE_BY_NAME_SCRIPT),
+        ("_TERMINAL_SCRIPT", TERMINAL_SCRIPT),
+        ("_AX_RAISE_SCRIPT", AX_RAISE_SCRIPT),
+        ("_UNMINIMIZE_SCRIPT", UNMINIMIZE_SCRIPT),
+    ] {
+        let start = py.find(&format!("\n{name} = '''")).expect(name) + name.len() + 7;
+        let end = start + py[start..].find("'''").expect(name);
+        assert_eq!(&py[start..end], rust, "{name}");
+    }
+}
+
+#[test]
+fn default_targets_match_python() {
+    let py = include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../../bridge/src/eve_bridge/focus_terminal.py"
+    ));
+    for (name, bid) in DEFAULT_ACTIVATE_TARGETS {
+        let line = match bid {
+            Some(b) => format!("    (\"{name}\", \"{b}\"),\n"),
+            None => format!("    (\"{name}\", None),\n"),
+        };
+        assert!(py.contains(&line), "{line}");
+    }
+}
+
+#[test]
+fn py_strip_matches_python_whitespace() {
+    assert_eq!(py_strip("\x1c\x1f matched\n\u{a0}"), "matched");
+    assert_eq!(py_strip(" \t"), "");
+    assert_eq!(activate_targets_from("\x1fwarp\x1e"), vec![t("Warp", Some("dev.warp.Warp"))]);
+}
+
+#[test]
+fn py_repr_escapes_non_printable_like_python() {
+    // repr('a\x85b​c\xa0d\U000e0001') in CPython
+    assert_eq!(py_repr("a\u{85}b\u{200b}c\u{a0}d\u{e0001}"), "'a\\x85b\\u200bc\\xa0d\\U000e0001'");
+    assert_eq!(py_repr("x\x7f\x01é"), "'x\\x7f\\x01é'");
+}
+
+#[test]
+fn spawn_error_reads_like_python_oserror() {
+    let e = spawn_error(std::io::Error::from_raw_os_error(2), "osascript");
+    assert_eq!(e.to_string(), "[Errno 2] No such file or directory: 'osascript'");
+}

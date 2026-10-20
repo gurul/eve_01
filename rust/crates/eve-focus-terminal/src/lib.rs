@@ -98,19 +98,23 @@ pub fn default_activate_targets() -> Vec<ActivateTarget> {
 /// order (e.g. "Warp,cmux,Composer"). A name matching a default entry keeps
 /// its known bundle id; anything else activates by name.
 pub fn activate_targets() -> Vec<ActivateTarget> {
-    let raw = std::env::var("EVE_FOCUS_APPS").unwrap_or_default();
+    // Python reads the variable whatever its bytes; a non-UTF-8 value is
+    // decoded lossily here rather than treated as unset.
+    let raw = std::env::var_os("EVE_FOCUS_APPS")
+        .map(|v| v.to_string_lossy().into_owned())
+        .unwrap_or_default();
     activate_targets_from(&raw)
 }
 
 /// `activate_targets` over an explicit EVE_FOCUS_APPS value ("" = unset).
 pub fn activate_targets_from(raw: &str) -> Vec<ActivateTarget> {
-    let raw = raw.trim();
+    let raw = py_strip(raw);
     if raw.is_empty() {
         return default_activate_targets();
     }
     let mut targets: Vec<ActivateTarget> = Vec::new();
     for part in raw.split(',') {
-        let name = part.trim();
+        let name = py_strip(part);
         if name.is_empty() {
             continue;
         }
@@ -246,12 +250,33 @@ pub async fn app_running(bundle_hint: &str) -> anyhow::Result<bool> {
     let status = Command::new("pgrep")
         .arg("-x")
         .arg(bundle_hint)
-        .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .status()
-        .await?;
+        .await
+        .map_err(|e| spawn_error(e, "pgrep"))?;
     Ok(status.code() == Some(0))
+}
+
+/// A spawn failure worded as Python's `OSError` str, e.g.
+/// `[Errno 2] No such file or directory: 'osascript'`, so the
+/// `focus: failed non-fatally: …` warning reads the same.
+fn spawn_error(e: std::io::Error, program: &str) -> anyhow::Error {
+    match e.raw_os_error() {
+        Some(code) => {
+            let full = e.to_string();
+            let suffix = format!(" (os error {code})");
+            let msg = full.strip_suffix(&suffix).unwrap_or(&full);
+            anyhow::anyhow!("[Errno {code}] {msg}: {}", py_repr(program))
+        }
+        None => anyhow::Error::new(e),
+    }
+}
+
+/// Python `str.strip()` with no arguments: strips every char whose
+/// `isspace()` is true, which adds U+001C..U+001F to Rust's White_Space set.
+pub fn py_strip(s: &str) -> &str {
+    s.trim_matches(|c: char| c.is_whitespace() || ('\u{1c}'..='\u{1f}').contains(&c))
 }
 
 /// `osascript -e <script> <args…>`; stripped stdout, or `None` on a
@@ -261,16 +286,18 @@ pub async fn osascript(script: &str, args: &[&str]) -> anyhow::Result<Option<Str
         .arg("-e")
         .arg(script)
         .args(args)
-        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
         .output()
-        .await?;
+        .await
+        .map_err(|e| spawn_error(e, "osascript"))?;
     if out.status.code() != Some(0) {
         let err = String::from_utf8_lossy(&out.stderr);
-        let err: String = err.trim().chars().take(200).collect();
+        let err: String = py_strip(&err).chars().take(200).collect();
         tracing::debug!("focus: osascript failed: {}", err);
         return Ok(None);
     }
-    Ok(Some(String::from_utf8_lossy(&out.stdout).trim().to_string()))
+    Ok(Some(py_strip(&String::from_utf8_lossy(&out.stdout)).to_string()))
 }
 
 /// Python truthiness of an `_osascript` result: `None` and `""` are false.
@@ -301,14 +328,42 @@ pub fn py_repr(s: &str) -> String {
                 out.push('\\');
                 out.push(c);
             }
-            c if (c as u32) < 0x20 || c as u32 == 0x7f => {
-                out.push_str(&format!("\\x{:02x}", c as u32));
+            c if !is_printable(c) => {
+                let n = c as u32;
+                if n < 0x100 {
+                    out.push_str(&format!("\\x{n:02x}"));
+                } else if n < 0x10000 {
+                    out.push_str(&format!("\\u{n:04x}"));
+                } else {
+                    out.push_str(&format!("\\U{n:08x}"));
+                }
             }
             c => out.push(c),
         }
     }
     out.push(quote);
     out
+}
+
+/// Python's `str.isprintable()` for one char: every general category is
+/// printable except Cc, Cf, Cs, Co, Cn, Zl, Zp and Zs; the ASCII space is
+/// printable.
+fn is_printable(c: char) -> bool {
+    use unicode_general_category::{get_general_category, GeneralCategory as G};
+    if c == ' ' {
+        return true;
+    }
+    !matches!(
+        get_general_category(c),
+        G::Control
+            | G::Format
+            | G::Surrogate
+            | G::PrivateUse
+            | G::Unassigned
+            | G::LineSeparator
+            | G::ParagraphSeparator
+            | G::SpaceSeparator
+    )
 }
 
 /// `os.path.basename(cwd.rstrip("/")) if cwd else ""`.
