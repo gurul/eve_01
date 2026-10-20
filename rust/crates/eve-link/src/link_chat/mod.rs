@@ -303,8 +303,75 @@ pub const LEGACY_CONTROLS: [&str; 5] = ["lights", "spotify", "firetv", "pika", "
 /// sheet opens it ("native" when the phone has Swift for it, else "generic"). An older phone reads only the keys it
 /// knows.
 pub fn controls_listing(get: &dyn Fn(&str) -> Option<std::sync::Arc<dyn Hub>>) -> Obj {
-    let _ = get;
-    todo!()
+    fn here(hub: &Option<std::sync::Arc<dyn Hub>>) -> bool {
+        hub.as_ref().is_some_and(|h| h.available())
+    }
+
+    let mut legacy = Obj::new();
+    for slot in LEGACY_CONTROLS {
+        // the legacy keys, in their order; a newer app has none
+        let Some(app) = eve_app_registry::get(slot) else {
+            continue;
+        };
+        let hub = get(&app.slot);
+        let value = if app.listing {
+            Value::Array(hub.as_ref().map(|h| h.listing()).unwrap_or_default())
+        } else {
+            Value::Bool(here(&hub))
+        };
+        legacy.insert(app.slot.clone(), value);
+        if app.slot == "firetv" {
+            // the Memory card (link_memory.py): its object is always there, its memory only while EVE_MEMORY is on
+            // and the daemon has built it; Notes (link_notes.py): while the second brain is on and its vault is there
+            legacy.insert("memory".to_string(), Value::Bool(here(&get("memory"))));
+            legacy.insert("notes".to_string(), Value::Bool(here(&get("notes"))));
+        }
+    }
+    if !legacy.contains_key("memory") {
+        legacy.insert("memory".to_string(), Value::Bool(here(&get("memory"))));
+    }
+    if !legacy.contains_key("notes") {
+        legacy.insert("notes".to_string(), Value::Bool(here(&get("notes"))));
+    }
+    let mut rows: Vec<Value> = Vec::new();
+    for app in eve_app_registry::for_phone() {
+        let hub = get(&app.slot);
+        let listed: Option<Vec<Value>> = if app.listing && here(&hub) {
+            match legacy.get(&app.slot) {
+                Some(Value::Array(items)) => Some(items.clone()),
+                Some(_) => Some(Vec::new()),
+                None => Some(hub.as_ref().map(|h| h.listing()).unwrap_or_default()),
+            }
+        } else {
+            None
+        };
+        if !here(&hub) || (app.listing && listed.as_ref().is_none_or(|l| l.is_empty())) {
+            continue;
+        }
+        let detail = match (&listed, app.listing) {
+            (Some(items), true) => {
+                let n = items.len();
+                if n == 1 {
+                    format!("{n} light")
+                } else {
+                    format!("{n} lights")
+                }
+            }
+            _ => app.detail.clone(),
+        };
+        let mut row = Obj::new();
+        row.insert("id".to_string(), Value::String(app.slot.clone()));
+        row.insert("title".to_string(), Value::String(app.title.clone()));
+        row.insert("symbol".to_string(), Value::String(app.symbol.clone()));
+        row.insert("detail".to_string(), Value::String(detail));
+        row.insert(
+            "sheet".to_string(),
+            Value::String(if app.native_sheet { "native" } else { "generic" }.to_string()),
+        );
+        rows.push(Value::Object(row));
+    }
+    legacy.insert("apps".to_string(), Value::Array(rows));
+    legacy
 }
 
 /// What an app turn's instructions end with: `APP_RULE` (when to use OpenUI, with one example), the openui-lang
@@ -312,8 +379,45 @@ pub fn controls_listing(get: &dyn Fn(&str) -> Option<std::sync::Arc<dyn Hub>>) -
 /// or empty file means no addition at all, logged once: the brain then answers in plain Markdown, which the app also
 /// shows, and is never told to write a language it has no reference for.
 pub fn app_block(path: Option<&Path>) -> String {
-    let _ = path;
-    todo!()
+    let default = prompt_path();
+    let path = path.unwrap_or(&default);
+    let mut cache = PROMPT.lock();
+    match std::fs::metadata(path) {
+        Ok(st) => {
+            use std::os::unix::fs::MetadataExt;
+            let key = (path.to_path_buf(), st.mtime() as i128 * 1_000_000_000 + st.mtime_nsec() as i128, st.len());
+            if cache.key.as_ref() != Some(&key) {
+                match std::fs::read(path).map(String::from_utf8) {
+                    Ok(Ok(text)) => {
+                        cache.key = Some(key);
+                        cache.text = eve_transcripts::py::strip(&text).to_string();
+                    }
+                    // a read that fails, or bytes that are not UTF-8: no guide (see parity/chat-core.md)
+                    _ => {
+                        cache.key = None;
+                        cache.text.clear();
+                    }
+                }
+            }
+        }
+        Err(_) => {
+            cache.key = None;
+            cache.text.clear();
+        }
+    }
+    if cache.text.is_empty() {
+        if !cache.warned {
+            cache.warned = true;
+            let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+            tracing::warn!(
+                "link chat: {} is missing or empty; app turns get no OpenUI guide \
+                 (run ios/EveLink/Web/scripts/gen-prompt.mjs)",
+                name
+            );
+        }
+        return String::new();
+    }
+    format!("{}\n\n{}\n\n{}", *APP_RULE, cache.text, APP_LINE)
 }
 
 /// The default reference's path (`PROMPT_PATH`).
@@ -335,8 +439,25 @@ pub static OPENUI_BARE_LINE: LazyLock<Regex> =
 /// (`history_text`), so Telegram never shows a raw program and those turns never read past replies in OpenUI Lang
 /// and copy the format. An unclosed fence runs to the end, as the app renders it.
 pub fn strip_openui(text: &str) -> String {
-    let _ = text;
-    todo!()
+    use eve_transcripts::py;
+    // a program at the start, or after some prose, as replyParts.ts draws it (`root = Card(` at a line start, no ```
+    // before it): the prose stays, the program goes (review, 2026-10-08: it reached Telegram and voice history
+    // unstripped)
+    if let Some(at) = OPENUI_BARE_LINE.find(text) {
+        // the match starts with "\n", a space, a tab or "r": one byte, so `start + 1` is a char boundary
+        if !text[..at.start() + 1].contains("```") {
+            let before = py::rstrip(&text[..at.start()]);
+            return if before.is_empty() {
+                OPENUI_PLACEHOLDER.to_string()
+            } else {
+                py::strip(&format!("{before}\n{OPENUI_PLACEHOLDER}")).to_string()
+            };
+        }
+    }
+    if !text.contains("```openui-lang") {
+        return text.to_string();
+    }
+    py::strip(&OPENUI_FENCE.replace_all(text, regex::NoExpand(OPENUI_PLACEHOLDER))).to_string()
 }
 
 /// An eve line the chat log holds from before app history kept programs (2026-10-08): the placeholder is all that is
@@ -347,8 +468,14 @@ pub const OPENUI_GONE: &str = "(A card was shown here; what it held is no longer
 /// turn (`app`) reads it as written, so a follow-up has the block's titles, rows and options to work from. A
 /// Telegram, voice or call turn reads each program as `OPENUI_PLACEHOLDER` (`strip_openui`).
 pub fn history_text(text: &str, app: bool) -> String {
-    let _ = (text, app);
-    todo!()
+    if !app {
+        return strip_openui(text);
+    }
+    if text.contains(OPENUI_PLACEHOLDER) {
+        text.replace(OPENUI_PLACEHOLDER, OPENUI_GONE)
+    } else {
+        text.to_string()
+    }
 }
 
 // ---- the conversation, read back from the transcript -------------------------------------------------------
@@ -363,8 +490,75 @@ pub struct BadCursor(pub String);
 /// a command word, a line sent over the memory bus, and a forgotten line. "claude on" relays (`kind: "relay"`)
 /// show the owner's relayed line as theirs and Claude's answers as eve's (`via: "other"`). Python's `_row`.
 pub fn row(day: &str, i: usize, line: &Line) -> Option<Obj> {
-    let _ = (day, i, line);
-    todo!()
+    use eve_transcripts::{FORGOTTEN, TALK};
+
+    let s = |key: &str| line.get(key).and_then(Value::as_str);
+    let (who, kind, ch) = (s("who"), s("kind"), s("ch"));
+    let relayed = kind == Some("relay") && matches!(who, Some("owner" | "claude"));
+    let (who, kind) = if relayed {
+        (if who == Some("claude") { "eve" } else { "owner" }, "say")
+    } else {
+        (who?, kind?)
+    };
+    let ch = ch?;
+    if !ROLES.contains(&who)
+        || !KINDS.contains(&kind)
+        || !TALK.contains(&ch)
+        || line.get("text").and_then(Value::as_str) == Some(FORGOTTEN)
+    {
+        return None;
+    }
+    let ts = py_str(line.get("ts")?);
+    let at = eve_transcripts::parse_ts(&ts)?;
+    let t = at.timestamp_micros() as f64 / 1e6;
+    let via = if relayed && who == "eve" {
+        "other" // Claude Code's words, not eve's own turn
+    } else {
+        match s("via") {
+            Some(v) if VIAS.contains(&v) => v,
+            _ => match ch {
+                "voice" => "voice",
+                "telegram" => "telegram",
+                _ => "other",
+            },
+        }
+    };
+    let mut text = match line.get("text") {
+        Some(v) if eve_transcripts::py::truthy(v) => py_str(v),
+        _ => String::new(),
+    };
+    let att = att(line.get("att"));
+    if who == "owner" && !att.is_empty() {
+        // The history's note for the attachments ("[image attached]", telegram._attached), which the relay keeps
+        // in the line: the app shows the attachments themselves, and matches its own bubble by the words alone,
+        // so the note made a second copy of every photo sent while the relay was on (owner, 2026-10-09).
+        text = ATTACHED_NOTE.replace_all(&text, "").into_owned();
+    }
+    let mut row = Obj::new();
+    row.insert("id".to_string(), Value::String(format!("{day}:{i}")));
+    row.insert("role".to_string(), Value::String(who.to_string()));
+    row.insert("text".to_string(), Value::String(text));
+    row.insert("t".to_string(), Value::from(t));
+    row.insert("via".to_string(), Value::String(via.to_string()));
+    row.insert("kind".to_string(), Value::String(kind.to_string()));
+    if who == "owner" {
+        if let Some(mid) = s("mid") {
+            if TURN_ID_RE.is_match(mid) {
+                row.insert("rid".to_string(), Value::String(mid.to_string())); // its reaction's key (link_reactions.py)
+            }
+        }
+    }
+    if !att.is_empty() {
+        row.insert("attachments".to_string(), Value::Array(att.into_iter().map(Value::Object).collect()));
+    }
+    if who == "eve" {
+        let sources = eve_memory_sources::sanitize(line.get("src").unwrap_or(&Value::Null));
+        if !sources.is_empty() {
+            // the memory lines the reply leaned on (memory_sources.py)
+            row.insert("sources".to_string(), Value::Array(sources.iter().map(|s| s.to_value()).collect()));
+        }
+    }
+    Some(row)
 }
 
 /// telegram._attached's note at the end of an owner line: "[image attached]", "[2 images, file a.pdf attached]".
@@ -380,15 +574,47 @@ pub const ATT_KINDS: [&str; 5] = ["image", "pdf", "text", "doc", "file"];
 
 /// What the owner's transcript line keeps of a turn's attachments (link_uploads.Upload): id, name and kind.
 pub fn att_record(uploads: &[Upload]) -> Vec<Value> {
-    let _ = uploads;
-    todo!()
+    uploads
+        .iter()
+        .map(|u| {
+            let mut a = Obj::new();
+            a.insert("id".to_string(), Value::String(u.id.clone()));
+            a.insert("name".to_string(), Value::String(u.name.clone()));
+            a.insert("kind".to_string(), Value::String(u.kind.clone()));
+            Value::Object(a)
+        })
+        .collect()
 }
 
 /// A transcript line's `att`, as the app may show it: well-formed entries only, at most MAX_ATTACHMENTS. Python's
 /// `_att`.
 pub fn att(raw: Option<&Value>) -> Vec<Obj> {
-    let _ = raw;
-    todo!()
+    let Some(Value::Array(items)) = raw else {
+        return Vec::new();
+    };
+    let mut out = Vec::new();
+    for a in items.iter().take(MAX_ATTACHMENTS) {
+        let Value::Object(a) = a else {
+            continue;
+        };
+        let (Some(Value::String(id)), Some(Value::String(kind)), Some(Value::String(name))) =
+            (a.get("id"), a.get("kind"), a.get("name"))
+        else {
+            continue;
+        };
+        if !eve_link_uploads::ID_RE.is_match(id) || !ATT_KINDS.contains(&kind.as_str()) {
+            continue;
+        }
+        let mut entry = Obj::new();
+        entry.insert("id".to_string(), Value::String(id.clone()));
+        entry.insert(
+            "name".to_string(),
+            Value::String(eve_transcripts::py::head(name, eve_link_uploads::MAX_NAME_CHARS).to_string()),
+        );
+        entry.insert("kind".to_string(), Value::String(kind.clone()));
+        out.push(entry);
+    }
+    out
 }
 
 /// (messages oldest first, cursor). A message's id and the cursor are `<day>:<line index>`: a day's file is only ever
@@ -396,36 +622,127 @@ pub fn att(raw: Option<&Value>) -> Vec<Obj> {
 /// looked at, shown or not, so the next poll starts after it, across the 04:00 day boundary too. Without `after`:
 /// the newest HISTORY_LIMIT shown lines, however far back. Blocking: call it on a blocking thread.
 pub fn read_messages(store: &Transcripts, after: Option<&str>) -> Result<(Vec<Obj>, String), BadCursor> {
-    let _ = (store, after);
-    todo!()
+    let days = store.days();
+    let Some(after) = after else {
+        // The newest HISTORY_LIMIT shown lines, however many days back they go (owner, 2026-10-13: "keep all chat
+        // history, i want infinite scroll"); older pages come from read_before.
+        let mut cursor = format!("{}:-1", store.day_of(store.now()));
+        for day in days.iter().rev() {
+            let lines = store.lines(day);
+            if !lines.is_empty() {
+                cursor = format!("{day}:{}", lines.len() - 1);
+                break;
+            }
+        }
+        let (rows, _) = read_before(store, None, HISTORY_LIMIT)?;
+        return Ok((rows, cursor));
+    };
+    let m = CURSOR_RE.captures(after).ok_or_else(|| BadCursor("bad cursor".to_string()))?;
+    let since = m[1].to_string();
+    let last: i64 = if &m[2] == "-1" { -1 } else { m[2].parse().map_err(|_| BadCursor("bad cursor".to_string()))? };
+    let mut rows = Vec::new();
+    let mut cursor = after.to_string();
+    for day in days.iter().filter(|d| d.as_str() >= since.as_str()) {
+        let lines = store.lines(day);
+        let start = if *day == since { (last + 1) as usize } else { 0 };
+        for (i, line) in lines.iter().enumerate().skip(start) {
+            cursor = format!("{day}:{i}");
+            if let Some(row) = row(day, i, line) {
+                rows.push(row);
+                if rows.len() >= PAGE_LIMIT {
+                    return Ok((rows, cursor));
+                }
+            }
+        }
+    }
+    Ok((rows, cursor))
 }
 
 /// (up to `limit` shown lines just before message `before`, oldest first; whether older ones exist). None: the
 /// newest. Infinite scroll's older pages (`?before=<id>`). Nothing is ever pruned (transcripts.py), so this reaches
 /// the first day. Blocking.
 pub fn read_before(store: &Transcripts, before: Option<&str>, limit: usize) -> Result<(Vec<Obj>, bool), BadCursor> {
-    let _ = (store, before, limit);
-    todo!()
+    let stop: Option<(String, usize)> = match before {
+        Some(before) => {
+            let bad = || BadCursor("bad message id".to_string());
+            let m = CURSOR_RE.captures(before).ok_or_else(bad)?;
+            if &m[2] == "-1" {
+                return Err(bad());
+            }
+            Some((m[1].to_string(), m[2].parse().map_err(|_| bad())?))
+        }
+        None => None,
+    };
+    let mut found: Vec<Obj> = Vec::new();
+    for day in store.days().iter().rev() {
+        if let Some((stop_day, _)) = &stop {
+            if day > stop_day {
+                continue;
+            }
+        }
+        let lines = store.lines(day);
+        let end = match &stop {
+            Some((stop_day, stop_i)) if stop_day == day => (*stop_i).min(lines.len()),
+            _ => lines.len(),
+        };
+        for i in (0..end).rev() {
+            if let Some(row) = row(day, i, &lines[i]) {
+                found.push(row);
+                if found.len() > limit {
+                    found.truncate(limit);
+                    found.reverse();
+                    return Ok((found, true));
+                }
+            }
+        }
+    }
+    found.reverse();
+    Ok((found, false))
 }
 
 /// A cursor as the app sends it back → (the transcript position, the reaction version it saw or None). An error
 /// for one this door never made.
 pub fn split_cursor(after: Option<&str>) -> Result<(Option<String>, Option<i64>), BadCursor> {
-    let _ = after;
-    todo!()
+    let Some(after) = after else {
+        return Ok((None, None));
+    };
+    let bad = || BadCursor("bad cursor".to_string());
+    let (base, version) = match after.split_once('~') {
+        Some((base, version)) => (base, Some(version)),
+        None => (after, None),
+    };
+    if !CURSOR_RE.is_match(base) {
+        return Err(bad());
+    }
+    match version {
+        None => Ok((Some(base.to_string()), None)),
+        Some(v) => {
+            if !REACTION_VERSION_RE.is_match(v) {
+                return Err(bad());
+            }
+            // int() drops the final newline `$` let through
+            let n = eve_transcripts::py::int(v.trim_end_matches('\n')).ok_or_else(bad)?;
+            Ok((Some(base.to_string()), Some(n)))
+        }
+    }
 }
 
 /// The request's Content-Length, -1 when it is not a number (`int(headers.get("content-length") or 0)`).
 pub fn length(headers: &Headers) -> i64 {
-    let _ = headers;
-    todo!()
+    match headers.get("content-length") {
+        None => 0,
+        Some(raw) if raw.is_empty() => 0,
+        Some(raw) => py_int(raw).unwrap_or(-1),
+    }
 }
 
 /// An app turn's id: the app's `client_id` when it is a plain id not in use (`taken`), else a random one
 /// (`secrets.token_hex(8)`).
 pub fn turn_id(client_id: &str, taken: &dyn Fn(&str) -> bool) -> String {
-    let _ = (client_id, taken);
-    todo!()
+    if TURN_ID_RE.is_match(client_id) && !taken(client_id) {
+        return client_id.to_string();
+    }
+    hex::encode(rand::random::<[u8; 8]>())
 }
 
 // ---- one turn's stream ------------------------------------------------------------------------------------
@@ -433,8 +750,11 @@ pub fn turn_id(client_id: &str, taken: &dyn Fn(&str) -> bool) -> String {
 /// One OpenAI Chat Completions streaming chunk carrying `content`, framed as one SSE event:
 /// `data: {"choices": [{"index": 0, "delta": {"content": ...}}]}\n\n` with Python's `json.dumps` spacing.
 pub fn sse(content: &str) -> Vec<u8> {
-    let _ = content;
-    todo!()
+    let body = serde_json::json!({"choices": [{"index": 0, "delta": {"content": content}}]});
+    let mut out = b"data: ".to_vec();
+    out.extend_from_slice(py_json(&body).as_bytes());
+    out.extend_from_slice(b"\n\n");
+    out
 }
 
 pub const DONE: &[u8] = b"data: [DONE]\n\n";
@@ -444,8 +764,12 @@ X-Accel-Buffering: no\r\nTransfer-Encoding: chunked\r\nConnection: close\r\n\r\n
 
 /// One HTTP/1.1 chunk (the stream's length is not known up front), flushed now: the tunnel passes each on.
 pub async fn chunk(writer: &mut DynWrite, data: &[u8]) -> std::io::Result<()> {
-    let _ = (writer, data);
-    todo!()
+    use tokio::io::AsyncWriteExt;
+    let mut buf = format!("{:x}\r\n", data.len()).into_bytes();
+    buf.extend_from_slice(data);
+    buf.extend_from_slice(b"\r\n");
+    writer.write_all(&buf).await?;
+    writer.flush().await
 }
 
 // ---- the chief's cards, for the Work view ------------------------------------------------------------------
@@ -464,41 +788,121 @@ pub const WAITING: [(&str, &str); 4] = [
 /// A Go would approve something now (Chief.approve's own conditions): the first queued one-way step, every step
 /// before it done, no yes on it yet. Python's `_go_ready`.
 pub fn go_ready(card: &JobCard) -> bool {
-    let _ = card;
-    todo!()
+    let Some(phase) = card.phases.iter().find(|p| p.status == "queued" && p.door == "one_way") else {
+        return false;
+    };
+    matches!(phase.approval, None | Some(Value::Null))
+        && card.phases.iter().filter(|p| p.n < phase.n).all(|p| p.status == "ok")
 }
 
 /// The owner's move: a Go, a budget, an answer, a receipt not confirmed, or an act that may have happened.
 pub fn job_needs_you(card: &JobCard) -> bool {
-    let _ = card;
-    todo!()
+    if card.terminal {
+        return false;
+    }
+    (card.status == "waiting" && matches!(card.waiting_for.as_deref(), Some("go" | "budget" | "question")))
+        || card.status == "unverified"
+        || card.doubtful
 }
 
 /// The subset of JOB_ACTIONS that does something to this card now, the way Chief.choices picks its buttons.
 pub fn job_actions(card: &JobCard) -> Vec<String> {
-    let _ = card;
-    todo!()
+    if card.terminal {
+        return vec!["hide".to_string()];
+    }
+    if card.doubtful {
+        // the act may already have happened: never a one-tap Go (that would run it twice), only the answer
+        // Telegram's buttons ask for (Chief.choices), or a drop
+        return ["happened", "didnt", "drop"].iter().map(|s| s.to_string()).collect();
+    }
+    let mut out = Vec::new();
+    if go_ready(card) {
+        out.push("go".to_string());
+    }
+    if card.status == "unverified" || card.kind == "commitment" {
+        out.push("done".to_string());
+    }
+    if card.status != "unverified" {
+        out.push("drop".to_string());
+    }
+    if card.status == "waiting" && card.waiting_for.as_deref() == Some("budget") {
+        out.push("raise".to_string());
+    }
+    out
 }
 
 /// One muted status line, composed by code: "Waiting on your Go", "Researching", "Done".
 pub fn job_line(card: &JobCard) -> String {
-    let _ = card;
-    todo!()
+    let line = match card.status.as_str() {
+        "done" => "Done",
+        "dropped" => "Dropped",
+        "unverified" => "Not confirmed: did it go through?",
+        _ if card.doubtful => "May have happened: check",
+        "waiting" => {
+            let wait = card.waiting_for.as_deref().unwrap_or("");
+            WAITING.iter().find(|(k, _)| *k == wait).map(|(_, v)| *v).unwrap_or("Waiting")
+        }
+        "proposed" => "Proposed",
+        _ => {
+            if let Some(running) = card.phases.iter().find(|p| p.status == "running") {
+                return RUNNING
+                    .iter()
+                    .find(|(k, _)| *k == running.do_)
+                    .map(|(_, v)| *v)
+                    .unwrap_or("Working")
+                    .to_string();
+            }
+            if card.kind == "commitment" {
+                if let Some(at) = card.cue_at.as_deref().filter(|a| !a.is_empty()) {
+                    return format!("Reminder {at}");
+                }
+            }
+            if card.phases.iter().any(|p| p.status == "queued") {
+                "Up next"
+            } else {
+                "Working"
+            }
+        }
+    };
+    line.to_string()
 }
 
 /// One card for `GET /api/link/jobs`: `Chief._as_data` (`card.data`) and what the app needs to draw and act on it:
 /// `rev`, `updated`, `line`, `steps`, `steps_done`, `needs_you`, `actions`.
 pub fn job_entry(card: &JobCard) -> Obj {
-    let _ = card;
-    todo!()
+    let mut out = card.data.clone();
+    out.insert("rev".to_string(), Value::from(card.rev));
+    out.insert("updated".to_string(), Value::from(card.updated));
+    out.insert("line".to_string(), Value::String(job_line(card)));
+    out.insert("steps".to_string(), Value::from(card.phases.len()));
+    out.insert("steps_done".to_string(), Value::from(card.phases.iter().filter(|p| p.status == "ok").count()));
+    out.insert("needs_you".to_string(), Value::Bool(job_needs_you(card)));
+    out.insert(
+        "actions".to_string(),
+        Value::Array(job_actions(card).into_iter().map(Value::String).collect()),
+    );
+    out
 }
 
 /// Open cards first (the ones that need the owner first, then the newest), then the last `FINISHED_SHOWN` finished,
 /// newest first, without the ones the owner removed (`hidden`); `needs_you` counts the cards that need the owner.
 /// `{"jobs": [...], "needs_you": n}`.
 pub fn list_jobs(chief: &dyn Chief, hidden: &BTreeSet<String>) -> Obj {
-    let _ = (chief, hidden);
-    todo!()
+    let cards = chief.cards();
+    let mut open: Vec<(bool, f64, Obj)> =
+        cards.iter().filter(|c| !c.terminal).map(|c| (job_needs_you(c), c.updated, job_entry(c))).collect();
+    // (not needs_you, -updated), stable as Python's sort
+    open.sort_by(|a, b| (!a.0).cmp(&!b.0).then_with(|| b.1.total_cmp(&a.1)));
+    let mut finished: Vec<&JobCard> = cards.iter().filter(|c| c.terminal && !hidden.contains(&c.id)).collect();
+    finished.sort_by(|a, b| b.updated.total_cmp(&a.updated)); // newest first; equal ones keep their order
+    finished.truncate(FINISHED_SHOWN);
+    let needs_you = open.iter().filter(|o| o.0).count();
+    let mut jobs: Vec<Value> = open.into_iter().map(|o| Value::Object(o.2)).collect();
+    jobs.extend(finished.into_iter().map(|c| Value::Object(job_entry(c))));
+    let mut out = Obj::new();
+    out.insert("jobs".to_string(), Value::Array(jobs));
+    out.insert("needs_you".to_string(), Value::from(needs_you));
+    out
 }
 
 /// The finished cards' ids the owner removed from the Work list, kept in one small file (`{"hidden": [sorted ids]}`,
@@ -513,8 +917,19 @@ pub struct HiddenJobs {
 impl HiddenJobs {
     /// Load `path` (`~` expanded; `HIDDEN_JOBS_FILE` by default).
     pub fn new(path: Option<&Path>) -> Self {
-        let _ = path;
-        todo!()
+        let path = match path {
+            Some(p) => crate::expanduser(&p.to_string_lossy()),
+            None => crate::expanduser(HIDDEN_JOBS_FILE),
+        };
+        let ids = match read_hidden(&path) {
+            Ok(ids) => ids,
+            Err(None) => BTreeSet::new(),
+            Err(Some(kind)) => {
+                tracing::warn!("link chat: the hidden jobs could not be read ({}); all are shown", kind);
+                BTreeSet::new()
+            }
+        };
+        HiddenJobs { path, ids: parking_lot::Mutex::new(ids) }
     }
 
     /// The ids now.
@@ -524,8 +939,99 @@ impl HiddenJobs {
 
     /// Add `cid` and write the file (a `.tmp` beside it, 0600, then a rename).
     pub fn add(&self, cid: &str) -> std::io::Result<()> {
-        let _ = cid;
-        todo!()
+        let mut ids = self.ids.lock();
+        ids.insert(cid.to_string());
+        if let Some(parent) = self.path.parent() {
+            mkdir_private(parent)?;
+        }
+        let tmp = self.path.with_extension("tmp");
+        let sorted: Vec<Value> = ids.iter().map(|i| Value::String(i.clone())).collect();
+        let body = py_json(&serde_json::json!({"hidden": sorted}));
+        std::fs::write(&tmp, body)?;
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&tmp, std::fs::Permissions::from_mode(0o600))?;
+        }
+        std::fs::rename(&tmp, &self.path)
+    }
+}
+
+// ---- private helpers ------------------------------------------------------------------------------------------
+
+/// `_prompt`: the reference as last read, keyed by (path, mtime in ns, size), and whether its absence was logged.
+#[derive(Default)]
+struct PromptCache {
+    key: Option<(PathBuf, i128, u64)>,
+    text: String,
+    warned: bool,
+}
+
+static PROMPT: LazyLock<parking_lot::Mutex<PromptCache>> = LazyLock::new(Default::default);
+
+/// Python's `str(value)` of a decoded JSON value.
+fn py_str(v: &Value) -> String {
+    match v {
+        Value::String(s) => s.clone(),
+        other => eve_app_registry::py_repr(other),
+    }
+}
+
+/// Python's `int(text)` of a header: surrounding whitespace, one sign, digits with single underscores between them
+/// (any Unicode decimal digit). None where Python raises ValueError; a value past i64 saturates.
+fn py_int(raw: &str) -> Option<i64> {
+    use eve_transcripts::py;
+    let s = py::strip(raw);
+    let (negative, body) = match s.as_bytes().first() {
+        Some(b'-') => (true, &s[1..]),
+        Some(b'+') => (false, &s[1..]),
+        _ => (false, s),
+    };
+    if body.is_empty() || body.starts_with('_') || body.ends_with('_') || body.contains("__") {
+        return None;
+    }
+    let digits: String = body.chars().filter(|c| *c != '_').collect();
+    if !digits.chars().all(|c| py::int(c.encode_utf8(&mut [0u8; 4])).is_some()) {
+        return None;
+    }
+    let n = py::int(&digits).unwrap_or(i64::MAX);
+    Some(if negative { -n } else { n })
+}
+
+/// The hidden ids from `path`. Err(None): no file (nothing to say); Err(Some(name)): the Python exception's name
+/// for the log line.
+fn read_hidden(path: &Path) -> Result<BTreeSet<String>, Option<&'static str>> {
+    let raw = match std::fs::read(path) {
+        Ok(raw) => raw,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Err(None),
+        Err(e) => return Err(Some(eve_transcripts::py::os_error_name(&e))),
+    };
+    let text = String::from_utf8(raw).map_err(|_| Some("UnicodeDecodeError"))?;
+    let got: Value = serde_json::from_str(&text).map_err(|_| Some("JSONDecodeError"))?;
+    let Value::Object(got) = got else {
+        return Err(Some("AttributeError"));
+    };
+    // `{i for i in got.get("hidden", []) if isinstance(i, str)}`: whatever iterating the value gives
+    Ok(match got.get("hidden") {
+        None => BTreeSet::new(),
+        Some(Value::Array(items)) => items.iter().filter_map(Value::as_str).map(str::to_string).collect(),
+        Some(Value::String(s)) => s.chars().map(|c| c.to_string()).collect(),
+        Some(Value::Object(keys)) => keys.keys().cloned().collect(),
+        Some(_) => return Err(Some("TypeError")),
+    })
+}
+
+/// `dir.mkdir(mode=0o700, parents=True, exist_ok=True)`: the missing parents with the default mode, `dir` 0700.
+pub(crate) fn mkdir_private(dir: &Path) -> std::io::Result<()> {
+    use std::os::unix::fs::DirBuilderExt;
+    if dir.is_dir() {
+        return Ok(());
+    }
+    if let Some(parent) = dir.parent().filter(|p| !p.as_os_str().is_empty()) {
+        std::fs::create_dir_all(parent)?;
+    }
+    match std::fs::DirBuilder::new().mode(0o700).create(dir) {
+        Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists && dir.is_dir() => Ok(()),
+        other => other,
     }
 }
 
