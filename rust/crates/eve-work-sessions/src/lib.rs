@@ -1255,9 +1255,10 @@ impl WorkSessions {
         }
         {
             let mut records = self.inner.records.lock();
-            records.insert(sid.clone(), rec);
+            records.insert(sid.clone(), rec.clone());
             self.save_locked(&mut records);
         }
+        let rec_made = rec;
         let line = self.inner.launch.line(&self.inner.root, &sid);
         let (code, out) = match (self.inner.osascript)(TERMINAL_OPEN.to_string(), vec![line]).await {
             Ok(answer) => answer,
@@ -1283,19 +1284,18 @@ impl WorkSessions {
         };
         let tty = py::strip(tty);
         let tty = if tty.starts_with("/dev/") { tty.to_string() } else { String::new() };
-        let rec = {
+        // Python sets these on its own `rec` object, so the answer carries them whatever happened to the dict.
+        let mut rec = self.inner.records.lock().get(&sid).cloned().unwrap_or(rec_made);
+        rec.window_id = window_id;
+        rec.tty = tty;
+        {
             let mut records = self.inner.records.lock();
-            let rec = records.get_mut(&sid).map(|r| {
-                r.window_id = window_id;
-                r.tty = tty;
-                r.clone()
-            });
+            if let Some(r) = records.get_mut(&sid) {
+                r.window_id = rec.window_id;
+                r.tty = rec.tty.clone();
+            }
             self.save_locked(&mut records);
-            rec
-        };
-        let Some(rec) = rec else {
-            return refuse(503, "eve couldn't open Terminal on the Mac");
-        };
+        }
         tracing::info!("work sessions: {} started (task {} characters)", sid8(&sid), py::len(&task));
         (200, json!({"ok": true, "session": self.row(&rec, None, None, "")}))
     }
@@ -1565,7 +1565,8 @@ pub fn execvp(file: &str, args: &[String]) -> std::io::Error {
 
 /// `main()` over the process: `launch <sid>` from the command line, `~/.config/eve-bridge`, the real PATH and exec.
 pub fn main() -> i32 {
-    let args: Vec<String> = std::env::args().skip(1).collect();
+    // sys.argv never fails to decode (surrogateescape); a word that is not UTF-8 is no session id either way.
+    let args: Vec<String> = std::env::args_os().skip(1).map(|a| a.to_string_lossy().into_owned()).collect();
     let which = |name: &str| which::which(name).ok();
     main_with(&args, None, &which, &mut |file, argv| Err(execvp(file, argv)))
 }
@@ -1593,7 +1594,8 @@ pub fn main_with(
         }
     };
     let task = match String::from_utf8(task) {
-        Ok(t) => t,
+        // `read_text` reads in universal-newlines mode: "\r\n" and a lone "\r" both arrive as "\n".
+        Ok(t) => t.replace("\r\n", "\n").replace('\r', "\n"),
         Err(_) => {
             eprintln!("UnicodeDecodeError: this Work session's task is not UTF-8.");
             return 1;

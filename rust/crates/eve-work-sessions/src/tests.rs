@@ -917,3 +917,23 @@ async fn a_hook_transcript_path_is_saved_and_survives_a_restart() {
     assert_eq!(again.records()[&sid].window_id, Some(4321));
     assert_eq!(again.records()[&sid].tty, "/dev/ttys009");
 }
+
+#[tokio::test]
+async fn launch_reads_the_task_with_universal_newlines_as_read_text_does() {
+    // Python writes the task as given and `read_text` reads "\r\n" and a lone "\r" as "\n".
+    let tmp = TempDir::new().unwrap();
+    let mac = Mac::new();
+    let work = make(tmp.path(), &mac, None, None);
+    let sid = start_sid(&work, "one\r\ntwo\rthree\n four").await;
+    let task_file = tmp.path().join("home").join("work").join(format!("{sid}.task"));
+    assert_eq!(std::fs::read(&task_file).unwrap(), b"one\r\ntwo\rthree\n four");
+    assert_eq!(work.records()[&sid].title, "one");
+    let mut ran: Vec<Vec<String>> = Vec::new();
+    let which = |_: &str| Some(PathBuf::from("/usr/local/bin/claude"));
+    let code = main_with(&["launch".to_string(), sid.clone()], Some(&tmp.path().join("home")), &which, &mut |_, a| {
+        ran.push(a.to_vec());
+        Ok(())
+    });
+    assert_eq!(code, 0);
+    assert_eq!(ran[0].last().unwrap(), "one\ntwo\nthree\n four");
+}
