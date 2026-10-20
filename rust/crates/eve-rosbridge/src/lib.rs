@@ -194,6 +194,8 @@ struct Shared {
     stats: Counters,
     running: Mutex<Option<Running>>,
     next_conn: AtomicU64,
+    /// (ping interval, pong timeout): `PING_INTERVAL`, `PING_TIMEOUT`; tests shorten them.
+    keepalive: Mutex<(Duration, Duration)>,
 }
 
 /// The rosbridge server. Cloning shares the same server.
@@ -238,6 +240,7 @@ impl RosbridgeServer {
                 stats: Counters::default(),
                 running: Mutex::new(None),
                 next_conn: AtomicU64::new(1),
+                keepalive: Mutex::new((PING_INTERVAL, PING_TIMEOUT)),
             }),
         }
     }
@@ -314,6 +317,7 @@ impl RosbridgeServer {
         if let Ok(addr) = listeners[0].local_addr() {
             *self.inner.port.lock() = addr.port() as i64;
         }
+        let names: Vec<String> = listeners.iter().filter_map(|l| l.local_addr().ok()).map(py_sockname).collect();
         let conns: Arc<Mutex<HashMap<u64, JoinHandle<()>>>> = Arc::default();
         let (closing, _) = watch::channel(false);
         let tasks = listeners
@@ -332,6 +336,9 @@ impl RosbridgeServer {
             }
             *running = Some(Running { listeners: tasks, conns, closing });
         }
+        for name in names {
+            tracing::info!("server listening on {name}");
+        }
         tracing::info!("rosbridge: serving eve's memory at {}", self.url());
         Ok(())
     }
@@ -340,6 +347,7 @@ impl RosbridgeServer {
     /// connections to finish.
     pub async fn stop(&self) {
         let Some(running) = self.inner.running.lock().take() else { return };
+        tracing::info!("server closing");
         for t in &running.listeners {
             t.abort();
         }
@@ -359,6 +367,7 @@ impl RosbridgeServer {
                 abort.abort();
             }
         }
+        tracing::info!("server closed");
         let s = self.stats();
         tracing::info!(
             "rosbridge: stopped ({} sent, {} dropped, {} clients over its life)",
@@ -412,6 +421,14 @@ fn check_origin(origins: &[Option<String>], req: &Request) -> Result<(), ErrorRe
     Err(reject(StatusCode::FORBIDDEN, &why))
 }
 
+/// Python's `str(sock.getsockname())`: `('127.0.0.1', 9090)`, or `('::1', 9090, 0, 0)` for IPv6.
+fn py_sockname(addr: SocketAddr) -> String {
+    match addr {
+        SocketAddr::V4(a) => format!("('{}', {})", a.ip(), a.port()),
+        SocketAddr::V6(a) => format!("('{}', {}, {}, {})", a.ip(), a.port(), a.flowinfo(), a.scope_id()),
+    }
+}
+
 fn http_date() -> String {
     chrono::Utc::now().format("%a, %d %b %Y %H:%M:%S GMT").to_string()
 }
@@ -455,7 +472,10 @@ async fn handle_conn(
     let ws = tokio::select! {
         _ = closing.wait_for(|c| *c) => None,
         r = tokio::time::timeout(OPEN_TIMEOUT, handshake) => match r {
-            Ok(Ok(ws)) => Some(ws),
+            Ok(Ok(ws)) => {
+                tracing::info!("connection open");
+                Some(ws)
+            }
             Ok(Err(WsError::Http(resp))) => {
                 let status = resp.status();
                 tracing::info!(
@@ -466,13 +486,11 @@ async fn handle_conn(
                 None
             }
             Ok(Err(e)) => {
-                tracing::info!("opening handshake failed: {e}");
+                tracing::error!(error = %e, "opening handshake failed");
                 None
             }
-            Err(_) => {
-                tracing::info!("opening handshake failed: timed out during opening handshake");
-                None
-            }
+            // websockets logs nothing when the opening handshake times out.
+            Err(_) => None,
         },
     };
     if let Some(ws) = ws {
@@ -492,7 +510,7 @@ async fn serve_client(shared: &Arc<Shared>, ws: WebSocketStream<TcpStream>, peer
     shared.clients.lock().insert(id, client.clone());
     shared.stats.clients_total.fetch_add(1, Ordering::SeqCst);
     *client.writer.lock() = Some(tokio::spawn(write_loop(shared.clone(), client.clone())));
-    *client.keepalive.lock() = Some(tokio::spawn(keepalive_loop(client.clone())));
+    *client.keepalive.lock() = Some(tokio::spawn(keepalive_loop(client.clone(), *shared.keepalive.lock())));
     read_loop(shared, &client, read).await;
     close_client(shared, &client).await;
 }
@@ -587,9 +605,12 @@ async fn write_loop(shared: Arc<Shared>, client: Arc<Client>) {
 }
 
 /// `websockets` keepalive: a ping every 20 s; no matching pong within 20 s closes with 1011.
-async fn keepalive_loop(client: Arc<Client>) {
+async fn keepalive_loop(client: Arc<Client>, (ping_interval, ping_timeout): (Duration, Duration)) {
+    let mut latency = Duration::ZERO;
     loop {
-        tokio::time::sleep(PING_INTERVAL).await;
+        // If ping_timeout > latency > ping_interval, the next ping goes out as soon as the pong
+        // arrives: the period is then longer than ping_interval.
+        tokio::time::sleep(ping_interval.saturating_sub(latency)).await;
         let payload = rand::random::<u32>().to_be_bytes().to_vec();
         *client.ping.lock() = Some(payload.clone());
         {
@@ -598,7 +619,8 @@ async fn keepalive_loop(client: Arc<Client>) {
                 return;
             }
         }
-        let acked = tokio::time::timeout(PING_TIMEOUT, async {
+        let sent = Instant::now();
+        let acked = tokio::time::timeout(ping_timeout, async {
             loop {
                 if client.ping.lock().is_none() {
                     return;
@@ -607,8 +629,9 @@ async fn keepalive_loop(client: Arc<Client>) {
             }
         })
         .await;
+        latency = sent.elapsed();
         if acked.is_err() {
-            tracing::info!("- timed out waiting for keepalive pong");
+            tracing::debug!("- timed out waiting for keepalive pong");
             send_close(&client, CloseCode::Error, "keepalive ping timeout").await;
             let _ = client.abort.send(true);
             return;

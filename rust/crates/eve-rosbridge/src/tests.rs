@@ -553,6 +553,9 @@ fn an_unbounded_queue_never_drops_and_the_warning_is_logged_once() {
     assert_eq!(text.matches(&warning(&names[0])).count(), 0);
     assert_eq!(text.matches(&warning(&names[1])).count(), 1);
     assert!(text.contains("rosbridge: serving eve's memory at ws://127.0.0.1:"));
+    assert!(text.contains("server listening on ('127.0.0.1', "));
+    assert!(text.contains("connection open"));
+    assert!(text.contains("server closing") && text.contains("server closed"));
     assert!(text.contains("rosbridge: stopped (0 sent, 8 dropped, 1 clients over its life)"));
 }
 
@@ -630,6 +633,12 @@ fn python_text_forms() {
     assert_eq!(py_str_repr("a\tb\u{a0}\u{7f}\\"), r"'a\tb\xa0\x7f\\'");
     assert_eq!(py_str_repr("both ' and \""), r#"'both \' and "'"#);
     assert_eq!(py_str_repr("\u{2028}é"), "'\\u2028é'");
+    // The recorded differences: serde_json reads `-0` as a float and refuses a lone surrogate.
+    assert_eq!(py_json(&serde_json::from_str("-0").unwrap()), "-0.0");
+    assert!(serde_json::from_str::<Value>(r#""\ud800""#).is_err());
+    // Format characters added in Unicode 14/15, an unassigned code point, and a printable
+    // variation selector, exactly as Python 3.13 shows them.
+    assert_eq!(py_str_repr("\u{890}\u{13430}\u{378}a\u{e0100}"), "'\\u0890\\U00013430\\u0378a\u{e0100}'");
 }
 
 #[derive(Clone, Default)]
@@ -663,4 +672,35 @@ fn global_logs() -> LogBuf {
         buf
     })
     .clone()
+}
+
+#[tokio::test]
+async fn a_client_that_never_answers_pings_is_closed_with_1011_and_one_that_reads_stays() {
+    let bus = bound_bus();
+    let server = RosbridgeServer::new(bus.clone(), "127.0.0.1", free_port(), DEFAULT_QUEUE_SIZE);
+    *server.inner.keepalive.lock() = (Duration::from_millis(150), Duration::from_millis(150));
+    server.start().await.unwrap();
+    // A client that reads answers every ping (tungstenite queues the pong while reading).
+    let mut alive = connect(&server.url()).await;
+    send(&mut alive, json!({"op": "subscribe", "topic": "/eve/state"})).await;
+    // A client that never reads never answers.
+    let mut silent = connect(&server.url()).await;
+    assert!(recv_within(&mut alive, 0.8).await.is_err());
+    assert_eq!(server.client_count(), 1, "the silent client is closed, the reading one stays");
+    bus.publish("/eve/state", msg(json!({"state": "wake"})));
+    assert_eq!(recv(&mut alive).await["msg"], json!({"state": "wake"}));
+    let mut close = None;
+    while let Ok(Some(item)) = tokio::time::timeout(Duration::from_secs(2), silent.next()).await {
+        if let Ok(Message::Close(Some(frame))) = item {
+            close = Some((u16::from(frame.code), frame.reason.as_str().to_string()));
+        }
+    }
+    assert_eq!(close, Some((1011, "keepalive ping timeout".to_string())));
+    server.stop().await;
+}
+
+#[test]
+fn socket_names_are_shown_as_python_getsockname() {
+    assert_eq!(py_sockname("127.0.0.1:9090".parse().unwrap()), "('127.0.0.1', 9090)");
+    assert_eq!(py_sockname("[::1]:9090".parse().unwrap()), "('::1', 9090, 0, 0)");
 }
