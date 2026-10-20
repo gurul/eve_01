@@ -433,3 +433,28 @@ async fn test_the_real_client_merges_extra_body_and_posts_to_openrouter_shape() 
         "<voice>\nHow the owner likes to be talked to:\nDry\n</voice>\n\n<message>hi</message>"
     );
 }
+
+/// `asyncio.wait_for` semantics at the edges: a timeout <= 0 is a timeout before the call starts, even against an
+/// instant reply; an infinite one never fires; a TimeoutError the call raises itself is a timeout, not an error.
+#[tokio::test]
+async fn test_the_timeout_edges_follow_wait_for() {
+    let tmp = tempfile::tempdir().unwrap();
+    let opts = |fake: Arc<FakeCompletions>, timeout_s: f64| AskOptions {
+        client: Some(fake),
+        timeout_s,
+        ledger: Some(Ledger::at(tmp.path())),
+        ..AskOptions::default()
+    };
+    for t in [0.0, -1.0] {
+        let fake = Arc::new(FakeCompletions::new(completion(json!("Hey."), 0.00002, "stop")));
+        let answer = small_talk::ask("hi", "", opts(fake.clone(), t)).await;
+        assert_eq!(answer.reason, "timeout", "{t}");
+        assert!(answer.error.is_empty() && fake.bodies.lock().is_empty(), "{t}");
+    }
+    let fake = Arc::new(FakeCompletions::new(completion(json!("Hey."), 0.00002, "stop")));
+    let answer = small_talk::ask("hi", "", opts(fake, f64::INFINITY)).await;
+    assert!(answer.answered() && answer.reply == "Hey.");
+    let fake = Arc::new(FakeCompletions::raising(CallError::new("TimeoutError", "")));
+    let answer = small_talk::ask("hi", "", opts(fake, 1.0)).await;
+    assert_eq!((answer.reason.as_str(), answer.error.as_str()), ("timeout", ""));
+}

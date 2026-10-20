@@ -492,16 +492,28 @@ pub async fn ask(text: &str, owner_voice: &str, opts: AskOptions) -> Answer {
     };
     // OpenRouter's own fields ride extra_body; no thinking (it spent every token on a short message, 2026-10-12)
     let extra = json!({"usage": {"include": true}, "reasoning": {"enabled": false}, "provider": PROVIDER.clone()});
-    let timeout = if opts.timeout_s.is_finite() && opts.timeout_s > 0.0 {
-        Duration::from_secs_f64(opts.timeout_s)
-    } else {
-        Duration::ZERO
+    let timed_out = |t0: Instant, model: String| Answer {
+        reason: "timeout".into(),
+        secs: t0.elapsed().as_secs_f64(),
+        model,
+        ..Answer::default()
     };
+    // asyncio.wait_for: a timeout <= 0 cancels the call before it starts (TimeoutError even when it would be
+    // instant); an infinite (or NaN) one never fires; any other runs the call first, then checks the clock.
+    if opts.timeout_s <= 0.0 {
+        return timed_out(t0, model_id);
+    }
+    let limit = Duration::try_from_secs_f64(opts.timeout_s).ok();
     let call = c.create(request(text, owner_voice, &model_id), extra);
-    let response = match tokio::time::timeout(timeout, call).await {
-        Err(_) => {
-            return Answer { reason: "timeout".into(), secs: t0.elapsed().as_secs_f64(), model: model_id, ..Answer::default() }
-        }
+    let result = match limit {
+        Some(limit) => tokio::time::timeout(limit, call).await,
+        None => Ok(call.await),
+    };
+    let response = match result {
+        Err(_) => return timed_out(t0, model_id),
+        // Python's `except asyncio.TimeoutError` (the builtin TimeoutError since 3.11) also takes one the call
+        // itself raises
+        Ok(Err(e)) if e.name == "TimeoutError" => return timed_out(t0, model_id),
         // the provider's failure: the brain answers
         Ok(Err(e)) => {
             return Answer {
