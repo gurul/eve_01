@@ -17,39 +17,40 @@ pub fn has_content(text: &str) -> bool {
     text.chars().any(|c| !is_space(c))
 }
 
-/// `str.isprintable()` for one character, over the categories Python treats as not printable: controls,
-/// format characters, separators other than the ASCII space, private use and non-characters.
+/// `str.lower()`, from CPython's own case table (`unicode_tables.rs`), so a letter Rust's newer Unicode data
+/// would lowercase stays as the daemon's Python leaves it. U+03A3 takes the final-sigma rule from context, as
+/// both languages do; Rust's `to_lowercase` decides that one.
+pub fn lower(text: &str) -> String {
+    if text.is_ascii() {
+        return text.to_ascii_lowercase();
+    }
+    let table = crate::unicode_tables::LOWER;
+    let mut whole: Option<String> = None;
+    let mut out = String::with_capacity(text.len());
+    for (i, c) in text.char_indices() {
+        if c == '\u{3a3}' {
+            // Every other character lowers the same alone as in context, so the sigma's form in the whole
+            // string sits right after the lowered prefix.
+            let all = whole.get_or_insert_with(|| text.to_lowercase());
+            let at = text[..i].to_lowercase().len();
+            out.push(all[at..].chars().next().unwrap_or('\u{3c3}'));
+            continue;
+        }
+        match table.binary_search_by_key(&(c as u32), |&(k, _)| k) {
+            Ok(j) => out.push_str(table[j].1),
+            Err(_) => out.push(c),
+        }
+    }
+    out
+}
+
+/// `str.isprintable()` for one character, read from CPython's own table (`unicode_tables.rs`, generated from
+/// the Python the daemon runs): controls, format characters, separators other than the ASCII space, surrogates,
+/// private use and unassigned code points are not printable.
 fn is_printable(c: char) -> bool {
     let u = c as u32;
-    !(u < 0x20
-        || (0x7f..=0xa0).contains(&u)
-        || u == 0xad
-        || (0x600..=0x605).contains(&u)
-        || u == 0x61c
-        || u == 0x6dd
-        || u == 0x70f
-        || (0x890..=0x891).contains(&u)
-        || u == 0x8e2
-        || u == 0x1680
-        || u == 0x180e
-        || (0x2000..=0x200f).contains(&u)
-        || (0x2028..=0x202f).contains(&u)
-        || (0x205f..=0x2064).contains(&u)
-        || (0x2066..=0x206f).contains(&u)
-        || u == 0x3000
-        || (0xd800..=0xf8ff).contains(&u)
-        || (0xfdd0..=0xfdef).contains(&u)
-        || u == 0xfeff
-        || (0xfff9..=0xfffb).contains(&u)
-        || (u & 0xfffe) == 0xfffe
-        || u == 0x110bd
-        || u == 0x110cd
-        || (0x13430..=0x1343f).contains(&u)
-        || (0x1bca0..=0x1bca3).contains(&u)
-        || (0x1d173..=0x1d17a).contains(&u)
-        || u == 0xe0001
-        || (0xe0020..=0xe007f).contains(&u)
-        || u >= 0xf0000)
+    let i = crate::unicode_tables::NOT_PRINTABLE.partition_point(|&(_, hi)| hi < u);
+    !matches!(crate::unicode_tables::NOT_PRINTABLE.get(i), Some(&(lo, _)) if lo <= u)
 }
 
 /// `repr(str)`: single quotes unless the text holds a single quote and no double quote.
@@ -146,6 +147,37 @@ mod tests {
         assert_eq!(repr_str("café ☕"), "'café ☕'");
         let t = ("don't".to_string(), "a-b".to_string(), "x".to_string());
         assert_eq!(repr_triple(&t), "(\"don't\", 'a-b', 'x')");
+    }
+
+    #[test]
+    fn repr_escapes_what_python_3_13_has_not_assigned() {
+        // Unassigned in CPython 3.13's Unicode 15.1, so repr escapes them; Rust's own data (16.0) knows U+1C89.
+        assert_eq!(repr_str("a\u{378}b\u{10d50}"), "'a\\u0378b\\U00010d50'");
+        assert_eq!(repr_str("\u{1c89}"), "'\\u1c89'");
+    }
+
+    #[test]
+    fn lower_matches_python() {
+        // Each expected value is what CPython 3.13 returns for text.lower().
+        let cases = [
+            ("ΟΔΟΣ", "οδος"),
+            ("Σ", "σ"),
+            ("ΣΑ", "σα"),
+            ("ΑΣ ΒΣ", "ας βς"),
+            ("ΑΣ.", "ας."),
+            ("İΣ", "i\u{307}ς"),
+            ("ΑΣ'Β", "ασ'β"),
+            ("ΑΣ'", "ας'"),
+            ("x Σ y", "x σ y"),
+            ("ΑΣΣ", "ασς"),
+            ("Vent CEILING", "vent ceiling"),
+            ("\u{212a}elvin", "kelvin"),
+            // Garay capital letters arrived in Unicode 16.0; Python 3.13 leaves them as they are.
+            ("\u{10d50}\u{1c89}", "\u{10d50}\u{1c89}"),
+        ];
+        for (text, want) in cases {
+            assert_eq!(lower(text), want, "{text:?}");
+        }
     }
 
     #[test]

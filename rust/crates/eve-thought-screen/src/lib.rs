@@ -45,6 +45,7 @@
 //! monotonic time it already has.
 
 pub mod py;
+mod unicode_tables;
 
 use std::collections::{BTreeSet, HashMap, HashSet};
 use std::sync::LazyLock;
@@ -88,7 +89,7 @@ pub static STOPWORDS: LazyLock<HashSet<&'static str>> =
     LazyLock::new(|| STOPWORDS_TEXT.split_whitespace().collect());
 
 fn content_iter(text: &str) -> Vec<String> {
-    let lowered = text.to_lowercase();
+    let lowered = py::lower(text);
     WORD.find_iter(&lowered)
         .map(|m| m.as_str())
         .filter(|w| !STOPWORDS.contains(w) && w.chars().count() > 2)
@@ -135,7 +136,7 @@ where
 {
     tags.into_iter()
         .filter(|t| py::has_content(t.as_ref()))
-        .map(|t| t.as_ref().to_lowercase())
+        .map(|t| py::lower(t.as_ref()))
         .collect()
 }
 
