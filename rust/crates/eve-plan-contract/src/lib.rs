@@ -396,9 +396,13 @@ const TRAIL_WORDS: [&str; 3] = ["please", "thanks", "now"];
 const TRAIL_PHRASES: [&[&str]; 2] = [&["for", "me"], &["thank", "you"]];
 // Python's `\b` after the clause's last word is "a character that is not a word character, or the end"; Rust's
 // `\b` counts combining marks as word characters, so it is spelled out (the text has no newlines: it was squashed).
+// The class is case-sensitive: under `(?i)` a negated class is case-folded first, and U+0345 (a mark Python's `\b`
+// reads as a boundary) folds to iota, a letter.
+// Python's IGNORECASE also matches "i" with U+0130 (its simple lowercase is "i") and U+0131 (sre's own fix-up
+// table); Rust's simple case folding has neither, so each "i" is spelled [iİı].
 static CLAUSE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
-        r"(?i)(?:\s*,\s*(?:(?:and|then|so)\s+)?|\s+(?:and|then|so)\s+)(?:then\s+)?(?:(?:tell|show|give|read)\s+(?:me|us)|let\s+me\s+know|see\s+(?:what|if|whether|which|how)|find\s+out)(?:[^\p{L}\p{N}_].*)?$",
+        r"(?i)(?:\s*,\s*(?:(?:and|then|so)\s+)?|\s+(?:and|then|so)\s+)(?:then\s+)?(?:(?:tell|show|g[iİı]ve|read)\s+(?:me|us)|let\s+me\s+know|see\s+(?:what|[iİı]f|whether|wh[iİı]ch|how)|f[iİı]nd\s+out)(?-i:[^\p{L}\p{N}_].*)?$",
     )
     .expect("clause")
 });

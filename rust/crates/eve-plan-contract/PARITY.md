@@ -26,7 +26,7 @@ Status: complete
 | `def bare_host` | `pub fn bare_host(&str)`, `pub fn bare_host_value(Option<&Value>)` | `bare_host_value` is `str(value or "")` first, so `bare_host(outline.get("url"))` ports as `bare_host_value(outline.get("url"))`. |
 | `def _on_host` | `fn on_host` | |
 | `def _search_addresses` | `fn search_addresses` | Reads `eve_browser_intent::SITES` (same table, same order). |
-| `_WORD`, `_LEAD_WORDS`, `_LEAD_PHRASES`, `_TRAIL_WORDS`, `_TRAIL_PHRASES`, `_CLAUSE`, `_AT_SITE`, `_TLDS` | `WORD`, `LEAD_WORDS`, `LEAD_PHRASES`, `TRAIL_WORDS`, `TRAIL_PHRASES`, `CLAUSE`, `AT_SITE`, `TLDS` | `[^\W_]` is `[\p{L}\p{N}]` (Python's `isalnum`); `_CLAUSE`'s trailing `\b` is spelled `(?:[^\p{L}\p{N}_].*)?$`, because Rust's `\b` counts combining marks as word characters and Python's does not. |
+| `_WORD`, `_LEAD_WORDS`, `_LEAD_PHRASES`, `_TRAIL_WORDS`, `_TRAIL_PHRASES`, `_CLAUSE`, `_AT_SITE`, `_TLDS` | `WORD`, `LEAD_WORDS`, `LEAD_PHRASES`, `TRAIL_WORDS`, `TRAIL_PHRASES`, `CLAUSE`, `AT_SITE`, `TLDS` | `[^\W_]` is `[\p{L}\p{N}]` (Python's `isalnum`); `_CLAUSE`'s trailing `\b` is spelled `(?-i:[^\p{L}\p{N}_].*)?$`, because Rust's `\b` counts combining marks as word characters and Python's does not (case-sensitive, so U+0345 is not folded into the letters); each `i` in its words is `[iİı]`, the two extra characters Python's IGNORECASE matches with `i` and Rust's simple case folding does not. |
 | `def _query_words` | `fn query_words` | Same trimming loop (lead phrase, else lead word, else trail word, else trail phrase). |
 | `def _site_named_last` | `fn site_named_last` | |
 | `def _site_label` | `fn site_label` | |
@@ -60,7 +60,7 @@ Status: complete
 | `bridge/tests/test_plan_scope.py` (tests_ref) | — | — | Every test there walks a plan with `plan_executor.run_plan` (crate eve-desktop-lanes); it calls `parse_plan` only to build its input, which the tests above cover. |
 | `bridge/tests/test_agent_browser_lane.py`, `bridge/tests/test_agent_plan_once.py` (tests_ref) | the prompt and request assertions (instructions, schema, read request) | `test_the_prompts_say_what_the_lanes_rely_on`, `test_the_mac_plan_request_is_text_in_strict_json_out`, `test_the_read_request_is_plain_text` | The agent flows are computer_agent's. |
 
-Extra Rust tests: `test_describe_names_each_step_the_way_the_ledger_does`, `test_plan_to_dict_sends_the_planners_check_never_the_derived_one`, `test_python_reprs_in_error_messages`, `test_casefold_matches_python`, and `test_matches_python_on_the_differential_cases`: 3383 cases (canonical_url, url_matches, bare_host on JSON values, query words, url_query_expect, 2500 url_query_matches, parse_step / parse_plan results and error messages, plan_request_text, plan_request, read_request, every constant) produced by the Python module itself under Python 3.13 (`tests/fixtures/gen_differential.py`, output `tests/fixtures/differential.json`).
+Extra Rust tests: `test_describe_names_each_step_the_way_the_ledger_does`, `test_plan_to_dict_sends_the_planners_check_never_the_derived_one`, `test_python_reprs_in_error_messages`, `test_casefold_matches_python`, `test_a_combining_mark_after_the_clause_is_a_word_boundary_as_in_python`, `test_the_clause_matches_dotted_and_dotless_i_as_python_ignorecase_does`, and `test_matches_python_on_the_differential_cases`: 3383 cases (canonical_url, url_matches, bare_host on JSON values, query words, url_query_expect, 2500 url_query_matches, parse_step / parse_plan results and error messages, plan_request_text, plan_request, read_request, every constant) produced by the Python module itself under Python 3.13 (`tests/fixtures/gen_differential.py`, output `tests/fixtures/differential.json`).
 
 ## Boundaries
 None.
@@ -77,3 +77,6 @@ None.
   rule); the two agree on every ordinary address form.
 - `read_request` / `plan_request` take `timeout` as `f64`, so it is always a JSON float (Python passes
   `config.api_timeout_secs`, a float, too).
+- An integer beyond 64 bits in a plan's JSON is a float in `serde_json` (the workspace has no `arbitrary_precision`),
+  so where Python's error message quotes such a value with `repr` (`not 100000000000000000000`) Rust quotes the
+  float (`not 1e+20`). Only that error text differs; no check reads the number.

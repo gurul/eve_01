@@ -1258,3 +1258,19 @@ fn test_matches_python_on_the_differential_cases() {
             .join("\n")
     );
 }
+
+#[test]
+fn test_a_combining_mark_after_the_clause_is_a_word_boundary_as_in_python() {
+    // Python's `\b` reads U+0345 (a combining mark) as a non-word character even under IGNORECASE, so the
+    // clause is still trimmed; a case-folded negated class in Rust would not (U+0345 folds to iota).
+    for q in ["cats and tell me\u{345} x", "cats and tell me\u{345}", "cats and find out\u{345}more"] {
+        assert_eq!(query_words(q), vec!["cats".to_string()], "{q:?}");
+    }
+}
+
+#[test]
+fn test_the_clause_matches_dotted_and_dotless_i_as_python_ignorecase_does() {
+    for q in ["cats and fİnd out", "cats and gıve me", "cats, see İf it works", "cats, see whıch is best"] {
+        assert_eq!(query_words(q), vec!["cats".to_string()], "{q:?}");
+    }
+}
