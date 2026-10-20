@@ -129,6 +129,10 @@ pub enum Error {
     /// `email.errors.HeaderWriteError`: a folded header would have started a new header line.
     #[error("{0}")]
     HeaderWrite(String),
+    /// Any other exception the Python lets out, by class name (the email package's UnboundLocalError on a
+    /// msg-id literal that opens with a blank).
+    #[error("{msg}")]
+    Other { name: &'static str, msg: String },
 }
 
 impl Error {
@@ -147,6 +151,7 @@ impl Error {
             Error::Type(_) => "TypeError",
             Error::Overflow(_) => "OverflowError",
             Error::HeaderWrite(_) => "HeaderWriteError",
+            Error::Other { name, .. } => name,
         }
     }
 
@@ -1231,8 +1236,12 @@ impl GoogleRestClient {
         if !known {
             return Ok(json!({"isError": true, "content": [{"type": "text", "text": format!("no tool {name}")}]}));
         }
-        let a = py_dict(arguments)?;
-        match self.dispatch(name, a).await {
+        // dict() runs inside the Python's try, so its ValueError is a tool error too
+        let result = match py_dict(arguments) {
+            Ok(a) => self.dispatch(name, a).await,
+            Err(e) => Err(e),
+        };
+        match result {
             Ok(v) => Ok(json!({"isError": false, "structuredContent": v})),
             Err(e) if e.is_tool_error() => {
                 let text = if matches!(e, Error::Google(_)) { e.to_string() } else { format!("{}: {e}", e.type_name()) };

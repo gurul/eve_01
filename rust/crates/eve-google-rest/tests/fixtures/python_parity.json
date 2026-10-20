@@ -1451,6 +1451,316 @@
     null
    ],
    "To: p0@=?utf-8?b?0L/RgNC40LzQtdGALtGA0YQ=?=,\r\n p1@=?utf-8?b?0L/RgNC40LzQtdGALtGA0YQ=?=,\r\n p2@=?utf-8?b?0L/RgNC40LzQtdGALtGA0YQ=?=,\r\n p3@=?utf-8?b?0L/RgNC40LzQtdGALtGA0YQ=?=,\r\n p4@=?utf-8?b?0L/RgNC40LzQtdGALtGA0YQ=?=,\r\n p5@=?utf-8?b?0L/RgNC40LzQtdGALtGA0YQ=?=\r\nSubject: s\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "a@b.co"
+    ],
+    [],
+    [],
+    "s",
+    "b",
+    {
+     "In-Reply-To": "<CAFakeMessageIdForParityTests0000000000000000000000+A@mail.gmail.com>",
+     "References": "<CAFakeMessageIdForParityTests0000000000000000000000+A@mail.gmail.com>"
+    }
+   ],
+   "To: a@b.co\r\nSubject: s\r\nIn-Reply-To:\r\n <CAFakeMessageIdForParityTests0000000000000000000000+A@mail.gmail.com>\r\nReferences:\r\n <CAFakeMessageIdForParityTests0000000000000000000000+A@mail.gmail.com>\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "a@b.co"
+    ],
+    [],
+    [],
+    "s",
+    "b",
+    {
+     "In-Reply-To": "<CAFakeMessageIdForParityTests0000000000000000000000+A@mail.gmail.com>",
+     "References": "<CAFakeMessageIdForParityTests0000000000000000000000+A@mail.gmail.com> <CAFakeMessageIdForParityTests0000000000000000000000+A@mail.gmail.com> <CAFakeMessageIdForParityTests0000000000000000000000+A@mail.gmail.com>"
+    }
+   ],
+   "To: a@b.co\r\nSubject: s\r\nIn-Reply-To:\r\n <CAFakeMessageIdForParityTests0000000000000000000000+A@mail.gmail.com>\r\nReferences:\r\n <CAFakeMessageIdForParityTests0000000000000000000000+A@mail.gmail.com>\r\n <CAFakeMessageIdForParityTests0000000000000000000000+A@mail.gmail.com>\r\n <CAFakeMessageIdForParityTests0000000000000000000000+A@mail.gmail.com>\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "a@b.co"
+    ],
+    [],
+    [],
+    "s",
+    "b",
+    {
+     "In-Reply-To": "<a@b>",
+     "References": "<a@b> <c@d>"
+    }
+   ],
+   "To: a@b.co\r\nSubject: s\r\nIn-Reply-To: <a@b>\r\nReferences: <a@b> <c@d>\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "a@b.co"
+    ],
+    [],
+    [],
+    "s",
+    "b",
+    {
+     "In-Reply-To": "<mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm@mail.gmail.com>",
+     "References": "<mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm@mail.gmail.com> <a@b>"
+    }
+   ],
+   "To: a@b.co\r\nSubject: s\r\nIn-Reply-To:\r\n <mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm@mail.gmail.com>\r\nReferences: <mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm@mail.gmail.com>\r\n <a@b>\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "a@b.co"
+    ],
+    [],
+    [],
+    "s",
+    "b",
+    {
+     "In-Reply-To": "<a@b>,<c@d>,",
+     "References": "<a@b>,<c@d>, <e@f>"
+    }
+   ],
+   "To: a@b.co\r\nSubject: s\r\nIn-Reply-To: <a@b> <c@d> \r\nReferences: <a@b> <c@d>  <e@f>\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "a@b.co"
+    ],
+    [],
+    [],
+    "s",
+    "b",
+    {
+     "In-Reply-To": "(note)",
+     "References": "(note) <a@b> (x y) <c@d>"
+    }
+   ],
+   "To: a@b.co\r\nSubject: s\r\nIn-Reply-To: (note)\r\nReferences: (note) <a@b> (x y) <c@d>\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "a@b.co"
+    ],
+    [],
+    [],
+    "s",
+    "b",
+    {
+     "In-Reply-To": "<a@b",
+     "References": "<a@b"
+    }
+   ],
+   "To: a@b.co\r\nSubject: s\r\nIn-Reply-To: <a@b>\r\nReferences: <a@b>\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "a@b.co"
+    ],
+    [],
+    [],
+    "s",
+    "b",
+    {
+     "In-Reply-To": "<a@b>",
+     "References": "<a@b> junk after"
+    }
+   ],
+   "To: a@b.co\r\nSubject: s\r\nIn-Reply-To: <a@b>\r\nReferences: <a@b> junk after\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "a@b.co"
+    ],
+    [],
+    [],
+    "s",
+    "b",
+    {
+     "In-Reply-To": "not",
+     "References": "not a msg-id"
+    }
+   ],
+   "To: a@b.co\r\nSubject: s\r\nIn-Reply-To: not\r\nReferences: not a msg-id\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "a@b.co"
+    ],
+    [],
+    [],
+    "s",
+    "b",
+    {
+     "In-Reply-To": "<a.@x.co>",
+     "References": "<a.@x.co> <.a@b.co> <a..b@c.co>"
+    }
+   ],
+   "To: a@b.co\r\nSubject: s\r\nIn-Reply-To: <a.@x.co>\r\nReferences: <a.@x.co> <.a@b.co> <a..b@c.co>\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "a@b.co"
+    ],
+    [],
+    [],
+    "s",
+    "b",
+    {
+     "In-Reply-To": "<\"q",
+     "References": "<\"q s\"@x.co>"
+    }
+   ],
+   "To: a@b.co\r\nSubject: s\r\nIn-Reply-To: <\"q\"\r\nReferences: <\"q s\"@x.co>\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "a@b.co"
+    ],
+    [],
+    [],
+    "s",
+    "b",
+    {
+     "In-Reply-To": "<a@[1.2.3.4]>",
+     "References": "<a@[1.2.3.4]> <b@[ c ]>"
+    }
+   ],
+   {
+    "err": "UnboundLocalError: cannot access local variable 'pos' where it is not associated with a value"
+   }
+  ],
+  [
+   [
+    [
+     "a@b.co"
+    ],
+    [],
+    [],
+    "s",
+    "b",
+    {
+     "In-Reply-To": "<a@[a\\]b]>",
+     "References": "<a@[a\\]b]>"
+    }
+   ],
+   "To: a@b.co\r\nSubject: s\r\nIn-Reply-To: <a@[a]b]>\r\nReferences: <a@[a]b]>\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "a@b.co"
+    ],
+    [],
+    [],
+    "s",
+    "b",
+    {
+     "In-Reply-To": "<a@b.(c)d>",
+     "References": "<a@b.(c)d>"
+    }
+   ],
+   "To: a@b.co\r\nSubject: s\r\nIn-Reply-To: <a@b.(c)d>\r\nReferences: <a@b.(c)d>\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "a@b.co"
+    ],
+    [],
+    [],
+    "s",
+    "b",
+    {
+     "In-Reply-To": "<a@",
+     "References": "<a@ b> <c (x) @d>"
+    }
+   ],
+   "To: a@b.co\r\nSubject: s\r\nIn-Reply-To: <a@\r\nReferences: <a@ b> <c (x) @d>\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "a@b.co"
+    ],
+    [],
+    [],
+    "s",
+    "b",
+    {
+     "In-Reply-To": "<a@b@c>",
+     "References": "<a@b@c>"
+    }
+   ],
+   "To: a@b.co\r\nSubject: s\r\nIn-Reply-To: <a@b>@c>\r\nReferences: <a@b>@c>\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
+  ],
+  [
+   [
+    [
+     "a@b.co"
+    ],
+    [],
+    [],
+    "s",
+    "b",
+    {
+     "In-Reply-To": "<é@x.co>",
+     "References": "<é@x.co>"
+    }
+   ],
+   {
+    "err": "UnicodeEncodeError: 'ascii' codec can't encode character '\\xe9' in position 14: ordinal not in range(128)"
+   }
+  ],
+  [
+   [
+    [
+     "a@b.co"
+    ],
+    [],
+    [],
+    "s",
+    "b",
+    {
+     "In-Reply-To": "<a@[",
+     "References": "<a@[ x]>"
+    }
+   ],
+   {
+    "err": "UnboundLocalError: cannot access local variable 'pos' where it is not associated with a value"
+   }
+  ],
+  [
+   [
+    [
+     "a@b.co"
+    ],
+    [],
+    [],
+    "s",
+    "b",
+    {
+     "In-Reply-To": "<xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx@y.com>",
+     "References": "<xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx@y.com> <zzzzzzzzzzzzzzzzzzzzzzzzzzzzzz@w.com>"
+    }
+   ],
+   "To: a@b.co\r\nSubject: s\r\nIn-Reply-To: <xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx@y.com>\r\nReferences: <xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx@y.com>\r\n <zzzzzzzzzzzzzzzzzzzzzzzzzzzzzz@w.com>\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nb\r\n"
   ]
  ],
  "free_slots": [

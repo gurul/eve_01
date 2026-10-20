@@ -144,6 +144,15 @@ cases.append([["a.very.long.local.part.that.keeps.going@домен-очень-д
 for to in [["josé@x.co"], ["user@домен.рф"], ["a.very.long.local.part.that.keeps.going@домен-очень-длинный.рф", "é@b.co"],
            ["a(b)@x.co"], ["a[1]@x.co"], [f"p{i}@пример.рф" for i in range(6)]]:
     cases.append([to, [], [], "s", "b", None])
+# In-Reply-To and References are msg-id lists on the bridge's CPython (3.13.14): Gmail's long ids, a list that
+# folds, commas, a comment, a missing ">", text that is not a msg-id, and the parser's own failures
+GMAIL_ID = "<CAFakeMessageIdForParityTests0000000000000000000000+A@mail.gmail.com>"
+for refs in [GMAIL_ID, " ".join([GMAIL_ID] * 3), "<a@b> <c@d>", "<" + "m" * 60 + "@mail.gmail.com> <a@b>",
+             "<a@b>,<c@d>, <e@f>", "(note) <a@b> (x y) <c@d>", "<a@b", "<a@b> junk after", "not a msg-id",
+             "<a.@x.co> <.a@b.co> <a..b@c.co>", "<\"q s\"@x.co>", "<a@[1.2.3.4]> <b@[ c ]>", "<a@[a\\]b]>",
+             "<a@b.(c)d>", "<a@ b> <c (x) @d>", "<a@b@c>", "<é@x.co>", "<a@[ x]>",
+             "<" + "x" * 90 + "@y.com> <" + "z" * 30 + "@w.com>"]:
+    cases.append([["a@b.co"], [], [], "s", "b", {"In-Reply-To": refs.split(" ")[0] or refs, "References": refs}])
 out["build_mail"] = [[c, mail(*c)] for c in cases]
 
 LA = timezone(timedelta(hours=-7))

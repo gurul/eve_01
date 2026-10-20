@@ -766,6 +766,27 @@ async fn test_a_missing_argument_is_a_key_error_and_a_dropped_connection_propaga
     let (client, _) = google("gmail", |_| text("<html>oops</html>", "text/html"));
     let e = client.call_tool("list_labels", &json!({})).await.unwrap_err();
     assert_eq!((e.type_name(), e.to_string().as_str()), ("AttributeError", "'str' object has no attribute 'get'"));
+    // dict(arguments) runs inside call_tool's try: its ValueError is a tool error, its TypeError is not
+    let out = client.call_tool("list_labels", &json!([["a", "b", "c"]])).await.unwrap();
+    assert_eq!(err_text(&out), "ValueError: dictionary update sequence element #0 has length 3; 2 is required");
+    let e = client.call_tool("list_labels", &json!(5)).await.unwrap_err();
+    assert_eq!(e.type_name(), "TypeError");
+}
+
+#[tokio::test]
+async fn test_a_reply_to_a_message_id_the_header_cannot_hold_is_refused_as_python_refuses_it() {
+    // In-Reply-To is a msg-id list: a msg-id is never encoded, so a non-ASCII one cannot be written
+    let (client, _) = google("gmail", |r| {
+        if r.path().ends_with("/messages/m1") {
+            json!({"threadId": "t1", "payload": {"headers": [{"name": "Message-ID", "value": "<é@x.co>"}]}})
+        } else {
+            json!({"id": "s1", "threadId": "t1"})
+        }
+    });
+    let out = client.call_tool("send_message", &json!({"to": ["a@b.co"], "body": "hi", "replyToMessageId": "m1"}))
+        .await.unwrap();
+    assert_eq!(err_text(&out), "UnicodeEncodeError: 'ascii' codec can't encode character '\\xe9' in position 14: \
+                                ordinal not in range(128)");
 }
 
 #[tokio::test]

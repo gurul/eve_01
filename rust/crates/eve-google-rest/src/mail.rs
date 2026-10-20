@@ -36,6 +36,9 @@ enum Tok {
         ttype: &'static str,
         children: Vec<Tok>,
         ew_allowed: Option<bool>,
+        /// `startswith_fws()` when the children are a rendering (a comment or a quoted string written with
+        /// its delimiters) rather than the parsed tokens it is asked of.
+        first_fws: Option<bool>,
     },
     /// `end_ew_not_allowed`: closes a stretch where encoded words are blocked.
     EndBlock,
@@ -51,11 +54,11 @@ impl Tok {
     }
 
     fn list(ttype: &'static str, children: Vec<Tok>) -> Tok {
-        Tok::List { ttype, children, ew_allowed: None }
+        Tok::List { ttype, children, ew_allowed: None, first_fws: None }
     }
 
     fn list_no_ew(ttype: &'static str, children: Vec<Tok>) -> Tok {
-        Tok::List { ttype, children, ew_allowed: Some(false) }
+        Tok::List { ttype, children, ew_allowed: Some(false), first_fws: None }
     }
 
     fn text(&self) -> String {
@@ -92,6 +95,7 @@ impl Tok {
     fn startswith_fws(&self) -> bool {
         match self {
             Tok::Term { whitespace, .. } => *whitespace,
+            Tok::List { first_fws: Some(v), .. } => *v,
             Tok::List { children, .. } => children.first().map(Tok::startswith_fws).unwrap_or(false),
             Tok::EndBlock => false,
         }
@@ -102,7 +106,12 @@ impl Tok {
 /// with an encoded word the value itself holds read back into its text, as the email package's header parser
 /// does before folding.
 fn unstructured(value: &str) -> Tok {
-    let out = get_unstructured(value)
+    Tok::list("unstructured", unstructured_parts(value))
+}
+
+/// The tokens of `unstructured(value)`.
+fn unstructured_parts(value: &str) -> Vec<Tok> {
+    get_unstructured(value)
         .into_iter()
         .map(|t| match t {
             UTok::Fws(text) => Tok::fws(&text),
@@ -116,8 +125,7 @@ fn unstructured(value: &str) -> Tok {
                     .collect(),
             ),
         })
-        .collect();
-    Tok::list("unstructured", out)
+        .collect()
 }
 
 /// RFC 5322 atext as the email package reads it: anything but the specials and blanks.
@@ -137,7 +145,7 @@ fn dot_atom(text: &str, leading_space: bool) -> Option<Tok> {
         }
         inner.push(Tok::value(p, "atext"));
     }
-    let text = Tok::List { ttype: "dot-atom-text", children: inner, ew_allowed: Some(true) };
+    let text = Tok::List { ttype: "dot-atom-text", children: inner, ew_allowed: Some(true), first_fws: None };
     let mut children = Vec::new();
     if leading_space {
         children.push(Tok::list("cfws", vec![Tok::fws(" ")]));
@@ -184,6 +192,443 @@ fn address_list(addrs: &[String]) -> Tok {
         children.push(address(a, i > 0));
     }
     Tok::list("address-list", children)
+}
+
+// ---- In-Reply-To and References: parse_message_ids -------------------------------------------------------------
+//
+// CPython 3.13.14, the bridge's interpreter, reads both headers as a list of msg-ids (ReferencesHeader), not as
+// unstructured text: a msg-id is never encoded and is broken only at its blanks, and a value that stops being a
+// msg-id list at some point keeps that rest as unstructured text (InvalidMessageID). The parsers below build the
+// email package's tree for that grammar (`get_msg_id` and what it calls), which is what the folder walks.
+
+const ATOM_ENDS: &str = "\\(@\t)>.,[<] ;:\"";
+const SPECIALS: &str = "\\(@)>.,[<];:\"";
+const PHRASE_ENDS: &str = "\\@)>,[<];:";
+
+/// A parse that failed the way HeaderParseError does (None), or crashed (an Err the caller sees).
+type Parsed<'a> = Result<Option<(Tok, &'a str)>, Error>;
+
+fn first(v: &str) -> Option<char> {
+    v.chars().next()
+}
+
+fn starts_in(v: &str, set: &str) -> bool {
+    first(v).is_some_and(|c| set.contains(c))
+}
+
+fn starts_cfws(v: &str) -> bool {
+    starts_in(v, " \t(")
+}
+
+fn ptext(text: &str) -> Tok {
+    Tok::value(text, "ptext")
+}
+
+/// A list whose `startswith_fws()` is that of the parsed tokens it renders.
+fn rendered(ttype: &'static str, children: Vec<Tok>, first_fws: bool) -> Tok {
+    Tok::List { ttype, children, ew_allowed: None, first_fws: Some(first_fws) }
+}
+
+/// `_get_ptext_to_endchars(value, endchars)`: the first blank-free fragment up to an unescaped end character,
+/// quoted pairs read as their character. A value that starts with a blank makes CPython reach an unset local
+/// (`pos`), an UnboundLocalError that nothing catches.
+fn ptext_to_endchars<'a>(value: &'a str, endchars: &str) -> Result<(String, &'a str), Error> {
+    if value.is_empty() {
+        return Ok((String::new(), value));
+    }
+    let frag_end = value.find(is_wsp).unwrap_or(value.len());
+    if frag_end == 0 {
+        return Err(Error::Other {
+            name: "UnboundLocalError",
+            msg: "cannot access local variable 'pos' where it is not associated with a value".into(),
+        });
+    }
+    let mut out = String::new();
+    let mut escape = false;
+    for (i, c) in value[..frag_end].char_indices() {
+        if c == '\\' {
+            if escape {
+                escape = false;
+            } else {
+                escape = true;
+                continue;
+            }
+        }
+        if escape {
+            escape = false;
+        } else if endchars.contains(c) {
+            return Ok((out, &value[i..]));
+        }
+        out.push(c);
+    }
+    Ok((out, &value[frag_end..]))
+}
+
+fn fws_tok(value: &str) -> (Tok, &str) {
+    let (ws, rest) = get_fws(value);
+    (Tok::fws(&ws), rest)
+}
+
+/// `get_comment`, rendered as the folder unpacks one: "(", its text with ( ) and \ quoted, ")".
+fn get_comment(value: &str) -> Result<(Tok, &str), Error> {
+    let mut v = &value[1..];
+    let mut children = vec![ptext("(")];
+    let mut first_fws = None;
+    while !v.is_empty() && !v.starts_with(')') {
+        let (tok, rest, fws) = if v.starts_with(is_wsp) {
+            let (t, r) = fws_tok(v);
+            (t, r, true)
+        } else if v.starts_with('(') {
+            let (t, r) = get_comment(v)?;
+            let f = t.startswith_fws();
+            (t, r, f)
+        } else {
+            let (text, r) = ptext_to_endchars(v, "()")?;
+            (ptext(&text.replace('\\', "\\\\").replace('(', "\\(").replace(')', "\\)")), r, false)
+        };
+        first_fws.get_or_insert(fws);
+        children.push(tok);
+        v = rest;
+    }
+    v = v.strip_prefix(')').unwrap_or(v);
+    children.push(ptext(")"));
+    Ok((rendered("comment", children, first_fws.unwrap_or(false)), v))
+}
+
+/// `get_cfws`: blanks and comments.
+fn get_cfws(mut value: &str) -> Result<(Tok, &str), Error> {
+    let mut children = Vec::new();
+    while starts_cfws(value) {
+        let (tok, rest) = if value.starts_with('(') { get_comment(value)? } else { fws_tok(value) };
+        children.push(tok);
+        value = rest;
+    }
+    Ok((Tok::list("cfws", children), value))
+}
+
+/// `[CFWS]` where the grammar allows it: pushed onto `children`.
+fn opt_cfws<'a>(value: &'a str, children: &mut Vec<Tok>) -> Result<&'a str, Error> {
+    if !starts_cfws(value) {
+        return Ok(value);
+    }
+    let (tok, rest) = get_cfws(value)?;
+    children.push(tok);
+    Ok(rest)
+}
+
+/// `get_bare_quoted_string`, rendered as the folder unpacks one: the quote marks, and each piece with " and \
+/// quoted. An encoded word inside is read as plain text.
+fn get_bare_quoted_string(value: &str) -> Result<(Tok, &str), Error> {
+    let mut v = &value[1..];
+    let mut children = vec![ptext("\"")];
+    let mut first_fws = None;
+    if let Some(rest) = v.strip_prefix('"') {
+        children.push(ptext("\""));
+        return Ok((rendered("bare-quoted-string", children, false), rest));
+    }
+    while !v.is_empty() && !v.starts_with('"') {
+        let (text, rest, fws) = if v.starts_with(is_wsp) {
+            let (ws, r) = get_fws(v);
+            (ws, r, true)
+        } else {
+            let (t, r) = ptext_to_endchars(v, "\"")?;
+            (t, r, false)
+        };
+        first_fws.get_or_insert(fws);
+        children.push(ptext(&text.replace('\\', "\\\\").replace('"', "\\\"")));
+        v = rest;
+    }
+    v = v.strip_prefix('"').unwrap_or(v);
+    children.push(ptext("\""));
+    Ok((rendered("bare-quoted-string", children, first_fws.unwrap_or(false)), v))
+}
+
+/// `get_atext`: a run of characters that are not ATOM_ENDS.
+fn atext_len(value: &str) -> usize {
+    value.find(|c| ATOM_ENDS.contains(c)).unwrap_or(value.len())
+}
+
+/// `get_atom`: [CFWS] 1*atext [CFWS].
+fn get_atom(value: &str) -> Parsed<'_> {
+    let mut children = Vec::new();
+    let mut v = opt_cfws(value, &mut children)?;
+    let n = atext_len(v);
+    if n == 0 {
+        return Ok(None);
+    }
+    children.push(Tok::value(&v[..n], "atext"));
+    v = opt_cfws(&v[n..], &mut children)?;
+    Ok(Some((Tok::list("atom", children), v)))
+}
+
+/// `get_dot_atom_text`: atext runs joined by single dots.
+fn get_dot_atom_text(value: &str) -> Option<(Tok, &str)> {
+    if first(value).is_none_or(|c| ATOM_ENDS.contains(c)) {
+        return None;
+    }
+    let mut v = value;
+    let mut children = Vec::new();
+    let mut last_dot = false;
+    while first(v).is_some_and(|c| !ATOM_ENDS.contains(c)) {
+        let n = atext_len(v);
+        children.push(Tok::value(&v[..n], "atext"));
+        v = &v[n..];
+        last_dot = false;
+        if let Some(rest) = v.strip_prefix('.') {
+            children.push(Tok::value(".", "dot"));
+            v = rest;
+            last_dot = true;
+        }
+    }
+    if last_dot {
+        return None;
+    }
+    Some((Tok::List { ttype: "dot-atom-text", children, ew_allowed: Some(true), first_fws: None }, v))
+}
+
+/// `get_dot_atom`: [CFWS] dot-atom-text [CFWS].
+fn get_dot_atom(value: &str) -> Parsed<'_> {
+    let mut children = Vec::new();
+    let v = opt_cfws(value, &mut children)?;
+    let Some((text, v)) = get_dot_atom_text(v) else { return Ok(None) };
+    children.push(text);
+    let v = opt_cfws(v, &mut children)?;
+    Ok(Some((Tok::list("dot-atom", children), v)))
+}
+
+/// `get_quoted_string`: [CFWS] bare-quoted-string [CFWS].
+fn get_quoted_string(value: &str) -> Result<(Tok, &str), Error> {
+    let mut children = Vec::new();
+    let v = opt_cfws(value, &mut children)?;
+    let (bare, v) = get_bare_quoted_string(v)?;
+    children.push(bare);
+    let v = opt_cfws(v, &mut children)?;
+    Ok((Tok::list("quoted-string", children), v))
+}
+
+/// Put `leader` in front of a token's children (`token[:0] = [leader]`).
+fn with_leader(tok: Tok, leader: Option<Tok>) -> Tok {
+    match (tok, leader) {
+        (Tok::List { ttype, mut children, ew_allowed, first_fws }, Some(l)) => {
+            children.insert(0, l);
+            let first_fws = first_fws.map(|_| children[0].startswith_fws());
+            Tok::List { ttype, children, ew_allowed, first_fws }
+        }
+        (tok, _) => tok,
+    }
+}
+
+/// `get_word`: an atom or a quoted string, either after CFWS.
+fn get_word(value: &str) -> Parsed<'_> {
+    let (leader, v) = if starts_cfws(value) {
+        let (l, r) = get_cfws(value)?;
+        (Some(l), r)
+    } else {
+        (None, value)
+    };
+    if v.is_empty() {
+        return Ok(None);
+    }
+    if v.starts_with('"') {
+        let (tok, rest) = get_quoted_string(v)?;
+        return Ok(Some((with_leader(tok, leader), rest)));
+    }
+    if starts_in(v, SPECIALS) {
+        return Ok(None);
+    }
+    Ok(get_atom(v)?.map(|(tok, rest)| (with_leader(tok, leader), rest)))
+}
+
+/// `get_obs_local_part`: words, dots, CFWS and stray backslashes up to a phrase end.
+fn get_obs_local_part(value: &str) -> Parsed<'_> {
+    let mut v = value;
+    let mut children = Vec::new();
+    while let Some(c) = first(v) {
+        if c != '\\' && PHRASE_ENDS.contains(c) {
+            break;
+        }
+        if c == '.' {
+            children.push(Tok::value(".", "dot"));
+            v = &v[1..];
+            continue;
+        }
+        if c == '\\' {
+            children.push(Tok::value("\\", "misplaced-special"));
+            v = &v[1..];
+            continue;
+        }
+        match get_word(v)? {
+            Some((tok, rest)) => {
+                children.push(tok);
+                v = rest;
+            }
+            None if starts_cfws(v) => {
+                let (tok, rest) = get_cfws(v)?;
+                children.push(tok);
+                v = rest;
+            }
+            None => return Ok(None),
+        }
+    }
+    if children.is_empty() {
+        return Ok(None);
+    }
+    Ok(Some((Tok::list_no_ew("obs-local-part", children), v)))
+}
+
+/// `get_dtext`.
+fn get_dtext(value: &str) -> Result<(Tok, &str), Error> {
+    let (text, rest) = ptext_to_endchars(value, "[]")?;
+    Ok((ptext(&text), rest))
+}
+
+/// `get_no_fold_literal`: "[" dtext "]".
+fn get_no_fold_literal(value: &str) -> Parsed<'_> {
+    let Some(v) = value.strip_prefix('[') else { return Ok(None) };
+    let (dtext, v) = get_dtext(v)?;
+    let Some(v) = v.strip_prefix(']') else { return Ok(None) };
+    let children = vec![Tok::value("[", "no-fold-literal-start"), dtext, Tok::value("]", "no-fold-literal-end")];
+    Ok(Some((Tok::list_no_ew("no-fold-literal", children), v)))
+}
+
+/// `get_domain_literal`: [CFWS] "[" [FWS] dtext [FWS] "]" [CFWS], closed for it where the value ends.
+fn get_domain_literal(value: &str) -> Parsed<'_> {
+    let mut children = Vec::new();
+    let v = opt_cfws(value, &mut children)?;
+    let Some(mut v) = v.strip_prefix('[') else { return Ok(None) };
+    children.push(Tok::value("[", "domain-literal-start"));
+    let close = |mut children: Vec<Tok>, v| {
+        children.push(Tok::value("]", "domain-literal-end"));
+        Ok(Some((Tok::list_no_ew("domain-literal", children), v)))
+    };
+    if v.is_empty() {
+        return close(children, v);
+    }
+    if v.starts_with(is_wsp) {
+        let (t, r) = fws_tok(v);
+        children.push(t);
+        v = r;
+    }
+    let (dtext, rest) = get_dtext(v)?;
+    children.push(dtext);
+    v = rest;
+    if v.is_empty() {
+        return close(children, v);
+    }
+    if v.starts_with(is_wsp) {
+        let (t, r) = fws_tok(v);
+        children.push(t);
+        v = r;
+    }
+    if v.is_empty() {
+        return close(children, v);
+    }
+    let Some(v) = v.strip_prefix(']') else { return Ok(None) };
+    children.push(Tok::value("]", "domain-literal-end"));
+    let v = opt_cfws(v, &mut children)?;
+    Ok(Some((Tok::list_no_ew("domain-literal", children), v)))
+}
+
+/// `get_domain`: a dot-atom, a domain literal, or atoms joined by dots (obs-domain).
+fn get_domain(value: &str) -> Parsed<'_> {
+    let (leader, v) = if starts_cfws(value) {
+        let (l, r) = get_cfws(value)?;
+        (Some(l), r)
+    } else {
+        (None, value)
+    };
+    if v.is_empty() {
+        return Ok(None);
+    }
+    if v.starts_with('[') {
+        let Some((tok, rest)) = get_domain_literal(v)? else { return Ok(None) };
+        return Ok(Some((Tok::list_no_ew("domain", vec![with_leader(tok, leader)]), rest)));
+    }
+    let Some((tok, mut v)) = (match get_dot_atom(v)? {
+        Some(found) => Some(found),
+        None => get_atom(v)?,
+    }) else {
+        return Ok(None);
+    };
+    if v.starts_with('@') {
+        return Ok(None);
+    }
+    let tok = with_leader(tok, leader);
+    let mut children = vec![tok];
+    if v.starts_with('.') {
+        if let Some(Tok::List { ttype: "dot-atom", children: inner, .. }) = children.first().cloned() {
+            children = inner;
+        }
+        while let Some(rest) = v.strip_prefix('.') {
+            children.push(Tok::value(".", "dot"));
+            let Some((atom, rest)) = get_atom(rest)? else { return Ok(None) };
+            children.push(atom);
+            v = rest;
+        }
+    }
+    Ok(Some((Tok::list_no_ew("domain", children), v)))
+}
+
+/// `get_msg_id`: [CFWS] "<" id-left "@" id-right ">" [CFWS]. A missing ">" is written anyway, as the email
+/// package does.
+fn get_msg_id(value: &str) -> Parsed<'_> {
+    let mut children = Vec::new();
+    let v = opt_cfws(value, &mut children)?;
+    let Some(v) = v.strip_prefix('<') else { return Ok(None) };
+    children.push(Tok::value("<", "msg-id-start"));
+    let left = match get_dot_atom_text(v) {
+        Some(found) => Some(found),
+        None => get_obs_local_part(v)?,
+    };
+    let Some((left, mut v)) = left else { return Ok(None) };
+    children.push(left);
+    if !v.starts_with('@') {
+        if let Some(rest) = v.strip_prefix('>') {
+            children.push(Tok::value(">", "msg-id-end"));
+            v = rest;
+        }
+        return Ok(Some((Tok::list_no_ew("msg-id", children), v)));
+    }
+    children.push(Tok::value("@", "address-at-symbol"));
+    let v = &v[1..];
+    let right = match get_dot_atom_text(v) {
+        Some(found) => Some(found),
+        None => match get_no_fold_literal(v)? {
+            Some(found) => Some(found),
+            None => get_domain(v)?,
+        },
+    };
+    let Some((right, v)) = right else { return Ok(None) };
+    children.push(right);
+    let v = v.strip_prefix('>').unwrap_or(v);
+    children.push(Tok::value(">", "msg-id-end"));
+    let v = opt_cfws(v, &mut children)?;
+    Ok(Some((Tok::list_no_ew("msg-id", children), v)))
+}
+
+/// `parse_message_ids(value)`: the msg-ids in order, a comma read as a blank, and the rest from the first
+/// thing that is not a msg-id kept as unstructured text that is never encoded.
+fn message_ids(value: &str) -> Result<Tok, Error> {
+    let mut children = Vec::new();
+    let mut v = value;
+    while !v.is_empty() {
+        if let Some(rest) = v.strip_prefix(',') {
+            children.push(Tok::fws(" "));
+            v = rest;
+            continue;
+        }
+        match get_msg_id(v)? {
+            Some((tok, rest)) => {
+                children.push(tok);
+                v = rest;
+            }
+            None => {
+                children.push(Tok::list_no_ew("invalid-message-id", unstructured_parts(v)));
+                break;
+            }
+        }
+    }
+    Ok(Tok::list("message-id-list", children))
 }
 
 // ---- RFC 2047 encoded words ----------------------------------------------------------------------------------
@@ -442,7 +887,9 @@ fn fold_as_ew(
     last_ew: Option<usize>,
     charset: &str,
     last_word_is_ew: bool,
-) -> Option<usize> {
+) -> Result<Option<usize>, Error> {
+    // `to_encode[0]` and `to_encode[-1]` on an empty word: what CPython raises
+    let index_error = || Error::Other { name: "IndexError", msg: "string index out of range".into() };
     let mut to_encode = to_encode.to_string();
     if let Some(le) = last_ew {
         let line = last(lines);
@@ -458,6 +905,8 @@ fn fold_as_ew(
             line.push(' ');
         }
         to_encode = leading + &to_encode;
+    } else if to_encode.is_empty() {
+        return Err(index_error());
     } else if to_encode.starts_with(is_wsp) {
         let lead = to_encode.remove(0);
         if clen(last(lines)) == MAXLEN as isize {
@@ -467,6 +916,9 @@ fn fold_as_ew(
         last(lines).push(lead);
     }
     let mut trailing = String::new();
+    if to_encode.is_empty() {
+        return Err(index_error());
+    }
     if to_encode.ends_with(is_wsp) {
         trailing.push(to_encode.pop().expect("ends with a blank"));
     }
@@ -499,10 +951,10 @@ fn fold_as_ew(
         }
     }
     last(lines).push_str(&trailing);
-    Some(new_last_ew)
+    Ok(Some(new_last_ew))
 }
 
-fn refold(tree: Vec<Tok>) -> String {
+fn refold(tree: Vec<Tok>) -> Result<String, Error> {
     let maxlen = MAXLEN as isize;
     let mut lines: Vec<String> = vec![String::new()];
     let mut last_word_is_ew = false;
@@ -535,8 +987,13 @@ fn refold(tree: Vec<Tok>) -> String {
                 want_encoding = false;
                 last_ew = None;
                 if part.syntactic_break() {
-                    if let Tok::List { children, .. } = &part {
-                        let folded = refold(children.clone());
+                    if let Tok::List { children, ttype, .. } = &part {
+                        // a msg-id folds as itself (MsgID.fold): it may not be broken
+                        let folded = if matches!(*ttype, "msg-id" | "invalid-message-id") {
+                            format!("{}{LINESEP}", part.text())
+                        } else {
+                            refold(children.clone())?
+                        };
                         let encoded = &folded[..folded.len() - LINESEP.len()];
                         if !encoded.contains(LINESEP) {
                             if clen(encoded) > maxlen - clen(last(&mut lines)) {
@@ -563,7 +1020,7 @@ fn refold(tree: Vec<Tok>) -> String {
                 {
                     last_ew = None;
                 }
-                last_ew = fold_as_ew(&tstr, &mut lines, last_ew, charset, last_word_is_ew);
+                last_ew = fold_as_ew(&tstr, &mut lines, last_ew, charset, last_word_is_ew)?;
                 last_word_is_ew = true;
                 last_charset = Some(charset);
                 want_encoding = false;
@@ -611,11 +1068,11 @@ fn refold(tree: Vec<Tok>) -> String {
         }
         last_word_is_ew = last_word_is_ew && tstr.trim_matches(is_wsp).is_empty();
     }
-    lines.join(LINESEP) + LINESEP
+    Ok(lines.join(LINESEP) + LINESEP)
 }
 
 /// One header line (or folded lines), ending CRLF, as `BaseHeader.fold` writes it.
-fn fold_header(name: &str, value: Tok) -> String {
+fn fold_header(name: &str, value: Tok) -> Result<String, Error> {
     let label = Tok::list_no_ew("header-label", vec![Tok::value(name, "header-name"), Tok::value(":", "header-sep")]);
     let mut tree = vec![label];
     let has_value = matches!(&value, Tok::List { children, .. } if !children.is_empty());
@@ -645,6 +1102,28 @@ fn verify_generated(folded: &str) -> Result<(), Error> {
         )));
     }
     Ok(())
+}
+
+/// `fold_binary`'s `folded.encode("ascii")`: a folded header that still holds non-ASCII text (a msg-id is never
+/// encoded) is a UnicodeEncodeError naming the first run of such characters.
+fn ascii_only(folded: &str) -> Result<(), Error> {
+    let chars: Vec<char> = folded.chars().collect();
+    let Some(start) = chars.iter().position(|c| !c.is_ascii()) else { return Ok(()) };
+    let end = start + chars[start..].iter().take_while(|c| !c.is_ascii()).count();
+    let msg = if end - start == 1 {
+        let u = chars[start] as u32;
+        let shown = if u < 0x100 {
+            format!("\\x{u:02x}")
+        } else if u < 0x10000 {
+            format!("\\u{u:04x}")
+        } else {
+            format!("\\U{u:08x}")
+        };
+        format!("'ascii' codec can't encode character '{shown}' in position {start}: ordinal not in range(128)")
+    } else {
+        format!("'ascii' codec can't encode characters in position {start}-{}: ordinal not in range(128)", end - 1)
+    };
+    Err(Error::Value { name: "UnicodeEncodeError", msg })
 }
 
 /// The SMTP policy's check on a header value: one line by `str.splitlines`.
@@ -793,31 +1272,35 @@ pub fn message_bytes(
     body: &str,
     reply_headers: &[(String, String)],
 ) -> Result<Vec<u8>, Error> {
-    // the policy refuses a value with a line break when the header is set, before anything is written
+    // Each header is checked and parsed when it is set (`msg[k] = v`), in order, before anything is written:
+    // the policy refuses a value with a line break, and the parser's own failures surface there.
+    let mut headers: Vec<(&str, Tok)> = vec![("To", address_list(to))];
+    if !cc.is_empty() {
+        headers.push(("Cc", address_list(cc)));
+    }
+    if !bcc.is_empty() {
+        headers.push(("Bcc", address_list(bcc)));
+    }
     one_line_header(subject)?;
-    for (_, v) in reply_headers {
+    headers.push(("Subject", unstructured(subject)));
+    for (k, v) in reply_headers {
         if !v.is_empty() {
             one_line_header(v)?;
+            // the header registry reads In-Reply-To and References as msg-id lists, any other as text
+            let value = if matches!(k.to_ascii_lowercase().as_str(), "in-reply-to" | "references") {
+                message_ids(v)?
+            } else {
+                unstructured(v)
+            };
+            headers.push((k.as_str(), value));
         }
     }
     let mut out = String::new();
-    let mut write = |folded: String| -> Result<(), Error> {
+    for (name, value) in headers {
+        let folded = fold_header(name, value)?;
+        ascii_only(&folded)?;
         verify_generated(&folded)?;
         out.push_str(&folded);
-        Ok(())
-    };
-    write(fold_header("To", address_list(to)))?;
-    if !cc.is_empty() {
-        write(fold_header("Cc", address_list(cc)))?;
-    }
-    if !bcc.is_empty() {
-        write(fold_header("Bcc", address_list(bcc)))?;
-    }
-    write(fold_header("Subject", unstructured(subject)))?;
-    for (k, v) in reply_headers {
-        if !v.is_empty() {
-            write(fold_header(k, unstructured(v)))?;
-        }
     }
     let (cte, payload) = encode_text(body);
     out.push_str("Content-Type: text/plain; charset=\"utf-8\"\r\n");
