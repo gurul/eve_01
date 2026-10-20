@@ -406,44 +406,63 @@ async fn cancel_jobs(s: &Arc<VoiceSession>) {
 #[derive(Clone, Default)]
 struct Logs(Arc<Mutex<Vec<u8>>>);
 
-impl std::io::Write for Logs {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        self.0.lock().extend_from_slice(buf);
-        Ok(buf.len())
-    }
-    fn flush(&mut self) -> std::io::Result<()> {
-        Ok(())
-    }
-}
-
-impl<'a> tracing_subscriber::fmt::MakeWriter<'a> for Logs {
-    type Writer = Logs;
-    fn make_writer(&'a self) -> Self::Writer {
-        self.clone()
-    }
-}
-
 impl Logs {
     fn text(&self) -> String {
         String::from_utf8_lossy(&self.0.lock()).into_owned()
     }
 }
 
-/// `caplog.set_level("INFO")` for this thread (a current-thread test runtime runs every task here).
-fn caplog() -> (Logs, tracing::subscriber::DefaultGuard) {
+thread_local! {
+    static CAPTURE: std::cell::RefCell<Option<Logs>> = const { std::cell::RefCell::new(None) };
+}
+
+/// The one global subscriber's writer: each line goes to the buffer of the thread that wrote it.
+struct LogWriter;
+
+impl std::io::Write for LogWriter {
+    fn write(&mut self, data: &[u8]) -> std::io::Result<usize> {
+        CAPTURE.with(|c| {
+            if let Some(logs) = &*c.borrow() {
+                logs.0.lock().extend_from_slice(data);
+            }
+        });
+        Ok(data.len())
+    }
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+/// Ends this thread's capture when dropped.
+struct CaptureGuard;
+
+impl Drop for CaptureGuard {
+    fn drop(&mut self) {
+        CAPTURE.with(|c| *c.borrow_mut() = None);
+    }
+}
+
+/// `caplog.set_level("INFO")` for this thread (a current-thread test runtime runs every task here). One global
+/// subscriber writes each line to the capturing thread's buffer: a scoped (`set_default`) subscriber loses lines
+/// once another test's callsite caches "nobody listens" for the whole process.
+fn caplog() -> (Logs, CaptureGuard) {
+    static INSTALL: std::sync::Once = std::sync::Once::new();
+    INSTALL.call_once(|| {
+        let subscriber = tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::INFO)
+            .with_ansi(false)
+            .with_writer(|| LogWriter)
+            .finish();
+        tracing::subscriber::set_global_default(subscriber).expect("one global subscriber");
+    });
     let logs = Logs::default();
-    let subscriber = tracing_subscriber::fmt()
-        .with_writer(logs.clone())
-        .with_ansi(false)
-        .with_max_level(tracing::Level::INFO)
-        .finish();
-    (logs.clone(), tracing::subscriber::set_default(subscriber))
+    CAPTURE.with(|c| *c.borrow_mut() = Some(logs.clone()));
+    (logs, CaptureGuard)
 }
 
 // ---- config ----------------------------------------------------------------------------------------------------
 
 #[test]
-#[ignore = "configured() reads self_context::block (the self_context unit), still todo!()"]
 fn test_configured_defaults_and_env() {
     let env = |pairs: &[(&str, &str)]| -> Environ { pairs.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect() };
     let c = configured(Some(&env(&[])));
@@ -505,7 +524,6 @@ fn test_session_config_offers_web_search_through_openrouter_or_the_hosted_tool()
 }
 
 #[test]
-#[ignore = "configured() reads self_context::block (the self_context unit), still todo!()"]
 fn test_session_config_offers_web_search_configured_engines() {
     let key: Environ = HashMap::from([("OPENROUTER_API_KEY".to_string(), "r".to_string())]);
     assert_eq!(configured(Some(&key)).search.engine, "openrouter-perplexity"); // Perplexity by default
@@ -515,7 +533,6 @@ fn test_session_config_offers_web_search_configured_engines() {
 // ---- the conversation ------------------------------------------------------------------------------------------
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_setup_greeting_mic_pump_and_goodbye() {
     let conn = connection(vec![]);
     let v = voice(&conn, vec![PyAgent::plain()], |_| {});
@@ -538,7 +555,6 @@ async fn test_setup_greeting_mic_pump_and_goodbye() {
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_audio_events_drive_speaker_and_states() {
     let pcm = base64::engine::general_purpose::STANDARD.encode(b"\x00\x10".repeat(50));
     let conn = connection(vec![
@@ -560,7 +576,6 @@ async fn test_audio_events_drive_speaker_and_states() {
 
 /// telegram.py can own a running task too: two agents never share the mouse (mac_busy).
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_start_task_is_refused_while_a_texted_task_has_the_mac() {
     let busy = Arc::new(AtomicBool::new(true));
     let b = busy.clone();
@@ -575,7 +590,6 @@ async fn test_start_task_is_refused_while_a_texted_task_has_the_mac() {
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_start_task_runs_agent_and_reports_result() {
     let agent = PyAgent::new("Your mail is open.", None);
     let conn = connection(vec![tool_call("start_task", "c1", json!({"goal": "open mail"}))]);
@@ -608,7 +622,6 @@ async fn test_start_task_runs_agent_and_reports_result() {
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_steer_stop_and_status_tools() {
     let agent = PyAgent::plain();
     let conn = connection(vec![
@@ -646,7 +659,6 @@ async fn test_steer_stop_and_status_tools() {
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_second_start_while_running_is_refused_and_agent_can_be_disabled() {
     let agent = PyAgent::plain();
     let conn = connection(vec![
@@ -672,7 +684,6 @@ async fn test_second_start_while_running_is_refused_and_agent_can_be_disabled() 
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_ask_user_is_spoken_and_answered_through_the_tool() {
     let agent = PyAgent::new("Sent.", Some("Send the email to Sam?"));
     let conn = connection(vec![tool_call("start_task", "c1", json!({"goal": "email sam"}))]);
@@ -699,7 +710,6 @@ async fn test_ask_user_is_spoken_and_answered_through_the_tool() {
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_answer_without_a_pending_question_is_refused() {
     let conn = connection(vec![
         tool_call("answer_question", "c1", json!({"answer": "yes"})),
@@ -712,7 +722,6 @@ async fn test_answer_without_a_pending_question_is_refused() {
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_idle_timeout_closes_the_session() {
     let conn = connection(vec![done()]);
     let v = voice(&conn, vec![PyAgent::plain()], |_| {});
@@ -727,7 +736,6 @@ async fn test_idle_timeout_closes_the_session() {
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_running_task_defers_idle_timeout_but_not_the_session_cap() {
     let agent = PyAgent::plain();
     let conn = connection(vec![tool_call("start_task", "c1", json!({"goal": "g"}))]);
@@ -748,7 +756,6 @@ async fn test_running_task_defers_idle_timeout_but_not_the_session_cap() {
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_unknown_tool_and_error_events_are_harmless() {
     let conn = connection(vec![
         json!({"type": "error", "error": {"message": "boom"}}),
@@ -764,7 +771,6 @@ async fn test_unknown_tool_and_error_events_are_harmless() {
 /// A backend function call is reported before its response completes, and the API rejects a second
 /// response.create while one is active (bench 2026-09-06 09:01).
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_tool_result_defers_response_create_until_response_done() {
     let conn = connection(vec![delegated("d1"), tool_call("task_status", "c1", json!({}))]);
     let v = voice(&conn, vec![PyAgent::plain()], |_| {});
@@ -779,7 +785,6 @@ async fn test_tool_result_defers_response_create_until_response_done() {
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_mic_is_muted_while_eve_speaks_and_for_a_tail() {
     let conn = connection(vec![]);
     let v = voice(&conn, vec![PyAgent::plain()], |_| {});
@@ -807,7 +812,6 @@ async fn test_mic_is_muted_while_eve_speaks_and_for_a_tail() {
 /// Owner request 2026-09-10: a finished task does not end the conversation. A goodbye does (previous test), and so
 /// does the idle timeout when nothing more is said.
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_conversation_stays_open_after_a_task_until_goodbye_or_idle() {
     let agent = PyAgent::new("Done.", None);
     let conn = connection(vec![tool_call("start_task", "c1", json!({"goal": "g"}))]);
@@ -866,7 +870,6 @@ async fn quiet(clock: &FakeClock, at: f64) {
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_captions_mode_streams_text_to_the_robot_and_plays_nothing() {
     let conn = connection(reply(&["Ten past ", "three."]));
     let (v, captions) = captions_voice(&conn, None);
@@ -895,7 +898,6 @@ async fn test_captions_mode_streams_text_to_the_robot_and_plays_nothing() {
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_state_stays_speaking_until_the_last_page_is_held() {
     let conn = connection(reply(&["Ten past ", "three."]));
     let (v, captions) = captions_voice(&conn, None);
@@ -914,7 +916,6 @@ async fn test_state_stays_speaking_until_the_last_page_is_held() {
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_idle_watchdog_waits_for_captions() {
     let conn = connection(reply(&["Ten past ", "three."]));
     let (v, captions) = captions_voice(
@@ -936,7 +937,6 @@ async fn test_idle_watchdog_waits_for_captions() {
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_run_drains_captions_before_idle() {
     let mut events = reply(&["Ten past ", "three."]);
     events.extend([tool_call("end_conversation", "c1", json!({})), END]);
@@ -954,7 +954,6 @@ async fn test_run_drains_captions_before_idle() {
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_hush_clears_the_caption_at_once() {
     let conn = connection(reply(&["Ten past ", "three."]));
     let (v, captions) = captions_voice(&conn, None);
@@ -968,7 +967,6 @@ async fn test_hush_clears_the_caption_at_once() {
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_new_response_chains_pages() {
     let conn = connection(reply(&["Ten past ", "three."]));
     let (v, captions) = captions_voice(&conn, None);
@@ -998,7 +996,6 @@ async fn test_new_response_chains_pages() {
 }
 
 #[test]
-#[ignore = "configured() reads self_context::block (the self_context unit), still todo!()"]
 fn test_configured_caption_cps() {
     let cps = |v: &str| configured(Some(&HashMap::from([("EVE_CAPTION_CPS".to_string(), v.to_string())]))).caption_cps;
     assert_eq!(cps("8"), 8.0);
@@ -1022,7 +1019,6 @@ fn test_session_config_captions_vs_audio() {
 }
 
 #[test]
-#[ignore = "configured() reads self_context::block (the self_context unit), still todo!()"]
 fn test_session_config_captions_vs_audio_configured_output() {
     let out = |v: Option<&str>| {
         let env: Environ = v.map(|v| HashMap::from([("EVE_VOICE_OUTPUT".to_string(), v.to_string())])).unwrap_or_default();
@@ -1034,7 +1030,6 @@ fn test_session_config_captions_vs_audio_configured_output() {
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_session_config_captions_vs_audio_session() {
     // audio mode never touches the caption callback, even when one is wired
     let captions = Arc::new(Mutex::new(Vec::<Value>::new()));
@@ -1050,7 +1045,6 @@ async fn test_session_config_captions_vs_audio_session() {
 /// A task's helper sentences ("opened Safari") show on the robot as pages, at most one per PROGRESS_MIN_GAP_SECS,
 /// only when no reply page is up.
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_progress_events_become_caption_pages_while_working() {
     let conn = connection(vec![]);
     let (v, captions) = captions_voice(&conn, None);
@@ -1069,7 +1063,6 @@ async fn test_progress_events_become_caption_pages_while_working() {
 /// Steps of a Codex task are not read aloud (owner report 2026-09-26): the voice says "on it" and the result,
 /// nothing in between.
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_codex_progress_is_never_spoken() {
     let conn = connection(vec![]);
     let (v, _captions) = captions_voice(&conn, None);
@@ -1084,7 +1077,6 @@ async fn test_codex_progress_is_never_spoken() {
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_conversation_close_cancels_the_task_with_a_reason() {
     let agent = PyAgent::plain();
     let conn = connection(vec![tool_call("start_task", "c1", json!({"goal": "g"}))]);
@@ -1236,7 +1228,6 @@ fn test_with_no_memory_both_prompts_are_byte_identical_to_a_memory_less_session(
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_with_no_memory_a_real_session_starts_with_that_prompt_and_writes_nothing() {
     // and a real session with no memory starts with exactly that, writing nothing anywhere
     let dir = support::tmp();
@@ -1312,7 +1303,6 @@ fn test_think_aloud_gets_no_memory_blocks_and_no_memory_tools() {
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_a_session_with_memory_offers_the_memory_tools_and_logs_its_prompt_sizes() {
     let (logs, _guard) = caplog();
     let dir = support::tmp();
@@ -1349,7 +1339,6 @@ async fn test_a_session_with_memory_offers_the_memory_tools_and_logs_its_prompt_
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs: _close_turn), still todo!()"]
 async fn test_closed_turns_are_written_as_say_lines_of_one_conversation() {
     let dir = support::tmp();
     let memory = FakeMemory::at(dir.path(), "", "", None, None);
@@ -1438,7 +1427,6 @@ fn listening_voice(
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs: _close_turn), still todo!()"]
 async fn test_a_think_aloud_session_writes_nothing_to_the_transcript() {
     let dir = support::tmp();
     let memory = FakeMemory::at(dir.path(), "", "", None, None);
@@ -1521,7 +1509,6 @@ async fn test_capture_result_keeps_the_answer_field_or_the_rest_as_json() {
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_a_finished_task_result_is_kept_as_a_tool_line() {
     let dir = support::tmp();
     let memory = FakeMemory::at(dir.path(), "", "", None, None);
@@ -1546,7 +1533,6 @@ async fn test_a_finished_task_result_is_kept_as_a_tool_line() {
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_a_hush_keeps_the_open_turn_and_writes_the_close_marker() {
     let dir = support::tmp();
     let memory = FakeMemory::at(dir.path(), "", "", None, None);
@@ -1587,7 +1573,6 @@ fn utc(h: u32, m: u32, s: u32) -> Dt {
 /// The cross-channel positive control: the Live instructions cannot change after session.start, so a text sent
 /// mid-conversation reaches voice only through this tool.
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_recent_conversation_returns_a_text_sent_after_the_session_opened() {
     let dir = support::tmp();
     let (w, wall) = fixed_wall(utc(12, 0, 0));
@@ -1674,7 +1659,6 @@ async fn test_a_slow_lookup_returns_the_timeout_line_in_about_2_5_s_while_the_lo
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_memory_results_are_clipped_to_valid_json_and_the_log_has_no_query() {
     let (logs, _guard) = caplog();
     let dir = support::tmp();
@@ -1754,7 +1738,6 @@ async fn test_memory_lookup_logs_hits_and_never_the_query() {
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (tools.rs: _tool), still todo!()"]
 async fn test_memory_tools_are_refused_once_think_aloud_begins() {
     let dir = support::tmp();
     let memory = FakeMemory::at(dir.path(), "", "", None, None);
@@ -1815,7 +1798,6 @@ async fn test_memory_tools_are_memorys_own_less_any_taken_name() {
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (tools.rs: _think_hard), still todo!()"]
 async fn test_think_hard_passes_the_profile_and_today_as_context() {
     let dir = support::tmp();
     let memory = FakeMemory::at(dir.path(), "PROFILE-PAGE", "", None, None);
@@ -1856,7 +1838,6 @@ async fn test_think_context_is_the_profile_and_today() {
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs: _close_turn, tools.rs: _star), still todo!()"]
 async fn test_remember_that_stars_the_owners_last_turn_through_memory() {
     let dir = support::tmp();
     let memory = FakeMemory::at(dir.path(), "", "", None, None);
@@ -1871,7 +1852,6 @@ async fn test_remember_that_stars_the_owners_last_turn_through_memory() {
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs: _close_turn, tools.rs: _star), still todo!()"]
 async fn test_remember_that_never_stars_eves_own_words() {
     let (logs, _guard) = caplog();
     let dir = support::tmp();
@@ -1898,7 +1878,6 @@ fn approx(a: f64, b: f64) -> bool {
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs: handle_event), still todo!()"]
 async fn test_the_live_minutes_and_each_backend_call_are_metered() {
     let conn = connection(vec![
         json!({"type": "session.usage.updated", "usage": {"seconds": 30.0}}),
@@ -1953,7 +1932,6 @@ async fn test_live_seconds_and_backend_calls_are_billed() {
 }
 
 #[tokio::test]
-#[ignore = "needs the voice_events unit (events.rs, tools.rs), still todo!()"]
 async fn test_a_session_without_usage_events_is_metered_by_its_own_clock() {
     let conn = connection(vec![]);
     let v = voice(&conn, vec![PyAgent::plain()], |_| {});

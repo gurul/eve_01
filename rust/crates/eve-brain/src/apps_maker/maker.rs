@@ -1227,13 +1227,21 @@ pub struct ChatMaker {
     pub(crate) app: Arc<dyn MakerHost>,
     pub(crate) spawn: SpawnFn,
     pub building: Mutex<HashSet<String>>,
+    /// CHAT_PROGRESS_SECS, the module constant Python's tests patch (to 0); [`ChatMaker::set_progress_secs`].
+    progress_secs: Mutex<f64>,
 }
 
 impl ChatMaker {
     /// py: apps_maker.py:1751 `def __init__(self, app: Any, spawn: Callable[[Awaitable[Any], str], Any]) -> None:`
     pub fn new(app: Arc<dyn MakerHost>, spawn: SpawnFn) -> Arc<Self> {
         // miniapp.MiniApp: .maker, .store, .app_url(slug), .chat_url(slug), .url
-        Arc::new(Self { app, spawn, building: Mutex::new(HashSet::new()) })
+        Arc::new(Self { app, spawn, building: Mutex::new(HashSet::new()), progress_secs: Mutex::new(CHAT_PROGRESS_SECS) })
+    }
+
+    /// The shortest gap between two progress lines (CHAT_PROGRESS_SECS unless set: Python's tests patch the
+    /// module constant).
+    pub fn set_progress_secs(&self, secs: f64) {
+        *self.progress_secs.lock() = secs;
     }
 
     /// py: apps_maker.py:1757 `def live(self) -> bool:`
@@ -1463,7 +1471,8 @@ impl ChatMaker {
             tested: bool,
             at: f64,
         }
-        let state = Arc::new(Mutex::new(State { stage: String::new(), tested: false, at: -CHAT_PROGRESS_SECS }));
+        let gap = *self.progress_secs.lock();
+        let state = Arc::new(Mutex::new(State { stage: String::new(), tested: false, at: -gap }));
         Arc::new(move |stage: &str, n: i64| {
             let line = {
                 let mut s = state.lock();
@@ -1472,7 +1481,7 @@ impl ChatMaker {
                     return; // the first test, then each repair round; no more
                 }
                 s.tested = true;
-                if monotonic() - s.at < CHAT_PROGRESS_SECS {
+                if monotonic() - s.at < gap {
                     return;
                 }
                 s.at = monotonic();

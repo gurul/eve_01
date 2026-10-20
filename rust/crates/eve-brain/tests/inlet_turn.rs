@@ -500,7 +500,7 @@ async fn test_a_turn_is_written_to_the_transcript_as_it_happens() {
     let convs: std::collections::HashSet<Value> = lines.iter().map(|l| l["conv"].clone()).collect();
     let chans: std::collections::HashSet<Value> = lines.iter().map(|l| l["ch"].clone()).collect();
     assert_eq!(convs.len(), 1);
-    assert_eq!(chans, [json!("telegram")].into_iter().collect());
+    assert_eq!(chans, [json!("telegram")].into_iter().collect::<std::collections::HashSet<Value>>());
     // the control: with no memory lent nothing is minted or written
     let r = rig(FakeApi::new(vec![vec![update(1, "hello there", OWNER, NOW, 1)]]), FakeCreate::new(vec![say("Hi!")]), |_| {});
     run_plain(&r).await;

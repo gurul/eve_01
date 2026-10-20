@@ -273,6 +273,7 @@ async fn meet_join_in_words_is_a_model_turn_with_the_meet_tools() {
     assert!(first["instructions"].as_str().unwrap().contains(m.instructions()));
     let output = last_output(&requests[1]);
     assert!(output["ok"].as_bool().unwrap() && output["joining"] == "des-ignr-evw");
+    settle200().await; // the join runs as its own task: asyncio.run let it reach the page before returning
     assert_eq!(*pages.lock()[0].opened.lock(), vec!["https://meet.google.com/des-ignr-evw?hl=en".to_string()]);
     m.leave();
     // the summary's history line is eve's own words, never the call's

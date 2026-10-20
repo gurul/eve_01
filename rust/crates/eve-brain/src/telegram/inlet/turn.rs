@@ -464,7 +464,8 @@ impl TelegramInlet {
         let strs = |k: &str| -> Vec<String> {
             parts.get(k).and_then(Value::as_array).map(|a| a.iter().filter_map(|t| t.as_str().map(str::to_string)).collect()).unwrap_or_default()
         };
-        request(
+        request_in(
+            self.environ.as_ref(),
             &self.config,
             items,
             "",
@@ -637,7 +638,8 @@ impl TelegramInlet {
                     let feeder = reader.clone();
                     let response = stream_create(Value::Object(payload.clone()), Arc::new(move |delta: &str| feeder.feed(delta))).await?;
                     reader.flush();
-                    self.st.lock().streamed = if reader.text.is_empty() { None } else { Some(reader.text.clone()) };
+                    let streamed = reader.text();
+                    self.st.lock().streamed = if streamed.is_empty() { None } else { Some(streamed) };
                     response
                 }
                 _ => (self.create)(Value::Object(payload.clone())).await?,
@@ -645,7 +647,7 @@ impl TelegramInlet {
             Self::count_usage(&response, usage);
             Self::record_spend(eve_spend::CHAT, &response, &payload);
             let claimable = self.owned_names(&response, &allowed);
-            let (mut calls, round_text, carry) = parse_response(&response, &claimable, true);
+            let (mut calls, round_text, carry) = parse_response(&response, &claimable, true)?;
             text = round_text;
             if grade == "instant" {
                 for c in calls.iter_mut() {
@@ -846,7 +848,7 @@ impl TelegramInlet {
         Self::record_spend(eve_spend::CHAT, &response, &payload);
         // a call made despite tool_choice "none" is not run, and never fails the turn (Lean RoutedTurn P1)
         let claimable = self.owned_names(&response, &allowed);
-        let (_calls, summary, _carry) = parse_response(&response, &claimable, true);
+        let (_calls, summary, _carry) = parse_response(&response, &claimable, true)?;
         let out = if !summary.is_empty() {
             summary
         } else if !text.is_empty() {

@@ -5,7 +5,7 @@
 
 #![allow(dead_code, unused_imports)]
 
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
 use std::sync::Arc;
@@ -335,7 +335,8 @@ impl FakeCreate {
             let next = me.responses.lock().pop_front();
             async move {
                 match next {
-                    None => panic!("a model call nobody scripted"),
+                    // raised, as Python's FakeCreate raises AssertionError: the turn answers it as any failure
+                    None => Err(anyhow::anyhow!("a model call nobody scripted")),
                     Some(Scripted::Body(body)) => Ok(body),
                     Some(Scripted::Fail(message)) => Err(anyhow::anyhow!(message)),
                     Some(Scripted::Later(make)) => make().await,
@@ -548,13 +549,30 @@ impl Rig {
             toolset_route: eve_brain::prelude::Lent::Given(None),
             grader: eve_brain::prelude::Lent::Given(None),
             small_talk_ask: eve_brain::prelude::Lent::Given(None),
-            environ: Some(Default::default()),
+            environ: Some(conftest_env()),
             ..InletOptions::default()
         };
         tweak(&mut options);
         let inlet = TelegramInlet::new(config, api.clone(), create.create(), options);
         Self { api, create, agents, states, clock, inlet }
     }
+}
+
+/// conftest.py's autouse pins for every Python test: the menu tools off (`_menu_tools_pinned_off`), Ask science,
+/// the NYT tools and pictures for cards off, and the phone's fix and places history in files that do not exist
+/// (`_phone_location_in_tmp`); a test that wants one on sets it in its own environ.
+pub fn conftest_env() -> HashMap<String, String> {
+    [
+        ("EVE_MENU_TOOLS", "off"),
+        ("EVE_SCIENCE_SEARCH", "0"),
+        ("EVE_NYT", "0"),
+        ("EVE_FIND_IMAGE", "0"),
+        ("EVE_PHONE_LOCATION_FILE", "/nonexistent/eve-brain-tests/phone/phone-location.json"),
+        ("EVE_PLACES_FILE", "/nonexistent/eve-brain-tests/phone/places.db"),
+    ]
+        .into_iter()
+        .map(|(k, v)| (k.to_string(), v.to_string()))
+        .collect()
 }
 
 // ---- the voice's fakes --------------------------------------------------------------------------------------------
@@ -669,4 +687,60 @@ pub fn tmp() -> tempfile::TempDir {
 
 pub fn path(dir: &tempfile::TempDir, name: &str) -> PathBuf {
     dir.path().join(name)
+}
+
+// ---- caplog --------------------------------------------------------------------------------------------------------
+
+/// Log lines written on this thread while it is alive (pytest's caplog at INFO). One global subscriber writes each
+/// line to the capturing thread's buffer: a scoped (`set_default`) subscriber loses lines once another test's
+/// callsite caches "nobody listens" for the whole process. A current-thread test runtime runs every task here.
+pub struct Caplog {
+    buf: Arc<Mutex<Vec<u8>>>,
+}
+
+thread_local! {
+    static CAPLOG: std::cell::RefCell<Option<Arc<Mutex<Vec<u8>>>>> = const { std::cell::RefCell::new(None) };
+}
+
+struct CaplogWriter;
+
+impl std::io::Write for CaplogWriter {
+    fn write(&mut self, data: &[u8]) -> std::io::Result<usize> {
+        CAPLOG.with(|c| {
+            if let Some(buf) = &*c.borrow() {
+                buf.lock().extend_from_slice(data);
+            }
+        });
+        Ok(data.len())
+    }
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+impl Caplog {
+    pub fn capture() -> Self {
+        static INSTALL: std::sync::Once = std::sync::Once::new();
+        INSTALL.call_once(|| {
+            let subscriber = tracing_subscriber::fmt()
+                .with_max_level(tracing::Level::INFO)
+                .with_ansi(false)
+                .with_writer(|| CaplogWriter)
+                .finish();
+            let _ = tracing::subscriber::set_global_default(subscriber);
+        });
+        let buf = Arc::new(Mutex::new(Vec::new()));
+        CAPLOG.with(|c| *c.borrow_mut() = Some(buf.clone()));
+        Self { buf }
+    }
+
+    pub fn text(&self) -> String {
+        String::from_utf8_lossy(&self.buf.lock()).into_owned()
+    }
+}
+
+impl Drop for Caplog {
+    fn drop(&mut self) {
+        CAPLOG.with(|c| *c.borrow_mut() = None);
+    }
 }

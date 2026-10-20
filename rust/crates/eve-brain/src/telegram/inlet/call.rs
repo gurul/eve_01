@@ -544,8 +544,7 @@ impl TelegramInlet {
         let judged: anyhow::Result<Option<String>> = async {
             let response = (self.create)(payload).await?;
             eve_spend::record_response(eve_spend::CALLS, &response, &self.config.model, "openrouter", None);
-            let parsed = std::panic::catch_unwind(AssertUnwindSafe(|| parse_response(&response, &[], false)))
-                .map_err(|_| anyhow::anyhow!("the reply could not be read"))?;
+            let parsed = parse_response(&response, &[], false)?;
             let out = if parsed.1.is_empty() { "{}".to_string() } else { parsed.1 };
             let data: Value = serde_json::from_str(&out)?;
             Ok(data.get("choice").and_then(Value::as_str).map(str::to_string))

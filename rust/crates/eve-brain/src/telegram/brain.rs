@@ -256,8 +256,15 @@ pub fn call_names(calls: &[Obj]) -> String {
 /// same order.
 #[allow(clippy::too_many_arguments)]
 pub fn request(config: &TelegramConfig, items: &[Obj], brief: &str, profile: &str, app_tools: &[Obj], vault: bool, today: &str, memory_tools: &[Obj], context: Option<&str>, watch_tools: &[Obj], watch_block: &str, direct_apps: &[String], lent_block: &str, app_block: &str, recall: &str, chat_tools: &[Obj]) -> Obj {
-    let tools = tools_for(config, memory_tools, app_tools, vault, watch_tools, chat_tools);
-    let is_lite = lite(None);
+    request_in(None, config, items, brief, profile, app_tools, vault, today, memory_tools, context, watch_tools, watch_block, direct_apps, lent_block, app_block, recall, chat_tools)
+}
+
+/// [`request`] for the environment ``environ`` (None: the process's): EVE_PROFILE, EVE_ROBOT and EVE_MENU_TOOLS are
+/// read from it, as Python reads them from os.environ (the inlet lends the environment it was built with).
+#[allow(clippy::too_many_arguments)]
+pub fn request_in(environ: Option<&Environ>, config: &TelegramConfig, items: &[Obj], brief: &str, profile: &str, app_tools: &[Obj], vault: bool, today: &str, memory_tools: &[Obj], context: Option<&str>, watch_tools: &[Obj], watch_block: &str, direct_apps: &[String], lent_block: &str, app_block: &str, recall: &str, chat_tools: &[Obj]) -> Obj {
+    let tools = tools_for_in(environ, config, memory_tools, app_tools, vault, watch_tools, chat_tools);
+    let is_lite = lite(environ);
     let mut app_block = app_block.to_string();
     let mut recall = recall.to_string();
     let mut instructions: String;
@@ -269,8 +276,8 @@ pub fn request(config: &TelegramConfig, items: &[Obj], brief: &str, profile: &st
         }
         recall = recall.replace(RECALL_NOTES, RECALL_NOTES_LITE); // no agent's hand-off notes in lite
     } else {
-        instructions = if robot_enabled(None) { INSTRUCTIONS_ROBOT } else { INSTRUCTIONS }.to_string();
-        if eve_menu_tools::enabled(None) {
+        instructions = if robot_enabled(environ) { INSTRUCTIONS_ROBOT } else { INSTRUCTIONS }.to_string();
+        if eve_menu_tools::enabled(environ) {
             instructions = menu_instructions(&instructions); // the screen and the files are their own tools' (switch on)
         }
         if !app_block.is_empty() {

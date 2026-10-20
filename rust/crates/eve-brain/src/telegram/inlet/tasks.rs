@@ -633,6 +633,42 @@ impl SayRelayProbe {
         self.0.ask_user(question, chat_id, title.unwrap_or(TASK_ASKS_TITLE), None, None, false, false, None, false).await
     }
 
+    /// `inlet._codex_chat`.
+    pub fn codex_chat(&self) -> Option<i64> {
+        self.0.st.lock().codex_chat
+    }
+
+    /// `inlet._codex_chat = chat_id`.
+    pub fn set_codex_chat(&self, chat_id: Option<i64>) {
+        self.0.st.lock().codex_chat = chat_id;
+    }
+
+    /// `inlet._codex_progress.shown`, None while no Codex progress message is open.
+    pub fn codex_progress_shown(&self) -> Option<String> {
+        let progress = self.0.st.lock().codex_progress.clone();
+        progress.map(|p| p.st.lock().shown.clone())
+    }
+
+    /// `inlet._launch_step(chat_id, step)`.
+    pub async fn launch_step(&self, chat_id: i64, step: &eve_claude_launch::Step) {
+        self.0.launch_step(chat_id, step).await;
+    }
+
+    /// `await inlet._type_to_claude(chat_id, text, message_id)`.
+    pub async fn type_to_claude(&self, chat_id: i64, text: &str, message_id: i64) -> bool {
+        self.0.type_to_claude(chat_id, text, message_id, false).await
+    }
+
+    /// `await inlet._send_file(chat_id, raw, caption)`.
+    pub async fn send_file(&self, chat_id: i64, raw: &str, caption: &str) -> Obj {
+        self.0.send_file(chat_id, raw, caption).await
+    }
+
+    /// `inlet._join_after_launch = on`.
+    pub fn set_join_after_launch(&self, on: bool) {
+        self.0.st.lock().join_after_launch = on;
+    }
+
     /// `inlet._progress_step(inlet._task_progress, line)`.
     pub fn task_step(&self, line: &str) {
         let progress = self.0.st.lock().task_progress.clone();

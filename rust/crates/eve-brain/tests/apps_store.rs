@@ -115,7 +115,6 @@ fn test_only_a_complete_document_counts() {
 }
 
 #[test]
-#[ignore = "needs serve_app_html from the apps_maker unit (not filled in this unit; un-ignore once it merges)"]
 fn test_served_apps_get_telegram_and_window_eve_first() {
     let out = serve_app_html(DOC);
     assert!(out.find("src=\"/eve.js\"").expect("eve.js") < out.find("<title>").expect("title"));
@@ -813,12 +812,11 @@ async fn call(port: i64, method: &str, path: &str, body: Option<Value>) -> reqwe
 }
 
 #[tokio::test]
-#[ignore = "needs the miniapp and apps_maker units (not filled in this unit; un-ignore once they merge)"]
 async fn test_an_app_is_served_with_window_eve_and_keeps_its_data() {
     let t = tmp();
     let (srv, store) = server_for(t.path(), &Script::texts(&[fenced(DOC)]));
     store.save(DOC, "habit tracker", "", None, None).unwrap();
-    let port = srv.start(0).await;
+    let port = srv.start(0).await.unwrap();
     let listed: Value = call(port, "POST", "/api/apps", Some(json!({"initData": signed(OWNER)}))).await.json().await.unwrap();
     let page = call(port, "GET", &format!("/{}", listed["apps"][0]["open"].as_str().unwrap()), None).await;
     let page_status = page.status().as_u16();
@@ -850,13 +848,12 @@ async fn test_an_app_is_served_with_window_eve_and_keeps_its_data() {
 }
 
 #[tokio::test]
-#[ignore = "needs the miniapp and apps_maker units (not filled in this unit; un-ignore once they merge)"]
 async fn test_the_app_api_is_owner_only() {
     let t = tmp();
     let gen = Script::texts(&[fenced(DOC)]);
     let (srv, store) = server_for(t.path(), &gen);
     store.save(DOC, "x", "", None, None).unwrap();
-    let port = srv.start(0).await;
+    let port = srv.start(0).await.unwrap();
     let mut statuses = Vec::new();
     for p in ["/api/make", "/api/apps", "/api/apps/habit-tracker/load", "/api/apps/habit-tracker/save"] {
         for d in [String::new(), signed(999)] {
@@ -890,7 +887,6 @@ fn test_a_slug_names_its_own_app_before_any_title() {
 }
 
 #[tokio::test]
-#[ignore = "needs AppMaker from the apps_maker unit (not filled in this unit; un-ignore once it merges)"]
 async fn test_changing_the_older_of_two_same_named_apps_changes_that_one() {
     let t = tmp();
     let gen = Script::texts(&[fenced(&doc_titled("changed", "Notes"))]);
@@ -945,7 +941,6 @@ fn test_a_failed_page_write_leaves_the_app_as_it_was() {
 }
 
 #[tokio::test]
-#[ignore = "needs ChatMaker from the apps_maker unit (not filled in this unit; un-ignore once it merges)"]
 async fn test_the_chat_door_never_deletes_undoes_or_renames_on_a_guess() {
     let t = tmp();
     let chat = Chat::default();
@@ -1026,7 +1021,6 @@ fn test_a_deleted_app_comes_back_with_its_data() {
 }
 
 #[tokio::test]
-#[ignore = "needs ChatMaker from the apps_maker unit (not filled in this unit; un-ignore once it merges)"]
 async fn test_restore_from_the_chat() {
     let t = tmp();
     let chat = Chat::default();
@@ -1059,7 +1053,6 @@ fn test_undo_warns_when_the_data_has_moved_on_since_that_version() {
 }
 
 #[tokio::test]
-#[ignore = "needs ChatMaker from the apps_maker unit (not filled in this unit; un-ignore once it merges)"]
 async fn test_undo_from_the_chat_says_when_newer_entries_may_not_open() {
     let t = tmp();
     let chat = Chat::default();
@@ -1093,7 +1086,6 @@ fn test_a_library_must_be_an_npm_package_at_an_exact_version() {
 }
 
 #[tokio::test]
-#[ignore = "needs AppMaker from the apps_maker unit (not filled in this unit; un-ignore once it merges)"]
 async fn test_a_version_that_loads_outside_code_is_never_saved() {
     let t = tmp();
     let unpinned = DOC.replace("hi", "<script src=\"https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js\"></script>");
@@ -1108,7 +1100,6 @@ async fn test_a_version_that_loads_outside_code_is_never_saved() {
 }
 
 #[tokio::test]
-#[ignore = "needs AppMaker from the apps_maker unit (not filled in this unit; un-ignore once it merges)"]
 async fn test_a_version_the_check_could_not_run_on_never_beats_a_tested_one() {
     let t = tmp();
     let flaky = FakeCheck { skip: Some("v2".into()), ..FakeCheck::new(&[("v1", &["a", "b", "c"])]) };
@@ -1121,7 +1112,6 @@ async fn test_a_version_the_check_could_not_run_on_never_beats_a_tested_one() {
 }
 
 #[tokio::test]
-#[ignore = "needs ChatMaker from the apps_maker unit and miniapp's error_line (not filled in this unit; un-ignore once they merge)"]
 async fn test_a_chat_change_that_fails_says_why_and_that_the_app_is_unchanged() {
     let t = tmp();
     let chat = Chat::default();
@@ -1145,7 +1135,6 @@ async fn test_a_chat_change_that_fails_says_why_and_that_the_app_is_unchanged() 
 }
 
 #[tokio::test]
-#[ignore = "needs ChatMaker from the apps_maker unit, and a seam for CHAT_PROGRESS_SECS (Python patches it to 0)"]
 async fn test_a_chat_build_says_when_it_is_tested_and_fixed_and_what_may_still_be_wrong() {
     let t = tmp();
     let chat = Chat::default();
@@ -1156,6 +1145,7 @@ async fn test_a_chat_build_says_when_it_is_tested_and_fixed_and_what_may_still_b
     ]);
     let gen = Script::texts(&[fenced(&doc("v1")), fenced(&doc("v2")), fenced(&doc("v3"))]);
     let (door, _, spawned) = door_for(t.path(), &gen, Some(check.check()));
+    door.set_progress_secs(0.0); // monkeypatch.setattr(apps_maker, "CHAT_PROGRESS_SECS", 0)
     door.handle("make_app", &args(json!({"request": "habit tracker"})), 7, chat.send(), chat.say(), Some(chat.send_photo()))
         .await;
     spawned.gather().await;
@@ -1263,7 +1253,6 @@ async fn test_without_telegrams_settings_item_the_pencil_still_leads_there() {
 }
 
 #[tokio::test]
-#[ignore = "needs ChatMaker from the apps_maker unit (not filled in this unit; un-ignore once it merges)"]
 async fn test_a_change_from_the_chat_door_brings_a_change_button_to_its_chat() {
     let t = tmp();
     let chat = Chat::default();

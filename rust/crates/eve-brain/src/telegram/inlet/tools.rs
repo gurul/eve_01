@@ -347,11 +347,7 @@ impl TelegramInlet {
                 let me = self.clone();
                 let photo: SendPhoto = Arc::new(move |chat, jpeg, caption, buttons| {
                     let me = me.clone();
-                    async move {
-                        me.send_app_photo(chat, &jpeg, &caption, &buttons).await;
-                        Ok(())
-                    }
-                    .boxed()
+                    async move { me.send_app_photo(chat, &jpeg, &caption, &buttons).await.map_err(anyhow::Error::from) }.boxed()
                 });
                 return Ok(maker.handle(name, args, chat_id, send, say, Some(photo)).await);
             }

@@ -1,11 +1,8 @@
-//! Unit `inlet_say_relay`: telegram.py 3715-4773 and 7078-7339 (inlet/say, relay, tasks); tests: test_telegram.py the terminal relay (1210-1456), inline buttons (3013-3635), task progress (3636-4214).
+//! Unit `inlet_say_relay`: telegram.py 3715-4773 and 7078-7339 (inlet/say, relay, tasks); tests: test_telegram.py the terminal relay (1210-1456), inline buttons (3013-3635), task progress (3636-4214), the Codex chat (2221-2395 and its review fixes).
 //!
 //! The shared fakes are in `support` (architect-owned); this unit's own go here. What Python's tests read or set as
-//! private attributes is reached through `TelegramInlet::say_relay_probe`. Python's tests that need FakeCodex (the
-//! Codex relay's progress, steer and folder tests) have no Rust counterpart: `CodexChat` is concrete and its fake
-//! transport lives in a crate this one does not depend on. The Codex progress tests whose subject is the progress
-//! message itself (a long step kept whole, a step too long, steps scrolling off) run here on a task's progress
-//! message, which is the same `_Progress`.
+//! private attributes is reached through `TelegramInlet::say_relay_probe`. Python's FakeCodex is [`FakeCodex`], lent
+//! to the inlet through the `CodexDoor` seam.
 
 mod support;
 
@@ -19,7 +16,7 @@ use parking_lot::Mutex;
 use serde_json::{json, Value};
 
 use eve_agent_contract::AgentEvent;
-use eve_brain::prelude::{Flag, Sessions, Sleep};
+use eve_brain::prelude::{CodexDoor, Flag, Sessions, Sleep};
 use eve_brain::telegram::*;
 use support::*;
 
@@ -42,6 +39,8 @@ struct Hooked {
     edits: AtomicUsize,
     /// (before, after) the first edit
     first_edit: Mutex<Option<(Box<dyn FnOnce() + Send>, Box<dyn FnOnce() + Send>)>>,
+    /// setMessageReaction refused with this
+    refuse_react: Mutex<Option<BotApiError>>,
 }
 
 impl Hooked {
@@ -55,6 +54,7 @@ impl Hooked {
             send_gate: Mutex::new(None),
             edits: AtomicUsize::new(0),
             first_edit: Mutex::new(None),
+            refuse_react: Mutex::new(None),
         })
     }
 
@@ -128,6 +128,9 @@ impl TelegramApi for Hooked {
     }
 
     async fn react(&self, chat_id: i64, message_id: i64, emoji: &str) -> Result<(), BotApiError> {
+        if let Some(e) = self.refuse_react.lock().clone() {
+            return Err(e);
+        }
         self.inner.react(chat_id, message_id, emoji).await
     }
 
@@ -1336,4 +1339,712 @@ async fn test_a_step_scrolled_off_during_an_in_flight_edit_does_not_lose_a_later
     let said: String = sent(&rig).into_iter().map(|(_, t)| t).collect::<Vec<_>>().join("\n");
     assert!(said.contains(&long1) && said.contains(&long2)); // both long steps reached the phone
     assert_eq!(sent(&rig).last().unwrap(), &(OWNER, "Calculator is open.".to_string()));
+}
+
+// ---- the Codex chat (FakeCodex) ------------------------------------------------------------------------------------
+
+/// FakeCodex's attributes.
+#[derive(Default)]
+struct CodexState {
+    connected: bool,
+    selected: Vec<std::path::PathBuf>,
+    sent: Vec<String>,
+    stops: usize,
+    closed: usize,
+    emit: Option<eve_codex_chat::Emit>,
+    /// the turn's result (CodexChat hands it here, not to emit, when given)
+    done: Option<eve_codex_chat::Emit>,
+    /// a turn is going: a message sent now steers it
+    running: bool,
+    fail: bool,
+}
+
+/// How a FakeCodex subclass in Python's tests changes it.
+#[derive(Default, Clone, Copy, PartialEq)]
+enum CodexKind {
+    #[default]
+    Plain,
+    /// `Refuses`: interrupt raises CodexUnavailable
+    Refuses,
+    /// `SlowFail`: the wire takes a moment, then sends (or fails)
+    SlowFail,
+    /// `Chatty`: a step is emitted while the send is awaited
+    Chatty,
+}
+
+#[derive(Default)]
+struct FakeCodex {
+    st: Mutex<CodexState>,
+    attach_wait: Mutex<Option<Arc<Flag>>>,
+    kind: CodexKind,
+}
+
+const CODEX_FOLDER: &str = "/projects/eve";
+
+impl FakeCodex {
+    fn new() -> Arc<Self> {
+        Arc::new(Self::default())
+    }
+
+    fn of(kind: CodexKind) -> Arc<Self> {
+        Arc::new(Self { kind, ..Self::default() })
+    }
+
+    /// `await codex.emit(text)`.
+    async fn emit(&self, text: &str) {
+        let emit = self.st.lock().emit.clone().expect("no chat started");
+        let _ = emit(text.to_string()).await;
+    }
+
+    /// `await codex.done(text)`.
+    async fn done(&self, text: &str) {
+        let done = self.st.lock().done.clone().expect("no chat started");
+        let _ = done(text.to_string()).await;
+    }
+
+    fn sent(&self) -> Vec<String> {
+        self.st.lock().sent.clone()
+    }
+
+    fn selected(&self) -> Vec<std::path::PathBuf> {
+        self.st.lock().selected.clone()
+    }
+}
+
+#[async_trait]
+impl CodexDoor for FakeCodex {
+    fn connected(&self) -> bool {
+        self.st.lock().connected
+    }
+
+    fn running(&self) -> bool {
+        self.st.lock().running
+    }
+
+    async fn start(
+        &self,
+        folder: &std::path::Path,
+        emit: eve_codex_chat::Emit,
+        _picture: Option<eve_codex_chat::Picture>,
+        done: Option<eve_codex_chat::Emit>,
+    ) -> Result<(), eve_codex_computer::CodexError> {
+        {
+            let mut st = self.st.lock();
+            st.selected.push(folder.to_path_buf());
+            st.emit = Some(emit);
+            st.done = done;
+        }
+        let wait = self.attach_wait.lock().clone();
+        if let Some(wait) = wait {
+            wait.wait().await;
+        }
+        let mut st = self.st.lock();
+        if st.fail {
+            return Err(eve_codex_computer::CodexError::Unavailable("Codex unavailable. Eve is still available.".into()));
+        }
+        st.connected = true;
+        Ok(())
+    }
+
+    async fn send(&self, text: &str) -> Result<(), eve_codex_computer::CodexError> {
+        if self.kind == CodexKind::SlowFail {
+            settle(5).await;
+        }
+        {
+            let mut st = self.st.lock();
+            if st.fail {
+                st.connected = false;
+                return Err(eve_codex_computer::CodexError::Unavailable("No confirmation; work was not retried.".into()));
+            }
+            st.sent.push(text.to_string());
+        }
+        if self.kind == CodexKind::Chatty {
+            self.emit("Reading the tests").await;
+        }
+        Ok(())
+    }
+
+    async fn interrupt(&self) -> Result<(), eve_codex_computer::CodexError> {
+        if self.kind == CodexKind::Refuses {
+            return Err(eve_codex_computer::CodexError::Unavailable(
+                "Codex is still starting your last message. Please wait.".into(),
+            ));
+        }
+        self.st.lock().stops += 1;
+        Ok(())
+    }
+
+    async fn close(&self) {
+        let mut st = self.st.lock();
+        st.connected = false;
+        st.closed += 1;
+    }
+}
+
+fn folders(paths: &[&str]) -> eve_brain::prelude::CodexFolders {
+    let paths: Vec<std::path::PathBuf> = paths.iter().map(std::path::PathBuf::from).collect();
+    Arc::new(move || paths.clone())
+}
+
+/// `Rig(api, create, codex=codex, codex_folders=lambda: [...])`.
+fn codex_rig(hooked: Arc<Hooked>, create: Arc<FakeCreate>, codex: &Arc<FakeCodex>, paths: &[&str], config: TelegramConfig) -> TRig {
+    let (c, f) = (codex.clone(), folders(paths));
+    TRig::new(hooked, create, config, move |o| {
+        o.codex = Some(c as Arc<dyn CodexDoor>);
+        o.codex_folders = Some(f);
+    })
+}
+
+/// `await dispatch(rig, text, uid=uid)`: from `uid`, in their own private chat.
+async fn dispatch_from(rig: &TRig, text: &str, update_id: i64, uid: i64) {
+    rig.probe().dispatch(&Value::Object(update(update_id, text, uid, NOW, update_id)));
+    rig.probe().jobs().await;
+}
+
+fn last_edit(rig: &TRig) -> (i64, String) {
+    rig.api.log.lock().edits.last().cloned().expect("no edit")
+}
+
+fn edit_of(rig: &TRig, message_id: i64) -> String {
+    // `dict(api.edits)[id]`: the last edit of that message
+    rig.api.log.lock().edits.iter().rev().find(|(id, _)| *id == message_id).map(|(_, t)| t.clone()).expect("no edit")
+}
+
+fn titled3(t: &(Option<String>, Option<String>, String)) -> (String, String, String) {
+    (t.0.clone().unwrap_or_default(), t.1.clone().unwrap_or_default(), t.2.clone())
+}
+
+#[tokio::test]
+async fn test_codex_selection_relay_escape_stop_and_off() {
+    let codex = FakeCodex::new();
+    let create = FakeCreate::new(vec![reply("Eve here"), reply("back to Eve")]);
+    let rig = codex_rig(Hooked::new(FakeApi::new(vec![])), create.clone(), &codex, &[CODEX_FOLDER], config());
+    dispatch(&rig, "codex on", 1).await;
+    assert_eq!(sent(&rig), owner_says(&["eve"]));
+    assert!(rig.probe().codex_chat().is_none() && codex.selected().is_empty());
+    dispatch(&rig, "codex eve", 1).await;
+    assert_eq!(codex.selected(), vec![std::path::PathBuf::from(CODEX_FOLDER)]);
+    dispatch(&rig, "implement it", 7).await;
+    assert!(codex.sent() == ["implement it"] && create.requests.lock().is_empty());
+    // the turn's one progress message, with a Stop button; a step edits it, the result is a new reply
+    assert_eq!(titled3(&titled_last(&rig)), ("Codex".into(), "eve".into(), "Sent to Codex.".into()));
+    assert_eq!(rig.api.log.lock().buttons.last().unwrap(), &vec!["Stop".to_string()]);
+    let progress_id = rig.api.log.lock().message_id;
+    codex.emit("Reading the tests").await;
+    settle(200).await;
+    assert_eq!(last_edit(&rig), (progress_id, "Sent to Codex.\n\n- Reading the tests".to_string()));
+    codex.done("Here is the answer.").await;
+    settle(200).await;
+    assert_eq!(titled3(&titled_last(&rig)), ("Codex".into(), "eve".into(), "Here is the answer.".into()));
+    assert_eq!(rig.api.log.lock().replies.last().unwrap(), &("Here is the answer.".to_string(), 7));
+    assert!(last_edit(&rig).1.ends_with(PROGRESS_DONE_LINE));
+    dispatch(&rig, "eve: how are you?", 1).await;
+    assert!(create.requests.lock().len() == 1 && codex.sent() == ["implement it"]);
+    dispatch(&rig, "stop", 1).await;
+    assert_eq!(codex.st.lock().stops, 1);
+    dispatch(&rig, "codex off", 1).await;
+    let count = sent(&rig).len();
+    codex.emit("late output must not leak").await;
+    codex.done("late result must not leak").await;
+    assert!(sent(&rig).len() == count && !codex.connected());
+    dispatch(&rig, "hello eve", 1).await;
+    assert_eq!(create.requests.lock().len(), 2);
+    rig.probe().shutdown().await;
+}
+
+#[tokio::test]
+async fn test_codex_connects_by_folder_without_a_number() {
+    for command in ["codex eve", "codex use eve", "codex on eve", "/codex eve"] {
+        let codex = FakeCodex::new();
+        let rig = codex_rig(Hooked::new(FakeApi::new(vec![])), FakeCreate::new(vec![]), &codex, &[CODEX_FOLDER], config());
+        dispatch(&rig, command, 1).await;
+        dispatch(&rig, command, 1).await;
+        let eve = std::path::PathBuf::from(CODEX_FOLDER);
+        assert_eq!(codex.selected(), vec![eve.clone(), eve], "{command}"); // each selection starts fresh
+        assert_eq!(sent(&rig).last().unwrap(), &(OWNER, "New Codex chat in eve. Send your message.".to_string()));
+        assert!(rig.create.requests.lock().is_empty());
+        rig.probe().shutdown().await;
+    }
+}
+
+#[tokio::test]
+async fn test_codex_failure_returns_to_eve_without_replaying_failed_work() {
+    let logs = Caplog::capture();
+    let codex = FakeCodex::new();
+    codex.st.lock().fail = true;
+    let rig = codex_rig(Hooked::new(FakeApi::new(vec![])), FakeCreate::new(vec![reply("Hello")]), &codex, &[CODEX_FOLDER], config());
+    dispatch(&rig, "codex eve", 1).await;
+    assert!(!codex.connected() && rig.probe().codex_chat().is_none());
+    assert!(rig.create.requests.lock().is_empty());
+    assert!(logs.text().contains("codex startup failed error=CodexUnavailable"), "{}", logs.text());
+    assert!(!logs.text().contains("codex eve"));
+    dispatch(&rig, "Hi", 1).await;
+    assert_eq!(rig.create.requests.lock().len(), 1);
+    dispatch(&rig, "codex: explicit work", 1).await;
+    assert!(codex.sent().is_empty() && rig.create.requests.lock().len() == 1);
+    codex.st.lock().fail = false;
+    dispatch(&rig, "codex eve", 1).await;
+    codex.st.lock().fail = true;
+    dispatch(&rig, "private work", 1).await;
+    assert!(codex.sent().is_empty() && rig.probe().codex_chat().is_none());
+    assert_eq!(rig.create.requests.lock().len(), 1); // no replay via Eve on send failure
+    rig.probe().shutdown().await;
+}
+
+#[tokio::test]
+async fn test_codex_owner_binding_and_claude_switch() {
+    let codex = FakeCodex::new();
+    let config = TelegramConfig { owner_ids: [OWNER, STRANGER].into_iter().collect(), ..config() };
+    let (c, f) = (codex.clone(), folders(&[CODEX_FOLDER]));
+    let rig = TRig::plain(FakeApi::new(vec![]), FakeCreate::new(vec![]), config, move |o| {
+        o.codex = Some(c as Arc<dyn CodexDoor>);
+        o.codex_folders = Some(f);
+        o.claude_sessions = Some(sessions(&["/Users/g/repo"]));
+    });
+    dispatch(&rig, "codex eve", 1).await;
+    dispatch_from(&rig, "codex: cannot steer", 1, STRANGER).await;
+    dispatch_from(&rig, "codex off", 1, STRANGER).await;
+    assert!(codex.connected() && codex.sent().is_empty());
+    codex.emit("only for the original owner").await;
+    assert_eq!(sent(&rig).last().unwrap(), &(OWNER, "only for the original owner".to_string()));
+    dispatch(&rig, "claude on", 1).await;
+    assert!(rig.inlet.claude() && !codex.connected());
+    let count = sent(&rig).len();
+    codex.emit("late").await;
+    assert_eq!(sent(&rig).len(), count);
+    rig.probe().shutdown().await;
+}
+
+#[tokio::test]
+async fn test_codex_off_during_start_prevents_late_enable() {
+    let codex = FakeCodex::new();
+    let wait = Arc::new(Flag::new());
+    *codex.attach_wait.lock() = Some(wait.clone());
+    let rig = codex_rig(Hooked::new(FakeApi::new(vec![])), FakeCreate::new(vec![]), &codex, &[CODEX_FOLDER], config());
+    rig.probe().dispatch(&Value::Object(msg("codex eve", 1)));
+    settle(200).await;
+    rig.probe().dispatch(&Value::Object(msg("codex off", 1)));
+    wait.set();
+    rig.probe().jobs().await;
+    assert!(!codex.connected());
+    assert!(!sent(&rig).iter().any(|(_, t)| t.contains("New Codex chat")));
+    rig.probe().shutdown().await;
+}
+
+#[tokio::test]
+async fn test_codex_invalid_selection_status_and_explicit_prefix_off() {
+    let codex = FakeCodex::new();
+    let rig = codex_rig(Hooked::new(FakeApi::new(vec![])), FakeCreate::new(vec![]), &codex, &[CODEX_FOLDER], config());
+    dispatch(&rig, "codex use 99", 1).await;
+    assert!(codex.selected().is_empty() && rig.probe().codex_chat().is_none());
+    assert!(sent(&rig).iter().any(|(_, t)| t.contains("not available")));
+    dispatch(&rig, "codex status", 1).await;
+    assert!(sent(&rig).iter().any(|(_, t)| t.contains("No Codex chat")));
+    dispatch(&rig, "codex off", 1).await;
+    dispatch(&rig, "codex: no accidental Eve action", 1).await;
+    assert!(rig.create.requests.lock().is_empty() && codex.sent().is_empty());
+    rig.probe().shutdown().await;
+}
+
+/// `codex_relay_rig(api)`: a connected Codex chat in the owner's chat.
+fn codex_relay_rig(hooked: Arc<Hooked>) -> (TRig, Arc<FakeCodex>) {
+    let codex = FakeCodex::new();
+    codex.st.lock().connected = true;
+    let c = codex.clone();
+    let rig = TRig::new(hooked, FakeCreate::new(vec![]), config(), move |o| o.codex = Some(c as Arc<dyn CodexDoor>));
+    rig.probe().set_codex_chat(Some(OWNER));
+    rig.probe().set_chat(Some(OWNER));
+    (rig, codex)
+}
+
+#[tokio::test]
+async fn test_while_a_codex_yes_no_waits_codex_relay_text_goes_to_codex() {
+    // The same finding on the Codex relay: a command approval ("Reply yes or no.") ate the owner's next message
+    // for Codex, and a sentence opening with "ok" approved the command.
+    let (rig, codex) = codex_relay_rig(Hooked::new(FakeApi::new(vec![])));
+    let asked = ask_owner(&rig, "Codex asks to run this command in /r:\nrm -rf build\n\nReply yes or no.", None);
+    jobs(&rig).await;
+    assert_eq!(rig.api.log.lock().buttons.last().unwrap(), &vec!["Allow".to_string(), "Deny".to_string()]);
+    dispatch(&rig, "ok, also update the README", 5).await;
+    assert!(codex.sent() == ["ok, also update the README"] && !asked.is_finished());
+    dispatch(&rig, "no", 6).await;
+    assert_eq!(asked.await.unwrap(), "no");
+    assert_eq!(codex.sent(), ["ok, also update the README"]);
+    rig.probe().shutdown().await;
+}
+
+#[tokio::test]
+async fn test_a_codex_app_access_prompt_takes_its_button_words_typed_and_sends_other_text_to_codex() {
+    let (rig, codex) = codex_relay_rig(Hooked::new(FakeApi::new(vec![])));
+    let question = "Codex: Allow Calendar?\nReply: yes to allow once; \"allow for task\"; \"always allow\" to remember \
+                    this app for future tasks; no to deny.";
+    let asked = ask_owner(&rig, question, None);
+    jobs(&rig).await;
+    dispatch(&rig, "what calendar is it using?", 5).await;
+    assert!(codex.sent() == ["what calendar is it using?"] && !asked.is_finished());
+    dispatch(&rig, "Allow for task.", 6).await;
+    assert_eq!(asked.await.unwrap(), "Allow for task.");
+    jobs(&rig).await;
+    assert!(last_edit(&rig).1.ends_with("Allowed for this task."));
+    let (strict, words) = rig.probe().pending();
+    assert!(!strict && words.is_empty());
+    rig.probe().shutdown().await;
+}
+
+#[tokio::test]
+async fn test_the_codex_folder_menu_is_buttons_and_a_tap_starts_that_folder() {
+    let codex = FakeCodex::new();
+    let rig = codex_rig(Hooked::new(FakeApi::new(vec![])), FakeCreate::new(vec![]), &codex, &[CODEX_FOLDER, "/projects/car"], config());
+    dispatch(&rig, "codex on", 1).await;
+    assert_eq!(sent(&rig).last().unwrap(), &(OWNER, "eve\ncar".to_string()));
+    assert_eq!(rig.api.log.lock().buttons.last().unwrap(), &vec!["eve".to_string(), "car".to_string()]);
+    let (_, key) = rig.api.key("car", -1);
+    let board = last_keyboard_id(&rig);
+    tap(&rig, &key, board).await;
+    assert_eq!(codex.selected(), vec![std::path::PathBuf::from("/projects/car")]);
+    assert_eq!(rig.probe().codex_chat(), Some(OWNER));
+    assert!(rig.create.requests.lock().is_empty());
+    rig.probe().shutdown().await;
+}
+
+#[tokio::test]
+async fn test_a_codex_commentary_is_sent_when_the_turn_ends_inside_the_second_in_degraded_mode() {
+    let codex = FakeCodex::new();
+    let rig = codex_rig(Hooked::refusing(FakeApi::new(vec![])), FakeCreate::new(vec![]), &codex, &[CODEX_FOLDER], config());
+    rig.naps.set(Nap::Hold); // held_second
+    dispatch(&rig, "codex eve", 1).await;
+    dispatch(&rig, "fix the tests", 3).await;
+    settle(200).await;
+    assert_eq!(sent(&rig).last().unwrap(), &(OWNER, "Sent to Codex.".to_string()));
+    codex.emit("I fixed the flaky test.").await;
+    codex.done("All tests pass.").await; // ends at once: no settle between
+    settle(200).await;
+    let texts = rig.api.texts();
+    assert_eq!(&texts[texts.len() - 2..], &["I fixed the flaky test.".to_string(), "All tests pass.".to_string()]);
+    dispatch(&rig, "codex off", 1).await;
+    rig.probe().shutdown().await;
+}
+
+#[tokio::test]
+async fn test_the_codex_stop_button_interrupts_and_a_steer_keeps_the_progress_message() {
+    let codex = FakeCodex::new();
+    let rig = codex_rig(Hooked::new(FakeApi::new(vec![])), FakeCreate::new(vec![]), &codex, &[CODEX_FOLDER], config());
+    dispatch(&rig, "codex eve", 1).await;
+    dispatch(&rig, "fix the tests", 3).await;
+    let (progress_id, key) = rig.api.key("Stop", -1);
+    codex.st.lock().running = true;
+    let opened = sent(&rig).len();
+    dispatch(&rig, "and the docs", 4).await; // steers the running turn
+    assert!(codex.sent() == ["fix the tests", "and the docs"] && sent(&rig).len() == opened); // no line
+    assert_eq!(rig.api.log.lock().reactions.last().unwrap(), &(OWNER, 4, DELIVERED_REACTION.to_string())); // a 👍
+    assert_eq!(rig.api.key("Stop", -1), (progress_id, key.clone())); // no second progress message
+    tap(&rig, &key, progress_id).await;
+    assert!(codex.st.lock().stops == 1 && sent(&rig).last().unwrap() == &(OWNER, "Stop requested in Codex.".to_string()));
+    codex.done("Codex stopped.").await;
+    settle(200).await;
+    assert_eq!(rig.api.log.lock().replies.last().unwrap(), &("Codex stopped.".to_string(), 3));
+    // the progress message closes as stopped, not finished
+    assert_eq!(last_edit(&rig), (progress_id, format!("Sent to Codex.\n\n{PROGRESS_STOPPED_LINE}")));
+    dispatch(&rig, "codex off", 1).await;
+    rig.probe().shutdown().await;
+}
+
+#[tokio::test]
+async fn test_a_codex_steer_whose_thumb_is_refused_says_sent_to_codex() {
+    let codex = FakeCodex::new();
+    let hooked = Hooked::new(FakeApi::new(vec![]));
+    *hooked.refuse_react.lock() = Some(api_error(400, "Bad Request: REACTION_INVALID"));
+    let rig = codex_rig(hooked, FakeCreate::new(vec![]), &codex, &[CODEX_FOLDER], config());
+    dispatch(&rig, "codex eve", 1).await;
+    dispatch(&rig, "fix the tests", 3).await;
+    let opened = sent(&rig).len(); // the progress message, not a line
+    codex.st.lock().running = true;
+    dispatch(&rig, "and the docs", 4).await;
+    assert_eq!(codex.sent(), ["fix the tests", "and the docs"]);
+    assert_eq!(sent(&rig)[opened..].to_vec(), owner_says(&[CODEX_SENT_LINE]));
+    dispatch(&rig, "codex off", 1).await;
+    rig.probe().shutdown().await;
+}
+
+#[tokio::test]
+async fn test_codex_off_closes_an_open_progress_message() {
+    let codex = FakeCodex::new();
+    let rig = codex_rig(Hooked::new(FakeApi::new(vec![])), FakeCreate::new(vec![]), &codex, &[CODEX_FOLDER], config());
+    dispatch(&rig, "codex eve", 1).await;
+    dispatch(&rig, "fix the tests", 1).await;
+    let (progress_id, key) = rig.api.key("Stop", -1);
+    dispatch(&rig, "codex off", 1).await;
+    assert_eq!(last_edit(&rig), (progress_id, format!("Sent to Codex.\n\n{PROGRESS_CLOSED_LINE}")));
+    tap(&rig, &key, progress_id).await;
+    assert!(rig.api.log.lock().answered.last().unwrap().1 == TAP_EXPIRED_LINE && codex.st.lock().stops == 0);
+    rig.probe().shutdown().await;
+}
+
+#[tokio::test]
+async fn test_a_tasks_stop_button_stops_the_task_even_inside_a_codex_chat() {
+    // Review of the progress batch (owner, 2026-09-23): the button used to replay the word "stop", which a Codex chat
+    // takes first, so the Codex turn was interrupted and the task kept running.
+    let codex = FakeCodex::new();
+    let rig = codex_rig(Hooked::new(FakeApi::new(vec![])), task_create(), &codex, &[CODEX_FOLDER], config());
+    dispatch(&rig, "codex eve", 1).await;
+    dispatch(&rig, "eve: open the calculator", 3).await;
+    settle(200).await;
+    assert!(rig.inlet.task_running());
+    let (progress_id, key) = rig.api.key("Stop", -1);
+    tap(&rig, &key, progress_id).await;
+    assert_eq!(codex.st.lock().stops, 0); // the Codex chat is left alone
+    let agent = rig.agents.last();
+    assert_eq!(agent.cancel_reason.lock().as_deref(), Some("stopped from Telegram"));
+    assert_eq!(sent(&rig).last().unwrap(), &(OWNER, STOPPED_LINE.to_string()));
+    agent.release.set();
+    for _ in 0..2000 {
+        if !rig.inlet.task_running() {
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(1)).await;
+    }
+    settle(200).await;
+    assert!(!rig.inlet.task_running());
+    assert_eq!(last_edit(&rig), (progress_id, format!("{ON_IT_LINE}\n\n{PROGRESS_STOPPED_LINE}")));
+    dispatch(&rig, "codex off", 1).await;
+    rig.probe().shutdown().await;
+}
+
+#[tokio::test]
+async fn test_a_long_codex_commentary_is_kept_whole_in_the_progress_message() {
+    let codex = FakeCodex::new();
+    let rig = codex_rig(Hooked::new(FakeApi::new(vec![])), FakeCreate::new(vec![]), &codex, &[CODEX_FOLDER], config());
+    dispatch(&rig, "codex eve", 1).await;
+    dispatch(&rig, "fix the tests", 3).await;
+    let (progress_id, _) = rig.api.key("Stop", -1);
+    let long_step = format!("{}Then I fixed it.", "I read the failing test first. ".repeat(16)); // about 500 characters
+    codex.emit(&long_step).await;
+    jobs(&rig).await;
+    assert_eq!(last_edit(&rig), (progress_id, format!("Sent to Codex.\n\n- {}", long_step.trim())));
+    dispatch(&rig, "codex off", 1).await;
+    rig.probe().shutdown().await;
+}
+
+#[tokio::test]
+async fn test_claude_off_during_a_codex_chat_leaves_its_steps_and_result_flowing() {
+    // Review finding: "claude off" bumped the Codex epoch, so the running Codex turn's steps and result were dropped
+    // and its progress message kept a dead Stop button.
+    let codex = FakeCodex::new();
+    let rig = codex_rig(Hooked::new(FakeApi::new(vec![])), FakeCreate::new(vec![]), &codex, &[CODEX_FOLDER], config());
+    dispatch(&rig, "codex eve", 1).await;
+    dispatch(&rig, "implement it", 7).await;
+    dispatch(&rig, "claude off", 8).await;
+    codex.emit("Reading the tests").await;
+    codex.done("Here is the answer.").await;
+    settle(200).await;
+    assert_eq!(titled3(&titled_last(&rig)), ("Codex".into(), "eve".into(), "Here is the answer.".into()));
+    let (_, edited) = last_edit(&rig);
+    assert!(edited.ends_with(PROGRESS_DONE_LINE) && edited.contains("Reading the tests"));
+    rig.probe().shutdown().await;
+}
+
+#[tokio::test]
+async fn test_a_codex_stop_that_fails_puts_the_stop_button_back() {
+    // Review finding: a Stop tap retired its key before the interrupt ran; when Codex refused ("still starting"), the
+    // work went on with no button left to stop it.
+    let codex = FakeCodex::of(CodexKind::Refuses);
+    let rig = codex_rig(Hooked::new(FakeApi::new(vec![])), FakeCreate::new(vec![]), &codex, &[CODEX_FOLDER], config());
+    dispatch(&rig, "codex eve", 1).await;
+    dispatch(&rig, "implement it", 7).await;
+    let (progress_id, key) = rig.api.key("Stop", -1);
+    tap(&rig, &key, progress_id).await;
+    settle(200).await;
+    assert_eq!(last_edit(&rig).0, progress_id);
+    let rows = rig.api.log.lock().edit_keyboards.last().cloned().unwrap().1.expect("buttons back");
+    assert!(rows[0][0].0 == "Stop" && rows[0][0].1 != key); // back, under a fresh key
+    rig.probe().shutdown().await;
+}
+
+#[tokio::test]
+async fn test_a_codex_send_that_fails_closes_its_progress_message() {
+    // Review finding: a disconnect left the turn's progress message open with a live Stop button.
+    let codex = FakeCodex::of(CodexKind::SlowFail);
+    let rig = codex_rig(Hooked::new(FakeApi::new(vec![])), FakeCreate::new(vec![]), &codex, &[CODEX_FOLDER], config());
+    dispatch(&rig, "codex eve", 1).await;
+    dispatch(&rig, "implement it", 7).await;
+    let first = rig.api.log.lock().message_id;
+    codex.st.lock().fail = true;
+    dispatch(&rig, "and the docs", 8).await;
+    let second = rig.api.log.lock().message_id;
+    assert!(edit_of(&rig, first).ends_with(PROGRESS_CLOSED_LINE));
+    assert!(edit_of(&rig, second).ends_with(CODEX_NOT_SENT_LINE));
+    assert!(rig.probe().codex_chat().is_none() && rig.probe().codex_progress_shown().is_none());
+    rig.probe().shutdown().await;
+}
+
+#[tokio::test]
+async fn test_a_codex_disconnect_noticed_at_the_next_message_closes_the_open_progress() {
+    let codex = FakeCodex::new();
+    let rig = codex_rig(Hooked::new(FakeApi::new(vec![])), FakeCreate::new(vec![]), &codex, &[CODEX_FOLDER], config());
+    dispatch(&rig, "codex eve", 1).await;
+    dispatch(&rig, "implement it", 7).await;
+    let progress_id = rig.api.log.lock().message_id;
+    codex.st.lock().connected = false; // the app-server went away
+    dispatch(&rig, "and the docs", 8).await;
+    assert!(edit_of(&rig, progress_id).ends_with(PROGRESS_CLOSED_LINE));
+    rig.probe().shutdown().await;
+}
+
+#[tokio::test]
+async fn test_codex_commentary_emitted_while_the_send_is_awaited_is_a_step_of_its_turn() {
+    // Review finding: the progress message was opened only after send returned, so a step Codex emitted meanwhile
+    // went as a message of its own.
+    let codex = FakeCodex::of(CodexKind::Chatty);
+    let rig = codex_rig(Hooked::new(FakeApi::new(vec![])), FakeCreate::new(vec![]), &codex, &[CODEX_FOLDER], config());
+    dispatch(&rig, "codex eve", 1).await;
+    dispatch(&rig, "implement it", 7).await;
+    settle(200).await;
+    let own = (some("Codex"), some("eve"), "Reading the tests".to_string());
+    assert!(!rig.api.log.lock().titled.contains(&own)); // not a message of its own
+    assert_eq!(rig.probe().codex_progress_shown().as_deref(), Some("Sent to Codex.\n\n- Reading the tests"));
+    rig.probe().shutdown().await;
+}
+
+#[tokio::test]
+async fn test_two_codex_folders_with_one_name_get_buttons_that_can_be_told_apart() {
+    let codex = FakeCodex::new();
+    let home = dirs::home_dir().expect("a home");
+    let (work, personal) = (home.join("work").join("eve"), home.join("personal").join("eve"));
+    let paths = [work.to_string_lossy().into_owned(), personal.to_string_lossy().into_owned(), "/projects/status".into()];
+    let refs: Vec<&str> = paths.iter().map(String::as_str).collect();
+    let rig = codex_rig(Hooked::new(FakeApi::new(vec![])), FakeCreate::new(vec![]), &codex, &refs, config());
+    dispatch(&rig, "codex on", 1).await;
+    assert_eq!(
+        rig.api.log.lock().buttons.last().unwrap(),
+        &vec!["~/work/eve".to_string(), "~/personal/eve".to_string(), "status".to_string()]
+    );
+    let (_, key) = rig.api.key("status", -1);
+    let board = last_keyboard_id(&rig);
+    tap(&rig, &key, board).await; // a folder, not the "status" verb
+    assert_eq!(codex.selected(), vec![std::path::PathBuf::from("/projects/status")]);
+    rig.probe().shutdown().await;
+}
+
+/// `_opening_rig(tmp_path, **kw)`: a launcher that says when the terminal is opening and waits to be released.
+struct Opening {
+    rig: TRig,
+    folder: std::path::PathBuf,
+    opened: Arc<Flag>,
+    release: Arc<Flag>,
+    _dir: tempfile::TempDir,
+}
+
+fn opening_rig(codex: Option<Arc<FakeCodex>>) -> Opening {
+    let dir = tmp();
+    let folder = dir.path().join("repo");
+    std::fs::create_dir(&folder).unwrap();
+    let (opened, release) = (Arc::new(Flag::new()), Arc::new(Flag::new()));
+    let (o2, r2) = (opened.clone(), release.clone());
+    let launcher: eve_brain::prelude::Launcher = Arc::new(move |_where, _harness| {
+        let (o, r) = (o2.clone(), r2.clone());
+        async move {
+            o.set();
+            r.wait().await;
+            Ok("Opened.".to_string())
+        }
+        .boxed()
+    });
+    let repo = folder.to_string_lossy().into_owned();
+    let rig = TRig::plain(FakeApi::new(vec![]), FakeCreate::new(vec![]), config(), move |o| {
+        o.launcher = Some(launcher);
+        if let Some(codex) = codex {
+            o.codex = Some(codex as Arc<dyn CodexDoor>);
+            o.codex_folders = Some(folders(&[&repo]));
+        }
+    });
+    Opening { rig, folder, opened, release, _dir: dir }
+}
+
+fn opening_step(folder: &std::path::Path) -> eve_claude_launch::Step {
+    eve_claude_launch::Step { folder: Some(folder.to_path_buf()), harness: Some("claude".into()), done: true, ..eve_claude_launch::Step::new("Opening.") }
+}
+
+#[tokio::test]
+async fn test_a_codex_folder_while_a_new_claude_opens_cancels_its_late_join() {
+    // Found 2026-10-06: `_launch_step` took the "join what opens" flag, awaited the terminal for seconds, then joined
+    // without looking again. `codex <folder>` in that window left Claude and Codex both on.
+    let codex = FakeCodex::new();
+    let o = opening_rig(Some(codex.clone()));
+    o.rig.probe().set_join_after_launch(true);
+    let (probe, step) = (o.rig.probe(), opening_step(&o.folder));
+    let launching = tokio::spawn(async move { probe.launch_step(OWNER, &step).await });
+    o.opened.wait().await;
+    dispatch(&o.rig, &format!("codex use {}", o.folder.display()), 1).await;
+    o.release.set();
+    launching.await.unwrap();
+    o.rig.probe().jobs().await;
+    assert!(o.rig.probe().codex_chat() == Some(OWNER) && !o.rig.inlet.claude());
+}
+
+#[tokio::test]
+async fn test_claude_off_while_a_new_claude_opens_cancels_its_late_join() {
+    // The same window with "claude off": the relay stayed off only until the terminal opened.
+    let o = opening_rig(None);
+    o.rig.probe().set_join_after_launch(true);
+    let (probe, step) = (o.rig.probe(), opening_step(&o.folder));
+    let launching = tokio::spawn(async move { probe.launch_step(OWNER, &step).await });
+    o.opened.wait().await;
+    dispatch(&o.rig, "claude off", 1).await;
+    o.release.set();
+    launching.await.unwrap();
+    assert!(!o.rig.inlet.claude() && sent(&o.rig).last().unwrap() == &(OWNER, "Opened.".to_string()));
+}
+
+#[tokio::test]
+async fn test_with_no_switch_the_late_join_still_happens() {
+    // The control for the two above.
+    let o = opening_rig(None);
+    o.release.set();
+    o.rig.probe().set_join_after_launch(true);
+    o.rig.probe().launch_step(OWNER, &opening_step(&o.folder)).await;
+    assert!(o.rig.inlet.claude() && titled_last(&o.rig).0 == some(CLAUDE_ON_TITLE));
+}
+
+#[tokio::test]
+async fn test_the_first_message_to_a_new_claude_waits_until_the_session_has_started() {
+    // 2026-10-10: "new claude" joined as soon as the terminal opened, and the first message was typed a second before
+    // Claude Code's SessionStart, so it was lost. Typing now waits for that hook from the session's folder.
+    let dir = tmp();
+    let folder = dir.path().join("repo");
+    std::fs::create_dir(&folder).unwrap();
+    let typed: Typed = Arc::new(Mutex::new(Vec::new()));
+    let launcher: eve_brain::prelude::Launcher = Arc::new(|_where, _harness| async { Ok("Opened.".to_string()) }.boxed());
+    let t = typed.clone();
+    let rig = TRig::plain(FakeApi::new(vec![]), FakeCreate::new(vec![]), config(), move |o| {
+        o.launcher = Some(launcher);
+        o.terminal = Some(terminal(&t));
+    });
+    rig.probe().set_join_after_launch(true);
+    rig.probe().launch_step(OWNER, &opening_step(&folder)).await;
+    assert!(rig.inlet.claude());
+    let probe = rig.probe();
+    let typing = tokio::spawn(async move { probe.type_to_claude(OWNER, "hello claude", 7).await });
+    settle(200).await;
+    assert!(typed.lock().is_empty()); // still starting: nothing typed yet
+    rig.inlet.relay_session_started(&dir.path().join("elsewhere").to_string_lossy()); // another folder's session
+    settle(200).await;
+    assert!(typed.lock().is_empty());
+    rig.inlet.relay_session_started(&folder.to_string_lossy());
+    assert!(typing.await.unwrap());
+    assert_eq!(texts_typed(&typed), ["hello claude"]);
+    assert!(rig.probe().type_to_claude(OWNER, "and again", 8).await); // started: no wait after the first
+    assert_eq!(texts_typed(&typed), ["hello claude", "and again"]);
+}
+
+#[tokio::test]
+async fn test_a_session_already_running_is_typed_into_at_once() {
+    // The control: "claude on" joining a running session never waits for a SessionStart that already happened.
+    let typed: Typed = Arc::new(Mutex::new(Vec::new()));
+    let t = typed.clone();
+    let rig = TRig::plain(FakeApi::new(vec![]), FakeCreate::new(vec![]), config(), move |o| o.terminal = Some(terminal(&t)));
+    rig.probe().relay_to("/Users/g/repo");
+    let probe = rig.probe();
+    let typing = tokio::time::timeout(std::time::Duration::from_secs(1), probe.type_to_claude(OWNER, "run it", 3));
+    assert!(typing.await.expect("no wait"));
+    assert_eq!(texts_typed(&typed), ["run it"]);
 }

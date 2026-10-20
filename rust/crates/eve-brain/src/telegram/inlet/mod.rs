@@ -15,17 +15,8 @@ pub mod tasks;
 pub mod tools;
 pub mod turn;
 pub use call::*;
-pub use chief::*;
-pub use handle::*;
-pub use history::*;
 pub use media::*;
-pub use parts::*;
-pub use relay::*;
-pub use run::*;
-pub use say::*;
 pub use tasks::*;
-pub use tools::*;
-pub use turn::*;
 
 #[allow(unused_imports)]
 use crate::prelude::*;
@@ -244,7 +235,7 @@ pub struct InletOptions {
     pub launch_root: Option<PathBuf>,
     pub launch_recent: Option<LaunchRecent>,
     pub claude_sessions: Option<ClaudeSessions>,
-    pub codex: Option<Arc<eve_codex_chat::CodexChat>>,
+    pub codex: Option<Arc<dyn CodexDoor>>,
     pub codex_folders: Option<CodexFolders>,
     pub permission_timeout_secs: f64,
     pub clock: Option<Clock>,
@@ -434,7 +425,7 @@ pub struct TelegramInlet {
     pub(crate) on_sound: Option<OnSound>,
     pub(crate) on_caption: Option<OnCaption>,
     pub(crate) notes: Option<NotesFn>,
-    pub(crate) codex: Arc<eve_codex_chat::CodexChat>,
+    pub(crate) codex: Arc<dyn CodexDoor>,
     pub(crate) codex_folders: CodexFolders,
     pub(crate) codex_lock: tokio::sync::Mutex<()>,
     pub(crate) terminal: Option<Terminal>,
@@ -576,6 +567,8 @@ impl TelegramInlet {
     pub fn new(config: TelegramConfig, api: Arc<dyn TelegramApi>, create: Create, options: InletOptions) -> Arc<Self> {
         use futures::FutureExt;
 
+        crate::seams::register_app_modules(); // app_registry's modules, as Python imports them on first use
+
         let InletOptions {
             stream_create,
             agent_factory,
@@ -693,7 +686,7 @@ impl TelegramInlet {
                     }
                     .boxed()
                 });
-                Arc::new(eve_codex_chat::CodexChat::new(ask_user, Default::default()))
+                Arc::new(eve_codex_chat::CodexChat::new(ask_user, Default::default())) as Arc<dyn CodexDoor>
             });
             TelegramInlet {
                 config,

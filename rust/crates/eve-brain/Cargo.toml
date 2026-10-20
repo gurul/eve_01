@@ -35,6 +35,8 @@ eve-chief-card = { path = "../eve-chief-card" }
 eve-claude-launch = { path = "../eve-claude-launch" }
 # the Codex folder chat (telegram).
 eve-codex-chat = { path = "../eve-codex-chat" }
+# CodexError, the Codex chat's failures (seams::CodexDoor).
+eve-codex-computer = { path = "../eve-codex-computer" }
 # Composio: Slack, Notion, Linear and the long tail (telegram, self_context).
 eve-composio-tools = { path = "../eve-composio-tools" }
 # the computer agent (telegram, voice_agent, self_context).
@@ -113,6 +115,8 @@ eve-small-talk = { path = "../eve-small-talk" }
 eve-spend = { path = "../eve-spend" }
 # OpenRouter credit URLs (onboarding).
 eve-spend-sync = { path = "../eve-spend-sync" }
+# the Spotify app module: its tools, block and off reason for the app registry (seams::register_app_modules).
+eve-spotify = { path = "../eve-spotify" }
 # the Eve Link token, rendezvous (miniapp, notify).
 eve-stick-link = { path = "../eve-stick-link" }
 # the clock and place lines (think, telegram, voice_agent).

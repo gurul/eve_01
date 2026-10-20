@@ -821,10 +821,13 @@ async fn test_a_poll_failure_backs_off_and_a_fatal_one_stops_the_loop() {
     let api = FakeApi::new(vec![]);
     api.feed_error(api_error(502, "Bad Gateway"));
     api.feed(vec![msg("/start", 1)]);
-    api.feed_error(api_error(401, "Unauthorized"));
     let rig = Rig::new(api, FakeCreate::new(vec![]), config(), |_| {});
     let inlet = rig.inlet.clone();
     let looping = tokio::spawn(async move { inlet.run().await });
+    settle(400).await;
+    assert!(!looping.is_finished(), "a 502 is retried, not fatal");
+    // the 401 comes on the poll after the hello was said: the shutdown that follows it cancels open jobs
+    rig.api.feed_error(api_error(401, "Unauthorized"));
     settle(400).await;
     assert!(looping.is_finished(), "a 401 ends the loop");
     let log = rig.api.log.lock();

@@ -477,7 +477,7 @@ fn test_tools_offer_only_the_live_ways() {
     assert_eq!(with_email.tools()[0]["parameters"]["properties"]["via"]["enum"], json!(["imessage", "email"]));
     let names: std::collections::HashSet<String> =
         sh.tools().iter().map(|t| t["name"].as_str().unwrap().to_string()).collect();
-    assert_eq!(names, S::TOOL_NAMES.iter().map(|n| n.to_string()).collect());
+    assert_eq!(names, S::TOOL_NAMES.iter().map(|n| n.to_string()).collect::<std::collections::HashSet<String>>());
 }
 
 #[test]

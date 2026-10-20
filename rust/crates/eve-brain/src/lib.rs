@@ -12,8 +12,6 @@
 //!
 //! Python's module globals that tests patch are parameters or seams here; see PARITY.md.
 
-// Skeleton: the bodies are todo!() until their fill units port them. Integration removes this allow.
-#![allow(unused_variables, dead_code, unused_imports, clippy::all)]
 
 pub mod apps_maker;
 pub mod miniapp;

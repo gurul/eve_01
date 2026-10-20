@@ -11,7 +11,6 @@ pub mod events;
 pub mod live;
 pub mod session;
 pub mod tools;
-pub use events::*;
 pub use live::*;
 pub use session::*;
 pub use tools::*;

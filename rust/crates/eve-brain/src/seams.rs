@@ -947,3 +947,112 @@ mod tests {
         assert!(!f.is_set());
     }
 }
+
+// ---- app_registry: eve's apps' modules, as `app.mod()` imports them -----------------------------------------------
+
+/// Make eve's app modules known to the app registry (`app_registry.App.mod()`: Python imports
+/// `eve_bridge.<module>` on first use; Rust has no runtime import, so the brain registers the modules it is built
+/// with). Each one's TOOLS, TOOL_NAMES, INSTRUCTIONS (the lights' INSTRUCTIONS_HEAD), OFF_REASON and module-level
+/// callables, read from its own crate. A module already registered (the daemon's fuller description) is kept.
+/// Runs once per process; the inlet and the voice session call it as they are made.
+pub fn register_app_modules() {
+    static ONCE: std::sync::Once = std::sync::Once::new();
+    ONCE.call_once(|| {
+        use eve_app_registry::{ModuleInfo, ModuleSource, Registered};
+        let names = |n: &[&str]| -> Option<Vec<String>> { Some(n.iter().map(|s| s.to_string()).collect()) };
+        let funcs = |n: &[&str]| -> std::collections::BTreeSet<String> { n.iter().map(|s| s.to_string()).collect() };
+        let modules = [
+            ModuleInfo {
+                functions: funcs(&["enabled", "make_lights"]),
+                tool_names: names(&eve_lights::lights::TOOL_NAMES),
+                tools: Some(eve_lights::lights::TOOLS.clone()),
+                off_reason: Some(eve_lights::lights::OFF_REASON.to_string()),
+                instructions_head: Some(eve_lights::lights::INSTRUCTIONS_HEAD.to_string()),
+                ..ModuleInfo::new("lights")
+            },
+            ModuleInfo {
+                functions: funcs(&["enabled", "make_spotify", "match"]),
+                tool_names: names(&eve_spotify::TOOL_NAMES),
+                tools: Some(Value::Array(eve_spotify::TOOLS.clone())),
+                off_reason: Some(eve_spotify::OFF_REASON.to_string()),
+                instructions: Some(eve_spotify::INSTRUCTIONS.to_string()),
+                ..ModuleInfo::new("spotify")
+            },
+            ModuleInfo {
+                functions: funcs(&["enabled", "make_firetv", "match"]),
+                tool_names: names(&eve_firetv::TOOL_NAMES),
+                tools: Some(Value::Array(eve_firetv::TOOLS.clone())),
+                off_reason: Some(eve_firetv::OFF_REASON.to_string()),
+                instructions: Some(eve_firetv::INSTRUCTIONS.to_string()),
+                ..ModuleInfo::new("firetv")
+            },
+            ModuleInfo {
+                functions: funcs(&["enabled", "make_panel", "match"]),
+                tool_names: names(&eve_obsbot_panel::TOOL_NAMES),
+                tools: Some(Value::Array(eve_obsbot_panel::TOOLS.clone())),
+                off_reason: Some(eve_obsbot_panel::OFF_REASON.to_string()),
+                instructions: Some(eve_obsbot_panel::INSTRUCTIONS.to_string()),
+                ..ModuleInfo::new("obsbot_panel")
+            },
+        ];
+        for info in modules {
+            if Registered.module(&info.name).is_none() {
+                eve_app_registry::register_module(info);
+            }
+        }
+    });
+}
+
+// ---- codex_chat.CodexChat, as the Telegram inlet drives it -------------------------------------------------------
+
+/// The Codex chat as the inlet uses it (`self._codex`): Python duck-types it, and its tests lend a FakeCodex. The
+/// real one is [`eve_codex_chat::CodexChat`].
+#[async_trait]
+pub trait CodexDoor: Send + Sync {
+    /// `codex.connected`.
+    fn connected(&self) -> bool;
+    /// `codex.running`: a turn is going, so a message sent now steers it.
+    fn running(&self) -> bool;
+    /// `await codex.start(folder, emit, picture=..., done=...)`.
+    async fn start(
+        &self,
+        folder: &std::path::Path,
+        emit: eve_codex_chat::Emit,
+        picture: Option<eve_codex_chat::Picture>,
+        done: Option<eve_codex_chat::Emit>,
+    ) -> Result<(), eve_codex_computer::CodexError>;
+    /// `await codex.send(text)`.
+    async fn send(&self, text: &str) -> Result<(), eve_codex_computer::CodexError>;
+    /// `await codex.interrupt()`.
+    async fn interrupt(&self) -> Result<(), eve_codex_computer::CodexError>;
+    /// `await codex.close()`.
+    async fn close(&self);
+}
+
+#[async_trait]
+impl CodexDoor for eve_codex_chat::CodexChat {
+    fn connected(&self) -> bool {
+        eve_codex_chat::CodexChat::connected(self)
+    }
+    fn running(&self) -> bool {
+        (**self).running()
+    }
+    async fn start(
+        &self,
+        folder: &std::path::Path,
+        emit: eve_codex_chat::Emit,
+        picture: Option<eve_codex_chat::Picture>,
+        done: Option<eve_codex_chat::Emit>,
+    ) -> Result<(), eve_codex_computer::CodexError> {
+        eve_codex_chat::CodexChat::start(self, folder, emit, picture, done).await
+    }
+    async fn send(&self, text: &str) -> Result<(), eve_codex_computer::CodexError> {
+        eve_codex_chat::CodexChat::send(self, text).await
+    }
+    async fn interrupt(&self) -> Result<(), eve_codex_computer::CodexError> {
+        eve_codex_chat::CodexChat::interrupt(self).await
+    }
+    async fn close(&self) {
+        eve_codex_chat::CodexChat::close(self).await
+    }
+}

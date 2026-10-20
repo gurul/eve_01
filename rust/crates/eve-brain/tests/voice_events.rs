@@ -1713,7 +1713,7 @@ fn config_with(slot: Option<(&str, Arc<TestHub>)>, think_aloud: Option<&Obj>) ->
         Some((slot, hub)) => hubs(slot, hub),
         None => AppHubs::default(),
     };
-    session_config_with(&plain_config(), "", think_aloud, "", "", "", "", None, None, &hubs, "")
+    session_config_with(&plain_config(), "", think_aloud, "", "", "", "", None, None, &hubs, "", Some(&std::collections::HashMap::from([("EVE_SCIENCE_SEARCH".to_string(), "0".to_string()), ("EVE_NYT".to_string(), "0".to_string()), ("EVE_FIND_IMAGE".to_string(), "0".to_string())])))
 }
 
 fn backend_text(cfg: &Obj) -> String {
