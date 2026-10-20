@@ -72,7 +72,8 @@ Status: complete
 
 ## Differences
 - `act` and `read_screen` bound the page by an explicit `eval_s` (`*_within`, `WalkOptions::eval_timeout_s`) where the Python tests monkeypatch the module's `EVAL_TIMEOUT_S`; the default is the same 5 s.
-- `screen_from` skips a control that is not a JSON object and reads a non-object result as empty, where Python raises AttributeError (COLLECT_JS never returns either).
+- `screen_from` skips a control that is not a JSON object, reads a `controls` that is not a list and a non-object result as empty, and reads an `options` that is a number or a bool as no options, where Python raises AttributeError or TypeError (COLLECT_JS never returns any of these).
+- `offered` (and so `Verifier::pick`) offers nothing for a step whose kind is not tap, type or choose, where Python's `ACTS_ON[step.do]` raises KeyError. `parse_journeys` never makes such a step; only a hand-built `Step` can.
 - An action error whose text is empty reads `(Kind: )` where Python's `str(e).splitlines()[0]` raises IndexError out of `act`.
 - `extract_journeys` reads JSON with `eve_ipc::pyjson` (CPython's messages, at the same positions); `NaN`/`Infinity` and integers past 64 bits, which `json.loads` accepts, are refused or become floats there; a block nested past 1,000 levels is a problem line where Python's RecursionError would raise out of the maker.
 - `Verifier.ask` treats a predict that panics like one that raised.
