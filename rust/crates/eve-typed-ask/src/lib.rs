@@ -347,7 +347,7 @@ impl Gates {
 
 /// One choice answer read: the chosen key, its probability, and every numeric probability.
 /// `_choice` in Python: anything malformed reads as `("", 0.0, {})`.
-fn choice(answer: Option<&Value>) -> (String, f64, IndexMap<String, f64>) {
+pub fn choice(answer: Option<&Value>) -> (String, f64, IndexMap<String, f64>) {
     let Some(Value::Object(answer)) = answer else {
         return (String::new(), 0.0, IndexMap::new());
     };
@@ -373,7 +373,7 @@ fn choice(answer: Option<&Value>) -> (String, f64, IndexMap<String, f64>) {
 }
 
 /// A noul answer's value; anything malformed (a bool included) is 0.0.
-fn noul(answer: Option<&Value>) -> f64 {
+pub fn noul(answer: Option<&Value>) -> f64 {
     match answer {
         Some(Value::Object(m)) => match m.get("noul") {
             Some(Value::Number(n)) => n.as_f64().unwrap_or(0.0),

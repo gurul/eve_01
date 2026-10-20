@@ -15,8 +15,8 @@ Status: complete
 | `POSES`, `DIRECTIONS` | `POSES`, `DIRECTIONS` | same order |
 | `HeadAnswer` | `HeadAnswer` (+ `HeadAnswer::new`) | `pose()` same branching; `raw` is the answers map |
 | `Gates` | `Gates` | `decide` returns `String` |
-| `_choice` | `choice` (private) | bool probabilities count as 1.0/0.0, as `isinstance(v, (int, float))` does |
-| `_noul` | `noul` (private) | a bool is 0.0 |
+| `_choice` | `choice` (pub: jev-verify reads step answers with it) | bool probabilities count as 1.0/0.0, as `isinstance(v, (int, float))` does |
+| `_noul` | `noul` (pub: jev-verify reads step and expectation answers with it) | a bool is 0.0 |
 | `LAYA_HEAD_QUESTIONS` | `LAYA_HEAD_QUESTIONS` (`LazyLock<Value>`) | byte-identical JSON, same key order (checked against `json.dumps`) |
 | `ask_laya_head` | `ask_laya_head` | |
 | `JEV_HEAD_QUESTIONS`, `JEV_STATE_NOTE` | same names | byte-identical |
@@ -98,3 +98,6 @@ None
 - `app<N>` keys are read with ASCII digits only; Python's `str.isdigit()` also admits other Unicode digits.
 - `str.casefold` is modelled as lowercase plus the full foldings that produce ASCII letters (ß, ſ, ligatures, …); foldings that only produce non-ASCII text cannot change the `[a-z0-9]+` scan.
 - Under `(?i)` Python's `[A-Z]` also matches İ and ı; Rust's regex matches ſ and K (Kelvin) like Python but not those two. Only the redaction patterns use it.
+
+## Downstream edits
+- 2026-10-19, for eve-jev-verify (`jev_verify.py` imports `_choice` and `_noul`): `choice` and `noul` made `pub`. Additive; behavior unchanged.
