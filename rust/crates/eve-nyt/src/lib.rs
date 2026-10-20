@@ -1380,7 +1380,7 @@ pub fn archive_month(args: &Value, now: Option<DateTime<Utc>>) -> Result<(i64, i
     Ok((year, month))
 }
 
-fn archive_row(doc: &Value) -> Option<Value> {
+pub fn archive_row(doc: &Value) -> Option<Value> {
     let mut row = article(doc)?;
     let obj = row.as_object_mut()?;
     obj.insert("desk".into(), clean_opt(py::or(get(doc, "news_desk"), get(doc, "desk")), NAME_CHARS));
