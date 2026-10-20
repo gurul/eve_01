@@ -63,6 +63,33 @@ fn guarded<T>(f: impl FnOnce() -> T) -> Result<T, String> {
     std::panic::catch_unwind(AssertUnwindSafe(f)).map_err(|p| panic_text(p.as_ref()))
 }
 
+/// What a Work session's Terminal line and its eve MCP server run. Python names `sys.executable` (the daemon's own
+/// interpreter); this daemon names its own helper binaries beside it (`eve-work-sessions launch <sid>` and
+/// `eve-mcp`, built with it). Without them it falls back to Python's line on the checkout's venv, where the Python
+/// package is installed, and only then to `python3` on PATH.
+pub fn work_launch() -> eve_work_sessions::Launch {
+    work_launch_in(std::env::current_exe().ok().as_deref().and_then(std::path::Path::parent), &|p| p.is_file())
+}
+
+/// [`work_launch`] for an explicit folder and file check.
+pub fn work_launch_in(
+    dir: Option<&std::path::Path>,
+    is_file: &dyn Fn(&std::path::Path) -> bool,
+) -> eve_work_sessions::Launch {
+    if let Some(dir) = dir {
+        let (launcher, mcp) = (dir.join("eve-work-sessions"), dir.join("eve-mcp"));
+        if is_file(&launcher) && is_file(&mcp) {
+            return eve_work_sessions::Launch::Native {
+                launcher: launcher.to_string_lossy().into_owned(),
+                mcp: mcp.to_string_lossy().into_owned(),
+            };
+        }
+    }
+    let venv = std::path::PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/../../../bridge/.venv/bin/python3"));
+    let python = if is_file(&venv) { venv.to_string_lossy().into_owned() } else { "python3".to_string() };
+    eve_work_sessions::Launch::Python { python }
+}
+
 /// `threading.Thread(target=start, daemon=True).start()`: the start runs beside the daemon, never holding it. On the
 /// daemon's own runtime when there is one (so the clients it makes keep their runtime), else on a thread of its own.
 fn start_beside(name: &'static str, fut: impl Future<Output = ()> + Send + 'static) {
@@ -826,6 +853,7 @@ impl Daemon {
             let work = eve_work_sessions::WorkSessions::new(eve_work_sessions::Options {
                 state,
                 environ: self.environ.clone(),
+                launch: work_launch(),
                 ..Default::default()
             });
             self.st.lock().work = Some(Arc::new(work));
@@ -1089,6 +1117,38 @@ impl eve_meet::CalendarApps for DirectCalendar {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_work_session_runs_the_helper_binaries_beside_the_daemon() {
+        let dir = std::path::Path::new("/opt/eve/release");
+        let launch = work_launch_in(Some(dir), &|_| true);
+        assert_eq!(
+            launch,
+            eve_work_sessions::Launch::Native {
+                launcher: "/opt/eve/release/eve-work-sessions".into(),
+                mcp: "/opt/eve/release/eve-mcp".into(),
+            }
+        );
+        assert_eq!(
+            launch.line(std::path::Path::new("/w"), "5f0c3c1e-0000-4000-8000-000000000000"),
+            "cd /w && exec /opt/eve/release/eve-work-sessions launch 5f0c3c1e-0000-4000-8000-000000000000"
+        );
+    }
+
+    #[test]
+    fn without_the_helpers_a_work_session_runs_pythons_line() {
+        // one helper missing is not enough: both run from the same build
+        let only_launcher = |p: &std::path::Path| p.ends_with("eve-work-sessions");
+        match work_launch_in(Some(std::path::Path::new("/opt/eve")), &only_launcher) {
+            eve_work_sessions::Launch::Python { python } => assert_eq!(python, "python3"),
+            other => panic!("expected Python's line, got {other:?}"),
+        }
+        let venv_only = |p: &std::path::Path| p.ends_with("bridge/.venv/bin/python3");
+        match work_launch_in(None, &venv_only) {
+            eve_work_sessions::Launch::Python { python } => assert!(python.ends_with("bridge/.venv/bin/python3")),
+            other => panic!("expected the venv's Python, got {other:?}"),
+        }
+    }
 
     #[test]
     fn a_policy_is_logged_as_pythons_dict_repr() {

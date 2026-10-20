@@ -37,7 +37,7 @@ Status: complete
 - Ctrl-C at the confirmation prompt: Python catches `KeyboardInterrupt`, prints `\nAborted.` and exits 1; the Rust process takes the default SIGINT action and exits on the signal. End of input (`EOFError`) is handled identically (`\nAborted.`, exit 1).
 - `launchd` restart off Unix (unreachable: launchd is only detected on darwin): Python's `os.getuid` raises `AttributeError`; Rust returns `(false, "launchctl failed: os.getuid is unavailable on this platform")`.
 - **The Rust daemon's own update takes a native path** (`run_update`, `System { native: true }`): after
-  `git pull` it runs `cargo build --release --locked -p eve-bridge -p eve-hooks` in `rust/`, signs
+  `git pull` it runs `cargo build --release --locked` in `rust/` for `NATIVE_PACKAGES` (eve-bridge, eve-hooks and the helper binaries the daemon starts beside itself: eve-desktop-worker, eve-web's eve-watch, eve-vault-mcp, eve-eve-mcp's eve-mcp, eve-work-sessions), signs
   `rust/target/release/eve-bridge` (`EVE_CODESIGN_IDENTITY`, else the first Apple Development identity, so
   macOS keeps its permissions across rebuilds), refreshes `bridge/.venv` with `install.sh`'s extras for the
   Python helpers (a failure there warns and goes on), then restarts. Python's `pip install -e` path is

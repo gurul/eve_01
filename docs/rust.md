@@ -16,7 +16,8 @@ By hand, from a checkout:
 
 ```bash
 brew install rust                         # or rustup; any current stable toolchain
-(cd rust && cargo build --release --locked -p eve-bridge -p eve-hooks)
+(cd rust && cargo build --release --locked -p eve-bridge -p eve-hooks \
+  -p eve-desktop-worker -p eve-web -p eve-vault-mcp -p eve-eve-mcp -p eve-work-sessions)
 codesign --force --sign "Apple Development: you@example.com (TEAMID)" \
   --identifier com.github.eve-bridge rust/target/release/eve-bridge   # optional, see Permissions
 rust/target/release/eve-bridge install
@@ -24,7 +25,10 @@ rust/target/release/eve-bridge install --service --serial-port '/dev/cu.usbmodem
 ```
 
 `install` writes the Claude Code hooks as the `eve-hook-*` binaries next to
-`eve-bridge`. `install --service` writes the login service to run
+`eve-bridge`. The other binaries are helpers the daemon starts from the same folder:
+`eve-desktop-worker` (computer use), `eve-watch` (the watcher's browser),
+`eve-vault-mcp` (the vault's fill tool for Codex), and `eve-work-sessions` and
+`eve-mcp` (a Work session's launcher and its eve tools). `install --service` writes the login service to run
 `rust/target/release/eve-bridge daemon`. Each install names the binary that ran it.
 
 Build in the checkout, and keep the checkout. The binary reads some of eve's files

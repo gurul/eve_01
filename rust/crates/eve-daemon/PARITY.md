@@ -206,6 +206,7 @@ and the terminal raise, `git` in `code_origin`).
 - eve-brain (door unit): `telegram/inlet/door.rs`, the door's accessors the daemon's `Inlet` mapping reads.
 
 ## Differences
+- **A Work session's launch** (`work_launch`, completeness critic). Python's WorkSessions names `sys.executable`; the daemon used to leave eve-work-sessions' default, `python3 -P -m eve_bridge.work_sessions launch`, which the PATH Python cannot run. It now passes `Launch::Native` with `eve-work-sessions` and `eve-mcp` beside the daemon binary (both built by `install.sh` and `eve-bridge update`), else Python's line on `bridge/.venv`'s python3, else `python3`.
 - Fix (eve-brain's voice_session verify): the default `Seams::open_session` returns `eve_brain::voice_agent::open_session`'s `Err` (a connect failure, a session that cannot start), so `_on_wake` logs "voice: conversation failed: ..." and sets the agent state to `error` as daemon.py does; it used to drop it.
 - Follow-up to an eve-brain seam change: `on_spoken_idea` hands back `append_spoken`'s bool (eve-brain's `SpokenIdeaFn` is `anyhow::Result<bool>`), so the voice session logs `ok=False` for an idea that was not written, as Python's `bool(result)` does.
 - Construction: `Daemon::new` checks the IPC address and the transcript roots first, since `IpcServer::new` and

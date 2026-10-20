@@ -86,7 +86,7 @@ Status: complete
   `set_socketRetryLimit(1)`, the same state reading and the same `_tuya_ok` check, printing one JSON line.
   The request (with the light's local key) goes to the helper on stdin, never on its command line, where `ps`
   would show the key to any user of the Mac.
-  The interpreter is `EVE_LIGHTS_PYTHON` (new; default `python3`); it needs the `lights` extra. A missing
+  The interpreter is `EVE_LIGHTS_PYTHON` (new), else the checkout's `bridge/.venv/bin/python3` when it exists (where `install.sh` installs the extra, as the other Python helpers default), else `python3`; it needs the `lights` extra. A missing
   interpreter or tinytuya gives the Python daemon's message, `tinytuya is not installed: pip install -e ".[lights]"`,
   and `tuya_scan` returns no devices, as before.
 - **HappyLighting runs on btleplug** (CoreBluetooth on macOS) in place of bleak. The address kept in

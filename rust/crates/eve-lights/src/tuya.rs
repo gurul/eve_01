@@ -81,10 +81,32 @@ def main():
 main()
 "#;
 
+/// The bridge checkout's venv, where `install.sh` puts the `lights` extra (tinytuya).
+const BRIDGE_PYTHON: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../../bridge/.venv/bin/python3");
+
+/// The Python that has tinytuya: EVE_LIGHTS_PYTHON, else the bridge checkout's venv, else `python3`.
 fn python() -> String {
-    match std::env::var(PYTHON_ENV) {
-        Ok(p) if !p.trim().is_empty() => p.trim().to_string(),
+    python_from(std::env::var(PYTHON_ENV).ok().as_deref(), &|p| std::path::Path::new(p).exists())
+}
+
+fn python_from(chosen: Option<&str>, exists: &dyn Fn(&str) -> bool) -> String {
+    match chosen.map(str::trim) {
+        Some(p) if !p.is_empty() => p.to_string(),
+        _ if exists(BRIDGE_PYTHON) => BRIDGE_PYTHON.to_string(),
         _ => "python3".into(),
+    }
+}
+
+#[cfg(test)]
+mod python_tests {
+    use super::*;
+
+    #[test]
+    fn the_tuya_helper_runs_on_the_checkouts_venv_unless_told_otherwise() {
+        assert_eq!(python_from(Some(" /opt/py "), &|_| true), "/opt/py");
+        assert_eq!(python_from(None, &|_| true), BRIDGE_PYTHON);
+        assert!(BRIDGE_PYTHON.ends_with("bridge/.venv/bin/python3"));
+        assert_eq!(python_from(Some(""), &|_| false), "python3");
     }
 }
 

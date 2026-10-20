@@ -150,6 +150,23 @@ pub fn native_install_target(platform: &str, machine: &str) -> &'static str {
 /// permissions (Microphone, Accessibility, Screen Recording) across rebuilds.
 pub const SIGNING_IDENTIFIER: &str = "com.github.eve-bridge";
 
+/// The packages the native update builds: the daemon and its hooks, and every helper binary the daemon starts
+/// beside itself: the desktop worker (computer use), `eve-watch --render` (the watcher's browser), the vault's
+/// MCP server for Codex, and a Work session's launcher and MCP server. A helper left unbuilt is a feature that
+/// fails at its first use, so they are built with the daemon.
+pub const NATIVE_PACKAGES: &[&str] =
+    &["eve-bridge", "eve-hooks", "eve-desktop-worker", "eve-web", "eve-vault-mcp", "eve-eve-mcp", "eve-work-sessions"];
+
+/// `cargo build --release --locked -p <each of NATIVE_PACKAGES>`, after the cargo program.
+pub fn native_build_args() -> Vec<String> {
+    let mut args: Vec<String> = ["build", "--release", "--locked"].iter().map(|s| s.to_string()).collect();
+    for p in NATIVE_PACKAGES {
+        args.push("-p".to_string());
+        args.push(p.to_string());
+    }
+    args
+}
+
 /// Who signs the native build: `EVE_CODESIGN_IDENTITY` when set (`-` is ad
 /// hoc), else the first Apple Development identity `security` lists, else
 /// nobody.
@@ -577,11 +594,11 @@ pub fn run_update_with<H: Host + ?Sized>(host: &H, yes: bool, out: &mut dyn Writ
         let rust_dir = repo.join("rust");
         let home_cargo = home().join(".cargo").join("bin").join("cargo");
         let cargo = if host.exists(&home_cargo) { home_cargo.to_string_lossy().into_owned() } else { "cargo".to_string() };
-        say!(out, "$ cargo build --release --locked -p eve-bridge -p eve-hooks");
-        let (rc, _, e) = host.run(
-            &argv(&[&cargo, "build", "--release", "--locked", "-p", "eve-bridge", "-p", "eve-hooks"]),
-            Some(&rust_dir),
-        );
+        let build = native_build_args();
+        say!(out, "$ cargo {}", build.join(" "));
+        let mut cmd = vec![cargo.clone()];
+        cmd.extend(build);
+        let (rc, _, e) = host.run(&cmd, Some(&rust_dir));
         if rc != 0 {
             say!(err, "cargo build failed: {}", failure_text(&tail_lines(&e, 20), "unknown"));
             say!(err, "Repo is updated; only the build step failed. Re-run the build in rust/ manually.");

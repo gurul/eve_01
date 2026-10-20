@@ -146,12 +146,14 @@ main() {
   local eve="$venv/bin/eve-bridge"
   [ -x "$eve" ] || die "the install finished but $eve is missing"
 
-  # 3b. The Rust daemon and its hook binaries, built in the checkout: the binary reads eve's
-  # pages and prompts from the checkout, and `eve-bridge update` rebuilds it in place.
+  # 3b. The Rust daemon, its hook binaries and the helpers it starts beside itself (the desktop
+  # worker, eve-watch, the vault and Work-session MCP servers), built in the checkout: the binary
+  # reads eve's pages and prompts from the checkout, and `eve-bridge update` rebuilds it in place.
   local signed=""
   if [ "$rust" = 1 ]; then
     say "Building the Rust eve-bridge (about 5 minutes the first time)"
-    (cd "$eve_dir/rust" && cargo build --release --locked --quiet -p eve-bridge -p eve-hooks)
+    (cd "$eve_dir/rust" && cargo build --release --locked --quiet -p eve-bridge -p eve-hooks \
+      -p eve-desktop-worker -p eve-web -p eve-vault-mcp -p eve-eve-mcp -p eve-work-sessions)
     eve="$eve_dir/rust/target/release/eve-bridge"
     [ -x "$eve" ] || die "the build finished but $eve is missing"
     signed="$(find_signing_identity)"

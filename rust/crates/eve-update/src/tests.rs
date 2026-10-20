@@ -662,7 +662,10 @@ fn native_update_builds_signs_refreshes_the_venv_and_restarts() {
     let calls = host.inner.calls.borrow();
     let names: Vec<String> = calls.iter().map(|(c, _)| c[..2.min(c.len())].join(" ")).collect();
     assert_eq!(names[0], "git pull");
-    assert!(calls[1].0.ends_with(&argv(&["build", "--release", "--locked", "-p", "eve-bridge", "-p", "eve-hooks"])));
+    assert!(calls[1].0.ends_with(&argv(&[
+        "build", "--release", "--locked", "-p", "eve-bridge", "-p", "eve-hooks", "-p", "eve-desktop-worker", "-p",
+        "eve-web", "-p", "eve-vault-mcp", "-p", "eve-eve-mcp", "-p", "eve-work-sessions",
+    ])));
     assert_eq!(calls[1].1.as_deref(), Some(Path::new("/repo/rust")));
     assert_eq!(
         calls[2].0,
