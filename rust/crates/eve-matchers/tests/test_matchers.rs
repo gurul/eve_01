@@ -507,3 +507,29 @@ fn test_decision_strings() {
     assert_eq!(Decision::Ask.to_string(), "ask");
     assert_eq!(Decision::Default, "default");
 }
+
+#[test]
+fn test_toml_1_1_only_syntax_falls_back_like_tomllib() {
+    // tomllib is TOML 1.0: these files fail to parse in Python, so both
+    // daemons keep the defaults.
+    for extra in ["t = {a = 1,}", "t = \"\\e\"", "t = 07:32", "t = {a = 1,\nb = 2}"] {
+        let cfg = load(&format!("replace_defaults = true\n{extra}\n")).unwrap();
+        assert_eq!(cfg.auto_allow.len(), DEFAULT_AUTO_ALLOW.len(), "{extra:?}");
+    }
+    let cfg = load("replace_defaults = true\nt = 1979-05-27T07:32:00-07:00\n").unwrap();
+    assert!(cfg.auto_allow.is_empty() && cfg.always_ask.is_empty());
+}
+
+#[test]
+fn test_ignorecase_follows_python_not_unicode_folding() {
+    // Python lowers both sides and adds its extra cases, so `(?i)i` takes
+    // the dotted and dotless i that Unicode simple folding keeps apart.
+    let cfg = MatcherConfig {
+        auto_allow: vec![],
+        always_ask: pats(&[r"(?i)^pip install"]),
+        strict: false,
+    };
+    assert_eq!(classify_command("p\u{130}p install x", &cfg), "ask");
+    assert_eq!(classify_command("p\u{131}p install x", &cfg), "ask");
+    assert_eq!(classify_command("pjp install x", &cfg), "default");
+}

@@ -26,6 +26,7 @@ TEXTS = [
     "abc", "été", "x9", "٣", "1", "01", "a1", "\x01", "\n", "\t", "\x0b", "\x1c",
     "word", " word ", "wórd", "#c", "a#b", "%", "é", "<", ">", "a\\b", "z", "Z",
     "kK", "\u212a", "\u00c9", " ", "(", "xx", "ls -la", "cat\n", "aa", "ba", "a\n",
+    "\u0130", "\u0131", "I", "i", "\u1e9e", "\u00df", "\u017f", "s", "\u03c2", "\u03a3", "x\u0130", "\u0345",
 ]
 
 PATTERNS = list(matchers.DEFAULT_AUTO_ALLOW) + list(matchers.DEFAULT_ALWAYS_ASK) + [
@@ -61,6 +62,20 @@ PATTERNS = list(matchers.DEFAULT_AUTO_ALLOW) + list(matchers.DEFAULT_ALWAYS_ASK)
     r"(?P<a>x(?P=a))", r"(?(a)x)", r"(?P<\u00e9>x)", "(?P<\u00e9>x)", r"(?a:\b)k", r"(?a:\s)",
     r"[\ud800-\udfff]", r"[^\ud800]", r"[\x00-\U0010ffff]", r"(?i)[^k]", r"(?ai)[^k]",
     r"(?x)a{1, 2}", r"(?x)a {2}", r"\(", r"[(]", r"(?:a|b)+$", r"^(?:ls|cat)( |$)",
+    # Global flags may follow a comment, and whitespace or a comment in verbose mode.
+    r"(?#x)(?i)k", "(?x) (?i)k", "(?x)#c\n(?i)k", r"(?#x)(?a)\w", r"(?#x", r"a(?#x)(?i)b",
+    # An empty or look-around-only group can be repeated.
+    r"(?:)*", r"(?:)?a", r"(?:(?:))+", r"(?:(?=a))+", r"(?:(?=a))*b", r"(?:){2}", r"()*",
+    # Python's IGNORECASE: lowercase plus the extra cases, not Unicode folding.
+    r"(?i)i", r"(?i)I", r"(?i)\u0130", r"(?i)\u0131", r"(?i)[a-k]", r"(?i)[^a-k]", r"(?i)[^k[A-Z]",
+    r"(?i)\u00df", r"(?i)\u1e9e", r"(?i)s", r"(?i)\u017f", r"(?i)[r-t]", r"(?i)\u03c3", r"(?i)\u0345",
+    r"(?i)\w\u0130", r"(?i)[\u0100-\u017f]", r"(?ai)i", r"(?ai)[h-j]", r"(?i:(?a:i))",
+    r"(?i)[\x00-\U0010ffff]", r"(?i)[^\x00-\u00ff]",
+    # A look-around is atomic, and inside a look-behind a group reference must
+    # name a closed group defined before it.
+    r"(?=|())\1", r"(?=(a)|(a))\2", r"(?<=(?(1)a|b))(a)", r"(a)(?<=(?(1)a|b))x",
+    r"(?<=(a)\1)", r"(?<=\1)(a)", r"(?P<n>a)(?<=(?P=n))", r"(?<=(?P<n>a)(?P=n))",
+    r"(?<=(?(n)a|b))(?P<n>a)",
 ]
 
 

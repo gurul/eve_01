@@ -23,12 +23,22 @@
 //!   verbose mode and `(?#...)` comments follow Python's rules.
 //! * Python refuses a variable-width look-behind, a repeat of nothing or of
 //!   an anchor, a repeat of a repeat, and a conditional on a missing group;
-//!   fancy-regex accepts some of those.
+//!   fancy-regex accepts some of those; inside a look-behind a group
+//!   reference must name a closed group defined before it.
+//! * Look-arounds are atomic in Python: once one matches, a later failure
+//!   never backtracks into it for other group captures.
+//! * IGNORECASE lowers both sides and adds `_EXTRA_CASES` rather than
+//!   folding by Unicode simple case folding; `pycase` spells that out as
+//!   explicit sets, and Rust's `i` flag is used only for back-references.
+//! * A non-capturing group holding nothing or only a look-around can be
+//!   repeated; fancy-regex unwraps it and refuses the repeat.
 //!
 //! `translate` rewrites a Python pattern into an equivalent fancy-regex
 //! pattern, or returns the `re.error` message Python would raise.
 
 use std::fmt::Write as _;
+
+use crate::pycase::{self, Item, Mode};
 
 /// The character-class bodies for one mode (Unicode `str` default, or `(?a)`).
 struct Classes {
@@ -103,16 +113,11 @@ struct Flags {
 }
 
 impl Flags {
-    /// Whether Rust's own `i` flag should be on: Unicode case folding.
-    /// Under ASCII, Python folds only ASCII letters, which is spelled out
-    /// per literal instead.
-    fn rust_i(self) -> bool {
-        self.i && !self.a
-    }
-
-    /// Whether literals must be ASCII-folded by hand.
-    fn fold(self) -> bool {
-        self.i && self.a
+    /// The case table IGNORECASE uses here, if it is on. Rust's own `i`
+    /// flag is never used for literals or classes: Python's case rules are
+    /// spelled out as explicit sets (`pycase`).
+    fn case_mode(self) -> Option<Mode> {
+        self.i.then_some(if self.a { Mode::Ascii } else { Mode::Unicode })
     }
 }
 
@@ -153,6 +158,11 @@ struct Frame {
     out_start: usize,
     /// The flags to restore when a scoped `(?flags:...)` group closes.
     saved: Option<Flags>,
+    /// For a positive look-around: the output offset just past its lead,
+    /// and how many groups existed when it opened.
+    positive_look: Option<(usize, usize)>,
+    /// For a look-behind: the `lookbehindgroups` to restore on close.
+    lookbehind_restore: Option<Option<usize>>,
 }
 
 impl Frame {
@@ -166,6 +176,8 @@ impl Frame {
             start,
             out_start,
             saved: None,
+            positive_look: None,
+            lookbehind_restore: None,
         }
     }
 
@@ -204,48 +216,40 @@ impl ClassItem {
             ClassItem::Lit(_, t) | ClassItem::Set(_, t) => t,
         }
     }
-
-    /// Appends the member; returns how many members a Rust string can hit.
-    fn emit(&self, body: &mut String, fold: bool) -> usize {
-        match self {
-            ClassItem::Lit(cp, _) => emit_range(body, *cp, *cp, fold),
-            ClassItem::Set(set, _) => {
-                body.push_str(set);
-                1
-            }
-        }
-    }
 }
 
-/// Appends `lo-hi` as escaped code points, clipped off the surrogate block
-/// (Python strings may hold surrogates; Rust strings cannot). With `fold`
-/// (`(?ai)`), the other case of every ASCII letter in the range joins it.
-fn emit_range(body: &mut String, lo: u32, hi: u32, fold: bool) -> usize {
-    if fold {
-        for (a, z, shift) in [(0x61u32, 0x7Au32, -32i64), (0x41, 0x5A, 32)] {
-            let (l, h) = (lo.max(a), hi.min(z));
-            if l <= h {
-                let (l, h) = ((l as i64 + shift) as u32, (h as i64 + shift) as u32);
-                emit_range(body, l, h, false);
-            }
+/// Appends `lo-hi` as escaped code points, without the surrogate block
+/// (Python strings may hold surrogates; Rust strings cannot). Returns how
+/// many pieces a Rust string can hit.
+fn emit_range(body: &mut String, lo: u32, hi: u32) -> usize {
+    let mut n = 0;
+    for (lo, hi) in [(lo, hi.min(0xD7FF)), (lo.max(0xE000), hi)] {
+        if lo > hi {
+            continue;
         }
+        if lo == hi {
+            let _ = write!(body, r"\x{{{lo:X}}}");
+        } else {
+            let _ = write!(body, r"\x{{{lo:X}}}-\x{{{hi:X}}}");
+        }
+        n += 1;
     }
-    let (mut lo, mut hi) = (lo, hi);
-    if (0xD800..=0xDFFF).contains(&lo) {
-        lo = 0xE000;
-    }
-    if (0xD800..=0xDFFF).contains(&hi) {
-        hi = 0xD7FF;
-    }
-    if lo > hi {
-        return 0;
-    }
-    if lo == hi {
-        let _ = write!(body, r"\x{{{lo:X}}}");
+    n
+}
+
+/// A set of code points as a Rust class (never empty: an empty set is the
+/// never-matching atom).
+fn emit_set(out: &mut String, ranges: &[(u32, u32)]) {
+    let mut body = String::new();
+    let members: usize = ranges
+        .iter()
+        .map(|&(lo, hi)| emit_range(&mut body, lo, hi))
+        .sum();
+    if members == 0 {
+        out.push_str(NEVER);
     } else {
-        let _ = write!(body, r"\x{{{lo:X}}}-\x{{{hi:X}}}");
+        let _ = write!(out, "[{body}]");
     }
-    1
 }
 
 struct Translator {
@@ -261,6 +265,12 @@ struct Translator {
     group_widths: Vec<Option<(u64, u64)>>,
     names: Vec<(String, usize)>,
     cond_refs: Vec<(usize, usize)>,
+    /// sre_parse's `lookbehindgroups`: inside a look-behind, the number of
+    /// groups defined before the outermost one opened.
+    lookbehind_groups: Option<usize>,
+    /// Output offset of the last atom when it is a non-capturing group,
+    /// which a quantifier may need to rewrite.
+    plain_group_at: Option<usize>,
 }
 
 impl Translator {
@@ -288,6 +298,7 @@ impl Translator {
     }
 
     fn atom(&mut self, a: Atom) {
+        self.plain_group_at = None;
         let f = self.frame();
         f.commit();
         f.last = Some(a);
@@ -302,6 +313,36 @@ impl Translator {
     fn leading_flags(&mut self) -> Result<(), ReError> {
         let mut seen_u = false;
         loop {
+            // Python's `first` holds until the top-level branch has an item:
+            // a `(?#...)` comment, and whitespace or a `#` comment under
+            // `(?x)`, add none, so global flags may still follow them.
+            if self.flags.x {
+                match self.peek(0) {
+                    Some(' ' | '\t' | '\n' | '\r' | '\x0b' | '\x0c') => {
+                        self.i += 1;
+                        continue;
+                    }
+                    Some('#') => {
+                        while let Some(n) = self.peek(0) {
+                            self.i += 1;
+                            if n == '\n' {
+                                break;
+                            }
+                        }
+                        continue;
+                    }
+                    _ => {}
+                }
+            }
+            if self.starts_with("(?#") {
+                match self.comment_end() {
+                    Some(k) => {
+                        self.i = k;
+                        continue;
+                    }
+                    None => return Ok(()),
+                }
+            }
             if !self.starts_with("(?") {
                 return Ok(());
             }
@@ -351,9 +392,6 @@ impl Translator {
     /// default-mode `$` is rewritten instead.
     fn emit_global_flags(&mut self) {
         let mut on = String::new();
-        if self.flags.rust_i() {
-            on.push('i');
-        }
         if self.flags.m {
             on.push('m');
         }
@@ -365,20 +403,22 @@ impl Translator {
         }
     }
 
-    /// A literal code point, ASCII-folded by hand under `(?ai)`.
+    /// A literal code point; under IGNORECASE, the set Python's case
+    /// rules match for it.
     fn literal(&mut self, cp: u32) {
-        if self.flags.fold() {
-            if let Some(c) = char::from_u32(cp).filter(char::is_ascii_alphabetic) {
-                let _ = write!(
-                    self.out,
-                    "[{}{}]",
-                    c.to_ascii_lowercase(),
-                    c.to_ascii_uppercase()
-                );
-                return;
-            }
+        match self.flags.case_mode().and_then(|m| pycase::literal(m, cp)) {
+            Some(set) => emit_set(&mut self.out, &set),
+            None => hex_char(&mut self.out, cp),
         }
-        hex_char(&mut self.out, cp);
+    }
+
+    /// A back-reference, compared case-insensitively under IGNORECASE.
+    fn backref(&mut self, r: &str) {
+        if self.flags.i {
+            let _ = write!(self.out, "(?i:{r})");
+        } else {
+            let _ = write!(self.out, "(?:{r})");
+        }
     }
 
     fn run(mut self) -> Result<(String, bool), ReError> {
@@ -450,10 +490,10 @@ impl Translator {
                     self.item();
                 }
                 _ => {
-                    if self.flags.fold() && ch.is_ascii_alphabetic() {
-                        self.literal(ch as u32);
-                    } else {
+                    if ch == '.' || !self.flags.i {
                         self.out.push(ch);
+                    } else {
+                        self.literal(ch as u32);
                     }
                     self.i += 1;
                     self.item();
@@ -503,6 +543,15 @@ impl Translator {
             }
             Some(Atom::Item(alo, ahi)) => (alo, ahi),
         };
+        if self.plain_group_at.take().is_some() {
+            // fancy-regex unwraps a non-capturing group and refuses to repeat
+            // what is left when that is nothing or a look-around (`(?:)*`,
+            // `(?:(?=a))+`), which Python accepts. A never-matching branch
+            // keeps the group a group without changing what it matches.
+            let close = self.out.pop();
+            debug_assert_eq!(close, Some(')'));
+            self.out.push_str(r"|[^\s\S])");
+        }
         self.out.push_str(text);
         self.i += src_len;
         if let Some(sfx @ ('?' | '+')) = self.peek(0) {
@@ -724,9 +773,10 @@ impl Translator {
                         return Err(err(format!("invalid group reference {g}"), self.i + 1));
                     }
                 };
+                self.check_lookbehind_group(g, self.i)?;
                 // Wrapped so a literal digit after a two-digit reference
                 // stays a literal.
-                let _ = write!(self.out, r"(?:\{digits})");
+                self.backref(&format!(r"\{digits}"));
                 self.i = k;
                 self.atom(Atom::Item(width.0, width.1));
             }
@@ -822,9 +872,12 @@ impl Translator {
         if negate {
             self.i += 1;
         }
-        let fold = self.flags.fold();
-        let mut body = String::new();
-        let mut members = 0usize;
+        let mut items: Vec<Item> = Vec::new();
+        let mut sets: Vec<String> = Vec::new();
+        let mut add = |item: ClassItem, items: &mut Vec<Item>| match item {
+            ClassItem::Lit(cp, _) => items.push(Item::Lit(cp)),
+            ClassItem::Set(set, _) => sets.push(set),
+        };
         let mut first = true;
         loop {
             let Some(ch) = self.peek(0) else {
@@ -843,14 +896,14 @@ impl Translator {
                 };
                 if that == ']' {
                     self.i += 1;
-                    members += item1.emit(&mut body, fold);
-                    members += ClassItem::Lit('-' as u32, String::new()).emit(&mut body, fold);
+                    add(item1, &mut items);
+                    items.push(Item::Lit('-' as u32));
                     break;
                 }
                 let item2 = self.class_item()?;
                 match (&item1, &item2) {
                     (ClassItem::Lit(lo, _), ClassItem::Lit(hi, _)) if hi >= lo => {
-                        members += emit_range(&mut body, *lo, *hi, fold);
+                        items.push(Item::Range(*lo, *hi));
                     }
                     _ => {
                         return Err(err(
@@ -860,8 +913,32 @@ impl Translator {
                     }
                 }
             } else {
-                members += item1.emit(&mut body, fold);
+                add(item1, &mut items);
             }
+        }
+        // Under IGNORECASE a class with a cased member matches by Python's
+        // case rules; otherwise (or without it) it is exactly its members.
+        let ranges = self
+            .flags
+            .case_mode()
+            .and_then(|m| pycase::class(m, &items))
+            .unwrap_or_else(|| {
+                items
+                    .iter()
+                    .map(|it| match *it {
+                        Item::Lit(cp) => (cp, cp),
+                        Item::Range(lo, hi) => (lo, hi),
+                    })
+                    .collect()
+            });
+        let mut body = String::new();
+        let mut members: usize = ranges
+            .iter()
+            .map(|&(lo, hi)| emit_range(&mut body, lo, hi))
+            .sum();
+        for set in &sets {
+            body.push_str(set);
+            members += 1;
         }
         if members == 0 {
             // Only lone surrogates: nothing a Rust string holds is in the set.
@@ -877,13 +954,61 @@ impl Translator {
         Ok(())
     }
 
+    /// The source offset just past the `(?#...)` comment at `self.i`, or
+    /// None when it is unterminated. A comment ends at the first `)`; an
+    /// escape (`\)`) is one token in Python's tokenizer and does not end it.
+    fn comment_end(&self) -> Option<usize> {
+        let mut k = self.i + 3;
+        while let Some(&ch) = self.c.get(k) {
+            if ch == '\\' {
+                k += 2;
+                continue;
+            }
+            k += 1;
+            if ch == ')' {
+                return Some(k);
+            }
+        }
+        None
+    }
+
     fn open(&mut self, kind: Kind, lead: &str) {
         let start = self.i;
         let out_start = self.out.len();
         self.frame().commit();
         self.out.push_str(lead);
         self.i += lead.chars().count();
-        self.frames.push(Frame::new(kind, start, out_start));
+        let mut frame = Frame::new(kind, start, out_start);
+        if lead == "(?=" || lead == "(?<=" {
+            frame.positive_look = Some((self.out.len(), self.groups));
+        }
+        if kind == Kind::LookBehind {
+            // sre_parse's `state.lookbehindgroups`: the groups that exist
+            // when the outermost look-behind opens.
+            frame.lookbehind_restore = Some(self.lookbehind_groups);
+            if self.lookbehind_groups.is_none() {
+                self.lookbehind_groups = Some(self.groups);
+            }
+        }
+        self.frames.push(frame);
+    }
+
+    /// sre_parse's `checklookbehindgroup`: inside a look-behind, a group
+    /// reference must name a group that is closed and defined before it.
+    fn check_lookbehind_group(&self, g: usize, at: usize) -> Result<(), ReError> {
+        let Some(before) = self.lookbehind_groups else {
+            return Ok(());
+        };
+        if !matches!(self.group_widths.get(g.wrapping_sub(1)), Some(Some(_))) {
+            return Err(err("cannot refer to an open group", at));
+        }
+        if g > before {
+            return Err(err(
+                "cannot refer to group defined in the same lookbehind subpattern",
+                at,
+            ));
+        }
+        Ok(())
     }
 
     /// Reads source characters up to `close` (a group name or a condition),
@@ -976,8 +1101,9 @@ impl Translator {
             let Some(width) = self.group_widths[g - 1] else {
                 return Err(err("cannot refer to an open group", at));
             };
+            self.check_lookbehind_group(g, at)?;
             self.frame().commit();
-            let _ = write!(self.out, "(?P={name})");
+            self.backref(&format!("(?P={name})"));
             self.atom(Atom::Item(width.0, width.1));
             return Ok(());
         }
@@ -994,30 +1120,24 @@ impl Translator {
                     return Err(err("bad group number", pos));
                 }
                 self.cond_refs.push((g, pos));
+                self.check_lookbehind_group(g, pos)?;
                 let _ = write!(self.out, "(?({g})");
             } else {
-                self.named_group(&cond, pos)?;
+                let g = self.named_group(&cond, pos)?;
+                self.check_lookbehind_group(g, pos)?;
                 let _ = write!(self.out, "(?(<{cond}>)");
             }
             self.frames.push(Frame::new(Kind::Cond, start, out_start));
             return Ok(());
         }
         if self.starts_with("(?#") {
-            // A comment ends at the first `)`; an escape (`\)`) is one token
-            // in Python's tokenizer and does not end it.
-            let mut k = self.i + 3;
-            while let Some(&ch) = self.c.get(k) {
-                if ch == '\\' {
-                    k += 2;
-                    continue;
-                }
-                k += 1;
-                if ch == ')' {
+            return match self.comment_end() {
+                Some(k) => {
                     self.i = k;
-                    return Ok(());
+                    Ok(())
                 }
-            }
-            return Err(err("missing ), unterminated comment", self.i));
+                None => Err(err("missing ), unterminated comment", self.i)),
+            };
         }
         if self.starts_with("(?P") {
             let x: String = self.peek(3).map(String::from).unwrap_or_default();
@@ -1086,12 +1206,10 @@ impl Translator {
                             }
                         }
                     }
-                    // The Rust flags that change: `i` follows Unicode folding
-                    // only (ASCII folding is done per literal), `m` and `s`
-                    // pass through; `x` and `a` are handled here.
+                    // The Rust flags that change: `m` and `s` pass through;
+                    // `i`, `x` and `a` are handled here.
                     let (mut r_on, mut r_off) = (String::new(), String::new());
                     for (ch, was, now) in [
-                        ('i', old.rust_i(), new.rust_i()),
                         ('m', old.m, new.m),
                         ('s', old.s, new.s),
                     ] {
@@ -1139,6 +1257,18 @@ impl Translator {
             self.flags = saved;
         }
         let (lo, hi) = f.alts.unwrap_or((0, 0));
+        if let Some(restore) = f.lookbehind_restore {
+            self.lookbehind_groups = restore;
+        }
+        if let Some((body_at, groups)) = f.positive_look {
+            if self.groups > groups {
+                // Python never backtracks into a look-around once it has
+                // matched; fancy-regex would, and could then try another
+                // branch that sets different groups.
+                self.out.insert_str(body_at, "(?>");
+                self.out.push(')');
+            }
+        }
         self.out.push(')');
         self.i += 1;
         match f.kind {
@@ -1162,7 +1292,10 @@ impl Translator {
                 let lo = if f.branches < 2 { 0 } else { lo };
                 self.atom(Atom::Item(lo, hi));
             }
-            Kind::Plain | Kind::Root => self.atom(Atom::Item(lo, hi)),
+            Kind::Plain | Kind::Root => {
+                self.atom(Atom::Item(lo, hi));
+                self.plain_group_at = Some(f.out_start);
+            }
         }
         Ok(())
     }
@@ -1195,6 +1328,8 @@ pub(crate) fn translate(pattern: &str) -> Result<(String, Option<String>), ReErr
             group_widths: Vec::new(),
             names: Vec::new(),
             cond_refs: Vec::new(),
+            plain_group_at: None,
+            lookbehind_groups: None,
         }
         .run()
     };

@@ -48,6 +48,7 @@
 //! The patterns are Python `re` patterns (the same file feeds the Python
 //! daemon); `pyre` rewrites them so they match exactly what Python matches.
 
+mod pycase;
 mod pyre;
 
 use std::fmt;
@@ -317,12 +318,26 @@ pub fn config_path_from(xdg_config_home: Option<std::ffi::OsString>, home: PathB
     }
 }
 
-/// `Path.home()`: `$HOME` when set (even empty, as `expanduser` does), else
-/// the password database.
+/// `Path.home()`: `$HOME` when set, else the password database.
 fn home_dir() -> PathBuf {
     match std::env::var_os("HOME") {
-        Some(h) => PathBuf::from(h),
+        Some(h) => home_from_env(&h),
         None => dirs::home_dir().unwrap_or_default(),
+    }
+}
+
+/// `os.path.expanduser("~")` with `$HOME` set: trailing slashes are
+/// stripped, and a value left empty (`HOME=` or `HOME=/`) is `/`.
+fn home_from_env(home: &std::ffi::OsStr) -> PathBuf {
+    use std::os::unix::ffi::OsStrExt;
+    let mut bytes = home.as_bytes();
+    while let [rest @ .., b'/'] = bytes {
+        bytes = rest;
+    }
+    if bytes.is_empty() {
+        PathBuf::from("/")
+    } else {
+        PathBuf::from(std::ffi::OsStr::from_bytes(bytes))
     }
 }
 
@@ -422,7 +437,127 @@ fn read_toml(target: &Path) -> Result<toml::Table, String> {
     if text.starts_with('\u{feff}') {
         return Err("Invalid statement (at line 1, column 1)".to_string());
     }
+    toml_1_0_only(&text)?;
     text.parse::<toml::Table>().map_err(|e| e.to_string())
+}
+
+/// Refuses the TOML 1.1 syntax the `toml` crate accepts and Python's
+/// `tomllib` (TOML 1.0) does not, so a file that only parses as 1.1 falls
+/// back to the defaults in both daemons: a newline or a trailing comma in an
+/// inline table, `\e` and `\xHH` escapes in basic strings, and a time
+/// without seconds. Anything else is left to the parser.
+fn toml_1_0_only(text: &str) -> Result<(), String> {
+    let c: Vec<char> = text.chars().collect();
+    let mut line = 1;
+    let fail = |what: &str, line: usize| {
+        Err(format!(
+            "{what} is TOML 1.1, which tomllib (TOML 1.0) rejects (at line {line})"
+        ))
+    };
+    // Open `{` / `[` outside strings and comments, innermost last.
+    let mut open: Vec<char> = Vec::new();
+    // The last character outside strings, comments and whitespace.
+    let mut last = '\n';
+    let mut i = 0;
+    while i < c.len() {
+        let ch = c[i];
+        match ch {
+            '\n' => {
+                if open.last() == Some(&'{') {
+                    return fail("a newline inside an inline table", line);
+                }
+                line += 1;
+                i += 1;
+            }
+            '#' => {
+                while i < c.len() && c[i] != '\n' {
+                    i += 1;
+                }
+            }
+            '"' | '\'' => {
+                let multi = c.get(i + 1) == Some(&ch) && c.get(i + 2) == Some(&ch);
+                i += if multi { 3 } else { 1 };
+                loop {
+                    let Some(&s) = c.get(i) else {
+                        // Unterminated: the parser reports it.
+                        return Ok(());
+                    };
+                    if s == '\n' {
+                        if !multi {
+                            return Ok(());
+                        }
+                        line += 1;
+                    }
+                    if s == '\\' && ch == '"' {
+                        match c.get(i + 1) {
+                            Some('e') => return fail("the escape \\e", line),
+                            Some('x') => return fail("the escape \\x", line),
+                            Some('\n') => line += 1,
+                            _ => {}
+                        }
+                        i += 2;
+                        continue;
+                    }
+                    if s == ch {
+                        if !multi {
+                            i += 1;
+                            break;
+                        }
+                        // A closing `"""` may carry one or two quotes of
+                        // content before it.
+                        let mut n = 0;
+                        while c.get(i + n) == Some(&ch) {
+                            n += 1;
+                        }
+                        if n >= 3 {
+                            i += n.min(5);
+                            break;
+                        }
+                        i += n;
+                        continue;
+                    }
+                    i += 1;
+                }
+                last = ch;
+            }
+            '{' | '[' => {
+                open.push(ch);
+                last = ch;
+                i += 1;
+            }
+            '}' | ']' => {
+                if ch == '}' && open.last() == Some(&'{') && last == ',' {
+                    return fail("a trailing comma in an inline table", line);
+                }
+                open.pop();
+                last = ch;
+                i += 1;
+            }
+            '0'..='9' => {
+                // `HH:MM` not followed by `:SS` (a time or the time of a
+                // datetime). Outside strings a `:` only appears in times and
+                // in the `+HH:MM` / `-HH:MM` offset that follows seconds.
+                let after_digit_or_colon =
+                    i > 0 && matches!(c[i - 1], '0'..='9' | ':' | '+' | '-');
+                let hh_mm = c.get(i + 1).is_some_and(char::is_ascii_digit)
+                    && c.get(i + 2) == Some(&':')
+                    && c.get(i + 3).is_some_and(char::is_ascii_digit)
+                    && c.get(i + 4).is_some_and(char::is_ascii_digit);
+                if !after_digit_or_colon && hh_mm && c.get(i + 5) != Some(&':') {
+                    return fail("a time without seconds", line);
+                }
+                last = ch;
+                i += 1;
+            }
+            _ => {
+                if !ch.is_whitespace() {
+                    last = ch;
+                }
+                i += 1;
+            }
+        }
+    }
+    Ok(())
 }
 
 /// Load rules. Falls back to built-in defaults if the file is missing or bad.
@@ -615,4 +750,50 @@ pub fn classify_command(command: &str, cfg: &MatcherConfig) -> Decision {
         }
     }
     fallthrough
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn home_follows_expanduser() {
+        assert_eq!(home_from_env("".as_ref()), PathBuf::from("/"));
+        assert_eq!(home_from_env("//".as_ref()), PathBuf::from("/"));
+        assert_eq!(home_from_env("/x/".as_ref()), PathBuf::from("/x"));
+        assert_eq!(home_from_env("/Users/me".as_ref()), PathBuf::from("/Users/me"));
+    }
+
+    #[test]
+    fn toml_1_1_syntax_is_refused() {
+        for doc in [
+            "a = {x = 1,\n y = 2}",
+            "a = {x = 1, y = 2,}",
+            "a = [ { b = 1, } ]",
+            "a = {x = 1 # c\n}",
+            "a = \"\\e\"",
+            "\"k\\x41\" = 1",
+            "a = \"\"\"\\e\"\"\"",
+            "a = 07:32",
+            "a = 1979-05-27T07:32Z",
+            "a = 1979-05-27 07:32",
+        ] {
+            assert!(toml_1_0_only(doc).is_err(), "{doc:?}");
+        }
+        for doc in [
+            "a = {x = 1, y = [1,\n2]}",
+            "a = [\n  1, # c\n  2,\n]",
+            "a = '\\e'",
+            "a = '''\\x41'''",
+            "a = \"\\\\e\"",
+            "a = \"\"\"a\"\"\"\"\nb = \"\\u0041\"",
+            "a = 07:32:00",
+            "a = 1979-05-27T07:32:00-07:00",
+            "a = 1979-05-27T07:32:00.5+01:00",
+            "a = \"07:32\" # 07:32",
+            "a = { x = \"}\", y = \"#,\" }",
+        ] {
+            assert!(toml_1_0_only(doc).is_ok(), "{doc:?}");
+        }
+    }
 }
