@@ -291,6 +291,11 @@ keywords only). Each turn then works like this:
    the keywords run inline: they take microseconds.
 2. **The sets.** The direct toolsets that are up go into `_direct_open`. Share and the workspace go into a new
    per-turn set, `_lent`, when that module is on (Share lent to the inlet, Composio's session up). The app tools, the allowed names and the instructions are then rebuilt, so round 1 already has the tools.
+   **Every account (2026-10-20).** When calendar or gmail opens and Composio holds the owner's other account of
+   that app (the work calendar or work Gmail, `ComposioBridge.other_account_apps`), the workspace opens too
+   (`telegram.OTHER_ACCOUNT_OF`), and the accounts note tells the brain to read every account before it says
+   something is not there. Before, "when should I leave for my flight tmrw" read only the personal calendar
+   and missed a flight on the work one until the owner said "work calendar".
 3. **Gating.** Share's and Composio's tools, and their instruction blocks (Share's, Composio's accounts note,
    and `APPS_BLOCK`), are offered only while their toolset is open. The blocks go into
    `request()`'s `lent_block`, after every block that does not change.

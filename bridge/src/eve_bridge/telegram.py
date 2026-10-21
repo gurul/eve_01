@@ -932,6 +932,9 @@ LENT_LABELS = {
     toolset_router.WORKSPACE: "the owner's Slack, Notion, Linear and other connected apps",
 }
 LENT_ORDER = (toolset_router.SHARE, toolset_router.WORKSPACE)
+# A direct app's toolset -> the Composio toolkit that holds the owner's other accounts of it (composio_tools.
+# OTHER_ACCOUNT_TOOLKITS): opening the one opens the workspace too, so every account is read (2026-10-20).
+OTHER_ACCOUNT_OF = {toolset_router.CALENDAR: "googlecalendar", toolset_router.GMAIL: "gmail"}
 _FROM_ENV: Any = object()            # TelegramInlet(toolset_route=...) not given: built from the environment
 
 
@@ -5387,6 +5390,12 @@ class TelegramInlet:
                     self._turn_parts(tail))
             self._direct_open = route.toolsets & up
             self._lent = route.toolsets & set(self._lendable())
+            # A turn that reads the owner's calendar or mail reads every connected account of it (owner,
+            # 2026-10-20: "it should have context of all connected data stores"). The work accounts live in
+            # Composio, so the workspace opens with the direct app; before, a flight on the work calendar was
+            # reported missing until the owner said "work calendar".
+            if self._other_accounts_for(route.toolsets) and toolset_router.WORKSPACE in self._lendable():
+                self._lent.add(toolset_router.WORKSPACE)
             log.info("telegram: toolsets: %s", route.log_line())     # names and ms, never the message
             app_tools = self._refresh_lent(parts, allowed)
         if grading is not None:
@@ -5757,6 +5766,18 @@ class TelegramInlet:
         have = {toolset_router.SHARE: self._share is not None,
                 toolset_router.WORKSPACE: self._composio_up()}
         return [name for name in LENT_ORDER if have[name]]
+
+    def _other_accounts_for(self, toolsets: Collection[str]) -> frozenset[str]:
+        """The Composio apps holding another account of a direct app among ``toolsets`` (calendar -> the work
+        calendar, gmail -> the work Gmail); empty while Composio is down or holds none."""
+        if not self._composio_up():
+            return frozenset()
+        try:
+            held = frozenset(self._apps.other_account_apps())
+        except Exception:  # noqa: BLE001 — an older or fake bridge without the method holds none
+            return frozenset()
+        wanted = {kit for name, kit in OTHER_ACCOUNT_OF.items() if name in toolsets}
+        return held & wanted
 
     def _lent_block(self, lent: Collection[str]) -> str:
         """The open lent toolsets' instructions, for request()'s lent_block; "" with none open."""

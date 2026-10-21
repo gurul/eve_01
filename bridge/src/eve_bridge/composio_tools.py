@@ -677,6 +677,10 @@ class ComposioBridge:
         personal connection is still in Composio, so every call must name its account)."""
         return any(len(v) > 1 or k in OTHER_ACCOUNT_TOOLKITS for k, v in self._accounts.items())
 
+    def other_account_apps(self) -> frozenset[str]:
+        """The OTHER_ACCOUNT_TOOLKITS this session holds an account for (the owner's work Gmail or calendar)."""
+        return frozenset(k for k in self._accounts if k in OTHER_ACCOUNT_TOOLKITS)
+
     def accounts_note(self) -> str:
         """For the brain, only while some toolkit has more than one account: which accounts there are and which
         one each kind of call goes to. Empty otherwise, so a one-account prompt is unchanged."""
@@ -698,9 +702,11 @@ class ComposioBridge:
                          "own is reached with its own tools). Every COMPOSIO_MULTI_EXECUTE_TOOL item for them sets "
                          "\"account\" to one of these names:")
             lines.extend(f"- {labels.get(kit, kit)} ({kit}): {', '.join(names)}" for kit, names in other.items())
-            lines.append("When the owner says \"work\" mail or calendar, it is that account; for \"my mail\" or "
-                         "\"my calendar\" without saying which, read both and say which account each result came "
-                         "from.")
+            lines.append("When the owner says \"work\" mail or calendar, it is that account. Any other question "
+                         "that needs their mail or calendar (\"my mail\", \"my calendar\", \"my flight tomorrow\", "
+                         "\"when is my next meeting\") reads their own account AND these before answering, and "
+                         "says which account each result came from. Never answer that something is not there "
+                         "until every account has been read.")
         return "\n".join(lines)
 
     def _load_tools(self) -> list[dict[str, Any]]:

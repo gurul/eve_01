@@ -190,6 +190,41 @@ def test_a_composio_tool_called_while_the_workspace_is_closed_runs_and_brings_it
     assert rig.api.sent == [(OWNER, "Nothing new.")]
 
 
+class WorkAccountApps(FakeApps):
+    """Composio holding the owner's work calendar (an OTHER_ACCOUNT_TOOLKITS account)."""
+
+    def __init__(self, held: frozenset[str] = frozenset({"googlecalendar"})) -> None:
+        super().__init__()
+        self.held = held
+
+    def other_account_apps(self) -> frozenset[str]:
+        return self.held
+
+
+FLIGHT = "when should i leave for my flight tmrw"
+
+
+def test_a_calendar_turn_opens_the_workspace_too_when_composio_holds_the_work_calendar() -> None:
+    # owner, 2026-10-20: a flight on the work calendar was "not on your calendar" until they said "work calendar"
+    assert toolset_router.WORKSPACE not in toolset_router.keyword_toolsets(FLIGHT)
+    rig = routed(FakeApi([update(FLIGHT, update_id=1)]), FakeCreate(say("Leave at 6:15.")),
+                 FakeRouter({toolset_router.CALENDAR}), apps=WorkAccountApps(), direct=scenario_apps())
+    run_until(rig, requests=1)
+    first = rig.create.requests[0]
+    assert "COMPOSIO_MULTI_EXECUTE_TOOL" in names(first)              # the work calendar is reachable in round 1
+    assert any(n.startswith("calendar_") for n in names(first))      # beside the owner's own
+    # control: no work account held, so a calendar turn leaves the workspace closed as before
+    rig = routed(FakeApi([update(FLIGHT, update_id=1)]), FakeCreate(say("Leave at 6:15.")),
+                 FakeRouter({toolset_router.CALENDAR}), apps=WorkAccountApps(frozenset()), direct=scenario_apps())
+    run_until(rig, requests=1)
+    assert not any(n.startswith("COMPOSIO") for n in names(rig.create.requests[0]))
+    # and a turn that needs no calendar or mail leaves the workspace closed
+    rig = routed(FakeApi([update("lights blue", update_id=1)]), FakeCreate(say("Done.")),
+                 FakeRouter(set()), apps=WorkAccountApps(), direct=scenario_apps())
+    run_until(rig, requests=1)
+    assert not any(n.startswith("COMPOSIO") for n in names(rig.create.requests[0]))
+
+
 # ---- (e) open_app opens a lent toolset ----------------------------------------------------------------------------
 
 def test_open_app_share_offers_the_share_tools_on_the_next_round(tmp_path: Path) -> None:
