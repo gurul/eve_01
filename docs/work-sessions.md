@@ -230,7 +230,7 @@ would.
 ## Logs
 
 Ids' first 8 characters, counts, states and tool names only: never a task, a
-reply, a transcript line, a token or a tool's arguments (AGENTS.md rule 10).
+reply, a transcript line, a token or a tool's arguments (AGENTS.md rule 9).
 
 ## Files
 

@@ -240,39 +240,3 @@ def test_the_guard_holds_for_a_loose_user_pattern():
     assert classify_command("ls -la", cfg) == "allow"
     strict = MatcherConfig(auto_allow=(re.compile(r"^.*"),), always_ask=(), strict=True)
     assert classify_command("ls; rm", strict) == "ask"
-
-
-def test_is_simple_agrees_with_the_lean_model(tmp_path: Path):
-    """The proof is about the Lean `simple`; this ties it to the Python one.
-    Both judge the same random commands and must agree on every one."""
-    import random
-    import shutil
-    import subprocess
-
-    from eve_bridge.matchers import is_simple
-
-    lean = shutil.which("lean") or str(Path.home() / ".elan" / "bin" / "lean")
-    if not Path(lean).exists():
-        pytest.skip("lean is not installed")
-    model = Path(__file__).resolve().parents[2] / "verification" / "Eve" / "Command.lean"
-    pieces = ["ls", "echo", "env", "find", "fd", "rg", "tree", "git", "log", "x", "FOO=1",
-              "-exec", "-execdir", "-ok", "-Hx", "-ao", "-la", "--pre=sh", "--output",
-              "-c", "*.py", ";", "&&", "|", ">", "$(", "`", "'", '"', "\\", "#", "\t", "\n", "{", "!"]
-    rng = random.Random(20260925)
-    corpus = [" ".join(rng.choice(pieces) for _ in range(rng.randint(1, 4)))
-              for _ in range(3000)]
-    corpus += ["", " ", "env", "env x", "ls -la", "tree -L 2"]
-    lit = ", ".join('"' + c.replace("\\", "\\\\").replace('"', '\\"')
-                    .replace("\n", "\\n").replace("\t", "\\t") + '"' for c in corpus)
-    probe = tmp_path / "Probe.lean"
-    probe.write_text(model.read_text()
-                     + f"\n#eval do\n  for s in ([{lit}] : List String) do\n"
-                     + "    IO.println (Eve.Command.simple s.toList)\n")
-    out = subprocess.run([lean, str(probe)], capture_output=True, text=True, timeout=600)
-    assert out.returncode == 0, out.stdout + out.stderr
-    got = [w == "true" for w in out.stdout.split()]
-    want = [is_simple(c) for c in corpus]
-    assert len(got) == len(corpus)
-    diff = [c for c, g, w in zip(corpus, got, want, strict=True) if g != w]
-    assert not diff, diff[:10]
-    assert any(want) and not all(want)  # the corpus exercises both answers

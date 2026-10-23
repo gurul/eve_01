@@ -501,8 +501,7 @@ passes: it asks, and logs `would_replan`.
 store, and proves seven properties over every trace: done needs evidence,
 one yes per act, the budget before each step, the push budget and quiet
 hours, no act run again after a restart without a new yes, no automatic
-retry of a one-way act, and at most 3 lessons a key. See
-[verification](../verification.md#the-chief-of-staff-2026-09-29).
+retry of a one-way act, and at most 3 lessons a key.
 
 `bridge/tests/test_chief_lean.py` holds the Python to the model. It copies
 the model's rules into Python, reads the constants from the `.lean` file,

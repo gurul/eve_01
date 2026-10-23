@@ -170,7 +170,7 @@ order.
   else typed) stays out of `clean`, and it taints the turn after it.
 - **Name only your own tools** in your instructions, and never a wrong name, not even as
   "never say this" (rule 7). The scaffold's test checks the first half.
-- **Log counts, names and types**, never what was said or a device's secrets (rule 10).
+- **Log counts, names and types**, never what was said or a device's secrets (rule 9).
 - **Turning an app on by default changes what the models read** (rule 6). Before
   `default_on=True`: write down the pass bar, get a blind case set written by someone
   who did not see the change, score it once with `bridge/tools/intent_eval.py`, and

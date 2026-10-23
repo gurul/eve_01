@@ -27,7 +27,7 @@ the URL it returns, and hands the callback's query to ``finish``.
 Failures raise ``OnboardingError``. ``str(e)`` is one plain line for the setup page, never a key, a code or a
 provider's text. ``e.status`` is the HTTP status for the callback's answer. A key or token is handed to
 ``telegram.hide_token`` the moment it arrives, and no log line here carries a key, token, code, state, verifier or
-client id (AGENTS rule 10).
+client id (AGENTS rule 9).
 """
 
 from __future__ import annotations

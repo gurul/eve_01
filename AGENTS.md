@@ -52,12 +52,9 @@ same Mac are watched through hooks, so eve can relay their questions to the phon
    paying, pushing) runs only after the owner's typed or tapped yes, and the question
    shows the whole act when the turn has read outside text (`tool_gate.py`). Keep
    that shape when adding a tool.
-9. **Lean models mirror the code.** If you change code that a model in
-   `verification/Eve/*.lean` states a property of (its docstring names the Python
-   functions), update the model or add a theorem, and re-run `node verification/check-all.mjs`.
-10. **Logs carry counts, names and types, never what was said.** No message text,
+9. **Logs carry counts, names and types, never what was said.** No message text,
     file contents, recipients or tokens in a log line.
-11. **eve lite never changes full eve.** `EVE_PROFILE=lite` is written only by eve lite's
+10. **eve lite never changes full eve.** `EVE_PROFILE=lite` is written only by eve lite's
     installer, never on the owner's Mac, and every lite branch asks `profile.is_lite()`.
     With `EVE_PROFILE` unset, what full eve's brain is told and offered, its Composio
     verdicts, its plists and its daemon stay byte for byte as they were, and
@@ -70,7 +67,7 @@ same Mac are watched through hooks, so eve can relay their questions to the phon
     goes into `profile.EXEC_ALLOW`, or its process firewall refuses it. eve lite's work
     leaves `daemon.py`, `miniapp.py`, `link_chat.py`, `install.sh` and `ios/EveLink/App/`
     alone ([eve lite](docs/lite.md#why-full-eve-does-not-change)).
-12. **The Rust hooks follow the Python hooks.** The daemon is Python. `rust/` holds only
+11. **The Rust hooks follow the Python hooks.** The daemon is Python. `rust/` holds only
     eve's Claude Code hooks (`eve-hooks`) and the socket client they use (`eve-ipc`),
     because a hook is a process Claude Code starts on every tool call and Rust starts in
     3 to 4 ms where Python takes about 29. A change to `bridge/src/eve_bridge/hooks/` or to
@@ -91,8 +88,8 @@ a web page on the Mac and on phones on the same Wi-Fi ([eve lite](docs/lite.md);
 latest release, lite-v0.1.3, is published). Everything below is full eve.
 
 - A Mac on macOS 14 or later, with Python 3.12 (`python3.12 --version`), Homebrew,
-  Node 22.12 or later with pnpm (the phone app's chat page, eve lite's web page and the
-  Lean check), and Xcode 26 with `xcodegen` (`brew install xcodegen`) for the phone app.
+  Node 22.12 or later with pnpm (the phone app's chat page and eve lite's web page),
+  and Xcode 26 with `xcodegen` (`brew install xcodegen`) for the phone app.
 - An OpenRouter key (`OPENROUTER_API_KEY`).
 - A Telegram bot token and your numeric Telegram user id. eve's brain is wired
   through the Telegram door even when Telegram is muted (`EVE_TELEGRAM=app`):
@@ -365,9 +362,7 @@ are on) and `share: on`. Then send one message from the phone.
   serial). `cd bridge && uv run --extra dev ruff check src tests tools` for lint.
 - **The phone app's logic on the Mac:** `sh ios/EveLink/Tests/run.sh` (PCM,
   turns, pairing, voice-mode captions). Building the app: `sh ios/EveLink/build.sh`.
-- **The Lean models:** `PATH=$HOME/.elan/bin:$PATH node verification/check-all.mjs`
-  (539 theorems, no `sorry`, no `native_decide`; [verification](docs/verification.md)).
-- **eve lite** (rule 11; [eve lite](docs/lite.md)): its gates, each with the command that
+- **eve lite** (rule 10; [eve lite](docs/lite.md)): its gates, each with the command that
   decides it, are in `docs/lite-gates.md`; gate L1, `tools/owner_golden.py --check` run
   from `bridge/`, proves full eve unchanged. Its web page builds with
   `cd ios/EveLink/Web && pnpm build:web`, into `bridge/src/eve_bridge/web_lite/`
@@ -385,7 +380,7 @@ are on) and `share: on`. Then send one message from the phone.
   `link_uploads.py`, `link_reactions.py`, `notify.py`. Memory: `memory.py`,
   `transcripts.py`, `chat_log.py`, `mem0_memory.py`, `dream.py`. The iPhone app:
   `ios/EveLink/App` (SwiftUI), `Shared` (logic tested on the Mac), `Web`
-  (the chat page, OpenUI). Models of the state machines: `verification/Eve`. eve lite:
+  (the chat page, OpenUI). eve lite:
   `profile.py` (the switch, what it turns off, the process firewall), `lite.py` (its
   daemon), `lite_web.py` (its two web doors), `lite_rtc.py` (WebRTC), `lite_tls.py`,
   `lan_net.py`, `web_auth.py`, `onboarding.py` (the two sign-ins), `composio_connect.py`;

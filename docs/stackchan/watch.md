@@ -28,8 +28,7 @@ when, or watched until when.
 
 Code: `bridge/src/eve_bridge/watch.py`. Tests: `bridge/tests/test_watch.py`
 and the watcher test in `test_telegram.py`. Live check:
-`bridge/tools/watch_smoke.py`. The watcher's state machines are proved in Lean in
-`verification/Eve/Watch*.lean` ([verification](../verification.md)).
+`bridge/tools/watch_smoke.py`.
 
 ## The switch
 
@@ -360,10 +359,7 @@ send only `Mozilla/5.0`.
   watch never falls back to search, which can't see a phrase. It counts the
   refusal instead.
 
-These properties are proved in Lean 4 over every trace of a model of the code.
-The eight models are in `verification/Eve/Watch*.lean`, listed in
-[verification](../verification.md), and each has a pytest replay that failed
-before its fix.
+Each of these properties has a pytest replay that failed before its fix.
 
 ## Not done
 

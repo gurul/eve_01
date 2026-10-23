@@ -435,7 +435,7 @@ Every other rule is full eve's:
 The Lean model `Eve/AppsPolicy.lean` proves both halves: with `personal_direct` true,
 `decide` is today's for every call; and in lite, every write that is not routine, every code
 tool and every connection change `manage_needs_yes` does not prove runs only after a whole
-question and a bare yes ([verification](verification.md#eve-lite-2026-10-13)).
+question and a bare yes.
 
 ### If Composio Connect fails: the contingency
 

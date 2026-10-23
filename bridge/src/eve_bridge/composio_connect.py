@@ -37,7 +37,7 @@ docs/plans/eve-lite-s1.md) measured what this module relies on; its captures are
   when the person asks for a link.
 
 Tokens never reach a log, a repr, a result or the model, and logs carry tool names, counts and exception types only:
-arguments and results may hold mail text (AGENTS rule 10). Unlike onboarding's, these tokens are not handed to
+arguments and results may hold mail text (AGENTS rule 9). Unlike onboarding's, these tokens are not handed to
 ``telegram.hide_token``: an access token is replaced many times a day, and hide_token's set only grows.
 """
 

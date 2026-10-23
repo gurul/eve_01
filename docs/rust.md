@@ -55,7 +55,7 @@ needs to restart.
 ## Changing eve
 
 A change to `bridge/src/eve_bridge/hooks/` or to the request side of `ipc.py` lands
-in the matching crate in the same commit (AGENTS.md rule 12). Check both:
+in the matching crate in the same commit (AGENTS.md rule 11). Check both:
 
 ```bash
 (cd rust && cargo test --release)

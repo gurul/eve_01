@@ -600,17 +600,6 @@ the remaining desktop capture limits.
 See [routing](docs/stackchan/routing.md) for switches and measured evaluations, and
 [voice and computer control](docs/stackchan/voice.md) for worker details.
 
-Twenty state machines are **formally verified in Lean 4** (`verification/`, 286
-theorems): the Bash allow tier, the Telegram question slot and Stop, forget against the
-nightly dream, the serial link to the robot, the voice turn state, eight for the
-watcher (its rate limiter, conditions, scheduler and reading ladder, connection safety,
-links, routing and Ticketmaster), four for the Voice PE controller, the OpenAI stream
-retry, and the chief of staff's cards (done needs evidence, one yes per
-act, the budget, quiet hours and the push budget, no act run again after a restart). Each
-is either a kernel-checked counterexample on the old code plus a proof for every trace of
-the fix, or a proof of the code as it stands. The chief's model is also replayed against
-its Python on generated traces. See [formal verification](docs/verification.md).
-
 </details>
 
 ### The Telegram door
@@ -737,7 +726,6 @@ Persistent data lives under `~/.config/eve-bridge/`:
 | `widget/` | SwiftUI app, shared data readers, WidgetKit extension and Xcode project | [Widget setup](docs/stackchan/widget.md) |
 | `ios/EveLink/` | The Eve Link iPhone app: Updates (things to act on), chat with eve (with photos and files attached), the chief's jobs, Notes (your vault: pages, to-dos, edit, move, delete with undo), native Music, Lights and TV remote controls, Memory, Share location and the places history in Settings, voice mode (StackChan's face with captions, the Action Button talks), notes on the go | [Action Button](docs/action-button.md), [Chat in the app](docs/app-chat.md), [Updates](docs/updates.md), [voice mode](docs/voice-mode.md), [phone location](docs/phone-location.md), [places](docs/places.md) |
 | `ios/EveLink/Web/src/web/` | eve lite's web app: the iPhone app's chat page in a browser, with its own shell, setup, pairing and voice | [Web app](ios/EveLink/Web/README.md#eve-lites-web-app-srcweb) |
-| `verification/` | Lean 4 models of eve's state machines, 539 kernel-checked theorems | [Verification](docs/verification.md) |
 | `AGENTS.md` | The setup runbook and the rules, for an agent working on eve | |
 | `tools/` | Firmware flashing and demo utilities | [Build](docs/stackchan/build.md) |
 | `docs/stackchan/` | Hardware notes, personality, vision and integration details | [Personality](docs/stackchan/personality.md), [vision](docs/stackchan/vision.md), [memory](docs/stackchan/memory.md), [Claude Code](docs/stackchan/claude-code-integration.md) |

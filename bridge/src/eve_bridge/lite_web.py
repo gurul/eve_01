@@ -47,7 +47,7 @@ downloads.
 
 Files: ``web.json`` (0600) keeps the ports each door last had (so the address and bookmarks stay put), the LAN switch
 and the setup's Composio skip. Responses carry the spec's security headers, and the API's ``Cache-Control: no-store``.
-There is no access log: lines carry counts, ports and exception types only (AGENTS rule 10), never a path, an
+There is no access log: lines carry counts, ports and exception types only (AGENTS rule 9), never a path, an
 address, a name, a cookie or a code.
 
 This is eve lite's only: ``start`` refuses outside EVE_PROFILE=lite, and nothing in full eve imports this module.

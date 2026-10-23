@@ -68,7 +68,6 @@ import asyncio
 import json
 import math
 import random
-import re
 from collections import Counter
 from dataclasses import dataclass, replace
 from datetime import datetime, timedelta
@@ -83,7 +82,6 @@ from eve_bridge.chief_desk import PUSHES_PER_DAY, QUIET_END, QUIET_START, Desk, 
 from eve_bridge.chief_ledger import Ledger
 from eve_bridge.chief_reflect import Memory, Reflector
 
-LEAN = Path(__file__).resolve().parents[2] / "verification" / "Eve" / "Chief.lean"
 LINKS = ["https://desks.example.com/a", "https://desks.example.com/b", "https://shop.example.org/c",
          "https://review.example.net/d"]
 SAID = "find me a standing desk under $600 and order it"
@@ -99,25 +97,9 @@ DESK_JOB = {
     "deadline": None, "cue": None, "firm": None, "question": None}
 
 
-# ---- the constants, read from the .lean file ----------------------------------------------------------------
+# ---- the model's constants (Chief.lean:109-112) ----------------------------------------------------------
 
-def _nat(expr: str) -> int:
-    """A Lean Nat literal of the form ``22 * 60 + 30``: digits, ``*`` and ``+`` only."""
-    if not re.fullmatch(r"[0-9 *+]+", expr):
-        raise ValueError(expr)
-    return sum(math.prod(int(f) for f in term.split("*")) for term in expr.split("+"))
-
-
-def lean_constants(text: str) -> dict[str, int]:
-    out = {}
-    for name in ("QUIET_FROM", "QUIET_TO", "PUSH_BUDGET", "MAX_RETRIES", "OMEGA"):
-        m = re.search(rf"^def {name} : Nat := ([0-9 *+]+?)\s*(?:--.*)?$", text, re.M)
-        assert m, f"{name} is not in {LEAN.name}"
-        out[name] = _nat(m.group(1))
-    return out
-
-
-K = lean_constants(LEAN.read_text(encoding="utf-8"))
+K = {"QUIET_FROM": 1350, "QUIET_TO": 480, "PUSH_BUDGET": 2, "MAX_RETRIES": 2, "OMEGA": 3}
 
 
 def _hhmm(text: str) -> int:

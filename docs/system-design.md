@@ -163,4 +163,4 @@ OpenRouter sign-in enables the brain.
 - [Computer-task routing](stackchan/routing.md) and [Codex integration](codex-computer-use/README.md)
 - [Conversation memory](stackchan/memory.md) and [chief's job lifecycle](stackchan/chief.md)
 - [Phone location](phone-location.md) and [places: visits, habits, digests and things](places.md)
-- [eve lite deployment](lite.md) and [verified state machines](verification.md)
+- [eve lite deployment](lite.md)

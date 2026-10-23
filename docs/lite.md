@@ -406,7 +406,7 @@ no app, only kinds of app. An OpenRouter 402 becomes the plain no-credit line ab
   (`bridge/tests/test_owner_golden.py`, with a positive control).
 - `cli.py` imports full eve's daemon only when `eve-bridge daemon` runs it, so eve lite's command line never loads
   Bluetooth or the rest of full eve's Mac.
-- AGENTS rule 11 keeps it so.
+- AGENTS rule 10 keeps it so.
 
 ## Making a release
 
@@ -438,9 +438,8 @@ release (`releases/latest`), so that must be the eve lite release.
 
 The gates are in [lite-gates.md](lite-gates.md), each with the command that decides it: the owner golden, the profile
 and firewall, the lite brain, TLS and device auth, the sign-ins, Composio Connect, WebRTC, the web doors, the daemon,
-the command line and login service, the web client, the installer, the Lean models, the blind set, these docs, an end
-to end run in Chromium, no regression in the full suite, lint, and the owner's live service left alone. The Lean
-models for eve lite are in [verification.md](verification.md#eve-lite-2026-10-13).
+the command line and login service, the web client, the installer, the blind set, these docs, an end
+to end run in Chromium, no regression in the full suite, lint, and the owner's live service left alone.
 
 ## Verified on
 

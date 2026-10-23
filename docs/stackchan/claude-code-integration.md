@@ -21,8 +21,7 @@ refocused on the robot; the current knobs are in [../../bridge/README.md](../../
   given a flag that runs or writes (`find -exec`/`-execdir`/`-ok`/`-delete`/`-fprint`,
   `fd -x`, `rg --pre`, `tree -o`, `git --output`/`--ext-diff`/`-c`) falls through as
   unmatched, whatever the config says. Before 2026-09-25 the anchored patterns allowed
-  `echo x; rm -rf ~`. This holds for every `matchers.toml`, and is proved in Lean
-  (`verification/Eve/Command.lean`; see [verification](../verification.md)). `git branch`
+  `echo x; rm -rf ~`. This holds for every `matchers.toml`. `git branch`
   lists without asking; with a flag that deletes, force-resets, renames, copies or rewires a
   branch (`-d`, `-D`, `-f`, `-m`, `-M`, `-c`, `-C`, `-u`, or their long forms) it always asks.
 - **Summons your terminal.** Tap the pet while it demands attention and the daemon raises
@@ -49,8 +48,7 @@ refocused on the robot; the current knobs are in [../../bridge/README.md](../../
   until the port's write returns (bounded by `write_timeout=2`), even when its sender is
   cancelled, so two lines can never go out interleaved. A folder push registers each ack
   waiter before it sends, and a chunk waiter takes only the ack whose `n` is the bytes
-  written to that file so far. All three are proved in Lean
-  (`verification/Eve/Serial.lean`; see [verification](../verification.md)).
+  written to that file so far.
 
 ## Host bridge
 

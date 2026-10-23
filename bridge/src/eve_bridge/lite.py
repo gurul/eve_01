@@ -49,7 +49,7 @@ the Mac could reach a port, and ``web_login`` signs a browser in.
     {"evt": "lan", "on": <bool>}         -> {"ok": true, "lan": <whether the LAN door is open now>}
 
 A refusal is {"ok": false, "error": <one plain line>}. No request, code, key or token reaches a log: lines carry
-states, counts, ports and exception types (AGENTS rule 10). The model key is handed to telegram.hide_token at start,
+states, counts, ports and exception types (AGENTS rule 9). The model key is handed to telegram.hide_token at start,
 and httpx, httpcore, aioice and aiortc log at WARNING (QUIET_LOGGERS): their INFO lines name every URL and every
 address and candidate.
 """
