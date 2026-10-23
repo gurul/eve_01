@@ -15,11 +15,13 @@ from eve_bridge.obsbot import G, Obsbot, T, decode, encode
 
 
 class FakeUsb:
-    """UsbCamera's surface. Asleep, it reads tilt -79 and ignores moves, as the camera does."""
+    """UsbCamera's surface. Asleep, it reads tilt -79 and ignores moves, as the camera does. Like the Tiny 3
+    (2026-10-23), it ignores a move to the target it last took, and a turn moves it without changing that target."""
 
     def __init__(self, name: str = "OBSBOT Tiny 3"):
         self.name, self.pan, self.tilt, self.zoom_level = name, 0.0, 0.0, 0
         self.asleep, self.unplugged, self.why = False, False, ""
+        self.target: Optional[tuple] = None
         self.calls: list[tuple] = []
 
     def read(self) -> Optional[dict[str, Any]]:
@@ -36,8 +38,10 @@ class FakeUsb:
 
     def point(self, pan: float, tilt: float) -> bool:
         self.calls.append(("point", pan, tilt))
-        if not self.asleep:
-            self.pan, self.tilt = pan, tilt
+        if self.asleep or (pan, tilt) == self.target:
+            return True
+        self.target = (pan, tilt)
+        self.pan, self.tilt = pan, tilt
         return True
 
     def turn(self, direction: str, speed: int = obsbot_usb.TURN_SPEED) -> bool:
@@ -166,7 +170,34 @@ def test_move_turns_pitch_into_tilt_and_reads_back(cam, usb):
 def test_move_wakes_a_sleeping_camera_first(cam, usb):
     usb.asleep = True
     res = cam.move(20, 0)
-    assert res["ok"] and usb.calls[:2] == [("wake",), ("point", 20, 0)]
+    assert res["ok"] and usb.calls[:3] == [("wake",), ("point", 10, 0), ("point", 20, 0)]
+
+
+def test_move_after_a_turn_goes_where_the_last_move_went(cam, usb):
+    """A plain resend of the last target is ignored after a turn (the camera's own rule, 2026-10-23); eve's moves
+    land anyway."""
+    assert cam.reset()["ok"]
+    usb.turn("right")
+    assert usb.point(0, 0) and usb.pan == -5                    # the positive control: the camera drops it
+    usb.calls.clear()
+    res = cam.reset()
+    assert res["ok"] and res["line"] == "Centered." and usb.pan == 0
+    assert usb.calls == [("wake",), ("point", -8, 0), ("point", 0, 0)]  # a step back first: a new target
+
+
+def test_move_primer_goes_halfway_on_a_long_move():
+    assert obsbot._primer((30, 0), (0, 0)) == (15, 0)
+    assert obsbot._primer((0, 20), (0, -20)) == (0, 0)
+    assert obsbot._primer((128, 0), (129, 0)) == (125, 0)
+    assert obsbot._primer((129, 0), (127, 0)) == (129, 0)      # clamped to the range
+
+
+def test_move_gives_up_after_the_tries_and_says_where_it_stopped(cam, usb, monkeypatch):
+    usb.pan = -27
+    monkeypatch.setattr(usb, "point", lambda pan, tilt: usb.calls.append(("point", pan, tilt)) or True)
+    res = cam.move(0, 0)
+    assert not res["ok"] and res["pan"] == -27 and "stopped at pan -27°" in res["line"]
+    assert usb.calls.count(("point", 0, 0)) == obsbot.MOVE_TRIES
 
 
 def test_move_keeps_the_axis_not_given_and_clamps(cam, usb):

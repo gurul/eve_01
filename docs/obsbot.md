@@ -188,6 +188,11 @@ Measured on a Tiny 3, 2026-10-11:
   video for about a second wakes it, and the gimbal unparks. After the video closed, it stayed awake for at least a
   minute. eve wakes it this way before any move. Moves keep tilt within ±59°, so "asleep" and "pointed down" never
   look the same.
+- **The camera ignores an absolute move to the target it last took**, and a continuous turn moves the gimbal
+  without changing that target (measured 2026-10-23). So after a hold-to-turn, "center" sent (0, 0) again and the
+  camera stayed put: 13 times in 14. A resend, or a point at where it already is, was ignored too. `Obsbot.move`
+  first sends a real move a few degrees off (halfway on a long move, 3° back on a short one), then the target: 14
+  of 14 landed first time. A move that still stops short is sent again from there, up to three times.
 - **OBSBOT's own features are a vendor extension unit**, with 32 command slots of 60-byte packets. eve does not
   speak that protocol: tracking, the AI modes, presets and sleep go through OBSBOT Center.
 

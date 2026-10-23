@@ -47,6 +47,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import math
 import socket
 import struct
 import subprocess
@@ -63,6 +64,9 @@ APP = "OBSBOT_Center"
 APP_PATH = Path("/Applications/OBSBOT_Center.app")
 INI_PATH = Path("~/Library/Application Support/OBSBOT_Center/global.ini")
 ARRIVE_WAIT = 4.0           # zoom: 0 to 100% takes ~2 s
+MOVE_TRIES = 3              # a move the camera dropped is sent again (move)
+PRIME_STEP = 3.0            # move's first point: a short move steps back this far, a long one goes halfway
+PRIME_SECS = 0.3            # between that point and the target
 
 G = "/OBSBOT/WebCam/General/"
 T = "/OBSBOT/WebCam/Tiny/"
@@ -122,6 +126,17 @@ def decode(data: bytes) -> tuple[str, list[Any]]:
 
 
 # --- the camera -------------------------------------------------------------------------------------------------
+
+def _primer(now: tuple[float, float], to: tuple[float, float]) -> tuple[float, float]:
+    """move's first point, (pan, pitch): a few degrees from ``now`` on each axis that moves, so the camera takes it
+    as a new target. Halfway on a long move; a PRIME_STEP back from the target on a short one."""
+    out = []
+    for a, b, (lo, hi) in zip(now, to, (PAN_RANGE, PITCH_RANGE)):
+        d = b - a
+        x = a + d / 2 if abs(d) >= 2 * PRIME_STEP else a - math.copysign(PRIME_STEP, d) if d else a
+        out.append(round(max(lo, min(hi, x))))
+    return out[0], out[1]
+
 
 def _app_running() -> bool:
     return subprocess.run(["pgrep", "-x", "OBSBOT_Main"], capture_output=True).returncode == 0
@@ -313,10 +328,23 @@ class Obsbot:
             return {"ok": False, "line": "Couldn't read where the camera points."}
         pan = round(max(PAN_RANGE[0], min(PAN_RANGE[1], now[0] if pan is None else float(pan))))
         pitch = round(max(PITCH_RANGE[0], min(PITCH_RANGE[1], now[1] if pitch is None else float(pitch))))
-        if not self.usb.point(pan, -pitch):
-            return {"ok": False, "line": "The camera refused the move."}
-        far = max(abs(pan - now[0]), abs(pitch - now[1]))
-        return self._settle(pan, pitch, wait=min(12.0, 1.0 + far / 15))
+        res: dict[str, Any] = {}
+        for _ in range(MOVE_TRIES):
+            # The Tiny 3 ignores an absolute move to the target it last took, and a continuous turn moves the gimbal
+            # without changing that target. So after a hold-to-turn, "center" again was dropped (2026-10-23: 13 of
+            # 14), as was a resend, or a point at where it already is. A real move a few degrees off first gives it a
+            # new target, and then it takes this one: 14 of 14. A move that still stops short goes again from there.
+            p, q = _primer(now, (pan, pitch))
+            self.usb.point(p, -q)
+            time.sleep(PRIME_SECS)
+            if not self.usb.point(pan, -pitch):
+                return {"ok": False, "line": "The camera refused the move."}
+            far = max(abs(pan - now[0]), abs(pitch - now[1]))
+            res = self._settle(pan, pitch, wait=min(12.0, 1.0 + far / 15))
+            if res["ok"] or "pan" not in res:
+                return res
+            now = (res["pan"], res["pitch"])
+        return res
 
     def _settle(self, pan: float, pitch: float, wait: float = ARRIVE_WAIT) -> dict[str, Any]:
         start = time.monotonic()
