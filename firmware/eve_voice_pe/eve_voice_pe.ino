@@ -27,6 +27,7 @@
 #include <ArduinoJson.h>
 #include <Preferences.h>
 #include <Wire.h>
+#include <esp_task_wdt.h>
 #include <mbedtls/base64.h>
 
 #include "chirp.h"
@@ -207,6 +208,14 @@ void handleLine(const char *line) {
     int v = (Wire.requestFrom(0x18, 1) == 1) ? Wire.read() : -1;
     Serial.printf("[dac] page %u reg 0x%02X = 0x%02X (i2c %s)\n", page, reg, v & 0xFF, ok && v >= 0 ? "ok" : "FAIL");
     return;
+  }
+  if (!strcmp(cmd, "reboot")) {
+    // {"cmd":"reboot"} restarts at once; {"cmd":"reboot","wdt":true} stalls the loop so the watchdog
+    // restarts it, which proves a stuck board comes back as eve and not in its flashing mode.
+    Serial.println(doc["wdt"] | false ? "[reboot] stalling for the watchdog" : "[reboot]");
+    Serial.flush();
+    if (doc["wdt"] | false) for (;;) {}
+    esp_restart();
   }
   // cam, snap, face, look, move, mode, expression, emote, caption, char_*:
   // this board has no camera, motors or screen.
@@ -439,6 +448,13 @@ void setup() {
   chirpBegin();
   chirpSetEnabled(host.sound && !sbCodecMicMuted());
   chirpPlay(CHIRP_WAKE);
+
+  // A stuck loop restarts the board. Without this the board could hang with USB still up: the port opened,
+  // nothing came out, and only a reflash brought it back (2026-10-24). 10 s, not the core's 5 s, so a slow
+  // I2C or USB write is not mistaken for a hang.
+  esp_task_wdt_config_t wdt = {.timeout_ms = 10000, .idle_core_mask = 1 << 0, .trigger_panic = true};
+  esp_task_wdt_reconfigure(&wdt);
+  enableLoopWDT();
 }
 
 void loop() {

@@ -462,3 +462,80 @@ def test_port_open_and_rts_pulse_run_off_the_loop(fast_watchdog: None, monkeypat
     _run(_drive(bs, 0.3))
     assert open_threads and loop_thread not in open_threads
     assert sleep_threads and loop_thread not in sleep_threads
+
+
+# ---- the reset: boots the sketch, never the flashing mode ------------------------------------
+
+
+class Lines:
+    """The port's two control lines, recording every state they pass through, from the daemon's open state."""
+
+    def __init__(self) -> None:
+        self._dtr = self._rts = True
+        self.states = [(True, True)]
+
+    @property
+    def dtr(self) -> bool:
+        return self._dtr
+
+    @dtr.setter
+    def dtr(self, v: bool) -> None:
+        self._dtr = v
+        self.states.append((self._dtr, self._rts))
+
+    @property
+    def rts(self) -> bool:
+        return self._rts
+
+    @rts.setter
+    def rts(self, v: bool) -> None:
+        self._rts = v
+        self.states.append((self._dtr, self._rts))
+
+
+def _resets(states: list[tuple[bool, bool]]) -> list[bool]:
+    """Each entry into RTS-high, DTR-low resets an ESP32-S3; True where DTR was high just before (the flashing mode)."""
+    return [prev[0] for prev, cur in zip(states, states[1:]) if cur == (False, True) and prev != cur]
+
+
+def test_the_reset_boots_the_sketch_not_the_flashing_mode(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The Voice PE, 2026-10-24: DTR dropped under a high RTS booted "DOWNLOAD(USB/UART0)", silent until reflashed,
+    and RTS toggled under a held-high DTR reset nothing. _reset_board resets once, from DTR low, and leaves DTR up."""
+    monkeypatch.setattr(serial_transport.time, "sleep", lambda s: None)
+    lines = Lines()
+    serial_transport._reset_board(lines)  # type: ignore[arg-type]
+    assert _resets(lines.states) == [False]
+    assert (lines.dtr, lines.rts) == (True, False)
+
+    # controls: the old pulse_reset order is caught as the flashing mode, the old open pulse as no reset at all
+    old = Lines()
+    old.dtr = False
+    old.rts = True
+    old.rts = False
+    assert _resets(old.states) == [True]
+    noop = Lines()
+    noop.rts = True
+    noop.rts = False
+    noop.dtr = True
+    assert _resets(noop.states) == []
+
+
+def test_pulse_reset_resets_on_the_reopened_handle_off_the_loop() -> None:
+    """pulse_reset only arms the reset and drops the link; _open_port runs _reset_board on a worker thread."""
+    bs = EveSerial(on_message=_noop, port="/dev/fake")
+    bs._ser = FakeSerial([])
+    bs.pulse_reset("test")
+    assert bs._pulse_on_open and bs._pulse_why == "test"
+    assert bs._drop_reason == "RTS reset: test" and bs._ser.cancelled
+    assert (bs._ser.dtr, bs._ser.rts) == (False, False)  # the live handle's lines untouched
+
+
+def test_a_flashing_mode_banner_resets_the_board() -> None:
+    bs = EveSerial(on_message=_noop, port="/dev/fake")
+    bs._dispatch_line(b"rst:0x15 (USB_UART_CHIP_RESET),boot:0x8 (SPI_FAST_FLASH_BOOT)\n")
+    assert not bs._pulse_on_open  # control: a normal boot is left alone
+    bs._dispatch_line(b"rst:0x15 (USB_UART_CHIP_RESET),boot:0x0 (DOWNLOAD(USB/UART0))\n")
+    assert bs._pulse_on_open
+    bs._pulse_on_open, bs._drop_reason = False, None
+    bs._dispatch_line(b"rst:0x15 (USB_UART_CHIP_RESET),boot:0x0 (DOWNLOAD(USB/UART0))\n")
+    assert not bs._pulse_on_open  # at most one reset per DOWNLOAD_RESET_SECS: a held button is not fought

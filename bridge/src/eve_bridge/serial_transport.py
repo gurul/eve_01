@@ -72,6 +72,10 @@ _IS_CRASH = re.compile(
 # "No Claude connected" until state happens to change. The ROM banner and the
 # firmware's own boot line are the tell; the daemon hooks them via `on_boot`.
 _IS_BOOT = re.compile(r"rst:0x|^\[boot\] ")
+# The ROM banner of a board that booted its flashing mode: it waits for esptool and prints nothing more, so
+# the link reads as a dead board until something resets it properly (_reset_board).
+_IS_DOWNLOAD = re.compile(r"boot:0x[0-9a-f]+ \(DOWNLOAD")
+DOWNLOAD_RESET_SECS = 30.0
 
 # What the board says when a host motion is admitted, reduced, refused or stopped
 # (body.cpp / main.cpp). Promoted to INFO: see _on_line.
@@ -187,8 +191,27 @@ def _resolve_port(pattern: str, skip_serials: frozenset[str] = frozenset()) -> O
     return hits[0]
 
 
+def _reset_board(ser: serial.Serial) -> None:
+    """Worker thread. Reset the board so it boots its sketch: RTS down, DTR down, an RTS pulse, DTR back up.
+
+    The order is the fix. An ESP32-S3's native USB-Serial/JTAG resets the chip when RTS rises with DTR low,
+    and boots the flashing mode (ROM download, silent until reflashed) when DTR was high just before. A
+    CH340 board's auto-reset transistors reset on the same RTS-high, DTR-low state. Measured on the Voice PE,
+    2026-10-24: the old pulse, RTS toggled under a held-high DTR, reset nothing (the board's uptime kept
+    counting); DTR dropped under a high RTS booted "boot:0x0 (DOWNLOAD(USB/UART0))"; this order booted
+    "boot:0x8 (SPI_FAST_FLASH_BOOT)", from the flashing mode too."""
+    ser.rts = False
+    ser.dtr = False
+    time.sleep(0.05)
+    ser.rts = True
+    time.sleep(0.1)
+    ser.rts = False
+    time.sleep(0.05)
+    ser.dtr = True  # firmware HWCDC drops TX without DTR
+
+
 def _open_port(port: str, baud: int, pulse: bool) -> serial.Serial:
-    """Worker thread. Open the port with DTR up, RTS-pulse the fresh handle when asked, and flush what
+    """Worker thread. Open the port with DTR up, reset the board on the fresh handle when asked, and flush what
     the board printed before we were listening. A failed open raises; a failed pulse is logged."""
     ser = serial.Serial(port, baud, timeout=1, write_timeout=2, exclusive=True)
     try:
@@ -198,10 +221,7 @@ def _open_port(port: str, baud: int, pulse: bool) -> serial.Serial:
         raise
     if pulse:
         try:
-            ser.rts = True
-            time.sleep(0.1)
-            ser.rts = False
-            ser.dtr = True
+            _reset_board(ser)
         except Exception as e:  # noqa: BLE001
             log.warning("serial: RTS pulse failed: %s", e)
     try:
@@ -230,6 +250,7 @@ class EveSerial:
         # several matching lines back to back.
         self.on_boot: Optional[Callable[[], Awaitable[None]]] = None
         self._last_boot_hook = 0.0
+        self._last_download_reset = -DOWNLOAD_RESET_SECS
         self.port_pattern = port
         self.baud = baud
         self._ser: Optional[serial.Serial] = None
@@ -240,6 +261,7 @@ class EveSerial:
         self._reopen_holdoff = 0.0               # extra close-time before next open
         self._rx_trips: list[tuple[float, str]] = []  # (monotonic, port) silence trips
         self._pulse_on_open = False              # RTS-reset the board on next open
+        self._pulse_why = ""                     # why, when it is not the silent-reopen count
         self._tasks: set[asyncio.Future[Any]] = set()  # on_message / on_boot handlers still running
 
     @property
@@ -341,15 +363,16 @@ class EveSerial:
             # Opening the port, the RTS pulse's 0.1 s sleep and the buffer reset all block, so they run
             # on a worker thread: on the loop they would stall every door for as long as the open takes.
             pulse, self._pulse_on_open = self._pulse_on_open, False
+            why, self._pulse_why = self._pulse_why, ""
             if pulse:
                 # Escalation for the enumerated-but-silent board: pulse RTS on
                 # the FRESH handle (pulsing before reopen is a no-op — the old
                 # handle is already gone). Logs unconditionally: this line's
                 # absence from a log is proof the pulse never ran.
                 log.warning(
-                    "serial: RTS-resetting the board — %d silent or deaf reopens of %s "
-                    "within %.0f min", RX_TRIP_PULSE_COUNT, port,
-                    RX_TRIP_WINDOW_SECS / 60)
+                    "serial: RTS-resetting the board — %s",
+                    why or "%d silent or deaf reopens of %s within %.0f min" % (
+                        RX_TRIP_PULSE_COUNT, port, RX_TRIP_WINDOW_SECS / 60))
             try:
                 ser = await asyncio.to_thread(_open_port, port, self.baud, pulse)
             except Exception as e:  # noqa: BLE001
@@ -431,6 +454,10 @@ class EveSerial:
                         and time.monotonic() - self._last_boot_hook > 5.0):
                     self._last_boot_hook = time.monotonic()
                     self._spawn(self.on_boot())
+                if (_IS_DOWNLOAD.search(text)
+                        and time.monotonic() - self._last_download_reset > DOWNLOAD_RESET_SECS):
+                    self._last_download_reset = time.monotonic()
+                    self.pulse_reset("it booted into its flashing mode, where it stays silent")
             return
         try:
             obj = json.loads(text)
@@ -496,20 +523,12 @@ class EveSerial:
         but stops receiving, and reopening the host port does nothing because
         the dead half is in the chip. The pet reboots (~5s, diag ring reports
         the reset as external-pin) — a short outage against an indefinitely
-        deaf board. Pulses the LIVE handle first (ioctls under a concurrent
-        select are safe; the fd must be open to pulse), then hands the drop
-        to the reader.
+        deaf board. The reset runs on the reopened handle (_open_port, a
+        worker thread), in _reset_board's order: the old one here dropped DTR
+        under a high RTS, which boots an S3 into its silent flashing mode.
         """
-        ser = self._ser
-        log.warning("serial: RTS-resetting the board — %s", why)
-        if ser is not None:
-            try:
-                ser.dtr = False
-                ser.rts = True
-                time.sleep(0.1)
-                ser.rts = False
-            except Exception as e:  # noqa: BLE001
-                log.warning("serial: RTS pulse failed: %s", e)
+        self._pulse_on_open = True
+        self._pulse_why = why
         self._request_drop(f"RTS reset: {why}")
 
     def force_reconnect(self, why: str) -> None:

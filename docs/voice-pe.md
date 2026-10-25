@@ -313,6 +313,7 @@ Stop the daemon, which holds the port, then send these lines at 115200 baud:
 | `{"cmd":"tone","hz":660,"ms":2000,"level":0.6}` | Plays a sine even while chirps are off. Prints `[chirp] played in … ms: N bytes to i2s, E write errors` |
 | `{"cmd":"dac","page":0,"reg":11}` | Reads one AIC3204 register. Add `"val":N` to write it first |
 | `{"cmd":"amp","on":true}` | Sets the amplifier enable pin |
+| `{"cmd":"reboot"}` | Restarts the board. `"wdt":true` stalls the loop instead, so the watchdog restarts it |
 
 For a working setup, page 0 register 0x0B (NDAC) reads `0x82`, 0x1B (the
 audio interface) reads `0x30`, and page 1 register 0x09 (output power)
@@ -335,6 +336,18 @@ The daemon does not check which board is attached (`serial_transport.py`,
   daemon counts that reopen like a silent one. Three in 10 minutes reset the
   board through RTS on the next open. Before 2026-10-03 only silence counted,
   and a board that did not read was reopened every 5 s for two days.
+- The reset drops RTS, then DTR, then pulses RTS (`_reset_board`). The
+  order matters. The board's USB port resets the chip when RTS rises with DTR
+  low. After an explicit DTR-high, RTS-low state, that reset boots the ROM
+  flashing mode instead, where the board stays silent until it is reflashed.
+  Before 2026-10-24 the reset pulsed RTS under a high DTR, which reset
+  nothing, so a silent board stayed silent until someone reflashed it.
+- A board that prints the flashing-mode banner (`boot:0x0 (DOWNLOAD…`) is
+  reset at once, at most every 30 s, so a button held on purpose is not
+  fought.
+- The firmware's loop runs under a 10 s watchdog. A stuck loop restarts the
+  board, and a restart from the board itself always boots eve, whatever the
+  lines are.
 - It answers `{"cmd":"status"}` with
   `{"ack":"status","ok":true,"data":{"name","owner","board":"voice-pe","snd","sys":{"up","heap"}}}`.
   It sends no `sec`, `bat` or `sys.fsTotal`: this board has no BLE, battery
