@@ -295,6 +295,19 @@ LAUNCHER_PACKAGE = "com.amazon.tv.launcher"
 PROJECTIVY_PACKAGE = "com.spocky.projengmenu"        # a third-party launcher the Home button may open instead
 SCREENSAVER_PACKAGE = "com.amazon.ftv.screensaver"
 PASSTHROUGH_ACTIVITY = "PassthroughPlayerActivity"   # the TV showing an HDMI input
+# Keeping Projectivy as home (owner, 2026-10-25: "it reverted to the one with ads"). Projectivy takes the Home button
+# through its accessibility service. A force-stop clears that service, and Fire OS can bring its own home screen
+# forward without a Home press. Then the Amazon screen with the ads stays up until someone fixes it by hand.
+PROJECTIVY_HOME = f"{PROJECTIVY_PACKAGE}/.ui.home.MainActivity"
+PROJECTIVY_A11Y = f"{PROJECTIVY_PACKAGE}/.services.ProjectivyAccessibilityService"
+HOME_CHECK_SECS = 15.0            # how often the TV is checked while it answers (~0.4 s on the TV)
+HOME_AWAY_SECS = 120.0            # how often while it does not (standby, off the network)
+HOME_SCRIPT = (
+    f"echo @@PKG; cmd package path {PROJECTIVY_PACKAGE}; "
+    "echo @@POWER; dumpsys power | grep -E 'mWakefulness=|Display Power: state='; "
+    "echo @@FOCUS; dumpsys window | grep mCurrentFocus; "
+    "echo @@A11Y; settings get secure enabled_accessibility_services; "
+    "echo @@END")
 
 
 def _app_key(text: str) -> str:
@@ -683,6 +696,7 @@ class FireTV:
         self._clock = clock
         self._ready = False
         self._lock = asyncio.Lock()
+        self._amazon_seen = False          # heal_home saw Amazon's home screen on its last check
 
     @property
     def serial(self) -> str:
@@ -1114,6 +1128,54 @@ class FireTV:
         return {"ok": True, "path": str(target)}
 
     # -- the model's tools --
+    # -- keeping Projectivy as home --
+    async def heal_home(self) -> str:
+        """One check: when Projectivy is installed, put its accessibility service back if it is gone, and open
+        Projectivy when Amazon's home screen has been in front for two checks in a row. A single sighting is not
+        enough: it can be the short moment between pressing Home and Projectivy taking over. Answers what it did:
+        "fine", "no projectivy", "away", "service", "home", "service+home", or "pending" (one sighting only)."""
+        r, rc, out = await self.shell(HOME_SCRIPT)
+        if not r.ok or "@@END" not in out:
+            self._amazon_seen = False
+            return "away"
+        if PROJECTIVY_PACKAGE not in _section(out, "PKG"):
+            return "no projectivy"
+        did = []
+        services = _section(out, "A11Y").strip()
+        on = [x for x in services.split(":") if x and x != "null"]
+        # the TV keeps either form: package/.services.Name or package/package.services.Name
+        if not any(x.split("/")[0] == PROJECTIVY_PACKAGE and x.endswith(".ProjectivyAccessibilityService")
+                   for x in on):
+            await self.shell(_sh("settings", "put", "secure", "enabled_accessibility_services",
+                                 ":".join([*on, PROJECTIVY_A11Y]))
+                             + "; " + _sh("settings", "put", "secure", "accessibility_enabled", "1"))
+            log.warning("firetv: Projectivy's accessibility service was off; turned it back on")
+            did.append("service")
+        st = parse_state(out)
+        amazon_home = (st.power == "on" and st.package == LAUNCHER_PACKAGE and "HomeActivity" in st.activity)
+        if amazon_home and self._amazon_seen:
+            await self.shell(_sh("am", "start", "-n", PROJECTIVY_HOME))
+            log.warning("firetv: Amazon's home screen was up; opened Projectivy")
+            did.append("home")
+            amazon_home = False
+        self._amazon_seen = amazon_home
+        if did:
+            return "+".join(did)
+        return "pending" if amazon_home else "fine"
+
+    async def keep_home(self, shutdown: asyncio.Event) -> None:
+        """Runs ``heal_home`` for the daemon's life: every HOME_CHECK_SECS while the TV answers, every HOME_AWAY_SECS
+        while it does not or has no Projectivy. Never raises."""
+        while not shutdown.is_set():
+            try:
+                what = await self.heal_home()
+            except Exception as e:  # noqa: BLE001 — a failed check is tried again later
+                log.warning("firetv: the home check failed (%s)", type(e).__name__)
+                what = "away"
+            secs = HOME_AWAY_SECS if what in ("away", "no projectivy") else HOME_CHECK_SECS
+            with contextlib.suppress(asyncio.TimeoutError):
+                await asyncio.wait_for(shutdown.wait(), secs)
+
     def tools(self) -> list[dict[str, Any]]:
         return json.loads(json.dumps(TOOLS))
 
@@ -1222,6 +1284,12 @@ def parse_mdns(text: str) -> list[tuple[str, str, int]]:
 def enabled(environ: Any = None) -> bool:
     env = os.environ if environ is None else environ
     return str(env.get("EVE_FIRETV", "")).strip().lower() not in ("0", "false", "no", "off")
+
+
+def keep_home_enabled(environ: Any = None) -> bool:
+    """``EVE_FIRETV_HOME=0`` stops eve putting Projectivy back as home (FireTV.keep_home)."""
+    env = os.environ if environ is None else environ
+    return str(env.get("EVE_FIRETV_HOME", "")).strip().lower() not in ("0", "false", "no", "off")
 
 
 def make_firetv(path: Optional[Path] = None, environ: Any = None, runner: Optional[Runner] = None,

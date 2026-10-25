@@ -169,8 +169,9 @@ listening without a connected board needs `EVE_MIC_ALWAYS=1`. The
   TV is handled by code. Anything more goes to the model, which has the TV
   tools, including the d-pad, typing and a screenshot. The Mini App has a TV
   remote card (power, d-pad, back / home / menu, play-pause and seek, volume,
-  and app chips). Pair once with `eve-bridge firetv pair`. See
-  [Fire TV](docs/firetv.md).
+  and app chips). With Projectivy Launcher installed, eve puts Projectivy back
+  when Amazon's home screen with the ads comes up. Pair once with
+  `eve-bridge firetv pair`. See [Fire TV](docs/firetv.md).
 
 ### From your phone (opt-in)
 

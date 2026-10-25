@@ -85,6 +85,8 @@ class FakeAdb:
                           "com.example.coolgame", "com.example.coolgame.helper", "com.example.weatherly"]
         self.wake_works = True
         self.png = PNG
+        self.projectivy = False             # Projectivy Launcher installed
+        self.a11y = "null"                  # secure enabled_accessibility_services
         self.model = "AFTTEST1"
         self.serialno = "TESTSERIAL0001"
 
@@ -128,6 +130,13 @@ class FakeAdb:
     def shell(self, script: str) -> tuple[int, str]:
         if script == F.STATE_SCRIPT:
             return 0, state_text(self.wake, self.display, self.focus, self.volume, self.muted, self.max_index)
+        if script == F.HOME_SCRIPT:
+            pkg = f"package:/data/app/~~x==/{F.PROJECTIVY_PACKAGE}-y==/base.apk\n" if self.projectivy else ""
+            return 0, (f"@@PKG\n{pkg}@@POWER\n  mWakefulness={self.wake}\nDisplay Power: state={self.display}\n"
+                       f"@@FOCUS\n{self.focus}\n@@A11Y\n{self.a11y}\n@@END\n")
+        if script.startswith("settings put secure enabled_accessibility_services"):
+            self.a11y = shlex.split(script.split(";")[0])[-1]
+            return 0, ""
         if "resolve-activity" in script:
             pkg = script.split()[-1]
             comp = self.resolve.get(pkg, "")
@@ -1092,3 +1101,130 @@ def test_the_real_probe_tells_an_open_port_from_a_closed_one() -> None:
 
 
 _REAL_PROBE = F.tcp_probe          # taken at import, before the autouse fixture swaps it out
+
+
+# ---- keeping Projectivy as home ----
+
+PROJ_FOCUS = ("  mCurrentFocus=Window{ba41 u0 com.spocky.projengmenu/"
+              "com.spocky.projengmenu.ui.home.MainActivity}")
+
+
+def home_tv(**kw: Any) -> tuple[F.FireTV, FakeAdb]:
+    t, fake = tv()
+    fake.projectivy, fake.a11y = True, F.PROJECTIVY_A11Y
+    for k, v in kw.items():
+        setattr(fake, k, v)
+    return t, fake
+
+
+def test_home_on_projectivy_is_left_alone() -> None:
+    t, fake = home_tv(focus=PROJ_FOCUS)
+    assert run(t.heal_home()) == "fine"
+    assert fake.sent() == [F.HOME_SCRIPT]
+
+
+def test_amazon_home_twice_in_a_row_opens_projectivy() -> None:
+    t, fake = home_tv(focus=HOME_FOCUS)
+    assert run(t.heal_home()) == "pending"
+    assert not any(s.startswith("am start") for s in fake.sent())
+    assert run(t.heal_home()) == "home"
+    assert fake.sent()[-1] == f"am start -n {F.PROJECTIVY_HOME}"
+    assert F.PROJECTIVY_PACKAGE in fake.focus
+    assert run(t.heal_home()) == "fine"
+
+
+def test_amazon_home_once_between_two_other_screens_is_not_touched() -> None:
+    t, fake = home_tv(focus=HOME_FOCUS)
+    assert run(t.heal_home()) == "pending"
+    fake.focus = YT_FOCUS
+    assert run(t.heal_home()) == "fine"
+    fake.focus = HOME_FOCUS
+    assert run(t.heal_home()) == "pending"
+    assert not any(s.startswith("am start") for s in fake.sent())
+
+
+def test_amazon_settings_are_not_home() -> None:
+    t, fake = home_tv(focus="  mCurrentFocus=Window{1 u0 com.amazon.tv.launcher/"
+                            "com.amazon.tv.launcher.ui.SettingsActivity}")
+    run(t.heal_home())
+    assert run(t.heal_home()) == "fine"
+
+
+@pytest.mark.parametrize("wake,display,focus", [("Asleep", "OFF", HOME_FOCUS), ("Dreaming", "ON", DREAM_FOCUS)])
+def test_standby_and_screensaver_are_not_touched(wake: str, display: str, focus: str) -> None:
+    t, fake = home_tv(wake=wake, display=display, focus=focus)
+    run(t.heal_home())
+    assert run(t.heal_home()) == "fine"
+    assert fake.sent() == [F.HOME_SCRIPT, F.HOME_SCRIPT]
+
+
+@pytest.mark.parametrize("before,after", [
+    ("null", F.PROJECTIVY_A11Y),
+    ("", F.PROJECTIVY_A11Y),
+    ("com.example.reader/.Svc", f"com.example.reader/.Svc:{F.PROJECTIVY_A11Y}"),
+])
+def test_a_cleared_service_is_put_back_and_others_are_kept(before: str, after: str) -> None:
+    t, fake = home_tv(focus=PROJ_FOCUS, a11y=before)
+    assert run(t.heal_home()) == "service"
+    assert fake.a11y == after
+    assert "settings put secure accessibility_enabled 1" in fake.sent()[-1]
+    assert run(t.heal_home()) == "fine"
+
+
+def test_the_service_in_its_long_form_counts() -> None:
+    t, fake = home_tv(focus=PROJ_FOCUS,
+                      a11y="com.spocky.projengmenu/com.spocky.projengmenu.services.ProjectivyAccessibilityService")
+    assert run(t.heal_home()) == "fine"
+
+
+def test_service_and_home_together_after_a_force_stop() -> None:
+    t, fake = home_tv(focus=HOME_FOCUS, a11y="null")
+    assert run(t.heal_home()) == "service"
+    assert run(t.heal_home()) == "home"
+    assert fake.a11y == F.PROJECTIVY_A11Y and F.PROJECTIVY_PACKAGE in fake.focus
+
+
+def test_without_projectivy_nothing_is_changed() -> None:
+    t, fake = tv()
+    fake.focus = HOME_FOCUS
+    assert run(t.heal_home()) == "no projectivy"
+    assert run(t.heal_home()) == "no projectivy"
+    assert fake.sent() == [F.HOME_SCRIPT, F.HOME_SCRIPT]
+
+
+def test_an_unreachable_tv_is_away_and_forgets_the_sighting() -> None:
+    t, fake = home_tv(focus=HOME_FOCUS)
+    assert run(t.heal_home()) == "pending"
+    fake.at = "192.0.2.99:5555"
+    fake.mdns_rows = []
+    fake.lose_next = 5
+    assert run(t.heal_home()) == "away"
+    fake.at, fake.lose_next = SERIAL, 0
+    t._ready = False
+    assert run(t.heal_home()) == "pending"
+
+
+def test_keep_home_stops_on_shutdown_and_never_raises() -> None:
+    t, fake = home_tv(focus=HOME_FOCUS)
+    calls = []
+
+    async def boom() -> str:
+        calls.append(1)
+        raise RuntimeError("x")
+
+    t.heal_home = boom  # type: ignore[method-assign]
+
+    async def go() -> None:
+        stop = asyncio.Event()
+        task = asyncio.create_task(t.keep_home(stop))
+        await asyncio.sleep(0.05)
+        stop.set()
+        await asyncio.wait_for(task, 1.0)
+
+    run(go())
+    assert calls == [1]
+
+
+def test_keep_home_switch() -> None:
+    assert F.keep_home_enabled({}) and F.keep_home_enabled({"EVE_FIRETV_HOME": "1"})
+    assert not F.keep_home_enabled({"EVE_FIRETV_HOME": "0"})

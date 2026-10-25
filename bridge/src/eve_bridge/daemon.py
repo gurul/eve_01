@@ -448,6 +448,14 @@ class Daemon:
         # inferred again. Nothing runs while EVE_PLACES is off or nothing has been kept.
         from . import places
         tasks.append(asyncio.create_task(places.loop(self._shutdown), name="places"))
+        # The Fire TV's home screen (firetv.py): when Projectivy is installed, Amazon's home screen with the ads is
+        # replaced by Projectivy again, and Projectivy's Home-button service is turned back on. EVE_FIRETV_HOME=0
+        # stops it.
+        tv = Daemon._firetv_hub(self)
+        if tv is not None and hasattr(tv, "keep_home"):
+            from . import firetv
+            if firetv.keep_home_enabled():
+                tasks.append(asyncio.create_task(tv.keep_home(self._shutdown), name="firetv-home"))
         # The nightly dream (dream.py): the one automatic writer of the records and the mem0 index. It
         # watches the shutdown event itself and is drained, not cancelled, at the end: a night half written
         # is worse than a restart a few seconds late.

@@ -274,6 +274,14 @@ its chip suspends. So:
   Projectivy instead of Amazon's home screen, eve still says the TV is on
   "home" (and "Projectivy settings" on its settings screens). Other
   third-party launchers are read out by their package name.
+- **eve keeps Projectivy as home.** With Projectivy installed, eve checks
+  the TV every 15 seconds (every 2 minutes while the TV doesn't answer).
+  When Amazon's home screen, the one with the ads, is in front on two
+  checks in a row, eve opens Projectivy. When Projectivy's accessibility
+  service is off (a force-stop of Projectivy turns it off, and then the Home
+  button opens Amazon's screen again), eve turns it back on and keeps any
+  other services that were on. Amazon's Settings, the screensaver and
+  standby are left alone. `EVE_FIRETV_HOME=0` turns this off.
 
 ## Privacy
 
@@ -292,6 +300,7 @@ Set these in `~/.config/eve-bridge/env`:
 | Setting | What it does |
 |---|---|
 | `EVE_FIRETV=0` | Turns the Fire TV off. With no pairing it is off too, and eve gives the model no TV tools. |
+| `EVE_FIRETV_HOME=0` | Stops eve putting Projectivy back when Amazon's home screen comes up. It only does anything when Projectivy is installed. |
 | `EVE_ADB=/path/to/adb` | Uses this `adb`. Without it, eve looks on the PATH, then in `/opt/homebrew/bin` and `/usr/local/bin` (the daemon runs under launchd with a short PATH). |
 
 ## Troubleshooting
