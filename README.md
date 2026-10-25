@@ -532,6 +532,13 @@ permission choices.
   browser API on 127.0.0.1, with no API key and no prompt; eve starts it when needed.
   Meet stays on eve's own Chrome. Sign it in with `eve-bridge steel-profile`. See
   [Steel](docs/steel.md).
+- **Or Polar's own agent (opt-in, wins over the others):** with `EVE_BROWSER_POLAR=1`,
+  a web task that needs only the browser goes whole to the agent inside
+  [Polar](https://polar.app), and eve reads back its answer. Polar only: such a task never
+  falls back to Steel or Codex, and eve says why when Polar can't take it. A task that
+  would send, buy, post or delete asks you first; everything else goes read-only. Each
+  task spends Polar credits and shows in Polar's Recents. In a blind test on 16 web tasks
+  Polar scored 32/32 and Steel 23/32. See [Polar](docs/polar.md).
 - **Browser guards:** a bot check stops the task with one line to you (Cloudflare's
   self-clearing "Just a moment" check gets up to 8 s first), a click is refused
   when its control changed since the decision, upvote/like/follow-style links ask first,

@@ -2,6 +2,10 @@
 
 Owner, 2026-10-13: "replace browser with steel for eve", then "local steel".
 
+`EVE_BROWSER_POLAR=1` wins over Steel: with it on, the Steel lane is not built and browser-only web
+tasks go to Polar's agent instead ([Polar](polar.md); Polar 32/32 against Steel 23/32 in a blind test,
+2026-10-24).
+
 With `EVE_BROWSER_STEEL=1`, eve's web tasks run in a Chrome driven by
 [Steel](https://github.com/steel-dev/steel-browser) (Apache-2.0), the self-hosted
 browser API, on this Mac. Nothing goes to Steel's cloud and no Steel API key is used.

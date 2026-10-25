@@ -1547,8 +1547,11 @@ class Daemon:
         """EVE_BROWSER_ATTACH=1: the browser lane attached to the owner's own Chrome, kept for the daemon's
         life (connected on the first web task, not now). EVE_BROWSER_OWN=1: the same lane on eve's own
         Chrome instead (browser_lane.py, EVE'S OWN CHROME). None otherwise, or without Playwright."""
-        from . import browser_lane
+        from . import browser_lane, polar_lane
 
+        if polar_lane.configured().enabled:
+            log.info("chrome lane: off — EVE_BROWSER_POLAR hands browser-only web tasks to Polar's agent")
+            return None
         cfg = browser_lane.configured()
         if not cfg.attach:
             return None
@@ -1775,7 +1778,22 @@ class Daemon:
 
     def _chrome_body(self, make_inner: Any, on_event: Any, ask_user: Any) -> dict[str, Any]:
         """The Chrome lane as ReflexFirstAgent's second body, for web goals (browser_lane.is_web_goal: a URL, a
-        site, the browser). {} when the lane is off: every task stays Codex's."""
+        site, the browser). {} when the lane is off: every task stays Codex's. With EVE_BROWSER_POLAR=1 the body
+        is Polar's agent instead (polar_lane.py), and a browser-only goal never falls back to Steel or Codex."""
+        from . import polar_lane
+
+        polar = polar_lane.configured()
+        if polar.enabled:
+            from . import browser_lane
+
+            async def polar_route(goal: str) -> str:
+                from .task_router import installed_apps
+
+                return "polar" if browser_lane.is_browser_only_goal(goal, installed_apps()) else "codex"
+
+            log.info("polar: on — browser-only web tasks go to Polar's agent (%s)", polar.data_dir)
+            return {"make_auto": lambda: polar_lane.PolarAgent(polar, on_event, ask_user),
+                    "route_body": polar_route}
         lane = getattr(self, "_chrome_lane", None)
         if lane is None:
             return {}
