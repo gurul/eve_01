@@ -32,7 +32,7 @@ The Voice PE runs in one of two setups:
 | Input or state | Voice PE |
 |---|---|
 | Not connected (no message from the daemon for 30 s) | One dim dot circles the ring |
-| Connected, nothing running | Asleep: three soft blue blips rise one after another (z z Z), then a dark rest |
+| Connected, nothing running | Asleep: three soft red blips rise one after another (z z Z), then a dark rest |
 | Claude sessions running, or eve working on a task | Teal comet |
 | eve thinking | Violet double comet |
 | eve listening (wake word, or the Listen key held) | Soft blue breathe, "hm?" chirp |

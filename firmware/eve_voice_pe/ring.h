@@ -4,7 +4,7 @@
 
 enum RingLook : uint8_t {
   LOOK_OFFLINE,    // no message from the daemon for 30 s: one dim dot circles
-  LOOK_IDLE,       // connected, nothing running: asleep, three blue "z" blips rise
+  LOOK_IDLE,       // connected, nothing running: asleep, three red "z" blips rise
   LOOK_WORKING,    // Claude sessions running, or eve doing a task: teal comet
   LOOK_THINKING,   // eve thinking: violet double comet
   LOOK_LISTENING,  // eve listening: soft blue, steady breathe

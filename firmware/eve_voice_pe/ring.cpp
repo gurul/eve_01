@@ -62,7 +62,7 @@ void sleeping(uint32_t now) {
   constexpr uint32_t kCycle = 5200, kStep = 650, kBlip = 1100;
   constexpr uint8_t kAt[3] = {4, 3, 2};         // rising toward the top of the ring
   constexpr float kPeak[3] = {0.35f, 0.6f, 1.0f};  // z, z, Z
-  const Rgb moon = {90, 110, 255};
+  const Rgb moon = {255, 30, 20};
   uint32_t t = now % kCycle;
   for (uint8_t z = 0; z < 3; z++) {
     uint32_t start = z * kStep;
