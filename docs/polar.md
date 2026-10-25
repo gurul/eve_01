@@ -7,8 +7,19 @@ inside [Polar](https://polar.app), a Chromium browser with its own agent. eve do
 through Polar. It hands over the task in one sentence and reads back Polar's answer
 (`bridge/src/eve_bridge/polar_lane.py`).
 
+**The browser comes last** (owner, 2026-10-24: "only browser for when it can't use anything
+else"). A question is answered with `web_search` in the chat, and no task starts. A task that is
+only reading the public web goes to the web reader first (`web_reader.py`, no browser). Polar
+gets a task only when it needs a real browser (clicking, a form, a site the reader can't read),
+or when the web reader can't answer. Before this change the web reader's fallback was Codex in
+your Chrome.
+
 ```
-web task ─▶ route: browser only? ──no──▶ Codex (the Mac is involved)
+question ─▶ web_search in the chat (no task)
+task ─▶ Jev: only reading the public web? ──yes──▶ web reader ──can't answer──┐
+            │ no                                                              │
+            ▼                                                                 ▼
+        browser only? ──no──▶ Codex (the Mac is involved)
                  │ yes
                  ▼
             PolarAgent ─▶ consequential (send, buy, post, delete…)? ─▶ ask you first

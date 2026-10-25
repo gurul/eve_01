@@ -311,3 +311,27 @@ def test_wiring_polar_off_changes_nothing(monkeypatch: pytest.MonkeyPatch) -> No
 
     monkeypatch.delenv("EVE_BROWSER_POLAR", raising=False)
     assert Daemon._chrome_body(SimpleNamespace(_chrome_lane=None), lambda: None, lambda ev: None, None) == {}
+
+
+def test_wiring_a_reading_task_the_web_reader_cannot_answer_goes_to_polar_not_codex(
+        monkeypatch: pytest.MonkeyPatch) -> None:
+    """Owner, 2026-10-24: "only browser for when it can't use anything else". Search and the web reader come first;
+    with Polar on, the browser they fall back to is Polar's agent. With Polar off, the fallback stays Codex."""
+    from eve_bridge import web_reader
+    from eve_bridge.daemon import Daemon
+
+    import dataclasses
+
+    real = web_reader.configured({})
+    monkeypatch.setattr(web_reader, "configured", lambda *a, **k: dataclasses.replace(real, enabled=True))
+    codex = object()
+    host = SimpleNamespace(_chrome_lane=None, _telegram=None, _reader_router=lambda goal: "web")
+
+    monkeypatch.setenv("EVE_BROWSER_POLAR", "1")
+    wiring = Daemon._bodies(host, lambda: codex, lambda ev: None, None)
+    assert asyncio.run(wiring["route_body"]("what are the opening hours on spl.org")) == "web"
+    assert wiring["bodies"]["web"]()._make_fallback().provider == "polar"
+
+    monkeypatch.delenv("EVE_BROWSER_POLAR")
+    wiring = Daemon._bodies(host, lambda: codex, lambda ev: None, None)
+    assert wiring["bodies"]["web"]()._make_fallback() is codex

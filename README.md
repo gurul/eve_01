@@ -533,8 +533,9 @@ permission choices.
   Meet stays on eve's own Chrome. Sign it in with `eve-bridge steel-profile`. See
   [Steel](docs/steel.md).
 - **Or Polar's own agent (opt-in, wins over the others):** with `EVE_BROWSER_POLAR=1`,
-  a web task that needs only the browser goes whole to the agent inside
-  [Polar](https://polar.app), and eve reads back its answer. Polar only: such a task never
+  the browser is the last resort: questions go to web search and reading tasks to the web
+  reader first. A task that needs a real browser, or that the web reader can't answer,
+  goes whole to the agent inside [Polar](https://polar.app), and eve reads back its answer. Polar only: such a task never
   falls back to Steel or Codex, and eve says why when Polar can't take it. A task that
   would send, buy, post or delete asks you first; everything else goes read-only. Each
   task spends Polar credits and shows in Polar's Recents. In a blind test on 16 web tasks

@@ -1743,8 +1743,12 @@ class Daemon:
     def _bodies(self, make_inner: Any, on_event: Any, ask_user: Any) -> dict[str, Any]:
         """ReflexFirstAgent's bodies beside Codex, and the one router that picks between them: Jev first
         (browser_router.py: the web reader for a public-web reading task, web_reader.py), then the Chrome lane's rule
-        for a web goal, else Codex. {} when neither extra body is on: every task stays Codex's."""
-        from . import web_reader
+        for a web goal, else Codex. {} when neither extra body is on: every task stays Codex's.
+
+        With EVE_BROWSER_POLAR=1 the browser is the last resort (owner, 2026-10-24: "only browser for when it
+        can't use anything else"): a reading task the web reader cannot answer goes to Polar's agent, not to
+        Codex in the owner's Chrome."""
+        from . import polar_lane, web_reader
 
         chrome = Daemon._chrome_body(self, make_inner, on_event, ask_user)
         reader_on = web_reader.configured().enabled
@@ -1763,8 +1767,10 @@ class Daemon:
                 return body
             return await chrome_route(goal) if chrome_route is not None else "codex"
 
+        polar = polar_lane.configured()
+        reader_fallback = (lambda: polar_lane.PolarAgent(polar, on_event, ask_user)) if polar.enabled else make_inner
         return {**chrome, "route_body": route_body,
-                "bodies": {"web": lambda: web_reader.WebReaderAgent(make_inner, on_event, ask_user)}}
+                "bodies": {"web": lambda: web_reader.WebReaderAgent(reader_fallback, on_event, ask_user)}}
 
     def _reader_route(self) -> Any:
         """browser_router's Jev router, made once (None without a Jev route: every task stays where it was)."""
