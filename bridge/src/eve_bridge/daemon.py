@@ -819,6 +819,15 @@ class Daemon:
                 self._last_hb_sent_at = now
             else:
                 log.warning("heartbeat: ble.send returned failure")
+        else:
+            # No robot plugged in: the controller still needs the heartbeat. Its copy came only from the robot's
+            # sends, so with the StackChan retired the Voice PE heard nothing, counted itself offline after 30 s
+            # and refused hold to talk (2026-10-24).
+            ctl = getattr(self, "_controller", None)
+            if ctl is not None and ctl.connected:
+                await ctl.mirror(snap)
+                self._last_hb_serialized = serialized
+                self._last_hb_sent_at = now
 
     async def _resync_board(self) -> None:
         """Re-run the on-connect resync after a board reboot on a live link:

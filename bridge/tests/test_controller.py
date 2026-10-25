@@ -115,3 +115,23 @@ async def test_the_beeps_are_the_robots_alone() -> None:
     assert ctl.link.sent[0] == {"cmd": "sound", "on": False}
     task.cancel()
     await asyncio.gather(task, return_exceptions=True)
+
+
+@run
+async def test_the_controller_gets_the_heartbeat_with_no_robot_plugged_in() -> None:
+    # The StackChan retired, the robot link stays down; the Voice PE must still hear the daemon, or it counts
+    # itself offline after 30 s and refuses hold to talk.
+    from types import SimpleNamespace
+
+    from eve_bridge.daemon import Daemon
+    from eve_bridge.state import State
+
+    ctl, _ = make()
+    ctl.link.plug(True)
+    robot = SimpleNamespace(connected=False)
+    d = SimpleNamespace(state=State(), _cjk_codec=None, _last_hb_serialized="", _last_hb_sent_at=0.0,
+                        ble=robot, _controller=ctl)
+    await Daemon._push_heartbeat(d)
+    assert len(ctl.link.sent) == 1 and "total" in ctl.link.sent[0]
+    await Daemon._push_heartbeat(d)                       # unchanged and fresh: not resent
+    assert len(ctl.link.sent) == 1
