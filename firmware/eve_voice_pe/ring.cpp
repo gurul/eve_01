@@ -86,16 +86,16 @@ void render(uint32_t now) {
       sleeping(now);
       break;
     case LOOK_WORKING:
-      comet({0, 170, 150}, 1400, 1, now);
+      comet({230, 20, 8}, 1400, 1, now);
       break;
     case LOOK_THINKING:
-      comet({150, 60, 255}, 1100, 2, now);
+      comet({200, 0, 70}, 1100, 2, now);
       break;
     case LOOK_LISTENING:
-      fill({40, 110, 255}, 0.45f + 0.35f * breathe(2400, now));
+      fill({255, 40, 25}, 0.45f + 0.35f * breathe(2400, now));
       break;
     case LOOK_SPEAKING:
-      fill({40, 110, 255}, 0.3f + 0.7f * breathe(600, now));
+      fill({255, 40, 25}, 0.3f + 0.7f * breathe(600, now));
       break;
     case LOOK_WAITING:
       fill({255, 140, 0}, 0.15f + 0.85f * breathe(1500, now));

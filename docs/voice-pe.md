@@ -33,10 +33,10 @@ The Voice PE runs in one of two setups:
 |---|---|
 | Not connected (no message from the daemon for 30 s) | One dim dot circles the ring |
 | Connected, nothing running | Asleep: three soft red blips rise one after another (z z Z), then a dark rest |
-| Claude sessions running, or eve working on a task | Teal comet |
-| eve thinking | Violet double comet |
-| eve listening (wake word, or the Listen key held) | Soft blue breathe, "hm?" chirp |
-| eve speaking | Quick blue pulse |
+| Claude sessions running, or eve working on a task | Red comet |
+| eve thinking | Crimson double comet |
+| eve listening (wake word, or the Listen key held) | Soft red breathe, "hm?" chirp |
+| eve speaking | Quick red pulse |
 | A session waits on you | Amber pulse, attention chirp when the count rises |
 | Task finished | Green sweep, happy trill |
 | Error | Red blink, falling boop |
@@ -54,14 +54,14 @@ The Voice PE runs in one of two setups:
 Hold to talk works like **Call eve** in the Telegram Mini App
 ([calling eve](stackchan/miniapp.md#calling-eve)), but uses the board's button:
 
-1. Hold the button. The ring turns blue, and the daemon records the **Mac
+1. Hold the button. The ring turns red, and the daemon records the **Mac
    microphone** (`EVE_MIC`, the wake word's device).
 2. Let go. The daemon transcribes the press and sends it to **the Telegram
    chat's brain**, as if you had typed it. The chat's tools all work, and the
-   Telegram chat keeps a written copy. The ring spins violet while eve thinks.
+   Telegram chat keeps a written copy. The ring spins crimson while eve thinks.
 3. eve reads the reply aloud on the **Voice PE's speaker**, or on the Mac
    speaker if no controller is connected when the call starts. The ring pulses
-   blue. Press again while it speaks to stop it and talk. The dial sets the
+   red. Press again while it speaks to stop it and talk. The dial sets the
    voice's volume.
 
 The daemon side is `bridge/src/eve_bridge/desk_call.py`. It runs
