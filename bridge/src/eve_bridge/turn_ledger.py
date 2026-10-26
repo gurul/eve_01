@@ -20,7 +20,8 @@ calls. This module is that join: one small JSON line per event in a per-day file
   Mac task's run log (computer_agent.py) or Codex's own turn id (codex_computer.py).
 * **Names and numbers only** (AGENTS.md rule 9). Every event has an allowlist of keys; anything else is dropped
   before the line is built, and every string is checked against a name pattern (a tool, a model, a door), so no
-  message text, tool argument, tool result, recipient or token can reach the file, whatever a caller passes.
+  sentence, email address or phone number can reach the file, whatever a caller passes. The callers pass names and
+  numbers only: never message text, a tool's arguments or result, a recipient or a token.
 * **Never raises.** A failed write is one log line (the type only), never a failed turn.
 * ``EVE_TURN_LEDGER=0`` turns it off: no file, no trace id, and spend rows exactly as they were.
 
@@ -56,8 +57,10 @@ DOORS = frozenset({"telegram", "app", "call", "voice", "work", "other"})
 OUTCOMES = frozenset({"answered", "silent", "small_talk", "failed", "cancelled", "error", "open"})
 LINKS = frozenset({"agent_run", "codex"})
 
-# A name: a tool, a model id, a trace id, a linked id. Short, no spaces: a sentence can never pass.
-_NAME = re.compile(r"^[A-Za-z0-9_.:/@+-]{1,80}$")
+# A name: a tool, a model id, a trace id, a linked id. Short, no spaces: a sentence can never pass. No "@" and no
+# "+", so an email address or an international phone number cannot pass either. One bare word still can, so every
+# caller passes a name, never a value it was handed.
+_NAME = re.compile(r"^[A-Za-z0-9_.:/-]{1,80}$")
 _TRACE_ID = re.compile(r"^[0-9a-f]{16}$")
 
 # Per event: the keys a row may carry, and the kind of each. Every other key is dropped.

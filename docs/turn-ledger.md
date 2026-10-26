@@ -24,10 +24,10 @@ One JSON line per event, in a per-day file named by the local date:
 
 | Event | Written by | Fields |
 |---|---|---|
-| `turn.started` | each text turn of the chat brain (`telegram.py`, `_answer_turn`), once the turn lock is held | `door`; `parent` when one turn ran inside another |
+| `turn.started` | each text turn of the chat brain (`telegram.py`, `TelegramInlet._turn`), once the turn lock is held | `door`; `parent` when one turn ran inside another |
 | `turn.settled` | the same turn, on the way out | `outcome` (`answered`, `silent`, `small_talk`, `failed`, `error`, `cancelled`), `rounds`, `total_ms` |
 | `model` | each chat model call in the round loop, the out-of-rounds summary, and the small-talk lane's call | `model`, `ms`, `in`, `cached`, `out` (this call's tokens), `usd` (null when not priced) |
-| `call` | every tool call through `Telegram._tool` | `tool`, `ok`, `ms`, `gated` (the taint gate asked first) |
+| `call` | every tool call through `TelegramInlet._tool` | `tool`, `ok`, `ms`, `gated` (the taint gate asked first) |
 | `gate` | each taint-gate question (`_gated_tool`) | `tool`, `allowed`, `ms` (how long the asking took, the owner's time included) |
 | `link` | a Mac task's run log (`computer_agent.py`), Codex's own turn id (`codex_computer.py`) | `kind` (`agent_run` or `codex`), `ref` |
 
@@ -45,9 +45,11 @@ One JSON line per event, in a per-day file named by the local date:
   `link` row names the run log, so each can be found from the other.
 - **Names and numbers only** (AGENTS.md rule 9). Each event has an allowlist of
   keys, and every other key is dropped before the line is built. Every string
-  must look like a name (letters, digits and `_.:/@+-`, no spaces, at most 80
-  characters) or it is written as `?`. No message text, tool argument, tool
-  result, recipient or token can reach the file, whatever a caller passes.
+  must look like a name (letters, digits and `_.:/-`, no spaces, at most 80
+  characters) or it is written as `?`, so no sentence, email address or phone
+  number can reach the file, whatever a caller passes. A single bare word could,
+  so the callers pass only names and numbers: never message text, a tool's
+  arguments or result, a recipient or a token.
   `bridge/tests/test_turn_ledger.py` checks this with a sentinel string in the
   message, the tool's arguments, its result and the reply. A deliberately leaky
   writer fails the same check, which proves the check can fail.

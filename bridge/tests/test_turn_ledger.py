@@ -97,6 +97,18 @@ def test_the_allowlist_drops_any_key_and_any_sentence_a_caller_passes(folder: Pa
     assert not any(r["ev"] == "not.an.event" for r in all_rows(folder))
 
 
+def test_an_address_or_a_phone_number_is_not_a_name(folder: Path) -> None:
+    """One word can look like a name; an email address or an international number must not (a recipient)."""
+    with turn_ledger.turn("app"):
+        turn_ledger._emit("call", tool="sam@example.com", ok=True, ms=1)
+        turn_ledger._emit("call", tool="+15550100", ok=True, ms=1)
+        turn_ledger._emit("model", model="openai/gpt-6-luna:online", ms=1)
+    assert "example.com" not in ledger_text(folder) and "15550100" not in ledger_text(folder)
+    rows = all_rows(folder)
+    assert [r["tool"] for r in rows if r["ev"] == "call"] == ["?", "?"]
+    assert [r["model"] for r in rows if r["ev"] == "model"] == ["openai/gpt-6-luna:online"]
+
+
 def test_a_gated_call_says_so_and_the_asking_is_timed(monkeypatch: pytest.MonkeyPatch, folder: Path) -> None:
     rig = _rig_with_search(monkeypatch)
     real = tool_gate.needs_confirmation
