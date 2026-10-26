@@ -653,7 +653,7 @@ Say **hey eve** and the daemon opens a spoken conversation that can run your
 Mac. The wake word is spotted on-device (sherpa-onnx keyword spotting on the
 Mac microphone, ~1 % of a core, no cloud until you speak); the conversation is a
 Realtime session (`gpt-realtime-2.1-mini`, speech in and out, barge-in); a task
-on the computer is a `gpt-6-astra` loop that screenshots, writes PyAutoGUI and
+on the computer is a `gpt-6.1-terra` loop that screenshots, writes PyAutoGUI and
 runs it in a worker process on the real desktop, up to 25 steps, asking out loud
 before anything consequential, stopping on "stop", taking corrections mid-task.
 The robot mirrors every phase (`{"cmd":"agent","state":..}`).
@@ -680,7 +680,7 @@ eve, go explore"* sends the robot off to look around the room right away
 | `EVE_WAKE_THRESHOLD` | `0.25` | lower = more sensitive |
 | `EVE_MIC` | default input | input device name substring |
 | `EVE_LIVE_MODEL` / `EVE_VOICE_NAME` / `EVE_VOICE_IDLE_SECS` | `gpt-live-1` / `marin` / `20` | the conversation |
-| `EVE_COMPUTER_CONTROL` / `EVE_AGENT_MODEL` / `EVE_AGENT_MAX_TURNS` | on / `gpt-6-astra` / `25` | computer use; action logs under `~/.config/eve-bridge/agent-runs/` |
+| `EVE_COMPUTER_CONTROL` / `EVE_AGENT_MODEL` / `EVE_AGENT_MAX_TURNS` | on / `gpt-6.1-terra` / `25` | computer use; action logs under `~/.config/eve-bridge/agent-runs/` |
 
 ## Idle explorer and the diary
 

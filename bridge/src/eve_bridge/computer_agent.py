@@ -1,4 +1,4 @@
-"""The brain for computer control: gpt-6-astra driving this Mac through exec_py.
+"""The brain for computer control: gpt-6.1-terra driving this Mac through exec_py.
 
 One `ComputerAgent.run(goal)` is one task. Turn 1 already carries the
 screen size, the frontmost app and window, the local time and a screenshot
@@ -64,7 +64,7 @@ from .fast_lane import DECIDE_MODES, DEFAULT_DECIDE, FAST_LANE_DEFAULT, LANE_FIR
 
 log = logging.getLogger(__name__)
 
-DEFAULT_MODEL = "gpt-6-astra"
+DEFAULT_MODEL = "gpt-6.1-terra"   # owner, 2026-10-26: general computer use moves off astra; EVE_AGENT_MODEL overrides
 DEFAULT_BROWSER_MODEL = "gpt-6-luna"
 DEFAULT_MAX_TURNS = 25
 DEFAULT_EXEC_TIMEOUT_SECS = 60.0

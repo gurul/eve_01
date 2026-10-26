@@ -8,7 +8,7 @@ def test_browser_default_keeps_desktop_and_other_budgets():
     cfg = ca.AgentConfig(max_turns=9, max_secs=83, verify=False)
     browser = ca.browser_config(cfg, {})
     assert browser.model == 'gpt-6-luna'
-    assert cfg.model == 'gpt-6-astra'
+    assert cfg.model == 'gpt-6.1-terra'
     assert browser is not cfg and browser.max_turns == 9 and browser.max_secs == 83 and not browser.verify
 
 
@@ -31,4 +31,4 @@ def test_actual_daemon_browser_factory_uses_browser_config(monkeypatch):
     planner = body._make_planner(lambda ev: None, None)
     assert planner.config.model == 'gpt-6-luna'
     assert planner.browser is lane
-    assert cfg.model == 'gpt-6-astra'
+    assert cfg.model == 'gpt-6.1-terra'

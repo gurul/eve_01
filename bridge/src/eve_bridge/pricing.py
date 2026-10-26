@@ -85,6 +85,7 @@ def estimate_cost(model_id: str, usage: dict) -> float:
 # tokens, grounded the day they were written:
 #   developers.openai.com/api/docs/pricing, 2026-09-21 (standard tier; long-context variants cost double)
 #   gpt-6-sol and gpt-6-luna: developers.openai.com/api/docs/pricing, 2026-09-24 (standard tier)
+#   gpt-6.1-terra: openrouter.ai/api/v1/models, 2026-10-26 (under 272k prompt tokens)
 #   docs.typesafe.ai/models, 2026-09-21: jev-1.13 $0.042 per million input tokens, output free
 # An unknown model prices to None on purpose: a wrong figure in a bill is worse than a blank one.
 
@@ -92,6 +93,7 @@ OPENAI_RATES: dict[str, dict[str, float]] = {
     "gpt-6-astra":   {"input": 10.0, "cached": 1.0,  "output": 50.0},
     "gpt-6-sol":     {"input": 2.0,  "cached": 0.20, "output": 10.0},
     "gpt-6-luna":    {"input": 0.10, "cached": 0.01, "output": 0.50},
+    "gpt-6.1-terra": {"input": 1.0,  "cached": 0.05, "output": 5.0},
     "gpt-5.6-sol":   {"input": 4.0,  "cached": 0.40, "output": 20.0},
     "gpt-5.6-terra": {"input": 2.0,  "cached": 0.20, "output": 12.0},
     "gpt-5.6-luna":  {"input": 0.20, "cached": 0.02, "output": 1.20},

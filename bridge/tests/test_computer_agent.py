@@ -131,7 +131,7 @@ async def _no_sleep(_s: float) -> None:
 
 def test_configured_defaults_and_env() -> None:
     c = configured({})
-    assert c.enabled and c.model == "gpt-6-astra" and c.max_turns == 25
+    assert c.enabled and c.model == "gpt-6.1-terra" and c.max_turns == 25
     c = configured({"EVE_COMPUTER_CONTROL": "off", "EVE_AGENT_MODEL": "gpt-5.6-sol",
                     "EVE_AGENT_MAX_TURNS": "3"})
     assert not c.enabled and c.model == "gpt-5.6-sol" and c.max_turns == 3
@@ -225,7 +225,7 @@ def test_happy_path_chains_outputs_and_ends_on_final(tmp_path: Path) -> None:
     assert worker.executed == ["display(pyautogui.screenshot())", "pyautogui.click(1, 2)"]
     # request shapes: turn 1 carries the goal, the context line and the observe screenshot
     r1, r2, r3 = client.requests
-    assert r1["model"] == "gpt-6-astra" and "previous_response_id" not in r1
+    assert r1["model"] == "gpt-6.1-terra" and "previous_response_id" not in r1
     [first] = r1["input"]
     assert first["type"] == "message" and first["role"] == "user"
     assert first["content"][0]["type"] == "input_text"
@@ -521,7 +521,7 @@ def test_action_log_records_goal_exec_results_and_final(tmp_path: Path) -> None:
     asyncio.run(a.run("look"))
     assert a.run_log is not None and a.run_log.parent == tmp_path / "runs"
     lines = [json.loads(ln) for ln in a.run_log.read_text().splitlines()]
-    assert lines[0]["goal"] == "look" and lines[0]["model"] == "gpt-6-astra"
+    assert lines[0]["goal"] == "look" and lines[0]["model"] == "gpt-6.1-terra"
     assert lines[1] == {"t": 1.0, "worker": {"width": 100, "height": 50}}          # the ready line, minus "ready"
     assert lines[2] == {"t": 1.0, "turn": 0, "context": "frontmost: Warp — 'zsh'; screen 100x50; 14:02"}
     assert lines[3] == {"t": 1.0, "turn": 1, "effort": "high", "api_secs": 0.0}
@@ -744,10 +744,10 @@ def test_the_run_log_ends_with_the_bill(tmp_path: Path) -> None:
     lines = [json.loads(ln) for ln in a.run_log.read_text().splitlines()]
     assert "bill" in lines[-1] and "final" in lines[-2]
     bill = lines[-1]["bill"]
-    assert bill["model"] == "gpt-6-astra" and bill["calls"] == 1
+    assert bill["model"] == "gpt-6.1-terra" and bill["calls"] == 1
     assert bill["tokens"] == {"in": 1_000_000, "cached": 200_000, "out": 100_000}
-    assert abs(bill["usd"] - 13.2) < 1e-6 and bill["jev"] == {"calls": 0, "input_tokens": 0, "ms": 0, "errors": 0, "usd": 0.0}
-    assert abs(bill["total_usd"] - 13.2) < 1e-6 and bill["secs"] == 6.5
+    assert abs(bill["usd"] - 1.31) < 1e-6 and bill["jev"] == {"calls": 0, "input_tokens": 0, "ms": 0, "errors": 0, "usd": 0.0}
+    assert abs(bill["total_usd"] - 1.31) < 1e-6 and bill["secs"] == 6.5
     # a model the table does not know: tokens yes, dollars null, never a guess
     cfg = AgentConfig(runs_dir=tmp_path / "runs2", model="gpt-9-mystery", reflexes=False, lane_first=False)
     b, _ = _agent(FakeClient([_response("r1", _message("ok"), usage=usage)]), FakeWorker(), tmp_path, config=cfg)
