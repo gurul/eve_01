@@ -985,6 +985,37 @@ table does not know, never a guess. `tools/bill_report.py` sums a runs directory
 total. The Jev Engineering article's rule: "track the bill per completed task", so a cheap decision that
 sent a worker down the wrong branch shows up as what it cost.
 
+### Old screenshots: measured, not dropped (2026-10-26)
+
+The planner resends its whole history each turn, screenshots included, with `truncation: "auto"`.
+Dropping old screenshots (`prune_images`, behind `EVE_AGENT_KEEP_SHOTS`) would be worth building only
+if a turn gets slower as its input grows. `tools/agent_tokens_report.py` reads the run logs' per-call
+lines (`turn`, `api_secs`, `tokens.in`) and prints, per model and per turn index, the call count, the
+median input tokens and the median API seconds; then the correlation and least-squares slope of
+`api_secs` against input tokens, and the share of runs that reached turn 8. The rule is fixed in the
+tool: **build** only with at least 30 calls of the default model, r ≥ 0.3 and a positive slope; fewer
+calls is "not measured". It prints numbers and model names only, no text from a log.
+
+The owner's logs on 2026-10-26 (147 runs, all before the default moved to `gpt-6.1-terra` that day):
+
+| Model | Runs (with a planner call) | Calls | Max input | r | Slope | Runs reaching turn 8+ |
+|---|---|---|---|---|---|---|
+| `gpt-6.1-terra` (default) | 0 | 0 | — | — | — | — |
+| `gpt-6-astra` | 146 (70) | 307 | 39,887 | 0.39 | +0.118 s per 1k tokens | 10 (14.3 %) |
+| `gpt-6-luna` | 1 (0) | 0 | — | — | — | — |
+
+On astra, the median call took 3.5 s at turn 1 (3.2k tokens in), 4.5 s at turn 4 (9.0k), 4.2 s at
+turn 8 (15.8k) and 5.1 s at turn 10 (20.4k); turns 1–3 had a median of 3.45 s and turns 8 and later
+5.26 s (45 calls). The median run lasted 3 turns. The correlation holds without the two calls over
+10 s (r 0.36) and without turn 1, which runs at the plan's reasoning effort (r 0.41); Spearman's is
+0.37. So, against the earlier reading, astra's latency **did** rise with input, about 4 s across its
+largest run, while input stayed far below the point where `truncation: "auto"` drops anything.
+
+**Decision: not built.** The rule is about the default model, and there are no `gpt-6.1-terra` runs
+yet. Re-run `.venv/bin/python tools/agent_tokens_report.py` once terra has 30 or more planner calls.
+If it prints `build`, `prune_images` still ships only after a blind eval shows no loss of success
+and lower `api_secs` at turn 8 or later, because removing screenshots changes what the model reads.
+
 ## How the evidence was kept honest
 
 - A holdout is written by an author who has seen neither the code nor any other set, and is run
