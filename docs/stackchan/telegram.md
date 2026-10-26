@@ -764,7 +764,11 @@ Flip it to `ask` if two seconds a command is a price you will pay.
     - **Why it is off.** The withdrawn call's result is new text the brain
       reads, so it needs a blind eval (corrections against today's queue)
       before it is on by default (AGENTS.md, rule 6). The tests are
-      `pytest tests/test_tool_gate.py -k withdraw`.
+      `pytest tests/test_tool_gate.py -k withdraw`. The bar is
+      [docs/evals/gate-withdraw-BAR.md](../evals/gate-withdraw-BAR.md); the harness,
+      `bridge/tools/gate_withdraw_eval.py --arm off|on`, drives the real chat
+      turn with every acting tool a recorder (its docstring lists the gated
+      tools it can drive, also in `tests/fixtures/gate_withdraw_tools.json`).
   - **Out loud.** The voice brain has the same gate
     (`voice_agent.VoiceSession._gate`): a consequential call waits for approval, whether or not outside text was read. **Code says the question, not
     the model** (2026-10-09): `tool_gate.spoken_question` writes it from the
