@@ -1535,12 +1535,17 @@ class _SteerEntry:
 @dataclass(eq=False)
 class _Steering:
     """The running text turn's inbox (EVE_CHAT_STEER): its chat, the messages waiting to be folded in, and whether
-    it still folds (``open``; closed when the turn makes no further model call with tools)."""
+    it still folds (``open``; closed when the turn makes no further model call with tools, or when another turn is
+    queued behind it, so a later message never jumps that one). ``turn``: the running turn's key in
+    ``_open_turns``; ``said``: its own message's words; ``keys``: every steered message's key, folded or not."""
 
     chat_id: int
+    turn: int = 0
+    said: str = ""
     inbox: list[_SteerEntry] = field(default_factory=list)
     open: bool = True
     folded: list[str] = field(default_factory=list)
+    keys: set[int] = field(default_factory=set)
 
 
 def graded(payload: dict[str, Any], config: TelegramConfig, grade: str) -> dict[str, Any]:
@@ -3609,8 +3614,14 @@ class TelegramInlet:
                 or _FROM_APP.get() is not None or _FROM_CALL.get() is not None
                 or not inbound.text.strip() or EVE_PREFIX.match(inbound.text)):
             return None
+        if set(self._open_turns) - steering.keys - {steering.turn}:
+            # another turn (a picture, a quick answer's fallback, an app turn) already waits behind the running
+            # one: this message, and every later one, keeps its place after that turn, as today
+            steering.open = False
+            return None
         entry = _SteerEntry(inbound, self._wall())
         steering.inbox.append(entry)
+        steering.keys.add(id(inbound))
         log.info("telegram: steer: a message waits for the running turn's next model call")
         return entry
 
@@ -5490,8 +5501,8 @@ class TelegramInlet:
         self._turn_said = inbound.text                # take_on's door floor reads it; gone with the turn
         # EVE_CHAT_STEER: a typed Telegram text turn (never a rundown, a call's or an app's) takes the chat's
         # further plain messages into its next model call (_steer_entry, _steer_into)
-        steering = (_Steering(chat_id) if _chat_steer() and not daily and not handoff
-                    and _FROM_APP.get() is None and _FROM_CALL.get() is None else None)
+        steering = (_Steering(chat_id, turn=id(inbound), said=inbound.text) if _chat_steer() and not daily
+                    and not handoff and _FROM_APP.get() is None and _FROM_CALL.get() is None else None)
         if steering is not None:
             self._steering = steering
         try:
@@ -6368,11 +6379,20 @@ class TelegramInlet:
         lines = self._chat_log.lines(self._log_chat())
         now = self._turn_said
         if now:
+            # the turn's own messages, newest last: its message, and any folded into it (EVE_CHAT_STEER)
+            steering = self._steering
+            own = [steering.said, *steering.folded] if steering is not None and steering.folded else [now]
+            cut = None
             for i in range(len(lines) - 1, -1, -1):
                 if lines[i].who == "user":
-                    if lines[i].text == now or lines[i].text.startswith(now + " ["):
-                        lines = lines[:i]
+                    if own and (lines[i].text == own[-1] or lines[i].text.startswith(own[-1] + " [")):
+                        own.pop()
+                        cut = i
+                        if own:
+                            continue
                     break
+            if cut is not None:
+                lines = lines[:cut]
         # "back": how far back each line is, 1 the newest before the message being answered; "owner_back" counts the
         # owner's own messages only, 1 their last one before this. "The one before the one I quoted" and "the message
         # I sent before my last one" are then numbers to read, not lines to count (eval, 2026-10-08: the brain

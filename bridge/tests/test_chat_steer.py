@@ -446,3 +446,82 @@ def test_steer_a_gated_acting_call_after_a_folded_message_still_asks(
     assert _users(create.requests[1])[-1] == "and then forget it"
     assert not any(c[0] == "forget_apply" for c in memory.calls)
     assert len(create.requests) == 3 and rig.inlet._open_turns.most == 2   # its queued turn ended unasked
+
+
+def test_steer_a_turn_already_queued_behind_keeps_its_place(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A turn that waits behind the running one (a picture, a quick answer's fallback) is answered before a message
+    typed after it: that message is not folded ahead of it, and neither is any later one."""
+    _on(monkeypatch)
+    release = asyncio.Event()
+    create = FakeCreate(_held(release, call("web_search", {"query": "ramen"})), say("Ramen: Ippudo."),
+                        say("That is a cat."), say("Sushi: Nobu."))
+    rig = Rig(FakeApi(), create)
+    rig.inlet._tool = _Tools()
+
+    async def go() -> None:
+        turn = asyncio.ensure_future(rig.inlet._turn(_typed(FIRST, message_id=7)))
+        await _until(lambda: len(create.requests) == 1)
+        between = asyncio.ensure_future(rig.inlet._turn(_typed("what is in this picture", message_id=8)))
+        await settle()
+        rig.inlet._handle(_typed(SECOND, message_id=9))
+        await settle()
+        assert rig.inlet._steering is not None and rig.inlet._steering.inbox == []
+        assert rig.inlet._steering.open is False
+        release.set()
+        await asyncio.wait_for(asyncio.gather(turn, between), 1.0)
+        await _jobs(rig)
+
+    asyncio.run(go())
+    assert len(create.requests) == 4
+    assert SECOND not in _users(create.requests[1])                     # never folded into the first turn
+    assert _users(create.requests[2])[-1] == "what is in this picture"
+    assert _users(create.requests[3])[-1] == SECOND
+    assert [t for _c, t in rig.api.sent][-3:] == ["Ramen: Ippudo.", "That is a cat.", "Sushi: Nobu."]
+
+
+def test_steer_recent_messages_leaves_out_every_message_of_the_turn(
+        monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """With a message folded in, recent_messages still leaves out the messages being answered (both of them), so
+    "the message before my last one" counts from before the turn."""
+    from test_chat_memory import rig_with_log
+
+    _on(monkeypatch)
+    release = asyncio.Event()
+    earlier = "remind me to water the plants on friday"
+    rig, wall, log = rig_with_log(tmp_path, _held(release, call("web_search", {"query": "ramen"})),
+                                  call("recent_messages", {"count": 6, "before": 0}, call_id="call_2"),
+                                  say("Sushi: Nobu."))
+    if log is None:
+        pytest.skip("no chat log module")
+    tools = _Tools()
+    real_tool = rig.inlet._tool
+
+    async def tool(name: str, args: dict[str, Any], chat_id: int) -> dict[str, Any]:
+        if name == "recent_messages":
+            return await real_tool(name, args, chat_id)
+        return await tools(name, args, chat_id)
+
+    rig.inlet._tool = tool
+    rig.inlet._note("user", earlier)
+    wall.t += 20
+    rig.inlet._note("eve", "I will remind you on Friday.")
+    wall.t += 20
+
+    async def go() -> None:
+        turn = asyncio.ensure_future(rig.inlet._turn(_typed(FIRST, message_id=7)))
+        await _until(lambda: len(rig.create.requests) == 1)
+        rig.inlet._handle(_typed(SECOND))
+        await settle()
+        release.set()
+        await asyncio.wait_for(turn, 1.0)
+        await _jobs(rig)
+
+    asyncio.run(go())
+    outs = [json.loads(i["output"]) for i in rig.create.requests[-1]["input"]
+            if i.get("type") == "function_call_output" and i.get("call_id") == "call_2"]
+    assert outs, "recent_messages never ran"
+    texts = [m.get("text") for m in outs[0]["messages"]]
+    assert FIRST not in texts and SECOND not in texts
+    assert earlier in texts
+    owner = {m["owner_back"]: m["text"] for m in outs[0]["messages"] if "owner_back" in m}
+    assert owner[1] == earlier

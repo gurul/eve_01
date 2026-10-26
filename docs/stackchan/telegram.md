@@ -1131,6 +1131,13 @@ read it. Nothing new is acknowledged, as before.
   withdrawal (`EVE_GATE_WITHDRAW`), a picture and a message for another chat are
   all routed as before. A rundown, a phone call's turn and an Eve Link app turn
   (Work sessions included) keep the queue.
+- **A turn already waiting keeps its place.** When another turn is queued
+  behind the running one (a picture, an app turn, a quick answer that fell back
+  to the model), the turn stops taking messages: a message typed after that turn
+  is answered after it, as today, never folded ahead of it.
+- **`recent_messages` leaves out every message the turn answers**, the folded
+  ones as well as its own, so "the message before my last one" still counts
+  from before the turn.
 - **The gate is unchanged.** An acting call written after a folded message asks
   exactly as it would in its own turn.
 - Logs say only that a message waited and how many were folded into which
