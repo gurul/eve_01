@@ -373,7 +373,8 @@ are on) and `share: on`. Then send one message from the phone.
   then confirm the `code: … @ <commit>` line in the log is the commit you merged.
 - **Where things are.** The daemon: `bridge/src/eve_bridge/daemon.py`. The
   chat brain and every tool it offers: `telegram.py` (large; grep for `_tool_`).
-  Tool safety: `tool_gate.py`, `consent.py`. eve's apps: `app_registry.py` (one line
+  Tool safety: `tool_gate.py`, `consent.py`. Turn timings: `turn_ledger.py` (`eve-bridge turns`,
+  `eve-bridge trace <id>`, [turn ledger](docs/turn-ledger.md)). eve's apps: `app_registry.py` (one line
   each; every wiring site reads it), `app_template/` (`eve-bridge app new`), and the
   phone's generic sheet `ios/EveLink/App/GenericAppSheet.swift`. Routing: `toolset_router.py`,
   `grade_router.py`, `search_router.py`. Connected accounts: `apps_mcp.py`,

@@ -243,6 +243,8 @@ LITE_CLASSIFIED: dict[str, str] = {
     **_why("kept: Jev's model and wait, for anything left that calls it (its route is forced to OpenRouter)",
            "EVE_JEV_MODEL", "EVE_JEV_TIMEOUT"),
     **_why("kept: where spend lines go", "EVE_SPEND_DIR"),
+    **_why("kept: the turn ledger (turn_ledger.py), on in lite and full eve alike: timings, names and ids only, never "
+           "words; 0 turns it off, and where its lines go", "EVE_TURN_LEDGER", "EVE_TURNS_DIR"),
     **_why("kept: the clock's time zone and the weather's place, set by the user or not at all", "EVE_TIMEZONE",
            "EVE_LOCATION", "EVE_WEATHER_PLACE", "EVE_WEATHER_LAT", "EVE_WEATHER_LON"),
     **_why("kept: where the env file is (lite's installer writes the default one)", "EVE_ENV_FILE"),

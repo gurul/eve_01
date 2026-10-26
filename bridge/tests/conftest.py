@@ -55,6 +55,18 @@ def _spend_ledger_in_tmp(_test_dir):
 
 
 @pytest.fixture(autouse=True)
+def _turn_ledger_in_tmp(_test_dir):
+    """Every test's turn ledger lines (turn_ledger.py) go to a temporary folder, never the owner's real ledger: every
+    text turn a test drives writes them. Not made until a line is written."""
+    from eve_bridge import turn_ledger
+
+    folder = _test_dir / "turns"
+    turn_ledger.set_dir(folder)
+    yield folder
+    turn_ledger.set_dir(None)
+
+
+@pytest.fixture(autouse=True)
 def _vault_in_tmp(_test_dir, monkeypatch: pytest.MonkeyPatch):
     """Every test's vault (vault.py) is a temporary index and a keychain file that does not exist, never the
     owner's: a BrowserLane builds a Vault, and its outline lists the vault's items."""

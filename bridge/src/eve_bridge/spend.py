@@ -27,6 +27,9 @@ that price a provider's usage object), and one line goes into a per-day JSONL fi
   variable, so no call site has to pass a card id; ``asyncio.to_thread`` and ``contextvars.copy_context`` carry
   it into worker threads). ``job_total`` sums one card's rows: what the chief's budget reads.
 * ``record`` never raises and is thread-safe: a failed write is one log line, never a failed turn.
+* A row written inside a turn carries ``"trace": "<id>"``, the turn ledger's id for that turn (turn_ledger.py,
+  docs/turn-ledger.md), so ``eve-bridge trace <id>`` joins a turn's timings to its dollars. Off
+  (``EVE_TURN_LEDGER=0``), or outside a turn, the row is as it was.
 
 The reader (``day_rows``, ``totals``, ``summary``) aggregates by day, provider, feature and model for the Mini App's
 Spending view and the ``/spend`` command. The providers' own figures (OpenRouter, and OpenAI and Anthropic when an
@@ -47,7 +50,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any, Iterable, Iterator, Optional
 
-from . import pricing
+from . import pricing, turn_ledger
 
 log = logging.getLogger(__name__)
 
@@ -127,8 +130,9 @@ def _num(value: Any) -> int:
 
 def record(provider: str, model: str, feature: str, usd: Optional[float], *,
            tokens: Optional[dict[str, Any]] = None, source: str = "priced", note: str = "",
-           now: Optional[float] = None) -> None:
-    """One spend line in today's ledger. ``usd`` None means "not priced" (flagged, never guessed). Never raises."""
+           now: Optional[float] = None) -> Optional[float]:
+    """One spend line in today's ledger. ``usd`` None means "not priced" (flagged, never guessed). Returns the
+    dollars recorded (None: unpriced or not written), for the turn ledger's model row. Never raises."""
     try:
         ts = time.time() if now is None else float(now)
         row: dict[str, Any] = {"t": int(ts), "p": str(provider or "?")[:32], "m": str(model or "?")[:64],
@@ -150,14 +154,19 @@ def record(provider: str, model: str, feature: str, usd: Optional[float], *,
         tag = _JOB.get()
         if tag:
             row["job"] = tag
+        trace = turn_ledger.current_trace()
+        if trace:
+            row["trace"] = trace              # the turn this call was made in (turn_ledger.py; "" when it is off)
         line = json.dumps(row, separators=(",", ":")) + "\n"
         folder = spend_dir()
         with _lock:
             folder.mkdir(parents=True, exist_ok=True)
             with open(folder / f"{_local_day(ts)}.jsonl", "a", encoding="utf-8") as f:
                 f.write(line)
+        return row["usd"]
     except Exception as e:  # noqa: BLE001 — the meter never breaks the work it measures
         _once("write", "spend: a spend line was not written (%s)", type(e).__name__)
+        return None
 
 
 # ---- the helpers: a provider's usage object in, one priced line out ----------------------------------------
@@ -189,28 +198,28 @@ def _web_search_calls(output: Any) -> int:
 
 
 def record_response(feature: str, response: Any, *, model: str = "", provider: str = "openrouter",
-                    searches: Optional[int] = None) -> None:
+                    searches: Optional[int] = None) -> Optional[float]:
     """One Responses API reply (a dict or the SDK object). Priced at pricing.OPENAI_RATES, plus any hosted web
-    searches it made; a reply without usage is recorded unpriced. Never raises."""
+    searches it made; a reply without usage is recorded unpriced. Returns the dollars recorded (None: unpriced).
+    Never raises."""
     try:
         body = _as_dict(response)
         usage = body.get("usage") if isinstance(body.get("usage"), dict) else None
         name = str(model or body.get("model") or "")
         calls = _web_search_calls(body.get("output")) if searches is None else max(0, int(searches))
         if usage is None:
-            record(provider, name, feature, None, note="no usage in the reply")
-            return
+            return record(provider, name, feature, None, note="no usage in the reply")
         if isinstance(usage.get("cost"), (int, float)):
             t = pricing.responses_tokens(usage)
-            record(provider, name, feature, float(usage["cost"]), tokens=t, source="reported")
-            return
+            return record(provider, name, feature, float(usage["cost"]), tokens=t, source="reported")
         t = pricing.responses_tokens(usage)
         usd = pricing.estimate_openai_cost(name, usage)
         if usd is not None and calls:
             usd += calls * pricing.OPENAI_WEB_SEARCH_PER_CALL
-        record(provider, name, feature, usd, tokens={**t, **({"searches": calls} if calls else {})})
+        return record(provider, name, feature, usd, tokens={**t, **({"searches": calls} if calls else {})})
     except Exception as e:  # noqa: BLE001
         _once("helper", "spend: could not read a reply's usage (%s)", type(e).__name__)
+        return None
 
 
 def record_chat_completion(feature: str, payload: Any, *, model: str = "", provider: str = "openrouter") -> None:

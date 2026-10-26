@@ -57,7 +57,7 @@ from pathlib import Path
 from typing import Any, Awaitable, Callable, Optional
 from urllib.parse import quote_plus, urlsplit
 
-from . import browser_lane, consent, lane_router, pricing, spend, task_router
+from . import browser_lane, consent, lane_router, pricing, spend, task_router, turn_ledger
 from . import jev as jev_mod
 from .agent_contract import AgentEvent  # noqa: F401 — defined there, re-exported for importers of this module
 from .fast_lane import DECIDE_MODES, DEFAULT_DECIDE, FAST_LANE_DEFAULT, LANE_FIRST_DEFAULT
@@ -1485,7 +1485,11 @@ class ComputerAgent:
             self.config.runs_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
             stamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
             self.run_log = self.config.runs_dir / f"{stamp}.jsonl"
-            self._log({"goal": goal, "model": self.config.model})
+            # the chat turn that started this run (turn_ledger.py), both ways: its trace id in this header, and
+            # this log's name in the turn's ledger rows, so `eve-bridge trace <id>` finds the run
+            trace = turn_ledger.current_trace()
+            self._log({"goal": goal, "model": self.config.model, **({"trace": trace} if trace else {})})
+            turn_ledger.link("agent_run", self.run_log.stem)
         except OSError as e:
             log.warning("agent: cannot write the action log (%s)", e)
             self.run_log = None

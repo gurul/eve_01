@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
-from . import codex_auth, pricing, spend, telegram_images, vault_mcp
+from . import codex_auth, pricing, spend, telegram_images, turn_ledger, vault_mcp
 from .agent_contract import AgentEvent
 from .vault import Vault
 
@@ -675,6 +675,7 @@ class CodexComputerAgent:
                     'input': [{'type': 'text', 'text': goal}]})
                 self.turn_id = result['turn']['id']
                 self._meter_turn_id = self.turn_id
+                turn_ledger.link('codex', self.turn_id)   # Codex's own turn id, joined to eve's trace (an id only)
                 turn = await asyncio.shield(self._done)
                 if turn['status'] == 'interrupted':
                     self.final = 'Codex task stopped. The requested result is not verified.'

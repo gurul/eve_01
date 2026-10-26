@@ -126,6 +126,7 @@ from . import (
     telegram_images,
     tool_gate,
     toolset_router,
+    turn_ledger,
     watch,
     websearch,
 )
@@ -5232,6 +5233,9 @@ class TelegramInlet:
             answer = small_talk.Answer(reason="error", error=type(e).__name__)
         finally:
             self._stop_typing(inbound.chat_id, "turn")
+        if answer.model:
+            # the lane's one model call, timed, in the turn ledger (names and numbers only)
+            turn_ledger.model(answer.model, answer.secs * 1000, usd=answer.cost)
         if not answer.answered:
             # reasons and seconds only, never the message or the reply
             log.info("telegram: small talk fell through (%s%s) after %.1f s", answer.reason,
@@ -5274,10 +5278,14 @@ class TelegramInlet:
         """One message's turn. ``handoff``: daily_rundown handed this message on (_rundown_handoff): it is answered
         as a rundown, and its words are already in the transcript and the chief's ear from the turn that handed it
         on, so neither hears them twice. ``lane``: the small-talk lane may answer it first (_small_talk_lane); when
-        it does, nothing below runs; when it does not, nothing was written or said and the turn goes on as ever."""
-        async with self._turn_lock:
+        it does, nothing below runs; when it does not, nothing was written or said and the turn goes on as ever.
+
+        The turn ledger (turn_ledger.py) times it from the moment the turn lock is held: its door, its outcome and
+        its rounds, never its words."""
+        async with self._turn_lock, turn_ledger.turn(self._ledger_door()) as ledger:
             if (lane and not handoff and image is None and not images and not inbound.uploads
                     and await self._small_talk_lane(inbound)):
+                ledger.outcome = "small_talk"
                 return
             chat_id = inbound.chat_id
             self._turn_request = inbound.message_id          # a task this turn starts replies to it
@@ -5340,6 +5348,7 @@ class TelegramInlet:
                     reply, rounds = await self._think(
                         items, chat_id, daily=daily, tail=tail, usage=usage,
                         taint=tool_gate.ATTACHED if files else tool_gate.PICTURE if pictures else carried_in)
+                    ledger.rounds = rounds
                 finally:
                     self._stop_typing(chat_id, "turn")
                     self._turn_said = ""
@@ -5355,9 +5364,12 @@ class TelegramInlet:
                 elif lite and key_rejected(e):
                     failed = LITE_KEY_REJECTED_LINE       # OpenRouter's 401: the OAuth key is gone; sign in again
                 # the chat log keeps the line, so the next turn sees this message was not answered
+                ledger.outcome = "failed"
                 self._log_line("eve", failed)
                 await self._say(chat_id, failed)
                 return
+            if not reply:
+                ledger.outcome = "silent"
             if reply:
                 # Kept whole, OpenUI Lang programs included: a later app turn's history reads them as written, and a
                 # Telegram, voice or call turn's reads each as one plain line (link_chat.history_text).
@@ -5388,6 +5400,40 @@ class TelegramInlet:
         usage["in"] += num(u.get("input_tokens"))
         usage["out"] += num(u.get("output_tokens"))
         usage["cached"] += num(details.get("cached_tokens")) if isinstance(details, dict) else 0
+
+    def _ledger_model(self, payload: dict[str, Any], response: Any, usage: dict[str, int], started: float) -> None:
+        """One chat model call counted (the turn's usage), priced (spend) and timed (turn_ledger): its model,
+        milliseconds, this call's own token counts and dollars. Never what was asked or answered."""
+        ms = (time.perf_counter() - started) * 1000
+        before = dict(usage)
+        self._count_usage(response, usage)
+        name = str(payload.get("model") or "")
+        usd = spend.record_response(spend.CHAT, response, model=name)
+        turn_ledger.model(name, ms, usage["in"] - before["in"], usage["cached"] - before["cached"],
+                          usage["out"] - before["out"], usd)
+
+    @staticmethod
+    def _ledger_door() -> str:
+        """The door the turn running now came through, for the turn ledger: a call, the Eve Link app, else the
+        Telegram inlet (its chat, the desk controller and every other door that hands it text)."""
+        if _FROM_CALL.get() is not None:
+            return "call"
+        if _FROM_APP.get() is not None:
+            return "app"
+        return "telegram"
+
+    async def _gated_tool(self, name: str, args: dict[str, Any], chat_id: int,
+                          read: Optional[str] = None) -> dict[str, Any]:
+        """The taint gate's question, then the call when the owner said yes: ``_gate(...) or _tool(...)``, with the
+        asking timed in the turn ledger and the call's row marked ``gated``."""
+        started = time.perf_counter()
+        refused = await (self._gate(name, args, chat_id) if read is None
+                         else self._gate(name, args, chat_id, read=read))
+        turn_ledger.gate(name, not refused, (time.perf_counter() - started) * 1000)
+        if refused:
+            return refused
+        with turn_ledger.gated():
+            return await self._tool(name, args, chat_id)
 
     async def _think(self, items: list[dict[str, Any]], chat_id: int, *, daily: bool = False, tail: int = 0,
                      usage: Optional[dict[str, int]] = None, taint: str = "") -> tuple[str, int]:
@@ -5474,6 +5520,7 @@ class TelegramInlet:
             if daily:
                 payload["tools"] = self._rundown_tools(app_tools)
             payload = graded(payload, self.config, grade)
+            started = time.perf_counter()
             if call_say is not None and self._stream_create is not None:
                 # on a call: each sentence is read out as soon as the model has written it
                 # each sentence through _to_call, so a call that ends mid-turn (or another that takes the listener)
@@ -5484,8 +5531,7 @@ class TelegramInlet:
                 self._streamed = reader.text or None
             else:
                 response = await self._create(payload)
-            self._count_usage(response, usage)
-            spend.record_response(spend.CHAT, response, model=str(payload.get("model") or ""))
+            self._ledger_model(payload, response, usage, started)
             calls, text, carry = parse_response(response, allowed, keep_unknown=True)
             if grade == "instant":
                 for c in calls:                     # not offered on instant: refused like any name not offered
@@ -5525,8 +5571,7 @@ class TelegramInlet:
                     result = {"ok": False, "reason": MAIL_SEND_REASON}
                 elif tool_gate.needs_confirmation(call["name"], call["args"], self._taint):
                     # Only consequential native calls ask; delegated tools own their final action's approval.
-                    result = await self._gate(call["name"], call["args"], chat_id) or await self._tool(
-                        call["name"], call["args"], chat_id)
+                    result = await self._gated_tool(call["name"], call["args"], chat_id)
                 else:
                     result = await self._tool(call["name"], call["args"], chat_id)
                 results.append(result)
@@ -5588,12 +5633,12 @@ class TelegramInlet:
         payload = graded(payload, self.config, grade)
         payload["tool_choice"] = "none"
         try:
+            started = time.perf_counter()
             response = await self._create(payload)
         except Exception as e:  # noqa: BLE001 — the summary is a courtesy; the turn's own failure line still goes
             log.warning("telegram: the out-of-rounds summary failed (%s)", type(e).__name__)
             return text or TANGLED_LINE, MAX_TOOL_ROUNDS
-        self._count_usage(response, usage)
-        spend.record_response(spend.CHAT, response, model=str(payload.get("model") or ""))
+        self._ledger_model(payload, response, usage, started)
         # a call made despite tool_choice "none" is not run, and never fails the turn (Lean RoutedTurn P1)
         _calls, summary, _carry = parse_response(response, allowed, keep_unknown=True)
         return summary or text or TANGLED_LINE, MAX_TOOL_ROUNDS + 1
@@ -5787,8 +5832,7 @@ class TelegramInlet:
         token = _SESSION.set(session)
         try:
             if tool_gate.needs_confirmation(name, args, SESSION_READ):
-                result = await self._gate(name, args, chat_id, read=SESSION_READ) or await self._tool(
-                    name, args, chat_id)
+                result = await self._gated_tool(name, args, chat_id, read=SESSION_READ)
             else:
                 result = await self._tool(name, args, chat_id)
         finally:
@@ -5930,6 +5974,14 @@ class TelegramInlet:
 
     # -- tools --
     async def _tool(self, name: str, args: dict[str, Any], chat_id: int) -> dict[str, Any]:
+        """One tool call from the text brain (_dispatch_tool), timed in the turn ledger by its name alone: never
+        its arguments, never its result. A cancelled call writes no row."""
+        started = time.perf_counter()
+        result = await self._dispatch_tool(name, args, chat_id)
+        turn_ledger.call(name, turn_ledger.ok_of(result), (time.perf_counter() - started) * 1000)
+        return result
+
+    async def _dispatch_tool(self, name: str, args: dict[str, Any], chat_id: int) -> dict[str, Any]:
         """One tool call from the text brain. The fixed tools are a table (TOOL_HANDLERS, below the class);
         then, in this order, the owner's apps (known only at run time), the second brain, and think_hard for
         anything else. A handler that raises is reported, never raised.

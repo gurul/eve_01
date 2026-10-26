@@ -49,6 +49,10 @@ def main(argv: list[str] | None = None) -> int:
     except profile.ProfileError as e:
         print(f"eve-bridge: {e}", file=sys.stderr)
         return EX_CONFIG
+    if rest[:1] in (["turns"], ["trace"]):
+        # the turn ledger's two readers (turn_ledger.py, docs/turn-ledger.md): files only, in either edition
+        from . import turn_ledger
+        return turn_ledger.cli(rest)
     if profile.is_lite():
         return _lite_main(rest, applied)
     # eve's apps' own CLIs (app_registry.APPS: lights, spotify, firetv, obsbot/cam, ...): everything after the word
@@ -451,6 +455,11 @@ def main(argv: list[str] | None = None) -> int:
                        ("schedule", "Run remind every Friday at 09:00 (a LaunchAgent)"),
                        ("unschedule", "Stop the weekly reminder")):
         refresh_sub.add_parser(name, help=text)
+
+    # listed for --help only: main() hands both words to turn_ledger.cli before this parser runs
+    sub.add_parser("turns", help="Turn timings for a day: p50, p95 and count per tool, model and door "
+                                 "(--day D, --tool T; see docs/turn-ledger.md)")
+    sub.add_parser("trace", help="One turn's ledger rows and its spend rows, by trace id")
 
     sub.add_parser(
         "telegram-check",

@@ -54,6 +54,10 @@ moves the folder. A line looks like this:
   the two figures can differ.
 - Writing a line can never make a turn fail. If the write fails, eve logs one
   line and moves on.
+- A line written during a chat turn also carries `"trace": "<id>"`, the turn
+  ledger's id for that turn, so `eve-bridge trace <id>` shows the turn's timings
+  and its dollars together ([turn ledger](../turn-ledger.md)). With
+  `EVE_TURN_LEDGER=0`, or outside a turn, the line has no `trace`.
 
 ### Where each cost comes from
 
