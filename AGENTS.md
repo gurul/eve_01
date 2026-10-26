@@ -51,7 +51,9 @@ same Mac are watched through hooks, so eve can relay their questions to the phon
 8. **Code decides safety; a model never does.** A one-way act (sending, deleting,
    paying, pushing) runs only after the owner's typed or tapped yes, and the question
    shows the whole act when the turn has read outside text (`tool_gate.py`). Keep
-   that shape when adding a tool.
+   that shape when adding a tool: every new tool, eve's own or an app's, needs an entry
+   in `tool_gate.POLICY` (an app's comes from its registry line's `acting`, `clean` and
+   `policy`), or `bridge/tests/test_tool_gate_coverage.py` fails.
 9. **Logs carry counts, names and types, never what was said.** No message text,
     file contents, recipients or tokens in a log line.
 10. **eve lite never changes full eve.** `EVE_PROFILE=lite` is written only by eve lite's

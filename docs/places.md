@@ -26,6 +26,10 @@ hour: "Where the owner is now, from their phone: Equinox (fitness center), since
 tool's answer carries the same (`at`). The tools ride with `phone_location`: they are offered once the phone has
 shared a location, in the chat, the app chat and voice.
 
+`place_name` and `thing_place` write the places history, so the tool gate counts them as acts with the `routine`
+approval policy: they never ask, after a read or not. Their answers can carry the phone's geocoder's words (a
+business's own name), so they still mark the turn as having read outside text, as `places_recall` does.
+
 ## Where the evidence comes from
 
 - **Every fix** the app already sends (`POST /api/link/location`) is kept as well. Fixes within 150 m of each

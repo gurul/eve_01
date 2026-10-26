@@ -669,7 +669,14 @@ Flip it to `ask` if two seconds a command is a price you will pay.
   approval rather than asking just to start the task.
   - **Acting and confirming are separate.** `tool_gate.ACTING` still records
     which tools change state. That list is used for provenance tracking;
-    `tool_gate.needs_confirmation` decides which native operations need a yes.
+    `tool_gate.needs_confirmation` decides which native operations need a yes,
+    from `tool_gate.POLICY`: every tool eve offers declares exactly one of
+    `read`, `routine`, `asks`, `taint_asks` or `executor_owned` (2026-10-26), and
+    `bridge/tests/test_tool_gate_coverage.py` fails CI for an offered tool with
+    none. An undeclared tool still runs unasked at runtime, so a map that lags
+    never puts questions on the phone; the test is what catches it. Declaring
+    the policies changed no decision (the test compares every name against the
+    old rules).
     The app policies make the corresponding argument-aware decision for
     connected apps. A no or no answer means the consequential call does not run.
   - **What taints.** Every read, and the acting calls that answer with what

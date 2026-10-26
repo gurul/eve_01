@@ -65,3 +65,4 @@ def test_it_is_registered() -> None:
     app = app_registry.get("$name")
     assert app is not None and app_registry.check(app) == []
     assert "${name}_set" in app.acting and app.switch == "$SWITCH" and not app.default_on
+    assert app.policies() == {"${name}_set": "routine", "${name}_status": "read"}

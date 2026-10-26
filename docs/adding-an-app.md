@@ -17,7 +17,7 @@ every wiring site reads it, so the app reaches:
 - **a code path** (optional): a plain command like "lights off" done by code, with no
   model turn;
 - **the tool gate**: which of its tools act, which are reads that bring in no outside
-  text (`bridge/src/eve_bridge/tool_gate.py`);
+  text, and who approves each call (`bridge/src/eve_bridge/tool_gate.py`);
 - **the phone**: a row under Apps and a sheet, through `GET /api/link/controls` and
   `POST /api/link/controls/<slot>` (`bridge/src/eve_bridge/link_chat.py`);
 - **the CLI** (optional): `eve-bridge <word> ...` (`bridge/src/eve_bridge/cli.py`);
@@ -115,9 +115,12 @@ or `app_registry.check` fails:
    lists every read that brings in no outside text (see Safety). Every tool goes in
    one of the two, unless it reads outside text (a web page, a message, a device's
    free-text name), which taints the turn and goes in neither. Each name in either
-   set must be in `TOOL_NAMES`.
+   set must be in `TOOL_NAMES`. `policy` gives every tool its approval policy (see
+   Safety); `acting` names default to `routine` and `clean` and `sources` names to
+   `read`, and `app_registry.check` fails for a tool with none.
 3. **The generated test.** It tests `_status` and `_set`; replace those tests with ones
-   for your tools, and change `test_it_is_registered` to the new `acting` and `clean`.
+   for your tools, and change `test_it_is_registered` to the new `acting`, `clean` and
+   `policy`.
 4. **The doc.** Its Tools table and its phone section.
 
 Then run the app's test, the whole suite and lint again.
@@ -141,6 +144,7 @@ at all, only a phone sheet: `tools=False`).
 | `tools` | it gives the models tools (False: a phone sheet only, like Pika) |
 | `label`, `tool_prefix` | its intent-eval label; every tool name starts with the prefix |
 | `acting`, `clean` | its tools that change something; its reads that bring in no outside text |
+| `policy` | who approves each tool's call (`read`, `routine`, `asks`, `taint_asks`, `executor_owned`), where it is not the default (`acting` is `routine`; `clean` and `sources` are `read`) |
 | `sources`, `say`, `own_words` | a read's name in the owner's question; an act's head out loud; actions that answer in eve's own words |
 | `voice_omit`, `voice_kwargs`, `voice_note` | tools not offered out loud; `instructions(**voice_kwargs)` out loud; a line after the voice block (the TV: no screenshot out loud) |
 | `code`, `code_taint_tool` | a code path; its line counts as outside words when that tool's call would (Spotify) |
@@ -162,12 +166,20 @@ order.
 
 ## Safety
 
-- **Declare every tool that acts** in `acting` (AGENTS.md rule 8). The tool gate then
-  asks the owner before it runs whenever the turn has read outside text, and says the
-  act whole out loud. A read that brings in no outside text goes in `clean`: eve's own
+- **Declare every tool that acts** in `acting` (AGENTS.md rule 8): the tool gate then
+  keeps its result from tainting the turn, and says the act whole out loud when it asks.
+  A read that brings in no outside text goes in `clean`: eve's own
   state (whether the fan is on), or a value the code makes (a random coin side, a
   sum). A read that returns text from outside (a web page, an email, a name someone
   else typed) stays out of `clean`, and it taints the turn after it.
+- **Every tool needs an approval policy** (`tool_gate.POLICY`, filled from the registry
+  line's `policy` and its defaults). The set is exactly five: `read` (changes nothing),
+  `routine` (changes what the owner asked for; never asks, the owner's rule of
+  2026-10-09), `asks` (sending, deleting or paying: code asks the owner first, every
+  time), `taint_asks` (asks once the turn has read outside text) and `executor_owned`
+  (the tool's own handler asks for the exact act). An app that sends, deletes or buys
+  sets `policy` to `asks` for that tool. `bridge/tests/test_tool_gate_coverage.py`
+  fails for any offered tool without one; at runtime an undeclared tool does not ask.
 - **Name only your own tools** in your instructions, and never a wrong name, not even as
   "never say this" (rule 7). The scaffold's test checks the first half.
 - **Log counts, names and types**, never what was said or a device's secrets (rule 9).
@@ -296,7 +308,7 @@ scores stay comparable. That is also how a new app is scored before its switch i
 
 - [ ] Its tests pass, and the whole suite with them (AGENTS.md, "Working on the code").
       No other test needs an edit; if one fails, the app collides with something.
-- [ ] Its registry line has a real `symbol` and `detail`, and `acting` and `clean` match its tools.
+- [ ] Its registry line has a real `symbol` and `detail`, and `acting`, `clean` and `policy` match its tools.
 - [ ] `cd bridge && uv run --extra dev ruff check src tests tools` is clean.
 - [ ] Its doc says what it does, its switch, its tools and which act, and how to test it;
       README.md and AGENTS.md's apps table name it if it ships in this repository.

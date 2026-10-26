@@ -17,10 +17,10 @@ registered app whatever its switch, so an eval run does not depend on the shell.
 
 ## Tools
 
-| Tool | Acts? | What it does |
-|---|---|---|
-| `${name}_status` | no (in `clean`: a read that brings in no outside text) | whether it is on |
-| `${name}_set` | yes (declared in `acting`, so the tool gate treats it as an act) | turns it on or off |
+| Tool | Acts? | Approval (`policy`) | What it does |
+|---|---|---|---|
+| `${name}_status` | no (in `clean`: a read that brings in no outside text) | `read`: never asks | whether it is on |
+| `${name}_set` | yes (declared in `acting`, so the tool gate treats it as an act) | `routine`: never asks | turns it on or off |
 
 ## The phone
 

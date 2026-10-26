@@ -34,7 +34,10 @@ TODAY_ACTING = frozenset({
     "meet_join", "meet_leave", "opentable_search", "pair_eve_link", "remember", "rename_app", "restore_app",
     "screenshot", "send_file", "set_sound", "set_stealth", "spotify_control", "start_coding_session", "start_task",
     "steer_task", "stop_task", "take_notes", "take_on", "take_photo", "undo_app", "undo_note", "watch_add",
-    "watch_pause", "watch_remove", "watch_resume", "watch_set_end"})
+    "watch_pause", "watch_remove", "watch_resume", "watch_set_end",
+    # 2026-10-26: the places tools write the places history (acting for provenance; routine, so they never ask, and
+    # in ACTING_READS, so they still taint as before)
+    "place_name", "thing_place"})
 TODAY_CLEAN = frozenset({"camera_status", "firetv_status", "forget_preview", "lights_status", "move_head", "open_app",
                          "open_apps", "spend_report"})
 TODAY_APP_SOURCES = {"spotify_control": "Spotify", "spotify_now_playing": "Spotify"}
@@ -115,6 +118,38 @@ def test_the_tool_gate_sets_are_todays() -> None:
     owners_only = [a for a in APPS if a.slot in OWNERS]
     assert {k: v for a in owners_only for k, v in a.sources.items()} == TODAY_APP_SOURCES
     assert {k: v for a in owners_only for k, v in a.say.items()} == TODAY_APP_SAY
+
+
+# The owner's apps' approval policies (tool_gate.POLICY), 2026-10-26: every tool declared; none asks.
+TODAY_APP_POLICY = {"lights_set": "routine", "lights_match": "routine", "lights_status": "read",
+                    "spotify_control": "routine", "spotify_now_playing": "read",
+                    "firetv_control": "routine", "firetv_status": "read", "firetv_screenshot": "read",
+                    "camera_control": "routine", "camera_status": "read"}
+
+
+def test_every_app_tool_declares_an_approval_policy() -> None:
+    owners_only = {k: v for a in APPS if a.slot in OWNERS for k, v in a.policies().items()}
+    assert owners_only == TODAY_APP_POLICY
+    for app in app_registry.with_tools():
+        assert set(app.mod().TOOL_NAMES) <= set(app.policies()), app.slot
+    assert {k: tool_gate.POLICY[k] for k in app_registry.POLICY()} == app_registry.POLICY()
+
+
+def test_check_refuses_an_undeclared_or_wrong_policy() -> None:
+    from dataclasses import replace
+
+    firetv = app_registry.get("firetv")
+    bare = replace(firetv, policy={})
+    assert "firetv_screenshot has no approval policy (put it in acting, clean, sources or policy)" in \
+        app_registry.check(bare)
+    wrong = replace(firetv, policy={"firetv_screenshot": "maybe"})
+    assert any("firetv_screenshot's policy 'maybe'" in p for p in app_registry.check(wrong))
+    read_act = replace(firetv, policy={"firetv_screenshot": "read", "firetv_control": "read"})
+    assert "firetv_control is in acting, so its policy cannot be read" in app_registry.check(read_act)
+    stray = replace(firetv, policy={"firetv_screenshot": "read", "firetv_nothing": "read"})
+    assert "firetv_nothing is not one of firetv.TOOL_NAMES" in app_registry.check(stray)
+    asking = replace(firetv, policy={"firetv_screenshot": "read", "firetv_control": "asks"})
+    assert app_registry.check(asking) == [] and asking.policies()["firetv_control"] == "asks"
 
 
 def test_the_eval_labels_and_prefixes_are_todays() -> None:

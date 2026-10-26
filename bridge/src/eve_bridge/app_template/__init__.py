@@ -20,11 +20,12 @@ HERE = Path(__file__).resolve().parent
 
 REGISTRY_LINE = Template(
     '    # $name: set symbol (an SF Symbol) and detail (the phone row\'s subtitle); if you change its tools, change\n'
-    '    # acting and clean to match (docs/adding-an-app.md, "Change the tools")\n'
+    '    # acting, clean and policy to match (docs/adding-an-app.md, "Change the tools")\n'
     '    App(slot="$name", module="$name", make="make", switch="$SWITCH", default_on=False,\n'
     '        title="$Name", symbol="square.grid.2x2", detail="", doc="docs/$name.md",\n'
     '        no_control="$Name is off on this Mac ($SWITCH).", label="$name", tool_prefix="${name}_",\n'
-    '        acting=frozenset({"${name}_set"}), clean=frozenset({"${name}_status"})),\n')
+    '        acting=frozenset({"${name}_set"}), clean=frozenset({"${name}_status"}),\n'
+    '        policy=_map(${name}_set="routine", ${name}_status="read")),\n')
 
 
 class Refused(ValueError):
@@ -41,19 +42,23 @@ def find_root(start: Optional[Path] = None) -> Path:
 
 
 def own_prefixes() -> frozenset[str]:
-    """The first word of each of eve's own tools (the tool gate's sets), so a new app's tools never share one."""
+    """The first word of each of eve's own tools (the tool gate's sets and POLICY), so a new app's tools never
+    share one."""
     from .. import tool_gate
 
-    names = (set(tool_gate.ACTING) | set(tool_gate.CLEAN) | set(tool_gate._SOURCES) | set(tool_gate._SAY_HEADS)) \
-        - {n for app in app_registry.APPS for n in (*app.acting, *app.clean, *app.sources, *app.say)}
+    names = (set(tool_gate.ACTING) | set(tool_gate.CLEAN) | set(tool_gate._SOURCES) | set(tool_gate._SAY_HEADS)
+             | set(tool_gate.POLICY)) \
+        - {n for app in app_registry.APPS for n in (*app.acting, *app.clean, *app.sources, *app.say, *app.policy)}
     return frozenset(n.split("_")[0] + "_" for n in names if "_" in n)
 
 
 def own_names() -> frozenset[str]:
-    """eve's own tool names (the tool gate's sets), whole: a new app's name must not be one (``screenshot``)."""
+    """eve's own tool names (the tool gate's sets and POLICY), whole: a new app's name must not be one
+    (``screenshot``)."""
     from .. import tool_gate
 
-    return frozenset(set(tool_gate.ACTING) | set(tool_gate.CLEAN) | set(tool_gate._SOURCES) | set(tool_gate._SAY_HEADS))
+    return frozenset(set(tool_gate.ACTING) | set(tool_gate.CLEAN) | set(tool_gate._SOURCES) | set(tool_gate._SAY_HEADS)
+                     | set(tool_gate.POLICY))
 
 
 def eval_labels(root: Path) -> frozenset[str]:

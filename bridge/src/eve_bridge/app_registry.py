@@ -54,6 +54,9 @@ class App:
     tool_prefix: str = ""              # every tool name starts with it
     acting: frozenset[str] = frozenset()                         # tools that change something (tool_gate.ACTING)
     clean: frozenset[str] = frozenset()                          # reads that bring in no outside text (tool_gate.CLEAN)
+    policy: Mapping[str, str] = _EMPTY                           # a tool's approval policy (tool_gate.POLICY), when
+                                                                 # not what policies() derives: acting is routine,
+                                                                 # clean and sources are read
     sources: Mapping[str, str] = _EMPTY                          # a read's name in the owner's question
     say: Mapping[str, str] = _EMPTY                              # an act's head out loud (tool_gate._SAY_HEADS)
     own_words: Mapping[str, frozenset[str]] = _EMPTY             # actions answering in eve's own words only
@@ -70,12 +73,30 @@ class App:
     cli_module: str = ""               # "" means module
     cli_help: str = ""
 
+    def policies(self) -> dict[str, str]:
+        """Each declared tool's approval policy (one of POLICIES): ``clean`` and ``sources`` names are read, ``acting``
+        names are routine, and ``policy`` overrides either. Import-light: it reads the declaration, never the module
+        (``check`` asks that every one of the module's TOOL_NAMES has one)."""
+        out = dict.fromkeys((*self.clean, *self.sources), "read")
+        out.update(dict.fromkeys(self.acting, "routine"))
+        out.update(self.policy)
+        return out
+
     def mod(self) -> ModuleType:
         """The app's module, imported on first use (importlib caches it)."""
         return importlib.import_module(f"eve_bridge.{self.module}")
 
     def cli_mod(self) -> ModuleType:
         return importlib.import_module(f"eve_bridge.{self.cli_module or self.module}")
+
+
+# Who approves a tool's call (tool_gate.POLICY, docs/adding-an-app.md "Safety"); the set is exactly these five.
+#   read            changes nothing; never asks
+#   routine         changes something the owner asked for; never asks (the owner's rule, 2026-10-09)
+#   asks            a one-way act (deleting, sending, paying): code asks the owner first, every time
+#   taint_asks      runs on the owner's own request; asks once the turn has read outside text
+#   executor_owned  the tool's own handler asks the owner for the exact act (a purchase, a share)
+POLICIES: tuple[str, ...] = ("read", "routine", "asks", "taint_asks", "executor_owned")
 
 
 def _fs(*names: str) -> frozenset[str]:
@@ -113,6 +134,7 @@ APPS: tuple[App, ...] = (
         no_control="eve has no TV on this computer.",
         label="tv_control", tool_prefix="firetv_",
         acting=_fs("firetv_control"), clean=_fs("firetv_status"),
+        policy=_map(firetv_screenshot="read"),           # a picture to the owner; changes nothing on the TV
         say=_map(firetv_control="use the TV"),
         # no screenshot out loud: the picture goes to a chat, and a voice conversation has none
         voice_omit=_fs("firetv_screenshot"), voice_kwargs=_map(screenshot=False),
@@ -207,6 +229,10 @@ def CLEAN() -> frozenset[str]:  # noqa: N802
     return _union("clean")
 
 
+def POLICY() -> dict[str, str]:  # noqa: N802
+    return {k: v for app in APPS for k, v in app.policies().items()}
+
+
 def SOURCES() -> dict[str, str]:  # noqa: N802
     return {k: v for app in APPS for k, v in app.sources.items()}
 
@@ -258,9 +284,16 @@ def check(app: App) -> list[str]:
         if not isinstance(getattr(mod, "INSTRUCTIONS", getattr(mod, "INSTRUCTIONS_HEAD", None)), str):
             problems.append(f"{app.module}.INSTRUCTIONS is missing (the intent eval lends it)")
         for name in sorted(set(app.acting) | set(app.clean) | set(app.voice_omit) | set(app.sources)
-                           | set(app.say) | set(app.own_words)):
+                           | set(app.say) | set(app.own_words) | set(app.policy)):
             if name not in names:
                 problems.append(f"{name} is not one of {app.module}.TOOL_NAMES")
+        declared = app.policies()
+        problems += [f"{n} has no approval policy (put it in acting, clean, sources or policy)" for n in names
+                     if n not in declared]
+        problems += [f"{n}'s policy {p!r} is not one of {', '.join(POLICIES)}" for n, p in sorted(declared.items())
+                     if p not in POLICIES]
+        problems += [f"{n} is in acting, so its policy cannot be read" for n in sorted(app.acting)
+                     if declared.get(n) == "read"]
         if not app.tool_prefix:
             problems.append("a tools app needs a tool_prefix")
         problems += [f"{n} does not start with {app.tool_prefix}" for n in names

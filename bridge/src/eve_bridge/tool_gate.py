@@ -19,7 +19,7 @@ import json
 import re
 import unicodedata
 from collections import deque
-from typing import Any, Iterable, Mapping, Optional
+from typing import Any, Callable, Iterable, Mapping, Optional
 
 from . import app_registry
 
@@ -40,6 +40,9 @@ ACTING: frozenset[str] = frozenset({
     "capture_note", "edit_note", "file_note", "undo_note",
     "make_app", "change_app", "delete_app", "rename_app", "restore_app", "undo_app",
     "take_on", "close_card",
+    # places (places.py): place_name names a place, thing_place keeps or forgets where a thing is (it also finds and
+    # lists); both write the places history. Routine, so neither asks (POLICY)
+    "place_name", "thing_place",
     # buying
     "agentcard_buy", "agentcard_confirm",
     # the voice's own (voice_agent.TOOLS): the robot sent off, its sound, a task's question answered, Meet
@@ -48,7 +51,9 @@ ACTING: frozenset[str] = frozenset({
 # Acting calls whose results still carry outside words: the page a new watch read first, what a photo or the
 # screen shows. They taint the turn after them like any read.
 ACTING_READS: frozenset[str] = frozenset({"watch_add", "take_photo", "screenshot",
-                                         "meet_join", "join_meeting"})   # an invite's title comes back
+                                         "meet_join", "join_meeting",   # an invite's title comes back
+                                         # a place's name can be the phone's geocoder's words (a business's own)
+                                         "place_name", "thing_place"})
 # Acting calls whose result carries outside words for most of their actions: spotify_control answers with the
 # catalog's own text (a track's and an artist's names, a public playlist's name and its owner's display name) when it
 # plays something by name, skips, or says what is on (round-4 review). These actions answer with eve's own words
@@ -86,6 +91,56 @@ _SOURCES: dict[str, str] = {
     "look_around": "the camera", "find": "the camera",
     **app_registry.SOURCES(),
 }
+# ---- approval policy: who approves each tool's call ---------------------------------------------------------------
+
+# Every tool eve offers declares one of app_registry.POLICIES here (exactly read, routine, asks, taint_asks and
+# executor_owned), and tests/test_tool_gate_coverage.py fails CI for an offered tool that has none. It is declared, not
+# defaulted: a tool missing here does not ask at runtime (that would put questions on the phone whenever this map
+# fell behind); the test is what stops a new tool from shipping undeclared. needs_confirmation reads it. Names with
+# "__" (the direct apps) and COMPOSIO_* names are decided by their own policies (apps_mcp, composio_tools.decide).
+#
+# Asks every time: deleting (forget, delete an app, remove a watch), and a new Eve Link pairing (_ASK_WHEN).
+ASKS: frozenset[str] = frozenset({"forget_apply", "delete_app", "watch_remove", "pair_eve_link"})
+# Runs on the owner's own request; asks once the turn has read outside text, because a page's words could have
+# asked for it: recording the room (_ASK_WHEN), joining a meeting, answering a delegated task's question.
+TAINT_ASKS: frozenset[str] = frozenset({"take_notes", "meet_join", "join_meeting", "answer_question"})
+# The tool's own handler asks for the exact act, so the gate does not ask twice: a purchase's confirmation, sharing a
+# file, the vault's fill (Codex; its value never reaches a model), a Mac task's Python (the computer agent's own
+# approval of its final act).
+EXECUTOR_OWNED: frozenset[str] = frozenset({"agentcard_confirm", "share_file", "vault_fill", "exec_py"})
+# Changes something and never asks, though not in ACTING (its result keeps tainting like a read's): ending the voice
+# conversation, the lesson whiteboard.
+_ROUTINE: frozenset[str] = frozenset({"end_conversation", "lesson"})
+# Reads with no other entry above (not in _SOURCES or CLEAN): each changes nothing.
+_READS: frozenset[str] = frozenset({
+    "canvas_courses", "canvas_due", "canvas_announcements", "canvas_find_link",   # canvas.py
+    "places_recall", "task_status", "find_contact", "vault_list", "second_brain_workflow", "list_apps",
+    "meet_status", "recent_conversation", "ask_user",                             # ask_user: the Mac task's question
+    "agentcard_merchants", "agentcard_status",                                    # agentcard.py
+})
+# Narrower than the name: which arguments make an asks or taint_asks tool ask (absent: every call does).
+_ASK_WHEN: dict[str, Callable[[Mapping[str, Any]], bool]] = {
+    "pair_eve_link": lambda args: bool(args.get("new_link")),        # match the handler: a new link revokes pairing
+    "take_notes": lambda args: str(args.get("action") or "").strip().lower() == "start",   # recording the room
+}
+# Later entries win: an acting read (watch_add) is routine, and eve's own asking sets come last, so no app's line can
+# turn one of them into a tool that runs unasked.
+POLICY: dict[str, str] = {
+    **dict.fromkeys((*_SOURCES, *CLEAN, *_READS), "read"),
+    **dict.fromkeys((*ACTING, *_ROUTINE), "routine"),
+    **app_registry.POLICY(),
+    **dict.fromkeys(EXECUTOR_OWNED, "executor_owned"),
+    **dict.fromkeys(TAINT_ASKS, "taint_asks"),
+    **dict.fromkeys(ASKS, "asks"),
+}
+assert set(POLICY.values()) <= set(app_registry.POLICIES)
+
+
+def policy(name: str) -> Optional[str]:
+    """The tool's declared approval policy; None for a name eve does not declare (a direct app's, Composio's)."""
+    return POLICY.get(name)
+
+
 # A Composio read in eve lite (EVE_PROFILE=lite), where Composio holds whichever apps the owner connected (source).
 COMPOSIO_LITE_SOURCE = "your connected apps"
 TASK_RESULT = "a computer task's result"
@@ -111,17 +166,14 @@ def needs_confirmation(name: str, args: Mapping[str, Any], tainted: Any = "") ->
     question is the owner's own request in a clean turn; after a read, a page's words could have asked for it,
     so it asks then. Purchases and sharing have their own exact confirmation handlers; asking before those
     handlers would ask twice for one action.
+
+    Read from POLICY: ``asks`` asks always and ``taint_asks`` after outside text, each narrowed by _ASK_WHEN; every
+    other policy, and a name with none, runs unasked.
     """
-    if name in {"forget_apply", "delete_app", "watch_remove"}:
-        return True
-    if name == "pair_eve_link":
-        return bool(args.get("new_link"))              # match the handler: replacing credentials revokes pairing
-    if not tainted:
-        return False
-    if name in {"answer_question", "meet_join", "join_meeting"}:
-        return True
-    if name == "take_notes":
-        return str(args.get("action") or "").strip().lower() == "start"   # recording the room
+    kind = POLICY.get(name)
+    if kind == "asks" or (kind == "taint_asks" and tainted):
+        when = _ASK_WHEN.get(name)
+        return True if when is None else when(args)
     return False
 
 
