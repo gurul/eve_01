@@ -341,6 +341,8 @@ PERMISSION_DEFERRED_LINE = "No answer here, so the dialog on the Mac decides."
 ANSWERED_LINE = "Answered."
 UNANSWERED_LINE = "No answer, so I took that as a no."
 ASK_CLOSED_LINE = "Closed without an answer here."   # the asker went away first: a stopped task, a Mac-side answer
+# A withdrawable question the owner typed something else to (EVE_GATE_WITHDRAW, _withdraw): the board's last line.
+WITHDRAWN_LINE = "Withdrawn: not done. I'm acting on what you wrote instead."
 # The titles: a message that is not eve's own voice says whose it is, or what it is, in bold on its
 # first line (telegram_format.compose). Eve's own replies and one-liners carry none.
 TASK_DONE_TITLE = "Task result"
@@ -1487,6 +1489,20 @@ _APP_GRADE: contextvars.ContextVar[str] = contextvars.ContextVar("telegram_app_g
 # that times out is reported as unanswered. A ContextVar for the same reason as _FROM_APP.
 _SESSION: contextvars.ContextVar[Optional[dict[str, Any]]] = contextvars.ContextVar("telegram_work_session",
                                                                                      default=None)
+# The question count (``_question_seq``) when the message being handled now arrived, for a message replayed later
+# (``_held``); None for a message handled as it arrives. A withdrawal (_withdraw) never settles a question opened
+# after its message arrived.
+_ARRIVED: contextvars.ContextVar[Optional[int]] = contextvars.ContextVar("telegram_arrived", default=None)
+
+# A typed correction withdraws the waiting gate (_withdraw, docs/stackchan/telegram.md): "1" turns it on. Off by
+# default, because the withdrawn call's result is new text the brain reads, and that ships only after its blind eval
+# (corrections against today's queue) passes. Unset or "0" is today's behaviour byte for byte.
+GATE_WITHDRAW_ENV = "EVE_GATE_WITHDRAW"
+
+
+def _gate_withdraw(environ: Optional[Any] = None) -> bool:
+    env = os.environ if environ is None else environ
+    return str(env.get(GATE_WITHDRAW_ENV) or "").strip().lower() in ("1", "true", "yes", "on")
 
 
 def graded(payload: dict[str, Any], config: TelegramConfig, grade: str) -> dict[str, Any]:
@@ -2505,6 +2521,11 @@ class _Question:
     # Firm: answered only by a bare yes or no or a button, relay or not, typed or spoken, as a permission prompt
     # is. The chief's Go (a one-way act): a sentence that opens with "ok" is a new request, never a yes.
     firm: bool = False
+    # Withdrawable (EVE_GATE_WITHDRAW): the chat turn's own gate or app question, waiting inside that turn. Other
+    # text typed in its chat settles it as consent.Withdrawn, a no, and the same turn reads the words (_withdraw).
+    # Only _gate, _app_tool and _direct_tool ask for it, and never from a Work session.
+    withdrawable: bool = False
+    seq: int = 0                                    # the question count when it opened (_ARRIVED)
 
 
 @dataclass(eq=False)
@@ -2753,7 +2774,8 @@ class TelegramInlet:
         self._claude_on_job: Optional[asyncio.Task] = None
         # Each with the call it was said on (``_FROM_CALL``), so it is replayed as its own work, not the "claude on"
         # job's: typed stays typed, said stays said (verification/Eve/CallScope.lean, the "claude on" queue).
-        self._held: list[tuple[Inbound, Optional[Callable[[str], None]]]] = []
+        # The third item is the question count when it arrived (``_ARRIVED``).
+        self._held: list[tuple[Inbound, Optional[Callable[[str], None]], int]] = []
         # Which call Claude's lines answer. Claude's lines come back from daemon tasks, not from the job that typed
         # the prompt, so each line is read with the origin (``_FROM_CALL``) of the prompt Claude is answering:
         # ``_relay_prompts`` holds each prompt typed into the session with its origin, oldest first, until Claude
@@ -2834,6 +2856,7 @@ class TelegramInlet:
         # waiting, whatever order the others end in. A saved "before" per question used to lose an outer
         # question when two inner ones ended out of order (verification/Eve/Questions.lean, 2026-09-25).
         self._questions: list[_Question] = []
+        self._question_seq = 0                            # questions opened so far (_Question.seq, _ARRIVED)
         # Inline buttons: key -> (keyboard, choice). The generation makes keys from before a restart unknown.
         self._taps: dict[str, tuple[_Keyboard, Choice]] = {}
         self._tap_gen = secrets.token_hex(3)
@@ -3287,7 +3310,9 @@ class TelegramInlet:
         if self._answer_america_question(inbound):
             return
         if self._claude_on_job is not None and not self._claude_on_job.done():
-            self._held.append((inbound, _FROM_CALL.get()))   # routed once "claude on" has decided: never ahead of it
+            # routed once "claude on" has decided: never ahead of it
+            arrived = _ARRIVED.get()
+            self._held.append((inbound, _FROM_CALL.get(), self._question_seq if arrived is None else arrived))
             return
         if inbound.image is not None:
             if self._image_waits():
@@ -3477,9 +3502,40 @@ class TelegramInlet:
             # the time, the weather, a sum...: answered by code, no model turn and no search (quick_answers.py)
             self._spawn(self._quick_answer(inbound, ask), "telegram-quick")
             return
+        if self._withdraw(inbound, addressed_eve):
+            return                                        # the waiting turn reads the words: no second turn
         # Every code path above has had its say: a small-talk phrase may now be answered by the small-talk lane,
         # inside the turn (small_talk.py, _small_talk_lane), before the routers, the prompt and the brain.
         self._spawn(self._turn(inbound, lane=True), "telegram-turn")
+
+    def _withdraw(self, inbound: Inbound, addressed_eve: bool = False) -> bool:
+        """EVE_GATE_WITHDRAW: text that would open a new turn while the running turn's gate or app question waits
+        withdraws that question instead (consent.Withdrawn, a no: the call does not run), and the same turn goes on
+        with the words as the refused call's result (tool_gate.withdrawn). Before, the text queued behind the turn
+        until the question timed out as a no, and a second turn answered it. Only a ``withdrawable`` question (_gate,
+        _app_tool, _direct_tool; never a Work session's, the chief's Go, a share, a task's or a relay's), only the
+        newest live one, only in its own chat, and only one already open when the message arrived. Only text that
+        got this far: a bare yes or no, a button's words, a tap, a code word, a quick answer, "eve: …" while a strict
+        prompt waits and text for a relay have all been routed above, as before. Nothing here can approve. True when
+        it withdrew."""
+        if not _gate_withdraw() or inbound.tapped or inbound.image is not None or addressed_eve:
+            return False
+        live = self._live_question()
+        if live is None or not live.withdrawable or live.future.done():
+            return False
+        if live.chat_id is not None and live.chat_id != inbound.chat_id:
+            return False                                  # never settles a question in another chat
+        arrived = _ARRIVED.get()
+        if arrived is not None and live.seq > arrived:
+            return False                                  # opened after this message arrived
+        text = inbound.text.strip()
+        if not text or consent.bare_decision(text) or text.lower().rstrip(".!") in live.words:
+            return False                                  # an answer, not a correction (_answers_pending had it)
+        live.future.set_result(consent.Withdrawn(text))
+        # The transcript keeps what was said; the history gets the words only through the refused call's result.
+        self._record("user", "say", inbound.text)
+        log.info("telegram: gate: a typed message withdrew the waiting question")
+        return True
 
     def _lite_code_word(self, inbound: Inbound) -> bool:
         """eve lite: the code word of a feature eve lite does not have (the Claude Code relay, a new coding session,
@@ -4357,13 +4413,15 @@ class TelegramInlet:
             if self._claude_on_job is asyncio.current_task():
                 self._claude_on_job = None
         held, self._held = self._held, []
-        for message, origin in held:
+        for message, origin, arrived in held:
             # its own origin, not this task's: "claude on" said on a call must not read a typed message's answer
             # aloud, and "claude on" typed must not silence words said meanwhile (CallScope.lean, current_gaps)
             mark = _FROM_CALL.set(origin)
+            seen = _ARRIVED.set(arrived)
             try:
                 self._handle(message)
             finally:
+                _ARRIVED.reset(seen)
                 _FROM_CALL.reset(mark)
 
     def _claude_on_pick(self, inbound: Inbound, target: str, sessions: Any, ask_to_start: bool = False) -> None:
@@ -6989,7 +7047,10 @@ class TelegramInlet:
                 log.info("telegram: apps: %s refused unasked (too long to show whole)", name)
                 return dict(tool_gate.TOO_LONG)
             answer = await self._ask_user(question, chat_id, title=APP_ASKS_TITLE, choices=ALLOW_DENY, firm=True,
-                                          outside=bool(self._read_now()))
+                                          outside=bool(self._read_now()), withdrawable=True)
+            if isinstance(answer, consent.Withdrawn):
+                log.info("telegram: apps: %s withdrawn by a typed message", name)
+                return tool_gate.withdrawn(answer.text)
             if consent.bare_decision(answer) != "allow":
                 return {"ok": False, "reason": "the owner said no; do not retry it"}
         return await asyncio.to_thread(self._direct.execute, name, args)
@@ -7042,8 +7103,11 @@ class TelegramInlet:
             log.info("telegram: gate: %s refused unasked (too long to show)", name)
             return dict(tool_gate.TOO_LONG)
         log.info("telegram: gate: %s needs confirmation; asking the owner first", name)
-        answer = await self._ask_user(asked, chat_id, title=GATE_TITLE,
-                                      choices=YES_NO, firm=True, about=tool_gate.about(name, read))
+        answer = await self._ask_user(asked, chat_id, title=GATE_TITLE, choices=YES_NO, firm=True,
+                                      about=tool_gate.about(name, read), withdrawable=True)
+        if isinstance(answer, consent.Withdrawn):
+            log.info("telegram: gate: %s withdrawn by a typed message", name)
+            return tool_gate.withdrawn(answer.text)
         if consent.bare_decision(answer) != "allow":
             log.info("telegram: gate: %s not approved", name)
             return dict(tool_gate.REFUSED)
@@ -7091,7 +7155,10 @@ class TelegramInlet:
                 log.info("telegram: apps: %s refused unasked (too long to show whole)", name)
                 return dict(tool_gate.TOO_LONG)
             answer = await self._ask_user(question, chat_id, title=APP_ASKS_TITLE, choices=ALLOW_DENY, firm=True,
-                                          outside=bool(self._read_now()))
+                                          outside=bool(self._read_now()), withdrawable=True)
+            if isinstance(answer, consent.Withdrawn):
+                log.info("telegram: apps: %s withdrawn by a typed message", name)
+                return tool_gate.withdrawn(answer.text)
             if consent.bare_decision(answer) != "allow":
                 return {"ok": False, "reason": "the owner said no; do not retry it"}
         return await asyncio.to_thread(self._apps.execute, name, args)
@@ -7247,11 +7314,14 @@ class TelegramInlet:
             self._show(state)
 
     def _open_question(self, future: asyncio.Future, chat_id: Optional[int], *, strict: bool,
-                       words: frozenset[str] = frozenset(), firm: bool = False) -> _Question:
+                       words: frozenset[str] = frozenset(), firm: bool = False,
+                       withdrawable: bool = False) -> _Question:
         """A new question waiting on the owner: the newest, so the slot names it. When its future is
         settled (an answer, a tap, a timeout, its asker gone) the slot moves on at once, not only when the
         asker's ``finally`` runs (``_close_question``)."""
-        asked = _Question(future, chat_id, strict, words, firm=firm)
+        self._question_seq += 1
+        asked = _Question(future, chat_id, strict, words, firm=firm, withdrawable=withdrawable,
+                          seq=self._question_seq)
         self._questions.append(asked)
         future.add_done_callback(lambda _f: self._show_question())
         self._show_question()
@@ -7276,7 +7346,8 @@ class TelegramInlet:
     async def _ask_user(self, question: str, chat_id: int, title: str = TASK_ASKS_TITLE,
                         choices: Optional[Sequence[Choice]] = None, about: Optional[str] = None,
                         firm: bool = False, read_all: bool = False,
-                        on_open: Optional[Callable[[_Question], None]] = None, outside: bool = False) -> str:
+                        on_open: Optional[Callable[[_Question], None]] = None, outside: bool = False,
+                        withdrawable: bool = False) -> str:
         """A question for the owner from a task, an app or Codex. A free question needs words: the owner's
         next message is its answer, whatever it says. A question whose answers are known (``choices``, or
         what ``answer_choices`` reads off its wording: a yes/no, Codex's app-access choices) also gets
@@ -7297,7 +7368,9 @@ class TelegramInlet:
         as tell_owner's ``about``, web words never become eve's own words in the history). ``firm``: only a bare
         yes or no or a button answers it, relay or not, on a call too (``_Question.firm``). ``outside``: the question's
         words are not eve's (a task's or Codex's question, written after reading screens and pages): its history
-        line is marked, so a later turn that shows it starts tainted (tool_gate.py; v3 safety review)."""
+        line is marked, so a later turn that shows it starts tainted (tool_gate.py; v3 safety review).
+        ``withdrawable``: other text typed in the chat settles it as consent.Withdrawn (``_withdraw``), only while
+        EVE_GATE_WITHDRAW is on and never for a Work session's question."""
         loop = asyncio.get_running_loop()
         future = loop.create_future()
         session = _SESSION.get()
@@ -7306,7 +7379,7 @@ class TelegramInlet:
         choices = tuple(answer_choices(question) if choices is None else choices)
         # A free question: any next message answers it.
         asked = self._open_question(future, chat_id, strict=bool(choices), words=frozenset(c.value for c in choices),
-                                    firm=firm)
+                                    firm=firm, withdrawable=withdrawable and session is None and _gate_withdraw())
         if on_open is not None:
             on_open(asked)
         asked.text = question
@@ -7332,6 +7405,9 @@ class TelegramInlet:
                 # A free question opens the reply box on itself (ForceReply): the next message is its answer.
                 await self._say(chat_id, question, title=title, force_reply=ASK_PLACEHOLDER)
             answer = await asyncio.wait_for(future, timeout=self.config.ask_timeout_secs)
+            if isinstance(answer, consent.Withdrawn):
+                line = WITHDRAWN_LINE
+                return answer
             said = answer.strip().lower().rstrip(".!")
             line = next((c.done or c.label for c in choices if c.value == said), ANSWERED_LINE)
             return answer

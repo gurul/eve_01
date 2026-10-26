@@ -195,6 +195,7 @@ token without an owner id is off. A door with no allowlist never opens.
 | `EVE_SHARE` | `0` | `1`: `share_file` and `find_contact`, sending one of your files to someone by iMessage (this Mac) or by email as a Google Drive link (the direct apps' Google sign-in), after your Allow ([share.md](../share.md)). |
 | `EVE_TOOLSET_ROUTER` | `auto` | Which toolsets a turn starts with ([toolset-router.md](../toolset-router.md)): the direct apps, Share and the workspace (Slack, Notion, Linear through Composio) open by the message's words plus Jev's judgment of it; `open_app` opens the rest, and a call to a closed toolset's tool opens it and runs. `auto` asks Jev (it has passed its blind holdout) when a Jev key is set, else keywords only; `on` asks Jev regardless of the holdout; `off` is the turn as it was before the router: every Share and Composio tool on every turn, the direct apps by their words. While Jev is asked, your message and the one before it go to Jev on every turn. |
 | `EVE_MENU_TOOLS` | `menu_tools.SHIPPED` (`True` since the v4 blind tool-choice eval passed, 2026-10-09) | The / menu as tools, `events_search`, and the tool-choice lines (see "The menu in plain words" below); `off` sends every request byte for byte as before. The taint gate is on either way. |
+| `EVE_GATE_WITHDRAW` | `0` | `1`: a message you type while the chat's own check-first or app question waits withdraws that question: the act does not run, and the same turn goes on with your words ([below](#a-typed-correction-withdraws-the-question)). Unset or `0` keeps today's behaviour byte for byte. Off until a blind eval of corrections against today's queue passes, because the withdrawn call's result is new text the brain reads. |
 | `EVE_CHAT_LOG` | `1` | `0` turns the chat log off ([below](#the-chats-history-the-chat-log)): the history is then RAM only and is cleared after ten quiet minutes or a restart. |
 | `EVE_CHAT_LOG_FILE` | `~/.config/eve-bridge/chat/log.json` | Where the chat log is kept. |
 | `EVE_CHAT_LOG_LINES` | `300` | Lines kept per chat, at most. |
@@ -728,6 +729,42 @@ Flip it to `ask` if two seconds a command is a price you will pay.
     show the required arguments whole, the operation is refused unasked. A
     pending question is never silently replaced. The history keeps a neutral
     line in place of the question so outside words remain marked.
+  - <a id="a-typed-correction-withdraws-the-question"></a>**A typed correction
+    withdraws the question** (`EVE_GATE_WITHDRAW=1`; off by default, 2026-10-26).
+    Without it, typing "no, send it to Bob instead" while eve waits on a
+    send, delete or app question queues your words behind the waiting turn for
+    up to `ask_timeout_secs` (180 s); the act is then refused as "No answer,
+    so I took that as a no." and a second turn reads your words. With it on,
+    the words settle the question at once as a withdrawal
+    (`consent.Withdrawn`, which every consent rule reads as a no), the act does
+    not run, the question's message ends "Withdrawn: not done. I'm acting on
+    what you wrote instead.", and the same turn goes on with the refused call's
+    result holding your words (`tool_gate.withdrawn`). No second turn opens,
+    and the words reach the brain's history only through that result; the
+    transcript keeps them as said. Nothing new can approve: a bare yes, a bare
+    no, a button's words and a tap answer exactly as before.
+    - **Which questions.** Only the chat turn's own: the check-first gate
+      (`TelegramInlet._gate`) and a direct app's or Composio's
+      whole-act question (`_direct_tool`, `_app_tool`), marked
+      `_Question.withdrawable`. The chief's Go, a share or other outward
+      send (`_ask_alone`), a Work session's questions, a Mac task's or Codex's
+      question and Claude Code's permission prompts keep their rules.
+    - **Which words.** Only a message that would otherwise open a new turn
+      (`TelegramInlet._withdraw`, the last step of `_handle`). Text for the
+      Claude Code, Codex or Muse relay still goes to the relay and the
+      question keeps waiting; so does "eve: …" while a strict prompt waits.
+      eve's code words, `/` commands, app commands done by code and quick
+      answers run as before. A picture never withdraws. Spoken words keep the
+      spoken-answer rules.
+    - **Which chat, which moment.** Only the newest live question, only in
+      the chat it was asked in, and only one that was already open when the
+      message arrived: a message held while "claude on" decides keeps the
+      question count it arrived with (`_ARRIVED`), so it never withdraws a
+      question opened after it.
+    - **Why it is off.** The withdrawn call's result is new text the brain
+      reads, so it needs a blind eval (corrections against today's queue)
+      before it is on by default (AGENTS.md, rule 6). The tests are
+      `pytest tests/test_tool_gate.py -k withdraw`.
   - **Out loud.** The voice brain has the same gate
     (`voice_agent.VoiceSession._gate`): a consequential call waits for approval, whether or not outside text was read. **Code says the question, not
     the model** (2026-10-09): `tool_gate.spoken_question` writes it from the

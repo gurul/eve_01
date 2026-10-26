@@ -484,3 +484,324 @@ def test_a_gate_question_shows_every_hidden_character(ch: str) -> None:
 
 def test_a_gate_question_without_hidden_characters_is_unchanged() -> None:
     assert tool_gate.visible("plain words, café") == "plain words, café"
+
+
+# ---- a typed correction withdraws the waiting gate (EVE_GATE_WITHDRAW, telegram._withdraw) -----------------------
+# Every test here has "withdraw" in its name: `pytest tests/test_tool_gate.py -k withdraw`. The switch is on in each,
+# except the one that proves the old queue with it off.
+
+CORRECTION = "no, send it to Bob instead"
+
+
+class _MaxTurns(dict):
+    """The inlet's ``_open_turns``, remembering the most entries it ever held."""
+
+    most = 0
+
+    def __setitem__(self, key: Any, value: Any) -> None:
+        super().__setitem__(key, value)
+        self.most = max(self.most, len(self))
+
+
+def _withdraw_on(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(telegram.GATE_WITHDRAW_ENV, "1")
+
+
+async def _asked(rig: Rig) -> telegram._Question:
+    """The question the owner sees now, once its buttons are on the screen."""
+    for _ in range(500):
+        live = rig.inlet._live_question()
+        if live is not None and rig.api.keyboards:
+            return live
+        await asyncio.sleep(0.01)
+    raise AssertionError("no question was asked")
+
+
+def _typed(text: str, chat: int = OWNER, message_id: int = 8) -> telegram.Inbound:
+    return telegram.Inbound(chat, OWNER, text, message_id=message_id)
+
+
+def _outputs(request: dict[str, Any]) -> list[dict[str, Any]]:
+    return [json.loads(i["output"]) for i in request["input"] if i.get("type") == "function_call_output"]
+
+
+def test_withdraw_the_switch_reads_one_and_nothing_else() -> None:
+    assert telegram._gate_withdraw({}) is False
+    assert telegram._gate_withdraw({"EVE_GATE_WITHDRAW": "0"}) is False
+    assert telegram._gate_withdraw({"EVE_GATE_WITHDRAW": ""}) is False
+    assert telegram._gate_withdraw({"EVE_GATE_WITHDRAW": "1"}) is True
+
+
+@pytest.mark.parametrize("words", ["yes", "ok", "go ahead please", "yes, send it", "sure", CORRECTION, ""])
+def test_withdraw_the_sentinel_is_never_an_allow(words: str) -> None:
+    from eve_bridge import consent
+
+    withdrawn = consent.Withdrawn(words)
+    assert withdrawn.text == words
+    assert consent.bare_decision(withdrawn) == "deny"
+    assert consent.decision(withdrawn) == "deny"
+    assert consent.approves(withdrawn) is False and consent.denies(withdrawn) is True
+    # a reader that only sees a plain string (a strip, a lower) finds no yes in it either
+    for plain in (str.strip(withdrawn), str(withdrawn).lower(), "" + withdrawn):
+        assert consent.bare_decision(plain) != "allow" and not consent.approves(plain)
+
+
+def test_withdraw_result_hands_the_owner_s_words_on_and_ran_nothing() -> None:
+    result = tool_gate.withdrawn(CORRECTION)
+    assert result["ok"] is False and CORRECTION in result["reason"]
+    assert "did not run" in result["reason"] and "do not retry" in result["reason"]
+
+
+def test_withdraw_a_typed_correction_steers_the_same_turn_and_the_act_never_runs(
+        monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    _withdraw_on(monkeypatch)
+    memory = FakeMemory(tmp_path)
+    create = FakeCreate(call("forget_apply", {"token": "t-sam"}), say("Okay, I kept that and will do Bob's instead."))
+    rig = Rig(FakeApi(), create, memory=memory)
+    rig.inlet._open_turns = _MaxTurns()
+
+    async def go() -> None:
+        turn = asyncio.ensure_future(rig.inlet._turn(_in("forget what I told you about Sam")))
+        asked = await _asked(rig)
+        assert asked.withdrawable and asked.firm
+        rig.inlet._handle(_typed(CORRECTION))
+        await asyncio.wait_for(turn, 1.0)                     # the same turn ends at once: no 180 s wait
+        await _jobs(rig)
+
+    asyncio.run(go())
+    assert not any(c[0] == "forget_apply" for c in memory.calls)          # the executor ran 0 times
+    assert len(create.requests) == 2                                      # one turn, its second round
+    assert _outputs(create.requests[1])[-1] == tool_gate.withdrawn(CORRECTION)
+    assert rig.inlet._open_turns.most == 1                                # never a second turn
+    assert rig.api.sent[-1] == (OWNER, "Okay, I kept that and will do Bob's instead.")
+    assert any(telegram.WITHDRAWN_LINE in text for _m, text in rig.api.edits)        # the board says withdrawn
+    assert not any(telegram.UNANSWERED_LINE in text for _c, text in rig.api.sent)
+    # the words reach the history only through the call's result, never as a user turn of their own
+    assert not any(who == "user" and CORRECTION in text for who, text in rig.inlet.turns)
+    assert rig.inlet._live_question() is None
+
+
+def test_withdraw_a_bare_yes_still_runs_the_act_exactly_once(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    _withdraw_on(monkeypatch)
+    memory = FakeMemory(tmp_path)
+    create = FakeCreate(call("forget_apply", {"token": "t-sam"}), say("Forgotten."))
+    rig = Rig(FakeApi(), create, memory=memory)
+    rig.inlet._open_turns = _MaxTurns()
+
+    async def go() -> None:
+        turn = asyncio.ensure_future(rig.inlet._turn(_in("forget what I told you about Sam")))
+        await _asked(rig)
+        rig.inlet._handle(_typed("yes"))
+        await asyncio.wait_for(turn, 1.0)
+        await _jobs(rig)
+
+    asyncio.run(go())
+    assert [c[0] for c in memory.calls].count("forget_apply") == 1
+    assert _outputs(create.requests[1])[-1] == {"ok": True}
+    assert rig.inlet._open_turns.most == 1
+    assert not any(telegram.WITHDRAWN_LINE in text for _m, text in rig.api.edits)
+
+
+def test_withdraw_with_the_switch_off_the_correction_queues_as_before(
+        monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.delenv(telegram.GATE_WITHDRAW_ENV, raising=False)
+    memory = FakeMemory(tmp_path)
+    create = FakeCreate(call("forget_apply", {"token": "t-sam"}), say("Okay, not forgotten."), say("Bob's it is."))
+    rig = Rig(FakeApi(), create, memory=memory)
+    rig.inlet._open_turns = _MaxTurns()
+
+    async def go() -> None:
+        turn = asyncio.ensure_future(rig.inlet._turn(_in("forget what I told you about Sam")))
+        asked = await _asked(rig)
+        assert not asked.withdrawable
+        rig.inlet._handle(_typed(CORRECTION))
+        await settle()
+        assert not asked.future.done() and len(create.requests) == 1     # the question waits; the words queue
+        assert rig.inlet._open_turns.most == 2
+        await _answer(rig, "No")
+        await asyncio.wait_for(turn, 1.0)
+        await _jobs(rig)
+
+    asyncio.run(go())
+    assert not any(c[0] == "forget_apply" for c in memory.calls)
+    assert _outputs(create.requests[1])[-1] == tool_gate.REFUSED
+    assert len(create.requests) == 3                                      # a second turn answered the words
+    assert any(i.get("role") == "user" and CORRECTION in json.dumps(i) for i in create.requests[2]["input"])
+
+
+class _Gmail(_Direct):
+    """A direct Gmail whose send asks (apps_mcp's whole-email ask)."""
+
+    apps, names = ["gmail"], frozenset({"gmail__send_message"})
+
+    def owns(self, name: str) -> bool:
+        return name.startswith("gmail__")
+
+    def ensure_open(self, name: str, opened: set[str]) -> None:
+        opened.add("gmail")
+
+
+SEND = {"to": ["ana@example.invalid"], "subject": "Lunch", "body": "Noon works."}
+
+
+def test_withdraw_a_correction_withdraws_a_direct_app_send(monkeypatch: pytest.MonkeyPatch) -> None:
+    _withdraw_on(monkeypatch)
+    rig = Rig(FakeApi(), FakeCreate())
+    gmail = _Gmail("ask")
+    rig.inlet._direct = gmail
+
+    async def go() -> dict[str, Any]:
+        sent = asyncio.ensure_future(rig.inlet._direct_tool("gmail__send_message", SEND, OWNER))
+        assert (await _asked(rig)).withdrawable
+        rig.inlet._handle(_typed(CORRECTION))
+        out = await asyncio.wait_for(sent, 1.0)
+        await _jobs(rig)
+        return out
+
+    assert asyncio.run(go()) == tool_gate.withdrawn(CORRECTION)
+    assert gmail.ran == []
+
+
+class _Composio:
+    """A Composio stand-in that records what ran."""
+
+    started, names = True, frozenset({"COMPOSIO_MULTI_EXECUTE_TOOL"})
+
+    def __init__(self) -> None:
+        self.ran: list[str] = []
+
+    def tools(self) -> list[dict[str, Any]]:
+        return []
+
+    def execute(self, name: str, args: dict[str, Any]) -> dict[str, Any]:
+        self.ran.append(name)
+        return {"ok": True}
+
+
+DRIVE_DELETE = {"tools": [{"tool_slug": "GOOGLEDRIVE_DELETE_FILE", "arguments": {"file_id": "x"}}]}
+
+
+def test_withdraw_a_correction_withdraws_a_composio_question(monkeypatch: pytest.MonkeyPatch) -> None:
+    _withdraw_on(monkeypatch)
+    apps = _Composio()
+    rig = Rig(FakeApi(), FakeCreate(), apps=apps)
+
+    async def go() -> dict[str, Any]:
+        result = asyncio.ensure_future(rig.inlet._app_tool("COMPOSIO_MULTI_EXECUTE_TOOL", DRIVE_DELETE, OWNER))
+        assert (await _asked(rig)).withdrawable
+        rig.inlet._handle(_typed("keep that file, delete the old draft instead"))
+        out = await asyncio.wait_for(result, 1.0)
+        await _jobs(rig)
+        return out
+
+    assert asyncio.run(go()) == tool_gate.withdrawn("keep that file, delete the old draft instead")
+    assert apps.ran == []
+
+
+def test_withdraw_relay_text_still_goes_to_claude_and_the_question_waits(monkeypatch: pytest.MonkeyPatch) -> None:
+    from test_telegram import dispatch, relay_rig
+
+    _withdraw_on(monkeypatch)
+
+    async def go() -> None:
+        api, typed, apps = FakeApi(), [], _Composio()
+        rig = relay_rig(api, typed, apps=apps)
+        result = asyncio.ensure_future(rig.inlet._app_tool("COMPOSIO_MULTI_EXECUTE_TOOL", DRIVE_DELETE, OWNER))
+        assert (await _asked(rig)).withdrawable
+        await dispatch(rig, "ok, also update the README", update_id=5)
+        assert typed == ["ok, also update the README"] and not result.done() and apps.ran == []
+        await dispatch(rig, "eve: send it to Bob instead", update_id=6)   # "eve: …" while a strict prompt waits
+        assert not result.done() and apps.ran == []
+        await dispatch(rig, "no", update_id=7)
+        assert (await result) == {"ok": False, "reason": "the owner said no; do not retry it"} and apps.ran == []
+        await rig.inlet._shutdown()
+
+    asyncio.run(go())
+
+
+def test_withdraw_never_touches_the_chief_go_a_share_or_a_work_session(monkeypatch: pytest.MonkeyPatch) -> None:
+    _withdraw_on(monkeypatch)
+    create = FakeCreate(say("Here is the weather."), say("Still here."), say("And again."))
+    rig = Rig(FakeApi(), create)
+    rig.inlet._chat_id = OWNER
+
+    async def go() -> None:
+        # the chief's Go: the words go on as a new message, the Go waits for a yes or a no
+        go_ = asyncio.ensure_future(rig.inlet.chief_ask("c1, Go?"))
+        asked = await _asked(rig)
+        assert not asked.withdrawable
+        rig.inlet._handle(_typed("what's the weather tomorrow?"))
+        await _jobs(rig)
+        assert not go_.done() and len(create.requests) == 1
+        rig.inlet._handle(_typed("no", message_id=9))
+        assert await go_ == "no"
+        # a share's outward send (_ask_alone)
+        share = asyncio.ensure_future(rig.inlet._ask_alone("Send report.pdf to Ana?", OWNER, title="Share a file"))
+        assert not (await _asked(rig)).withdrawable
+        rig.inlet._handle(_typed("send it to Bob instead", message_id=10))
+        await _jobs(rig)
+        assert not share.done() and len(create.requests) == 2
+        rig.inlet._handle(_typed("no", message_id=11))
+        assert await share == "no"
+        # a Work session's gate
+        mark = telegram._SESSION.set({"sid": "s1", "unanswered": False})
+        try:
+            gated = asyncio.ensure_future(rig.inlet._gate("forget_apply", {"token": "t"}, OWNER,
+                                                          read=telegram.SESSION_READ))
+        finally:
+            telegram._SESSION.reset(mark)
+        assert not (await _asked(rig)).withdrawable
+        rig.inlet._handle(_typed("not that one", message_id=12))
+        await _jobs(rig)
+        assert not gated.done() and len(create.requests) == 3
+        rig.inlet._handle(_typed("no", message_id=13))
+        assert await gated == tool_gate.REFUSED
+
+    asyncio.run(go())
+
+
+def test_withdraw_never_settles_a_question_in_another_chat_or_one_opened_later(monkeypatch: pytest.MonkeyPatch) -> None:
+    _withdraw_on(monkeypatch)
+    other_chat = OWNER + 1
+    create = FakeCreate(say("Answered over there."), say("Answered later."))
+    rig = Rig(FakeApi(), create)
+
+    async def go() -> None:
+        gated = asyncio.ensure_future(rig.inlet._gate("forget_apply", {"token": "t"}, OWNER))
+        asked = await _asked(rig)
+        assert asked.withdrawable
+        # typed in another chat: a new message there, never this chat's withdrawal
+        rig.inlet._handle(_typed(CORRECTION, chat=other_chat))
+        await _jobs(rig)
+        assert not gated.done() and len(create.requests) == 1
+        # a message that arrived before this question opened (held while "claude on" decided, replayed now)
+        mark = telegram._ARRIVED.set(asked.seq - 1)
+        try:
+            rig.inlet._handle(_typed(CORRECTION, message_id=9))
+        finally:
+            telegram._ARRIVED.reset(mark)
+        await _jobs(rig)
+        assert not gated.done() and len(create.requests) == 2
+        # the same words, now, in its own chat: withdrawn
+        rig.inlet._handle(_typed(CORRECTION, message_id=10))
+        assert await asyncio.wait_for(gated, 1.0) == tool_gate.withdrawn(CORRECTION)
+        await _jobs(rig)
+
+    asyncio.run(go())
+
+
+def test_withdraw_a_held_message_keeps_the_question_count_it_arrived_with(monkeypatch: pytest.MonkeyPatch) -> None:
+    _withdraw_on(monkeypatch)
+    rig = Rig(FakeApi(), FakeCreate())
+
+    async def go() -> None:
+        waiting = asyncio.Event()
+        rig.inlet._claude_on_job = asyncio.ensure_future(waiting.wait())
+        before = rig.inlet._question_seq
+        rig.inlet._handle(_typed(CORRECTION))
+        assert [(m.text, seq) for m, _o, seq in rig.inlet._held] == [(CORRECTION, before)]
+        waiting.set()
+        await rig.inlet._claude_on_job
+        rig.inlet._held.clear()
+
+    asyncio.run(go())

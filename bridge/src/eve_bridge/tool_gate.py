@@ -277,6 +277,15 @@ def about(name: str, read: str) -> str:
 
 
 REFUSED = {"ok": False, "reason": "the owner did not approve it; it did not run. Do not try it again this turn."}
+
+
+def withdrawn(text: str) -> dict[str, Any]:
+    """The result of a call whose question the owner withdrew by typing something else (EVE_GATE_WITHDRAW): it did
+    not run, and the owner's own words are handed to the same turn to act on. The words are the owner's, typed in the
+    chat, so they taint nothing. Model-visible text: it ships behind the switch until its blind eval passes."""
+    return {"ok": False, "reason": ('the owner did not approve this, so it did not run; instead they wrote: "'
+                                    + str(text) + '". Act on that now; do not retry the refused call unless '
+                                    "their words ask for it.")}
 TOO_LONG = {"ok": False, "reason": "too long to show the owner whole in a question, so it did not run; ask the owner "
                                    "to say what they want in their own words."}
 

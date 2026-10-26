@@ -10,6 +10,8 @@ closed:
 * **no**: the first word is a no-word.
 * anything else is neither: nothing is approved, and a caller that can defer (a permission prompt) leaves
   the decision to the dialog on the Mac.
+* a ``Withdrawn`` answer (the owner typed something else while a firm question waited, EVE_GATE_WITHDRAW) is a
+  no under every reading here, whatever the owner's words were.
 """
 
 from __future__ import annotations
@@ -28,12 +30,29 @@ HOLD_WORDS = frozenset({"no", "not", "nope", "nah", "don't", "dont", "never", "s
 _WORD = re.compile(r"[a-z]+(?:'[a-z]+)?")
 
 
+class Withdrawn(str):
+    """The answer a withdrawable question gets when the owner types something else instead of answering it
+    (telegram._withdraw, EVE_GATE_WITHDRAW). Its string value is a fixed marker, never the owner's words, so even a
+    reader that only sees a plain string finds no yes in it; the words ride on ``text``. Every rule below reads it
+    as a no."""
+
+    MARK = "\x00withdrawn"
+    text: str
+
+    def __new__(cls, text: str) -> "Withdrawn":
+        made = super().__new__(cls, cls.MARK)
+        made.text = str(text)
+        return made
+
+
 def _words(reply: str) -> list[str]:
     return _WORD.findall(str(reply).lower().replace("’", "'"))
 
 
 def approves(reply: str) -> bool:
     """The reply is an unambiguous yes."""
+    if isinstance(reply, Withdrawn):
+        return False
     words = _words(reply)
     if not words:
         return False
@@ -43,6 +62,8 @@ def approves(reply: str) -> bool:
 
 def denies(reply: str) -> bool:
     """The reply is a no."""
+    if isinstance(reply, Withdrawn):
+        return True
     words = _words(reply)
     return bool(words) and words[0] in NO_WORDS
 
@@ -65,7 +86,9 @@ def bare_decision(reply: str) -> str:
     """"allow" or "deny" only when the whole reply is a yes or a no, else "". For a prompt that has another
     way to be answered (Allow/Deny buttons on the screen), where anything that is not plainly the answer
     must go on to where it was meant to go instead of being eaten. ``decision`` stays the rule where the
-    next message is the answer by construction."""
+    next message is the answer by construction. A ``Withdrawn`` answer is "deny"."""
+    if isinstance(reply, Withdrawn):
+        return "deny"
     words = _words(reply)
     if not words or len(words) > BARE_MAX_WORDS or any(w not in _BARE_WORDS for w in words):
         return ""
