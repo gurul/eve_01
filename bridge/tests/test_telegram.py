@@ -5350,6 +5350,35 @@ def test_a_refused_edit_never_blocks_the_shutdown_or_runs_the_tool() -> None:
     asyncio.run(go())
 
 
+def test_a_yes_typed_while_shutdown_settles_never_runs_the_tool() -> None:
+    # Review of the shutdown micro-fix: the edits take up to ASK_RESTARTED_SECS, and app text still reaches
+    # _handle meanwhile. A "yes" then must not answer the settled question, or the call runs under "I restarted".
+    release = asyncio.Event()
+
+    class Slow(FakeApi):
+        async def edit_message(self, *a: Any, **kw: Any) -> None:
+            await release.wait()
+
+    api = Slow()
+    rig = Rig(api, FakeCreate())
+    ran: list[str] = []
+
+    async def go() -> None:
+        _open_gate(rig, ran)
+        await settle()
+        assert rig.inlet._awaiting_answer
+        stopping = asyncio.create_task(rig.inlet._shutdown())
+        await settle()
+        assert not rig.inlet._awaiting_answer                      # out of the slot before the edit returns
+        rig.inlet._dispatch(update("yes", update_id=7))
+        await settle()
+        release.set()
+        await stopping
+        assert ran == []
+
+    asyncio.run(go())
+
+
 def test_a_stuck_edit_is_bounded_at_shutdown() -> None:
     never = asyncio.Event()
 

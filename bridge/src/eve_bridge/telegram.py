@@ -3014,7 +3014,8 @@ class TelegramInlet:
     async def _settle_open_asks(self) -> None:
         """Every firm question still waiting with buttons (the taint gate's, the chief's Go, an app's ask) is
         edited at shutdown to say ``ASK_RESTARTED_LINE``, and its buttons go. After the restart, a tap on one
-        answered only "This button has expired." Its keys are forgotten first, so no tap answers it now; its
+        answered only "This button has expired." Its keys are forgotten and it leaves the question slot first, so
+        no tap and no typed or spoken yes answers it now; its
         future is left as it is, so nothing is approved and the gated call never runs (its asker is cancelled
         with the jobs, as before). The line goes to Telegram only: nothing is noted in the transcript or the
         model's history. Best effort, all within ASK_RESTARTED_SECS; never raises."""
@@ -3025,6 +3026,9 @@ class TelegramInlet:
             return
         for asked in open_asks:
             self._retire(asked.board)
+            # Out of the slot too: a "yes" typed or spoken in the Eve Link app while these edits run (or before
+            # the jobs are cancelled) must not answer it, or the gated call would run under "I restarted".
+            self._close_question(asked)
         try:
             await asyncio.wait_for(asyncio.gather(*(self._settle_restarted(q) for q in open_asks),
                                                   return_exceptions=True), timeout=ASK_RESTARTED_SECS)
