@@ -196,7 +196,7 @@ token without an owner id is off. A door with no allowlist never opens.
 | `EVE_TOOLSET_ROUTER` | `auto` | Which toolsets a turn starts with ([toolset-router.md](../toolset-router.md)): the direct apps, Share and the workspace (Slack, Notion, Linear through Composio) open by the message's words plus Jev's judgment of it; `open_app` opens the rest, and a call to a closed toolset's tool opens it and runs. `auto` asks Jev (it has passed its blind holdout) when a Jev key is set, else keywords only; `on` asks Jev regardless of the holdout; `off` is the turn as it was before the router: every Share and Composio tool on every turn, the direct apps by their words. While Jev is asked, your message and the one before it go to Jev on every turn. |
 | `EVE_MENU_TOOLS` | `menu_tools.SHIPPED` (`True` since the v4 blind tool-choice eval passed, 2026-10-09) | The / menu as tools, `events_search`, and the tool-choice lines (see "The menu in plain words" below); `off` sends every request byte for byte as before. The taint gate is on either way. |
 | `EVE_GATE_WITHDRAW` | `0` | `1`: a message you type while the chat's own check-first or app question waits withdraws that question: the act does not run, and the same turn goes on with your words ([below](#a-typed-correction-withdraws-the-question)). Unset or `0` keeps today's behaviour byte for byte. Off: its blind eval failed on 2026-10-26 ([verdict](../evals/gate-withdraw-VERDICT.md)); the withdrawn call's result is new text the brain reads. |
-| `EVE_CHAT_STEER` | `0` | `1`: a plain message you type while eve's text turn for that chat is still running is folded into that turn, as your own message before its next model call, instead of waiting behind it as a turn of its own ([below](#a-second-message-steers-the-running-turn)). A running tool is never interrupted. Unset or `0` keeps today's behaviour byte for byte. Off until its blind eval passes ([bar](../evals/chat-steer-BAR.md)). |
+| `EVE_CHAT_STEER` | `0` | `1`: a plain message you type while eve's text turn for that chat is still running is folded into that turn, as your own message before its next model call, instead of waiting behind it as a turn of its own ([below](#a-second-message-steers-the-running-turn)). A running tool is never interrupted. Unset or `0` keeps today's behaviour byte for byte. Off: its blind eval on 2026-10-26 beat today's queue (27 of 38 against 17) but missed the 80% floor and the control check ([verdict](../evals/chat-steer-VERDICT.md)). |
 | `EVE_CHAT_LOG` | `1` | `0` turns the chat log off ([below](#the-chats-history-the-chat-log)): the history is then RAM only and is cleared after ten quiet minutes or a restart. |
 | `EVE_CHAT_LOG_FILE` | `~/.config/eve-bridge/chat/log.json` | Where the chat log is kept. |
 | `EVE_CHAT_LOG_LINES` | `300` | Lines kept per chat, at most. |
@@ -1103,8 +1103,9 @@ every line was already written down the moment it was typed or sent.
 
 ## A second message steers the running turn
 
-Off by default (`EVE_CHAT_STEER=1` turns it on; it stays off until its blind
-eval passes, [bar](../evals/chat-steer-BAR.md)). Without it, a message you type
+Off by default (`EVE_CHAT_STEER=1` turns it on). Its first blind eval, on
+2026-10-26, did not hold its bar: 27 of 38 double-texts right against 17 for
+today's queue, short of the 80% floor ([verdict](../evals/chat-steer-VERDICT.md)). Without it, a message you type
 while eve is still working on the last one waits behind that turn and runs as a
 turn of its own afterwards; eve shows no sign that it is queued.
 

@@ -126,3 +126,11 @@ def test_the_scripted_brain_has_real_args_for_every_drivable_tool() -> None:
 
     listed = {t["name"] for t in json.loads(TOOLS.read_text())["tools"]}
     assert listed <= gw.FAKE_ARGS.keys(), sorted(listed - gw.FAKE_ARGS.keys())
+
+
+def test_a_routine_tool_is_not_counted_as_unapproved_but_a_gated_one_is():
+    import gate_withdraw_eval as gw
+    rec = gw.Record()
+    rec.execute("start_task", {"goal": "x"})
+    rec.execute("delete_app", {"app": "Water Log"})
+    assert [e["needs_yes"] for e in rec.executed] == [False, True]

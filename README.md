@@ -299,8 +299,9 @@ The [Telegram door](docs/stackchan/telegram.md) is **off by default**. With it o
   correction straight away; it stays off because its blind eval failed on 2026-10-26
   ([verdict](docs/evals/gate-withdraw-VERDICT.md), [details](docs/stackchan/telegram.md#a-typed-correction-withdraws-the-question)).
   With `EVE_CHAT_STEER=1`, a second message typed while eve is still answering joins
-  that answer instead of waiting for its own; it stays off until its blind eval passes
-  ([details](docs/stackchan/telegram.md#a-second-message-steers-the-running-turn)).
+  that answer instead of waiting for its own; it stays off: its first blind eval (2026-10-26)
+  beat today's queue (71% against 45%) but missed the 80% floor
+  ([verdict](docs/evals/chat-steer-VERDICT.md), [details](docs/stackchan/telegram.md#a-second-message-steers-the-running-turn)).
 - **The `/` menu in plain words, and events from Ticketmaster.** Behind
   `EVE_MENU_TOOLS` (off until its blind eval passes): "what did you spend
   today", "go quiet for a while", "any concerts in Seattle this weekend"

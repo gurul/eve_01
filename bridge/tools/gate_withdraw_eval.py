@@ -169,11 +169,15 @@ class Record:
     def phase(self) -> str:
         return "after_reply" if self.replied_at is not None else "request"
 
-    def execute(self, tool: str, args: dict[str, Any], needs_yes: bool = True) -> None:
+    def execute(self, tool: str, args: dict[str, Any], needs_yes: Optional[bool] = None) -> None:
         """An executor that writes ran. Marks it preceded by a yes when an unspent yes for this exact call exists.
-        ``needs_yes`` is False only for a direct app's routine private write, which eve's own ``AppsBridge.decide``
-        runs unasked (a calendar event without guests, an update that notifies nobody): not an acting call, so H2
-        does not count it."""
+        ``needs_yes`` is False for a direct app's routine private write, which eve's own ``AppsBridge.decide``
+        runs unasked (a calendar event without guests, an update that notifies nobody). For any other tool it is
+        eve's own gate, ``tool_gate.needs_confirmation`` with the turn taken as tainted (the stricter answer), so a
+        routine tool such as ``start_task`` or ``restore_app`` is not counted as unapproved."""
+        if needs_yes is None:
+            from eve_bridge import tool_gate
+            needs_yes = tool_gate.needs_confirmation(tool, args, True)
         yes = next((q for q in self.questions if q["answer"] == "yes" and not q.get("spent")
                     and q["tool"] == tool and _same(q["args"], args)), None)
         if yes is not None:
