@@ -342,6 +342,10 @@ PERMISSION_DEFERRED_LINE = "No answer here, so the dialog on the Mac decides."
 ANSWERED_LINE = "Answered."
 UNANSWERED_LINE = "No answer, so I took that as a no."
 ASK_CLOSED_LINE = "Closed without an answer here."   # the asker went away first: a stopped task, a Mac-side answer
+# A firm question still open when the daemon stops (_settle_open_asks): its buttons go, so none answers "expired",
+# and the message says how to get the question back. Shown to the owner only; never in the model's history.
+ASK_RESTARTED_LINE = "I restarted before you answered. Say yes and I'll ask again."
+ASK_RESTARTED_SECS = 3.0             # every such edit together: a restart is never held up longer
 # A withdrawable question the owner typed something else to (EVE_GATE_WITHDRAW, _withdraw): the board's last line.
 WITHDRAWN_LINE = "Withdrawn: not done. I'm acting on what you wrote instead."
 # The titles: a message that is not eve's own voice says whose it is, or what it is, in bold on its
@@ -2527,6 +2531,8 @@ class _Question:
     # Only _gate, _app_tool and _direct_tool ask for it, and never from a Work session.
     withdrawable: bool = False
     seq: int = 0                                    # the question count when it opened (_ARRIVED)
+    board: Optional["_Keyboard"] = None             # its buttons, when it has any (_ask_user): settled at shutdown
+    title: Optional[str] = None                     # the title it was sent under, for that edit
 
 
 @dataclass(eq=False)
@@ -2961,6 +2967,7 @@ class TelegramInlet:
                     await asyncio.wait_for(self._close_progress(progress, line), timeout=3)
                 except Exception:  # noqa: BLE001 — shutting down: best effort only
                     pass
+        await self._settle_open_asks()
         if self._agent is not None and self.task_running:
             self._agent.cancel(reason="the daemon is stopping")
             # A restart used to end a texted task in silence (live, 2026-09-23: a Chrome task died with two
@@ -3003,6 +3010,45 @@ class TelegramInlet:
                 log.warning("telegram: /america could not close (%s)", type(exc).__name__)
         await self._codex.close()
         self._close_chat()
+
+    async def _settle_open_asks(self) -> None:
+        """Every firm question still waiting with buttons (the taint gate's, the chief's Go, an app's ask) is
+        edited at shutdown to say ``ASK_RESTARTED_LINE``, and its buttons go. After the restart, a tap on one
+        answered only "This button has expired." Its keys are forgotten first, so no tap answers it now; its
+        future is left as it is, so nothing is approved and the gated call never runs (its asker is cancelled
+        with the jobs, as before). The line goes to Telegram only: nothing is noted in the transcript or the
+        model's history. Best effort, all within ASK_RESTARTED_SECS; never raises."""
+        open_asks = [q for q in self._questions
+                     if q.firm and not q.future.done() and q.board is not None and q.board.message_id
+                     and q.board.chat_id is not None]
+        if not open_asks:
+            return
+        for asked in open_asks:
+            self._retire(asked.board)
+        try:
+            await asyncio.wait_for(asyncio.gather(*(self._settle_restarted(q) for q in open_asks),
+                                                  return_exceptions=True), timeout=ASK_RESTARTED_SECS)
+        except Exception:  # noqa: BLE001 — shutting down: best effort only
+            pass
+        log.info("telegram: %d open question(s) settled by the restart, best effort", len(open_asks))
+
+    async def _settle_restarted(self, asked: _Question) -> None:
+        """One open question's message, rewritten at shutdown: its words, then ASK_RESTARTED_LINE, no buttons
+        (``edit_message`` sends an empty keyboard). A question longer than one piece loses its buttons and the
+        line goes as a short message of its own, as ``_settle_prompt`` does. Errors are swallowed."""
+        board = asked.board
+        if board is None or board.chat_id is None or not board.message_id:
+            return
+        text = asked.text + "\n\n" + ASK_RESTARTED_LINE
+        try:
+            if len(fmt.split(fmt.compose(text, asked.title, None))) > 1:
+                await self._drop_buttons(board.chat_id, board.message_id)
+                await self.api.send_message(board.chat_id, ASK_RESTARTED_LINE)
+                return
+            await self.api.edit_message(board.chat_id, board.message_id, text, title=asked.title)
+        except Exception as e:  # noqa: BLE001 — shutting down: a refused edit leaves only an "expired" button
+            log.debug("telegram: could not settle an open question (%s)", type(e).__name__)
+            await self._drop_buttons(board.chat_id, board.message_id)
 
     def menu_commands(self) -> tuple[tuple[str, str], ...]:
         """The / menu as this inlet runs: BOT_COMMANDS, plus /jobs while the chief is on, /america and /opentable
@@ -7437,6 +7483,7 @@ class TelegramInlet:
         asked.text = question
         self._note("eve", question if about is None else about, outside=about is None and outside)
         board = _Keyboard(chat_id, ANSWER, list(choices), future=future) if choices else None
+        asked.board, asked.title = board, title
         # Waiting on the owner is not working: no "typing…" under the question. It comes back with the answer,
         # except a reason that ended while the question waited (_stop_typing drops it from the paused set).
         # Only the outermost question in a chat owns the paused set: a question asked under another one adds

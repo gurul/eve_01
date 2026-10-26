@@ -5282,6 +5282,103 @@ def test_the_restart_line_never_holds_up_the_shutdown() -> None:
     assert waited and max(waited) <= telegram.TURN_RESTART_SECS <= 2.0
 
 
+def _open_gate(rig: Rig, ran: list[str]) -> None:
+    """A taint-gate question waiting on the owner, as a chat turn's job: the call behind it records that it ran."""
+    async def tool(name: str, args: dict[str, Any], chat_id: int) -> dict[str, Any]:
+        ran.append(name)
+        return {"ok": True}
+
+    rig.inlet._tool = tool                                      # type: ignore[method-assign]
+    rig.inlet._spawn(rig.inlet._gated_tool("send_reply", {"to": "a friend"}, OWNER, read="a web page"),
+                     "test-gate")
+
+
+def test_shutdown_settles_an_open_firm_question_without_running_its_tool() -> None:
+    # Plan "Later", the shutdown micro-fix: a gate question still open when the daemon stops loses its buttons
+    # and says how to get it back, so no button is left to answer "This button has expired."
+    api = FakeApi()
+    rig = Rig(api, FakeCreate())
+    ran: list[str] = []
+
+    async def go() -> None:
+        _open_gate(rig, ran)
+        await settle()
+        assert api.keyboards and api.titled[-1][0] == telegram.GATE_TITLE
+        message_id, key = api.key("Yes")
+        await rig.inlet._shutdown()
+        assert not rig.inlet._jobs or all(job.done() for job in rig.inlet._jobs)
+        assert [e for e in api.edits if e[0] == message_id] == [
+            (message_id, api.sent[-1][1] + "\n\n" + telegram.ASK_RESTARTED_LINE)]
+        assert api.edit_keyboards == [(message_id, None)]          # edit_message without rows: no buttons left
+        assert key not in rig.inlet._taps                          # no tap can approve it now
+        assert ran == []                                           # the gated call never ran
+        assert not any(telegram.ASK_RESTARTED_LINE in str(t) for t in rig.inlet.turns)   # the owner's eyes only
+
+    asyncio.run(go())
+
+
+def test_shutdown_leaves_a_question_that_is_not_firm_as_it_was() -> None:
+    # The control: a plain yes/no (not firm) is not rewritten with the restart line.
+    api = FakeApi()
+    rig = Rig(api, FakeCreate())
+
+    async def go() -> None:
+        rig.inlet._spawn(rig.inlet._ask_user("Shall I keep going?", OWNER, choices=telegram.YES_NO), "test-ask")
+        await settle()
+        assert api.keyboards
+        await rig.inlet._shutdown()
+        assert not any(telegram.ASK_RESTARTED_LINE in text for _, text in api.edits)
+        assert not any(telegram.ASK_RESTARTED_LINE in text for _, text in api.sent)
+
+    asyncio.run(go())
+
+
+def test_a_refused_edit_never_blocks_the_shutdown_or_runs_the_tool() -> None:
+    api = FakeApi()
+    api.fail_edits = BotApiError(400, "Bad Request: message can't be edited")
+    rig = Rig(api, FakeCreate())
+    ran: list[str] = []
+
+    async def go() -> None:
+        _open_gate(rig, ran)
+        await settle()
+        message_id, _ = api.key("Yes")
+        await rig.inlet._shutdown()
+        assert api.dropped == [message_id]                        # the buttons still go
+        assert ran == []
+
+    asyncio.run(go())
+
+
+def test_a_stuck_edit_is_bounded_at_shutdown() -> None:
+    never = asyncio.Event()
+
+    class Stuck(FakeApi):
+        async def edit_message(self, *a: Any, **kw: Any) -> None:
+            await never.wait()                                     # Telegram does not answer
+
+    api = Stuck()
+    rig = Rig(api, FakeCreate())
+    ran: list[str] = []
+    waited: list[float] = []
+    real_wait_for = asyncio.wait_for
+
+    async def timed(aw: Any, timeout: Optional[float]) -> Any:
+        waited.append(timeout or 0.0)
+        return await real_wait_for(aw, 0.01)                       # the test does not sit out the real budget
+
+    async def go() -> None:
+        _open_gate(rig, ran)
+        await settle()
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(telegram.asyncio, "wait_for", timed)
+            await rig.inlet._shutdown()
+        assert ran == []
+
+    asyncio.run(go())
+    assert telegram.ASK_RESTARTED_SECS in waited and telegram.ASK_RESTARTED_SECS <= 3.0
+
+
 def test_empty_citation_links_never_reach_the_phone() -> None:
     # Live, 2026-09-24 23:35:17: a reply carried "([]())", an empty markdown link left by the hosted web
     # search's citations. It is taken out before the reply is kept or sent; real links and code are not.
