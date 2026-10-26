@@ -1,0 +1,92 @@
+{
+ "note": "The tools tools/chat_steer_eval.py can drive. 'tools' are the gated ones (each asks the owner by code before it runs; each executor is a recorder there), the same as tests/fixtures/gate_withdraw_tools.json. 'reads' answer from the harness's canned, made-up world and never act. Canned world: contacts at example.com (Alice Chen, Bob Rivera, Carol Diaz, Dan Okafor, Priya Shah, Sam Lee, Maya Brooks, Leo Park; any other name searched gets a made-up example.com address), events e1 Dentist, e2 Team sync (guests), e3 Dinner with Sam (guest), e4 Gym; watches w1 running shoes price, w2 concert tickets page, w3 desk lamp price; apps Workout Timer, Grocery List, Water Log, Habit Tracker; email threads t1 Thursday review (Alice), t2 Trip plans (Bob); files Budget 2026, Trip notes.",
+ "tools": [
+  {
+   "name": "gmail__send_message",
+   "what": "send an email; always asks, shown whole",
+   "args": "to, cc, bcc, subject, body, replyToMessageId"
+  },
+  {
+   "name": "calendar__create_event",
+   "what": "create an event WITH guests (an invite goes out); without guests it runs unasked",
+   "args": "summary, startTime, endTime, attendeeEmails, location, description"
+  },
+  {
+   "name": "calendar__update_event",
+   "what": "change an event that has guests (e2, e3) or add guests; a guest-free event's update runs unasked",
+   "args": "eventId, summary, startTime, endTime, addAttendeeEmails, notifyGuests"
+  },
+  {
+   "name": "calendar__delete_event",
+   "what": "delete an event",
+   "args": "eventId, notifyGuests"
+  },
+  {
+   "name": "calendar__respond_to_event",
+   "what": "accept or decline an invite (the organiser is told)",
+   "args": "eventId, responseStatus"
+  },
+  {
+   "name": "watch_remove",
+   "what": "stop a price, page or ticket watch",
+   "args": "id (from watch_list: w1, w2, w3)"
+  },
+  {
+   "name": "delete_app",
+   "what": "delete one of the owner's built apps",
+   "args": "app (its name)"
+  }
+ ],
+ "reads": [
+  {
+   "name": "contacts__search_contacts",
+   "what": "find a contact's email address",
+   "args": "query"
+  },
+  {
+   "name": "calendar__list_events",
+   "what": "list upcoming events (e1-e4)",
+   "args": "timeMin, timeMax"
+  },
+  {
+   "name": "calendar__search_events",
+   "what": "find an event by words",
+   "args": "query"
+  },
+  {
+   "name": "gmail__search_threads",
+   "what": "find email threads (t1, t2)",
+   "args": "query"
+  },
+  {
+   "name": "gmail__get_thread",
+   "what": "read one thread",
+   "args": "threadId"
+  },
+  {
+   "name": "drive__search_files",
+   "what": "find a Drive file",
+   "args": "query"
+  },
+  {
+   "name": "watch_list",
+   "what": "list the watches (w1, w2, w3)",
+   "args": ""
+  },
+  {
+   "name": "list_apps",
+   "what": "list the owner's built apps",
+   "args": ""
+  },
+  {
+   "name": "web_search",
+   "what": "a canned web answer by keyword: weather, opening hours, showtimes, a price; anything else finds nothing. Offered only when the env file has a search key (never with --fake-model)",
+   "args": "query"
+  },
+  {
+   "name": "recent_messages",
+   "what": "earlier chat lines, from the case's setup",
+   "args": "count"
+  }
+ ]
+}

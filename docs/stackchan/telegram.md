@@ -1143,6 +1143,15 @@ read it. Nothing new is acknowledged, as before.
 - Logs say only that a message waited and how many were folded into which
   round, never the words. The tests are
   `pytest tests/test_chat_steer.py -k steer`.
+- **The eval.** `bridge/tools/chat_steer_eval.py --arm off|on` drives the
+  real chat turn on the gate withdraw harness's recorders and canned world:
+  each case's first message, then its second either during the first turn's
+  first model call or after the turn has ended, with an owner stand-in that
+  answers every gate question yes. It records executed calls, duplicate acts,
+  gate questions, folds, turns, replies, provider errors and the latency from
+  the second message to the last reply. The tools it can drive are in
+  `tests/fixtures/chat_steer_tools.json`; its plumbing test is
+  `pytest tests/test_chat_steer_eval.py`, on a scripted brain.
 
 ## When a turn runs long
 

@@ -1,0 +1,28 @@
+{
+ "note": "A smoke fixture for the harness's plumbing (tests/test_chat_steer_eval.py), not the eval's set. Made-up names, example.com only. 'fake' scripts the --fake-model brain: the tool it calls for each owner message.",
+ "cases": [
+  {"id": "s01", "kind": "double", "subtype": "addition",
+   "setup": [{"who": "owner", "text": "The Thursday review is moving to 3pm."}, {"who": "eve", "text": "Noted."}],
+   "first": "Email alice@example.com that the Thursday review moved to 3pm.",
+   "second": "and stop watching the running shoes price too",
+   "delay": "during",
+   "intent": "the email to alice@example.com is sent once and watch w1 is removed",
+   "fake": {"first": {"tool": "gmail__send_message",
+                      "args": {"to": "alice@example.com", "subject": "Review", "body": "The review moved to 3pm."}},
+            "second": {"tool": "watch_remove", "args": {"id": "w1"}}}},
+  {"id": "s02", "kind": "double", "subtype": "correction",
+   "first": "What am I watching right now?",
+   "second": "actually just remove the desk lamp one",
+   "delay": "during",
+   "intent": "the watches are listed and watch w3 is removed, nothing else",
+   "fake": {"first": {"tool": "watch_list", "args": {}},
+            "second": {"tool": "watch_remove", "args": {"id": "w3"}}}},
+  {"id": "s03", "kind": "control", "subtype": "unrelated",
+   "first": "Stop watching the running shoes price.",
+   "second": "Delete my Workout Timer app.",
+   "delay": "after",
+   "intent": "watch w1 is removed, then the Workout Timer app is deleted",
+   "fake": {"first": {"tool": "watch_remove", "args": {"id": "w1"}},
+            "second": {"tool": "delete_app", "args": {"app": "Workout Timer"}}}}
+ ]
+}
