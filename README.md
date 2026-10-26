@@ -296,8 +296,8 @@ The [Telegram door](docs/stackchan/telegram.md) is **off by default**. With it o
   provenance marks but no longer adds a question to every later routine action.
   See [confirmation rules](docs/stackchan/telegram.md). With `EVE_GATE_WITHDRAW=1`,
   typing a correction while eve asks cancels the act and eve acts on your
-  correction straight away; it is off until a blind eval of corrections against
-  today's queue passes ([details](docs/stackchan/telegram.md#a-typed-correction-withdraws-the-question)).
+  correction straight away; it stays off because its blind eval failed on 2026-10-26
+  ([verdict](docs/evals/gate-withdraw-VERDICT.md), [details](docs/stackchan/telegram.md#a-typed-correction-withdraws-the-question)).
 - **The `/` menu in plain words, and events from Ticketmaster.** Behind
   `EVE_MENU_TOOLS` (off until its blind eval passes): "what did you spend
   today", "go quiet for a while", "any concerts in Seattle this weekend"
