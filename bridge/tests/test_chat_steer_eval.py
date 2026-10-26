@@ -165,3 +165,48 @@ def test_the_drivable_tools_are_listed_gated_and_offered(runs: dict[str, dict]) 
     for case in json.loads(SMOKE.read_text())["cases"]:
         for step in case["fake"].values():
             assert step["tool"] in offered
+
+
+def test_a_quick_answer_is_recorded_and_reads_canned_data_with_no_network(tmp_path: Path) -> None:
+    # "What's the weather in X?" is answered by code (quick_answers.py) before any turn; it reads Open-Meteo in the
+    # daemon. The harness records that reply (by_code) and its getter answers canned data, so the case opens no
+    # socket at all: connect is made to fail in the run below.
+    cases = tmp_path / "cases.json"
+    cases.write_text(json.dumps({"cases": [
+        {"id": "q01", "kind": "double", "subtype": "unrelated", "first": "Delete my Workout Timer app.",
+         "second": "What's the weather in Lisbon?", "delay": "during", "intent": "-",
+         "fake": {"first": {"tool": "delete_app", "args": {"app": "Workout Timer"}}}},
+        {"id": "q02", "kind": "control", "subtype": "control", "first": "What's the weather in Lisbon?",
+         "second": "Delete my Workout Timer app.", "delay": "after", "intent": "-",
+         "fake": {"second": {"tool": "delete_app", "args": {"app": "Workout Timer"}}}}]}))
+    out = tmp_path / "on.json"
+    guard = ("import socket, sys, runpy\n"
+             "def no(*a, **k): raise OSError('network blocked by the test')\n"
+             "socket.socket.connect = no; socket.socket.connect_ex = no; socket.create_connection = no\n"
+             f"sys.argv = ['chat_steer_eval', '--arm', 'on', '--fake-model', '--cases', {str(cases)!r}, "
+             f"'--json', {str(out)!r}]\n"
+             f"runpy.run_path({str(TOOL)!r}, run_name='__main__')\n")
+    done = subprocess.run([sys.executable, "-c", guard], cwd=BRIDGE, capture_output=True, text=True, timeout=300)
+    assert done.returncode == 0, done.stderr[-2000:]
+    rows = {r["id"]: r for r in json.loads(out.read_text())["rows"]}
+    for r in rows.values():
+        assert r["outcome"] == "ok" and not r["provider_error"]
+        assert r["by_code"] == 1 and r["turns"] == 1 and r["second_own_turn"]
+        weather = [t for t in r["replies"] if t["by_code"] == "weather"]
+        assert len(weather) == 1 and "Lisbon" in weather[0]["reply"] and "64°F" in weather[0]["reply"]
+        assert [e["tool"] for e in r["executed"]] == ["delete_app"]
+
+
+def test_the_quick_answer_stub_answers_only_known_sources() -> None:
+    import asyncio
+
+    sys.path.insert(0, str(BRIDGE / "tools"))
+    sys.path.insert(0, str(BRIDGE / "src"))
+    import chat_steer_eval as cs
+
+    from eve_bridge import quick_answers as qa
+
+    assert asyncio.run(cs.quick_get(qa.GEOCODE_URL, {"name": "lisbon"}))["results"][0]["name"] == "Lisbon"
+    assert asyncio.run(cs.quick_get(qa.FORECAST_URL, {})) is cs.QUICK_FORECAST
+    with pytest.raises(RuntimeError):
+        asyncio.run(cs.quick_get("https://elsewhere.example.com/", {}))

@@ -46,9 +46,11 @@ for that exact call came before it, ``needs_yes``: False only for a direct app's
 unasked in the daemon too; ``phase``: before or after ``second`` was sent), ``unapproved_executed`` (needed a yes,
 had none), ``duplicate_acts`` (the same acting call, tool and args, executed more than once: the extra runs),
 every gate question with its answer, ``folds`` (each time the running turn folded messages in: its round and how
-many), ``turns`` (model turns run) and ``second_own_turn`` (``second`` ran as a turn of its own), every eve reply in
-order, the final one, provider errors, and ``latency_s`` (seconds from handing ``second`` to ``_handle`` to the last
-reply, as measured). Replies are in the JSON (a local eval artifact, not a log), and printed only with ``--show``.
+many), ``turns`` (model turns run), ``by_code`` (replies answered by code, quick_answers.py, with no model turn; its
+Open-Meteo reads answer canned, made-up data here) and ``second_own_turn`` (``second`` ran as a turn of its own, a
+model's or code's), every eve reply in order (``by_code``: the quick answer's kind, else empty), the final one,
+provider errors, and ``latency_s`` (seconds from handing ``second`` to ``_handle`` to the last reply, as measured).
+Replies are in the JSON (a local eval artifact, not a log), and printed only with ``--show``.
 
 ``--fake-model``: a scripted brain, no API call and no env file. A case may carry ``fake``:
 ``{"first": {"tool", "args"}, "second": {"tool", "args"}}``; for the newest owner message it calls that message's
@@ -97,6 +99,34 @@ def web_answer(args: dict[str, Any]) -> dict[str, Any]:
     q = str(args.get("query") or args.get("q") or args.get("question") or "").lower()
     answer = next((a for words, a in WEB_FACTS if all(w in q for w in words)), "No results found for that search.")
     return {"ok": True, "answer": answer, "sources": ["https://news.example.com/result"]}
+
+
+# Quick answers (quick_answers.py: the time, the weather, a sum, answered by code before any turn) read Open-Meteo
+# over the network. Here its getter answers canned, made-up data instead; no request leaves the machine.
+QUICK_GEO = {"latitude": 10.0, "longitude": 20.0, "timezone": "UTC"}
+QUICK_FORECAST = {
+    "current": {"temperature_2m": 64, "apparent_temperature": 64, "weather_code": 0, "wind_speed_10m": 6},
+    "daily": {"temperature_2m_min": [55, 54], "temperature_2m_max": [68, 67],
+              "precipitation_probability_max": [5, 10], "weather_code": [0, 1],
+              "sunrise": ["2026-10-28T07:30", "2026-10-29T07:31"], "sunset": ["2026-10-28T18:10", "2026-10-29T18:09"]},
+}
+QUICK_AIR = {"current": {"us_aqi": 30}}
+
+
+async def quick_get(url: str, params: dict[str, Any]) -> dict[str, Any]:
+    from eve_bridge import quick_answers as qa
+
+    if url == qa.GEOCODE_URL:
+        return {"results": [dict(QUICK_GEO, name=str(params.get("name") or "there").title())]}
+    if url == qa.AIR_URL:
+        return QUICK_AIR
+    if url == qa.FORECAST_URL:
+        return QUICK_FORECAST
+    raise RuntimeError("quick answers: no canned data for this source")
+
+
+async def quick_pmset() -> str:
+    return "Now drawing from 'AC Power'\n -InternalBattery-0 (id=1)\t80%; charged; 0:00 remaining present: true"
 
 
 # ---- the run's record ---------------------------------------------------------------------------------------------
@@ -166,7 +196,28 @@ def _build(cfg: Any, create: Any, scratch: Path) -> Any:
                                    "t": round(time.monotonic() - gw.H.run.t0, 3)})
         return out
 
-    inlet._dispatch_tool, inlet._steer_into = dispatch, steer_into
+    quick, real_quick_answer = inlet._quick, inlet._quick_answer
+    real_answer = quick.answer
+    quick.get, quick.pmset = quick_get, quick_pmset
+
+    async def quick_answer(inbound: Any, ask: Any) -> None:
+        mark = gw._TURN_TEXT.set(inbound.text)
+        try:
+            await real_quick_answer(inbound, ask)
+        finally:
+            gw._TURN_TEXT.reset(mark)
+
+    async def answer(ask: Any) -> Optional[str]:
+        # a reply by code is recorded as a turn marked by_code (not a model turn); None falls to a model turn
+        said = gw._TURN_TEXT.get()
+        text = await real_answer(ask)
+        if text is not None:
+            gw.H.run.turns.append({"said": said, "phase": gw.H.run.phase(), "reply": text, "error": "",
+                                   "by_code": ask.kind, "t": time.monotonic()})
+        return text
+
+    quick.answer = answer
+    inlet._dispatch_tool, inlet._steer_into, inlet._quick_answer = dispatch, steer_into, quick_answer
     return inlet
 
 
@@ -257,12 +308,13 @@ async def run_case(case: dict[str, Any], arm: str, cfg: Any, create: Any, scratc
         "questions": [{k: v for k, v in q.items() if k != "spent"} for q in run.questions],
         "gate_questions": sum(1 for q in run.questions if q.get("firm")),
         "folds": run.folds, "folded": sum(f["count"] for f in run.folds),
-        "turns": len(run.turns),
+        "turns": sum(1 for t in run.turns if not t.get("by_code")),
+        "by_code": sum(1 for t in run.turns if t.get("by_code")),
         "second_own_turn": any(t["said"] == case["second"] for t in run.turns),
         "provider_error": error,
         "replies": [{"said_by_owner": t["said"], "began": t["phase"],
                      "ended_after_second": run.replied_at is not None and t["t"] >= run.replied_at,
-                     "reply": t["reply"], "error": t["error"]} for t in ended],
+                     "reply": t["reply"], "error": t["error"], "by_code": t.get("by_code", "")} for t in ended],
         "final_reply": final.get("reply", ""),
         "latency_s": round(final["t"] - run.replied_at, 3) if late and run.replied_at is not None else None,
         "offered": sorted(run.offered),
@@ -318,7 +370,7 @@ async def main_async(args: argparse.Namespace) -> dict[str, Any]:
         r = await run_case(case, args.arm, cfg, create, scratch, args.show)
         rows.append(r)
         acts = ",".join(e["tool"] for e in r["executed"]) or "-"
-        print(f"{r['id']:<8} {args.arm:<3} {r['delay']:<6} {r['outcome']:<6} turns={r['turns']} "
+        print(f"{r['id']:<8} {args.arm:<3} {r['delay']:<6} {r['outcome']:<6} turns={r['turns']} by_code={r['by_code']} "
               f"folded={r['folded']} dup={r['duplicate_acts']} acts={acts}"
               f"{'  ERROR ' + r['provider_error'] if r['provider_error'] else ''}", flush=True)
     return {"arm": args.arm, "fake_model": bool(args.fake_model), "commit": gw._commit(),
