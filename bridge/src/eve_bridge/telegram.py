@@ -1510,6 +1510,39 @@ def _gate_withdraw(environ: Optional[Any] = None) -> bool:
     return str(env.get(GATE_WITHDRAW_ENV) or "").strip().lower() in ("1", "true", "yes", "on")
 
 
+# Chat steering (_steer_entry, _steer_into, docs/stackchan/telegram.md): "1" turns it on. A plain message typed while
+# the chat's text turn runs is folded into that turn, as an owner message before its next model call, instead of
+# queueing behind it. Off by default until its blind eval (docs/evals/chat-steer-BAR.md) passes. Unset or "0" is
+# today's behaviour byte for byte.
+CHAT_STEER_ENV = "EVE_CHAT_STEER"
+
+
+def _chat_steer(environ: Optional[Any] = None) -> bool:
+    env = os.environ if environ is None else environ
+    return str(env.get(CHAT_STEER_ENV) or "").strip().lower() in ("1", "true", "yes", "on")
+
+
+@dataclass(eq=False)
+class _SteerEntry:
+    """One message waiting in a running turn's inbox (EVE_CHAT_STEER). ``folded``: the running turn read it as an
+    owner message, so its own queued turn ends at once; else that turn runs after the running one, as today."""
+
+    inbound: Inbound
+    arrived: float
+    folded: bool = False
+
+
+@dataclass(eq=False)
+class _Steering:
+    """The running text turn's inbox (EVE_CHAT_STEER): its chat, the messages waiting to be folded in, and whether
+    it still folds (``open``; closed when the turn makes no further model call with tools)."""
+
+    chat_id: int
+    inbox: list[_SteerEntry] = field(default_factory=list)
+    open: bool = True
+    folded: list[str] = field(default_factory=list)
+
+
 def graded(payload: dict[str, Any], config: TelegramConfig, grade: str) -> dict[str, Any]:
     """One round's request as the app's speed dial grades it. "auto" (and anything else): the payload as it is.
     "instant": the chat's model at low effort, think_hard not offered. "think": the app's think model and effort.
@@ -2712,6 +2745,7 @@ class TelegramInlet:
         self._watcher = watcher                            # watch.Watcher, or None (EVE_WATCH=0)
         self.chief = chief                                 # chief.Chief, or None (EVE_CHIEF off)
         self._turn_said = ""                               # the owner's words in the running turn: take_on's door
+        self._steering: Optional[_Steering] = None         # the running text turn's inbox (EVE_CHAT_STEER)
         self._chief_task: Optional[tuple[str, int]] = None   # (card id, step) of the running task, when a chief's
         self._meeter = meeter                              # meet.Meeter, or None (EVE_MEET=0, no Chrome attach)
         # eve's apps (app_registry.APPS: lights, spotify, firetv, obsbot, ...): each hub at self._<slot>, or None when
@@ -3557,7 +3591,52 @@ class TelegramInlet:
             return                                        # the waiting turn reads the words: no second turn
         # Every code path above has had its say: a small-talk phrase may now be answered by the small-talk lane,
         # inside the turn (small_talk.py, _small_talk_lane), before the routers, the prompt and the brain.
-        self._spawn(self._turn(inbound, lane=True), "telegram-turn")
+        steer = self._steer_entry(inbound, addressed_eve)
+        if steer is None:
+            self._spawn(self._turn(inbound, lane=True), "telegram-turn")
+        else:
+            self._spawn(self._turn(inbound, lane=True, steer=steer), "telegram-turn")
+
+    def _steer_entry(self, inbound: Inbound, addressed_eve: bool = False) -> Optional[_SteerEntry]:
+        """EVE_CHAT_STEER: a plain typed message for the chat whose text turn is running goes into that turn's inbox
+        (``_Steering``), to be read before its next model call (_steer_into). Its own turn is still queued, as today,
+        and ends unasked if the running turn reads it. Only text that got this far: an answer to an open question, a
+        tap, relay text, a code word, a command, a quick answer and a withdrawal were all routed above. Never "eve:
+        …", a picture or a file, a call's or an app's words, or a message for another chat. None: not steered."""
+        steering = self._steering
+        if (not _chat_steer() or steering is None or not steering.open or steering.chat_id != inbound.chat_id
+                or addressed_eve or inbound.tapped or inbound.image is not None or inbound.uploads
+                or _FROM_APP.get() is not None or _FROM_CALL.get() is not None
+                or not inbound.text.strip() or EVE_PREFIX.match(inbound.text)):
+            return None
+        entry = _SteerEntry(inbound, self._wall())
+        steering.inbox.append(entry)
+        log.info("telegram: steer: a message waits for the running turn's next model call")
+        return entry
+
+    def _steer_into(self, items: list[dict[str, Any]], round_no: int) -> list[dict[str, Any]]:
+        """EVE_CHAT_STEER: before this round's model call, the messages typed since the last one join the turn as
+        owner messages, each noted as its own turn notes it (transcript, history, chat log). The last round with
+        tools folds nothing: a message then gets its own turn and every round. A running tool is never interrupted:
+        this runs only between rounds."""
+        steering = self._steering
+        if steering is None or not steering.open or not steering.inbox:
+            return items
+        if round_no >= MAX_TOOL_ROUNDS:
+            steering.open = False
+            return items
+        waiting, steering.inbox = steering.inbox, []
+        items = list(items)
+        for entry in waiting:
+            text = entry.inbound.text
+            self._note("user", text, "say", at=entry.arrived)
+            items.append(message_item("user", text))
+            entry.folded = True
+            steering.folded.append(text)
+            self._turn_said = f"{self._turn_said}\n{text}" if self._turn_said else text
+        log.info("telegram: steer: folded %d message%s into round %d", len(waiting),
+                 "" if len(waiting) == 1 else "s", round_no)
+        return items
 
     def _withdraw(self, inbound: Inbound, addressed_eve: bool = False) -> bool:
         """EVE_GATE_WITHDRAW: text that would open a new turn while the running turn's gate or app question waits
@@ -5303,16 +5382,22 @@ class TelegramInlet:
     # -- one turn --
     async def _turn(self, inbound: Inbound, *, image: Optional[telegram_images.ReceivedImage] = None,
                     images: Sequence[telegram_images.ReceivedImage] = (), handoff: bool = False,
-                    lane: bool = False) -> None:
+                    lane: bool = False, steer: Optional[_SteerEntry] = None) -> None:
         """One message's turn, one at a time. ``lane``: the message came straight from _handle's last step, past
         every code path, so the small-talk lane may answer it (_small_talk_lane); never while another of the owner's
-        turns was in flight when it arrived (the owner may be adding to that one)."""
+        turns was in flight when it arrived (the owner may be adding to that one). ``steer``: the message also
+        waits in the running turn's inbox (EVE_CHAT_STEER); when that turn folds it in, this one ends once it holds
+        the lock, so it keeps its place in the queue either way."""
         key = id(inbound)
         queued = bool(self._open_turns)
         self._open_turns[key] = (inbound.chat_id, inbound.message_id)
         try:
-            await self._answer_turn(inbound, image=image, images=images, handoff=handoff,
-                                    lane=lane and not queued)
+            if steer is None:
+                await self._answer_turn(inbound, image=image, images=images, handoff=handoff,
+                                        lane=lane and not queued)
+            else:
+                await self._answer_turn(inbound, image=image, images=images, handoff=handoff,
+                                        lane=lane and not queued, steer=steer)
         finally:
             self._open_turns.pop(key, None)
             after, self._after_turn = self._after_turn, []
@@ -5324,7 +5409,7 @@ class TelegramInlet:
 
     async def _answer_turn(self, inbound: Inbound, *, image: Optional[telegram_images.ReceivedImage] = None,
                            images: Sequence[telegram_images.ReceivedImage] = (), handoff: bool = False,
-                           lane: bool = False) -> None:
+                           lane: bool = False, steer: Optional[_SteerEntry] = None) -> None:
         """One message's turn. ``handoff``: daily_rundown handed this message on (_rundown_handoff): it is answered
         as a rundown, and its words are already in the transcript and the chief's ear from the turn that handed it
         on, so neither hears them twice. ``lane``: the small-talk lane may answer it first (_small_talk_lane); when
@@ -5332,109 +5417,134 @@ class TelegramInlet:
 
         The turn ledger (turn_ledger.py) times it from the moment the turn lock is held: its door, its outcome and
         its rounds, never its words."""
-        async with self._turn_lock, turn_ledger.turn(self._ledger_door()) as ledger:
-            if (lane and not handoff and image is None and not images and not inbound.uploads
-                    and await self._small_talk_lane(inbound)):
-                ledger.outcome = "small_talk"
+        async with self._turn_lock:
+            if steer is not None and steer.folded:
+                # EVE_CHAT_STEER: the running turn already read these words (_steer_into); its reply answered them
+                log.info("telegram: steer: a folded message needs no turn of its own")
                 return
-            chat_id = inbound.chat_id
-            self._turn_request = inbound.message_id          # a task this turn starts replies to it
-            self._streamed = None
-            t0 = self._clock()
-            pictures = list(images) or ([image] if image is not None else [])
-            files = [u for u in inbound.uploads if getattr(u, "kind", "") != "image"]
-            user_item = message_item("user", inbound.text or ("Please describe this image." if pictures or not files
-                                                              else "Please look at this file."))
-            for picture in pictures:
-                user_item["content"].append({"type": "input_image", "image_url": picture.data_url(), "detail": "auto"})
-            if files:
-                from .link_uploads import brain_parts
+            async with turn_ledger.turn(self._ledger_door()) as ledger:
+                await self._answer_locked(inbound, ledger, image=image, images=images, handoff=handoff, lane=lane)
 
-                for upload in files:
-                    try:
-                        user_item["content"].extend(await asyncio.to_thread(brain_parts, upload))
-                    except OSError:
-                        user_item["content"].append({"type": "input_text", "text": f"(The attached file "
-                                                     f"\"{upload.name}\" could not be read.)"})
-            image = pictures[0] if pictures else None
-            attached = bool(pictures or files)
-            arrived = self._wall()
-            self._recall_seen = []
-            _TURN_SOURCES.set([])                         # this turn's memory sources, its own (memory_sources.py)
-            if self._chat_log is not None and self._memory is not None and self._log_chat() not in self._seeded_chats:
-                await asyncio.to_thread(self._seed_log)
-            # with the chat log, a quiet spell or a restart before this message is a gap note right before it
-            items = self._history() + self._gap_before_now(arrived) + [user_item]
-            shown = self._turn_kinds[-HISTORY_TURNS:]       # the history's lines, as the transcript has them
-            # eve lite has no rundown (its skill reads a vault and apps lite does not have): its words are an ordinary
-            # turn, with every tool lite has, Composio's connection manager and its sign-in links included
-            lite = _lite()
-            daily = handoff or (not attached and not lite and rundown.matches(inbound.text))
-            carried_in = ""
-            if daily:
-                school = await self._canvas_rundown()
-                skill, fed = await asyncio.to_thread(
-                    rundown.context_and_outside, self._vault.root if self._vault else None,
-                    datetime.fromtimestamp(self._wall()).astimezone(), canvas=school,
-                    direct_apps=self._direct_up(), composio=self._composio_up())
-                # vault todos or Canvas titles fed it: the turn starts tainted, so its reply is kept as outside
-                # words even when no read tool ran (round-4 review)
-                carried_in = tool_gate.source("daily_rundown") if fed else ""
-                items = [message_item("user", inbound.text), message_item("developer", skill)]
-                shown = []
-            if not handoff:
-                self._note("user", (inbound.text + " " + _attached(inbound)).strip() if attached else inbound.text,
-                           "image" if pictures else "say", said=inbound.text if attached else None, at=arrived,
-                           att=_att_of(inbound))
-            tail = self._shown([*shown, self._turn_kinds[-1]]) if self._turn_kinds else 0
-            # "typing…" for the whole turn, not only its first 5 s (owner, 2026-09-23), gone before the reply.
-            self._keep_typing(chat_id, "turn", TYPING_TURN_SECS)
-            usage = {"in": 0, "cached": 0, "out": 0, "instr": 0}
-            self._turn_said = inbound.text                # take_on's door floor reads it; gone with the turn
-            try:
+    async def _answer_locked(self, inbound: Inbound, ledger: Any, *,
+                             image: Optional[telegram_images.ReceivedImage] = None,
+                             images: Sequence[telegram_images.ReceivedImage] = (), handoff: bool = False,
+                             lane: bool = False) -> None:
+        """_answer_turn's body, with the turn lock held and the turn ledger's row open (``ledger``)."""
+        if (lane and not handoff and image is None and not images and not inbound.uploads
+                and await self._small_talk_lane(inbound)):
+            ledger.outcome = "small_talk"
+            return
+        chat_id = inbound.chat_id
+        self._turn_request = inbound.message_id          # a task this turn starts replies to it
+        self._streamed = None
+        t0 = self._clock()
+        pictures = list(images) or ([image] if image is not None else [])
+        files = [u for u in inbound.uploads if getattr(u, "kind", "") != "image"]
+        user_item = message_item("user", inbound.text or ("Please describe this image." if pictures or not files
+                                                          else "Please look at this file."))
+        for picture in pictures:
+            user_item["content"].append({"type": "input_image", "image_url": picture.data_url(), "detail": "auto"})
+        if files:
+            from .link_uploads import brain_parts
+
+            for upload in files:
                 try:
-                    # an attached file's words, or what a picture shows, are not the owner's: the turn starts
-                    # tainted (tool_gate.py)
-                    reply, rounds = await self._think(
-                        items, chat_id, daily=daily, tail=tail, usage=usage,
-                        taint=tool_gate.ATTACHED if files else tool_gate.PICTURE if pictures else carried_in)
-                    ledger.rounds = rounds
-                finally:
-                    self._stop_typing(chat_id, "turn")
-                    self._turn_said = ""
-            except asyncio.CancelledError:
-                raise
-            except Exception as e:  # noqa: BLE001 — the type only: a message can quote what was asked
-                from .computer_agent import is_connection_drop
+                    user_item["content"].extend(await asyncio.to_thread(brain_parts, upload))
+                except OSError:
+                    user_item["content"].append({"type": "input_text", "text": f"(The attached file "
+                                                 f"\"{upload.name}\" could not be read.)"})
+        image = pictures[0] if pictures else None
+        attached = bool(pictures or files)
+        arrived = self._wall()
+        self._recall_seen = []
+        _TURN_SOURCES.set([])                         # this turn's memory sources, its own (memory_sources.py)
+        if self._chat_log is not None and self._memory is not None and self._log_chat() not in self._seeded_chats:
+            await asyncio.to_thread(self._seed_log)
+        # with the chat log, a quiet spell or a restart before this message is a gap note right before it
+        items = self._history() + self._gap_before_now(arrived) + [user_item]
+        shown = self._turn_kinds[-HISTORY_TURNS:]       # the history's lines, as the transcript has them
+        # eve lite has no rundown (its skill reads a vault and apps lite does not have): its words are an ordinary
+        # turn, with every tool lite has, Composio's connection manager and its sign-in links included
+        lite = _lite()
+        daily = handoff or (not attached and not lite and rundown.matches(inbound.text))
+        carried_in = ""
+        if daily:
+            school = await self._canvas_rundown()
+            skill, fed = await asyncio.to_thread(
+                rundown.context_and_outside, self._vault.root if self._vault else None,
+                datetime.fromtimestamp(self._wall()).astimezone(), canvas=school,
+                direct_apps=self._direct_up(), composio=self._composio_up())
+            # vault todos or Canvas titles fed it: the turn starts tainted, so its reply is kept as outside
+            # words even when no read tool ran (round-4 review)
+            carried_in = tool_gate.source("daily_rundown") if fed else ""
+            items = [message_item("user", inbound.text), message_item("developer", skill)]
+            shown = []
+        if not handoff:
+            self._note("user", (inbound.text + " " + _attached(inbound)).strip() if attached else inbound.text,
+                       "image" if pictures else "say", said=inbound.text if attached else None, at=arrived,
+                       att=_att_of(inbound))
+        tail = self._shown([*shown, self._turn_kinds[-1]]) if self._turn_kinds else 0
+        # "typing…" for the whole turn, not only its first 5 s (owner, 2026-09-23), gone before the reply.
+        self._keep_typing(chat_id, "turn", TYPING_TURN_SECS)
+        usage = {"in": 0, "cached": 0, "out": 0, "instr": 0}
+        self._turn_said = inbound.text                # take_on's door floor reads it; gone with the turn
+        # EVE_CHAT_STEER: a typed Telegram text turn (never a rundown, a call's or an app's) takes the chat's
+        # further plain messages into its next model call (_steer_entry, _steer_into)
+        steering = (_Steering(chat_id) if _chat_steer() and not daily and not handoff
+                    and _FROM_APP.get() is None and _FROM_CALL.get() is None else None)
+        if steering is not None:
+            self._steering = steering
+        try:
+            try:
+                # an attached file's words, or what a picture shows, are not the owner's: the turn starts
+                # tainted (tool_gate.py)
+                reply, rounds = await self._think(
+                    items, chat_id, daily=daily, tail=tail, usage=usage,
+                    taint=tool_gate.ATTACHED if files else tool_gate.PICTURE if pictures else carried_in)
+                ledger.rounds = rounds
+            finally:
+                self._stop_typing(chat_id, "turn")
+                self._turn_said = ""
+                if steering is not None:
+                    # what was not folded in runs as its own turn next, exactly as a queued message does
+                    steering.open = False
+                    if self._steering is steering:
+                        self._steering = None
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:  # noqa: BLE001 — the type only: a message can quote what was asked
+            from .computer_agent import is_connection_drop
 
-                log.warning("telegram: turn failed: %s", type(e).__name__)
-                failed = DROPPED_LINE if is_connection_drop(e) else FAILED_LINE
-                if lite and no_credit(e):
-                    failed = LITE_NO_CREDIT_LINE          # OpenRouter's 402: the line says what to do about it
-                elif lite and key_rejected(e):
-                    failed = LITE_KEY_REJECTED_LINE       # OpenRouter's 401: the OAuth key is gone; sign in again
-                # the chat log keeps the line, so the next turn sees this message was not answered
-                ledger.outcome = "failed"
-                self._log_line("eve", failed)
-                await self._say(chat_id, failed)
-                return
-            if not reply:
-                ledger.outcome = "silent"
-            if reply:
-                # Kept whole, OpenUI Lang programs included: a later app turn's history reads them as written, and a
-                # Telegram, voice or call turn's reads each as one plain line (link_chat.history_text).
-                # the memory lines the reply leaned on ride on its transcript line only (Sources in the app)
-                self._note("eve", reply, outside=bool(self._taint), src=_TURN_SOURCES.get() or None)
-                self._recall_seen = []
-                _TURN_SOURCES.set(None)
-                await self._say(chat_id, reply)
-            if not handoff:
-                await self._chief_heard(chat_id, inbound.text)
-            # Counts and seconds only: never what was asked, never what was answered. The token counts say
-            # whether the cache-ordered prompt pays off (cached of in), and instr how big the prefix is.
-            log.info("telegram: turn answered in %.1f s (%d model call%s; in=%d cached=%d out=%d instr=%d chars)",
-                     self._clock() - t0, rounds, "" if rounds == 1 else "s",
-                     usage["in"], usage["cached"], usage["out"], usage["instr"])
+            log.warning("telegram: turn failed: %s", type(e).__name__)
+            failed = DROPPED_LINE if is_connection_drop(e) else FAILED_LINE
+            if lite and no_credit(e):
+                failed = LITE_NO_CREDIT_LINE          # OpenRouter's 402: the line says what to do about it
+            elif lite and key_rejected(e):
+                failed = LITE_KEY_REJECTED_LINE       # OpenRouter's 401: the OAuth key is gone; sign in again
+            # the chat log keeps the line, so the next turn sees this message was not answered
+            ledger.outcome = "failed"
+            self._log_line("eve", failed)
+            await self._say(chat_id, failed)
+            return
+        if not reply:
+            ledger.outcome = "silent"
+        if reply:
+            # Kept whole, OpenUI Lang programs included: a later app turn's history reads them as written, and a
+            # Telegram, voice or call turn's reads each as one plain line (link_chat.history_text).
+            # the memory lines the reply leaned on ride on its transcript line only (Sources in the app)
+            self._note("eve", reply, outside=bool(self._taint), src=_TURN_SOURCES.get() or None)
+            self._recall_seen = []
+            _TURN_SOURCES.set(None)
+            await self._say(chat_id, reply)
+        if not handoff:
+            await self._chief_heard(chat_id, inbound.text)
+        for text in steering.folded if steering is not None else ():
+            await self._chief_heard(chat_id, text)          # as each message's own turn would have
+        # Counts and seconds only: never what was asked, never what was answered. The token counts say
+        # whether the cache-ordered prompt pays off (cached of in), and instr how big the prefix is.
+        log.info("telegram: turn answered in %.1f s (%d model call%s; in=%d cached=%d out=%d instr=%d chars)",
+                 self._clock() - t0, rounds, "" if rounds == 1 else "s",
+                 usage["in"], usage["cached"], usage["out"], usage["instr"])
 
     @staticmethod
     def _count_usage(response: Any, usage: dict[str, int]) -> None:
@@ -5560,6 +5670,8 @@ class TelegramInlet:
         text = ""
         said_on_call = False
         for round_no in range(1, MAX_TOOL_ROUNDS + 1):
+            if self._steering is not None:
+                items = self._steer_into(items, round_no)
             payload = request(self.config, items, context=note, app_block=app_block, **parts)
             if round_no == 1:
                 usage["instr"] = len(payload["instructions"])
@@ -5675,6 +5787,8 @@ class TelegramInlet:
                           if e != emoji]
                 return "\n".join(x for x in (text, *others) if x), round_no
         # Every round used and the work not finished: one more call, with tools off, says what was found.
+        if self._steering is not None:
+            self._steering.open = False                 # a message now gets its own turn, with every round
         log.info("telegram: turn used all %d rounds; asking for what was found so far", MAX_TOOL_ROUNDS)
         payload = request(self.config, items, context=note + "\n\n" + OUT_OF_ROUNDS_NOTE, app_block=app_block,
                           **parts)

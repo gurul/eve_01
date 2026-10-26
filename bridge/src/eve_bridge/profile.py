@@ -219,6 +219,8 @@ LITE_CLASSIFIED: dict[str, str] = {
     **_why("kept: science search, on in lite (no key)", "EVE_SCIENCE_SEARCH"),
     **_why("kept: a typed correction withdraws the waiting gate or app question (telegram._withdraw); off until set, "
            "in lite and full eve alike, until its blind eval passes", "EVE_GATE_WITHDRAW"),
+    **_why("kept: a message typed while the chat's turn runs is folded into that turn (telegram._steer_into); off "
+           "until set, in lite and full eve alike, until its blind eval passes", "EVE_CHAT_STEER"),
     **_why("kept: Muse on the owner's Raspberry Pi (muse_pi.py); off until set, in lite and full eve alike",
            "EVE_MUSE_PI"),
     **_why("kept: card pictures from Wikipedia (find_image), on in lite (no key)", "EVE_FIND_IMAGE"),

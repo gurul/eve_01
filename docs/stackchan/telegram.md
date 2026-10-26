@@ -196,6 +196,7 @@ token without an owner id is off. A door with no allowlist never opens.
 | `EVE_TOOLSET_ROUTER` | `auto` | Which toolsets a turn starts with ([toolset-router.md](../toolset-router.md)): the direct apps, Share and the workspace (Slack, Notion, Linear through Composio) open by the message's words plus Jev's judgment of it; `open_app` opens the rest, and a call to a closed toolset's tool opens it and runs. `auto` asks Jev (it has passed its blind holdout) when a Jev key is set, else keywords only; `on` asks Jev regardless of the holdout; `off` is the turn as it was before the router: every Share and Composio tool on every turn, the direct apps by their words. While Jev is asked, your message and the one before it go to Jev on every turn. |
 | `EVE_MENU_TOOLS` | `menu_tools.SHIPPED` (`True` since the v4 blind tool-choice eval passed, 2026-10-09) | The / menu as tools, `events_search`, and the tool-choice lines (see "The menu in plain words" below); `off` sends every request byte for byte as before. The taint gate is on either way. |
 | `EVE_GATE_WITHDRAW` | `0` | `1`: a message you type while the chat's own check-first or app question waits withdraws that question: the act does not run, and the same turn goes on with your words ([below](#a-typed-correction-withdraws-the-question)). Unset or `0` keeps today's behaviour byte for byte. Off: its blind eval failed on 2026-10-26 ([verdict](../evals/gate-withdraw-VERDICT.md)); the withdrawn call's result is new text the brain reads. |
+| `EVE_CHAT_STEER` | `0` | `1`: a plain message you type while eve's text turn for that chat is still running is folded into that turn, as your own message before its next model call, instead of waiting behind it as a turn of its own ([below](#a-second-message-steers-the-running-turn)). A running tool is never interrupted. Unset or `0` keeps today's behaviour byte for byte. Off until its blind eval passes ([bar](../evals/chat-steer-BAR.md)). |
 | `EVE_CHAT_LOG` | `1` | `0` turns the chat log off ([below](#the-chats-history-the-chat-log)): the history is then RAM only and is cleared after ten quiet minutes or a restart. |
 | `EVE_CHAT_LOG_FILE` | `~/.config/eve-bridge/chat/log.json` | Where the chat log is kept. |
 | `EVE_CHAT_LOG_LINES` | `300` | Lines kept per chat, at most. |
@@ -1099,6 +1100,42 @@ another. Touching the robot to cancel a task works for a texted task too.
 After ten quiet minutes the chat is over: its turns are cleared from RAM and its
 transcript gets a close marker. Nothing is handed anywhere, because with memory on
 every line was already written down the moment it was typed or sent.
+
+## A second message steers the running turn
+
+Off by default (`EVE_CHAT_STEER=1` turns it on; it stays off until its blind
+eval passes, [bar](../evals/chat-steer-BAR.md)). Without it, a message you type
+while eve is still working on the last one waits behind that turn and runs as a
+turn of its own afterwards; eve shows no sign that it is queued.
+
+With it on, the message goes into the running turn's inbox
+(`TelegramInlet._steer_entry`). Before the turn's next model call
+(`_steer_into`), each waiting message joins the turn as **your own message**,
+after the last round's tool results, never inside one: a correction quoted
+inside a tool result made the brain re-ask instead of act
+([gate withdraw verdict](../evals/gate-withdraw-VERDICT.md)). It is noted
+exactly as its own turn would note it (the transcript, the history, the chat
+log, and the chief hears it after the reply), and one reply answers both. Its
+queued turn still holds its place and ends unasked once the running turn has
+read it. Nothing new is acknowledged, as before.
+
+- **A running tool is never interrupted**, and neither is a model call in
+  flight: the message waits for the next round.
+- **Left over, it runs as before.** When the turn makes no further model call
+  with tools (the reply was the last call, a task or a card ended the turn, or
+  it is on its last round with tools or the tools-off summary after
+  `MAX_TOOL_ROUNDS`), the message runs as the next turn, exactly as today.
+- **Only plain words for that chat's typed Telegram turn.** An answer to an open
+  question, a tap, relay text (Claude Code, Codex, Muse), "eve: …", a code word
+  or `/` command, a chief's word, an app command done by code, a quick answer, a
+  withdrawal (`EVE_GATE_WITHDRAW`), a picture and a message for another chat are
+  all routed as before. A rundown, a phone call's turn and an Eve Link app turn
+  (Work sessions included) keep the queue.
+- **The gate is unchanged.** An acting call written after a folded message asks
+  exactly as it would in its own turn.
+- Logs say only that a message waited and how many were folded into which
+  round, never the words. The tests are
+  `pytest tests/test_chat_steer.py -k steer`.
 
 ## When a turn runs long
 
