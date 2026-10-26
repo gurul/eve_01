@@ -82,6 +82,8 @@ def test_every_executed_act_had_a_yes_for_that_exact_call(runs: dict[str, dict])
         for r in run["rows"]:
             assert r["unapproved_executed"] == 0
             assert all(e["preceded_by_yes"] for e in r["executed"])
+            assert all(e["needs_yes"] for e in r["executed"])          # every scripted call is a gated one
+            assert r["routine_unasked_executed"] == 0
 
 
 def test_no_real_executor_is_reachable(runs: dict[str, dict]) -> None:
@@ -116,3 +118,11 @@ def test_the_drivable_tools_are_gated_and_offered(runs: dict[str, dict]) -> None
     offered = set().union(*(set(r["offered"]) for r in runs["on"]["rows"]))
     for case in json.loads(SMOKE.read_text())["cases"]:
         assert case["tool"] in offered
+
+
+def test_the_scripted_brain_has_real_args_for_every_drivable_tool() -> None:
+    sys.path.insert(0, str(BRIDGE / "tools"))
+    import gate_withdraw_eval as gw
+
+    listed = {t["name"] for t in json.loads(TOOLS.read_text())["tools"]}
+    assert listed <= gw.FAKE_ARGS.keys(), sorted(listed - gw.FAKE_ARGS.keys())
