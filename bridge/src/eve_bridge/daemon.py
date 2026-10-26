@@ -2932,7 +2932,9 @@ class Daemon:
         # The Auto Mode gate (typed_ask.py, the Jev Engineering article): a Bash command the regex list did
         # not stop is judged by Jev before it runs, in EVERY permission mode, because bypass is exactly when
         # nothing else would stop it. "shadow" only logs the verdict; "ask" turns a risky one into the
-        # phone's yes/no; "off" is the relay of 2026-09-21. A safe verdict or an error changes nothing.
+        # phone's yes/no; "off" is the relay of 2026-09-21. In "ask" only a safe verdict is allowed: a failed one
+        # (Jev timed out, errored, or the asker raised) is asked like a risky one, labelled "[Jev: unavailable]",
+        # because with the regex list empty Jev is the only gate (fail closed, 2026-10-26). Silence still defers.
         risk = self._command_risk() if inlet is not None and inlet.claude and tool_name == "Bash" and hint else None
         if risk is not None and decision_class != "ask":
             risk_mode, ask_cmd = risk
@@ -2940,28 +2942,38 @@ class Daemon:
                 _spawn(self, self._shadow_command_risk(ask_cmd, tool_name, hint, cwd, audit_kwargs),
                        name="command-risk-shadow")
             elif risk_mode == "ask":
-                verdict = await asyncio.to_thread(ask_cmd, tool_name, hint, cwd)
-                jev = {"verdict": verdict.decision, "why": verdict.why, **{k: round(v, 3) for k, v in
-                       verdict.answer.nouls().items()}, "ms": round(verdict.answer.ms)}
-                if verdict.decision == "risky":
-                    log.info("pretooluse for %s (%s): Jev says risky (%s) → asking the phone", tool_name,
-                             hint[:60], verdict.why)
-                    decision = await inlet.decide_permission(tool_name, f"{hint} [Jev: {verdict.why}]", cwd,
-                                                             always=True)
+                try:
+                    verdict = await asyncio.to_thread(ask_cmd, tool_name, hint, cwd)
+                    jev = {"verdict": verdict.decision, "why": verdict.why, **{k: round(v, 3) for k, v in
+                           verdict.answer.nouls().items()}, "ms": round(verdict.answer.ms)}
+                    decided = str(verdict.decision)
+                    why = str(verdict.why)
+                except Exception as e:  # noqa: BLE001 — an asker that raises is a failed verdict, never an allow
+                    log.warning("pretooluse for %s: the risk model raised %s", tool_name, type(e).__name__)
+                    jev = {"verdict": "unknown", "why": type(e).__name__}
+                    decided, why = "unknown", type(e).__name__
+                if decided != "safe":
+                    risky = decided == "risky"
+                    label = f"[Jev: {why}]" if risky else "[Jev: unavailable]"
+                    if risky:
+                        log.info("pretooluse for %s (%s): Jev says risky (%s) → asking the phone", tool_name,
+                                 hint[:60], why)
+                    else:
+                        log.warning("pretooluse for %s: the risk model failed (%s) → asking the phone", tool_name,
+                                    why)
+                    decision = await inlet.decide_permission(tool_name, f"{hint} {label}", cwd, always=True)
                     if decision in ("allow", "deny"):
-                        self.audit.record(**audit_kwargs, decision=decision, source="telegram", jev=jev)
+                        self.audit.record(**audit_kwargs, decision=decision,
+                                          source="telegram" if risky else "jev_error_asked", jev=jev)
                         return {"ok": True, "decision": decision}
-                    log.info("pretooluse for %s (%s): no answer from Telegram → defer", tool_name, hint[:60])
-                    self.audit.record(**audit_kwargs, decision=None, source="jev_risky_deferred", jev=jev)
+                    log.info("pretooluse for %s: no answer from Telegram → defer", tool_name)
+                    self.audit.record(**audit_kwargs, decision=None,
+                                      source="jev_risky_deferred" if risky else "jev_error_deferred", jev=jev)
                     return {"ok": True}
-                source = "jev_safe" if verdict.decision == "safe" else "jev_error"
-                if verdict.decision != "safe":
-                    log.warning("pretooluse for %s: the risk model failed (%s); allowed as before", tool_name,
-                                verdict.why)
                 if mode in ("bypassPermissions", "dontAsk"):
-                    self.audit.record(**audit_kwargs, decision=None, source=source, jev=jev)
+                    self.audit.record(**audit_kwargs, decision=None, source="jev_safe", jev=jev)
                     return {"ok": True}                       # bypass: Claude Code allows on its own
-                self.audit.record(**audit_kwargs, decision="allow", source=source, jev=jev)
+                self.audit.record(**audit_kwargs, decision="allow", source="jev_safe", jev=jev)
                 return {"ok": True, "decision": "allow"}
         if inlet is not None and inlet.claude and mode not in ("bypassPermissions", "dontAsk"):
             asks_all = bool(getattr(getattr(inlet, "config", None), "ask_permissions", False))

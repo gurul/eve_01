@@ -201,7 +201,7 @@ token without an owner id is off. A door with no allowlist never opens.
 | `EVE_CHAT_LOG_DAYS` | `7` | Days a line is kept, at most. |
 | `EVE_SECOND_BRAIN` | `0` | `1`: your own notes, todos and journals as a local markdown vault, captured from this chat ([second-brain.md](second-brain.md)). |
 | `EVE_VAULT` | `~/Documents/Second Brain` | The vault's folder (open it in Obsidian). |
-| `EVE_COMMAND_RISK` | `shadow` | The Auto Mode gate behind the Claude relay ([below](#the-auto-mode-gate-jev-judges-a-relayed-command)): `off`, `shadow` (judged and logged, never acted on), `ask` (a risky verdict is your yes/no). |
+| `EVE_COMMAND_RISK` | `shadow` | The Auto Mode gate behind the Claude relay ([below](#the-auto-mode-gate-jev-judges-a-relayed-command)): `off`, `shadow` (judged and logged, never acted on), `ask` (a risky or failed verdict is your yes/no; a failed one reads `[Jev: unavailable]`). |
 | `EVE_CODE_ROOT` | `~/Documents` | Where `new claude` looks for project folders. |
 | `EVE_CODE_AREAS` | `personal,work` | The first question's answers: folders under the root, comma separated. |
 | `EVE_CLAUDE_TERMINAL` | `warp` if installed | `warp` or `terminal` (Terminal.app): where a new session opens. |
@@ -513,9 +513,19 @@ before the command leaves, and the folder's name goes, never its path.
 judges every relayed Bash command and writes the verdict beside the regex class
 in the audit log (`source: jev_shadow`) without acting on it; `ask` turns a risky
 verdict into your yes/no in the chat with Jev's reason ("[Jev: destroys data,
-publishes or sends]"), allows a safe one, and allows a failed one (logged as
-`jev_error`). Silence still defers to Claude Code's own flow, never denies. The
-regex always-ask class is asked first and never sent to Jev.
+publishes or sends]") and allows a safe one. A failed verdict (an OpenRouter
+error, a timeout, or the asker raising) fails closed: it is asked like a risky
+one, labelled `[Jev: unavailable]` with the error kept off the phone, and
+logged as `jev_error_asked` when you answer or `jev_error_deferred` when you do
+not (2026-10-26). Before that a failed verdict was allowed; with the always-ask
+list empty Jev is the only gate, so an outage let every command through. The
+cost was measured first: of 647 commands judged in shadow from 2026-10-10 to
+2026-10-26, 591 were safe, 50 risky and 6 failed (0.9%), so failing closed adds
+about 6 questions to the 50 risky ones. Silence still defers to Claude Code's
+own flow, never denies, for a risky and a failed verdict alike: under
+`bypassPermissions` or `dontAsk` an unanswered question still lets Claude Code
+run the command. The regex always-ask class is asked first and never sent to
+Jev.
 
 The ship decision is `tools/command_risk_eval.py --check-default` on
 `tests/fixtures/commands/` (74 tuning commands, 59 holdout, both author-written

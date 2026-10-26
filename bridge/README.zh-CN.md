@@ -259,7 +259,7 @@ INFO eve_bridge.daemon: settings.json: permissions.defaultMode='auto' ask=0
 | `hint`      | 命令/路径短摘要（截断到 200 字符）                                            |
 | `matcher`   | 匹配器分类：`allow` / `ask` / `default`                                      |
 | `decision`  | 桥实际返回：`allow` / `deny` / `null`（未表态）                              |
-| `source`    | `auto_allow` / `telegram`（你在手机上回答）/ `telegram_relay`（中继放行）/ `jev_safe` / `jev_error` / `jev_risky_deferred` / `jev_shadow` / `defer` / `ble_disconnected` |
+| `source`    | `auto_allow` / `telegram`（你在手机上回答）/ `telegram_relay`（中继放行）/ `jev_safe` / `jev_error_asked` / `jev_error_deferred` / `jev_risky_deferred` / `jev_shadow` / `defer` / `ble_disconnected` |
 
 ### 查看
 

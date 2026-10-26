@@ -185,10 +185,41 @@ def test_ask_routes_a_risky_command_to_the_phone() -> None:
     d, classify = daemon_with(Inlet("deny"), ("ask", asker_saying("safe")))
     assert run(d, classify, {**REQ, "hint": "pytest -q", "permission_mode": "bypassPermissions"}) == {"ok": True}
     assert d.audit.rows[-1]["source"] == "jev_safe" and d.audit.rows[-1]["decision"] is None
-    # the model failing is allowed and logged, never a denial and never a traceback
+
+
+def test_ask_fails_closed_when_jev_cannot_classify() -> None:
+    """A failed verdict is asked like a risky one (2026-10-26): with the regex list empty Jev is the only gate,
+    so an OpenRouter error or a timeout must not let the command through. The phone's answer decides."""
+    for answer in ("deny", "allow"):
+        for mode in ("default", "bypassPermissions"):
+            d, classify = daemon_with(Inlet(answer), ("ask", asker_saying("unknown")))
+            assert run(d, classify, {**REQ, "permission_mode": mode}) == {"ok": True, "decision": answer}
+            assert d._telegram.asked == [("Bash", "git push --force origin main [Jev: unavailable]", "/r", True)]
+            row = d.audit.rows[-1]
+            assert row["source"] == "jev_error_asked" and row["decision"] == answer
+            assert row["jev"]["verdict"] == "unknown"
+    # the error's text stays in the audit log; the phone sees only that Jev was unavailable
     d, classify = daemon_with(Inlet("deny"), ("ask", asker_saying("unknown")))
-    assert run(d, classify, REQ) == {"ok": True, "decision": "allow"}
-    assert d._telegram.asked == [] and d.audit.rows[-1]["source"] == "jev_error"
+    run(d, classify, REQ)
+    assert "HTTP 503" not in d._telegram.asked[0][1] and d.audit.rows[-1]["jev"]["why"] == "HTTP 503"
+    # silence defers to Claude Code's own flow, as for a risky one: never an allow, never a denial
+    d, classify = daemon_with(Inlet(None), ("ask", asker_saying("unknown")))
+    assert run(d, classify, REQ) == {"ok": True}
+    assert len(d._telegram.asked) == 1
+    assert d.audit.rows[-1]["source"] == "jev_error_deferred" and d.audit.rows[-1]["decision"] is None
+
+
+def test_an_asker_that_raises_is_asked_never_allowed() -> None:
+    def boom(tool: str, command: str, cwd: str) -> ta.CommandVerdict:
+        raise TimeoutError("read timed out")
+    d, classify = daemon_with(Inlet("deny"), ("ask", boom))
+    assert run(d, classify, REQ) == {"ok": True, "decision": "deny"}
+    assert d._telegram.asked == [("Bash", "git push --force origin main [Jev: unavailable]", "/r", True)]
+    row = d.audit.rows[-1]
+    assert row["source"] == "jev_error_asked" and row["jev"] == {"verdict": "unknown", "why": "TimeoutError"}
+    d, classify = daemon_with(Inlet(None), ("ask", boom))
+    assert run(d, classify, {**REQ, "permission_mode": "bypassPermissions"}) == {"ok": True}
+    assert d.audit.rows[-1]["source"] == "jev_error_deferred"
 
 
 def test_the_regex_class_asks_before_jev_is_consulted() -> None:

@@ -924,6 +924,6 @@ JEV_COMMAND_GATES = CommandGates(destroys=0.6, escapes=0.9, publishes=0.9, secre
 # (zero misses, at most 15% cried wolf, p90 under a second), "shadow" otherwise. 2026-09-21: the judgement
 # held (0 misses, 7% wolves) and the clock did not: p50 1.5 s, p90 2.1 s through OpenRouter's alpha
 # endpoint, so it ships "shadow": judged and logged beside the regex class, never acted on. The owner's
-# switch is EVE_COMMAND_RISK=ask (a risky verdict becomes the phone's yes/no; about two seconds a
-# command) or off (the relay of 2026-09-21: allow everything the regex list does not stop).
+# switch is EVE_COMMAND_RISK=ask (a risky verdict becomes the phone's yes/no, and so does an unknown one,
+# labelled "[Jev: unavailable]": fail closed since 2026-10-26; about two seconds a command) or off (the relay of 2026-09-21: allow everything the regex list does not stop).
 COMMAND_RISK_DEFAULT: str = "shadow"

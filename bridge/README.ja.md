@@ -274,7 +274,7 @@ INFO eve_bridge.daemon: settings.json: permissions.defaultMode='auto' ask=0
 | `hint`      | 実行内容の短いサマリ（200 文字に切り詰め）                                |
 | `matcher`   | マッチャー分類：`allow` / `ask` / `default`                              |
 | `decision`  | ブリッジが返した値：`allow` / `deny` / `null`（判定なし）                |
-| `source`    | `auto_allow` / `telegram`（スマートフォンで回答）/ `telegram_relay`（リレーが許可）/ `jev_safe` / `jev_error` / `jev_risky_deferred` / `jev_shadow` / `defer` / `ble_disconnected` |
+| `source`    | `auto_allow` / `telegram`（スマートフォンで回答）/ `telegram_relay`（リレーが許可）/ `jev_safe` / `jev_error_asked` / `jev_error_deferred` / `jev_risky_deferred` / `jev_shadow` / `defer` / `ble_disconnected` |
 
 ### 表示する
 

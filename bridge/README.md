@@ -283,7 +283,8 @@ matcher classify_command(hint)
 The robot has no approve/deny surface; it never decides a prompt. "Relay on"
 means the Telegram door's `claude on`. With it on, Jev can also judge a Bash
 command the matcher let through (`EVE_COMMAND_RISK`: `shadow` only logs,
-`ask` sends a risky one to your phone).
+`ask` sends a risky one to your phone, and one Jev could not judge too,
+labelled `[Jev: unavailable]`).
 
 **Recommended pairings**
 
@@ -339,7 +340,7 @@ One line per decision; fields:
 | `hint`     | Short summary of what's being run (truncated to 200 chars)       |
 | `matcher`  | Matcher classification: `allow` / `ask` / `default`              |
 | `decision` | What the bridge returned: `allow` / `deny` / `null` (deferred)   |
-| `source`   | `auto_allow` / `telegram` (you answered on the phone) / `telegram_relay` (allowed by the relay) / `jev_safe` / `jev_error` / `jev_risky_deferred` / `jev_shadow` / `defer` / `ble_disconnected` |
+| `source`   | `auto_allow` / `telegram` (you answered on the phone) / `telegram_relay` (allowed by the relay) / `jev_safe` / `jev_error_asked` / `jev_error_deferred` / `jev_risky_deferred` / `jev_shadow` / `defer` / `ble_disconnected` |
 
 ### Viewing
 

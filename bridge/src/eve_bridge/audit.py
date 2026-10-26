@@ -23,7 +23,10 @@ Fields:
               "defer"      — bridge returned no opinion (Claude Code's flow ran)
               "telegram_relay" — the Claude relay is on: allowed without asking
               "jev_shadow" — a second line: Jev's risk verdict for a relayed command, logged only
-              "jev_safe" / "jev_error" — the relay allowed after Jev judged the command safe / failed
+              "jev_safe" — the relay allowed after Jev judged the command safe
+              "jev_error_asked" / "jev_error_deferred" — Jev could not judge it (error, timeout): the phone
+                           was asked "[Jev: unavailable]" and answered / did not answer (Claude Code's flow ran)
+              "jev_error"  — older logs only: a failed verdict was allowed (before 2026-10-26)
               "jev_risky_deferred" — Jev judged it risky, the phone did not answer: Claude Code's flow ran
   elapsed_s elapsed seconds for the round-trip (older entries only)
   Older logs also hold "stick" (A/B on the eve) and "timeout": the robot no longer decides prompts.

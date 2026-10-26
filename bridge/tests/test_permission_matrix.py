@@ -34,7 +34,7 @@ HINTS = ("ls -la", "rm -rf build", "make build", "")
 RELAY = (False, True)
 MODES = ("default", "bypassPermissions")
 LINK = (True, False)
-RISK = ("none", "shadow", "ask-safe", "ask-risky", "ask-error")
+RISK = ("none", "shadow", "ask-safe", "ask-risky", "ask-error", "ask-raise")
 ANSWERS = ("allow", "deny", None)
 ASK_ALL = (False, True)
 READ_PATHS = ("/repo/src/a.py", "/elsewhere/b.py", "")
@@ -71,6 +71,10 @@ def _host(relay: Relay, connected: bool, risk: str) -> SimpleNamespace:
     risk_value: Any = None
     if risk == "shadow":
         risk_value = ("shadow", lambda t, h, c: _verdict("safe"))
+    elif risk == "ask-raise":
+        def raises(t: str, h: str, c: str) -> Any:
+            raise TimeoutError("the risk model timed out")
+        risk_value = ("ask", raises)
     elif risk.startswith("ask-"):
         risk_value = ("ask", lambda t, h, c, k=risk[4:]: _verdict(k))
 
@@ -157,7 +161,8 @@ def test_the_matrix_covers_every_outcome_it_should() -> None:
     sources = {(a[0], a[1]) for r in golden.values() for a in r["audit"]}
     for expected in [("allow", "auto_allow"), ("allow", "telegram_relay"), ("allow", "telegram"),
                      ("deny", "telegram"), (None, "ble_disconnected"), (None, "defer"), ("allow", "jev_safe"),
-                     (None, "jev_safe"), ("allow", "jev_error"), (None, "jev_error"), (None, "jev_risky_deferred")]:
+                     (None, "jev_safe"), ("allow", "jev_error_asked"), ("deny", "jev_error_asked"),
+                     (None, "jev_error_deferred"), (None, "jev_risky_deferred")]:
         assert expected in sources, expected
     responses = {json.dumps(r["resp"], sort_keys=True) for r in golden.values()}
     for shape in ({"ok": True}, {"ok": True, "decision": "allow"}, {"ok": True, "decision": "deny"},
@@ -165,3 +170,19 @@ def test_the_matrix_covers_every_outcome_it_should() -> None:
         assert json.dumps(shape, sort_keys=True) in responses, shape
     assert any(r["shadow"] for r in golden.values())                 # the shadow gate ran
     assert any(r["relayed"] for r in golden.values())                # a question reached the phone
+
+
+def test_a_failed_verdict_never_reaches_the_allow_branch() -> None:
+    """Fail closed (2026-10-26): when Jev returns an error or the asker raises, a relayed Bash command is allowed
+    only by the owner's own "allow" on the phone, which was asked with "[Jev: unavailable]"; silence defers."""
+    golden = _golden()
+    judged = [(k, r) for k, r in golden.items()
+              if k.startswith("pre|Bash|") and ("|ask-error|" in k or "|ask-raise|" in k) and r["audit"]
+              and r["audit"][-1][1] in ("jev_error_asked", "jev_error_deferred")]
+    assert len(judged) >= 2 * 2 * 3 * 2 * 2          # 2 kinds x 2 modes x 3 answers x 2 links x 2 ask-all, per hint
+    for key, r in judged:
+        assert r["asked"] and r["asked"][-1][1].endswith(" [Jev: unavailable]"), key
+        if "ans=allow" not in key:
+            assert r["resp"].get("decision") != "allow", key
+        assert all(a[1] != "jev_safe" for a in r["audit"]), key
+    assert not any(a[1] == "jev_error" for r in golden.values() for a in r["audit"])   # the old allow is gone
