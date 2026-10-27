@@ -1,50 +1,46 @@
-// One Claude Code session from the Work tab (docs/work-sessions.md): its latest turns, read again every few seconds
-// while the sheet is open, a reply box that types into that session's own terminal, and Stop (with a confirm) that
-// ends it. A session the phone can't reply to (eve didn't start it, or it ended) can be continued: a fork of it opens as
-// a new Work session in the same folder, the owner's words its next prompt, and the sheet follows the fork.
+// One Claude Code session from the Work tab (docs/work-sessions.md), whatever terminal it runs in: its latest turns,
+// read again every few seconds while the sheet is open, one message box, and Stop (with a confirm) for a session eve
+// started. The box takes as many messages in a row as the owner types (owner, 2026-10-26: "I want to also be able to
+// talk to current terminal sessions through the work area ... Unify everything"): each shows at once as the owner's
+// bubble with a small line saying how it landed, and they go in order from WorkModel's outbox, never waiting on each
+// other. A session that has ended gets Resume in the same box: the same session opened again on the Mac, under the
+// same id, so the sheet stays on it. Nothing here forks a session or opens a second one.
 import SwiftUI
+import UIKit
 
 struct SessionSheet: View {
     @ObservedObject var work: WorkModel
     /// The session as the list had it, until the first read.
     let fallback: WorkSession
     @Environment(\.dismiss) private var dismiss
-    /// The session the sheet shows: the one it opened on, then the fork a continue made.
-    @State private var current: String
-    /// The fork as the continue answered it, until its first read.
-    @State private var forked: WorkSession?
-    /// One per continue wording, so a retry after a dropped connection is the same fork.
-    @State private var continueID = UUID().uuidString
-    @State private var detail: WorkSessionDetail?
     @State private var loadProblem: String?
-    @State private var ended = false
-    @State private var reply = ""
-    @State private var sending = false
+    @State private var draft = ""
     @State private var stopping = false
     @State private var problem: String?
     @State private var confirmStop = false
-    @FocusState private var replyFocused: Bool
+    @FocusState private var draftFocused: Bool
 
-    /// How often an open sheet reads its session again.
+    /// How often an open sheet reads its session again; an ended one more slowly (it can be resumed at the desk too).
     static let poll: Duration = .seconds(4)
+    static let endedPoll: Duration = .seconds(12)
 
-    init(work: WorkModel, fallback: WorkSession) {
-        self.work = work
-        self.fallback = fallback
-        _current = State(initialValue: fallback.id)
-    }
-
+    private var id: String { fallback.id }
+    private var detail: WorkSessionDetail? { work.details[id] }
+    /// The newest the phone knows: the last read, with the newest state heard (a refused reply, a resume).
     private var session: WorkSession {
-        var s = detail?.session ?? forked ?? fallback
-        if ended { s.state = .ended }
+        var s = detail?.session ?? fallback
+        if let state = work.heard[id] { s.state = state }
         return s
     }
+    private var ended: Bool { !session.state.live }
     private var turns: [WorkSessionTurn] { detail?.turns ?? [] }
-    private var canSend: Bool {
-        !sending && !reply.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    private var outbox: WorkOutbox { work.outboxes[id] ?? WorkOutbox() }
+    private var composer: WorkComposer { .of(session, resuming: outbox.resuming) }
+    private var canSend: Bool { !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    /// Changes when a turn comes, the last one grows, or the owner sends: the list follows it down.
+    private var scrollKey: String {
+        "\(turns.count)-\(turns.last?.text.count ?? 0)-\(outbox.messages.count)-\(outbox.messages.last?.id ?? 0)"
     }
-    /// Changes when a turn comes or the last one grows: the list follows it down.
-    private var scrollKey: String { "\(turns.count)-\(turns.last?.text.count ?? 0)" }
 
     var body: some View {
         NavigationStack {
@@ -60,7 +56,16 @@ struct SessionSheet: View {
                                     .frame(maxWidth: .infinity)
                             }
                             ForEach(turns) { TurnView(turn: $0) }
-                            if turns.isEmpty {
+                            let captions = outbox.captions(failedHint: composer == .resume ? "Tap to put it back in the box."
+                                                                                          : "Tap to try again.")
+                            ForEach(outbox.messages) { m in
+                                PendingView(message: m, caption: captions[m.id],
+                                            tapHint: composer == .resume ? "Puts your words back in the box"
+                                                                         : "Sends it again",
+                                            tap: { tapped(m) }, delete: { work.discard(m.id, from: id) })
+                                    .id("pending-\(m.id)")
+                            }
+                            if turns.isEmpty && outbox.isEmpty {
                                 Text(emptyLine)
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
@@ -84,7 +89,7 @@ struct SessionSheet: View {
                         .padding(.horizontal, 16)
                         .padding(.top, 6)
                 }
-                replyBar
+                bottom
             }
             .background(Color.eveBackground)
             .navigationTitle(session.headline)
@@ -108,11 +113,12 @@ struct SessionSheet: View {
             } message: {
                 Text("Claude Code quits on your Mac. Its terminal window stays open.")
             }
-            .task(id: current) {
+            .task(id: ended) {               // starts again when it ends or comes back, so a resume reads at once
                 while !Task.isCancelled {
-                    await load()
-                    if ended { break }
-                    try? await Task.sleep(for: Self.poll)
+                    let said = await work.load(id)
+                    if Task.isCancelled { break }            // a read cut short by the restart is not a problem
+                    loadProblem = said
+                    try? await Task.sleep(for: ended ? Self.endedPoll : Self.poll)
                 }
             }
         }
@@ -120,16 +126,17 @@ struct SessionSheet: View {
         .sensoryFeedback(.success, trigger: work.acted)
     }
 
-    /// The state chip, the folder and when it last moved.
+    /// The state chip, where it runs and its folder, and when it last moved.
     private var header: some View {
         TimelineView(.periodic(from: .now, by: 30)) { clock in
             HStack(spacing: 10) {
                 SessionChip(state: session.state)
-                if !session.folder.isEmpty {
-                    Label(session.folder, systemImage: "folder")
+                if !session.place.isEmpty {
+                    Label(session.place, systemImage: "folder")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
+                        .accessibilityLabel(session.placeSpoken)
                 }
                 Spacer(minLength: 0)
                 Text(WorkSession.ago(session.lastActivity, now: clock.date))
@@ -142,60 +149,56 @@ struct SessionSheet: View {
         }
     }
 
-    @ViewBuilder private var replyBar: some View {
-        if !ended && session.canReply {
-            input("Reply to Claude", hint: "Types your reply into this session on your Mac") { await send() }
-        } else if session.canContinue {
-            VStack(spacing: 0) {
-                input("Continue from here", hint: "Opens this conversation in a new Terminal window on your Mac") {
-                    await continueHere()
-                }
-                Text(ended ? "This session has ended. Continuing opens it again in a new Terminal window on your Mac."
-                           : "Continuing opens this conversation in a new Terminal window on your Mac. The original stays as it is.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 8)
-            }
-        } else if ended {
-            note("This session has ended.")
+    /// The message box for a live session, Resume in the same box for an ended one, or why neither. The box is one
+    /// view either way, so the keyboard stays up when the session ends or comes back while the owner types.
+    @ViewBuilder private var bottom: some View {
+        if case .note(let line) = composer {
+            note(line)
         } else {
-            note(session.fromWork ? "This session can't take a reply from the phone."
-                                  : "eve can't find this session's transcript, so it can only show it here.")
+            let resume = composer == .resume
+            VStack(spacing: 0) {
+                if resume {
+                    Text("This session has ended. Resume opens it again in Terminal on your Mac, your words its next prompt.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
+                }
+                input(resume ? "Resume with a message" : "Message Claude", button: resume ? "Resume" : "Send",
+                      hint: resume ? "Opens this same session again in Terminal on your Mac, your words its next prompt"
+                            : session.runsIn.isEmpty ? "Sends your message to this session on your Mac"
+                            : "Sends your message to this session in \(session.runsIn) on your Mac")
+            }
         }
     }
 
-    /// The text box and its send button, for a reply or a continue.
-    private func input(_ placeholder: String, hint: String, action: @escaping () async -> Void) -> some View {
+    /// The text box and its button. It stays open while messages are on their way: the owner can send another at
+    /// once, and it goes after the ones before it.
+    private func input(_ placeholder: String, button: String, hint: String) -> some View {
         HStack(alignment: .bottom, spacing: 10) {
-            TextField(placeholder, text: $reply, axis: .vertical)
+            TextField(placeholder, text: $draft, axis: .vertical)
                 .lineLimit(1...5)
-                .focused($replyFocused)
+                .focused($draftFocused)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 9)
                 .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Color.eveFill))
                 .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .strokeBorder(Color.eveEdge, lineWidth: 1))
-                .disabled(sending)
-                .accessibilityLabel("Reply")
-                .onChange(of: reply) { _, now in
+                .accessibilityLabel("Message")
+                .onChange(of: draft) { _, now in
                     if now.count > WorkSessionRequests.maxReply {
-                        reply = String(now.prefix(WorkSessionRequests.maxReply))
+                        draft = String(now.prefix(WorkSessionRequests.maxReply))
                     }
                 }
-            Button { Task { await action() } } label: {
-                if sending {
-                    ProgressView()
-                } else {
-                    Image(systemName: "arrow.up").font(.system(size: 16, weight: .semibold))
-                }
+            Button(action: submit) {
+                Image(systemName: "arrow.up").font(.system(size: 16, weight: .semibold))
             }
             .buttonStyle(RoundButtonStyle(size: 38))
             .foregroundStyle(.primary)
             .disabled(!canSend)
-            .opacity(canSend || sending ? 1 : 0.4)
-            .accessibilityLabel(sending ? "Sending" : "Send")
+            .opacity(canSend ? 1 : 0.4)
+            .accessibilityLabel(button)
             .accessibilityHint(hint)
         }
         .padding(.horizontal, 12)
@@ -207,7 +210,9 @@ struct SessionSheet: View {
         Text(line)
             .font(.footnote)
             .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
             .frame(maxWidth: .infinity)
+            .padding(.horizontal, 16)
             .padding(.vertical, 14)
     }
 
@@ -217,58 +222,36 @@ struct SessionSheet: View {
         return session.state == .starting ? "Claude is starting…" : "Nothing yet."
     }
 
-    private func load() async {
-        switch await work.detail(current) {
-        case .success(let d):
-            if d != detail { detail = d }
-            loadProblem = nil
-            if d.session.state == .ended { ended = true }
-        case .failure(let p):
-            if p.message == WorkFailure.sessionEnded { ended = true }
-            loadProblem = p.message
+    /// The words go to the outbox and the box empties at once; the bubble says how they landed.
+    private func submit() {
+        let words = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !words.isEmpty else { return }
+        switch composer {
+        case .message: work.send(words, to: id, shown: turns)
+        case .resume: work.resume(id, with: words, shown: turns)
+        case .note: return
         }
+        draft = ""
     }
 
-    private func send() async {
-        guard canSend else { return }
-        sending = true
-        problem = nil
-        let said = await work.reply(reply, to: current)
-        sending = false
-        if let said {
-            problem = said
-            if said == WorkFailure.sessionEnded { ended = true }
+    /// A tap on a message that did not go: send it again, or, once the session has ended, put its words (and those of
+    /// any behind it) back in the box for Resume.
+    private func tapped(_ m: WorkOutbox.Message) {
+        guard case .failed = m.phase else { return }
+        if composer == .resume {
+            let words = work.takeUnsent(id)
+            let typed = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+            draft = [words, typed].filter { !$0.isEmpty }.joined(separator: "\n\n")
+            draftFocused = true
         } else {
-            reply = ""
-            await load()
-        }
-    }
-
-    /// Forks this session into a Work session and follows it: the sheet now reads, replies to and stops the fork.
-    private func continueHere() async {
-        guard canSend else { return }
-        sending = true
-        problem = nil
-        let result = await work.continueSession(reply, from: current, clientID: continueID)
-        sending = false
-        switch result {
-        case .success(let s):
-            reply = ""
-            continueID = UUID().uuidString
-            forked = s
-            detail = nil
-            loadProblem = nil
-            ended = false
-            current = s.id                  // the .task restarts on the fork
-        case .failure(let p):
-            problem = p.message
+            work.retry(id)
         }
     }
 
     private func stop() async {
         stopping = true
         problem = nil
-        let said = await work.stop(current)
+        let said = await work.stop(id)
         stopping = false
         if let said {
             problem = said
@@ -286,11 +269,7 @@ private struct TurnView: View {
         if turn.role == .owner {
             HStack {
                 Spacer(minLength: 48)
-                Text(turn.text)
-                    .font(.body)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 9)
-                    .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color.eveFill))
+                OwnerBubble(text: turn.text)
                     .textSelection(.enabled)
             }
             .accessibilityElement(children: .combine)
@@ -307,5 +286,72 @@ private struct TurnView: View {
     private var rendered: AttributedString {
         let options = AttributedString.MarkdownParsingOptions(interpretedSyntax: .inlineOnlyPreservingWhitespace)
         return (try? AttributedString(markdown: turn.text, options: options)) ?? AttributedString(turn.text)
+    }
+}
+
+/// The owner's words in their bubble.
+private struct OwnerBubble: View {
+    let text: String
+
+    var body: some View {
+        Text(text)
+            .font(.body)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 9)
+            .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color.eveFill))
+    }
+}
+
+/// A message the owner sent that the transcript does not show yet: their bubble, faded until it has gone, and the
+/// small line under it ("Sending…", "Sent", "Waiting for approval on the Mac"). One that failed has a red mark and
+/// takes a tap; a long press copies it, or deletes one that has not gone.
+private struct PendingView: View {
+    let message: WorkOutbox.Message
+    /// nil when the bubble below says the same.
+    let caption: String?
+    let tapHint: String
+    let tap: () -> Void
+    let delete: () -> Void
+
+    private var failed: Bool { if case .failed = message.phase { true } else { false } }
+    private var gone: Bool { if case .sent = message.phase { true } else { false } }
+
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 4) {
+            HStack(spacing: 8) {
+                Spacer(minLength: 48)
+                if failed {
+                    Image(systemName: "exclamationmark.circle.fill")
+                        .foregroundStyle(.red)
+                        .accessibilityHidden(true)
+                }
+                OwnerBubble(text: message.text)
+                    .opacity(gone || failed ? 1 : 0.6)
+            }
+            if let caption {
+                Text(caption)
+                    .font(.caption)
+                    .foregroundStyle(failed ? Color.red : Color.secondary)
+                    .multilineTextAlignment(.trailing)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .trailing)
+        .contentShape(Rectangle())
+        .onTapGesture { if failed { tap() } }
+        .contextMenu {
+            Button("Copy", systemImage: "doc.on.doc") { UIPasteboard.general.string = message.text }
+            if message.phase.unsent {
+                Button("Delete", systemImage: "trash", role: .destructive) { delete() }
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("You: \(message.text)")
+        .accessibilityValue(WorkOutbox.caption(message.phase))
+        .accessibilityHint(failed ? tapHint : "")
+        .accessibilityAddTraits(failed ? .isButton : [])
+        .accessibilityAction { if failed { tap() } }
+        .accessibilityActions {
+            if message.phase.unsent { Button("Delete", action: delete) }
+        }
     }
 }

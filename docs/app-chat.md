@@ -39,8 +39,10 @@ screen but the controls below until there are messages.
   bottom is one rounded card (24 pt corners, a 1 px edge, dark gray): the field
   ("Ask eve", grows to six lines) on top, and a row below it with **+** at
   left and the speed dial, the mic and the send button at right. Send is a
-  white circle with a black up arrow; it turns into a stop square while eve
-  answers, and into a small spinner while attachments upload.
+  white circle with a black up arrow, and a small spinner while attachments
+  upload. While eve answers it stays send whenever there is something to send
+  (the message queues: see [Sending while eve replies](#sending-while-eve-replies)),
+  and is a stop square when there is nothing it can send.
   - **+** (`App/ChatAttach.swift`) is a menu with **Photos** (the system photo
     picker) and **Files** (the Files app).
     What you pick shows above the field in the card: a photo as a 56 pt rounded
@@ -75,9 +77,52 @@ screen but the controls below until there are messages.
   card's Dismiss.
 - **Apps** and **Work** (`App/WorkView.swift`, one plain list each). **Apps**
   is Notes and the Mac's apps (the owner's are Music, Lights, Remote, Pika and
-  Camera; any app added to the registry shows up too); **Work** is the chief's jobs.
+  Camera; any app added to the registry shows up too); **Work** is the Mac's
+  Claude Code sessions ([Work sessions](work-sessions.md)), with the chief's
+  jobs in a small section under them while there are any.
   Pull down to refresh; each also refreshes when its tab opens, and both are
   read at launch, so a tab opens on data, not "Loading…".
+  - **Sessions** (`App/WorkView.swift`, `Shared/WorkSessions.swift`). Every
+    Claude Code session on the Mac is a row, whatever it runs in (Warp,
+    Terminal, an IDE): its state chip ("Waiting on you", "Working", "Idle",
+    "Starting", "Ended"), its title, what it last said, where it runs and its
+    folder in one small line ("Warp · eve"), and when it last moved. The ones
+    waiting on you come first. The list reads again every 6 seconds while the
+    tab is open. **+** in the bar opens **New session**: the task in your
+    words, and Start opens Claude Code in a new Terminal window in the work
+    folder with the task as its first prompt; its sheet opens next.
+  - **A session's sheet** (`App/SessionSheet.swift`) shows its latest turns,
+    read again every 4 seconds (12 once it has ended): yours on the right,
+    Claude's on the left.
+    Under them is one message box for every live session eve can reach, in
+    any terminal (owner, 2026-10-26: "I want to also be able to talk to
+    current terminal sessions through the work area ... Unify everything").
+    Send as many messages in a row as you like, as Claude Code itself takes
+    them: the box never waits. Each shows at once as your bubble, faded until
+    it has gone, and they go to the Mac one at a time, in order. The small
+    line under a bubble says how it landed: "Sent"; "It's working: it'll take
+    this at its next step" (a busy session takes it at its next step);
+    "Waiting for approval on the Mac" (the session holds messages from eve
+    until you allow them there); or, in red, "Not sent:" and eve's reason. Tap
+    a failed one to try again; the ones behind it wait, so the session never
+    gets them out of order. Touch and hold a bubble to copy it, or to delete
+    one that has not gone. Once the transcript shows your message, its turn
+    takes the bubble's place (a read that no longer reaches back to it does
+    too). A bubble the transcript never shows goes 30 minutes after it was
+    sent. The messages are sent by the app's model, not the sheet, so they
+    keep going when the sheet closes, and a session whose message failed says
+    "A message wasn't sent" in the list.
+  - **Resume.** When a session has ended, the same box becomes **Resume**:
+    your words open the same session again, under the same id, in a Terminal
+    window in its folder, as its next prompt, and the sheet stays on it.
+    Messages that never went go with them, before your new words; tap one
+    that failed to put its words back in the box instead. Resume is never
+    offered for a live session, and nothing in Work forks a session or opens
+    a second window to talk to one. (An eve from before 2026-10-26 still
+    forks an ended session under a new id: the bubble says it is in the
+    sessions list, and the sheet stays where it is.)
+  - A live session eve can't reach says so in place of the box. **Stop**
+    (it asks first) is there for the sessions eve started from Work.
   - A job shows its title, one muted status line ("Waiting on your Go",
     "Researching", "Done": the daemon's `line`) and a thin line of the steps
     done. Open jobs come first. A blue dot marks one that waits on the owner.
@@ -104,7 +149,8 @@ screen but the controls below until there are messages.
     the question waits in the chat. The same words sent again (a dropped
     connection, a slow turn) wait for the first try, never a second job;
     changed words are a new job.
-  - An error says which part is off: "eve's chief is off." for Jobs.
+  - An error says which part is off: "eve's chief is off." for Jobs, "eve's
+    Work sessions are off." for the sessions.
   - **Apps** are eve's own controls (owner, 2026-10-08: "like the spotify,
     lights and remote"): **Notes** (2026-10-10, below), then **Music**, **Lights** and **Remote**, the Telegram
     Mini App's three cards, then **Pika** (2026-10-10, the robot car; [pika.md](pika.md)) and **Camera**
@@ -240,6 +286,76 @@ screen but the controls below until there are messages.
   eve's own message; a tap opens any picture or file full size.
 - A reply that used eve's memory shows a small "Sources · N" under it; a tap
   opens the memory lines it leaned on. See "Sources".
+- Messages sent while eve is still answering wait at the end of the chat,
+  dimmed and marked "Queued", and go in order. See below.
+
+## Sending while eve replies
+
+Owner, 2026-10-26: "I wanted to just be able to double-send or triple-send,
+and it just catches things", as Claude Code queues what is typed while it
+works. Before this, the composer had only Stop while eve replied.
+
+- **Send stays send.** While eve replies, the send button is send whenever
+  the composer could send (words or attachments, within the length limit),
+  and a stop square otherwise (an empty field, or words over the limit), so
+  Stop is always there when Send is not. VoiceOver reads it as
+  "Send (queued after eve's reply)", and Stop's hint says a queued message, if
+  any, goes next. Attachments upload first, as on any send (the spinner shows
+  meanwhile).
+- **A queued message shows at once,** at the end of the chat, after the reply
+  that is running: the owner's own bubble (photos and files above it, as on a
+  sent message), dimmed, with a small muted "Queued" under its right edge.
+  Send two or three and they line up in the order sent. Each one scrolls the
+  chat to its end, as a send does.
+- **They go in order, one at a time.** When the reply on the screen ends, the
+  oldest queued message goes as an ordinary turn: its bubble becomes the
+  normal message where it stood, in the same update, so it is never on the
+  screen twice, and eve answers it. Then the next one, and so on. The daemon
+  hears each one as a typed message, as in Telegram.
+- **Stop, then the next one goes,** as in Claude Code. Stop ends the reply on
+  the screen, and the oldest queued message is sent at once. Tap Stop again
+  to end that one too. Stop does not stop eve (see "Left out"): the daemon
+  takes typed messages one turn at a time, as in Telegram, so she finishes
+  the stopped reply on the Mac before she answers the queued message, and
+  the rest of the stopped reply shows in the chat when it comes, after the
+  reply that is on the screen then. So Stop does not change what she does;
+  it only stops the phone waiting on that reply.
+- **A reply that asks you something.** When eve's reply ends on a question
+  to you (a task asking which one, a chief's Go, an approval), the stream
+  ends there, and the next queued message goes as your answer, as a second
+  message typed in Telegram would. A Go or an approval still takes only a
+  plain yes or no (or its button's word); anything else goes to eve as a new
+  message and the question keeps waiting.
+- **A queued message never joins the running reply.** Folding a second
+  message into a turn that is running (steering) was measured on 2026-10-26
+  and missed its bar ([the verdict](evals/chat-steer-VERDICT.md)), so
+  `EVE_CHAT_STEER` stays off and a queued message waits for the reply to end.
+- **After an error.** A reply that fails lets the next queued message go, as a
+  finished one does. One case waits: the page is hidden and the reply before
+  it ended in an error. In the app that is the stream the app stops after 25
+  seconds in the background (see "Background and foreground"), and a turn
+  started then could stay open with nobody reading it. That message waits,
+  still marked Queued, and goes when the chat shows again.
+
+How it is built. The page keeps the queue (`Web/src/sendQueue.ts`): native's
+`send(text, attachments)` goes to the end of it, and a send starts only when no
+turn of the page's is in flight or running and the history has loaded, the same
+guard as before (`inFlight`). It leaves the queue in the same call that hands it
+to OpenUI's `processMessage`, which appends it to the thread at once. The
+queued bubbles (`Web/src/QueuedMessages.tsx`) are drawn with the owner bubble's
+own component (`OwnerBubble` in `UserMessage.tsx`), into a div of the page's
+own kept as the last child of OpenUI's scroll area, after its message list:
+OpenUI puts exactly one child there and never inserts after it, so the order
+holds, and the div scrolls with the thread inside the padding that keeps the
+end clear of the composer. Nothing else changed: the ledger still flushes the
+lines the poll held before the next queued message starts, a picture eve sends
+mid-turn still goes before the streamed reply, and the list keeps its pinning.
+Because turns now run back to back, the ledger keeps a late line of the
+earlier turn with that turn: its sources go on its own reply, and a late
+picture of it is appended rather than put before the reply now streaming (see
+"eve's pictures and files" and "Sources").
+`window.eveNative.send` and the native `send` did not change; the composer
+change is in `ChatComposer.sendButton` (`App/ChatScreen.swift`).
 
 ## How it is built
 
@@ -440,7 +556,11 @@ back after the picture, both through the store's functional updates). Read back
 from history later, it is in the same place. A picture that comes in after the
 reply's own line, or once the stream has ended, goes after the reply, as the
 transcript has it too. A picture sent with nothing streaming (a task finishing,
-the chief) shows at once.
+the chief) shows at once. When turns run back to back (a queued message starts
+the moment the reply before it ends), a picture of the earlier turn that the
+poll brings only while the next one streams is never put before the new reply:
+the ledger knows which turn's owner line came last, and appends it once the
+run settles.
 
 ## Reactions
 
@@ -547,7 +667,9 @@ eve's media, in a small store the bubble subscribes to. `sync.ts` sets them
 when a history row is mapped (`toChat`), adds a merged line's sources to the
 bubble it joins, and, when the long poll's copy of a reply streamed in the page
 is dropped as a copy, hands its sources to that streamed reply
-(`LedgerSink.attachSources`, `App.tsx`). `SourceList.tsx` draws the folded
+(`LedgerSink.attachSources`, `App.tsx`): the reply to the owner message its
+turn sent (`replyAfter`), so a copy that arrives while a queued message's
+reply already streams still goes on its own turn's reply. `SourceList.tsx` draws the folded
 line and the list (`.eve-sources` in `native.css`). The words are text,
 never markup.
 
@@ -701,14 +823,16 @@ same one retry at a new address as the chat:
 
 | Call | Answer |
 |---|---|
-| `GET /api/link/jobs` | `{"jobs": [card + "line", "steps_done", "needs_you", "actions"], "needs_you": n}`: open cards first, then the last 20 finished. 503 when the chief is off. |
+| `GET /api/link/jobs` | `{"jobs": [card + "line", "steps_done", "needs_you", "actions"], "needs_you": n}`: open cards first, then the last 20 done. A dropped job is never listed (owner, 2026-10-26: "I don't need to see Dropped jobs"; the chief's ledger keeps it), and the app leaves one out if an older eve sends it. 503 when the chief is off. |
 | `POST /api/link/jobs` | New job. Body `{"goal", "detail"?, "client_id"?}`: goal 1 to 1000 characters after trimming, detail at most 2000, client_id at most 64; a JSON object of at most 64 kB. The words are heard as an app turn, as `POST /api/link/turn` hears typed words, led by `"Take this on as a job: "` (`link_chat.JOB_LEAD`, which names no act, so it never grounds a one-way step) and the details after `"Details: "`. The brain's own `take_on` files the card, with its parse, door floor, backbrief and every chief rule; nothing in the endpoint files or approves anything. The request waits for that turn (90 s at most) and answers `{"ok": true, "job": <one card, as GET gives it>, "said": [...]}` for the card that turn's own `take_on` filed (`TelegramInlet.app_filed`, keyed by the app turn's id; a card another turn files during the wait is never returned), or `{"ok": false, "reason", "said"}` when it filed none (`said`: eve's lines on the turn, OpenUI made plain). The same `client_id` within 10 minutes waits for the first request's turn, never a second card. 503 when the chief is off or the chat is not running; 400 or 413 for a bad body. |
 | `POST /api/link/jobs/<id>/<go\|done\|drop\|raise\|happened\|didnt>` | The chief's own `approve` / `done` / `drop` / `raise_budget` / `happened` / `didnt`, and its dict: `{"ok": true, ...}` or `{"ok": false, "reason": ...}`. A Go here is the owner's yes, as "go c12" in Telegram, and may carry `{"rev": n}`. A Go on a card whose act may already have happened is refused (`ok: false`); answer `happened` or `didnt` first. |
 | `POST /api/link/jobs/<id>/hide` | A finished job leaves the Work list for good: long-press it, Delete in its sheet, or Clear finished in the bar. Only the list forgets it (`~/.config/eve-bridge/chat/hidden-jobs.json`); the chief's ledger keeps the card. An open job is refused (`ok: false`): Drop it first. |
-| `GET /api/link/sessions` | Work's Claude Code sessions in `~/Documents/personal/work`: `{"ok": true, "folder": "work", "sessions": [{"id", "folder", "title", "state", "last_activity", "last_line", "from_work", "can_reply", "can_stop"}]}`. See [Work sessions](work-sessions.md). |
+| `GET /api/link/sessions` | The Mac's Claude Code sessions, in any folder and terminal: `{"ok": true, "folder": "work", "sessions": [{"id", "folder", "title", "state", "last_activity", "last_line", "from_work", "can_reply", "can_stop", "can_continue", "where"}]}`. `can_reply`: live and eve can reach it; `can_continue`: ended and it can be resumed; `where`: the app it runs in ("Warp", "Terminal", "VS Code") or "". An app build older than `where` ignores it, and an older daemon's rows without it read as before. See [Work sessions](work-sessions.md). |
 | `POST /api/link/sessions/start` | `{"task", "client_id"?}`: one Terminal window running `claude` in the work folder, the task its first prompt; `{"ok": true, "session"}`. The same `client_id` within 10 minutes is the same session. |
 | `GET /api/link/sessions/<id>` | `{"ok": true, "session", "turns": [{"role": "owner"\|"claude", "text", "at"}], "cut", "ended"}`: the last 20 turns, words only, secrets masked. |
-| `POST /api/link/sessions/<id>/<reply\|stop>` | `{"text"}` typed into that session's own tab, only while it runs (409 otherwise); stop ends it. Only sessions started from Work. |
+| `POST /api/link/sessions/<id>/reply` | `{"text"}` → `{"ok": true, "delivered": "now"\|"queued"\|"held"\|"typed"}`: the owner's words to any live session eve can reach, whatever terminal it runs in; the app shows `delivered` under the bubble ("Sent", "It's working: it'll take this at its next step", "Waiting for approval on the Mac"). 409 `{"ok": false, "reason", "code"?}` when it can't land (`"code": "ended"` once it has ended, which the app matches, never the words). An older daemon's bare `{"ok": true}` reads as "Sent". |
+| `POST /api/link/sessions/<id>/continue` | Resume: `{"text", "client_id"}` → `{"ok": true, "delivered": "resumed", "session"}`: an ended session opened again in Terminal in its folder, the same session under the same id, the text its next prompt; the app shows "Opened again on your Mac" and keeps reading that id. A session that is live after all takes the text as a reply does (reply's answer, plus `session`). The same `client_id` within 10 minutes is the same resume. |
+| `POST /api/link/sessions/<id>/stop` | Ends a session eve started from Work. |
 | `GET /api/link/controls` | `{"lights": [{"name", "room"?}], "spotify": bool, "firetv": bool, "memory": bool, "notes": bool, "pika": bool, "obsbot": bool, "apps": [{"id", "title", "symbol", "detail", "sheet"}]}`: which of the Mini App's Lights, Music and TV remote cards, the Memory card, Notes, Pika and the camera this Mac has, and (`apps`, 2026-10-12) the registry's present apps in the order the Apps tab lists them. An app build older than `apps` ignores it. |
 | `POST /api/link/controls/<id>` | An app with no native sheet (the generic sheet): the app's `panel(body)`. Bodies `{"action": "status"}`, `{"action"}`, `{"action", "on"}`, `{"action", "value"}`; the answer `{"ok", "ui": 1, "line", "status"?, "controls"?: [{"type": "button"\|"toggle"\|"slider", "id", "label", "action", ...}]}`. See [adding-an-app.md](adding-an-app.md). |
 | `POST /api/link/controls/obsbot` | The OBSBOT webcam (`obsbot_panel.ObsbotPanel`): `{"action": "status"}`, `{"action": "hold", "dir": "up"\|"down"\|"left"\|"right", "hold"}` every 150 ms while held, `{"action": "stop", "hold"}`, `{"action": "move", "pan", "pitch"}`, `center`, `wake`, `sleep`, `{"action": "zoom", "level"}`, `{"action": "track", "on"}`, `{"action": "mode", "name"}`, `{"action": "preset", "n"}`, `close`; `{"ok", "line", ...}`. 404 when no OBSBOT camera is plugged in (and OBSBOT Center isn't installed) or `EVE_OBSBOT=0`. See [obsbot.md](obsbot.md). |
@@ -720,7 +844,7 @@ same one retry at a new address as the chat:
 | `POST /api/link/controls/<lights\|spotify\|firetv>` | That card's own `panel(body)` (`lights.Lights`, `spotify.Spotify`, `firetv.FireTV`, the same objects the Mini App's `/api/lights`, `/api/spotify` and `/api/firetv` use), and its JSON as it is. The body is the Mini App's: `{"action": "status"}` reads; `{"action": "set", "target", "power"\|"color"\|"brightness"}` for lights; `play`, `pause`, `next`, `previous`, `volume`, `transfer`, `mode` for music; the d-pad keys (with `repeat`), `power_on`/`power_off`, media keys, `volume`, `volume_change`, `mute`/`unmute`, `open_app` for the TV. 404 with `{"ok": false, "line"}` for one this Mac does not have. JSON object bodies only, 64 kB at most. |
 | `GET /api/link/today` | The home-screen widget's one read: what needs the owner, what is going, the events left today and what plays now, each source within its own limit and left out when it fails. See [the widget](widget.md). |
 | `GET /api/link/updates` | The Updates pane's cards: `{"cards": [{"id", "verb", "text", "entity", "kind", "source", "due"}], "generated_at", "refreshing"}`, read from the kept store, never waiting on the model. Empty when `EVE_UPDATES=0`. See [Updates](updates.md). |
-| `POST /api/link/updates/dismiss` | `{"id"}`: that card's sources stay out of Updates for 30 days. `{"ok": true}`, also for the id of a card a rebuild replaced in the last 2 days; 404 `{"ok": false}` for an id the daemon does not know (the app puts the card back); 400 for a missing, empty or over-64-character id. |
+| `POST /api/link/updates/dismiss` | `{"id"}`: that card's sources stay out of Updates for good ([Dismissals](updates.md#dismissals)). `{"ok": true}`, also for the id of a card a rebuild replaced in the last 2 days; 404 `{"ok": false}` for an id the daemon does not know (the app puts the card back); 400 for a missing, empty or over-64-character id. |
 | `POST /api/link/updates/refresh` | Starts one rebuild in the background: `{"ok": true, "started": bool}` (`false` while one runs, when off, or without a model key). |
 | `GET /api/link/apps` | `{"apps": [{"slug", "name", "updated"}]}`. Not used by Work now (the built apps are not listed there); kept for later. |
 | `POST /api/link/apps/<slug>/open` | `{"url": "<tunnel origin>/apps/<slug>/?t=<app token>"}`; 404 for an app that is gone. Not used by Work now. |
@@ -760,7 +884,11 @@ seconds and the stream stays open to the daemon with nobody reading it. When
 the stream stops, the daemon sends the rest of the turn to Telegram (with
 Telegram app-only, to [ntfy](notifications.md)), so the owner gets a
 notification. The page gets `onError` and reads the reply from the
-history when it comes back.
+history when it comes back. A message queued behind that reply does not start
+while the page is hidden: it waits, marked Queued, and goes when the chat shows
+again (see "Sending while eve replies"). A queued message whose reply before it
+finished in the background starts at once, and its stream is stopped at the
+end of the same 25 seconds like any other.
 
 ## What the daemon does for app turns
 
@@ -1131,6 +1259,20 @@ raises as a 500.
 
 The parser tests are skipped when node or the web packages are missing.
 
+`sendQueue.test.ts` checks sending while eve replies: an idle send starts at
+once and never shows as queued; sends made during a reply wait in the order
+sent and start one at a time; a send is never shown twice and never lost at
+any step (it leaves the queue in the step that puts it in the thread); Stop
+ends the reply and the next one goes, then the one after, and the rest of the
+stopped reply, which eve finishes on the Mac first, comes after the queued
+turn's reply, never inside it; a failed reply lets
+the next one go, but after a stream cut while the page is hidden the next one
+waits until it shows; sends wait for history; each keeps its attachments and
+its own key; the snapshot React reads stays the same array until the queue
+changes. It also renders the queued list: each send as the owner's bubble, in
+order, marked Queued, its words escaped, a photo above it, and no `data-mid`
+(Horizontal History cannot jump to a message that has not gone).
+
 `attachments.test.ts` checks what the page takes from native and from history
 (a thumbnail only as an inline JPEG or PNG), the turn's upload ids, an owner
 line with only a photo, an expired photo shown as its name, and the ledger
@@ -1167,7 +1309,8 @@ for them), a `media` line leaving the quiet clock alone, and a source scan
 that no Bot API media send in `telegram.py` bypasses `_send_media`.
 `media.test.ts` checks the page side: a media line as its own message with its
 attachments, never merged, held during a turn and placed before the streamed
-reply without being claimed, a `file` kind, an expired one
+reply without being claimed, back-to-back turns (a late picture of the turn
+before goes after the new reply, the new turn's own before it), a `file` kind, an expired one
 not openable, the open request, and the left-aligned buttons.
 `OPEN_ATTACHMENT_OK` (`Tests/run.sh`) checks the page's open message, the
 file request, and the safe local name.
@@ -1180,12 +1323,17 @@ forget taking a quoted source and a forgotten reply's sources, and the app row
 (`sources` on eve rows only, sanitized). `sources.test.ts` checks
 `sanitizeSources`, mapping (an owner row has none, a merged line adds to its
 bubble, a reload replaces), a claimed copy handing its sources to the streamed
-reply, and the folded and open markup with a source's words escaped.
+reply, a late copy of the turn before handing them to that turn's reply and not
+the one streaming (`replyAfter`), and the folded and open markup with a
+source's words escaped.
 
 ## Left out
 
 - The Stop button stops the stream on the phone. It does not stop eve: the
   daemon has no cancel for a turn. The full reply is in the history.
+- A queued message cannot be edited or taken back before it goes. The queue
+  lives in the page: if iOS ends the web view's process before they go, the
+  messages still queued are lost (their words were never sent).
 - No voice notes from the composer, and no camera in the "+" menu.
 - Work cannot answer a chief's question; answer it in the chat.
 - No Apple push notifications (a free personal team cannot use them). eve
@@ -1219,8 +1367,9 @@ messages the app does:
 
 **The shell** draws what is native in the app, outside `App.tsx`: a top bar (Settings at left,
 "eve" and, while it matters, how chat reaches the Mac, and the voice button at right), and the
-composer ("Ask eve", **+** for up to 4 photos or files, a Think toggle, and send, which turns
-into stop). Think sends the grade `think`, otherwise `auto`. A photo goes as a JPEG of at most
+composer ("Ask eve", **+** for up to 4 photos or files, a Think toggle, and send, which is stop
+while eve answers and there is nothing it can send; words sent while eve answers queue, as in the app:
+see [Sending while eve replies](#sending-while-eve-replies)). Think sends the grade `think`, otherwise `auto`. A photo goes as a JPEG of at most
 2048 px on its long side, as the app sends it; a HEIC or AVIF photo is converted in the browser
 when the browser can read it, since the daemon refuses HEIC. Each file is uploaded first, then
 the words go to the page with `window.eveNative.send`, as in the app.

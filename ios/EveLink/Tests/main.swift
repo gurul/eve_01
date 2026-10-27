@@ -469,6 +469,12 @@ check(jobs?.finished.first?.actions == [.hide] && WorkAction.hide.title == "Dele
 check(WorkJobs.decode(Data(#"{"jobs": [{"id": "c1", "title": "x", "needs_you": true}]}"#.utf8))?.needsYou == 1,
       "no needs_you count: counted from the jobs")
 check(WorkJobs.decode(Data("[]".utf8)) == nil && WorkJobs.decode(Data("nope".utf8)) == nil, "a bad payload is nil")
+// Owner, 2026-10-26: "I don't need to see Dropped jobs". An older daemon still lists them; the app leaves them out.
+let withDropped = WorkJobs.decode(Data((#"{"jobs": [{"id": "c1", "title": "a", "status": "waiting", "needs_you": true},"#
+    + #" {"id": "c2", "title": "b", "status": "dropped", "actions": ["hide"]},"#
+    + #" {"id": "c3", "title": "c", "status": "done", "actions": ["hide"]}], "needs_you": 1}"#).utf8))
+check(withDropped?.jobs.map(\.id) == ["c1", "c3"] && withDropped?.finished.map(\.id) == ["c3"]
+      && withDropped?.needsYou == 1, "a dropped job is left out; a done one is still listed")
 for (status, waiting, line) in [("waiting", "question", "Waiting on your answer"), ("waiting", "budget", "Waiting on a budget raise"),
                                 ("waiting", "mac_slot", "Waiting for the Mac"), ("proposed", nil, "Proposed"),
                                 ("dropped", nil, "Dropped"), ("active", nil, "Working")] {
@@ -1779,13 +1785,15 @@ check(replyReq.httpMethod == "POST" && replyReq.url?.path == "/api/link/sessions
 let longReply = WorkSessionRequests.reply(ep, id: sid1, text: String(repeating: "r", count: 4500))
 check(((try? JSONSerialization.jsonObject(with: longReply.httpBody ?? Data())) as? [String: String])?["text"]?.count
       == WorkSessionRequests.maxReply, "a reply is at most 4000 characters")
-let contReq = WorkSessionRequests.continueSession(ep, id: sid2, text: " and run the tests \n", clientID: String(repeating: "k", count: 80))
-check(contReq.httpMethod == "POST" && contReq.url?.path == "/api/link/sessions/\(sid2)/continue"
-      && (try? JSONSerialization.jsonObject(with: contReq.httpBody ?? Data())) as? [String: String]
+let resumeReq = WorkSessionRequests.resume(ep, id: sid2, text: " and run the tests \n", clientID: String(repeating: "k", count: 80))
+check(resumeReq.httpMethod == "POST" && resumeReq.url?.path == "/api/link/sessions/\(sid2)/continue"
+      && (try? JSONSerialization.jsonObject(with: resumeReq.httpBody ?? Data())) as? [String: String]
          == ["text": "and run the tests", "client_id": String(repeating: "k", count: 64)]
-      && contReq.timeoutInterval == WorkSessionRequests.startTimeout, "the continue request: trimmed, a start's timeout")
-let continuable = WorkSession(json: ["id": sid2, "state": "working", "from_work": false, "can_continue": true])
-check(continuable?.canContinue == true && continuable?.canReply == false, "a session eve didn't start can be continued")
+      && resumeReq.timeoutInterval == WorkSessionRequests.startTimeout,
+      "the resume request (the continue route): trimmed, a start's timeout")
+let resumable = WorkSession(json: ["id": sid2, "state": "ended", "from_work": false, "can_continue": true])
+check(resumable?.canContinue == true && resumable?.canReply == false && resumable?.state == .ended,
+      "an ended session that can be resumed")
 check(s1?.canContinue == false, "can_continue is false when the daemon leaves it out")
 let stopReq = WorkSessionRequests.stop(ep, id: sid1)
 check(stopReq.httpMethod == "POST" && stopReq.url?.path == "/api/link/sessions/\(sid1)/stop"
@@ -1813,6 +1821,241 @@ check(WorkFailure.from(status: 401, body: Data(), for: .sessions).message.hasPre
       && WorkFailure.from(status: 530, body: Data(), for: .sessions).addressMayHaveMoved,
       "the shared words otherwise: 401 re-pair, 530 retried at the new address")
 check(WorkFailure.from(status: 503, body: Data(), for: .jobs).message == "eve's chief is off.", "jobs keep their words")
+
+// "where" (2026-10-26): the app a session runs in. An older eve leaves it out, and the rows read as before.
+let warpRow = WorkSession(json: ["id": "w", "folder": "eve", "state": "working", "can_reply": true, "where": " Warp \n"])
+check(warpRow?.runsIn == "Warp" && warpRow?.place == "Warp · eve" && warpRow?.placeSpoken == "In Warp, folder eve",
+      "where: one line, before the folder")
+check(s1?.runsIn == "" && s1?.place == "work" && s1?.placeSpoken == "In work"
+      && WorkSession(json: ["id": "n"])?.place == "" && WorkSession(json: ["id": "n"])?.placeSpoken == ""
+      && WorkSession(json: ["id": "n", "where": "Terminal"])?.place == "Terminal"
+      && WorkSession(json: ["id": "n", "where": "Terminal"])?.placeSpoken == "In Terminal"
+      && WorkSession(json: ["id": "n", "where": 7])?.runsIn == ""
+      && WorkSession(json: ["id": "n", "where": String(repeating: "x", count: 99)])?.runsIn.count == WorkSession.maxWhere,
+      "without where, the folder alone; a bad one is empty, a long one clipped")
+let whereList = WorkSessionList.decode(Data(#"""
+{"ok": true, "folder": "work", "sessions": [{"id": "a", "state": "idle", "where": "VS Code", "can_reply": true},
+ {"id": "b", "state": "ended", "can_continue": true}]}
+"""#.utf8))
+check(whereList?.sessions.map(\.runsIn) == ["VS Code", ""] && whereList?.sessions.first?.canReply == true
+      && whereList?.sessions.last?.state == .ended && whereList?.sessions.last?.canContinue == true,
+      "the list with the new fields, and without them")
+let whereDetail = WorkSessionDetail.decode(Data(#"{"ok": true, "session": {"id": "x", "state": "working", "where": "Warp", "can_reply": true}}"#.utf8))
+check(whereDetail?.session.runsIn == "Warp" && whereDetail?.session.canReply == true, "a detail's session carries where")
+
+// A reply's answer: how it landed, in the words under the owner's bubble. An older eve's bare ok is "Sent".
+check(WorkSendResult.decode(Data(#"{"ok": true, "delivered": "now"}"#.utf8))
+      == WorkSendResult(ok: true, delivered: .now, reason: nil, session: nil)
+      && WorkSendResult.decode(Data(#"{"ok": true, "delivered": "now"}"#.utf8)).caption == "Sent"
+      && WorkSendResult.decode(Data(#"{"ok": true, "delivered": "queued"}"#.utf8)).caption
+         == "It's working: it'll take this at its next step"
+      && WorkSendResult.decode(Data(#"{"ok": true, "delivered": "held", "reason": "it asks first"}"#.utf8)).caption
+         == "Waiting for approval on the Mac"
+      && WorkSendResult.decode(Data(#"{"ok": true, "delivered": "typed"}"#.utf8)).caption == "Sent",
+      "delivered: now, queued, held, typed")
+check(WorkSendResult.decode(Data(#"{"ok": true}"#.utf8)) == WorkSendResult(ok: true, delivered: nil, reason: nil, session: nil)
+      && WorkSendResult.decode(Data(#"{"ok": true}"#.utf8)).caption == "Sent"
+      && WorkSendResult.decode(Data(#"{"ok": true, "delivered": "beamed"}"#.utf8)).caption == "Sent",
+      "an older eve's bare ok, or a word the phone doesn't know: Sent")
+check(WorkSendResult.decode(Data(#"{"ok": false, "reason": "the session refused it"}"#.utf8))
+      == WorkSendResult(ok: false, delivered: nil, reason: "the session refused it", session: nil)
+      && WorkSendResult.decode(Data(#"{"ok": false, "reason": "", "session": {"id": "x"}}"#.utf8))
+         == WorkSendResult(ok: false, delivered: nil, reason: nil, session: nil)
+      && WorkSendResult.decode(Data("nope".utf8)).ok == false, "a refusal says why; a session only with ok")
+let resumedAnswer = WorkSendResult.decode(Data(#"{"ok": true, "session": {"id": "\#(sid2)", "state": "starting"}}"#.utf8))
+check(resumedAnswer.ok && resumedAnswer.session?.id == sid2 && resumedAnswer.session?.state == .starting
+      && resumedAnswer.delivered == nil, "a resume answers the same session, starting")
+check(WorkDelivery.allCases.map(\.rawValue) == ["now", "queued", "held", "typed"], "the four deliveries")
+
+// The sheet's bottom: the message box for a live session eve can reach in any terminal, Resume only once it ended.
+check(WorkComposer.of(WorkSession(id: "c", state: .working, canReply: true, runsIn: "Warp"), resuming: false) == .message
+      && WorkComposer.of(WorkSession(id: "c", state: .waiting, canReply: true), resuming: false) == .message
+      && WorkComposer.of(WorkSession(id: "c", state: .starting), resuming: false) == .message
+      && WorkComposer.of(WorkSession(id: "c", state: .idle, runsIn: "Warp"), resuming: false)
+         == .note("eve can't reach this session in Warp from the phone.")
+      && WorkComposer.of(WorkSession(id: "c", state: .idle), resuming: false)
+         == .note("eve can't reach this session from the phone."),
+      "a live session: the box when eve can reach it or it is starting, else why not")
+check(WorkComposer.of(WorkSession(id: "c", state: .ended, canContinue: true), resuming: false) == .resume
+      && WorkComposer.of(WorkSession(id: "c", state: .ended), resuming: false) == .note("This session has ended.")
+      && WorkComposer.of(WorkSession(id: "c", state: .ended, canContinue: true), resuming: true) == .message,
+      "an ended one: Resume when it can be, the message box while a resume brings it back")
+check(WorkComposer.of(WorkSession(id: "c", state: .working, canReply: true, canContinue: true), resuming: false) == .message
+      && WorkComposer.of(WorkSession(id: "c", state: .idle, canContinue: true), resuming: false) != .resume,
+      "never Resume for a live session")
+
+// The outbox: the owner's messages from the tap until the transcript shows them.
+let obT0 = Date(timeIntervalSince1970: 1_000_000)
+func obOwner(_ id: Int, _ text: String, _ at: TimeInterval?) -> WorkSessionTurn {
+    WorkSessionTurn(id: id, role: .owner, text: text, at: at.map { Date(timeIntervalSince1970: $0) })
+}
+let obShown = [obOwner(0, "yes", 999_900), WorkSessionTurn(id: 1, role: .claude, text: "Pushed. Anything else?", at: nil)]
+var outbox = WorkOutbox()
+check(outbox.add("  \n ", shown: obShown, at: obT0) == nil && outbox.isEmpty && outbox.next == nil, "only whitespace: nothing")
+let obA = outbox.add("  yes \n", shown: obShown, at: obT0)!
+let obB = outbox.add("and run the tests", shown: obShown, at: obT0.addingTimeInterval(1))!
+let obC = outbox.add("then stop", shown: obShown, at: obT0.addingTimeInterval(2))!
+check(obA.text == "yes" && outbox.messages.map(\.phase) == [.waiting, .waiting, .waiting] && outbox.next?.id == obA.id
+      && obA.id != obB.id && obB.id != obC.id, "three in a row: each its own bubble at once, in order, the first next")
+check(outbox.add(String(repeating: "m", count: 5000), shown: [], at: obT0)?.text.count == WorkSessionRequests.maxReply,
+      "a message is at most 4000 characters")
+outbox.remove(outbox.messages.last!.id)
+outbox.begin(obA.id)
+check(outbox.next == nil, "one at a time: nothing next while one is on its way")
+check(outbox.captions() == [obA.id: "Sending…", obC.id: "Waiting to send"],
+      "a run of bubbles that say the same says it once, under the last")
+outbox.settle(obA.id, .sent(WorkDelivery.queued.caption))
+check(outbox.next?.id == obB.id, "the next goes once the one before it has")
+outbox.begin(obB.id)
+outbox.settle(obB.id, .failed("Can't reach eve."))
+check(outbox.next == nil && outbox.messages[2].phase == .waiting, "a failure stops the queue: the one behind it waits")
+check(outbox.captions(failedHint: "Tap to try again.") == [obA.id: "It's working: it'll take this at its next step",
+                                                         obB.id: "Not sent: Can't reach eve. Tap to try again.",
+                                                         obC.id: "Waiting to send"], "each bubble's line")
+outbox.remove(obA.id)
+check(outbox.messages.count == 3, "one that has gone can't be deleted")
+outbox.retry()
+check(outbox.next?.id == obB.id && outbox.messages[1].phase == .waiting, "try again: the failed one first, in its place")
+outbox.begin(obB.id)
+outbox.settle(obB.id, .sent("Sent"))
+outbox.begin(obC.id)
+
+// Echoes: the old "yes" on screen at the tap is not the new one's; the new one, a little later, is.
+outbox.confirm(obShown, now: obT0.addingTimeInterval(5))
+check(outbox.messages.map(\.id) == [obA.id, obB.id, obC.id], "a turn on screen at the tap is never its echo")
+outbox.confirm([obOwner(5, "yes", 990_000)], now: obT0.addingTimeInterval(5))
+check(outbox.messages.count == 3, "nor a turn from well before the tap (the sheet hadn't read yet)")
+let obEchoA = obShown + [obOwner(2, "yes", 1_000_001)]
+outbox.confirm(obEchoA, now: obT0.addingTimeInterval(6))
+check(outbox.messages.map(\.id) == [obB.id, obC.id], "its echo drops the bubble")
+outbox.confirm(obEchoA + [obOwner(3, "From the owner, typed on their phone in eve's Work tab:\nand run the tests", 1_000_002),
+                          obOwner(4, "then stop", nil)], now: obT0.addingTimeInterval(7))
+check(outbox.isEmpty, "after eve's own first line, and while still on its way (the echo can come first)")
+outbox.settle(obC.id, .sent("Sent"))
+check(outbox.isEmpty, "a settle for one already gone leaves it gone")
+
+var twice = WorkOutbox()
+let obY1 = twice.add("yes", shown: [], at: obT0)!
+let obY2 = twice.add("yes", shown: [], at: obT0)!
+twice.begin(obY1.id); twice.settle(obY1.id, .sent("Sent"))
+twice.begin(obY2.id); twice.settle(obY2.id, .failed("Can't reach eve."))
+twice.confirm([obOwner(0, "yes", 1_000_003)], now: obT0.addingTimeInterval(4))
+check(twice.messages.map(\.id) == [obY2.id], "each turn is one message's echo: \"yes\" twice needs two")
+twice.confirm([obOwner(0, "yes", 1_000_003)], now: obT0.addingTimeInterval(5))
+check(twice.messages.map(\.id) == [obY2.id], "the next read: a turn that dropped one bubble never drops another")
+twice.confirm([obOwner(0, "yes", 1_000_003), obOwner(1, "yes", 1_000_003)], now: obT0.addingTimeInterval(6))
+check(twice.isEmpty, "the second \"yes\" in the same second is the second one's; a failed one whose echo comes did land")
+let obW = twice.add("not yet", shown: [], at: obT0)!
+twice.confirm([obOwner(0, "not yet", 1_000_001)], now: obT0.addingTimeInterval(5))
+check(twice.messages.map(\.id) == [obW.id], "one still waiting on the phone is never an echo's")
+twice.begin(obW.id); twice.settle(obW.id, .sent(WorkDelivery.held.caption), at: obT0)
+twice.confirm([], now: obT0.addingTimeInterval(WorkOutbox.keepSent + 1))
+check(twice.isEmpty, "a sent one the transcript never shows goes after keepSent")
+let obF = twice.add("try me", shown: [], at: obT0)!
+twice.begin(obF.id); twice.settle(obF.id, .failed("x"))
+twice.confirm([], now: obT0.addingTimeInterval(WorkOutbox.keepSent * 3))
+check(twice.messages.map(\.id) == [obF.id], "a failed one stays until the owner tries it again or deletes it")
+
+check(WorkOutbox.echoes("yes", " yes\n") && WorkOutbox.echoes("fix it\nthen push", "fix it then push")
+      && WorkOutbox.echoes("From the owner, typed on their phone in eve's Work tab: and run the tests", "and run the tests")
+      && WorkOutbox.echoes("use [hidden] to call it", "use " + "sk" + "-" + String(repeating: "a", count: 22) + " to call it")
+      && WorkOutbox.echoes("set API_KEY=[hidden]", "set API_KEY=abc123def456")
+      && WorkOutbox.echoes("[hidden] then [hidden] done", "tokA then tokB done"),
+      "an echo: on one line, after eve's line, secrets masked")
+let obLong = (0..<300).map { "word\($0)" }.joined(separator: " ")
+check(WorkOutbox.echoes(String(obLong.prefix(WorkSessionTurn.maxText - 1)) + "…", obLong)
+      && WorkOutbox.echoes(String(obLong.prefix(WorkSessionTurn.maxText)), obLong)
+      && !WorkOutbox.echoes(String(obLong.prefix(1500)) + "…", obLong),
+      "an echo cut at 2000 characters is its start; a shorter one with an ellipsis is not")
+check(!WorkOutbox.echoes("ok, now push it", "now push it") && !WorkOutbox.echoes("ok", "ok, now push it")
+      && !WorkOutbox.echoes("yes", "yes please") && !WorkOutbox.echoes("", "x") && !WorkOutbox.echoes("x", "  ")
+      && !WorkOutbox.echoes("use [hidden] to call", "use it to call it") && !WorkOutbox.echoes("hmm…", "hmm, wait"),
+      "not an echo: other words, a part of them, or a mask that doesn't line up")
+
+// Resume: the words reopen an ended session; messages that never went go with them, the new words last.
+var resumeBox = WorkOutbox()
+let obR1 = resumeBox.add("run the tests", shown: [], at: obT0)!
+resumeBox.begin(obR1.id); resumeBox.settle(obR1.id, .failed(WorkFailure.sessionEnded))
+_ = resumeBox.add("and push", shown: [], at: obT0)
+check(resumeBox.takeUnsent() == "run the tests\n\nand push" && resumeBox.isEmpty, "the unsent words back in the box")
+let obR2 = resumeBox.add("run the tests", shown: [], at: obT0)!
+resumeBox.begin(obR2.id); resumeBox.settle(obR2.id, .failed(WorkFailure.sessionEnded))
+let obResume = resumeBox.addResume(" carry on ", clientID: "wr-1", shown: [], at: obT0)!
+check(resumeBox.messages.map(\.id) == [obResume.id] && obResume.text == "run the tests\n\ncarry on"
+      && obResume.kind == .resume(clientID: "wr-1") && resumeBox.next?.id == obResume.id && resumeBox.resuming,
+      "a resume takes the messages that never went, oldest first")
+check(resumeBox.addResume(" \n", clientID: "wr-2", shown: [], at: obT0) == nil && resumeBox.messages.count == 1,
+      "a resume needs words")
+resumeBox.begin(obResume.id)
+let obAfter = resumeBox.add("and then this", shown: [], at: obT0)!
+check(resumeBox.resuming && resumeBox.next == nil, "a message typed while it reopens waits behind the resume")
+resumeBox.settle(obResume.id, .sent("Opened again on your Mac"))
+check(!resumeBox.resuming && resumeBox.next?.id == obAfter.id, "then goes, as a message")
+resumeBox.confirm([obOwner(0, "run the tests\n\ncarry on", 1_000_010)], now: obT0.addingTimeInterval(20))
+check(resumeBox.messages.map(\.id) == [obAfter.id], "the resumed session's first prompt is the resume's echo")
+var bigResume = WorkOutbox()
+let obBig = bigResume.add(String(repeating: "o", count: 3000), shown: [], at: obT0)!
+bigResume.begin(obBig.id); bigResume.settle(obBig.id, .failed("x"))
+let obNew = String(repeating: "n", count: 2000)
+let obBigResume = bigResume.addResume(obNew, clientID: "wr-3", shown: [], at: obT0)!
+check(obBigResume.text.count == WorkSessionRequests.maxTask && obBigResume.text.hasSuffix("\n\n" + obNew),
+      "past 4000 characters the oldest words are cut, never the new ones")
+var failedResume = WorkOutbox()
+let obFR = failedResume.addResume("go on", clientID: "wr-4", shown: [], at: obT0)!
+failedResume.begin(obFR.id); failedResume.settle(obFR.id, .failed("Can't reach eve."))
+check(!failedResume.resuming && failedResume.next == nil, "a failed resume brings nothing back and stops the queue")
+// The daemon's answer to a resume as it sends it: "resumed" is not a delivery the bubble words, so it reads as nil.
+let resumedReal = WorkSendResult.decode(Data(#"{"ok": true, "delivered": "resumed", "session": {"id": "\#(sid2)", "state": "starting", "where": "Terminal", "can_reply": true}}"#.utf8))
+check(resumedReal.ok && resumedReal.delivered == nil && resumedReal.session?.id == sid2
+      && resumedReal.session?.runsIn == "Terminal", "the daemon's resume answer: the same session, no delivery word")
+
+// keepSent counts from when it went: a message tried again long after the tap waits for its echo like any other.
+var late = WorkOutbox()
+let obLate = late.add("finally", shown: [], at: obT0)!
+late.begin(obLate.id); late.settle(obLate.id, .failed("Can't reach eve."), at: obT0)
+late.retry(); late.begin(obLate.id)
+late.settle(obLate.id, .sent("Sent"), at: obT0.addingTimeInterval(WorkOutbox.keepSent * 2))
+late.confirm([], now: obT0.addingTimeInterval(WorkOutbox.keepSent * 2 + 10))
+check(late.messages.map(\.id) == [obLate.id] && late.messages.first?.sentAt != nil,
+      "a retry that went long after the tap is kept until its echo")
+late.confirm([obOwner(0, "finally", 1_000_000 + WorkOutbox.keepSent * 2 + 3)],
+             now: obT0.addingTimeInterval(WorkOutbox.keepSent * 2 + 12))
+check(late.isEmpty, "then its echo drops it")
+
+// A read that left older turns out: a sent message older than every turn shown has its echo among those left out
+// (the sheet was closed while the session went on), so it goes; a held one still waits on the Mac.
+var window = WorkOutbox()
+let obGone = window.add("do the migration", shown: [], at: obT0)!
+let obHeld = window.add("and deploy", shown: [], at: obT0)!
+let obOnWay = window.add("then report", shown: [], at: obT0)!
+window.begin(obGone.id); window.settle(obGone.id, .sent(WorkDelivery.queued.caption), at: obT0)
+window.begin(obHeld.id); window.settle(obHeld.id, .sent(WorkDelivery.held.caption), at: obT0)
+window.begin(obOnWay.id)
+let later = (0..<20).map { WorkSessionTurn(id: $0, role: .claude, text: "step \($0)", at: Date(timeIntervalSince1970: 1_000_600 + Double($0))) }
+window.confirm(later, cut: false, now: obT0.addingTimeInterval(700))
+check(window.messages.count == 3, "all the turns read: no echo yet, every bubble stays")
+window.confirm(Array(later.prefix(1)) + [WorkSessionTurn(id: 1, role: .claude, text: "x", at: Date(timeIntervalSince1970: 1_000_010))],
+               cut: true, now: obT0.addingTimeInterval(700))
+check(window.messages.count == 3, "a cut read whose oldest turn is not later than the send: they stay")
+window.confirm(later, cut: true, now: obT0.addingTimeInterval(700))
+check(window.messages.map(\.id) == [obHeld.id, obOnWay.id] && window.messages.first?.held == true,
+      "a cut read past the send: the queued one goes, the held one and the one on its way stay")
+
+// The session's copy escapes a closing envelope tag in the words ("<\/"); the owner's words compare alike.
+let obTag = "keep </cross-session-message> inside"
+check(WorkOutbox.echoes(#"keep <\/cross-session-message> inside"#, obTag)
+      && WorkOutbox.echoes(#"keep <\/cross-session-message> inside"#, #"keep <\/cross-session-message> inside"#)
+      && WorkOutbox.echoes("keep ＜\\/cross-session-message> inside", "keep ＜/cross-session-message> inside")
+      && WorkOutbox.unescaped(#"a\b <\x"#) == #"a\b <x"# && !WorkOutbox.echoes("keep </cross> out", obTag),
+      "an escaped closing tag is its echo; a backslash elsewhere is kept")
+// The daemon cuts at 2000 characters as Python counts them (Unicode scalars): a message with many two-scalar emoji
+// is cut with fewer than 1960 of Swift's characters, and is still its echo.
+let obEmoji = String(repeating: "👍🏽", count: 50) + " " + obLong
+let obEmojiCut = String(String.UnicodeScalarView(obEmoji.unicodeScalars.prefix(WorkSessionTurn.maxText - 1)))
+    .trimmingCharacters(in: .whitespaces) + "…"
+check(obEmojiCut.count < WorkSessionTurn.maxText - 40 && WorkOutbox.echoes(obEmojiCut, obEmoji)
+      && !WorkOutbox.echoes(String(obEmojiCut.prefix(1500)) + "…", obEmoji),
+      "a cut counted in Unicode scalars is its start")
 print("WORK_SESSIONS_OK")
 
 // ChatTransport: a request replaced under the same id keeps its entry when the older one finishes, and a poll the

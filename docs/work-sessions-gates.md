@@ -31,3 +31,28 @@ Scope: the owner, 2026-10-12: "can work essentially be a new terminal session in
 
 - [ ] W6: From the phone, the owner starts a session from Work, watches it work, replies, and it carries on.
   MANUAL: the owner's word.
+
+## Unified Work (2026-10-26)
+
+Scope: the owner, 2026-10-26: "I want to also be able to talk to current terminal sessions through the work area ... Unify everything. This is important." Continue forked live sessions into new Terminal windows (two agents on one repository, twice), and replies to eve's own sessions failed as "not typed (gone)" because the recorded window id was wrong and ttys are reused. The design: one way to talk to any live session (its Claude Code messaging socket, `claude_peer.send`); typing by the claude process's live tty only for eve's own Terminal sessions with no usable socket; an ended session resumes as itself (`claude --resume <id>`, never `--fork-session`); several sends in a row all go through, in order. Details: [work-sessions.md](work-sessions.md).
+
+- [ ] U1: The unified model passes its tests (fakes for ps, osascript, kill, the registry and the send): a Warp session gets the words through its socket (now, queued while busy); held, refused, gone, unsupported and error are what the phone is told; an eve session with no socket is typed into by its live tty even with a stale window id; three quick sends go out in order; a send waits for a session still starting; continue to a live session is a reply and opens nothing; an ended session reopens with `--resume <id>` and no fork, under the same id; continue is refused when eve cannot tell (an unregistered claude, a failed ps or registry); an eve session the owner resumed at the Mac is sent to, never reopened or stopped; a look never ends a session reopened while it ran; relayed words and SendMessage answers to eve are turns, other sessions' messages are not; `named_session` reads only the words before `--`; `where` reads the app from the ancestors; the daemon runs one inbox, adds its address, closes it, and logs no text.
+  CHECK: cd bridge && .venv/bin/python -m pytest -q -p no:cacheprovider tests/test_work_sessions.py tests/test_link_chat.py && echo UNIFY_TESTS_OK
+  EXPECT: UNIFY_TESTS_OK
+
+- [x] U2: Live on this Mac, with throwaway sessions started for the check and stopped after (never the owner's): words reach a live session through its socket (delivered now); two sends while it worked were both taken (queued); a session in `--dangerously-skip-permissions` held the message ("held"); its SendMessage answer reached eve's inbox and showed in the sheet's turns; Claude Code filed a message taken mid-turn as one meta user line (no duplicate turn) and a held one as a system line only.
+  MANUAL: run 2026-10-26 by the leaf that built it, before the pass-3 fixes to ending and stopping (the send path did not change after).
+  EVIDENCE: kept only in that build session's transcript (counts and states); not re-run since.
+
+- [x] U3: Live: `claude --resume <id>` (no `--fork-session`) keeps the session's id and its transcript; `session_pids` names the resumed process; `where` says Terminal for it.
+  MANUAL: run 2026-10-26 on a throwaway session, stopped after. Re-run the same day by the review, through this code: a throwaway started and stopped through the live daemon, then `continue_session` on it (the real Terminal window and `resume` launch): 200 "resumed" under the same id; ps showed `--resume <id>` with no `--fork-session` or `--session-id`; the registry listed it; `where` said Terminal; the same transcript grew by 17 lines with the prompt and an answer, every new line under the same id, and no new transcript held the prompt; a reply to it answered "held"; `stop` ended it, and its files in eve's work folder were gone.
+
+- [x] U4: Live: the typing script, given a window id that is wrong, finds the busy tab by the claude process's tty in another window and types into it.
+  MANUAL: run 2026-10-26 on a throwaway Terminal window, closed after.
+
+- [ ] U5: W4's live check still passes. It replies to an eve Work session and waits for the answer; such a session runs with `--dangerously-skip-permissions`, which holds eve's messages until the owner approves on the Mac (U2), so it is expected to wait until someone approves there.
+  CHECK: bridge/.venv/bin/python bridge/tools/work_sessions_check.py
+  EXPECT: WORK_LIVE_OK
+
+- [ ] U6: From the phone, the owner talks to a session running in Warp, sends three messages in a row to one session, and resumes one that has ended; each lands once, in order, and nothing forks.
+  MANUAL: the owner's word.

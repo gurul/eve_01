@@ -1518,13 +1518,15 @@ class Daemon:
                 lambda init_data: miniapp.check_init_data(init_data, cfg.token, cfg.owner_ids),
                 getattr(self, "_telegram", None), make_voice())
             # Eve Link's chat (link_chat.py): the owner texts the chat's brain from the app, with the link token.
-            # The Work tab's Claude Code sessions in ~/Documents/personal/work (work_sessions.py,
-            # docs/work-sessions.md); EVE_WORK_SESSIONS=0 leaves them off and the routes answer 503.
+            # The Work tab: every Claude Code session on the Mac, talked to through its own messaging socket, and new
+            # ones in ~/Documents/personal/work (work_sessions.py, docs/work-sessions.md); EVE_WORK_SESSIONS=0 leaves
+            # them off and the routes answer 503. eve's inbox (claude_peer.Inbox) lets a session answer the owner.
             from . import work_sessions
             from .link_chat import LinkChat
 
             if work_sessions.enabled():
                 self._work = work_sessions.WorkSessions(state=lambda: self.state)
+                tasks.append(asyncio.create_task(Daemon._work_inbox(self), name="work-inbox"))
             server.link = LinkChat(lambda: getattr(self, "_telegram", None),
                                    work=lambda: getattr(self, "_work", None))
             # Notes on the phone (owner, 2026-10-04: "the phone should hold the port until i click action button
@@ -1550,6 +1552,38 @@ class Daemon:
             # for a build started from the other.
             door.building = self._miniapp.changing
             self._telegram._maker = door
+
+    async def _work_inbox(self) -> None:
+        """eve's own Claude Code messaging socket (claude_peer.Inbox), for the daemon's life. A session that answers
+        the owner's words with SendMessage reaches eve instead of failing, and a session that holds or refuses a message
+        says so here (claude_peer.send waits for that answer; a later approval on the Mac goes to WorkSessions.receipt).
+        eve never acts on a message: it is logged by size (WorkSessions.heard) and shows in that session's sheet, from
+        the session's transcript. If the inbox does not start, Work carries on without it: the owner's words still
+        reach sessions, but a hold is not reported back."""
+        work = getattr(self, "_work", None)
+        if work is None:
+            return
+        from . import claude_peer
+
+        inbox = claude_peer.Inbox(work.heard, on_receipt=work.receipt)
+        try:
+            await inbox.start()
+        except Exception as e:  # noqa: BLE001 — Work runs without the inbox; one line says so
+            log.warning("work sessions: eve's inbox did not start (%s); sessions' answers to eve will not arrive",
+                        type(e).__name__)
+            return
+        if inbox.address:
+            work.eve_addresses.add(inbox.address)
+        log.info("work sessions: eve's inbox is listening")
+        try:
+            shutdown = getattr(self, "_shutdown", None)
+            if shutdown is not None:
+                await shutdown.wait()
+        finally:
+            try:
+                await inbox.close()
+            except Exception as e:  # noqa: BLE001 — shutting down: best effort
+                log.warning("work sessions: eve's inbox did not close cleanly (%s)", type(e).__name__)
 
     def _make_chrome_lane(self) -> Any:
         """EVE_BROWSER_ATTACH=1: the browser lane attached to the owner's own Chrome, kept for the daemon's

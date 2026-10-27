@@ -996,14 +996,19 @@ def test_jobs_list_open_cards_first_needs_you_first_then_the_finished(tmp_path: 
         assert (first["line"], first["needs_you"], first["actions"]) == ("Waiting on your Go", True, ["go", "drop"])
         assert (first["steps"], first["steps_done"], first["rev"]) == (3, 2, 1)
         clock.t += 60
-        assert (await act(port, token, "c2", "drop"))[1]["ok"]
+        assert (await act(port, token, "c2", "done"))[1]["ok"]
         clock.t += 60
         assert (await act(port, token, "c3", "go"))[1]["ok"]          # approved, not yet run: no longer needs you
         got = await jobs(port, token)
         assert [j["id"] for j in got["jobs"]] == ["c1", "c3", "c2"] and got["needs_you"] == 1
         c3, c2 = got["jobs"][1], got["jobs"][2]
         assert (c3["needs_you"], c3["actions"]) == (False, ["drop"])
-        assert (c2["line"], c2["needs_you"], c2["actions"]) == ("Dropped", False, ["hide"])
+        assert (c2["line"], c2["needs_you"], c2["actions"]) == ("Done", False, ["hide"])
+        # owner, 2026-10-26: "I don't need to see Dropped jobs": a dropped card leaves the list at once
+        assert (await act(port, token, "c3", "drop"))[1]["ok"]
+        got = await jobs(port, token)
+        assert [j["id"] for j in got["jobs"]] == ["c1", "c2"] and got["needs_you"] == 1
+        assert c.ledger.get("c3").status == "dropped"                 # the chief's ledger keeps it
         inlet.chief = None
         status, _, body = await http(port, "GET", link_chat.JOBS_PATH, token=token)
         assert status == 503 and json.loads(body)["error"] == link_chat.NO_CHIEF
@@ -1022,11 +1027,11 @@ def test_a_finished_job_can_be_removed_from_work_for_good(tmp_path: Path) -> Non
         inlet.chief = c
         server, port, token = await serve(tmp_path, inlet)
         assert (await act(port, token, "c2", "hide"))[1] == {"ok": False, "reason": "c2 is still open; drop it first"}
-        await act(port, token, "c2", "drop")
+        await act(port, token, "c2", "done")
         assert "c2" in [j["id"] for j in (await jobs(port, token))["jobs"]]
         assert (await act(port, token, "c2", "hide"))[1] == {"ok": True, "hidden": "c2"}
         assert "c2" not in [j["id"] for j in (await jobs(port, token))["jobs"]]
-        assert c.ledger.get("c2").status == "dropped"                              # the chief's record is whole
+        assert c.ledger.get("c2").status == "done"                                 # the chief's record is whole
         assert (await act(port, token, "c99", "hide"))[0] == 404
         await server.close()
 
@@ -1046,12 +1051,17 @@ def test_only_the_last_twenty_finished_cards_are_listed(tmp_path: Path) -> None:
         for _ in range(23):
             out = await take(c)
             clock.t += 1
+            await c.done(out["id"])
+        for _ in range(3):                                                      # newer, but dropped: never listed
+            out = await take(c)
+            clock.t += 1
             c.drop(out["id"])
 
     asyncio.run(many())
     got = link_chat.list_jobs(c)
     assert len(got["jobs"]) == link_chat.FINISHED_SHOWN == 20 and got["needs_you"] == 0
-    assert got["jobs"][0]["id"] == "c23" and got["jobs"][-1]["id"] == "c4"      # the newest finished, newest first
+    assert got["jobs"][0]["id"] == "c23" and got["jobs"][-1]["id"] == "c4"      # the newest done, newest first
+    assert all(j["status"] == "done" for j in got["jobs"])
 
 
 def test_each_action_is_the_chiefs_own_method(tmp_path: Path) -> None:

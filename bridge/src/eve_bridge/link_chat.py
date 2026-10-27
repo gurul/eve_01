@@ -25,7 +25,8 @@ view and does all its networking natively (ios/EveLink); this module is the daem
   still answer first in each grade.
 * ``GET /api/link/jobs``: the chief's cards (chief.py) for the app's Work view, each ``Chief._as_data`` plus
   ``rev``, a status ``line``, the steps done, ``needs_you`` and the ``actions`` that apply now; open cards first
-  (the ones that need the owner first), then the last ``FINISHED_SHOWN`` finished. 503 when the chief is off.
+  (the ones that need the owner first), then the last ``FINISHED_SHOWN`` done. A dropped card is never listed. 503
+  when the chief is off.
 * ``POST /api/link/jobs`` ``{"goal", "detail"?, "client_id"?}`` (owner, 2026-10-09: "work tab should allow me to start
   long horizon task not only just track"): the Work tab's New job. A card comes only from the brain's ``take_on``
   (chief_card.parse needs its whole shape), so the words are heard as an app turn, exactly as ``POST
@@ -128,11 +129,14 @@ view and does all its networking natively (ios/EveLink); this module is the daem
 * ``GET /api/link/sessions``, ``POST /api/link/sessions/start`` ``{"task", "client_id"?}``, ``GET
   /api/link/sessions/<id>``, ``POST /api/link/sessions/<id>/reply`` ``{"text"}`` and ``POST .../<id>/stop``
   (work_sessions.py, docs/work-sessions.md; owner, 2026-10-12: "make a folder called work under personal where this
-  happens"): the Work tab's Claude Code sessions in ``~/Documents/personal/work``. Start opens one Terminal window
-  running ``claude`` with the task as its first prompt, never through a shell string; detail is the transcript's
-  latest turns, words only, secrets masked; reply types into that session's own tab only while it runs; stop ends
-  it; ``POST .../<id>/continue`` ``{"text", "client_id"?}`` forks a session the phone cannot reply to (one eve did not
-  start, or an ended one) into a new Work session in its own folder. 503 while ``EVE_WORK_SESSIONS=0`` (``work`` is None).
+  happens"; 2026-10-26: "talk to current terminal sessions through the work area ... Unify everything"): every live
+  Claude Code session on the Mac, whatever it runs in, and new ones in ``~/Documents/personal/work``. Start opens one
+  Terminal window running ``claude`` with the task as its first prompt, never through a shell string; detail is the
+  transcript's latest turns, words only, secrets masked; reply puts the owner's words in any live session through its
+  own messaging socket (claude_peer.py), or types them into the Terminal tab of an eve session without one; stop
+  ends a session eve started; ``POST .../<id>/continue`` ``{"text", "client_id"?}`` is a reply to a live session and
+  reopens an ended one as itself (``claude --resume <id>``), never a fork. 503 while ``EVE_WORK_SESSIONS=0``
+  (``work`` is None).
 
 **Who may call.** The link token (stick_link.LinkToken), as ``Authorization: Bearer``, checked in constant time.
 A browser sends an Origin on every cross-site fetch and the app's URLSession sends none, so any Origin is refused
@@ -221,7 +225,7 @@ MAX_CARD_ID_CHARS = 64                # a dismissed Updates card's id (updates.c
 GRADES = ("auto", "instant", "think")    # telegram.GRADES: the speed dial
 JOB_ACTIONS = ("go", "done", "drop", "raise", "happened", "didnt", "hide")
 HIDDEN_JOBS_FILE = "~/.config/eve-bridge/chat/hidden-jobs.json"   # the finished cards the owner removed from Work
-FINISHED_SHOWN = 20                   # finished cards listed after the open ones
+FINISHED_SHOWN = 20                   # done cards listed after the open ones (a dropped one never is)
 MAX_GOAL_CHARS = 1000                 # a New job's goal, after trimming
 MAX_DETAIL_CHARS = 2000               # and its details
 # What a New job's words are led by when heard: the Work tab's button said it, so the brain hears it. No word in it
@@ -699,12 +703,13 @@ def job_entry(chief: Any, card: Any) -> dict[str, Any]:
 
 def list_jobs(chief: Any, hidden: Collection[str] = ()) -> dict[str, Any]:
     """Open cards first (the ones that need the owner first, then the newest), then the last ``FINISHED_SHOWN``
-    finished, newest first, without the ones the owner removed (``hidden``); ``needs_you`` counts the cards that
-    need the owner."""
+    done, newest first, without the ones the owner removed (``hidden``); ``needs_you`` counts the cards that
+    need the owner. A dropped card is never listed (owner, 2026-10-26: "I don't need to see Dropped jobs"): the
+    chief's ledger keeps it, and every reader of this list (the Work tab, the widget's Today, Updates) skips it."""
     cards = chief.ledger.all()
     open_ = [job_entry(chief, c) for c in cards if not c.terminal]
     open_.sort(key=lambda j: (not j["needs_you"], -j["updated"]))
-    finished = sorted((c for c in cards if c.terminal and c.id not in hidden), key=lambda c: c.updated,
+    finished = sorted((c for c in cards if c.status == "done" and c.id not in hidden), key=lambda c: c.updated,
                       reverse=True)[:FINISHED_SHOWN]
     return {"jobs": open_ + [job_entry(chief, c) for c in finished],
             "needs_you": sum(1 for j in open_ if j["needs_you"])}
@@ -1438,7 +1443,7 @@ class LinkChat:
     async def _updates(self, path: str, headers: dict[str, str], reader: asyncio.StreamReader,
                        writer: asyncio.StreamWriter) -> None:
         """``GET /api/link/updates``: the cards (updates.Updates.view). ``POST .../dismiss`` ``{"id"}``: that card's
-        sources are dismissed for 30 days (404 when the store does not know the id). ``POST .../refresh``: one
+        sources are dismissed for good (404 when the store does not know the id). ``POST .../refresh``: one
         rebuild starts in the background; the answer never waits for it."""
         if path == UPDATES_PATH:
             await self._json(writer, 200, await asyncio.to_thread(self.updates.view))
@@ -1551,8 +1556,8 @@ class LinkChat:
                         reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         """The Work tab's Claude Code sessions (work_sessions.py, docs/work-sessions.md): ``GET /api/link/sessions``,
         ``POST .../start`` ``{"task", "client_id"?}``, ``GET .../<id>``, ``POST .../<id>/reply`` ``{"text"}`` and
-        ``POST .../<id>/stop`` and ``POST .../<id>/continue`` ``{"text", "client_id"?}`` (a fork of a session the phone
-        cannot reply to, as a new Work session). The token and Origin checks in ``serve`` come first; 503 while they are off."""
+        ``POST .../<id>/stop`` and ``POST .../<id>/continue`` ``{"text", "client_id"?}`` (a reply to a live session; an
+        ended one reopens as itself). The token and Origin checks in ``serve`` come first; 503 while they are off."""
         work = self._work() if self._work is not None else None
         if work is None:
             if path == SESSION_START_PATH or (session is not None and session.group(2)):

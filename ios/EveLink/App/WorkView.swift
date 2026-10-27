@@ -1,12 +1,15 @@
 // The Apps and Work tabs (docs/app-chat.md): one plain native list each. Work is Claude Code sessions on the Mac
-// (docs/work-sessions.md; owner, 2026-10-12: "can work essentially be a new terminal session"): each row a session's
-// state, folder, last line and last activity, refreshed while the tab is open; "+" starts one in the work folder with
-// the typed task (NewSessionSheet), and a session opens SessionSheet.swift. The chief's jobs stay below as a small
-// section while there are any (the menu's dot and Settings still point here). Apps is Notes (the owner's vault,
-// NotesView.swift) and then the apps the Mac's registry lists, in its order (app_registry.py; ControlsInfo.rows): the
-// owner's own (Music, Lights, Remote, Pika, Camera) open their native sheets (ControlSheets.swift), any other app the
-// generic sheet (GenericAppSheet.swift). Memory is in Settings (owner, 2026-10-10). The owner's built apps are not
-// listed (owner, 2026-10-08); the owner asked for "chat, apps, work" as three tabs the same evening.
+// (docs/work-sessions.md; owner, 2026-10-12: "can work essentially be a new terminal session"), in any terminal: each
+// row a session's state, where it runs and its folder, last line and last activity, refreshed while the tab is open;
+// "+" starts one in the work folder with the typed task (NewSessionSheet), and a session opens SessionSheet.swift. The
+// owner's messages to a session go from WorkModel's outbox, in order, so they keep going when its sheet closes
+// (owner, 2026-10-26: "I want to also be able to talk to current terminal sessions through the work area ... Unify
+// everything"). The chief's jobs stay below as a small section while there are any (the menu's dot and Settings
+// still point here). Apps is Notes (the owner's vault, NotesView.swift) and then the apps the Mac's registry lists,
+// in its order (app_registry.py; ControlsInfo.rows): the owner's own (Music, Lights, Remote, Pika, Camera) open their
+// native sheets (ControlSheets.swift), any other app the generic sheet (GenericAppSheet.swift). Memory is in Settings
+// (owner, 2026-10-10). The owner's built apps are not listed (owner, 2026-10-08); the owner asked for "chat, apps,
+// work" as three tabs the same evening.
 import SwiftUI
 
 @MainActor
@@ -23,6 +26,23 @@ final class WorkModel: ObservableObject {
     /// The Claude Code sessions on the Mac (WorkSessions.swift).
     @Published private(set) var sessions: WorkSessionList?
     @Published private(set) var sessionsProblem: String?
+    /// Each opened session's latest read, by id: its sheet shows it, and opens on it the next time.
+    @Published private(set) var details: [String: WorkSessionDetail] = [:]
+    /// The newest state the phone has heard for each session: from the list, its detail, a reply refused because it
+    /// has ended, or a resume. The sheet goes by it, so a refused reply turns the box into Resume at once.
+    @Published private(set) var heard: [String: WorkSessionState] = [:]
+    /// The owner's messages to each session, from the tap until its transcript shows them (WorkOutbox).
+    @Published private(set) var outboxes: [String: WorkOutbox] = [:]
+    /// Sessions whose outbox is being sent now: one sender each, so the messages go in order.
+    private var sending: Set<String> = []
+    /// The newest read of each session asked for, or news newer than any read (a resume, a refused reply). A read
+    /// that answers after a newer one began is dropped: it would put back what the phone has moved past, such as
+    /// "ended" just after a resume.
+    private var reads: [String: Int] = [:]
+    /// While a session is starting, a message waits on the phone (it can't be reached yet): this many reads, `startPoll`
+    /// apart, then it goes anyway and the daemon says why if it can't land.
+    static let startChecks = 15
+    static let startPoll: Duration = .seconds(3)
 
     /// The sheets' calls go through the same client (ControlsClient.swift).
     let client: WorkClient
@@ -67,9 +87,20 @@ final class WorkModel: ObservableObject {
         case .success(let got):
             if got != sessions { sessions = got }
             sessionsProblem = nil
+            for s in got.sessions { hear(s.id, s.state) }
         case .failure(let f):
             sessionsProblem = f.message
         }
+    }
+
+    private func hear(_ id: String, _ state: WorkSessionState) {
+        if heard[id] != state { heard[id] = state }
+    }
+
+    /// News of a session newer than any read on its way: those reads are dropped when they answer.
+    private func heardNews(_ id: String, _ state: WorkSessionState) {
+        reads[id, default: 0] += 1
+        hear(id, state)
     }
 
     struct Problem: Error { let message: String }
@@ -83,6 +114,7 @@ final class WorkModel: ObservableObject {
             if let s = r.session {
                 out = .success(s)
                 acted += 1
+                hear(s.id, s.state)
             } else {
                 out = .failure(Problem(message: r.reason ?? "eve didn't start a session."))
             }
@@ -93,41 +125,131 @@ final class WorkModel: ObservableObject {
         return out
     }
 
-    /// Jump into a session the phone can't reply to: a fork of it, in its own folder, becomes a Work session with
-    /// `text` its next prompt. The new session, or why there is none. The same clientID again is the same fork.
-    func continueSession(_ text: String, from id: String, clientID: String) async -> Result<WorkSession, Problem> {
-        let out: Result<WorkSession, Problem>
-        switch await client.continueSession(id, text: text, clientID: clientID) {
-        case .success(let r):
-            if let s = r.session {
-                out = .success(s)
-                acted += 1
-            } else {
-                out = .failure(Problem(message: r.reason ?? "eve didn't continue it."))
+    /// Reads a session again: its turns into `details`, its state into `heard`, and the outbox drops the messages the
+    /// transcript now shows. nil when it read (or a newer read or news overtook it), else why not.
+    @discardableResult
+    func load(_ id: String) async -> String? {
+        let mine = (reads[id] ?? 0) + 1
+        reads[id] = mine
+        let got = await client.session(id)
+        guard reads[id] == mine else { return nil }
+        switch got {
+        case .success(let d):
+            if details[id] != d { details[id] = d }
+            hear(id, d.session.state)
+            if var box = outboxes[id] {
+                box.confirm(d.turns, cut: d.cut, now: .now)
+                if box != outboxes[id] { outboxes[id] = box }
             }
+            return nil
         case .failure(let f):
-            out = .failure(Problem(message: f.message))
-        }
-        await refreshSessions()
-        return out
-    }
-
-    /// A session's latest turns, for its sheet.
-    func detail(_ id: String) async -> Result<WorkSessionDetail, Problem> {
-        switch await client.session(id) {
-        case .success(let d): .success(d)
-        case .failure(let f): .failure(Problem(message: f.message))
+            if f.message == WorkFailure.sessionEnded { hear(id, .ended) }
+            return f.message
         }
     }
 
-    /// The owner's words typed into that session's terminal. nil when they landed, else why not.
-    func reply(_ text: String, to id: String) async -> String? {
+    /// The owner's words to a live session, whatever terminal it runs in. They show at once as the owner's bubble and
+    /// go after the ones before them; the box never waits. `shown`: the turns on screen, none of which is its echo.
+    func send(_ text: String, to id: String, shown: [WorkSessionTurn]) {
+        var box = outboxes[id] ?? WorkOutbox()
+        guard box.add(text, shown: shown, at: .now) != nil else { return }
+        box.retry()                  // a new message sends a failed one first, so the session gets them in order
+        outboxes[id] = box
+        Task { await drain(id) }
+    }
+
+    /// Opens an ended session again, the same session under the same id, `text` its next prompt (and any messages
+    /// that never went, before it). One per tap: a retry of this one is the same resume on the Mac.
+    func resume(_ id: String, with text: String, shown: [WorkSessionTurn]) {
+        var box = outboxes[id] ?? WorkOutbox()
+        let clientID = "wr-" + UUID().uuidString.lowercased()
+        guard box.addResume(text, clientID: clientID, shown: shown, at: .now) != nil else { return }
+        outboxes[id] = box
+        Task { await drain(id) }
+    }
+
+    /// The messages that failed go again, in order, and the ones behind them follow.
+    func retry(_ id: String) {
+        guard var box = outboxes[id] else { return }
+        box.retry()
+        outboxes[id] = box
+        Task { await drain(id) }
+    }
+
+    /// A message that has not gone, deleted. The ones behind it go on.
+    func discard(_ message: Int, from id: String) {
+        guard var box = outboxes[id] else { return }
+        box.remove(message)
+        outboxes[id] = box
+        Task { await drain(id) }
+    }
+
+    /// The words of the messages that have not gone, taken out of the outbox (for the box, when it has ended).
+    func takeUnsent(_ id: String) -> String {
+        guard var box = outboxes[id] else { return "" }
+        let words = box.takeUnsent()
+        outboxes[id] = box
+        return words
+    }
+
+    /// Sends a session's outbox, one request at a time, oldest first, until it is empty, a send fails, or another
+    /// sender has it. A message to a session still starting waits until it is up (or for `startChecks` reads).
+    private func drain(_ id: String) async {
+        guard sending.insert(id).inserted else { return }
+        defer { sending.remove(id) }
+        var checks = 0
+        while let m = outboxes[id]?.next {
+            if m.kind == .message, heard[id] == .starting, checks < Self.startChecks {
+                checks += 1
+                try? await Task.sleep(for: Self.startPoll)
+                await load(id)
+                continue
+            }
+            outboxes[id]?.begin(m.id)
+            let phase: WorkOutbox.Phase
+            switch m.kind {
+            case .message: phase = await deliver(m.text, to: id)
+            case .resume(let clientID): phase = await reopen(id, with: m.text, clientID: clientID)
+            }
+            outboxes[id]?.settle(m.id, phase)
+            if case .failed = phase {
+                // An ended one turns the box into Resume, and the echo of a send that did land drops it. Then the
+                // loop asks again rather than stopping: a "try again" tapped during this read is this sender's to send.
+                await load(id)
+            }
+        }
+    }
+
+    private func deliver(_ text: String, to id: String) async -> WorkOutbox.Phase {
         switch await client.reply(text, to: id) {
         case .success(let r) where r.ok:
             acted += 1
-            return nil
-        case .success(let r): return r.reason ?? "eve didn't send that."
-        case .failure(let f): return f.message
+            return .sent(r.caption)
+        case .success(let r):
+            return .failed(r.reason ?? "eve didn't send that.")
+        case .failure(let f):
+            if f.message == WorkFailure.sessionEnded { heardNews(id, .ended) }
+            return .failed(f.message)
+        }
+    }
+
+    /// A resume: the same session again from this eve (the same id). A live session takes the words as a reply does.
+    /// An eve from before 2026-10-26 forks it under a new id instead: that one is in the list.
+    private func reopen(_ id: String, with text: String, clientID: String) async -> WorkOutbox.Phase {
+        switch await client.resumeSession(id, text: text, clientID: clientID) {
+        case .success(let r) where r.ok:
+            acted += 1
+            if let s = r.session, s.id != id {
+                await refreshSessions()
+                return .sent("eve opened it as a new session: it's in your sessions list")
+            }
+            heardNews(id, r.session?.state ?? .starting)
+            await load(id)
+            return .sent(r.delivered?.caption ?? "Opened again on your Mac")
+        case .success(let r):
+            return .failed(r.reason ?? "eve didn't open it again.")
+        case .failure(let f):
+            return .failed(f.message)
         }
     }
 
@@ -138,6 +260,7 @@ final class WorkModel: ObservableObject {
         case .success(let r) where r.ok:
             said = nil
             acted += 1
+            heardNews(id, .ended)
         case .success(let r): said = r.reason ?? "eve didn't stop it."
         case .failure(let f): said = f.message
         }
@@ -257,7 +380,7 @@ struct WorkView: View {
             ForEach(list.sessions) { s in
                 Button { session = s } label: {
                     TimelineView(.periodic(from: .now, by: 30)) { clock in    // "2 min ago" moves on between reads
-                        SessionRow(session: s, now: clock.date)
+                        SessionRow(session: s, now: clock.date, unsent: work.outboxes[s.id]?.hasFailed ?? false)
                     }
                 }
                 .listRowBackground(Color.eveBackground)
@@ -424,10 +547,13 @@ private struct ControlRow: View {
     }
 }
 
-/// One session: what it is doing in a chip, its title, what it last said, its folder and when it last moved.
+/// One session: what it is doing in a chip, its title, what it last said, where it runs and its folder ("Warp · eve"),
+/// and when it last moved.
 private struct SessionRow: View {
     let session: WorkSession
     let now: Date
+    /// A message to it failed and waits on the owner (its sheet may be closed).
+    var unsent = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -448,10 +574,17 @@ private struct SessionRow: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
             }
-            if !session.folder.isEmpty {
-                Label(session.folder, systemImage: "folder")
+            if !session.place.isEmpty {
+                Label(session.place, systemImage: "folder")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
+                    .labelStyle(.titleAndIcon)
+                    .lineLimit(1)
+            }
+            if unsent {
+                Label("A message wasn't sent", systemImage: "exclamationmark.circle")
+                    .font(.footnote)
+                    .foregroundStyle(.red)
                     .labelStyle(.titleAndIcon)
             }
         }
@@ -467,9 +600,10 @@ private struct SessionRow: View {
     private var accessibilityText: String {
         var parts = [session.headline, session.state.label]
         if !session.subline.isEmpty { parts.append(session.subline) }
-        if !session.folder.isEmpty { parts.append("In \(session.folder)") }
+        if !session.placeSpoken.isEmpty { parts.append(session.placeSpoken) }
         let ago = WorkSession.ago(session.lastActivity, now: now)
         if !ago.isEmpty { parts.append("Last active \(ago)") }
+        if unsent { parts.append("A message wasn't sent") }
         return parts.joined(separator: ". ")
     }
 }
