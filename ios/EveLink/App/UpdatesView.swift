@@ -3,7 +3,7 @@
 // Owner, 2026-10-12: "just actionable things", no weather, "when I open, chat should still be main pane". Each card
 // reads as one sentence, a verb chip then the rest. The hold menu's Send to chat sends exactly that sentence (and where
 // it came from) to the chat, so nothing the owner cannot see goes to eve; Open in <App> opens the source's own page
-// when the card has one; Dismiss takes a card away for 30 days. A plain tap does nothing; a sideways swipe changes the pane.
+// when the card has one; Dismiss takes a card away for good. A plain tap does nothing; a sideways swipe changes the pane.
 import SwiftUI
 
 @MainActor
@@ -58,8 +58,8 @@ final class UpdatesModel: ObservableObject {
     }
 
     /// Off the list at once; back in its place if the daemon refuses. Either way the list is read again after: the
-    /// daemon dismisses the card's sources, so other cards citing them go too, and a card it no longer knows is
-    /// shown only if it is still served.
+    /// daemon dismisses the card's sources for good, so another card citing only them goes too (one that also cites
+    /// something else stays), and a card it no longer knows is shown only if it is still served.
     func dismiss(_ card: UpdateCard) {
         guard let removed = list.dismiss(card.id) else { return }
         dismissProblem = nil

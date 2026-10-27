@@ -338,7 +338,8 @@ when the chief is off (`EVE_CHIEF`).
   `actions` lists the ones that do something now, from `go`, `done`, `drop`,
   `raise`, `happened` and `didnt`. A card whose act may already have happened
   gets `happened`, `didnt` and `drop`, never `go`, as Telegram's buttons do. Open cards come first, the ones that need the owner first, then
-  the newest. The last 20 finished cards follow, newest first.
+  the newest. The last 20 done cards follow, newest first. A dropped card is
+  never listed.
 - **`POST /api/link/jobs/<id>/<action>`**, where the action is `go`, `done`,
   `drop`, `raise`, `happened` or `didnt`. Each runs the chief's own method, as
   the Telegram words `go c12`, `done c12`, `drop c12`, `raise c12`,

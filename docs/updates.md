@@ -42,11 +42,13 @@ accident.
    `EVE_UPDATES_MODEL` overrides the model.
 4. **Check.** Code checks every card (`updates.clean_cards`) before it is kept.
    See "What code enforces".
-5. **Keep.** The cards, when they were made, the dismissed sources, what each
-   source said at the last full build, and the refs of cards a rebuild
-   replaced in the last 2 days go in one file, `~/.config/eve-bridge/chat/updates.json` (written whole and
-   atomically, mode 0600, its folder 0700). A file that cannot be read is an
-   empty store: no cards until the next refresh.
+5. **Keep.** The cards, when they were made, the dismissed items (see
+   [Dismissals](#dismissals)), what each source said at the last full build,
+   and the refs of cards a rebuild replaced in the last 2 days go in one file,
+   `~/.config/eve-bridge/chat/updates.json` (written whole and atomically, mode
+   0600, its folder 0700). A card that cites a dismissed item is never kept: it
+   can only come from a rebuild that read the item before you dismissed it. A
+   file that cannot be read is an empty store: no cards until the next refresh.
 6. **Serve.** The app reads `GET /api/link/updates`. That read never waits on
    the model; it gives the cards already kept.
 
@@ -64,6 +66,35 @@ the lost source beside the new ones, does not count as fresh
 read gave nothing and one was lost, nothing is written. A source that stays
 gone for a whole day (the last full build is more than 24 hours old) takes
 its cards with it: the next build counts as full.
+
+### Dismissals
+
+Owner, 2026-10-26: "when I dismiss an update, I don't want to resee it.
+Dismiss means I've already seen it, and it's done." So a dismissal is for
+good:
+
+- **No expiry.** A dismissed item is never read into a snapshot again, so no
+  later card can come from it, after any number of rebuilds and restarts.
+  (Until 2026-10-26 a dismissal lapsed after a month.)
+- **Only what you dismissed leaves.** The card goes, and so does every other
+  card whose sources are all dismissed (the same email worded with another
+  verb). A card that also cites something you did not dismiss stays on the
+  list. Before 2026-10-26 any card citing a dismissed source left with it, but
+  its other sources were not dismissed, so the next rebuild wrote it again from
+  them under a new id: on 2026-10-26 a "Prepare for…" card left when a card
+  about three work emails was dismissed, came back an hour later citing the
+  same meeting and email, and was dismissed a second time.
+- **One item, however it is named** (`updates.item_key`). Each week of a
+  recurring meeting has its own Google id (`<series>_<start>`); a dismissal
+  names the series, so next week's meeting stays away too. Every other ref is
+  its own item: an email thread (a new email in a dismissed thread stays out
+  too), a note, a journal line, a chief card, a Notion page, a Linear issue. A
+  Slack item names its conversation's newest message, so when someone writes
+  in that conversation again it is a new item and may show.
+- **Bounded.** Each rebuild notes which dismissed items a source still
+  returned. A dismissal whose item no source has returned for 365 days is
+  dropped (an email long out of the inbox, a meeting series that ended), and
+  there are at most 5,000, the least recently seen going first.
 
 ## Sources
 
@@ -243,10 +274,12 @@ The prompt asks; code decides (`clean_cards`, then the app's own clamps):
   `openURL`, so a Slack or Notion link opens that app when it is installed
   (a universal link) and Safari otherwise. A plain tap still does nothing.
 - **Dismiss.** The same hold menu, or the VoiceOver action. Cards have no swipe action. The card
-  goes at once and comes back in its place if the Mac refuses. A dismiss hides
-  every source the card cites for 30 days, so a later card from the same email
-  or note stays away too. The pane reads the list again after every dismiss,
-  so another card citing the same source goes at the same time.
+  goes at once and comes back in its place if the Mac refuses. A dismiss is for
+  good: every source the card cites stays out of Updates, so no later card
+  comes from the same email, note or meeting (every week of a recurring one).
+  The pane reads the list again after every dismiss, so another card citing
+  only those sources goes at the same time; a card that also cites something
+  else stays. See [Dismissals](#dismissals).
 - **The source line** under the sentence wraps and is never cut short: the
   card is sent whole, so all of it is on the card.
 - **Refresh.** Pull down, or tap the refresh button by the title (under it, "Updated 5 min ago" from the Mac's last build; a spinner while it rebuilds). The app asks for a rebuild, then reads every 2
@@ -284,8 +317,8 @@ path.
 
 | Call | Answer |
 |---|---|
-| `GET /api/link/updates` | `{"cards": [{"id", "verb", "text", "entity", "kind", "source", "due"}], "generated_at": ISO or null, "refreshing": bool}`. `kind` and `source` are the kind and title (at most 60 characters) of the card's first ref. A card from a Composio source may also have `link`, its app's own https page. Cards whose refs were dismissed are not served. |
-| `POST /api/link/updates/dismiss` | Body `{"id"}`. Dismisses every ref of that card for 30 days, kept in the store. `{"ok": true}`. The id may also be one a rebuild replaced in the last 2 days (the model worded the same email with another verb while the phone still showed the old card): its refs are kept for that. 400 for a missing, empty, non-string or over-64-character id. 404 `{"ok": false}` for an id the store does not know: nothing was dismissed, and the app puts the card back and reads the list again. |
+| `GET /api/link/updates` | `{"cards": [{"id", "verb", "text", "entity", "kind", "source", "due"}], "generated_at": ISO or null, "refreshing": bool}`. `kind` and `source` are the kind and title (at most 60 characters) of the card's first ref. A card from a Composio source may also have `link`, its app's own https page. A card whose refs are all dismissed is not served. |
+| `POST /api/link/updates/dismiss` | Body `{"id"}`. Dismisses every ref of that card for good (a recurring event's whole series), kept in the store. `{"ok": true}`. The id may also be one a rebuild replaced in the last 2 days (the model worded the same email with another verb while the phone still showed the old card): its refs are kept for that. 400 for a missing, empty, non-string or over-64-character id. 404 `{"ok": false}` for an id the store does not know: nothing was dismissed, and the app puts the card back and reads the list again. |
 | `POST /api/link/updates/refresh` | Body `{}`. Starts one rebuild in the background and answers at once: `{"ok": true, "started": bool}`. `started` is false while a rebuild already runs, when the feature is off, or without a model key. |
 
 A card's `id` is the first 12 hex characters of sha256 over its sorted refs
@@ -384,7 +417,7 @@ minutes count, and the check prints which way it passed.
 | `bridge/src/eve_bridge/composio_tools.py` | `ComposioBridge.connected_accounts` and `read_tool`, the reads the Composio sources make |
 | `bridge/src/eve_bridge/link_chat.py` | The three routes (`LinkChat._updates`) |
 | `bridge/src/eve_bridge/daemon.py` | Starts the loop in `run()` when the app's door is up |
-| `bridge/tests/test_updates.py` | The producer, checks, store and loop |
+| `bridge/tests/test_updates.py` | The producer, checks, store, dismissals and loop |
 | `bridge/tests/test_link_chat.py` | The routes: token, Origin, method, bad ids |
 | `bridge/tests/test_updates_composio.py` | The Composio sources: parsing, off and failed, the allow-list, refs and links |
 | `bridge/tests/fixtures/updates/` | `dev.json`, `blind.json` and `blind_composio.json` (fictional data only); `composio/responses.json`, Composio's answer shapes with every value made up |

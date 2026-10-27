@@ -149,10 +149,12 @@ struct WorkJobs: Equatable, Sendable {
     var open: [WorkJob] { jobs.filter(\.open) }
     var finished: [WorkJob] { jobs.filter { !$0.open } }
 
+    /// A dropped job is left out (owner, 2026-10-26: "I don't need to see Dropped jobs"). The daemon no longer lists
+    /// one; this keeps an older daemon's dropped jobs off the Work tab too.
     static func decode(_ data: Data) -> WorkJobs? {
         guard let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let raw = obj["jobs"] as? [[String: Any]] else { return nil }
-        let jobs = raw.compactMap(WorkJob.init(json:))
+        let jobs = raw.compactMap(WorkJob.init(json:)).filter { $0.status != "dropped" }
         let count = (obj["needs_you"] as? NSNumber)?.intValue ?? jobs.filter(\.needsYou).count
         return WorkJobs(jobs: jobs, needsYou: max(count, 0))
     }

@@ -376,20 +376,22 @@ def test_a_recent_day_that_is_not_a_date_does_not_stop_the_cards(tmp_path: Path)
     assert [c["id"] for c in state["cards"]] == ["aaa"] and set(state["recent"]) == {"good"}
 
 
-def test_dismiss_persists_hides_every_card_citing_the_refs_and_expires(tmp_path: Path) -> None:
+def test_dismiss_persists_and_hides_every_card_whose_sources_are_all_dismissed(tmp_path: Path) -> None:
     store = UpdatesStore(tmp_path / "u.json")
     cards = [{"id": "aaa", "verb": "Pay", "text": "x", "refs": ["gmail:a"], "kind": "email", "source": "s"},
              {"id": "bbb", "verb": "Reply", "text": "y", "refs": ["gmail:a", "cal:b"], "kind": "email", "source": "s"},
-             {"id": "ccc", "verb": "Book", "text": "z", "refs": ["cal:c"], "kind": "calendar", "source": "s"}]
+             {"id": "ccc", "verb": "Book", "text": "z", "refs": ["cal:c"], "kind": "calendar", "source": "s"},
+             {"id": "ddd", "verb": "Answer", "text": "w", "refs": ["gmail:a"], "kind": "email", "source": "s"}]
     store.put_cards(cards, NOW.isoformat())
     u = Updates(path=tmp_path / "u.json", sources=Sources(), client=lambda: None, now=lambda: NOW, environ={})
     assert u.dismiss("aaa") is True and u.dismiss("nope") is False
-    assert [c["id"] for c in u.view()["cards"]] == ["ccc"]
+    # ddd cites only the dismissed email: it goes too; bbb also cites an event, so it stays
+    assert [c["id"] for c in u.view()["cards"]] == ["bbb", "ccc"]
     again = Updates(path=tmp_path / "u.json", sources=Sources(), client=lambda: None, now=lambda: NOW, environ={})
-    assert [c["id"] for c in again.view()["cards"]] == ["ccc"]                       # persisted
+    assert [c["id"] for c in again.view()["cards"]] == ["bbb", "ccc"]                # persisted
     later = Updates(path=tmp_path / "u.json", sources=Sources(), client=lambda: None,
-                    now=lambda: NOW + timedelta(days=updates.DISMISS_DAYS), environ={})
-    assert [c["id"] for c in later.view()["cards"]] == ["aaa", "bbb", "ccc"]         # 30 days on, back
+                    now=lambda: NOW + timedelta(days=400), environ={})
+    assert [c["id"] for c in later.view()["cards"]] == ["bbb", "ccc"]                # no expiry
 
 
 def test_a_dismissed_source_is_left_out_of_the_next_refresh(tmp_path: Path) -> None:
@@ -421,8 +423,8 @@ def test_a_failed_refresh_keeps_the_old_cards(tmp_path: Path) -> None:
 def test_an_unreadable_store_is_empty(tmp_path: Path) -> None:
     path = tmp_path / "u.json"
     path.write_text("{not json")
-    assert UpdatesStore(path).load() == {"cards": [], "generated_at": None, "dismissed": {}, "sources": {},
-                                         "recent": {}}
+    assert UpdatesStore(path).load() == {"cards": [], "generated_at": None, "dismissed": {}, "seen": {},
+                                         "sources": {}, "recent": {}}
     path.write_text(json.dumps({"cards": [{"id": 3}, "x", {"id": "ok", "refs": ["a"]}], "dismissed": {"a": "bad"}}))
     got = UpdatesStore(path).load()
     assert [c["id"] for c in got["cards"]] == ["ok"] and got["dismissed"] == {}
@@ -672,6 +674,162 @@ def test_loop_retries_a_lost_build_before_the_interval(tmp_path: Path) -> None:
     for _ in range(10):
         u._retry_soon({"email"})
     assert u._next_try - time.monotonic() <= updates.every_secs({}) + 1                  # never past the interval
+
+
+# ---- owner, 2026-10-26: "when I dismiss an update, I don't want to resee it" --------------------------------------
+
+class Instances(FakeApps):
+    """A weekly meeting as Google lists it with single events: one id per week, ``<series>_<start>``, beside a
+    one-off event."""
+
+    def execute(self, name: str, args: dict[str, Any]) -> dict[str, Any]:
+        if name == "calendar__list_events":
+            self.calls.append(name)
+            return {"ok": True, "result": {"events": [
+                {"id": "wk7_20261013T170000Z", "summary": "Weekly sync", "start": {"dateTime": "2026-10-13T10:00:00-07:00"}},
+                {"id": "wk7_20261020T170000Z", "summary": "Weekly sync", "start": {"dateTime": "2026-10-20T10:00:00-07:00"}},
+                {"id": "e1", "summary": "Dentist", "start": {"dateTime": "2026-10-14T10:00:00-07:00"}}]}}
+        return super().execute(name, args)
+
+
+def test_a_card_that_left_with_a_dismiss_never_comes_back_reworded(tmp_path: Path) -> None:
+    """The 2026-10-26 case. Dismissing one card took a second card off the list because it cited one of the same
+    emails, but only the dismissed card's sources were kept as dismissed. The next rebuild left out that one shared
+    email and wrote the second card again from its other sources, under a new id: the owner saw it come back and
+    dismissed it a second time. Now a dismiss takes away the card and every card whose every source is dismissed;
+    a card that also cites something else stays on the list, so nothing leaves that can come back."""
+    gone_card = {"id": "x1", "verb": "Review", "text": "the three vendor emails", "refs": ["gmail:t0", "gmail:t1"],
+                 "kind": "email", "source": "s"}
+    shares = {"id": "y1", "verb": "Prepare", "text": "for the dentist visit", "refs": ["cal:e1", "gmail:t2", "gmail:t1"],
+              "kind": "calendar", "source": "s"}
+    same_sources = {"id": "z1", "verb": "Reply", "text": "to the vendor", "refs": ["gmail:t1"], "kind": "email",
+                    "source": "s"}
+    stored(tmp_path, [gone_card, shares, same_sources], NOW.isoformat(), ALL_OK)
+    client = FakeClient({"cards": [card(verb="Prepare", text="for the dentist visit", refs=["cal:e1", "gmail:t2"])]})
+    u = make_updates(tmp_path, client)
+    assert u.dismiss("x1") is True
+    # only the dismissed card and the one citing nothing but its sources leave; the meeting card stays
+    assert [c["id"] for c in u.view()["cards"]] == ["y1"]
+    run_refresh(u)
+    sent = client.calls[0][1]
+    assert '"gmail:t0"' not in sent and '"gmail:t1"' not in sent and '"cal:e1"' in sent   # the dismissed left out
+    assert [c["verb"] for c in u.view()["cards"]] == ["Prepare"]                           # it never left the list
+    # dismissing that one too: it is gone, and the next rebuild cannot cite its sources again
+    [now_shown] = u.view()["cards"]
+    assert u.dismiss(now_shown["id"]) is True and u.view()["cards"] == []
+    again = FakeClient({"cards": [card(verb="Prepare", text="for the dentist visit", refs=["cal:e1"])]})
+    u2 = make_updates(tmp_path, again)
+    run_refresh(u2)
+    assert '"cal:e1"' not in again.calls[0][1] and '"gmail:t2"' not in again.calls[0][1]
+    assert u2.view()["cards"] == []
+
+
+def test_a_dismiss_while_a_rebuild_runs_is_not_undone_by_it(tmp_path: Path) -> None:
+    """The rebuild read its snapshot before the owner dismissed the card; the model then cites that email beside
+    something else. The new card is not kept: it would show the dismissed email again."""
+    stored(tmp_path, [{"id": "aaa", "verb": "Reply", "text": "to the vendor", "refs": ["gmail:t0"]}], NOW.isoformat(),
+           ALL_OK)
+
+    class DismissMeanwhile(FakeClient):
+        def complete(self, instructions: str, body: str) -> str:
+            assert '"gmail:t0"' in body                                  # read before the dismiss
+            assert u.dismiss("aaa") is True                              # the owner taps Dismiss now
+            return super().complete(instructions, body)
+
+    client = DismissMeanwhile({"cards": [card(verb="Prepare", text="for the dentist and reply to the vendor",
+                                              refs=["cal:e1", "gmail:t0"]),
+                                         card(verb="Book", text="movers before Oct 20",
+                                              refs=["note:01-projects/move.md"])]})
+    u = make_updates(tmp_path, client)
+    run_refresh(u)
+    assert [c["verb"] for c in u.view()["cards"]] == ["Book"]
+    assert [c["refs"] for c in u.store.load()["cards"]] == [["note:01-projects/move.md"]]
+
+
+def test_a_dismissed_recurring_event_stays_dismissed_for_every_instance(tmp_path: Path) -> None:
+    """Google gives each week of a weekly meeting its own id, ``<series>_<start>``: a dismiss kept that week's id
+    only, so the next week's came back as a new card about the same meeting. The series is one item."""
+    stored(tmp_path, [{"id": "w1", "verb": "Prepare", "text": "for the weekly sync", "refs": ["cal:wk7_20261013T170000Z"],
+                       "kind": "calendar", "source": "Weekly sync"},
+                      {"id": "w2", "verb": "Prepare", "text": "for next week's sync", "refs": ["cal:wk7_20261020T170000Z"],
+                       "kind": "calendar", "source": "Weekly sync"}], NOW.isoformat(), ALL_OK)
+    client = FakeClient({"cards": []})
+    u = make_updates(tmp_path, client, src=sources_for(tmp_path, Instances(), vault=False, records=False))
+    assert u.dismiss("w1") is True
+    assert u.view()["cards"] == []                                     # the other week's card is the same meeting
+    run_refresh(u)
+    sent = client.calls[0][1]
+    assert "wk7_" not in sent and '"cal:e1"' in sent                  # every week left out; the one-off still read
+    assert updates.item_key("cal:wk7_20261013T170000Z") == "cal:wk7"
+    assert updates.item_key("cal:bday_20261013") == "cal:bday"                              # an all-day instance
+    assert updates.item_key("wcal:work/wk7_20261102T170000Z") == "wcal:work/wk7"
+    for ref in ("cal:e1", "gmail:t_20261013", "wcal:work/plain", "slack:D1/1792439198.197259", "cal:_20261013"):
+        assert updates.item_key(ref) == ref, ref                                          # nothing else changes
+
+
+def test_a_dismissal_made_before_series_keys_hides_the_series(tmp_path: Path) -> None:
+    """A store written by the old code holds the week's own id: read now, it names the whole series."""
+    path = tmp_path / "state" / "updates.json"
+    path.parent.mkdir(parents=True)
+    path.write_text(json.dumps({"cards": [{"id": "w2", "verb": "Prepare", "text": "x",
+                                           "refs": ["cal:wk7_20261020T170000Z"]}],
+                                "dismissed": {"cal:wk7_20261013T170000Z": "2026-10-12", "gmail:old": "2026-10-12"}}))
+    got = UpdatesStore(path).load()
+    assert got["dismissed"] == {"cal:wk7": "2026-10-12", "gmail:old": "2026-10-12"}
+    u = Updates(path=path, sources=Sources(), client=lambda: None, now=lambda: NOW, environ={})
+    assert u.view()["cards"] == []
+
+
+def test_a_dismissal_never_expires(tmp_path: Path) -> None:
+    """Dismiss means done: a dismissed email that still sits in the inbox stays hidden a year on, and a rebuild
+    then still leaves it out. It used to come back after 30 days."""
+    stored(tmp_path, [{"id": "aaa", "verb": "Pay", "text": "x", "refs": ["gmail:t1"]},
+                      {"id": "bbb", "verb": "Book", "text": "y", "refs": ["gmail:t2"]}], NOW.isoformat(), ALL_OK)
+    later = NOW + timedelta(days=400)
+    first = make_updates(tmp_path, FakeClient(), now=NOW)
+    assert first.dismiss("aaa") is True
+    u = make_updates(tmp_path, FakeClient({"cards": []}), now=later)
+    assert [c["id"] for c in u.view()["cards"]] == ["bbb"]                                 # a restart, 400 days on
+    client = FakeClient({"cards": [card(refs=["gmail:t0"])]})
+    u = make_updates(tmp_path, client, now=later)
+    run_refresh(u)
+    assert '"gmail:t1"' not in client.calls[0][1] and '"gmail:t0"' in client.calls[0][1]
+    assert "gmail:t1" in u.store.load()["dismissed"]
+
+
+def test_the_dismissed_store_stays_bounded(tmp_path: Path) -> None:
+    """With no expiry the store is kept small another way: a dismissal whose item no source has returned for
+    ``DISMISSED_KEEP_DAYS`` is dropped at a rebuild (its email left the inbox long ago), one a source still returns
+    is kept however old, and there are never more than ``DISMISSED_MAX``."""
+    path = tmp_path / "state" / "updates.json"
+    path.parent.mkdir(parents=True)
+    old = (NOW.date() - timedelta(days=updates.DISMISSED_KEEP_DAYS + 5)).isoformat()
+    path.write_text(json.dumps({"cards": [], "dismissed": {"gmail:t1": old, "gmail:gone-long-ago": old}}))
+    client = FakeClient({"cards": []})
+    u = make_updates(tmp_path, client)
+    run_refresh(u)
+    state = u.store.load()
+    assert set(state["dismissed"]) == {"gmail:t1"}                    # still in the inbox: kept, and still hidden
+    assert state["seen"]["gmail:t1"] == NOW.date().isoformat()
+    assert '"gmail:t1"' not in client.calls[0][1]
+    # the cap: the least recently seen go first
+    many = {f"gmail:m{i}": NOW.date().isoformat() for i in range(updates.DISMISSED_MAX + 3)}
+    seen = {f"gmail:m{i}": (NOW.date() - timedelta(days=i)).isoformat() for i in range(updates.DISMISSED_MAX + 3)}
+    path.write_text(json.dumps({"cards": [], "dismissed": many, "seen": seen}))
+    u.store.mark_seen(set(), NOW.date())
+    kept = u.store.load()["dismissed"]
+    assert len(kept) == updates.DISMISSED_MAX and "gmail:m0" in kept and f"gmail:m{updates.DISMISSED_MAX + 2}" not in kept
+
+
+def test_a_new_message_in_a_dismissed_slack_conversation_may_show(tmp_path: Path) -> None:
+    """Positive control: a Slack item names its conversation's newest message, so someone writing again is a new
+    item and may show; the dismissed message itself stays out."""
+    stored(tmp_path, [{"id": "s1", "verb": "Reply", "text": "to Ana", "refs": ["slack:D1/100.000001"]},
+                      {"id": "s2", "verb": "Reply", "text": "to Ana's new message", "refs": ["slack:D1/200.000002"]}],
+           NOW.isoformat(), ALL_OK)
+    u = make_updates(tmp_path, FakeClient())
+    assert u.dismiss("s1") is True
+    assert [c["id"] for c in u.view()["cards"]] == ["s2"]
 
 
 # ---- the eval's scoring ---------------------------------------------------------------------------------------

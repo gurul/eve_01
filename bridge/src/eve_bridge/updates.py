@@ -15,8 +15,12 @@ everything we have and suggest things", "just actionable things", no weather, "a
    instruction inside them is followed. Code then checks each card (``clean_cards``): one capitalised verb, the
    sentence clamped, refs that all name snapshot items (a card citing an id the snapshot does not have is dropped),
    no link, address or code carried from a message, at most ``MAX_CARDS``.
-3. ``UpdatesStore`` keeps the cards, when they were made and the dismissed refs with their dates in one JSON file
-   (``STATE_FILE``, written atomically, 0600). A dismissed ref hides every card that cites it for ``DISMISS_DAYS``.
+3. ``UpdatesStore`` keeps the cards, when they were made and the dismissed items in one JSON file (``STATE_FILE``,
+   written atomically, 0600). A dismissal never expires (owner, 2026-10-26: "when I dismiss an update, I don't want to
+   resee it. Dismiss means I've already seen it, and it's done."): a dismissed item is never read into a snapshot
+   again, and a kept card whose every source is dismissed is never served. An item is named by ``item_key``, so
+   every week of a recurring meeting is the one meeting. The store stays small because a dismissal whose item no
+   source has returned for ``DISMISSED_KEEP_DAYS`` is dropped, and there are at most ``DISMISSED_MAX``.
    A rebuild that loses a source (failed, or off when it was read before) keeps that source's old cards and is not
    counted as fresh (``Updates._rebuild``). The hidden words are checked again whenever the cards are served.
 4. ``Updates`` is what link_chat serves (``GET /api/link/updates``, ``POST .../dismiss``, ``POST .../refresh``) and
@@ -43,7 +47,7 @@ import threading
 import time
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Any, Callable, Mapping, Optional, Sequence
+from typing import Any, Callable, Collection, Iterable, Mapping, Optional, Sequence
 
 from . import phone_location
 
@@ -56,7 +60,8 @@ DEFAULT_EVERY_MIN = 120
 DAY_HOURS = (7, 22)                    # local hours the loop refreshes in: from 07:00 until 22:00
 TICK_SECS = 60.0                       # how often the loop looks at the clock
 STATE_FILE = "~/.config/eve-bridge/chat/updates.json"   # beside link_chat's hidden-jobs.json
-DISMISS_DAYS = 30
+DISMISSED_KEEP_DAYS = 365              # a dismissal whose item no source returned for this long is dropped
+DISMISSED_MAX = 5000                   # at most this many dismissals; the least recently seen go first
 RECENT_DAYS = 2                        # a card replaced by a rebuild can still be dismissed by its old id this long
 RECENT_MAX = 64
 RETRY_SECS = 600.0                     # a rebuild that lost a source tries again after this, doubling up to the interval
@@ -110,6 +115,8 @@ _HOST = re.compile(r"(?<![\w@.])[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[
 # a code: six or more digits in a row, or an upper-case token of six or more with two digits or more ("X7K9P2")
 _CODE = re.compile(r"(?<![\w$.,])\d{6,}(?![\w])|\b(?=[A-Z0-9]*\d[A-Z0-9]*\d)(?=[A-Z0-9]*[A-Z])[A-Z0-9]{6,}\b")
 _DAY_FILE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+# one occurrence of a recurring Google Calendar event: "<series id>_<start>", the start a day or a UTC time
+_INSTANCE = re.compile(r"^((?:cal|wcal):.*[^/:])_\d{8}(?:T\d{6}Z)?$")
 
 
 def enabled(environ: Optional[Mapping[str, str]] = None) -> bool:
@@ -423,6 +430,23 @@ def chief_items(chief: Any) -> list[dict[str, Any]]:
     return out[:CHIEF_MAX]
 
 
+def item_key(ref: str) -> str:
+    """The item a ref names, as a dismissal keeps it. A recurring event's occurrence (``cal:<series>_<start>``, the
+    same for ``wcal:``) is its series: Google gives each week its own id, and a dismissed weekly meeting must not
+    come back as next week's. Every other ref is its own key: an email thread (a new email in a dismissed thread
+    stays out), a note, a journal line, a chief card, a Notion page, a Linear issue, and a Slack conversation's
+    newest message (someone writing again is a new message, and that may show)."""
+    m = _INSTANCE.match(ref) if isinstance(ref, str) else None
+    return m.group(1) if m else ref
+
+
+def covered(refs: Sequence[Any], gone: Collection[str]) -> bool:
+    """Every source of a card is dismissed: the card is not served. A card that also cites something not dismissed
+    stays (it was on the list before the dismiss, so it never leaves and comes back reworded)."""
+    keys = [item_key(r) for r in refs if isinstance(r, str)]
+    return bool(keys) and all(k in gone for k in keys)
+
+
 def drop_hidden(items: Sequence[dict[str, Any]], hidden: Optional[Callable[[str], bool]]) -> list[dict[str, Any]]:
     """Items the owner's "don't mention this again" words do not match (records.hidden_match's rule), on the title,
     the sender, or the title, sender and body together."""
@@ -511,11 +535,12 @@ def _hidden_match() -> Optional[Callable[[str], bool]]:
 
 async def gather(sources: Sources, *, now: Optional[datetime] = None, tz: Optional[str] = None,
                  status: Optional[dict[str, str]] = None, mono: Callable[[], float] = time.monotonic,
-                 limits: Optional[Mapping[str, float]] = None, exclude: Sequence[str] = ()) -> dict[str, Any]:
+                 limits: Optional[Mapping[str, float]] = None, exclude: Iterable[str] = (),
+                 seen: Optional[set[str]] = None) -> dict[str, Any]:
     """The snapshot ``{"now", "tz", "items"}``. Every source at once on worker threads, each within its limit (the
     Composio sources too: updates_composio.py); a source that is off, slow or broken is left out and named in
-    ``status`` ("ok", "off" or "failed"). Items the owner hid (records' hidden.md) and items whose id is in
-    ``exclude`` (dismissed) are dropped."""
+    ``status`` ("ok", "off" or "failed"). Items the owner hid (records' hidden.md) and items whose ``item_key`` is
+    in ``exclude`` (dismissed) are dropped; the dismissed keys a source still returned go in ``seen``."""
     from . import updates_composio
 
     now = now or datetime.now().astimezone()
@@ -564,13 +589,13 @@ async def gather(sources: Sources, *, now: Optional[datetime] = None, tz: Option
 
     got = await asyncio.gather(*(one(n, r) for n, r in reads))
     items: list[dict[str, Any]] = []
-    seen: set[str] = set()
+    ids: set[str] = set()
     for name, state, rows in got:
         if status is not None:
             status[name] = state
         for row in rows:
-            if row["id"] not in seen:
-                seen.add(row["id"])
+            if row["id"] not in ids:
+                ids.add(row["id"])
                 items.append(row)
     try:
         hidden = await asyncio.to_thread(sources.hidden)
@@ -578,9 +603,11 @@ async def gather(sources: Sources, *, now: Optional[datetime] = None, tz: Option
         log.warning("updates: the hidden words could not be read (%s); journal items left out", type(e).__name__)
         hidden, items = None, [i for i in items if i["kind"] != "memory"]
     before = len(items)
+    gone = {item_key(x) for x in exclude}
+    if seen is not None:
+        seen.update(k for k in (item_key(i["id"]) for i in items) if k in gone)
     items = drop_hidden(items, hidden)
-    gone = set(exclude)
-    items = [i for i in items if i["id"] not in gone]
+    items = [i for i in items if item_key(i["id"]) not in gone]
     log.info("updates: gathered %d items (%s), %d hidden or dismissed", len(items),
              ", ".join(f"{n} {s}" for n, s, _ in got), before - len(items))
     snap: dict[str, Any] = {"now": now.isoformat(timespec="seconds"), "tz": tz or local_zone(), "items": items}
@@ -829,11 +856,12 @@ def make_client(environ: Optional[Mapping[str, str]] = None) -> Optional[Client]
 # ---- the store --------------------------------------------------------------------------------------------
 
 class UpdatesStore:
-    """``{"cards", "generated_at", "dismissed": {ref: "YYYY-MM-DD"}, "sources": {kind: status}, "recent": {id:
-    {"refs", "day"}}}`` in one file (0600, its folder 0700), written whole and atomically. ``sources`` is what each
-    source said at the last full build; ``recent`` keeps the refs of cards a rebuild replaced, so a card the phone
-    still shows can be dismissed by its old id. A file that cannot be read is an empty store: no cards until the
-    next refresh."""
+    """``{"cards", "generated_at", "dismissed": {key: "YYYY-MM-DD"}, "seen": {key: "YYYY-MM-DD"}, "sources": {kind:
+    status}, "recent": {id: {"refs", "day"}}}`` in one file (0600, its folder 0700), written whole and atomically.
+    ``dismissed`` holds each dismissed item's ``item_key`` and the day it was dismissed; ``seen`` the last day a
+    source still returned it (``mark_seen``). ``sources`` is what each source said at the last full build;
+    ``recent`` keeps the refs of cards a rebuild replaced, so a card the phone still shows can be dismissed by its
+    old id. A file that cannot be read is an empty store: no cards until the next refresh."""
 
     def __init__(self, path: str | Path = STATE_FILE) -> None:
         self.path = Path(path).expanduser()
@@ -852,9 +880,18 @@ class UpdatesStore:
                 got = {}
             cards = [c for c in got.get("cards") or [] if isinstance(c, dict) and isinstance(c.get("id"), str)
                      and isinstance(c.get("refs"), list)]
-            dismissed = {k: v for k, v in (got.get("dismissed") or {}).items()
-                         if isinstance(k, str) and isinstance(v, str) and _DATE.match(v)} \
-                if isinstance(got.get("dismissed"), dict) else {}
+            # read through item_key: a store from before series keys names one week of a meeting; now it is the
+            # series. Two weeks of one series keep the first day dismissed and the last day seen.
+            dismissed: dict[str, str] = {}
+            for k, v in (got.get("dismissed") if isinstance(got.get("dismissed"), dict) else {}).items():
+                if isinstance(k, str) and isinstance(v, str) and _due(v):
+                    key = item_key(k)
+                    dismissed[key] = min(v, dismissed.get(key, v))
+            seen: dict[str, str] = {}
+            for k, v in (got.get("seen") if isinstance(got.get("seen"), dict) else {}).items():
+                if isinstance(k, str) and isinstance(v, str) and _due(v) and item_key(k) in dismissed:
+                    key = item_key(k)
+                    seen[key] = max(v, seen.get(key, v))
             at = got.get("generated_at") if isinstance(got.get("generated_at"), str) else None
             sources = {k: v for k, v in got.get("sources").items() if isinstance(k, str) and isinstance(v, str)} \
                 if isinstance(got.get("sources"), dict) else {}
@@ -863,7 +900,7 @@ class UpdatesStore:
                       if isinstance(k, str) and isinstance(v, dict) and isinstance(v.get("refs"), list)
                       and isinstance(v.get("day"), str) and _due(v["day"])} \
                 if isinstance(got.get("recent"), dict) else {}
-            return {"cards": cards, "generated_at": at, "dismissed": dismissed, "sources": sources,
+            return {"cards": cards, "generated_at": at, "dismissed": dismissed, "seen": seen, "sources": sources,
                     "recent": recent}
 
     def save(self, state: Mapping[str, Any]) -> None:
@@ -873,7 +910,8 @@ class UpdatesStore:
             try:
                 with os.fdopen(fd, "w", encoding="utf-8") as f:
                     json.dump({"cards": state.get("cards") or [], "generated_at": state.get("generated_at"),
-                               "dismissed": state.get("dismissed") or {}, "sources": state.get("sources") or {},
+                               "dismissed": state.get("dismissed") or {}, "seen": state.get("seen") or {},
+                               "sources": state.get("sources") or {},
                                "recent": state.get("recent") or {}}, f, ensure_ascii=False)
                     f.flush()
                     os.fsync(f.fileno())
@@ -887,9 +925,13 @@ class UpdatesStore:
     def put_cards(self, cards: list[dict[str, Any]], generated_at: Optional[str],
                   sources: Optional[Mapping[str, str]] = None, today: Optional[date] = None) -> None:
         """Replace the cards. ``generated_at`` None keeps the time of the last full build (a build that lost a
-        source); ``sources`` None keeps the statuses of that build. The replaced cards' refs go in ``recent``."""
+        source); ``sources`` None keeps the statuses of that build. The replaced cards' refs go in ``recent``. A card
+        citing a dismissed item is not kept: the snapshot left every dismissed item out, so it was written from one
+        the owner dismissed while the rebuild ran (checked here, under the lock a dismiss takes too)."""
         with self._lock:
             state = self.load()
+            gone = set(state["dismissed"])
+            cards = [c for c in cards if not any(item_key(r) in gone for r in c.get("refs") or [] if isinstance(r, str))]
             day = (today or date.today())
             recent = {k: v for k, v in state["recent"].items()
                       if (day - date.fromisoformat(v["day"])).days < RECENT_DAYS}
@@ -908,33 +950,49 @@ class UpdatesStore:
             self.save(state)
 
     def dismiss(self, cid: str, today: date) -> int:
-        """Dismiss card ``cid``'s refs from ``today`` → how many refs (0 for a card the store does not have, now or
-        among the cards a rebuild replaced in the last ``RECENT_DAYS`` days). Dismissals older than
-        ``DISMISS_DAYS`` are pruned on the way."""
+        """Dismiss card ``cid``'s items for good from ``today`` → how many refs (0 for a card the store does not
+        have, now or among the cards a rebuild replaced in the last ``RECENT_DAYS`` days)."""
         with self._lock:
             state = self.load()
             card = next((c for c in state["cards"] if c["id"] == cid), None) or state["recent"].get(cid)
             if card is None:
                 return 0
             refs = [r for r in card["refs"] if isinstance(r, str)]
-            dismissed = live_dismissed(state["dismissed"], today)
             for ref in refs:
-                dismissed[ref] = today.isoformat()
-            state["dismissed"] = dismissed
+                key = item_key(ref)
+                state["dismissed"].setdefault(key, today.isoformat())
+                state["seen"][key] = today.isoformat()
             self.save(state)
             return len(refs)
 
+    def mark_seen(self, keys: Collection[str], today: date) -> int:
+        """After a gather: the dismissed items a source still returned (``keys``) were seen ``today``. Then the
+        store is kept small: a dismissal not seen for ``DISMISSED_KEEP_DAYS`` is dropped (no source has returned its
+        item for that long: an email long out of the inbox, a meeting series that ended), and past
+        ``DISMISSED_MAX`` the least recently seen go. Written only when something changed. → how many dropped."""
+        with self._lock:
+            state = self.load()
+            dismissed, seen = state["dismissed"], state["seen"]
+            changed = False
+            for k in keys:
+                if k in dismissed and seen.get(k) != today.isoformat():
+                    seen[k], changed = today.isoformat(), True
 
-def live_dismissed(dismissed: Mapping[str, str], today: date) -> dict[str, str]:
-    """The dismissals still in force on ``today`` (made less than ``DISMISS_DAYS`` days ago)."""
-    out = {}
-    for ref, day in dismissed.items():
-        try:
-            if (today - date.fromisoformat(day)).days < DISMISS_DAYS:
-                out[ref] = day
-        except ValueError:
-            continue
-    return out
+            def last(k: str) -> str:
+                return max(dismissed[k], seen.get(k, dismissed[k]))
+
+            keep = [k for k in dismissed if (today - date.fromisoformat(last(k))).days < DISMISSED_KEEP_DAYS]
+            if len(keep) > DISMISSED_MAX:
+                keep = sorted(keep, key=last, reverse=True)[:DISMISSED_MAX]
+            dropped = len(dismissed) - len(keep)
+            if dropped:
+                kept = set(keep)
+                state["dismissed"] = {k: v for k, v in dismissed.items() if k in kept}
+                state["seen"] = {k: v for k, v in seen.items() if k in kept}
+                changed = True
+            if changed:
+                self.save(state)
+            return dropped
 
 
 def served(card: Mapping[str, Any]) -> dict[str, Any]:
@@ -1017,13 +1075,14 @@ class Updates:
 
     def view(self) -> dict[str, Any]:
         """``GET /api/link/updates``: the cards no dismissal and no hidden word hides, when they were made, and
-        whether a refresh runs. Off: no cards. The hidden words are read at every view, so a card made before the
-        owner said "don't bring this up" stops being served at once, not at the next rebuild."""
+        whether a refresh runs. Off: no cards. A card is hidden when every source it cites is dismissed
+        (``covered``). The hidden words are read at every view, so a card made before the owner said "don't bring
+        this up" stops being served at once, not at the next rebuild."""
         if not self.enabled:
             return {"cards": [], "generated_at": None, "refreshing": False}
         state = self.store.load()
-        gone = live_dismissed(state["dismissed"], self._now().date())
-        cards = [c for c in state["cards"] if not any(r in gone for r in c["refs"])]
+        gone = set(state["dismissed"])
+        cards = [c for c in state["cards"] if not covered(c["refs"], gone)]
         try:
             hidden = self.sources.hidden()
         except Exception as e:  # noqa: BLE001 — as gather: unreadable hidden words leave the journal's cards out
@@ -1036,8 +1095,9 @@ class Updates:
                 "refreshing": self.refreshing}
 
     def dismiss(self, cid: str) -> bool:
-        """The card's refs are dismissed for ``DISMISS_DAYS``. → whether the store knew that card (now, or as one a
-        recent rebuild replaced)."""
+        """The card's items are dismissed for good: never read into a snapshot again, and every kept card citing
+        only dismissed items is not served. → whether the store knew that card (now, or as one a recent rebuild
+        replaced)."""
         if not self.enabled:
             return False
         n = self.store.dismiss(cid, self._now().date())
@@ -1071,10 +1131,14 @@ class Updates:
         try:
             state = self.store.load()
             today = self._now().date()
-            dismissed = live_dismissed(state["dismissed"], today)
             status: dict[str, str] = {}
-            snapshot = await gather(self.sources, now=self._now(), status=status, exclude=list(dismissed))
+            seen: set[str] = set()
+            snapshot = await gather(self.sources, now=self._now(), status=status, exclude=state["dismissed"],
+                                    seen=seen)
             self.last_status = status
+            dropped = await asyncio.to_thread(self.store.mark_seen, seen, today)
+            if dropped:
+                log.info("updates: %d dismissal(s) not seen for %d days dropped", dropped, DISMISSED_KEEP_DAYS)
             lost = lost_kinds(status, state["sources"])
             if lost and not snapshot["items"]:
                 self._retry_soon(lost)

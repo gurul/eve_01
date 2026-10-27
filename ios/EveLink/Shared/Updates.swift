@@ -8,8 +8,9 @@
 //                                      "generated_at": ISO | null, "refreshing": bool}
 //                                     link: the source's own page in its app (Slack, Notion, Linear, the work Gmail
 //                                     and Calendar), https on that app's host; the hold menu's "Open in <App>"
-//   POST /api/link/updates/dismiss    {"id"} -> {"ok": true}: the card's sources stay out for 30 days;
-//                                     404 {"ok": false} for an id the daemon does not know (the card comes back)
+//   POST /api/link/updates/dismiss    {"id"} -> {"ok": true}: the card's sources stay out for good (a recurring
+//                                     meeting's every week); 404 {"ok": false} for an id the daemon does not know
+//                                     (the card comes back)
 //   POST /api/link/updates/refresh    {} -> {"ok": true, "started": bool}: a rebuild in the background, never waited on
 import Foundation
 
