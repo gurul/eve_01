@@ -18,7 +18,7 @@ import {
   sources as pageSources,
   type Source,
 } from "../sources";
-import { Ledger, mapLines, type LedgerSink } from "../sync";
+import { Ledger, mapLines, replyAfter, type LedgerSink } from "../sync";
 
 let n = 0;
 const line = (role: WireMessage["role"], text: string, extra: Partial<WireMessage> = {}): WireMessage => ({
@@ -127,6 +127,57 @@ describe("a live turn", () => {
     ledger.ingest([line("owner", "when does the plumber come?"), line("eve", "On Friday.", { sources: [FACT] })]);
     expect(thread.map((m) => m.id)).toEqual(["ask", "reply"]); // the copy is dropped
     expect(handed).toEqual([[FACT]]);
+  });
+
+  it("back to back (a queued message started as the reply ended): a late copy's sources go on its own turn's reply", () => {
+    const thread: Message[] = [{ id: "askA", role: "user", content: "when does the plumber come?" }];
+    const store = new SourceStore();
+    // as App.tsx's sink
+    const sink: LedgerSink = {
+      append: (...m) => {
+        thread.push(...m);
+      },
+      lastRole: () => thread.at(-1)?.role,
+      attachSources: (s, userId) => {
+        const reply = replyAfter(thread, userId);
+        if (reply) store.add(reply.id, s);
+      },
+    };
+    const ledger = new Ledger(sink);
+    const a = ledger.beginTurn("when does the plumber come?", "askA");
+    a.bytes(chunk("On Friday."));
+    a.end();
+    thread.push({ id: "replyA", role: "assistant", content: "On Friday." });
+    // the queued message starts at once, and A's copy only arrives while B streams
+    thread.push({ id: "askB", role: "user", content: "and the electrician?" });
+    const b = ledger.beginTurn("and the electrician?", "askB");
+    b.bytes(chunk("Not booked yet."));
+    thread.push({ id: "replyB", role: "assistant", content: "Not booked yet." });
+    ledger.ingest([line("owner", "when does the plumber come?"), line("eve", "On Friday.", { sources: [FACT] })]);
+    b.end();
+    ledger.flushIfIdle();
+    expect(thread.map((m) => m.id)).toEqual(["askA", "replyA", "askB", "replyB"]); // the copy is dropped
+    expect(store.sourcesOf("replyA")).toEqual([FACT]);
+    expect(store.sourcesOf("replyB")).toEqual([]);
+  });
+
+  it("replyAfter finds a turn's own reply, and the last turn's without an id", () => {
+    const thread: Message[] = [
+      { id: "u1", role: "user", content: "a" },
+      { id: "r1", role: "assistant", content: "x" },
+      { id: "sep", role: "system", content: "" } as Message,
+      { id: "r1b", role: "assistant", content: "y" },
+      { id: "u2", role: "user", content: "b" },
+      { id: "r2", role: "assistant", content: "z" },
+      { id: "u3", role: "user", content: "c" },
+    ];
+    expect(replyAfter(thread, "u1")?.id).toBe("r1b");
+    expect(replyAfter(thread, "u2")?.id).toBe("r2");
+    expect(replyAfter(thread, "u3")).toBeUndefined();               // its reply is not in yet
+    expect(replyAfter(thread)).toBeUndefined();                     // the last owner message has none
+    expect(replyAfter(thread.slice(0, 6))?.id).toBe("r2");
+    expect(replyAfter(thread.slice(0, 6), "gone")?.id).toBe("r2");  // an id not in the thread: the last turn's
+    expect(replyAfter([])).toBeUndefined();
   });
 
   it("a claimed copy without sources hands nothing", () => {

@@ -314,7 +314,8 @@ private struct PairPrompt: View {
 }
 
 /// One rounded card: the photos and files picked (if any), the field, and below them "+" (attach), the speed dial, the mic
-/// (dictation) and send, which turns into stop while eve answers. Sending uploads the attachments first.
+/// (dictation) and send. While eve answers, send stays send whenever there is something to send (the page queues it after
+/// the reply, docs/app-chat.md "Sending while eve replies") and is stop otherwise. Sending uploads the attachments first.
 struct ChatComposer: View {
     @ObservedObject var chat: ChatModel
     @ObservedObject var relay: Relay
@@ -324,6 +325,8 @@ struct ChatComposer: View {
     @State private var draft = ""
     @State private var beforeDictation = ""
     @State private var sent = 0
+    /// When the last send went: Stop takes the place of Send at once, so a quick second tap is not a stop.
+    @State private var sentAt = Date.distantPast
     @State private var attachments: [PendingAttachment] = []
     @State private var showPhotos = false
     @State private var showFiles = false
@@ -465,14 +468,20 @@ struct ChatComposer: View {
         .accessibilityHint("Types what you say into the message. It does not send it.")
     }
 
+    /// How long after a send the Stop button ignores a tap (a double-tap on Send).
+    private static let stopGrace: TimeInterval = 0.6
+
     @ViewBuilder private var sendButton: some View {
         if uploading {
             ProgressView()
                 .controlSize(.small)
                 .frame(width: 36, height: 36)
                 .accessibilityLabel("Sending attachments")
-        } else if chat.busy {
+        } else if chat.busy && !canSend {
+            // Stop only while there is nothing it can send (owner, 2026-10-26: "double-send or triple-send, and it just
+            // catches things"). After a stop, the next queued message goes, as in Claude Code.
             Button {
+                guard Date().timeIntervalSince(sentAt) > Self.stopGrace else { return }
                 dictation.stop()
                 chat.stop()
             } label: {
@@ -484,7 +493,7 @@ struct ChatComposer: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Stop")
-            .accessibilityHint("Stops showing eve's reply")
+            .accessibilityHint("Stops showing eve's reply. If you queued a message, it goes next.")
         } else {
             Button(action: send) {
                 Image(systemName: "arrow.up")
@@ -495,7 +504,8 @@ struct ChatComposer: View {
             }
             .buttonStyle(.plain)
             .disabled(!canSend)
-            .accessibilityLabel("Send")
+            // While eve replies, the message waits in the chat, marked Queued, and goes when the reply ends.
+            .accessibilityLabel(chat.busy ? "Send (queued after eve's reply)" : "Send")
         }
     }
 
@@ -516,6 +526,7 @@ struct ChatComposer: View {
 
     private func send() {
         guard canSend else { return }
+        sentAt = Date()
         dictation.stop()
         attachProblem = nil
         guard !attachments.isEmpty else {

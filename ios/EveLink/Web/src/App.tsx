@@ -6,19 +6,21 @@ import type { Message } from "@openuidev/react-headless";
 import { useThread, useThreadList } from "@openuidev/react-headless";
 import { AgentInterface, DotMatrixLoader, useSystemThemeMode } from "@openuidev/react-ui";
 import { openuiChatLibrary } from "@openuidev/react-ui/genui-lib";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { EveAssistantMessage } from "./AssistantMessage";
-import { ownerParts, type Attachment } from "./attachments";
+import { ownerParts } from "./attachments";
 import { EveUserMessage } from "./UserMessage";
 import { HorizontalHistory } from "./HorizontalHistory";
+import { QueuedMessages } from "./QueuedMessages";
 import { applyInsets, domInsetTarget } from "./insets";
 import { createBridgeLLM } from "./llm";
 import type { Bridge } from "./nativeBridge";
 import { sources, type Source } from "./sources";
 import { EVE_THREAD, createEveStorage, startLivePoll, type Cursor } from "./storage";
-import { Ledger, mapLines, separator } from "./sync";
+import { Ledger, mapLines, replyAfter, separator } from "./sync";
 import { reactions as pageReactions } from "./reactions";
+import { SendQueue } from "./sendQueue";
 import { darkTheme, lightTheme } from "./theme";
 
 const SCROLL_AREA = ".openui-agent-thread-scroll-area";
@@ -31,7 +33,7 @@ interface Wiring {
     lastRole: () => Message["role"] | undefined;
     idle: () => boolean;
     insertBeforeReply: (...m: Message[]) => boolean;
-    attachSources: (s: Source[]) => void;
+    attachSources: (s: Source[], userId?: string) => void;
   };
   historyLoaded: { value: boolean };
 }
@@ -50,9 +52,12 @@ function NativeGlue({ bridge, wiring }: { bridge: Bridge; wiring: Wiring }) {
   const [busy, setBusy] = useState(false);
   const [settled, setSettled] = useState(0);
 
-  const queue = useRef<{ text: string; attachments: Attachment[] }[]>([]);
-  const latest = useRef({ messages, isRunning, isLoadingMessages });
-  latest.current = { messages, isRunning, isLoadingMessages };
+  // Sends that wait for the reply on the screen to end (sendQueue.ts), shown
+  // at the thread's end until each starts (QueuedMessages.tsx).
+  const [queue] = useState(() => new SendQueue());
+  const queued = useSyncExternalStore(queue.subscribe, queue.snapshot, queue.snapshot);
+  const latest = useRef({ messages, isRunning, isLoadingMessages, threadError });
+  latest.current = { messages, isRunning, isLoadingMessages, threadError };
   // A turn this page started and whose run has not settled. Set before
   // processMessage and cleared when its promise does, so two sends that
   // arrive before React re-renders never both reach processMessage (the
@@ -89,12 +94,11 @@ function NativeGlue({ bridge, wiring }: { bridge: Bridge; wiring: Wiring }) {
   };
   wiring.sink.idle = () => !inFlight.current && !latest.current.isRunning;
   // The poll's copy of our streamed reply carried memory sources: they go
-  // under that reply (the last assistant message after the last user one).
-  wiring.sink.attachSources = (found) => {
-    const thread = latest.current.messages;
-    const lastUser = thread.findLastIndex((x) => x.role === "user");
-    const reply = thread.findLast((x, i) => i > lastUser && x.role === "assistant");
-    if (lastUser !== -1 && reply) sources.add(reply.id, found);
+  // under that reply, the one after the owner message its turn sent (a turn
+  // queued behind it may be streaming by now).
+  wiring.sink.attachSources = (found, userId) => {
+    const reply = replyAfter(latest.current.messages, userId);
+    if (reply) sources.add(reply.id, found);
   };
 
   // History is retried inside storage (getMessages), so this is only the
@@ -111,11 +115,20 @@ function NativeGlue({ bridge, wiring }: { bridge: Bridge; wiring: Wiring }) {
   }, [threadError, isLoadingMessages, selectThread, switchToNewThread, wiring]);
 
   // Native composer -> a turn, exactly as OpenUI's own composer starts one
-  // (the store's processMessage). Sends that arrive mid-turn wait their turn.
+  // (the store's processMessage). Sends that arrive mid-turn wait their turn,
+  // in order, and start once the reply ends (finished, failed or stopped);
+  // none is ever folded into the running reply. A send leaves the queue in
+  // the same call that hands it to processMessage, which appends it to the
+  // thread at once, so its "Queued" bubble and the real one never both show.
   const drain = () => {
-    const { isRunning: running, isLoadingMessages: loading } = latest.current;
-    if (inFlight.current || running || loading || !wiring.historyLoaded.value) return;
-    const next = queue.current.shift();
+    const { isRunning: running, isLoadingMessages: loading, threadError: failed } = latest.current;
+    const next = queue.take({
+      inFlight: inFlight.current,
+      running,
+      loading,
+      historyLoaded: wiring.historyLoaded.value,
+      hiddenAfterError: !!failed && document.visibilityState === "hidden",
+    });
     if (next === undefined) return;
     inFlight.current = true;
     const content = ownerParts(next.text, next.attachments);
@@ -129,7 +142,7 @@ function NativeGlue({ bridge, wiring }: { bridge: Bridge; wiring: Wiring }) {
 
   useEffect(() => {
     bridge.setSendHandler((text, attachments) => {
-      queue.current.push({ text, attachments });
+      queue.push(text, attachments);
       drainRef.current();
     });
     bridge.setScrollHandler(() => {
@@ -148,7 +161,7 @@ function NativeGlue({ bridge, wiring }: { bridge: Bridge; wiring: Wiring }) {
       offBusy();
       offInsets();
     };
-  }, [bridge]);
+  }, [bridge, queue]);
 
   // One continuous thread. Declared after the bridge effect so native hears
   // {type:"ready"} before the first {type:"messages"}.
@@ -164,6 +177,15 @@ function NativeGlue({ bridge, wiring }: { bridge: Bridge; wiring: Wiring }) {
     wiring.ledger.flushIfIdle();
     drainRef.current();
   }, [isRunning, isLoadingMessages, messages, settled, wiring]);
+
+  // A send held while the page was hidden (sendQueue.ts) goes when it shows.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") drainRef.current();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, []);
 
   // A turn of ours ended: its busy is over, so the dots never wait on a long
   // poll to clear (a poll that still says busy sets them again, and while
@@ -249,6 +271,7 @@ function NativeGlue({ bridge, wiring }: { bridge: Bridge; wiring: Wiring }) {
   return (
     <>
       <HorizontalHistory bridge={bridge} refreshKey={settled} />
+      <QueuedMessages items={queued} />
       {showTyping &&
         createPortal(
           <div className="eve-typing" aria-label="eve is replying">

@@ -1,7 +1,8 @@
 // The composer, outside App so App.tsx stays the iOS page's own (docs/plans/eve-lite.md, M7): one rounded card
-// with the picked photos and files, the field, and under them attach, the Think toggle and send, which turns into
-// stop while eve answers. As in the iOS app (ChatScreen.swift, ChatComposer), the attachments are uploaded first
-// and the words go to the page with window.eveNative.send, so a turn starts exactly as one typed in OpenUI.
+// with the picked photos and files, the field, and under them attach, the Think toggle and send. While eve answers,
+// send stays send whenever there is something to send (the page queues it after the reply: sendQueue.ts) and is
+// stop otherwise. As in the iOS app (ChatScreen.swift, ChatComposer), the attachments are uploaded first and the
+// words go to the page with window.eveNative.send, so a turn starts exactly as one typed in OpenUI.
 
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ChangeEvent, type ClipboardEvent, type KeyboardEvent } from "react";
 import type { EveNative } from "../nativeBridge";
@@ -210,7 +211,7 @@ export function Composer({ host, native, draft, setDraft, onAuthLost }: Composer
             <span className="eve-send eve-send--busy" role="status" aria-label="Sending attachments">
               <span className="eve-spinner" />
             </span>
-          ) : busy ? (
+          ) : busy && !canSend ? (
             <button
               type="button"
               className="eve-send"
@@ -227,7 +228,8 @@ export function Composer({ host, native, draft, setDraft, onAuthLost }: Composer
             <button
               type="button"
               className="eve-send"
-              aria-label="Send"
+              aria-label={busy ? "Send (queued after eve's reply)" : "Send"}
+              title={busy ? "Send: it goes after eve's reply" : undefined}
               disabled={!canSend}
               onClick={(e) => {
                 e.stopPropagation();

@@ -23,7 +23,8 @@ export const EveUserMessage = memo(function EveUserMessage({ message }: { messag
   );
 });
 
-const OwnerBubble = memo(function OwnerBubble({ message }: { message: UserMessage }) {
+/** The bubble alone, without the jump-back marker: a queued send wears it too (QueuedMessages.tsx), so it looks the same once it starts. */
+export const OwnerBubble = memo(function OwnerBubble({ message }: { message: UserMessage }) {
   const reaction = useReaction(message.id);
   const attachments = attachmentsOf(message.content);
   if (attachments.length === 0 && !reaction) return <GenUIUserMessage message={message} />;

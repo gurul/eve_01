@@ -77,7 +77,7 @@ export interface HostOptions {
 export interface HostState {
   /** The page said ready: the composer may send. */
   ready: boolean;
-  /** A turn from this page is streaming: the send button is a stop button. */
+  /** A turn from this page is streaming: the send button is a stop button while there is nothing to send. */
   busy: boolean;
   /** The last turn's failure, for one line above the composer ("" when none). */
   problem: string;

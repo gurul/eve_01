@@ -58,7 +58,7 @@ export function createBridgeLLM(bridge: Bridge, ledger: Ledger, reactions: React
       const content = user?.content ?? "";
       const text = ownerText(content);
       const attachments = attachmentIds(content);
-      const claim = ledger.beginTurn(text);
+      const claim = ledger.beginTurn(text, user?.id);
       // The send haptic is the native composer's (ChatScreen .sensoryFeedback);
       // the page plays only the "reply arrived" one, on the first real words
       // (a ": ping" keep-alive is not a reply).

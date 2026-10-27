@@ -26,6 +26,14 @@
 // are kept beside the message by id; a merged line adds its own to the
 // bubble it joins, and a claimed copy of a streamed reply hands its sources to
 // that reply (LedgerSink.attachSources), since its words are already shown.
+//
+// Turns can run back to back: a message the owner queued while eve replied
+// starts the moment the reply before it ends (sendQueue.ts). The poll may
+// then bring the earlier turn's last lines while the next one streams. They
+// stay with their own turn: a claimed copy names the owner message its turn
+// sent, so its sources go on that turn's reply (replyAfter), and a picture
+// that follows an ended turn's owner line is never put before the reply that
+// is streaming now; it is appended once the run settles.
 
 import type { Message } from "@openuidev/react-headless";
 import type { WireMessage } from "./nativeBridge";
@@ -179,6 +187,8 @@ export class SseText {
 
 interface Claim {
   sentText: string;
+  /** The owner message this turn sent (OpenUI's id), when known: its reply is the one after it. */
+  userId?: string;
   ownerClaimed: boolean;
   reply: SseText;
   consumed: number;
@@ -201,15 +211,32 @@ export interface LedgerSink {
   insertBeforeReply?(...messages: Message[]): boolean;
   /**
    * The poll's copy of the page's own streamed reply carried sources: put
-   * them on that reply (the thread's last assistant message after the last
-   * user message). Nothing when there is no such reply.
+   * them on that reply, the one after `userId` (the owner message its turn
+   * sent; without one, the last owner message): replyAfter. Nothing when
+   * there is no such reply.
    */
-  attachSources?(sources: Source[]): void;
+  attachSources?(sources: Source[], userId?: string): void;
+}
+
+/**
+ * The reply to owner message `userId`: the last assistant message after it and
+ * before the next owner message. Without `userId`, or when it is not in the
+ * thread, the reply to the last owner message.
+ */
+export function replyAfter(thread: readonly Message[], userId?: string): Message | undefined {
+  const own = userId === undefined ? -1 : thread.findIndex((m) => m.id === userId && m.role === "user");
+  const from = own !== -1 ? own : thread.findLastIndex((m) => m.role === "user");
+  if (from === -1) return undefined;
+  const next = thread.findIndex((m, i) => i > from && m.role === "user");
+  return thread.slice(from + 1, next === -1 ? undefined : next).findLast((m) => m.role === "assistant");
 }
 
 export class Ledger {
   private seen = new Set<string>();
   private claims: Claim[] = [];
+  // The turn the poll is reading: the claim the last owner line it brought
+  // matched, null when that line was not an app turn's, undefined before any.
+  private reading: Claim | null | undefined;
   private held: WireMessage[] = [];
   // Held media lines that came in while a reply was streaming, before its
   // own line: they go before the streamed reply, not after it.
@@ -225,10 +252,14 @@ export class Ledger {
     for (const w of lines) this.seen.add(w.id);
   }
 
-  /** An app turn started; returns the hooks that feed its streamed text. */
-  beginTurn(sentText: string): { bytes: (text: string) => void; end: () => void; hasText: () => boolean } {
+  /** An app turn started (`userId`: the owner message it sent); returns the hooks that feed its streamed text. */
+  beginTurn(
+    sentText: string,
+    userId?: string,
+  ): { bytes: (text: string) => void; end: () => void; hasText: () => boolean } {
     const claim: Claim = {
       sentText: norm(sentText),
+      ...(userId !== undefined ? { userId } : {}),
       ownerClaimed: false,
       reply: new SseText(),
       consumed: 0,
@@ -264,10 +295,14 @@ export class Ledger {
       if (this.seen.has(w.id)) continue;
       this.seen.add(w.id);
       if (!visible(w)) continue;
-      if (w.role === "owner" && this.claimOwner(w)) continue;
+      if (w.role === "owner") {
+        this.reading = this.claimOwner(w);
+        if (this.reading) continue;
+      }
       const media = lineAttachments(w).length > 0;
       if (w.role === "eve" && !media) beforeReply = false;
-      if (media && beforeReply) this.beforeReply.add(w.id);
+      // a picture of a turn that has ended belongs before that turn's reply, not the one streaming now
+      if (media && beforeReply && !this.reading?.ended) this.beforeReply.add(w.id);
       fresh.push(w);
     }
     if (!this.isIdle() || this.held.length > 0) {
@@ -313,12 +348,12 @@ export class Ledger {
     if (msgs.length) this.sink.append(...msgs);
   }
 
-  private claimOwner(w: WireMessage): boolean {
+  private claimOwner(w: WireMessage): Claim | null {
     const text = norm(w.text);
     const claim = this.claims.find((c) => !c.ownerClaimed && c.sentText === text);
-    if (!claim) return false;
+    if (!claim) return null;
     claim.ownerClaimed = true;
-    return true;
+    return claim;
   }
 
   private claimReply(w: WireMessage): boolean {
@@ -334,7 +369,7 @@ export class Ledger {
         claim.consumed = at + text.length;
         // the words are on screen already; what memory they leaned on is not
         const found = lineSources(w);
-        if (found.length > 0) this.sink.attachSources?.(found);
+        if (found.length > 0) this.sink.attachSources?.(found, claim.userId);
         return true;
       }
     }

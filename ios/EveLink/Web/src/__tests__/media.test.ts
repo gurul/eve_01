@@ -177,6 +177,40 @@ describe("a live turn", () => {
     expect(eveMediaOf(thread[2]!.id)).toHaveLength(1);
   });
 
+  it("back to back (a queued message started as the reply ended): a late picture of the turn before never goes before the new reply", () => {
+    const { thread, state, sink: s } = sink();
+    const ledger = new Ledger(s);
+    // turn A, and the poll's copy of its owner line, read while it streams
+    thread.push({ id: "askA", role: "user", content: "take a photo" });
+    state.idle = false;
+    const a = ledger.beginTurn("take a photo", "askA");
+    const ownerA = line("owner", "take a photo");
+    ledger.ingest([ownerA]);
+    a.bytes(chunk("Here it is."));
+    a.end();
+    thread.push({ id: "replyA", role: "assistant", content: "Here it is." });
+    state.idle = true;
+    ledger.flushIfIdle();
+    // the queued message starts at once: turn B streams
+    thread.push({ id: "askB", role: "user", content: "thanks" });
+    state.idle = false;
+    const b = ledger.beginTurn("thanks", "askB");
+    // only now does the poll bring A's last picture (before B's owner line in the transcript)
+    const lateA = photo("the photo", ID1);
+    ledger.ingest([lateA]);
+    b.bytes(chunk("Anytime."));
+    // B's own picture, after B's owner line: before B's reply, as for a single turn
+    const ownerB = line("owner", "thanks");
+    const picB = photo("a second one", ID2);
+    ledger.ingest([ownerB, picB]);
+    b.end();
+    thread.push({ id: "replyB", role: "assistant", content: "Anytime." });
+    state.idle = true;
+    ledger.flushIfIdle();
+    const ids = thread.map((m) => m.id).filter((id) => !id.startsWith("sep:") && !id.startsWith("reply:"));
+    expect(ids).toEqual(["askA", "replyA", "askB", picB.id, "replyB", lateA.id]);
+  });
+
   it("a picture sent while nothing is streaming (a task, the chief) shows at once", () => {
     const { thread, sink: s } = sink();
     const ledger = new Ledger(s);

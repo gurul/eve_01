@@ -196,6 +196,61 @@ textarea,
   max-width: 100%;
 }
 
+/* Sends that wait for eve's reply to end (QueuedMessages.tsx, sendQueue.ts):
+   after OpenUI's list and laid out like it, each the owner's own bubble,
+   dimmed, with a small muted "Queued" under its right edge. */
+.eve-queued {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: calc(728px + var(--openui-space-m-l) + var(--openui-space-m-l));
+  margin: 14px auto 0;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.eve-queued__item {
+  animation: eve-queued-in 220ms ease-out both;
+}
+
+.eve-queued__item > .openui-shell-thread-message-user {
+  opacity: 0.5;
+}
+
+.eve-queued__label {
+  display: block;
+  margin-top: 4px;
+  padding-right: 6px;
+  text-align: right;
+  font-size: 12px;
+  line-height: 1.3;
+  color: rgba(60, 60, 67, 0.6);
+}
+
+@media (prefers-color-scheme: dark) {
+  .eve-queued__label {
+    color: rgba(235, 235, 245, 0.6);
+  }
+}
+
+@keyframes eve-queued-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eve-queued__item {
+    animation: none;
+  }
+}
+
 .eve-attachments {
   display: flex;
   flex-wrap: wrap;

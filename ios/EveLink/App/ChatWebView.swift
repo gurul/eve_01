@@ -12,7 +12,7 @@ import WebKit
 final class ChatModel: NSObject, ObservableObject {
     /// The page posted {type:"ready"}: the composer may send.
     @Published private(set) var ready = false
-    /// A turn from this app is streaming: the send button is a stop button.
+    /// A turn from this app is streaming: the send button is a stop button while the composer has nothing to send.
     @Published private(set) var busy = false
     /// The composer's speed dial: sent with every turn as "grade", and remembered.
     @Published var grade: ChatGrade = ChatGrade.stored(UserDefaults.standard.string(forKey: ChatGrade.defaultsKey)) {
