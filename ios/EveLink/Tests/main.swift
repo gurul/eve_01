@@ -1096,6 +1096,10 @@ check(todayFeed?.needsYou == 3 && todayFeed?.needs.map(\.id) == ["c1"] && todayF
 check(todayFeed?.events(at: Date(timeIntervalSince1970: 1000)).map(\.title) == ["Trip", "Review", "Dentist"],
       "an event that ended is not drawn")
 check(TodayFeed.decode(Data("{}".utf8)) == nil && TodayFeed.decode(Data("[]".utf8)) == nil, "no 'at': refused")
+let signinFeed = TodayFeed.decode(Data(#"{"at": 5, "needs_you": 1, "needs": [{"id": "signin-google", "kind": "signin", "title": "Sign in to Google", "line": "apps login google on the Mac"}]}"#.utf8))
+check(signinFeed?.needs.first.map { TodayLayout.symbol($0, needs: true) } == "key"
+      && TodayLayout.symbol(TodayRow(kind: "job", title: "x"), needs: true) == "hand.raised"
+      && signinFeed?.isEmpty(at: Date(timeIntervalSince1970: 5)) == false, "a sign-in row needs you, with a key")
 let emptyFeed = TodayFeed.decode(Data(#"{"at": 5}"#.utf8))
 check(emptyFeed?.isEmpty(at: Date()) == true && emptyFeed?.needsYou == 0, "an empty day is a feed, not an error")
 if let f = todayFeed {

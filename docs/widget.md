@@ -21,9 +21,12 @@ Add **eve** from the widget gallery. It comes in two sizes:
 
 - **Large** is the command center. It has up to four sections, in this order.
   A section shows only when it has something in it.
-  - **Needs you**: the chief's jobs that wait on the owner (a Go, an answer, a
-    budget raise, a receipt not confirmed, or an act that may already have
-    happened). The heading has the app's blue dot and the full count.
+  - **Needs you**: first, what you must sign in to again, with a key: Google
+    refused its sign-in, or the Google sign-in or the app's 7-day install
+    lapses within 36 hours ([refresh](refresh.md#on-the-widget)). Then the
+    chief's jobs that wait on the owner (a Go, an answer, a budget raise, a
+    receipt not confirmed, or an act that may already have happened). The
+    heading has the app's blue dot and the full count.
   - **Going**: the chief's other open jobs, then the watches that are on
     (prices, quotes, tickets: the label and the latest reading). A paused
     watch is left out. A watch that eve cannot read says "can't read it".

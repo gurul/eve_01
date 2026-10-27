@@ -373,11 +373,18 @@ class TokenSource:
         if not body.get("access_token"):
             log.warning("apps: Google refused the refresh (%s); sign in again: apps login google",
                         body.get("error") or "no token")
+            refusals["google"] = time.time()
             return None
+        refusals.pop("google", None)
         tok.update(access_token=body["access_token"],
                    expires_at=time.time() + float(body.get("expires_in") or 3600))
         write_private_json(path, tok)
         return str(body["access_token"])
+
+
+# When a provider last refused to refresh its sign-in (unix seconds), by kind; gone once a refresh works. The widget
+# (link_today.signin_part) asks the owner to sign in again while a refusal is newer than the last sign-in.
+refusals: dict[str, float] = {}
 
 
 def _google_client(path: Path) -> dict[str, Any]:

@@ -12,10 +12,10 @@ enum TodayWidgetKind {
     static let workURL = URL(string: "evelink://work")!
 }
 
-/// One line on the widget: a job (needs you or going), a watch, or what plays now.
+/// One line on the widget: a job (needs you or going), a sign-in to redo, a watch, or what plays now.
 struct TodayRow: Codable, Equatable, Sendable {
     var id: String
-    var kind: String            // job | watch | music | tv
+    var kind: String            // job | signin | watch | music | tv
     var title: String
     var line: String
 
@@ -208,6 +208,7 @@ struct TodaySection: Equatable, Sendable {
 
 enum TodayLayout {
     static func symbol(_ row: TodayRow, needs: Bool) -> String {
+        if row.kind == "signin" { return "key" }       // sign in again, or reinstall the app (link_today.signin_part)
         if needs { return "hand.raised" }
         switch row.kind {
         case "watch": return "eye"

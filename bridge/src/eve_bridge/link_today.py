@@ -10,6 +10,9 @@ request per refresh:
   (apps_mcp.AppsBridge, ``calendar__list_events``), only when the calendar is already signed in. The answer is kept
   for ``CALENDAR_KEEP_SECS``, so the widget's refreshes do not each cost a Google call per calendar.
 * ``now``: what Spotify plays and whether the TV is on, from the Mini App server's own Music and TV remote cards.
+* sign-ins (owner, 2026-10-26: "send a notification on the widget when u need to login"): Google refused to refresh
+  its sign-in (apps_mcp.refusals), or the Google sign-in or the app's 7-day install lapses within ``SIGNIN_WARN``
+  (refresh.py's dates). Each is a ``needs`` row of kind "signin", first, so every version of the widget shows it.
 
 Every source has its own short limit and is gathered at the same time as the others. A source that is off, slow or
 broken is left out and named in ``sources`` ("ok", "off" or "failed"); it never fails the whole answer. The link
@@ -33,6 +36,7 @@ GOING_SHOWN = 10             # running cards and watches, listed
 TODAY_SHOWN = 8              # events left today, listed
 TITLE_CHARS = 80             # one line on a phone
 LINE_CHARS = 60
+SIGNIN_WARN = timedelta(hours=36)   # a lapse this close shows on the widget before it happens
 
 
 def _clip(text: Any, limit: int) -> str:
@@ -55,6 +59,61 @@ def jobs_part(chief: Any) -> dict[str, Any]:
                "line": _clip(j.get("line"), LINE_CHARS)}
         (needs if j.get("needs_you") else going).append(row)
     return {"needs_you": int(listed.get("needs_you") or 0), "needs": needs, "going": going}
+
+
+def _soon(at: datetime, now: datetime) -> str:
+    """When a lapse comes, as a widget line says it: "now", "in 3 h", "tomorrow 11:40 am", "Fri 5:33 pm"."""
+    left = (at - now).total_seconds()
+    if left <= 0:
+        return "now"
+    if left < 6 * 3600:
+        return f"in {max(int(left // 3600), 1)} h" if left >= 3600 else f"in {max(int(left // 60), 1)} min"
+    local, today = at.astimezone(), now.astimezone().date()
+    day = "today" if local.date() == today else "tomorrow" if local.date() == today + timedelta(days=1) \
+        else f"{local:%a}"
+    return f"{day} {local:%-I:%M} {local:%p}".replace("AM", "am").replace("PM", "pm")
+
+
+_app_kept: dict[str, Any] = {}      # the last build's profile expiry, by the profile's mtime (security cms is slow)
+
+
+def _app_expiry() -> Optional[datetime]:
+    from . import refresh
+
+    profile = refresh.APP / "embedded.mobileprovision"
+    try:
+        stamp = profile.stat().st_mtime
+    except OSError:
+        return None
+    if _app_kept.get("stamp") != stamp:
+        _app_kept.update(stamp=stamp, at=refresh.app_expiry())
+    return _app_kept.get("at")
+
+
+def signin_part(token_path: Any, now: datetime, *, refused: Optional[float] = None,
+                app_expiry: Callable[[], Optional[datetime]] = _app_expiry) -> list[dict[str, Any]]:
+    """What the owner must sign in to again, as ``needs`` rows, most urgent first. ``token_path``: the Google token
+    file (None when Google is not set up); ``refused``: when Google last refused a refresh (apps_mcp.refusals)."""
+    from . import refresh
+
+    rows: list[dict[str, Any]] = []
+    fix = "apps login google on the Mac"
+    if token_path is not None:
+        lapses = refresh.google_expiry(token_path)
+        signed = lapses - refresh.GOOGLE_LIFE if lapses is not None else None
+        if refused is not None and (signed is None or refused > signed.timestamp()):
+            rows.append({"id": "signin-google", "kind": "signin", "title": "Sign in to Google",
+                         "line": "Calendar and Gmail stopped: " + fix})
+        elif lapses is not None and lapses - now <= SIGNIN_WARN:
+            rows.append({"id": "signin-google", "kind": "signin",
+                         "title": "Google sign-in ends " + _soon(lapses, now), "line": fix})
+    app = app_expiry()
+    if app is not None and app - now <= SIGNIN_WARN:
+        rows.append({"id": "signin-app", "kind": "signin", "title": "Eve Link stops opening " + _soon(app, now),
+                     "line": "build.sh --install on the Mac"})
+    for r in rows:
+        r["title"], r["line"] = _clip(r["title"], TITLE_CHARS), _clip(r["line"], LINE_CHARS)
+    return rows
 
 
 def watches_part(watcher: Any) -> list[dict[str, Any]]:
@@ -146,8 +205,9 @@ class Today:
 
     def __init__(self, *, now: Callable[[], datetime] = lambda: datetime.now().astimezone(),
                  mono: Callable[[], float] = time.monotonic, source_secs: float = SOURCE_SECS,
-                 calendar_secs: float = CALENDAR_SECS, calendar_keep_secs: float = CALENDAR_KEEP_SECS) -> None:
-        self._now, self._mono = now, mono
+                 calendar_secs: float = CALENDAR_SECS, calendar_keep_secs: float = CALENDAR_KEEP_SECS,
+                 app_expiry: Callable[[], Optional[datetime]] = _app_expiry) -> None:
+        self._now, self._mono, self._app_expiry = now, mono, app_expiry
         self.source_secs, self.calendar_secs, self.calendar_keep_secs = source_secs, calendar_secs, calendar_keep_secs
         self._calendar: Optional[tuple[float, date, Any]] = None   # (when read, which day, the answer)
         self._reading: Optional[asyncio.Task] = None                # one calendar read at a time
@@ -223,7 +283,22 @@ class Today:
         if value["calendar"] is not None:
             out["today"] = events_part(value["calendar"], now)[:TODAY_SHOWN]
         out["now"] = music_part(value["music"]) + tv_part(value["tv"])
-        log.info("link today: %d need you, %d going, %d today, %d now (%s)", out["needs_you"], len(out["going"]),
-                 len(out["today"]), len(out["now"]),
+        try:
+            from . import apps_mcp
+
+            token = apps.config.google_token_path if apps is not None and getattr(apps, "config", None) else None
+            signin = await asyncio.wait_for(asyncio.to_thread(
+                signin_part, token, now, refused=apps_mcp.refusals.get("google"), app_expiry=self._app_expiry),
+                self.source_secs)
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:  # noqa: BLE001 — the type only; a sign-in check never fails the answer
+            log.warning("link today: the sign-in check failed (%s); left out", type(e).__name__)
+            signin = []
+        if signin:
+            out["needs"] = (signin + out["needs"])[:NEEDS_SHOWN]
+            out["needs_you"] += len(signin)
+        log.info("link today: %d need you (%d sign-in), %d going, %d today, %d now (%s)", out["needs_you"],
+                 len(signin), len(out["going"]), len(out["today"]), len(out["now"]),
                  ", ".join(f"{k} {v}" for k, v in sources.items() if v != "ok") or "all ok")
         return out

@@ -1496,7 +1496,10 @@ def _run_apps(args: argparse.Namespace) -> int:
         except Exception as e:  # noqa: BLE001 — the reason, for the owner at the terminal
             print(f"Sign-in failed: {e}")
             return 1
-        print("Restart the daemon to use it (launchctl kickstart -k gui/$(id -u)/com.github.eve-bridge.daemon).")
+        # eve reads the token file on every call, so a sign-in again is used at once (seen 2026-10-26); only a first
+        # sign-in needs a restart, since the Google apps come up at start when a sign-in is there
+        print("If eve already used Google, it uses this now. On a first sign-in, restart the daemon "
+              "(launchctl kickstart -k gui/$(id -u)/com.github.eve-bridge.daemon).")
         return 0
     bridge = apps_mcp.AppsBridge(cfg)
     signed = set(bridge.available())

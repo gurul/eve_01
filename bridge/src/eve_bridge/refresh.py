@@ -76,7 +76,7 @@ def message(now: datetime, app: Optional[datetime], google: Optional[datetime]) 
     return "\n".join([
         "Weekly refresh, on the Mac:",
         f"1. Eve Link {_when(app, now)}: sh ios/EveLink/build.sh --install (phone unlocked)",
-        f"2. Google {_when(google, now)}: eve-bridge apps login google, then restart the daemon",
+        f"2. Google {_when(google, now)}: eve-bridge apps login google (eve uses it at once)",
     ])
 
 

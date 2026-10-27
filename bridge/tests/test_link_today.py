@@ -15,8 +15,8 @@ from typing import Any, Optional
 
 from test_link_chat import FakeInlet, FakePanel, chief_at, http, serve, store_at
 
-from eve_bridge import link_chat, watch
-from eve_bridge.link_today import Today, events_part, music_part, tv_part
+from eve_bridge import apps_mcp, link_chat, watch
+from eve_bridge.link_today import Today, events_part, music_part, signin_part, tv_part
 
 NOW = datetime(2026, 10, 8, 14, 0).astimezone()        # 2 pm local
 
@@ -98,6 +98,7 @@ def watches() -> Any:
 
 
 def today_door(**kw: Any) -> Today:
+    kw.setdefault("app_expiry", lambda: None)       # never the Mac's real last build
     return Today(now=lambda: NOW, **kw)
 
 
@@ -285,3 +286,77 @@ def test_music_and_tv_rows_only_while_something_plays() -> None:
     assert tv_part({"ok": False, "reachable": False}) == []
     assert tv_part({"ok": True, "power": "screensaver"}) == [{"kind": "tv", "title": "TV", "line": "Screensaver"}]
     assert tv_part({"ok": True, "power": "on", "app": None}) == [{"kind": "tv", "title": "TV", "line": "On"}]
+
+
+# ---- sign-ins (owner, 2026-10-26: "send a notification on the widget when u need to login") ---------------------
+
+def token_at(tmp_path: Path, signed: datetime) -> Path:
+    path = tmp_path / "google-token.json"
+    path.write_text(json.dumps({"refresh_token": "r", "signed_in_at": signed.timestamp()}))
+    return path
+
+
+def test_a_refused_google_refresh_asks_to_sign_in_until_a_newer_sign_in() -> None:
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        token = token_at(Path(d), NOW - timedelta(days=8))
+        rows = signin_part(token, NOW, refused=NOW.timestamp() - 60, app_expiry=lambda: None)
+        assert [(r["id"], r["kind"], r["title"]) for r in rows] == [("signin-google", "signin", "Sign in to Google")]
+        assert "apps login google" in rows[0]["line"] and len(rows[0]["line"]) <= 60
+        # signed in again after the refusal: nothing to ask, and the new sign-in has 7 days left
+        token = token_at(Path(d), NOW)
+        assert signin_part(token, NOW, refused=NOW.timestamp() - 60, app_expiry=lambda: None) == []
+
+
+def test_a_sign_in_or_install_that_lapses_soon_shows_before_it_does() -> None:
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        token = token_at(Path(d), NOW - timedelta(days=6, hours=20))          # lapses in 4 h
+        app = NOW + timedelta(days=1, hours=1)                                 # tomorrow 3 pm
+        rows = signin_part(token, NOW, app_expiry=lambda: app)
+        assert [r["title"] for r in rows] == ["Google sign-in ends in 4 h", "Eve Link stops opening tomorrow 3:00 pm"]
+        assert rows[1]["id"] == "signin-app" and "build.sh --install" in rows[1]["line"]
+        # three days out: quiet; no Google set up and no build: quiet
+        token = token_at(Path(d), NOW - timedelta(days=4))
+        assert signin_part(token, NOW, app_expiry=lambda: NOW + timedelta(days=3)) == []
+        assert signin_part(None, NOW, refused=NOW.timestamp(), app_expiry=lambda: None) == []
+
+
+def test_sign_ins_come_first_in_needs_you_on_the_widget(tmp_path: Path) -> None:
+    c, _, _ = chief_at(tmp_path)
+
+    async def go() -> None:
+        inlet = FakeInlet(store_at(tmp_path))
+        inlet.chief = c
+        app = NOW + timedelta(hours=2)
+        server, port, token = await serve(tmp_path, inlet, today=today_door(app_expiry=lambda: app))
+        got = await today(port, token)
+        assert got["needs"][0] == {"id": "signin-app", "kind": "signin", "title": "Eve Link stops opening in 2 h",
+                                   "line": "build.sh --install on the Mac"}
+        assert got["needs_you"] == 4 and [n["id"] for n in got["needs"][1:]] == ["c1", "c2", "c3"]
+        await server.close()
+
+    asyncio.run(go())
+
+
+def test_a_google_refusal_is_recorded_and_a_good_refresh_clears_it(tmp_path: Path) -> None:
+    class Http:
+        def __init__(self, body: dict[str, Any]) -> None:
+            self.body = body
+
+        def post(self, url: str, data: Any) -> Any:
+            body = self.body
+
+            class R:
+                def json(self) -> dict[str, Any]:
+                    return body
+            return R()
+
+    cfg = apps_mcp.AppsConfig(enabled=True, config_dir=tmp_path)
+    (tmp_path / "google-oauth-client.json").write_text(json.dumps({"installed": {"client_id": "id"}}))
+    cfg.google_token_path.write_text(json.dumps({"refresh_token": "r"}))
+    apps_mcp.refusals.clear()
+    assert apps_mcp.TokenSource("google", cfg, http=Http({"error": "invalid_grant"}))() is None
+    assert "google" in apps_mcp.refusals
+    assert apps_mcp.TokenSource("google", cfg, http=Http({"access_token": "a", "expires_in": 3600}))() == "a"
+    assert "google" not in apps_mcp.refusals

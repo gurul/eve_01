@@ -16,8 +16,20 @@ With the phone unlocked, run this on the Mac:
 ```bash
 sh ios/EveLink/build.sh --install
 bridge/.venv/bin/eve-bridge apps login google
-launchctl kickstart -k gui/$(id -u)/com.github.eve-bridge.daemon
 ```
+
+eve reads the Google sign-in on every call, so a sign-in again works at once,
+with no restart (checked 2026-10-26: the calendar came back a minute later).
+Only a first-ever sign-in needs `launchctl kickstart -k
+gui/$(id -u)/com.github.eve-bridge.daemon`.
+
+## On the widget
+
+The home-screen widget says so before either one lapses, and when Google has
+already refused the sign-in: a row with a key at the top of **Needs you**
+("Sign in to Google", "Google sign-in ends tomorrow 11:40", "Eve Link stops
+opening in 3 h"). It shows from 36 hours before a lapse
+(`link_today.SIGNIN_WARN`) and goes once you sign in again or reinstall.
 
 `build.sh --install` removes the cached Eve Link signing profiles before it
 builds. Xcode reuses a profile until it expires. Without this step, an install
