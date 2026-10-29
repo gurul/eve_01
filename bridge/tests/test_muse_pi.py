@@ -218,3 +218,125 @@ def test_the_link_door_reads_and_flips_muse(muse: list[str]) -> None:
         assert body(w) == {"ok": True, "available": True, "on": True} and inlet.muse is True
 
     asyncio.run(go())
+
+
+# ---- long answers, progress, the app's history and calls (owner, 2026-10-28) ------------------------------
+
+def test_parse_skips_progress_lines_and_marks_a_cut_answer() -> None:
+    out = b'{"progress": "Searching the web"}\n{"ok": true, "reply": "found it"}\n'
+    assert muse_pi.parse(out) == muse_pi.Answer(True, "found it")
+    assert muse_pi.parse(b'{"progress": "Searching"}\n') == muse_pi.Answer(False, muse_pi.UNREACHABLE_LINE)
+    cut = muse_pi.parse(b'{"ok": true, "reply": "long", "cut": true}\n')
+    assert cut.ok and cut.text == "long\n\n" + muse_pi.CUT_NOTE
+    assert muse_pi.progress_of(b'{"progress": "  Reading\\n the page "}') == "Reading the page"
+    assert muse_pi.progress_of(b'{"ok": true, "reply": "x"}') == "" and muse_pi.progress_of(b"junk") == ""
+
+
+def test_ask_hears_progress_as_it_comes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    fake = tmp_path / "ssh"
+    fake.write_text("#!/bin/sh\n"
+                    "cat > /dev/null\n"
+                    "echo '{\"progress\": \"Searching the web\"}'\n"
+                    "echo '{\"progress\": \"Reading three pages\"}'\n"
+                    "echo '{\"ok\": true, \"reply\": \"the answer\"}'\n")
+    fake.chmod(fake.stat().st_mode | stat.S_IEXEC)
+    monkeypatch.setenv("PATH", f"{tmp_path}{os.pathsep}{os.environ['PATH']}")
+    heard: list[str] = []
+    answer = asyncio.run(muse_pi.ask("hi", host=HOST, session="s1", on_progress=heard.append))
+    assert answer == muse_pi.Answer(True, "the answer")
+    assert heard == ["Searching the web", "Reading three pages"]
+
+
+def test_ask_waits_minutes_not_two() -> None:
+    assert muse_pi.ANSWER_SECS >= 900
+
+
+def test_a_muse_answer_stays_in_the_apps_history() -> None:
+    from eve_bridge import link_chat
+
+    line = {"ts": "2026-10-27T21:58:04", "ch": "telegram", "conv": "c", "who": "eve", "kind": "relay",
+            "text": "Muse: Here is everything I found."}
+    row = link_chat._row("2026-10-27", 3, line)
+    assert row is not None and row["role"] == "eve" and row["kind"] == "say"
+    assert row["text"] == f"**{telegram.MUSE_TITLE}**\n\nHere is everything I found."
+    other = dict(line, text="a relay line that is not Muse's")
+    assert link_chat._row("2026-10-27", 4, other) is None
+
+
+def _call_rig(monkeypatch: pytest.MonkeyPatch, ask: Any) -> tuple[Rig, list[str]]:
+    monkeypatch.setenv(muse_pi.ENV, HOST)
+    monkeypatch.setattr(muse_pi, "ask", ask)
+    rig = Rig(FakeApi(), FakeCreate(say("ok"), say("eve answer")))     # "ok": the call's warm-up
+    rig.inlet._chat_id = OWNER
+    return rig, []
+
+
+def test_the_action_button_talks_to_muse_when_the_app_switch_is_on(monkeypatch: pytest.MonkeyPatch) -> None:
+    asked: list[str] = []
+
+    async def ask(text: str, **_: Any) -> muse_pi.Answer:
+        asked.append(text)
+        return muse_pi.Answer(True, "Muse says hi")
+
+    rig, read = _call_rig(monkeypatch, ask)
+
+    async def go() -> None:
+        rig.inlet.listen(read.append)
+        await settle()
+        assert rig.inlet.set_muse(True, tell=False)                    # the app's switch
+        rig.inlet.hear("what's on my plate today")                     # said on the call
+        await settle()
+
+    asyncio.run(go())
+    assert asked == ["what's on my plate today"] and read == ["Muse says hi"]
+
+
+def test_a_slow_muse_answer_keeps_the_call_up(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def ask(text: str, *, on_progress: Any = None, **_: Any) -> muse_pi.Answer:
+        await asyncio.sleep(0.25)                                      # quiet: the nudge speaks
+        on_progress("Searching the web")
+        await asyncio.sleep(0.05)
+        return muse_pi.Answer(True, "Done.")
+
+    monkeypatch.setattr(telegram, "MUSE_CALL_NUDGE_SECS", 0.1)
+    monkeypatch.setattr(telegram, "MUSE_PROGRESS_GAP_SECS", 0.0)
+    rig, read = _call_rig(monkeypatch, ask)
+
+    async def go() -> None:
+        rig.inlet.listen(read.append)
+        await settle()
+        rig.inlet.set_muse(True, tell=False)
+        rig.inlet.hear("research this")
+        for _ in range(40):
+            await asyncio.sleep(0.02)
+            if "Done." in read:
+                break
+        await settle()
+
+    asyncio.run(go())
+    assert telegram.MUSE_STILL_LINE in read and "Searching the web" in read and read[-1] == "Done."
+    n = len(read)
+    asyncio.run(asyncio.sleep(0.25))
+    assert len(read) == n                                              # the nudge stopped with the answer
+
+
+def test_a_typed_muse_turn_reads_nothing_aloud(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def ask(text: str, *, on_progress: Any = None, **_: Any) -> muse_pi.Answer:
+        on_progress("Searching the web")
+        await asyncio.sleep(0.2)
+        return muse_pi.Answer(True, "Typed answer.")
+
+    monkeypatch.setattr(telegram, "MUSE_CALL_NUDGE_SECS", 0.05)
+    monkeypatch.setattr(telegram, "MUSE_PROGRESS_GAP_SECS", 0.0)
+    rig, read = _call_rig(monkeypatch, ask)
+
+    async def go() -> None:
+        rig.inlet.listen(read.append)
+        await settle()
+        rig.inlet.set_muse(True, tell=False)
+        rig.inlet._handle(telegram.Inbound(chat_id=OWNER, user_id=OWNER, text="typed question"))
+        await asyncio.sleep(0.4)
+        await settle()
+
+    asyncio.run(go())
+    assert read == []

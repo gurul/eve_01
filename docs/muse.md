@@ -28,6 +28,15 @@ While Muse is on:
 - eve's own code words still reach eve: `stop`, `stealth`, `/apps`, `/spend`,
   `/watch` and a screenshot request.
 - Photos and files go to eve. Muse gets text only.
+- **The Action Button and Hold to talk** go to Muse too: the switch is eve's,
+  not the app's, so a call says your words to Muse and reads its answer out.
+  While Muse works, the call reads what Muse says it is doing ("Searching the
+  web") and, after 30 quiet seconds, "Muse is still working on it.", so the
+  phone does not hang up (it ends a call after 45 quiet seconds).
+- Muse can take minutes on a question (research, tasks). eve waits up to 15
+  minutes. If the app's live reply has ended by then (it stops after five
+  minutes), the answer still lands in the chat, titled **Muse**, and stays
+  there in history.
 
 Only one relay is on at a time. `muse on` turns off the Claude and Codex
 relays; `claude on` or `codex <folder>` turns Muse off.
@@ -106,11 +115,16 @@ app on your phone.
 2. eve's relay (`pi/muse/eve_muse_relay.py`) runs that service unchanged and
    adds one request to its local socket: send a message and wait for the
    answer. It follows Muse's chat events with the SDK's own `MuseTurn` and
-   returns the reply text. It takes one question at a time and waits up to two
-   minutes.
+   returns every message of the reply. With `"stream": true` it first sends a
+   `{"progress": "..."}` line each time Muse says what it is doing. It takes one
+   question at a time and waits up to 15 minutes. An answer over the SDK's
+   64 KiB bound is kept as far as it got, with a note that the rest is in the
+   Muse app.
 3. On the Mac, `muse_pi.py` runs
    `ssh <pi> /opt/eve-muse/venv-python /opt/eve-muse/ask.py --session-id <id>`
-   with your message on stdin, and reads one JSON line back.
+   with your message on stdin, and reads the progress lines and then the
+   answer as they come. A Pi with the older relay sends the answer alone,
+   which still works, with the old two-minute limit.
 4. eve talks to Muse in one Muse side chat, its id kept in
    `~/.config/eve-bridge/muse-session`, so Muse remembers the conversation. You
    see that chat in the Muse app too.
@@ -143,5 +157,10 @@ in eve's own model history. eve logs only lengths and outcomes, never your words
   that tells it to echo a word for a check.
 - `bash pi/keepalive/test_keepalive.sh` runs the keepalive against stand-ins:
   healthy minutes, a broadcast stall, a lost router, and a Pi with no counter.
+- `pi/muse/test_relay.py` runs the relay against a fake Muse session with the
+  SDK's own `MuseTurn`: progress then answer, one line when not streamed, a cut
+  answer, and other requests left to musegadget. On the Pi, from this folder:
+  `/opt/eve-muse/venv-python -m pytest test_relay.py`.
 - `bridge/tests/test_muse_pi.py` covers the client, the switch words, one relay
-  at a time and the app's `/api/link/muse`.
+  at a time, the app's `/api/link/muse`, Muse answers in the app's history, and
+  Muse on a call (the Action Button, the keepalive line).

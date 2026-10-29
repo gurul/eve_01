@@ -298,6 +298,11 @@ MUSE_TITLE = "Muse"
 MUSE_ON_LINE = "You're talking to Muse now. \"eve: ...\" talks to me instead; \"muse off\" comes back."
 MUSE_OFF_LINE = "Back with eve."
 MUSE_UNAVAILABLE_LINE = "Muse isn't set up on this Mac (EVE_MUSE_PI)."
+MUSE_STILL_LINE = "Muse is still working on it."
+# On a call (the Action Button), Muse's answer can take minutes and the phone hangs up after 45 quiet seconds
+# (ios/EveLink Shared/Relay.swift hangUpAfter): something is said at least this often while Muse works.
+MUSE_CALL_NUDGE_SECS = 30.0
+MUSE_PROGRESS_GAP_SECS = 12.0         # Muse's own progress lines on a call, at most one per this long
 CLAUDE_NOT_ON_LINE = "The Claude relay is off. Say \"claude on\" first."
 CLAUDE_PICK_LINE = "Which Claude session? Tap one, or start a new one."
 CLAUDE_NONE_LINE = "No Claude session is running. Let's start one; the chat joins it once it opens."
@@ -3782,8 +3787,33 @@ class TelegramInlet:
 
     async def _muse_send(self, chat_id: int, text: str) -> None:
         """One message to Muse; its answer comes back titled Muse. The words and the answer are in the
-        transcript as relay lines, never in eve's model history."""
-        answer = await muse_pi.ask(text)
+        transcript as relay lines, never in eve's model history; the app shows the answer from there
+        (link_chat._row), so one that comes after the app's stream closed is still in the chat. On a call (the
+        Action Button) Muse's progress is read out, and a "still working" line keeps the phone from hanging up."""
+        on_call = self._call_reader() is not None
+        spoken_at = [time.monotonic()]
+
+        def speak(words: str) -> None:
+            spoken_at[0] = time.monotonic()
+            self._to_call(chat_id, words, None)
+
+        def progress(words: str) -> None:
+            # Muse saying what it is doing ("Searching the web…"): read on a call, never texted.
+            if on_call and time.monotonic() - spoken_at[0] >= MUSE_PROGRESS_GAP_SECS:
+                speak(words)
+
+        async def nudge() -> None:
+            while True:
+                await asyncio.sleep(max(0.05, MUSE_CALL_NUDGE_SECS - (time.monotonic() - spoken_at[0])))
+                if time.monotonic() - spoken_at[0] >= MUSE_CALL_NUDGE_SECS:
+                    speak(MUSE_STILL_LINE)
+
+        keepalive = asyncio.ensure_future(nudge()) if on_call else None
+        try:
+            answer = await muse_pi.ask(text, on_progress=progress)
+        finally:
+            if keepalive is not None:
+                keepalive.cancel()
         if answer.ok:
             self._record("eve", "relay", "Muse: " + answer.text)
         await self._say(chat_id, answer.text, title=MUSE_TITLE)

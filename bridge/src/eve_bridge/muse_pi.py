@@ -1,8 +1,10 @@
 """Muse on the owner's Raspberry Pi: one question in, Muse's answer out (docs/muse.md).
 
 The Pi runs Meta's Muse Linux Device SDK with eve's relay (pi/muse/). eve reaches it over SSH, key login only, and
-runs the relay's ``ask.py`` with the message on stdin; ``ask.py`` prints one JSON line, ``{"ok", "reply"}`` or
-``{"ok": false, "error"}``. The Pi keeps the Muse connection; nothing Muse-side runs on the Mac.
+runs the relay's ``ask.py`` with the message on stdin; ``ask.py`` prints a ``{"progress": "..."}`` line each time Muse
+says what it is doing, then the answer, ``{"ok", "reply"}`` or ``{"ok": false, "error"}`` (an older relay prints the
+answer alone). Muse can work on one question for minutes, so eve waits up to ``ANSWER_SECS``. The Pi keeps the Muse
+connection; nothing Muse-side runs on the Mac.
 
 ``EVE_MUSE_PI`` is the SSH target (``user@host``); unset, Muse is off. eve's chat with Muse is one Muse side chat,
 its id kept in ``muse-session`` under the config directory, so Muse remembers the conversation across turns.
@@ -18,6 +20,7 @@ import re
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable, Optional
 
 log = logging.getLogger(__name__)
 
@@ -25,12 +28,13 @@ ENV = "EVE_MUSE_PI"
 ASK = "/opt/eve-muse/venv-python /opt/eve-muse/ask.py"
 SESSION_FILE = "muse-session"
 CONFIG_DIR = Path.home() / ".config" / "eve-bridge"
-ANSWER_SECS = 170.0          # the Pi waits up to 120 s for Muse; SSH and the socket get the rest
+ANSWER_SECS = 1000.0         # the Pi waits up to 15 min for Muse; SSH and the socket get the rest
 CONNECT_SECS = 6
 _TARGET = re.compile(r"^[A-Za-z0-9._-]+@[A-Za-z0-9.:_-]+$")
 _SESSION = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 
 UNREACHABLE_LINE = "I couldn't reach Muse on the Pi just now."
+CUT_NOTE = "(Muse's answer was longer than the Pi relay carries; the rest is in the Muse app.)"
 
 
 @dataclass(frozen=True)
@@ -76,11 +80,11 @@ def parse(stdout: bytes) -> Answer:
         reply = json.loads(lines[-1]) if lines else None
     except ValueError:
         reply = None
-    if not isinstance(reply, dict):
+    if not isinstance(reply, dict) or "ok" not in reply:
         return Answer(False, UNREACHABLE_LINE)
     text = reply.get("reply") if isinstance(reply.get("reply"), str) else ""
     if reply.get("ok") and text.strip():
-        return Answer(True, text.strip())
+        return Answer(True, text.strip() + ("\n\n" + CUT_NOTE if reply.get("cut") else ""))
     if reply.get("ok"):
         return Answer(False, "Muse didn't answer that.")
     error = str(reply.get("error") or "")
@@ -91,29 +95,64 @@ def parse(stdout: bytes) -> Answer:
     return Answer(False, UNREACHABLE_LINE)
 
 
+def progress_of(line: bytes) -> str:
+    """A ``{"progress": "..."}`` line's words, one short line; "" for any other line."""
+    try:
+        item = json.loads(line)
+    except ValueError:
+        return ""
+    if not isinstance(item, dict) or "ok" in item or not isinstance(item.get("progress"), str):
+        return ""
+    return " ".join(item["progress"].split())[:200]
+
+
 async def ask(text: str, *, host: str | None = None, session: str | None = None,
-              timeout: float = ANSWER_SECS) -> Answer:
-    """One message to Muse through the Pi; Muse's answer, or a short line saying why not."""
+              timeout: float = ANSWER_SECS, on_progress: Optional[Callable[[str], None]] = None) -> Answer:
+    """One message to Muse through the Pi; Muse's answer, or a short line saying why not. ``on_progress`` hears
+    each thing Muse says it is doing while it works (a newer relay only)."""
     host = host if host is not None else target()
     if not host:
         return Answer(False, "Muse is off on this Mac (EVE_MUSE_PI).")
     try:
         proc = await asyncio.create_subprocess_exec(
             *command(host, session or session_id()), stdin=asyncio.subprocess.PIPE,
-            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, limit=1 << 20)
     except OSError as e:
         log.warning("muse: ssh did not start (%s)", type(e).__name__)
         return Answer(False, UNREACHABLE_LINE)
+    out: list[bytes] = []
+
+    async def read() -> None:
+        assert proc.stdin is not None and proc.stdout is not None
+        proc.stdin.write(text.encode())
+        await proc.stdin.drain()
+        proc.stdin.close()
+        async for line in proc.stdout:
+            out.append(line)
+            words = progress_of(line)
+            if words and on_progress is not None:
+                try:
+                    on_progress(words)
+                except Exception:  # noqa: BLE001 — a progress line never costs the answer
+                    log.exception("muse: progress not shown")
+
     try:
-        stdout, stderr = await asyncio.wait_for(proc.communicate(text.encode()), timeout)
+        await asyncio.wait_for(read(), timeout)
+        stderr = await proc.stderr.read() if proc.stderr is not None else b""
+        await proc.wait()
     except asyncio.TimeoutError:
         proc.kill()
         await proc.wait()
         log.warning("muse: no answer from the Pi in %.0f s", timeout)
         return Answer(False, "Muse didn't finish answering in time.")
-    answer = parse(stdout)
-    log.info("muse: asked (%d chars), %s, ssh exit %s", len(text), "answered" if answer.ok else "no answer",
-             proc.returncode)
+    except (OSError, ValueError) as e:            # a pipe gone, a line past the reader's limit
+        proc.kill()
+        await proc.wait()
+        log.warning("muse: reading the Pi failed (%s)", type(e).__name__)
+        return Answer(False, UNREACHABLE_LINE)
+    answer = parse(b"".join(out))
+    log.info("muse: asked (%d chars), %s (%d chars), ssh exit %s", len(text), "answered" if answer.ok else "no answer",
+             len(answer.text) if answer.ok else 0, proc.returncode)
     if not answer.ok and proc.returncode == 255:
         log.warning("muse: ssh failed: %s", stderr.decode("utf-8", "replace").strip()[:200])
     return answer

@@ -259,6 +259,8 @@ DISCARD_SECS = 2.0                    # and for at most this long
 ROLES = ("owner", "eve")
 KINDS = ("say", "tool", "image", "media")    # "media": a picture or file eve sent (TelegramInlet._send_media)
 VIAS = ("app", "telegram", "voice", "other")
+MUSE_PREFIX = "Muse: "                         # how telegram._muse_send keeps a Muse answer in the transcript
+MUSE_TITLE = "Muse"                            # telegram.MUSE_TITLE
 CURSOR_RE = re.compile(r"^(\d{4}-\d{2}-\d{2}):(-1|\d{1,9})$")
 REACTION_VERSION_RE = re.compile(r"^\d{1,16}$")         # a cursor's "~<version>" (link_reactions.Reactions.version)
 TURN_ID_RE = re.compile(r"^[A-Za-z0-9_-]{8,64}$")        # a client_id that is also a good turn id
@@ -438,13 +440,14 @@ def _row(day: str, i: int, line: dict[str, Any]) -> Optional[dict[str, Any]]:
     "claude on" relays the owner's words to a Claude Code session and its answers back (``kind: "relay"``). They
     used to show only in Telegram; with Telegram app-only (2026-10-08) the app is the one place left, so the owner's
     relayed line shows as theirs and Claude's answers as eve's (owner: "i had claude on ... why didnt it get
-    relayed")."""
+    relayed"). Muse's answers (eve's relay lines that start "Muse: ") show as eve's too, titled Muse."""
     from .transcripts import FORGOTTEN, TALK
 
     who, kind, ch = line.get("who"), line.get("kind"), line.get("ch")
-    relayed = kind == "relay" and who in ("owner", "claude")
+    muse = kind == "relay" and who == "eve" and str(line.get("text") or "").startswith(MUSE_PREFIX)
+    relayed = kind == "relay" and (who in ("owner", "claude") or muse)
     if relayed:
-        who, kind = ("eve" if who == "claude" else "owner"), "say"
+        who, kind = ("owner" if who == "owner" else "eve"), "say"
     if who not in ROLES or kind not in KINDS or ch not in TALK or line.get("text") == FORGOTTEN:
         return None
     try:
@@ -457,6 +460,10 @@ def _row(day: str, i: int, line: dict[str, Any]) -> Optional[dict[str, Any]]:
     elif via not in VIAS:
         via = {"voice": "voice", "telegram": "telegram"}.get(str(ch), "other")
     text = str(line.get("text") or "")
+    if muse:
+        # Muse's answer (telegram._muse_send), drawn as its live line was: titled Muse (owner, 2026-10-28: Muse
+        # answered, and the app lost it once its stream had closed).
+        text = f"**{MUSE_TITLE}**\n\n" + text[len(MUSE_PREFIX):]
     att = _att(line.get("att"))
     if who == "owner" and att:
         # The history's note for the attachments ("[image attached]", telegram._attached), which the relay keeps
