@@ -7,8 +7,10 @@ request per refresh:
 * ``needs`` and ``going``: the chief's open cards (link_chat.list_jobs), the ones waiting on the owner first, then
   the ones running; and the watcher's watches (watch.Watcher) that are not paused, as more of ``going``.
 * ``today``: the owner's calendar from now to the end of the local day, through the direct Google apps
-  (apps_mcp.AppsBridge, ``calendar__list_events``), only when the calendar is already signed in. The answer is kept
-  for ``CALENDAR_KEEP_SECS``, so the widget's refreshes do not each cost a Google call per calendar.
+  (apps_mcp.AppsBridge, ``calendar__list_events``), only when the calendar is already signed in, and the work
+  calendars connected through Composio (owner, 2026-10-29: "on eve widget i dont see calendar event from work
+  account"; the accounts and the read Updates uses, updates_composio.work_calendar_items). Each answer is kept for
+  ``CALENDAR_KEEP_SECS``, so the widget's refreshes do not each cost a Google call per calendar.
 * ``now``: what Spotify plays and whether the TV is on, from the Mini App server's own Music and TV remote cards.
 * sign-ins (owner, 2026-10-26: "send a notification on the widget when u need to login"): Google refused to refresh
   its sign-in (apps_mcp.refusals), or the Google sign-in or the app's 7-day install lapses within ``SIGNIN_WARN``
@@ -30,6 +32,7 @@ log = logging.getLogger(__name__)
 
 SOURCE_SECS = 4.0            # each quick source's own limit (the chief, the watches, Spotify, the TV)
 CALENDAR_SECS = 8.0          # the calendar reads every calendar the owner sees, one request each
+WORK_CALENDAR_SECS = 10.0    # the work calendars, one Composio call per account after listing the accounts
 CALENDAR_KEEP_SECS = 300.0   # a calendar answer is reused this long
 NEEDS_SHOWN = 6              # cards waiting on the owner, listed (``needs_you`` counts them all)
 GOING_SHOWN = 10             # running cards and watches, listed
@@ -154,7 +157,7 @@ def events_part(raw: Any, now: datetime) -> list[dict[str, Any]]:
     from .meet import events_in
 
     tomorrow = datetime.combine(now.date() + timedelta(days=1), datetime.min.time()).astimezone()
-    out, seen = [], set()
+    out, seen, shown = [], set(), set()
     for ev in events_in(raw):
         if ev.get("status") == "cancelled":
             continue
@@ -169,16 +172,41 @@ def events_part(raw: Any, now: datetime) -> list[dict[str, Any]]:
         if ends <= now or begins >= tomorrow:
             continue
         key = (ev.get("id"), begins)
-        if key in seen:
-            continue
-        seen.add(key)
         row: dict[str, Any] = {"title": _clip(ev.get("summary") or "Busy", TITLE_CHARS),
                                "start": begins.timestamp(), "end": ends.timestamp(), "all_day": all_day}
+        # a work meeting the owner is also invited to from the personal calendar shows once
+        if key in seen or (row["title"], row["start"]) in shown:
+            continue
+        seen.add(key)
+        shown.add((row["title"], row["start"]))
         if ev.get("location"):
             row["place"] = _clip(ev["location"], LINE_CHARS)
         out.append(row)
     out.sort(key=lambda r: (not r["all_day"], r["start"]))
     return out
+
+
+def _work_bridge(inlet: Any) -> Any:
+    """The Composio bridge Updates reads the work calendars through (the chat's ``_apps``), or None while Composio
+    or Updates' Composio sources are off (EVE_UPDATES_COMPOSIO)."""
+    from . import updates_composio
+
+    bridge = getattr(inlet, "_apps", None) if inlet is not None else None
+    return bridge if updates_composio.enabled() and updates_composio.usable(bridge) else None
+
+
+def work_calendar_raw(bridge: Any, now: datetime) -> list[Any]:
+    """Blocking. Today's events, from now to midnight, on each work calendar connected through Composio (the
+    accounts updates_composio reads: aliased other than the owner's own), as Google's ``items`` lists. Raises
+    updates_composio.SourceOff when none is connected, ReadFailed when the read failed."""
+    from . import updates_composio
+
+    reader = updates_composio.Reader(bridge)
+    tomorrow = datetime.combine(now.date() + timedelta(days=1), datetime.min.time()).astimezone()
+    return [reader.call("GOOGLECALENDAR_EVENTS_LIST", {
+        "calendarId": "primary", "timeMin": now.isoformat(), "timeMax": tomorrow.isoformat(), "singleEvents": True,
+        "orderBy": "startTime", "maxResults": 25}, account).get("items") or []
+        for _alias, account in reader.accounts_for("work_calendar")]
 
 
 def music_part(state: Any) -> list[dict[str, Any]]:
@@ -206,11 +234,15 @@ class Today:
     def __init__(self, *, now: Callable[[], datetime] = lambda: datetime.now().astimezone(),
                  mono: Callable[[], float] = time.monotonic, source_secs: float = SOURCE_SECS,
                  calendar_secs: float = CALENDAR_SECS, calendar_keep_secs: float = CALENDAR_KEEP_SECS,
+                 work_calendar_secs: float = WORK_CALENDAR_SECS,
                  app_expiry: Callable[[], Optional[datetime]] = _app_expiry) -> None:
         self._now, self._mono, self._app_expiry = now, mono, app_expiry
         self.source_secs, self.calendar_secs, self.calendar_keep_secs = source_secs, calendar_secs, calendar_keep_secs
+        self.work_calendar_secs = work_calendar_secs
         self._calendar: Optional[tuple[float, date, Any]] = None   # (when read, which day, the answer)
         self._reading: Optional[asyncio.Task] = None                # one calendar read at a time
+        self._work: Optional[tuple[float, date, Any]] = None        # the work calendars' answer, kept the same way
+        self._work_reading: Optional[asyncio.Task] = None
 
     async def _calendar_raw(self, apps: Any, now: datetime) -> Any:
         kept = self._calendar
@@ -231,6 +263,20 @@ class Today:
         self._calendar = (self._mono(), now.date(), raw)
         return raw
 
+    async def _work_raw(self, bridge: Any, now: datetime) -> Any:
+        kept = self._work
+        if kept is not None and kept[1] == now.date() and self._mono() - kept[0] < self.calendar_keep_secs:
+            return kept[2]
+        if self._work_reading is None or self._work_reading.done():
+            self._work_reading = asyncio.ensure_future(self._read_work(bridge, now))
+            self._work_reading.add_done_callback(lambda t: t.cancelled() or t.exception())
+        return await asyncio.shield(self._work_reading)
+
+    async def _read_work(self, bridge: Any, now: datetime) -> Any:
+        raw = await asyncio.to_thread(work_calendar_raw, bridge, now)
+        self._work = (self._mono(), now.date(), raw)
+        return raw
+
     async def gather(self, inlet: Any, server: Any) -> dict[str, Any]:
         """Every source at once, each within its limit; what failed is left out and named in ``sources``."""
         now = self._now()
@@ -238,6 +284,7 @@ class Today:
         watcher = getattr(inlet, "_watcher", None) if inlet is not None else None
         apps = getattr(inlet, "_direct", None) if inlet is not None else None
         calendar_on = apps is not None and "calendar" in (getattr(apps, "apps", None) or [])
+        work = _work_bridge(inlet)
         spotify = getattr(server, "spotify", None) if server is not None else None
         tv = getattr(server, "firetv", None) if server is not None else None
 
@@ -249,6 +296,8 @@ class Today:
             ("watches", (lambda: quick(lambda: watches_part(watcher))) if watcher is not None else None,
              self.source_secs),
             ("calendar", (lambda: self._calendar_raw(apps, now)) if calendar_on else None, self.calendar_secs),
+            ("work_calendar", (lambda: self._work_raw(work, now)) if work is not None else None,
+             self.work_calendar_secs),
             ("music", (lambda: spotify.panel({"action": "status"})) if spotify is not None else None,
              self.source_secs),
             ("tv", (lambda: tv.panel({"action": "status"})) if tv is not None else None, self.source_secs),
@@ -264,6 +313,8 @@ class Today:
             except asyncio.TimeoutError:
                 log.info("link today: %s took longer than %.0f s; left out", name, secs)
                 return name, "failed", None
+            except FileNotFoundError:     # updates_composio.SourceOff: no work calendar is connected
+                return name, "off", None
             except Exception as e:  # noqa: BLE001 — the type only; a source never fails the answer
                 log.warning("link today: %s failed (%s); left out", name, type(e).__name__)
                 return name, "failed", None
@@ -280,8 +331,9 @@ class Today:
         if value["watches"] is not None:
             out["going"] = out["going"] + value["watches"]
         out["going"] = out["going"][:GOING_SHOWN]
-        if value["calendar"] is not None:
-            out["today"] = events_part(value["calendar"], now)[:TODAY_SHOWN]
+        calendars = [value[k] for k in ("calendar", "work_calendar") if value[k] is not None]
+        if calendars:
+            out["today"] = events_part(calendars, now)[:TODAY_SHOWN]
         out["now"] = music_part(value["music"]) + tv_part(value["tv"])
         try:
             from . import apps_mcp

@@ -142,7 +142,8 @@ def test_today_gathers_jobs_watches_calendar_and_what_plays(tmp_path: Path) -> N
         server.spotify = FakePanel({"ok": True, "playing": True, "track": "A song", "artists": ["Someone", "Else"]})
         server.firetv = FakePanel({"ok": True, "power": "on", "app": "YouTube", "volume": 40, "line": "TV on"})
         got = await today(port, token)
-        assert got["sources"] == {"jobs": "ok", "watches": "ok", "calendar": "ok", "music": "ok", "tv": "ok"}
+        assert got["sources"] == {"jobs": "ok", "watches": "ok", "calendar": "ok", "work_calendar": "off", "music": "ok",
+                                  "tv": "ok"}
         assert got["at"] == NOW.timestamp()
         # the chief: three cards waiting on their Go, all needing the owner, none merely going
         assert got["needs_you"] == 3 and [n["id"] for n in got["needs"]] == ["c1", "c2", "c3"]
@@ -172,6 +173,65 @@ def test_today_gathers_jobs_watches_calendar_and_what_plays(tmp_path: Path) -> N
     asyncio.run(go())
 
 
+class FakeComposio:
+    """composio_tools.ComposioBridge as updates_composio.Reader uses it: the connected accounts and a read."""
+
+    can_read = True
+
+    def __init__(self, accounts: list[dict[str, Any]], events: list[dict[str, Any]]) -> None:
+        self.accounts, self.events = accounts, events
+        self.reads: list[tuple[str, dict[str, Any], str]] = []
+
+    def connected_accounts(self) -> list[dict[str, Any]]:
+        return self.accounts
+
+    def read_tool(self, slug: str, args: dict[str, Any], account: str) -> dict[str, Any]:
+        self.reads.append((slug, args, account))
+        return {"ok": True, "data": {"items": self.events}}
+
+
+WORK = {"toolkit": "googlecalendar", "id": "ca_work", "alias": "work", "status": "ACTIVE"}
+
+
+def test_today_adds_the_work_calendar_from_composio(tmp_path: Path) -> None:
+    composio = FakeComposio([WORK, {"toolkit": "googlecalendar", "id": "ca_me", "alias": "personal",
+                                    "status": "ACTIVE"}],
+                            [ev("Team sync", at(15), at(15, 30)), ev("Dentist", at(16), at(17)),      # also personal
+                             ev("Tomorrow's offsite", at(9, days=1), at(17, days=1))])
+
+    async def go() -> None:
+        inlet = FakeInlet(store_at(tmp_path))
+        inlet._direct = FakeApps()
+        inlet._apps = composio
+        server, port, token = await serve(tmp_path, inlet, today=today_door())
+        got = await today(port, token)
+        assert got["sources"]["calendar"] == "ok" and got["sources"]["work_calendar"] == "ok"
+        # merged in time order, the shared dentist once, tomorrow left out
+        assert [e["title"] for e in got["today"]] == ["Trip", "Design review", "Team sync", "Dentist"]
+        # only the work account is read (the personal one comes through the direct Google app), today only
+        assert [(slug, acct) for slug, _, acct in composio.reads] == [("GOOGLECALENDAR_EVENTS_LIST", "ca_work")]
+        args = composio.reads[0][1]
+        assert datetime.fromisoformat(args["timeMin"]) == NOW
+        assert datetime.fromisoformat(args["timeMax"]) == datetime(2026, 10, 9).astimezone()
+        got = await today(port, token)                               # kept: no second read
+        assert len(composio.reads) == 1 and len(got["today"]) == 4
+        await server.close()
+
+    asyncio.run(go())
+
+
+def test_no_work_calendar_connected_is_off(tmp_path: Path) -> None:
+    async def go() -> None:
+        inlet = FakeInlet(store_at(tmp_path))
+        inlet._apps = FakeComposio([{"toolkit": "slack", "id": "ca_s", "alias": "work", "status": "ACTIVE"}], [])
+        server, port, token = await serve(tmp_path, inlet, today=today_door())
+        got = await today(port, token)
+        assert got["sources"]["work_calendar"] == "off" and inlet._apps.reads == []
+        await server.close()
+
+    asyncio.run(go())
+
+
 def test_open_cards_that_do_not_need_the_owner_are_going(tmp_path: Path) -> None:
     c, _, _ = chief_at(tmp_path)
 
@@ -195,7 +255,7 @@ def test_nothing_on_is_an_empty_answer_not_an_error(tmp_path: Path) -> None:
         server, port, token = await serve(tmp_path, None, today=today_door())    # no chat, no chief, no cards
         got = await today(port, token)
         assert got == {"at": NOW.timestamp(), "needs_you": 0, "needs": [], "going": [], "today": [], "now": [],
-                       "sources": {k: "off" for k in ("jobs", "watches", "calendar", "music", "tv")}}
+                       "sources": {k: "off" for k in ("jobs", "watches", "calendar", "work_calendar", "music", "tv")}}
         await server.close()
 
     asyncio.run(go())
@@ -229,8 +289,8 @@ def test_a_slow_or_broken_source_is_left_out_and_the_rest_still_come(tmp_path: P
         started = time.monotonic()
         got = await today(port, token)
         assert time.monotonic() - started < 3.0                    # the slow card did not hold the answer
-        assert got["sources"] == {"jobs": "ok", "watches": "off", "calendar": "failed", "music": "failed",
-                                  "tv": "failed"}
+        assert got["sources"] == {"jobs": "ok", "watches": "off", "calendar": "failed", "work_calendar": "off",
+                                  "music": "failed", "tv": "failed"}
         assert got["needs_you"] == 3 and got["today"] == [] and got["now"] == []
         inlet.chief = None
         inlet._watcher = type("Broken", (), {"watches": property(lambda self: 1 / 0)})()

@@ -30,7 +30,9 @@ Add **eve** from the widget gallery. It comes in two sizes:
   - **Going**: the chief's other open jobs, then the watches that are on
     (prices, quotes, tickets: the label and the latest reading). A paused
     watch is left out. A watch that eve cannot read says "can't read it".
-  - **Today**: the calendar events left today. All-day events come first.
+  - **Today**: the calendar events left today, from your own Google calendar
+    and your work calendars connected through Composio, in one list. All-day
+    events come first. An event on both calendars shows once.
     Each event row starts with its time, or "now" while it is under way.
     Declined and cancelled events are left out.
   - **Now**: the Spotify track playing, and the TV's app while the TV is on.
@@ -60,6 +62,7 @@ reads.
 | `jobs` | the chief's open cards (`link_chat.list_jobs`) | the chief is off |
 | `watches` | `watch.Watcher.watches` | the watcher is off |
 | `calendar` | `calendar__list_events` from now to midnight, through the direct Google apps (`apps_mcp.AppsBridge`) | the calendar is not signed in |
+| `work_calendar` | `GOOGLECALENDAR_EVENTS_LIST` from now to midnight, through Composio, for each calendar account aliased other than `personal` (the accounts [Updates](updates.md) reads) | Composio is off, `EVE_UPDATES_COMPOSIO=0`, or no work calendar is connected |
 | `music` | the Mini App's Music card, `{"action": "status"}` | no Spotify login |
 | `tv` | the Mini App's TV remote, `{"action": "status"}` | no TV |
 
@@ -72,15 +75,16 @@ The answer:
            {"id": "w1", "kind": "watch", "title": "...", "line": "$320.00"}],
  "today": [{"title": "...", "start": 1760000000.0, "end": 1760003600.0, "all_day": false, "place": "..."}],
  "now": [{"kind": "music", "title": "...", "line": "..."}, {"kind": "tv", "title": "TV", "line": "YouTube"}],
- "sources": {"jobs": "ok", "watches": "ok", "calendar": "ok", "music": "off", "tv": "failed"}}
+ "sources": {"jobs": "ok", "watches": "ok", "calendar": "ok", "work_calendar": "ok", "music": "off",
+             "tv": "failed"}}
 ```
 
 The daemon reads every source at the same time, and each source has its own
-time limit: 4 s, or 8 s for the calendar, which makes one request per
-calendar. A source that is off, slow or broken is left out of the lists and
+time limit: 4 s, 8 s for the calendar, which makes one request per
+calendar, and 10 s for the work calendars. A source that is off, slow or broken is left out of the lists and
 is named in `sources` as `"off"` or `"failed"`. It never fails the whole
 answer. A calendar read that takes too long still finishes in the background.
-Its result is used on the next refresh. The daemon keeps a calendar answer for
+Its result is used on the next refresh. The daemon keeps each calendar answer for
 5 minutes, so frequent refreshes do not each call Google. The log has counts
 only, never titles.
 
@@ -150,7 +154,8 @@ entitlement. Reinstall after that build.
 - `bridge/tests/test_link_today.py`: the link token, any Origin refused, GET
   only; each source gathered and shaped; open jobs that do not need the owner
   listed as going; nothing on as an empty answer; a calendar that is not signed
-  in reported as off; a slow or broken source left out while the rest still
+  in reported as off; the work calendar merged in, read once per 5 minutes,
+  and off when none is connected; a slow or broken source left out while the rest still
   come; and a slow calendar read kept for the next refresh.
 - `sh ios/EveLink/Tests/run.sh` (`TODAY_OK`): the decoding, events that
   ended dropped, the section budget and its priority, the medium rows, the
