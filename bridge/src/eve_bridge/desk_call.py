@@ -131,18 +131,27 @@ Send = Callable[[dict[str, Any]], Awaitable[Any]]
 
 PCM_PIECE_BYTES = 4800     # 100 ms of 24 kHz mono int16 per {"cmd":"pcm"} line (6.4 KB of base64)
 LEAD_SECS = 3.0            # how far ahead of the board's playback the daemon may be; its buffer holds 12 s
+# The fastest the voice goes out, in multiples of real time. The board's USB serial (ESP32-S3 USB-Serial/JTAG,
+# arduino-esp32 HWCDC) has no backpressure: its interrupt takes every USB packet and drops the bytes once the
+# 16 KB receive queue is full. Kokoro makes 3 s of speech in about 0.5 s, so the whole 3 s lead (about 190 KB of
+# lines) went out at once, the first phrase played and the rest was lost (owner, 2026-11-07: "it says like one
+# phrase and then cuts"). At twice real time the lines arrive at about 128 KB/s, and 16 KB covers a 125 ms stall
+# of the board's loop. The lead still reaches LEAD_SECS, after about 3 s of speech.
+SEND_SPEED = 2.0
 
 
 class BoardSpeaker:
     """eve's reply on the Voice PE's speaker (firmware chirp.cpp, the voice buffer). The audio goes as base64
-    lines of at most ``PCM_PIECE_BYTES``, paced to stay at most ``LEAD_SECS`` ahead of real time: speech
-    arrives faster than it plays, and the board's buffer is finite. A flush drops what the board still holds."""
+    lines of at most ``PCM_PIECE_BYTES``, at most ``SEND_SPEED`` times real time (the board's serial input drops
+    a burst) and at most ``LEAD_SECS`` ahead of real time (speech arrives faster than it plays, and the board's
+    buffer is finite). A flush drops what the board still holds."""
 
     def __init__(self, send: Send, clock: Callable[[], float] = time.monotonic,
                  sleep: Callable[[float], Awaitable[Any]] = asyncio.sleep) -> None:
         self.send, self.clock, self.sleep = send, clock, sleep
         self.started: Optional[float] = None    # when the current burst began playing, roughly
         self.queued = 0.0                       # seconds of audio sent in the current burst
+        self.next_at = 0.0                      # the earliest the next piece may go (SEND_SPEED)
         self._odd = b""                         # a reply's last byte, half a sample, waiting for the next reply
 
     def ahead(self) -> float:
@@ -159,13 +168,16 @@ class BoardSpeaker:
         self._odd = pcm[end:]
         for i in range(0, end, PCM_PIECE_BYTES):
             piece = pcm[i:min(i + PCM_PIECE_BYTES, end)]
-            if self.ahead() == 0.0:              # the board ran dry: a new burst starts now
-                self.started, self.queued = self.clock(), 0.0
-            wait = self.ahead() + len(piece) / BYTES_PER_SEC - LEAD_SECS   # room for the whole piece
+            secs = len(piece) / BYTES_PER_SEC
+            wait = max(self.ahead() + secs - LEAD_SECS,      # room for the whole piece on the board
+                       self.next_at - self.clock())          # and no faster than its serial input takes
             if wait > 0:
                 await self.sleep(wait)
+            if self.ahead() == 0.0:              # the board ran dry: a new burst starts now
+                self.started, self.queued = self.clock(), 0.0
             await self.send({"cmd": "pcm", "d": base64.b64encode(piece).decode("ascii")})
-            self.queued += len(piece) / BYTES_PER_SEC
+            self.queued += secs
+            self.next_at = self.clock() + secs / SEND_SPEED
 
     async def flush(self) -> None:
         self.started, self.queued, self._odd = None, 0.0, b""

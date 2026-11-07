@@ -45,8 +45,8 @@ def test_missing_model_files_mean_no_local_voice(tmp_path):
 
 
 def _voice(engine):
-    v = phone_call.make_voice({"OPENROUTER_API_KEY": "or-key"})
-    assert v.kokoro_env == {}                     # on by default
+    v = phone_call.make_voice({"OPENROUTER_API_KEY": "or-key", "EVE_CALL_TTS": "kokoro"})
+    assert v.kokoro_env == {}                     # on when asked for
     v._kokoro, v._kokoro_tried = (kokoro_voice.KokoroVoice(engine) if engine else None), True
     v._openrouter_stream = lambda text: iter([b"OR"])
     return v

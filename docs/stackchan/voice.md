@@ -145,8 +145,9 @@ daemon ─{"cmd":"agent","state":…}─▶ robot: wake · listening · thinking
 
 ## eve's voice: Kokoro
 
-Since 2026-11-06, eve speaks English only, and the words are made on the Mac. This covers the voice on Voice PE
-presses, Eve Link calls, the Action Button and the app's push-to-talk. Kokoro-82M (Apache-2.0) runs through
+Since 2026-11-06, eve speaks English only. Its voice is OpenRouter's `deepgram/aura-2` (the default again since
+2026-11-07: the owner preferred it). Kokoro, made on the Mac, is opt-in with `EVE_CALL_TTS=kokoro`. It covers the
+voice on Voice PE presses, Eve Link calls, the Action Button and the app's push-to-talk. Kokoro-82M (Apache-2.0) runs through
 kokoro-onnx (`bridge/src/eve_bridge/kokoro_voice.py`). It is offline and free.
 
 - **English only.** The phonemizer is always American English. The voice must be one of Kokoro's English speakers
@@ -158,7 +159,7 @@ kokoro-onnx (`bridge/src/eve_bridge/kokoro_voice.py`). It is offline and free.
   `deepgram/aura-2` (an English voice) says the sentence instead.
 - **Speed.** On an M-series Mac, a short reply is ready in 0.2 s and a long sentence in about 0.75 s. Aura-2 starts
   sounding in about 0.3 s. A reply is cut at commas and full stops, and each piece plays while the next one is made.
-- **Knobs** (`~/.config/eve-bridge/env`): `EVE_CALL_TTS=openrouter` turns Kokoro off. `EVE_KOKORO_VOICE` picks the
+- **Knobs** (`~/.config/eve-bridge/env`): `EVE_CALL_TTS=kokoro` turns Kokoro on (default `openrouter`). `EVE_KOKORO_VOICE` picks the
   speaker (default `af_heart`). `EVE_KOKORO_SPEED` sets the speed (0.5 to 2.0, default 1.0). `EVE_KOKORO_DIR` moves
   the model files.
 

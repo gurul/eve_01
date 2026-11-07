@@ -444,8 +444,9 @@ class OpenAIVoice:
         self.live = False                               # LiveEars: EVE_CALL_LIVE_STT=1 and an OpenAI key
         self.live_key = ""                              # the OpenAI key the live ears need (opt-in only)
         self.or_key, self.or_model, self.or_voice = api_key, DEFAULT_OR_TTS_MODEL, DEFAULT_OR_TTS_VOICE
-        # Kokoro on this Mac speaks first (kokoro_voice.py; owner, 2026-11-06: "use kokoro"), loaded on the first
-        # sentence; None in kokoro_env keeps OpenRouter's voice alone (EVE_CALL_TTS=openrouter)
+        # Kokoro on this Mac speaks first when EVE_CALL_TTS=kokoro (kokoro_voice.py), loaded on the first sentence.
+        # Off by default: the owner went back to deepgram/aura-2 on 2026-11-07 ("switch back to deepgram dont like
+        # this voice"). None in kokoro_env keeps OpenRouter's voice alone.
         self.kokoro_env: Optional[dict[str, str]] = None
         self._kokoro: Any = None
         self._kokoro_tried = False
@@ -526,7 +527,7 @@ def make_voice(environ: Any = None) -> Optional[Voice]:
         return None
     voice.or_model = (env.get("EVE_CALL_OR_TTS_MODEL") or DEFAULT_OR_TTS_MODEL).strip()
     voice.or_voice = (env.get("EVE_CALL_OR_VOICE") or DEFAULT_OR_TTS_VOICE).strip()
-    if (env.get("EVE_CALL_TTS") or "kokoro").strip().lower() != "openrouter":
+    if (env.get("EVE_CALL_TTS") or "openrouter").strip().lower() == "kokoro":
         voice.kokoro_env = {k: env[k] for k in ("EVE_KOKORO_DIR", "EVE_KOKORO_VOICE", "EVE_KOKORO_SPEED") if env.get(k)}
     if _on(env.get("EVE_CALL_LIVE_STT")):
         voice.live_key = (env.get(LIVE_EARS_KEY_ENV) or "").strip()

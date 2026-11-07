@@ -104,7 +104,11 @@ The board decodes each line straight into a 12 s stream buffer in PSRAM,
 skipping the JSON parser. The audio task waits for 150 ms of audio, then
 plays it upsampled to 48 kHz at the dial's volume. The daemon paces itself
 so it is never more than 3 s ahead of playback (`LEAD_SECS`), because
-speech is made faster than it plays and the buffer is finite. The sound
+speech is made faster than it plays and the buffer is finite. It also never
+sends faster than twice real time (`SEND_SPEED`). The board's USB serial
+input has no backpressure. Its 16 KB receive queue silently drops whatever
+arrives while it is full. Kokoro makes 3 s of speech in half a second, and
+sent all at once, only the first phrase got through (2026-11-07). The sound
 setting (beeps off) does not mute the voice.
 
 The `[alive]` line reports `voice_dropped`: bytes that arrived with the
@@ -167,7 +171,7 @@ daemon sends `{"cmd":"music_mode","on":…}`, `{"cmd":"ring_level",…}` and
 ### Language
 
 eve is locked to English (2026-11-06). Voice PE presses are always transcribed as English, and no setting changes
-that (`EVE_CALL_LANGUAGE` was removed). eve's voice is Kokoro on the Mac, which reads everything as English
+that (`EVE_CALL_LANGUAGE` was removed). eve's voice is OpenRouter's English `deepgram/aura-2`
 ([voice](stackchan/voice.md#eves-voice-kokoro)). Before the lock, the transcription model guessed the language of each press, and a short press
 was sometimes heard as another language, so eve answered in that language.
 

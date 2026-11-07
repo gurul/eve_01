@@ -116,8 +116,8 @@ Code: `bridge/src/eve_bridge/phone_call.py` (the WebSocket, the call, the ears a
 `make_stream_creator` in `computer_agent.py`, and the call screen in `miniapp_page.html`. Tests:
 `bridge/tests/test_phone_call.py`, `bridge/tests/test_phone_call_turns.py` and the call tests in `test_telegram.py`. Spend shows as "phone calls".
 Switches: `EVE_CALL_LIVE_STT` (off; `1` with an `OPENAI_API_KEY` turns on OpenAI's live ears),
-`EVE_CALL_TTS` (`kokoro`, the default: eve's local English voice, [voice](voice.md#eves-voice-kokoro); `openrouter` for
-`deepgram/aura-2` alone), `EVE_KOKORO_VOICE`, `EVE_KOKORO_SPEED`, `EVE_CALL_OR_TTS_MODEL`, `EVE_CALL_OR_VOICE`,
+`EVE_CALL_TTS` (`openrouter`, the default: `deepgram/aura-2`; `kokoro` for eve's local English voice,
+[voice](voice.md#eves-voice-kokoro)), `EVE_KOKORO_VOICE`, `EVE_KOKORO_SPEED`, `EVE_CALL_OR_TTS_MODEL`, `EVE_CALL_OR_VOICE`,
 `EVE_CALL_STT_MODEL`. Calls and Voice PE presses are always transcribed as English; no switch changes that.
 
 ## Lights

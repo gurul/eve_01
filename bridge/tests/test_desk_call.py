@@ -349,8 +349,31 @@ async def test_after_a_pause_the_board_has_played_out_and_a_new_burst_starts() -
     await spk.play(b"\x00\x00" * phone_call.SAMPLE_RATE)          # 1 s
     clock.t += 5                                                    # the board played it out long ago
     assert spk.ahead() == 0.0
+    clock.slept.clear()
     await spk.play(b"\x00\x00" * phone_call.SAMPLE_RATE)
-    assert clock.slept == [] and abs(spk.ahead() - 1.0) < 1e-9
+    # only the SEND_SPEED pacing waits (9 gaps of 50 ms), never the lead: the board starts again from empty
+    assert abs(sum(clock.slept) - 0.45) < 1e-6
+    assert abs(spk.ahead() - (1.0 - 0.45)) < 1e-6
+
+
+@run
+async def test_the_voice_never_reaches_the_board_faster_than_twice_real_time() -> None:
+    # The board's USB serial drops bytes once its 16 KB receive queue is full. Kokoro made 3 s of speech in half a
+    # second and all ~190 KB went at once: the first phrase played, the rest was lost (owner, 2026-11-07).
+    clock = Clock()
+    sent_at: list[float] = []
+
+    async def send(obj: dict[str, Any]) -> None:
+        sent_at.append(clock.t)
+
+    spk = desk_call.BoardSpeaker(send, clock=clock, sleep=clock.sleep)
+    await spk.play(b"\x00\x00" * phone_call.SAMPLE_RATE * 3)       # 3 s, handed over all at once
+    gaps = [b - a for a, b in zip(sent_at, sent_at[1:])]
+    assert len(sent_at) == 30
+    assert min(gaps) >= 0.1 / desk_call.SEND_SPEED - 1e-9           # a 100 ms piece every 50 ms at most
+    # never more than 16 KB of lines (about 2.5 pieces) in any 50 ms
+    window = [sum(1 for t in sent_at if s <= t < s + 0.05) for s in sent_at]
+    assert max(window) * 6400 <= 16384
 
 
 @run

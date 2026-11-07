@@ -375,8 +375,8 @@ def test_the_voice_is_openrouters_alone_and_a_failed_sentence_raises(monkeypatch
         yield Resp(status[0])
 
     monkeypatch.setattr(httpx, "stream", fake_stream)
-    v = phone_call.make_voice({"OPENROUTER_API_KEY": "or-key", "EVE_CALL_TTS": "openrouter"})
-    assert v.kokoro() is None                   # Kokoro off: OpenRouter's voice alone
+    v = phone_call.make_voice({"OPENROUTER_API_KEY": "or-key"})
+    assert v.kokoro() is None                   # Kokoro off by default: OpenRouter's voice alone
     with pytest.raises(RuntimeError, match="503"):
         b"".join(v.speak_stream("hello"))
     status[0] = 200
