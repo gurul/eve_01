@@ -64,7 +64,9 @@ Hold to talk works like **Call eve** in the Telegram Mini App
    red. Press again while it speaks to stop it and talk. The dial sets the
    voice's volume. The speaker's analog gain is +6 dB over ESPHome's
    (`SB_SPEAKER_GAIN_DB` in `sb_config.h`, 2026-11-06), so the top of the dial
-   is louder than stock. Flash the firmware to apply it.
+   is louder than stock. A soft limiter on eve's voice (`limitVoice` in
+   `chirp.cpp`) rounds off the loudest peaks below the level where that gain
+   clipped, so loud words no longer cut off. Flash the firmware to apply it.
 
 The daemon side is `bridge/src/eve_bridge/desk_call.py`. It runs
 `phone_call.Call` unchanged, with a stand-in for the phone's WebSocket that

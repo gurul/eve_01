@@ -192,6 +192,21 @@ void play(const Req &r) {
   }
 }
 
+// Soft limiter for eve's voice (owner, 2026-11-06: "it's louder, there is distortion meaning it cuts off").
+// The speaker's analog gain is +6 dB (SB_SPEAKER_GAIN_DB), so a sample above half of full scale clipped in the
+// output driver. Below LIMIT_KNEE a sample passes unchanged; above it, the curve bends smoothly (slope 1 at the
+// knee) toward LIMIT_CEIL, which it never reaches. Normal speech keeps the full +6 dB; only the peaks are rounded.
+constexpr float LIMIT_KNEE = 11000.0f;
+constexpr float LIMIT_CEIL = 16000.0f;  // about half of full scale: the analog stage's clean limit at +6 dB
+
+int16_t limitVoice(float x) {
+  float a = fabsf(x);
+  if (a <= LIMIT_KNEE) return (int16_t)x;
+  float u = (a - LIMIT_KNEE) / (LIMIT_CEIL - LIMIT_KNEE);
+  float y = LIMIT_KNEE + (LIMIT_CEIL - LIMIT_KNEE) * u / (1.0f + u);
+  return (int16_t)(x < 0 ? -y : y);
+}
+
 // Plays one 10 ms block of voice if there is one. Returns false when there is nothing to play.
 bool playVoiceBlock() {
   if (voiceFlush) {
@@ -217,8 +232,8 @@ bool playVoiceBlock() {
   float gain = volume / 10.0f;
   for (size_t i = 0; i < got; i++) {
     // x2 to 48 kHz: the midpoint, then the sample.
-    out[i * 2] = (int16_t)(((int32_t)voicePrev + in[i]) / 2 * gain);
-    out[i * 2 + 1] = (int16_t)(in[i] * gain);
+    out[i * 2] = limitVoice(((int32_t)voicePrev + in[i]) / 2 * gain);
+    out[i * 2 + 1] = limitVoice(in[i] * gain);
     voicePrev = in[i];
   }
   sbI2sSpeakerWriteMono(out, got * 2);
