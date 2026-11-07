@@ -79,7 +79,7 @@ Historical measurements from 2026-09-25 (owner: "how can we improve latency"). B
 |---|---|---|
 | Your words to text | OpenAI realtime transcription (`gpt-4o-mini-transcribe`), one session per call, fed while you talk; the server transcribes at pauses | 0.39 to 0.50 s after release, whatever the press's length (uploading after release: 0.51 to 0.92 s, growing with length) |
 | The answer | The chat's model (`gpt-6-luna`) streamed: each sentence is spoken as soon as it is written; the prompt cache is warmed when the call opens | first sentence 1.9 s for a plain answer; tool turns take longer (each tool is real work) |
-| Text to voice | Deepgram Aura-2 through OpenRouter (`deepgram/aura-2`, voice `aura-2-thalia-en`), streamed; until 2026-10-08 OpenAI `gpt-4o-mini-tts` if it failed (now a failed sentence is not spoken, and the chat has it) | first sound 0.31 to 0.50 s (OpenAI streamed: 1.15 s; Kokoro on OpenRouter: 7 to 10 s) |
+| Text to voice | Kokoro-82M on the Mac since 2026-11-06 ([voice](voice.md#eves-voice-kokoro)); if it is missing or fails, Deepgram Aura-2 through OpenRouter (`deepgram/aura-2`, voice `aura-2-thalia-en`), streamed; until 2026-10-08 OpenAI `gpt-4o-mini-tts` if it failed (now a failed sentence is not spoken, and the chat has it) | first sound 0.31 to 0.50 s (OpenAI streamed: 1.15 s; Kokoro on OpenRouter: 7 to 10 s) |
 
 Every press is timed in the daemon's log (`call: press … → heard in … → first reply … → first sound …`).
 None of OpenRouter's transcription models beat the live session (Deepgram Nova-3 0.69 s, Whisper Large V3
@@ -116,9 +116,9 @@ Code: `bridge/src/eve_bridge/phone_call.py` (the WebSocket, the call, the ears a
 `make_stream_creator` in `computer_agent.py`, and the call screen in `miniapp_page.html`. Tests:
 `bridge/tests/test_phone_call.py`, `bridge/tests/test_phone_call_turns.py` and the call tests in `test_telegram.py`. Spend shows as "phone calls".
 Switches: `EVE_CALL_LIVE_STT` (off; `1` with an `OPENAI_API_KEY` turns on OpenAI's live ears),
-`EVE_CALL_OR_TTS_MODEL`, `EVE_CALL_OR_VOICE`, `EVE_CALL_STT_MODEL`, `EVE_CALL_LANGUAGE` (`en`: the language
-calls and Voice PE presses are transcribed in. Without it, the model guesses from each press and sometimes
-hears English as another language. Set it empty to let the model guess again).
+`EVE_CALL_TTS` (`kokoro`, the default: eve's local English voice, [voice](voice.md#eves-voice-kokoro); `openrouter` for
+`deepgram/aura-2` alone), `EVE_KOKORO_VOICE`, `EVE_KOKORO_SPEED`, `EVE_CALL_OR_TTS_MODEL`, `EVE_CALL_OR_VOICE`,
+`EVE_CALL_STT_MODEL`. Calls and Voice PE presses are always transcribed as English; no switch changes that.
 
 ## Lights
 

@@ -135,7 +135,7 @@ the call's optional live ears.
 | Meet summary, room-notes transcription and summary (`meet.py`, `notes.py`) | OpenAI | OpenRouter (`openai/gpt-4o-mini-transcribe` for the notes) |
 | Room-notes speaker labels (`notes.py` diarization) | `gpt-4o-transcribe-diarize` | **off**: OpenRouter has no diarizing transcriber; notes are a plain transcript |
 | Call ears (`phone_call.py`) | OpenAI realtime transcription (live ears), upload as fallback | each press is uploaded to OpenRouter (`openai/gpt-4o-transcribe`, `language=en`); the live ears are opt-in (`EVE_CALL_LIVE_STT=1` and an `OPENAI_API_KEY`) |
-| Call voice (`phone_call.py`) | `deepgram/aura-2` on OpenRouter, OpenAI `gpt-4o-mini-tts` as fallback | `deepgram/aura-2` only; a failed sentence is not spoken, and the chat still has it |
+| Call voice (`phone_call.py`) | `deepgram/aura-2` on OpenRouter, OpenAI `gpt-4o-mini-tts` as fallback | Kokoro on the Mac since 2026-11-06 ([voice](stackchan/voice.md#eves-voice-kokoro)), `deepgram/aura-2` when Kokoro is missing or fails; a failed sentence is not spoken, and the chat still has it |
 | Tutor (`learning/tutor.py`) | OpenAI by default, OpenRouter opt-in | OpenRouter only (`openai/gpt-6-astra`) |
 | App builder (`apps_maker.py`, `miniapp.py`) | `AsyncAnthropic()` on `ANTHROPIC_API_KEY` | `openrouter.anthropic_client()`, `anthropic/claude-opus-5.5`; the Mini App turns on with `OPENROUTER_API_KEY` |
 | Web search answer model, watch model (`websearch.py`, `watch.py`) | `openai/*` ids refused | `openai/*` ids allowed; without an OpenRouter key, search is `off` |

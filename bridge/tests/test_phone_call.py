@@ -375,7 +375,8 @@ def test_the_voice_is_openrouters_alone_and_a_failed_sentence_raises(monkeypatch
         yield Resp(status[0])
 
     monkeypatch.setattr(httpx, "stream", fake_stream)
-    v = phone_call.make_voice({"OPENROUTER_API_KEY": "or-key"})
+    v = phone_call.make_voice({"OPENROUTER_API_KEY": "or-key", "EVE_CALL_TTS": "openrouter"})
+    assert v.kokoro() is None                   # Kokoro off: OpenRouter's voice alone
     with pytest.raises(RuntimeError, match="503"):
         b"".join(v.speak_stream("hello"))
     status[0] = 200
@@ -396,11 +397,12 @@ def test_make_voice_needs_only_the_openrouter_key_and_the_live_ears_are_opt_in()
     assert v.live and isinstance(v.live_ears(), phone_call.LiveEars) and v.live_ears().api_key == "sk-test"
 
 
-def test_calls_are_transcribed_in_english_unless_told_otherwise():
-    # a short Voice PE press, left to guess, was heard as Chinese and answered in Chinese (2026-09-27)
+def test_calls_are_always_transcribed_in_english():
+    # a short Voice PE press, left to guess, was heard as Chinese and answered in Chinese (2026-09-27); locked to
+    # English 2026-11-06: the old EVE_CALL_LANGUAGE switch is ignored
     assert phone_call.make_voice({"OPENROUTER_API_KEY": "or-test"}).language == "en"
-    assert phone_call.make_voice({"OPENROUTER_API_KEY": "or-test", "EVE_CALL_LANGUAGE": "ES"}).language == "es"
-    assert phone_call.make_voice({"OPENROUTER_API_KEY": "or-test", "EVE_CALL_LANGUAGE": ""}).language == ""
+    assert phone_call.make_voice({"OPENROUTER_API_KEY": "or-test", "EVE_CALL_LANGUAGE": "ES"}).language == "en"
+    assert phone_call.make_voice({"OPENROUTER_API_KEY": "or-test", "EVE_CALL_LANGUAGE": ""}).language == "en"
 
     asked: list = []
 

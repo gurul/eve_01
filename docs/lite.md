@@ -196,8 +196,8 @@ Mac. It lasts 5 years; the certificate the LAN door serves lasts 397 days.
   as in the iPhone app.
 - **Photos, PDFs, text and Office files** in the chat, up to 4 a message and 20 MB each, kept 24 hours. A HEIC or AVIF
   photo is turned into a JPEG in the browser when the browser can read it.
-- **Push-to-talk voice:** speech to text with `gpt-4o-transcribe` and eve's voice with `deepgram/aura-2`, both through
-  OpenRouter.
+- **Push-to-talk voice:** speech to text with `gpt-4o-transcribe` (always English) through OpenRouter, and eve's voice
+  with Kokoro on the Mac (`deepgram/aura-2` on OpenRouter when Kokoro is not set up).
 - **Memory:** every line kept in transcripts, records (with no git history), the chat log, the mem0 index on
   OpenRouter's embedder, the nightly dream, "remember that" and "forget that".
 - **Web search** (Perplexity through OpenRouter, Exa when it fails) and **science search**.

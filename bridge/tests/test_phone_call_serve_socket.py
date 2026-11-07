@@ -22,7 +22,8 @@ from eve_bridge.phone_call import OP_BIN, OP_TEXT, Closed, PhoneCalls
 TOKEN = "call-token-CANARY-NOT-A-KEY-7f3c"
 # phone_call.py at d419b37 (git show d419b37:bridge/src/eve_bridge/phone_call.py | shasum -a 256), the commit eve
 # lite branched from. If phone_call.py changes on purpose outside serve_socket, record the new file's hash here.
-BASE_SHA256 = "674b3c9ae202e6f8b9ade4de7237eba8021e4d3e936dc2a117d3cfdefa10f958"
+# Re-recorded 2026-11-06: English locked (no EVE_CALL_LANGUAGE) and Kokoro as the call's voice.
+BASE_SHA256 = "15e4ad64ed021d499ff0ffa273efe2589f369c3fcd881475f193abe1811a29c3"
 
 
 def without_serve_socket(text: str) -> str:

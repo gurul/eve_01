@@ -70,6 +70,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--version", action="version", version=f"eve-bridge {__version__}")
     sub = parser.add_subparsers(dest="cmd")
     sub.add_parser("codex-home", help="Prepare Eve's separate Codex API-key home without changing your own sign-in")
+    sub.add_parser("kokoro-setup", help="Download eve's local English voice (Kokoro-82M) into ~/.config/eve-bridge/kokoro")
 
     p_daemon = sub.add_parser("daemon", help="Run the bridge daemon (connects to BLE device, serves hooks)")
     p_daemon.add_argument("--socket", default=None, help="IPC path or host:port override")
@@ -618,6 +619,9 @@ def main(argv: list[str] | None = None) -> int:
         return _run_notes(args)
     if args.cmd == "move":
         return _run_move(args)
+    if args.cmd == "kokoro-setup":
+        from . import kokoro_voice
+        return kokoro_voice.setup()
     if args.cmd == "head-cal":
         from . import head_cal
         return head_cal.serve(args.port, args.socket, open_browser=not args.no_open)

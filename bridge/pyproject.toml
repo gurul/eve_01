@@ -62,6 +62,10 @@ dependencies = [
     # sherpa-onnx 1.13.8 moved libonnxruntime into sherpa-onnx-core, but uv reads metadata
     # without that requirement (1.13.8, 2026-10-09), so a fresh venv could not import it.
     "sherpa-onnx-core>=1.13",
+    # eve's voice on this Mac (kokoro_voice.py, owner 2026-11-06: "use kokoro"): Kokoro-82M through kokoro-onnx
+    # (0.6.1, Apache-2.0 model, MIT package); its onnxruntime loads beside sherpa-onnx's (checked 2026-11-06).
+    # Imported lazily; the model files come from `eve-bridge kokoro-setup`.
+    "kokoro-onnx>=0.6.1",
     "sentencepiece>=0.2",
     "sounddevice>=0.5.6",
     "numpy>=2",

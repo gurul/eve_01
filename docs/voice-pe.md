@@ -62,7 +62,9 @@ Hold to talk works like **Call eve** in the Telegram Mini App
 3. eve reads the reply aloud on the **Voice PE's speaker**, or on the Mac
    speaker if no controller is connected when the call starts. The ring pulses
    red. Press again while it speaks to stop it and talk. The dial sets the
-   voice's volume.
+   voice's volume. The speaker's analog gain is +6 dB over ESPHome's
+   (`SB_SPEAKER_GAIN_DB` in `sb_config.h`, 2026-11-06), so the top of the dial
+   is louder than stock. Flash the firmware to apply it.
 
 The daemon side is `bridge/src/eve_bridge/desk_call.py`. It runs
 `phone_call.Call` unchanged, with a stand-in for the phone's WebSocket that
@@ -162,10 +164,10 @@ daemon sends `{"cmd":"music_mode","on":…}`, `{"cmd":"ring_level",…}` and
 
 ### Language
 
-eve transcribes Voice PE presses as English (`EVE_CALL_LANGUAGE=en`, the default). Before this was set,
-the transcription model guessed the language of each press, and a short press was sometimes heard as another
-language, so eve answered in that language. To use another language, set its ISO-639-1 code in
-`~/.config/eve-bridge/env`. Set it empty to let the model guess again.
+eve is locked to English (2026-11-06). Voice PE presses are always transcribed as English, and no setting changes
+that (`EVE_CALL_LANGUAGE` was removed). eve's voice is Kokoro on the Mac, which reads everything as English
+([voice](stackchan/voice.md#eves-voice-kokoro)). Before the lock, the transcription model guessed the language of each press, and a short press
+was sometimes heard as another language, so eve answered in that language.
 
 Even told "en", the model sometimes answers near-silence with a syllable in another script ("あ。" on a 7 s
 phone call, 2026-10-08). With English set, a call drops words whose letters are mostly not Latin

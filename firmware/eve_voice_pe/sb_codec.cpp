@@ -141,6 +141,18 @@ bool sbCodecBegin() {
     return false;
   }
 
+  // Louder speaker (SB_SPEAKER_GAIN_DB): page 1 output driver gains, bit 6 clear = unmuted, bits 5:0 signed dB.
+  uint8_t hp = static_cast<uint8_t>(constrain(SB_SPEAKER_GAIN_DB, -6, 14)) & 0x3F;
+  uint8_t lo = static_cast<uint8_t>(constrain(SB_SPEAKER_GAIN_DB, -6, 29)) & 0x3F;
+  ok = writeReg(0x00, 0x01)                             // Select page 1
+       && writeReg(0x10, hp) && writeReg(0x11, hp)       // HPL, HPR
+       && writeReg(0x12, lo) && writeReg(0x13, lo)       // LOL, LOR
+       && writeReg(0x00, 0x00);                          // Back to page 0
+  if (!ok) {
+    Serial.println("AIC3204 speaker gain setup failed.");
+    return false;
+  }
+
   digitalWrite(SB_PIN_AMP_ENABLE, HIGH);
   Serial.println("AIC3204 ready. Speaker amplifier on.");
   return true;

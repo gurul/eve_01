@@ -105,7 +105,9 @@ listening without a connected board needs `EVE_MIC_ALWAYS=1`. The
   through the Mac is optional. The Voice PE's button gives you a separate
   push-to-talk path through the chat brain, with replies on its speaker when it is
   connected as the controller. Web search and a reasoning backend handle questions
-  that need more than a quick reply.
+  that need more than a quick reply. eve speaks and hears English only, and its
+  voice is [Kokoro](docs/stackchan/voice.md#eves-voice-kokoro), running on the Mac
+  (`eve-bridge kokoro-setup` downloads it once).
 - **Sees and moves.** Host-side face detection helps it follow a conversation
   partner, recognise its owner, and remember where they usually sit. It can look
   for an object, explore the room, take a photo on request, or dance.

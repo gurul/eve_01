@@ -50,3 +50,8 @@
 #define SB_I2S_SLAVE 1
 #define SB_HAS_AIC3204 1
 #define SB_CODEC_VOLUME_STEPS 0
+// Analog output gain, in dB, written after the ESPHome tables (owner, 2026-11-06: "crank up voice pe volume").
+// ESPHome leaves HPL/HPR at -2 dB and LOL/LOR at 0 dB; this raises both pairs to +6 dB (HP: -6..+14, LO: -6..+29).
+// The DAC's digital gain stays at 0 dB, so a full-scale sample never clips inside the DAC. If loud words distort,
+// turn the dial down rather than this value.
+#define SB_SPEAKER_GAIN_DB 6

@@ -397,6 +397,7 @@ class OpenAINotesClient:
         resp = self._client.audio.transcriptions.create(
             file=("segment.wav", wav, "audio/wav"),
             model=self.model,
+            language="en",     # locked to English (owner, 2026-11-06), like the calls (phone_call.LANGUAGE)
             **({"prompt": prompt} if prompt else {}),
         )
         spend.record_transcription(spend.TRANSCRIPTION, self.model, resp, seconds=wav_seconds(wav))

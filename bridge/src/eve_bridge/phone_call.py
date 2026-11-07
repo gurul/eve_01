@@ -78,8 +78,10 @@ LIVE_NOISE_REDUCTION = "near_field"
 LIVE_EARS_KEY_ENV = "OPENAI_API_KEY"
 # The language the owner speaks, ISO-639-1. Left to guess, the model heard "Spotify mode" as Chinese on a short
 # Voice PE press and eve answered in Chinese (2026-09-27; owner: "it sometimes thinks i am speaking another
-# language"). EVE_CALL_LANGUAGE sets it; an empty value lets the model guess again.
-DEFAULT_LANGUAGE = "en"
+# language"). Locked to English since 2026-11-06 (owner: "hard lock eve to english"): there is no switch, and the
+# model is never left to guess.
+LANGUAGE = "en"
+DEFAULT_LANGUAGE = LANGUAGE
 # Even told "en", the transcriber can answer near-silence with a syllable in another script ("あ。" on a 7 s call,
 # 2026-10-08; owner: "english only remember"), and eve then answered in that language. With English set, words
 # whose letters are mostly not Latin are treated as not caught (``foreign``).
@@ -438,10 +440,15 @@ class OpenAIVoice:
 
         self._client = openrouter.client(api_key)
         self.stt_model = stt_model
-        self.language = DEFAULT_LANGUAGE                # EVE_CALL_LANGUAGE; "" = the model guesses
+        self.language = LANGUAGE                        # locked to English
         self.live = False                               # LiveEars: EVE_CALL_LIVE_STT=1 and an OpenAI key
         self.live_key = ""                              # the OpenAI key the live ears need (opt-in only)
         self.or_key, self.or_model, self.or_voice = api_key, DEFAULT_OR_TTS_MODEL, DEFAULT_OR_TTS_VOICE
+        # Kokoro on this Mac speaks first (kokoro_voice.py; owner, 2026-11-06: "use kokoro"), loaded on the first
+        # sentence; None in kokoro_env keeps OpenRouter's voice alone (EVE_CALL_TTS=openrouter)
+        self.kokoro_env: Optional[dict[str, str]] = None
+        self._kokoro: Any = None
+        self._kokoro_tried = False
 
     def transcribe(self, pcm: bytes) -> str:
         from .notes import to_wav
@@ -452,10 +459,35 @@ class OpenAIVoice:
         spend.record_transcription(spend.CALLS, self.stt_model, resp, seconds=len(pcm) / BYTES_PER_SEC)
         return (getattr(resp, "text", "") or "").strip()
 
+    def kokoro(self) -> Any:
+        """The local Kokoro voice, loaded once on first use; None when it is off or could not load."""
+        if self.kokoro_env is not None and not self._kokoro_tried:
+            from . import kokoro_voice
+
+            self._kokoro_tried = True
+            self._kokoro = kokoro_voice.load(self.kokoro_env)
+        return self._kokoro
+
     def speak_stream(self, text: str) -> Iterator[bytes]:
         """The spoken words as they are made (blocking iterator): the first bytes play while the rest arrive.
-        OpenRouter's voice (deepgram/aura-2). A failure raises: that sentence is not heard (the chat has it in
-        writing). There is no second voice since OpenAI's was removed with the OpenAI key (2026-10-08)."""
+        Kokoro on this Mac (English only) when it loaded; if it fails before its first sound, or is off, OpenRouter's
+        voice (deepgram/aura-2, an English speaker). A failure there raises: that sentence is not heard (the chat
+        has it in writing)."""
+        local = self.kokoro()
+        if local is not None:
+            started = False
+            try:
+                for chunk in local.speak_stream(text):
+                    started = True
+                    yield chunk
+                return
+            except Exception as e:  # noqa: BLE001 - before its first sound the other voice says it instead
+                if started:
+                    raise
+                log.warning("call: Kokoro failed (%s); OpenRouter's voice says it", type(e).__name__)
+        yield from self._openrouter_stream(text)
+
+    def _openrouter_stream(self, text: str) -> Iterator[bytes]:
         import httpx
 
         with httpx.stream("POST", OPENROUTER_SPEECH_URL, timeout=httpx.Timeout(20.0, connect=5.0),
@@ -478,7 +510,7 @@ def _on(raw: Any) -> bool:
 
 def make_voice(environ: Any = None) -> Optional[Voice]:
     """The call's ears and voice on OPENROUTER_API_KEY, or None (calls off) without it. EVE_CALL_STT_MODEL,
-    EVE_CALL_LANGUAGE, EVE_CALL_OR_TTS_MODEL and EVE_CALL_OR_VOICE tune it. The live ears are opt-in:
+    EVE_CALL_OR_TTS_MODEL and EVE_CALL_OR_VOICE tune it. The live ears are opt-in:
     EVE_CALL_LIVE_STT=1 with an OPENAI_API_KEY (OpenAI's realtime transcription; OpenRouter has none)."""
     from . import openrouter
 
@@ -492,9 +524,10 @@ def make_voice(environ: Any = None) -> Optional[Voice]:
     except ImportError as e:
         log.warning("call: the openai SDK is not importable (%s); calls are off", e)
         return None
-    voice.language = (env.get("EVE_CALL_LANGUAGE", DEFAULT_LANGUAGE) or "").strip().lower()
     voice.or_model = (env.get("EVE_CALL_OR_TTS_MODEL") or DEFAULT_OR_TTS_MODEL).strip()
     voice.or_voice = (env.get("EVE_CALL_OR_VOICE") or DEFAULT_OR_TTS_VOICE).strip()
+    if (env.get("EVE_CALL_TTS") or "kokoro").strip().lower() != "openrouter":
+        voice.kokoro_env = {k: env[k] for k in ("EVE_KOKORO_DIR", "EVE_KOKORO_VOICE", "EVE_KOKORO_SPEED") if env.get(k)}
     if _on(env.get("EVE_CALL_LIVE_STT")):
         voice.live_key = (env.get(LIVE_EARS_KEY_ENV) or "").strip()
         voice.live = bool(voice.live_key)
