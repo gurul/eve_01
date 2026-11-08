@@ -199,13 +199,49 @@ def make_private(home: Path) -> None:
                     os.chmod(p, 0o600)
 
 
+# The day the words being read were said (ingest_day sets it around each add; one thread, mem0's add is synchronous).
+_SAID = threading.local()
+
+
+def date_extraction(main: Any) -> bool:
+    """Make mem0 date what it extracts by the day the words were said, not the day it reads them.
+
+    mem0 2.2's extraction prompt has an "Observation Date" that grounds "today", "this morning" and a bare
+    "September 2" (``generate_additive_extraction_prompt(timestamp=...)``), but its OSS ``Memory.add`` never passes
+    one (``add(timestamp=...)`` raises: platform only), so it is always the day of the read. The dream reads a day
+    at 04:30 the next morning, a day late; the memory eval reads 60 days at once, and "weighed 172 this morning"
+    (said 2026-08-06) was kept as November 8, a dentist visit on 2026-09-16 as November 8 and a surgery on
+    "September 2" as 2027 (2026-11-07). This wraps the builder in mem0's own module so a read sets that date from
+    ``_SAID.day``. → whether it is in place (False when mem0 no longer has the builder: dates stay as mem0 makes
+    them)."""
+    fn = getattr(main, "generate_additive_extraction_prompt", None)
+    if fn is None:
+        log.warning("mem0: no extraction prompt builder to date; memories are dated by the day they are read")
+        return False
+    if getattr(fn, "_eve_dated", False):
+        return True
+
+    def dated(*args: Any, **kwargs: Any) -> Any:
+        day = getattr(_SAID, "day", None)
+        if day and kwargs.get("timestamp") is None:
+            kwargs["timestamp"] = day
+        return fn(*args, **kwargs)
+
+    dated._eve_dated = True  # type: ignore[attr-defined]
+    main.generate_additive_extraction_prompt = dated
+    return True
+
+
 def open_mem0(cfg: Mem0Config) -> Any:
     """The real mem0 Memory, with telemetry off and its home inside ours. Raises when that cannot be had."""
     cfg.home.mkdir(parents=True, exist_ok=True)
     os.environ["MEM0_TELEMETRY"] = "False"          # read once, at import: must be set before it
     os.environ["MEM0_DIR"] = str(cfg.home / "home")  # where mem0 keeps its config.json, instead of ~/.mem0
     from mem0 import Memory
+    from mem0.memory import main as mem0_main
     from mem0.memory import telemetry
+
+    date_extraction(mem0_main)
 
     if telemetry.MEM0_TELEMETRY:
         raise RuntimeError("mem0 telemetry is on (mem0 was imported before eve could turn it off)")
@@ -580,7 +616,11 @@ class OwnerMemory:
                             meta["src"] = src
                         if src_before:
                             meta["src_before"] = src_before
-                        mem.add(chunk, user_id=OWNER, metadata=meta)
+                        _SAID.day = (src or day)[:10]     # the line's own date when known, else the day's
+                        try:
+                            mem.add(chunk, user_id=OWNER, metadata=meta)
+                        finally:
+                            _SAID.day = None
                     except Exception as e:  # noqa: BLE001
                         log.warning("mem0: a conversation did not go in (%s); tried again next time",
                                     type(e).__name__)

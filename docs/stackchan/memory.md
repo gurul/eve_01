@@ -169,6 +169,36 @@ accuracy on the 162 holdout questions was 81.5% with every switch off, 96.3% wit
 (one question of 21). Forget compliance was 88.9%, a gate the baseline itself fails, because one forget question
 leaks with every switch off. Time ranges also had 16% abstention errors.
 
+### Implicit questions (PersonalizationV4 style)
+
+A second question set, `bridge/tests/fixtures/memory_eval_implicit/`, runs on the same
+synthetic persona and transcripts (2026-11-07). It follows the PersonalizationV4
+benchmark from the Memorilla paper (arXiv 2610.21375). Each question is a new
+situation whose answer needs two or more facts said on different days, often one
+updated later. Examples: what coffee costs a week now, or which lab partner is also
+on the hackathon team. The question names none of those facts. There are 32
+questions, 11 dev and 21 holdout, sealed before any answer existed. Run it with
+`tools/memory_eval.py --data tests/fixtures/memory_eval_implicit`.
+
+The dev run found the date bug in the mem0 ingest (the nightly dream, step 3):
+"weighed 172 this morning", said on 2026-08-06, was kept as November 8. After the fix
+the build was dreamt again and every run repeated, with every switch off and on the same day:
+
+| Run | Before the fix | After the fix |
+|---|---|---|
+| Implicit, dev | 8 of 11 (72.7%) | 11 of 11 (100.0%) |
+| Implicit, holdout | 17 of 21, 81.0% | 18 of 21, 85.7% |
+| Main holdout, 162 questions | 91.4% | 94.4% |
+| Main holdout, temporal | 70.0% | 90.0% |
+| Main holdout, multi_session | 94.7% | 100.0% |
+
+No category went down. Before the fix, 115 of the 470 mem0 memories that searches
+returned on the main holdout carried a date after the data ends (November,
+December or 2027). After it, none did except a real plan (a Thanksgiving flight).
+Each is one run, so a point or two is within the model's run-to-run noise. The
+result files are next to the questions (`*_before_datefix.json`,
+`*_after_datefix.json`) and in `memory_eval/` for the main holdout.
+
 - **`EVE_MEMORY_HYBRID=1`: ranked search over the words said.** Each round of a conversation (a line from the
   owner, or from the memory bus, and eve's reply after it) is one row of a local SQLite file,
   `memory/index/memory.sqlite3`, with an FTS5 (BM25) row and a 512-dimension `text-embedding-3-small` vector. A
@@ -241,7 +271,11 @@ wake**, so a week away does not become one burst of model calls.
    not read goes into mem0: what the owner said as the user, what eve said as the
    assistant, dated and labelled with its channel. Tool calls, commands, relays,
    photos and Claude's lines stay out. Then exact duplicates and any ★ candidate are
-   removed.
+   removed. mem0 dates what it extracts by the day the words were said, so "this
+   morning" or a bare "September 2" means that day. mem0's prompt calls it the
+   Observation Date, and `mem0_memory.date_extraction` supplies it. mem0's own `add`
+   never passes one, so before 2026-11-07 every memory was dated by the night it was
+   read: the dream at 04:30 put it a day late.
 4. The day is appended to `records/.dreamt` and a `## Dream` section with the
    counts is added to its journal.
 

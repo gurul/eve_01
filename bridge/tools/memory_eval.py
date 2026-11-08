@@ -120,7 +120,7 @@ PERSONA = "persona.json"
 TRANSCRIPTS = "transcripts"
 BUILD_FILE = "BUILD.json"
 CACHE_NAME = "eve-memory-eval-cache"
-BUILD_VERSION = 2                    # bump when the build steps change: a new key, a new build
+BUILD_VERSION = 3                    # bump when the build steps change: a new key, a new build (3: mem0 dated by the day said)
 SNAPS = "snapshots"                  # <build>/snapshots/<day>/{records,mem0}: memory after that night's dream
 
 MAX_ROUNDS = 4                       # tool rounds per question (the daemon allows telegram.MAX_TOOL_ROUNDS)

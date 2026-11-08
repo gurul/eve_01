@@ -437,3 +437,45 @@ def test_extraction_and_embeddings_go_to_openrouter_with_no_openai_key(tmp_path:
         transport=httpx2.MockTransport(embed_reply)))
     real.embedding_model.embed("hello")
     assert bodies and b'"model":"openai/text-embedding-3-small"' in bodies[-1]
+
+
+def test_mem0_dates_what_it_extracts_by_the_day_the_words_were_said(tmp_path: Path) -> None:
+    # mem0's OSS add() never passes the extraction prompt's Observation Date, so "weighed 172 this morning" said
+    # 2026-08-06 and read later was kept as the day of the read (the memory eval, 2026-11-07).
+    import types
+
+    seen: list[Any] = []
+
+    def builder(*args: Any, timestamp: Any = None, **kwargs: Any) -> str:
+        seen.append(timestamp)
+        return "prompt"
+
+    main = types.SimpleNamespace(generate_additive_extraction_prompt=builder)
+    assert mem0_memory.date_extraction(main) and mem0_memory.date_extraction(main)   # once, however often called
+    wrapped = main.generate_additive_extraction_prompt
+
+    class Extracting(FakeMem0):
+        def add(self, messages: list[dict[str, str]], **kw: Any) -> dict[str, Any]:
+            wrapped(new_messages=messages)                                # mem0's add builds its prompt here
+            return super().add(messages, **kw)
+
+    fake = Extracting()
+    mem = OwnerMemory(Mem0Config(enabled=True, home=rc_at(tmp_path).mem0_dir), factory=lambda cfg: fake)
+    t, _ = transcripts_with_a_day(tmp_path)
+    assert mem.ingest_day(t, DAY) == 2
+    assert seen == [DAY, DAY]                                             # the day said, not the day read
+    wrapped(new_messages=[])                                              # outside a read: mem0's own default
+    wrapped(new_messages=[], timestamp="2026-01-01")                      # a date mem0 was given is kept
+    assert seen[2:] == [None, "2026-01-01"]
+    assert not mem0_memory.date_extraction(types.SimpleNamespace())       # no builder: says so, changes nothing
+
+
+def test_the_installed_mem0_still_has_the_builder_eve_dates() -> None:
+    pytest.importorskip("mem0")
+    import inspect as _inspect
+
+    from mem0.configs import prompts
+    from mem0.memory import main
+
+    assert "timestamp" in _inspect.signature(prompts.generate_additive_extraction_prompt).parameters
+    assert "generate_additive_extraction_prompt(" in _inspect.getsource(main.Memory._add_to_vector_store)

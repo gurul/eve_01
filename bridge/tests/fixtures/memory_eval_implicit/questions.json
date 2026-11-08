@@ -1,0 +1,794 @@
+{
+ "version": 1,
+ "persona": "persona.json",
+ "transcripts": "transcripts/<YYYY-MM-DD>.jsonl, the line format of cc_buddy_bridge/transcripts.py; a day runs 04:00 to 04:00 local (-07:00)",
+ "split_rule": "split = 'dev' when the first hex digit of sha256(str(id)) is 0-4 (5 of 16, about 31%), else 'holdout'. The 'split' field on each question is that rule, precomputed.",
+ "evidence": "a list of {day, line}: the transcript file transcripts/<day>.jsonl and the 0-based index of the line in it (every line counts, close markers too). Empty for abstention questions.",
+ "answer_keys": "a list; every element must be found in the answer. A list element means any one of its strings will do. Matching (tools/memory_eval.py): both sides lowercased, dates written as dates turned to YYYY-MM-DD, '$' and thousands commas dropped, punctuation to spaces except a '.' or ':' between digits, whitespace collapsed; a key starts at a word start, a key ending in a digit ends where the number ends ('4' is not in '14' or '4.5'; '12.6' is in '12.60'), a key ending in a letter may run on ('cashew' is in 'cashews'). Empty when abstain is true.",
+ "abstain": "true when the honest answer is that it was never said (or, for forget questions, is no longer known).",
+ "forget": "forget questions only: {day, line}, the transcript line the harness forgets (through buddy's real forget, on that question's own copy of memory) before asking: once with the line's whole text, then once per leak key as a quoted phrase. The answer must then abstain, and must contain none of leak_keys (same matching rule).",
+ "asked_on": "the date the question is asked (at 20:00 in the data's time zone), after the last line it needs. The harness gives each question memory as it stood then: the records and mem0 dreamt through the night before, and the transcripts up to the asking moment.",
+ "categories": [
+  "implicit"
+ ],
+ "implicit": "PersonalizationV4-style (Memorilla, arXiv 2610.21375): each question is a new scenario whose answer needs two or more facts said on different turns (often one updated later); the question names none of them.",
+ "questions": [
+  {
+   "id": "imp01",
+   "slug": "coffee_delta",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "Compared with August, how much more does my usual coffee habit cost me each week now?",
+   "answer_keys": [
+    [
+     "2"
+    ]
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-11",
+     "line": 0
+    },
+    {
+     "day": "2026-09-14",
+     "line": 7
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "imp02",
+   "slug": "gym_phone_total",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "What do my gym membership and my phone plan add up to per month right now?",
+   "answer_keys": [
+    "64"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-03",
+     "line": 7
+    },
+    {
+     "day": "2026-08-26",
+     "line": 7
+    },
+    {
+     "day": "2026-08-09",
+     "line": 12
+    },
+    {
+     "day": "2026-09-20",
+     "line": 6
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "imp03",
+   "slug": "japan_gap",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "How much more do I still need to put away for my spring break trip?",
+   "answer_keys": [
+    "520"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-15",
+     "line": 0
+    },
+    {
+     "day": "2026-09-30",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "imp04",
+   "slug": "midterm_first",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "Which of my midterms comes first now, and on what date?",
+   "answer_keys": [
+    "probability",
+    "2026-10-06"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-10",
+     "line": 0
+    },
+    {
+     "day": "2026-09-22",
+     "line": 3
+    },
+    {
+     "day": "2026-09-25",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "imp05",
+   "slug": "midterm_gap",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "How many days apart are my two midterms?",
+   "answer_keys": [
+    "2"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-10",
+     "line": 0
+    },
+    {
+     "day": "2026-09-25",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "imp06",
+   "slug": "housing_monthly",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "What do I pay each month for my place, counting the bill that isn't included in the rent?",
+   "answer_keys": [
+    "1235"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-07",
+     "line": 6
+    },
+    {
+     "day": "2026-08-10",
+     "line": 0
+    },
+    {
+     "day": "2026-09-15",
+     "line": 12
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "imp07",
+   "slug": "dev_payback",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "I want to cook dinner for the friend I owe money to, as a thank-you. Who is it, and what ingredient must I leave out of the recipe?",
+   "answer_keys": [
+    "dev",
+    "cashew"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-12",
+     "line": 9
+    },
+    {
+     "day": "2026-08-22",
+     "line": 9
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "imp08",
+   "slug": "station_interval",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "My balcony sensor box: how often does it send a reading now, compared with when I first got it running?",
+   "answer_keys": [
+    [
+     "10 minutes",
+     "10 min",
+     "every 10"
+    ],
+    [
+     "5 minutes",
+     "5 min",
+     "every 5"
+    ]
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-17",
+     "line": 3
+    },
+    {
+     "day": "2026-09-13",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "imp09",
+   "slug": "lab_and_hack",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "Which of my lab partners is also coming to the hackathon with me?",
+   "answer_keys": [
+    "tobias"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-17",
+     "line": 6
+    },
+    {
+     "day": "2026-09-29",
+     "line": 4
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "imp10",
+   "slug": "study_group",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "My grandma wants a weekly Sunday video call. What time on Sundays should I avoid, and who will I be with then?",
+   "answer_keys": [
+    [
+     "6 pm",
+     "18:00",
+     "6:00 pm"
+    ],
+    "hamid"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-10",
+     "line": 10
+    },
+    {
+     "day": "2026-09-20",
+     "line": 9
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "imp11",
+   "slug": "sister_gift_total",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "What did my sister's birthday present cost me in total?",
+   "answer_keys": [
+    "105"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-14",
+     "line": 5
+    },
+    {
+     "day": "2026-09-15",
+     "line": 3
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "imp12",
+   "slug": "bike_costs",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "Add up everything my bike troubles cost me in September.",
+   "answer_keys": [
+    "250"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-15",
+     "line": 15
+    },
+    {
+     "day": "2026-09-22",
+     "line": 6
+    },
+    {
+     "day": "2026-09-23",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "imp13",
+   "slug": "switch_overrun",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "How much over the first price I was quoted did I end up paying for the parts for my keyboard?",
+   "answer_keys": [
+    "7"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-05",
+     "line": 6
+    },
+    {
+     "day": "2026-08-12",
+     "line": 7
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "imp14",
+   "slug": "weight_change",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "How much has my weight changed since the first time I told you?",
+   "answer_keys": [
+    "4"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-06",
+     "line": 0
+    },
+    {
+     "day": "2026-09-20",
+     "line": 3
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "imp15",
+   "slug": "office_hours_day",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "If I want to see my Control Systems professor and go to Probability on the same day, which day works, and when are his office hours?",
+   "answer_keys": [
+    "thursday",
+    [
+     "4 pm",
+     "16:00",
+     "4:00 pm"
+    ]
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-21",
+     "line": 4
+    },
+    {
+     "day": "2026-08-20",
+     "line": 0
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "imp16",
+   "slug": "gym_vs_embedded",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "On Mondays, how much time is there between the start of my workout and the start of my Embedded Systems class now?",
+   "answer_keys": [
+    [
+     "5 hours",
+     "five hours",
+     "5 hrs"
+    ]
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-02",
+     "line": 0
+    },
+    {
+     "day": "2026-09-08",
+     "line": 3
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "imp17",
+   "slug": "non_grocery",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "Out of my monthly spending limit, how much is left after food shopping?",
+   "answer_keys": [
+    "1400"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-01",
+     "line": 0
+    },
+    {
+     "day": "2026-08-31",
+     "line": 7
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "imp18",
+   "slug": "foundry_night",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "I just got a role at the makerspace. Which night do I need to keep free for its weekly event, and at what time?",
+   "answer_keys": [
+    "thursday",
+    [
+     "7 pm",
+     "19:00",
+     "7:00 pm"
+    ]
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-27",
+     "line": 10
+    },
+    {
+     "day": "2026-09-24",
+     "line": 15
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "imp19",
+   "slug": "dad_dates",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "I'm planning something for my dad. Which two things are coming up for him, and when?",
+   "answer_keys": [
+    "2026-10-12",
+    [
+     "retir"
+    ]
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-28",
+     "line": 9
+    },
+    {
+     "day": "2026-08-23",
+     "line": 7
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "imp20",
+   "slug": "family_secrets",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "My mom is about to visit. What two things must I be careful not to let slip in front of her?",
+   "answer_keys": [
+    "rafi",
+    "pelican"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-20",
+     "line": 18
+    },
+    {
+     "day": "2026-09-06",
+     "line": 0
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "imp21",
+   "slug": "savings_growth",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "How much did my savings grow between mid-August and the end of September?",
+   "answer_keys": [
+    "330"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-15",
+     "line": 0
+    },
+    {
+     "day": "2026-09-30",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "imp22",
+   "slug": "move_cost",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "What did getting into my current apartment cost me up front, the deposit plus the move itself?",
+   "answer_keys": [
+    "1320"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-10",
+     "line": 1
+    },
+    {
+     "day": "2026-08-29",
+     "line": 9
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "imp23",
+   "slug": "old_roommate",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "Could my old roommate help me show my family around town when they visit?",
+   "answer_keys": [
+    "kieran",
+    "chicago"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-12",
+     "line": 3
+    },
+    {
+     "day": "2026-08-31",
+     "line": 4
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "imp24",
+   "slug": "multimeter",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "I need a multimeter for the hackathon. Is there anything awkward I should sort out with the person on my app project first?",
+   "answer_keys": [
+    "sasha",
+    [
+     "lost",
+     "lose"
+    ]
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-10",
+     "line": 4
+    },
+    {
+     "day": "2026-08-04",
+     "line": 6
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "imp25",
+   "slug": "coffee_week",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "Roughly how much do I spend on coffee in a normal week now?",
+   "answer_keys": [
+    "23"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-11",
+     "line": 0
+    },
+    {
+     "day": "2026-09-14",
+     "line": 7
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "imp26",
+   "slug": "sensor_swap",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "Which sensor did the weather station start with, and what did I swap in?",
+   "answer_keys": [
+    "bme280",
+    "sht45"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-17",
+     "line": 3
+    },
+    {
+     "day": "2026-09-05",
+     "line": 0
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "imp27",
+   "slug": "shelfie_growth",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "How many users did my app gain over the last five days of September that you know about?",
+   "answer_keys": [
+    "19"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-23",
+     "line": 6
+    },
+    {
+     "day": "2026-09-28",
+     "line": 3
+    }
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "imp28",
+   "slug": "bench_gain",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "How much has my best bench press gone up?",
+   "answer_keys": [
+    "10"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-13",
+     "line": 3
+    },
+    {
+     "day": "2026-09-18",
+     "line": 9
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "imp29",
+   "slug": "sunday_family",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "My family arrives on a Saturday in mid-October. I want them to come with me to a lecture the day before. Which class would that be?",
+   "answer_keys": [
+    [
+     "phil 220",
+     "ethics"
+    ]
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-30",
+     "line": 3
+    },
+    {
+     "day": "2026-09-03",
+     "line": 3
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "imp30",
+   "slug": "launch_slip",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "How many days late did my app's beta launch end up, compared with the first plan?",
+   "answer_keys": [
+    "7"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-01",
+     "line": 15
+    },
+    {
+     "day": "2026-09-11",
+     "line": 8
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "imp31",
+   "slug": "drive_home",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "For Thanksgiving, could I rent a car and drive myself home instead of flying?",
+   "answer_keys": [
+    [
+     "driving test",
+     "license",
+     "licence"
+    ]
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-08-14",
+     "line": 7
+    },
+    {
+     "day": "2026-09-27",
+     "line": 4
+    }
+   ],
+   "split": "holdout"
+  },
+  {
+   "id": "imp32",
+   "slug": "dentist_kept",
+   "category": "implicit",
+   "asked_on": "2026-10-01",
+   "question": "Did I end up keeping the original dentist appointment, and how did it go?",
+   "answer_keys": [
+    [
+     "2026-09-16",
+     "16"
+    ],
+    "cavit"
+   ],
+   "abstain": false,
+   "evidence": [
+    {
+     "day": "2026-09-08",
+     "line": 6
+    },
+    {
+     "day": "2026-09-16",
+     "line": 0
+    }
+   ],
+   "split": "dev"
+  }
+ ]
+}

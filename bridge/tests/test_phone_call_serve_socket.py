@@ -23,7 +23,8 @@ TOKEN = "call-token-CANARY-NOT-A-KEY-7f3c"
 # phone_call.py at d419b37 (git show d419b37:bridge/src/eve_bridge/phone_call.py | shasum -a 256), the commit eve
 # lite branched from. If phone_call.py changes on purpose outside serve_socket, record the new file's hash here.
 # Re-recorded 2026-11-06: English locked (no EVE_CALL_LANGUAGE) and Kokoro as the call's voice.
-BASE_SHA256 = "15e4ad64ed021d499ff0ffa273efe2589f369c3fcd881475f193abe1811a29c3"
+# Re-recorded 2026-11-07: deepgram/aura-2 is the default voice again; Kokoro only with EVE_CALL_TTS=kokoro.
+BASE_SHA256 = "147a326f8ce9121b266f51df0fa3f592e60faee2a019ae787a049f95f7ab26de"
 
 
 def without_serve_socket(text: str) -> str:
