@@ -199,6 +199,12 @@ Each is one run, so a point or two is within the model's run-to-run noise. The
 result files are next to the questions (`*_before_datefix.json`,
 `*_after_datefix.json`) and in `memory_eval/` for the main holdout.
 
+**A detail for something else is not the answer** (2026-11-07). The chat brain's memory instructions
+(`telegram.PROFILE_HEADER`, `MEMORY_HINT`) say that a code, number, account, place or person memory holds for a
+different thing never answers the question. Before this, asked for a code that had been forgotten, eve offered
+another code it had on file. Judged once against a bar written first (`docs/evals/memory-other-thing-BAR.md`):
+the holdout went from 94.4% to 95.7% with no category down more than one question.
+
 - **`EVE_MEMORY_HYBRID=1`: ranked search over the words said.** Each round of a conversation (a line from the
   owner, or from the memory bus, and eve's reply after it) is one row of a local SQLite file,
   `memory/index/memory.sqlite3`, with an FTS5 (BM25) row and a 512-dimension `text-embedding-3-small` vector. A

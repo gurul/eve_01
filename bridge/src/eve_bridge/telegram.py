@@ -1191,15 +1191,19 @@ PROFILE_HEADER = """
 What you know about your owner, from earlier conversations. Let it shape every reply, not only questions
 about them: call them by name, fit their taste and how they like to be talked to, and do what they asked
 for without making them say it again. Asked what you know about them, tell them plainly from this page.
-Search your memory (memory_search, then memory_read) before saying you do not know something about them,
-and never recite the page back unasked:"""
+Search your memory (memory_search, then memory_read) before saying you do not know something about them.
+A detail your memory holds for something else (a different code, number, account, place or person) never
+answers the question: when the one they asked about is not there, say so instead of offering the other.
+Never recite the page back unasked:"""
 
 # With memory lent but no profile yet (a fresh install, a moved file): the tools are still there, and this
 # one line says what they are for.
 MEMORY_HINT = """
 
 Search your memory (memory_search, then memory_read) before saying you do not know something about your
-owner or about what the two of you said before."""
+owner or about what the two of you said before. A detail your memory holds for something else (a
+different code, number, account, place or person) never answers the question: when the one they asked
+about is not there, say so instead of offering the other."""
 
 # Today's transcript, both channels (transcripts.py). Last in the instructions: it only grows during a day,
 # so everything before it stays a stable prefix and the prompt cache keeps working.

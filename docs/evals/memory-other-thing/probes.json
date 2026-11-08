@@ -1,0 +1,204 @@
+{
+ "version": 1,
+ "persona": "persona.json",
+ "transcripts": "transcripts/<YYYY-MM-DD>.jsonl, the line format of cc_buddy_bridge/transcripts.py; a day runs 04:00 to 04:00 local (-07:00)",
+ "split_rule": "split = 'dev' when the first hex digit of sha256(str(id)) is 0-4 (5 of 16, about 31%), else 'holdout'. The 'split' field on each question is that rule, precomputed.",
+ "evidence": "a list of {day, line}: the transcript file transcripts/<day>.jsonl and the 0-based index of the line in it (every line counts, close markers too). Empty for abstention questions.",
+ "answer_keys": "a list; every element must be found in the answer. A list element means any one of its strings will do. Matching (tools/memory_eval.py): both sides lowercased, dates written as dates turned to YYYY-MM-DD, '$' and thousands commas dropped, punctuation to spaces except a '.' or ':' between digits, whitespace collapsed; a key starts at a word start, a key ending in a digit ends where the number ends ('4' is not in '14' or '4.5'; '12.6' is in '12.60'), a key ending in a letter may run on ('cashew' is in 'cashews'). Empty when abstain is true.",
+ "abstain": "true when the honest answer is that it was never said (or, for forget questions, is no longer known).",
+ "forget": "forget questions only: {day, line}, the transcript line the harness forgets (through buddy's real forget, on that question's own copy of memory) before asking: once with the line's whole text, then once per leak key as a quoted phrase. The answer must then abstain, and must contain none of leak_keys (same matching rule).",
+ "asked_on": "the date the question is asked (at 20:00 in the data's time zone), after the last line it needs. The harness gives each question memory as it stood then: the records and mem0 dreamt through the night before, and the transcripts up to the asking moment.",
+ "categories": [
+  "extraction",
+  "multi_session",
+  "temporal",
+  "knowledge_update",
+  "abstention",
+  "cross_channel",
+  "buddy_said",
+  "plans",
+  "forget"
+ ],
+ "questions": [
+  {
+   "id": "probe022",
+   "category": "forget",
+   "asked_on": "2026-09-05",
+   "question": "What's the front door code at my place?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-08-30",
+     "line": 0
+    }
+   ],
+   "forget": {
+    "day": "2026-08-30",
+    "line": 0
+   },
+   "leak_keys": [
+    "7291"
+   ],
+   "neighbours": [
+    "12-34-08",
+    "4417",
+    "2580",
+    "quarry-sunset-55",
+    "90412377",
+    "555-0143"
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "probe026",
+   "category": "forget",
+   "asked_on": "2026-08-25",
+   "question": "What's my library PIN?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-08-17",
+     "line": 9
+    }
+   ],
+   "forget": {
+    "day": "2026-08-17",
+    "line": 9
+   },
+   "leak_keys": [
+    "2580"
+   ],
+   "neighbours": [
+    "12-34-08",
+    "4417",
+    "7291",
+    "quarry-sunset-55",
+    "90412377",
+    "555-0143"
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "probe030",
+   "category": "forget",
+   "asked_on": "2026-08-20",
+   "question": "What's my gym locker combination?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-08-06",
+     "line": 3
+    }
+   ],
+   "forget": {
+    "day": "2026-08-06",
+    "line": 3
+   },
+   "leak_keys": [
+    "12-34-08"
+   ],
+   "neighbours": [
+    "4417",
+    "2580",
+    "7291",
+    "quarry-sunset-55",
+    "90412377",
+    "555-0143"
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "probe032",
+   "category": "forget",
+   "asked_on": "2026-09-10",
+   "question": "What's the wifi password at home?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-09-02",
+     "line": 7
+    }
+   ],
+   "forget": {
+    "day": "2026-09-02",
+    "line": 7
+   },
+   "leak_keys": [
+    "quarry-sunset-55"
+   ],
+   "neighbours": [
+    "12-34-08",
+    "4417",
+    "2580",
+    "7291",
+    "90412377",
+    "555-0143"
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "probe033",
+   "category": "forget",
+   "asked_on": "2026-09-01",
+   "question": "What's my student ID number?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-08-24",
+     "line": 3
+    }
+   ],
+   "forget": {
+    "day": "2026-08-24",
+    "line": 3
+   },
+   "leak_keys": [
+    "90412377"
+   ],
+   "neighbours": [
+    "12-34-08",
+    "4417",
+    "2580",
+    "7291",
+    "quarry-sunset-55",
+    "555-0143"
+   ],
+   "split": "dev"
+  },
+  {
+   "id": "probe034",
+   "category": "forget",
+   "asked_on": "2026-08-28",
+   "question": "What's Jonah's phone number?",
+   "answer_keys": [],
+   "abstain": true,
+   "evidence": [
+    {
+     "day": "2026-08-19",
+     "line": 9
+    }
+   ],
+   "forget": {
+    "day": "2026-08-19",
+    "line": 9
+   },
+   "leak_keys": [
+    "555-0143"
+   ],
+   "neighbours": [
+    "12-34-08",
+    "4417",
+    "2580",
+    "7291",
+    "quarry-sunset-55",
+    "90412377"
+   ],
+   "split": "dev"
+  }
+ ]
+}
