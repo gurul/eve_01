@@ -64,7 +64,9 @@ past-work questions to the real store):
 - **One call at a time.** Chat and voice share the app, and the script's index
   rebuild is not safe with two readers, so calls queue behind a lock and run again
   once when another reader (a coding session) was rebuilding it.
-- **The model is told** what the markers mean (`~` meaning-only, `⊘` replaced, the
+- **The model is told** what the markers mean (`~` meaning-only: read before trusting, never a
+  reason by itself to say there is no record, since the blind eval found the right note among
+  all-`~` results 14 times in 20; `⊘` replaced, the
   age in days, `★`), that an `INDEX.md` hit is the current answer, that a late-day
   addendum replaces its note's title, that a "review waived" part was never checked,
   and to search with a few distinctive words rather than a question, since the
