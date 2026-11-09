@@ -57,6 +57,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Iterable, Iterator, Optional, Sequence
 
+from . import spoken_names
+
 log = logging.getLogger(__name__)
 
 CONFIG_PATH = Path("~/.config/eve-bridge/lights.json")
@@ -967,7 +969,7 @@ class Lights:
     def _words_of(self, light: Light) -> list[str]:
         return [w for w in (_norm(light.name), *(_norm(a) for a in light.aliases)) if w]
 
-    def resolve(self, target: str) -> tuple[list[Light], str]:
+    def resolve(self, target: str, *, heard: bool = True) -> tuple[list[Light], str]:
         """(lights, "") or ([], why not). "all"/"the lights" is every light; then a name or alias; then a room;
         then a single word that is in exactly one name ("lamp" for "floor lamp") or names a brand."""
         t = _norm(target)
@@ -987,6 +989,14 @@ class Lights:
         partial = [lt for lt in self.lights if any(re.search(rf"\b{re.escape(t)}\b", w) for w in self._words_of(lt))]
         if partial:
             return partial, ""
+        # last: the name as speech-to-text may have written it ("blue fin 7" for bluefin7, "flor lamp"). Not when
+        # deciding whether a sentence is a light command at all (heard=False): a loose match would claim it.
+        names = [(lt, w) for lt in self.lights for w in (lt.name, *lt.aliases, *([lt.room] if lt.room else []))] \
+            if heard else []
+        close = spoken_names.resolve(t, [w for _, w in names])
+        found = [lt for lt in self.lights if any(names[i][0] is lt for i in close)]
+        if found:
+            return found, ""
         return [], f"no light called {target!r}; the lights are: " + self.names_line()
 
     def names_line(self) -> str:
@@ -1216,10 +1226,10 @@ class Lights:
             return None
         target = m.group("target")
         source = _COPY_TAIL.sub("", m.group("source") or "").strip()
-        targets, _ = self.resolve(target)
+        targets, _ = self.resolve(target, heard=False)
         if not targets:
             return None
-        if source and source not in _OTHERS and not self.resolve(source)[0]:
+        if source and source not in _OTHERS and not self.resolve(source, heard=False)[0]:
             return None
         return Command(target, Change(), tuple(lt.name for lt in targets), source=source)
 

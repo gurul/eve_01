@@ -60,6 +60,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Optional, Sequence
 
+from . import spoken_names
+
 log = logging.getLogger(__name__)
 
 CONFIG_PATH = Path("~/.config/eve-bridge/spotify.json")
@@ -484,7 +486,8 @@ _PATTERNS: list[tuple[re.Pattern[str], Callable[[re.Match[str]], Command]]] = [
     (re.compile(rf"(?:turn\s+)?{_MUSIC}\s+(?:down|quieter|softer)|(?:turn\s+down|quieter)\s+{_MUSIC}"),
      lambda m: Command("volume", change=-VOLUME_STEP)),
     (re.compile(rf"(?:play|move|switch|send|put|transfer)\s+{_MUSIC}\s+(?:on|to|onto)\s+(?:the\s+|my\s+)?"
-                r"(?!spotify\b)([\w' -]{1,40}?)"),
+                r"(?!spotify\b)([\w' -]{1,40}?)(?:\s+from\s+(?:the\s+|my\s+)?[\w' -]{1,30}?)?"
+                rf"(?:\s+{_ON_SPOTIFY})?"),
      lambda m: Command("transfer", device=m.group(1).strip())),
     (re.compile(rf"play\s+(?!{_MUSIC}\s+{_ON_SPOTIFY})(.{{1,80}}?)\s+{_ON_SPOTIFY}"), lambda m: Command("play", query=m.group(1).strip())),
 ]
@@ -530,8 +533,12 @@ class Spotify:
     # -- which device --
     @staticmethod
     def pick(devices: Sequence[dict[str, Any]], name: str) -> tuple[Optional[dict[str, Any]], str]:
-        """A device by name: exact, then a word of its name, then its kind ("phone", "speaker", "computer")."""
+        """A device by name: exact, then a word of its name, then its kind ("phone", "speaker", "computer"), then
+        the name as speech-to-text may have written it (spoken_names: "blue fin 7" is bluefin7). Spoken
+        leftovers ("... from my iPhone", "... on Spotify") are dropped first."""
         n = _norm(name)
+        n = re.sub(r"\s+(?:on|in|with|from)\s+spotify$", "", n)
+        n = re.sub(r"\s+from\s+(?:the\s+|my\s+)?[\w' -]+$", "", n) if " from " in f" {n} " else n
         n = re.sub(r"^(the|my)\s+", "", n)
         n = re.sub(r"\s+(speaker|device)$", "", n) if n not in ("speaker", "device") else n
         usable = [d for d in devices if not d.get("is_restricted")]
@@ -545,6 +552,11 @@ class Spotify:
                 return found[0], ""
             if len(found) > 1:
                 return None, f"More than one Spotify device matches {name!r}: " + _join([d["name"] for d in found]) + "."
+        heard = [usable[i] for i in spoken_names.resolve(n, [d.get("name", "") for d in usable])]
+        if len(heard) == 1:
+            return heard[0], ""
+        if heard:
+            return None, f"More than one Spotify device matches {name!r}: " + _join([d["name"] for d in heard]) + "."
         if any(_norm(d.get("name", "")) == n for d in devices):
             return None, f"{name} doesn't take remote control from Spotify."
         names = _join([d.get("name", "") for d in usable])
@@ -612,7 +624,7 @@ class Spotify:
         if device:
             found, why = self.pick(await self._devices_or_wake(), device)
             if found is None:
-                return {"ok": False, "reason": why, "line": why}
+                return {"ok": False, "reason": why, "line": why, "no_such_device": why.startswith("No Spotify device")}
             device_id, picked = found["id"], found
         if action == "play":
             if query:
@@ -709,11 +721,16 @@ class Spotify:
                 return None if cmd.volume is not None and cmd.volume > 100 else cmd
         return None
 
-    async def run(self, cmd: Command) -> str:
+    async def run(self, cmd: Command) -> Optional[str]:
+        """What to tell the owner, or None when the words named a device no name comes close to: the fast path's
+        regex may have cut the name wrong, so the model takes the message, and it sees the device list."""
         if cmd.action == "mode":
             return str((await self.control("mode_on" if cmd.on else "mode_off"))["line"])
         out = await self.control(cmd.action, query=cmd.query, volume=cmd.volume, volume_change=cmd.change,
                                  device=cmd.device)
+        if out.get("no_such_device"):
+            log.info("spotify: by code, %s -> no such device; the model takes it", cmd.action)
+            return None
         log.info("spotify: by code, %s -> %s", cmd.action, "done" if out.get("ok") else "refused")
         return str(out.get("line") or out.get("reason") or "")
 

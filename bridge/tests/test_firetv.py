@@ -582,7 +582,7 @@ class LossyMuteTv(FakeAdb):
             return super().shell(script)
         if self.readback == "timeout":
             self.timeout_next = 1                   # the readback gets no answer...
-            self.at, self.mdns_rows = "10.0.0.99:5555", []   # ...and the reconnect finds no TV
+            self.at, self.mdns_rows = "192.168.50.99:5555", []   # ...and the reconnect finds no TV
         elif self.readback == "no_muted":
             self.volume = None                      # the readback answers without the audio block
         return (0, "") if self.key == "dropped" else (1, "java.lang.SecurityException: injecting denied\n")
@@ -1228,3 +1228,17 @@ def test_keep_home_stops_on_shutdown_and_never_raises() -> None:
 def test_keep_home_switch() -> None:
     assert F.keep_home_enabled({}) and F.keep_home_enabled({"EVE_FIRETV_HOME": "1"})
     assert not F.keep_home_enabled({"EVE_FIRETV_HOME": "0"})
+
+
+def test_find_app_forgives_a_heard_name_only_when_asked() -> None:
+    assert F.find_app("net flicks") is None                                  # "play X on the tv": exact only
+    assert F.find_app("net flicks", heard=True).name == "Netflix"            # type: ignore[union-attr]
+    assert F.find_app("netflx", heard=True).name == "Netflix"                # type: ignore[union-attr]
+    assert F.find_app("daft punk", heard=True) is None
+    assert F.find_app("tubi", heard=True) is None                            # not "you tube"
+
+
+def test_open_app_tries_the_tvs_own_apps_before_a_heard_name() -> None:
+    t, fake = tv()
+    out = run(t.control("open_app", app="net flicks"))
+    assert out["ok"] and out["opened"] == "Netflix"

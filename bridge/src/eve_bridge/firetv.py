@@ -88,6 +88,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Optional, Sequence
 
+from . import spoken_names
+
 log = logging.getLogger(__name__)
 
 CONFIG_PATH = Path("~/.config/eve-bridge/firetv.json")
@@ -324,8 +326,16 @@ for _a in APPS:
         _BY_ALIAS.setdefault(_app_key(_k), _a)
 
 
-def find_app(name: str) -> Optional[App]:
-    return _BY_ALIAS.get(_app_key(name))
+def find_app(name: str, *, heard: bool = False) -> Optional[App]:
+    """The app by its name or an alias. With ``heard``, also the name as speech-to-text may have written it
+    (spoken_names: "net flicks", "you tube"), when exactly one app is that close. Off for "play X on the tv",
+    where X is often not an app at all."""
+    found = _BY_ALIAS.get(_app_key(name))
+    if found is not None or not heard:
+        return found
+    keys = list(_BY_ALIAS)
+    apps = list(dict.fromkeys(_BY_ALIAS[keys[i]] for i in spoken_names.resolve(_app_key(name), keys)))
+    return apps[0] if len(apps) == 1 else None
 
 
 def app_name(package: str, activity: str = "") -> str:
@@ -1032,7 +1042,8 @@ class FireTV:
         return sorted(set(re.findall(r"^package:([A-Za-z0-9_.]+)\s*$", out or "", re.M)))
 
     async def open_app(self, name: str) -> dict[str, Any]:
-        """By the table's name or alias; else any installed package whose name has the words in it."""
+        """By the table's name or alias; else any installed package whose name has the words in it; else a known
+        app's name as speech-to-text may have written it (spoken_names)."""
         key = _app_key(name)
         if not key:
             return self._fail("Which app?")
@@ -1051,6 +1062,11 @@ class FireTV:
                 squashed = key.replace(" ", "")
                 found = [p for p in await self.packages() if squashed in p.lower().replace("_", "")]
                 if not found:
+                    # last: an app eve knows, as speech-to-text may have written it ("net flicks"); only after the
+                    # TV's own apps, so an installed app is never swapped for a known one that sounds like it
+                    heard = find_app(name, heard=True)
+                    if heard is not None:
+                        return await self.open_app(heard.name)
                     return self._fail(f"There's no app called {label} on the TV.")
                 if len(found) > 1:
                     names = ", ".join(clean(p, 60) for p in found[:5])

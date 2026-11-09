@@ -95,6 +95,9 @@ and the reason.
    ```
 
    You can also add `"aliases": ["led strip"]` to a light in `lights.json`.
+   A name that speech-to-text writes a little differently ("flor lamp",
+   "deskbulb") still finds the light; see
+   [spoken names](spotify.md#spoken-names).
 
 3. **Try them.**
 

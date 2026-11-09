@@ -122,7 +122,9 @@ The model has three tools:
   `left`, `right`, `select`, `back`, `home`, `menu`, with a repeat of 1 to
   10); the media keys (`play_pause`, `play`, `pause`, `next`, `previous`,
   `rewind`, `fast_forward`); `volume` (a level or a change), `mute` and
-  `unmute`; `open_app` by name; `youtube_search`; and `type_text` into the box
+  `unmute`; `open_app` by name (the TV's installed apps first, then a known
+  app as speech-to-text may have written it, "net flicks"; see
+  [spoken names](spotify.md#spoken-names)); `youtube_search`; and `type_text` into the box
   the TV has focused.
 - `firetv_screenshot`: a picture of the screen, sent to you. The model does not
   see the picture. It gets back what the TV reports at the same moment: power,

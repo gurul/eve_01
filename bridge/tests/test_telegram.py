@@ -1554,12 +1554,12 @@ def test_history_is_bounded() -> None:
 def test_the_setup_check_prints_ids_never_words(capsys: pytest.CaptureFixture) -> None:
     class Api(FakeApi):
         async def get_me(self) -> dict[str, Any]:
-            return {"username": "guru_eve_bot"}
+            return {"username": "example_eve_bot"}
 
     api = Api([update("my secret words", uid=OWNER), update("hi", uid=STRANGER, update_id=2)])
     assert telegram.diagnose({"EVE_TELEGRAM_TOKEN": TOKEN, "EVE_TELEGRAM_OWNER": str(OWNER)}, api=api) == 0
     out = capsys.readouterr().out
-    assert "@guru_eve_bot" in out and f"user id {OWNER}" in out and "already an owner" in out
+    assert "@example_eve_bot" in out and f"user id {OWNER}" in out and "already an owner" in out
     assert f"user id {STRANGER}" in out and "secret" not in out and TOKEN not in out
     assert api.offsets == [None]                          # read without acknowledging
     assert telegram.diagnose({}) == 1
@@ -5870,6 +5870,16 @@ def test_spotify_by_code_and_by_the_brain() -> None:
     assert {"spotify_now_playing", "spotify_control"} <= {t.get("name") for t in first["tools"]}
     assert "spotify_control" in first["instructions"]
     assert hub.handled == [("spotify_control", args)]
+    # a device the code path cannot place: the model takes the whole message (2026-11-08)
+    class Unplaced(Hub):
+        async def run(self, cmd: Any) -> Any:
+            self.ran.append(cmd)
+            return None
+
+    lost = Unplaced()
+    run_rig(rig := Rig(api := FakeApi([update("move the music to the den speakr thing")]),
+                       FakeCreate(say("Moved it.")), spotify=lost))
+    assert lost.ran and rig.create.requests and api.sent[-1] == (OWNER, "Moved it.")
     # no login: no tools, and "pause the music" is the brain's like any other text
     rig = Rig(FakeApi(), FakeCreate(say("ok")))
     asyncio.run(rig.inlet._turn(telegram.Inbound(OWNER, OWNER, "hi", message_id=10)))

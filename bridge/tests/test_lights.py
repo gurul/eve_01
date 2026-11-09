@@ -589,3 +589,12 @@ def test_parallel_govee_reads_each_get_their_own_reply(monkeypatch: pytest.Monke
     for t in threads:
         t.join(10)
     assert all(isinstance(r, L.State) for r in results.values()), results
+
+
+def test_resolve_forgives_what_speech_to_text_does_to_a_name() -> None:
+    h, _ = hub()
+    names = lambda t: [lt.name for lt in h.resolve(t)[0]]  # noqa: E731
+    assert names("flor lamp") == ["floor lamp"]          # one letter off
+    assert names("deskbulb") == ["desk bulb"]            # joined
+    assert names("bulb desk") == ["desk bulb"]           # another order
+    assert names("garage") == []

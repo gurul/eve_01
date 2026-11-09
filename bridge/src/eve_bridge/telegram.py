@@ -3837,6 +3837,10 @@ class TelegramInlet:
         ``code_taint_tool`` (Spotify: a play by name answers with the catalog's words) keeps its line as outside
         words when that tool's call would taint, so the next turn that shows it starts tainted (tool_gate)."""
         line = await hub.run(cmd)
+        if line is None:
+            # the app could not place a name in the words (a device nobody has): the model answers instead
+            await self._turn(inbound)
+            return
         self._note("user", inbound.text)
         if app.code_taint_tool:
             self._note("eve", line, outside=tool_gate.taints(app.code_taint_tool, {

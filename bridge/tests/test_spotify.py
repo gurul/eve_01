@@ -222,6 +222,25 @@ def test_transfer_picks_a_device_by_name_word_or_kind() -> None:
     assert none["ok"] is False and "Kitchen Speaker" in none["line"] and "Living Room TV" not in none["line"]
 
 
+def test_pick_forgives_what_speech_to_text_does_to_a_name() -> None:
+    """2026-11-08: "bluefin7" came back as "Blue Fin 7", and "to the TV from iPhone" kept "from iPhone"."""
+    devices = [{"id": "p", "name": "iPhone", "type": "Smartphone"},
+               {"id": "m", "name": "Sam\u2019s MacBook Pro", "type": "Computer"},
+               {"id": "t", "name": "bluefin7", "type": "TV"}]
+    for said in ("blue fin 7", "Blue Fin 7 on Spotify", "blew fin 7", "blue fin seven", "tv from iphone",
+                 "the TV from my iPhone", "bluefin 7", "bluefin7"):
+        found, why = S.Spotify.pick(devices, said)
+        assert found is not None and found["id"] == "t", (said, why)
+    assert S.Spotify.pick(devices, "kitchen")[0] is None
+    assert S.Spotify.pick(devices, "iphone")[0]["id"] == "p"
+
+
+def test_a_device_nobody_has_goes_to_the_model_not_a_refusal() -> None:
+    h, _ = hub()
+    assert run(h.run(S.Command("transfer", device="garage"))) is None
+    assert run(h.run(S.Command("transfer", device="kitchen")))
+
+
 def test_play_by_name_searches_then_plays_the_track_or_the_context() -> None:
     h, fake = hub()
     out = run(h.control("play", query="one more time"))
@@ -297,6 +316,8 @@ def test_refusals_in_plain_words() -> None:
     ("what song is this", S.Command("now")),
     ("play the music on the kitchen speaker please", S.Command("transfer", device="kitchen speaker")),
     ("move spotify to my phone", S.Command("transfer", device="phone")),
+    ("Switch my music to the TV from iPhone.", S.Command("transfer", device="tv")),
+    ("Play music on Blue Fin 7 on Spotify.", S.Command("transfer", device="blue fin 7")),
     ("play Daft Punk on Spotify", S.Command("play", query="daft punk")),
 ])
 def test_match(text: str, cmd: S.Command) -> None:

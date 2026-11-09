@@ -100,9 +100,22 @@ The robot's live voice gets the same two tools, except during a lesson.
 
 eve finds a device by its full Spotify name ("Kitchen Speaker"), then by a
 word of its name ("kitchen"), then by its kind: "mac", "computer", "phone",
-"speaker", "tv" or "tablet". Spotify marks some devices as restricted, and the
+"speaker", "tv" or "tablet". If none of those match, it tries the name as
+speech-to-text may have written it ([spoken names](#spoken-names)). Extra words
+at the end, such as "from my iPhone" or "on Spotify", are dropped first. Spotify marks some devices as restricted, and the
 Web API refuses to control them. eve lists these devices but doesn't select
 them. The Mini App shows them with the label **no remote control**.
+
+### Spoken names
+
+Made-up names don't survive speech-to-text: a TV called bluefin7 is heard as
+"Blue Fin 7". `spoken_names.py` is the last try after the exact matchers, for
+Spotify devices, lights and Fire TV apps. It matches the name with the spaces
+removed, number words as digits ("blue fin seven"), words that sound the same
+("blew fin 7"), the words in any order, and one close spelling. When two names
+are about as close as each other, it doesn't pick one: eve asks which. When a
+voice or chat command names a device nobody has, the command goes to the model,
+which sees the device list, instead of failing on the fast path.
 
 ## Spotify mode on the Voice PE
 
