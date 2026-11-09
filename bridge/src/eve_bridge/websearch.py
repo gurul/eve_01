@@ -13,7 +13,10 @@ Search engines do not serve a live clock (Exa could not say the time in Seattle,
 either, 2026-09-24), so the answer step is told the local date and time: a clock or "today" question is answered
 from it, not from a page. Without an OpenRouter key there is no search (and no brain to ask for one): ``off``.
 ``openai`` (OpenAI's hosted ``web_search`` tool) is kept as an explicit choice only.
-``EVE_WEB_SEARCH`` = openrouter-perplexity | openrouter-exa | openai | off picks one explicitly.
+``EVE_WEB_SEARCH`` = openrouter-perplexity | openrouter-exa | openrouter-parallel | openai | off picks one explicitly.
+``openrouter-parallel`` (2026-10-27) is Parallel's Search API on the same server tool, billed in OpenRouter credits at
+$4 per 1,000 results (docs.parallel.ai/integrations/openrouter); its hedge partner is Perplexity. Not the default:
+no eval has compared it with Perplexity here.
 
 ROUTED (2026-09-29, search_router.py): when the search router is on (``EVE_SEARCH_ROUTER``; auto routes since its
 gates passed a blind holdout on 2026-09-29), ``configured`` lists the providers it may use in ``SearchConfig.providers`` and ``search`` hands
@@ -52,8 +55,9 @@ from . import openrouter, spend
 log = logging.getLogger(__name__)
 
 URL = "https://openrouter.ai/api/v1/chat/completions"
-ENGINES = ("openrouter-perplexity", "openrouter-exa", "openai", "off")
-OPENROUTER_ENGINES = {"openrouter-perplexity": "perplexity", "openrouter-exa": "exa"}   # eve's name -> OpenRouter's
+ENGINES = ("openrouter-perplexity", "openrouter-exa", "openrouter-parallel", "openai", "off")
+OPENROUTER_ENGINES = {"openrouter-perplexity": "perplexity", "openrouter-exa": "exa",   # eve's name -> OpenRouter's
+                      "openrouter-parallel": "parallel"}
 DEFAULT_ENGINE = "openrouter-perplexity"   # with OPENROUTER_API_KEY; without it, "off"
 # Selected for synthesis by the quality/cost screen (2026-10-09); watches and reflection keep their own defaults.
 DEFAULT_MODEL = "openai/gpt-6-luna"
@@ -66,14 +70,16 @@ DEFAULT_MAX_USES = 2                       # searches per question: realtime ans
 DEFAULT_TIMEOUT_SECS = 25.0                # the whole search, both engines
 HEDGE_SECS = 6.0                           # past the normal p95: start the other engine too
 FALLBACK_SECS = DEFAULT_TIMEOUT_SECS       # kept for callers that read it: the other engine gets what is left
-FALLBACK_ENGINE = {"openrouter-perplexity": "openrouter-exa", "openrouter-exa": "openrouter-perplexity"}
+FALLBACK_ENGINE = {"openrouter-perplexity": "openrouter-exa", "openrouter-exa": "openrouter-perplexity",
+                   "openrouter-parallel": "openrouter-perplexity"}
 DEFAULT_ROUTED_SECS = 10.0                 # a routed TinyFish/Firecrawl attempt, then the engine on its own timeout
 MAX_ANSWER_CHARS = 1500
 MAX_SNIPPET_CHARS = 300
 MAX_SOURCES = 8
 # Per search, up to 10 results (openrouter.ai/docs server-tools/web-search, 2026-09-24); the model's tokens come on
-# top. Used only when OpenRouter's reply carries no usage.cost.
-SEARCH_USD = {"perplexity": 0.005, "exa": 0.007}
+# top. Used only when OpenRouter's reply carries no usage.cost. Parallel bills per result ($4 per 1,000): its figure
+# is DEFAULT_RESULTS of them.
+SEARCH_USD = {"perplexity": 0.005, "exa": 0.007, "parallel": 0.004 * DEFAULT_RESULTS}
 
 TOOL_NAME = "web_search"
 WEB_SEARCH_TOOL: dict[str, Any] = {
@@ -119,8 +125,8 @@ class SearchConfig:
 
 
 def configured(environ: Any = None) -> SearchConfig:
-    """EVE_WEB_SEARCH = openrouter-perplexity | openrouter-exa | openai | off. Unset: openrouter-perplexity
-    when OPENROUTER_API_KEY is set, else off. EVE_WEB_SEARCH_MODEL, _RESULTS and _MAX_USES tune the call;
+    """EVE_WEB_SEARCH = openrouter-perplexity | openrouter-exa | openrouter-parallel | openai | off. Unset:
+    openrouter-perplexity when OPENROUTER_API_KEY is set, else off. EVE_WEB_SEARCH_MODEL, _RESULTS and _MAX_USES tune the call;
     any OpenRouter model id answers, openai/* included (every model call is on OpenRouter since 2026-10-08).
     ``providers`` is search_router.available: () unless EVE_SEARCH_ROUTER routes on this engine.
     EVE_SEARCH_ROUTED_SECS (1-60, default 10) is a routed attempt's outer budget."""

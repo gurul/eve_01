@@ -320,3 +320,28 @@ def test_answer_options_asks_mercury_for_low_reasoning_with_room():
     assert opts == {"max_tokens": 1024, "reasoning": {"effort": "low"}}
     assert "temperature" not in ws.request(
         ws.SearchConfig(engine="openrouter-perplexity", model="inception/mercury-3"), "q")
+
+
+def test_parallel_is_an_explicit_engine_hedged_by_perplexity(monkeypatch: pytest.MonkeyPatch) -> None:
+    """2026-10-27: Parallel's Search API on OpenRouter's server tool, $4 per 1,000 results; never the default."""
+    assert ws.configured({"OPENROUTER_API_KEY": "r"}).engine == "openrouter-perplexity"
+    cfg = ws.configured({"OPENROUTER_API_KEY": "r", "EVE_WEB_SEARCH": "openrouter-parallel"})
+    assert cfg.engine == "openrouter-parallel" and ws.tools_for(cfg) == [ws.WEB_SEARCH_TOOL]
+    assert ws.configured({"EVE_WEB_SEARCH": "openrouter-parallel"}).engine == "off"       # no key, no search
+    assert ws.request(cfg, "x")["tools"][0]["parameters"]["engine"] == "parallel"
+    assert ws.SEARCH_USD["parallel"] == pytest.approx(0.02)                                # 5 results at $0.004
+
+    monkeypatch.setattr(ws, "HEDGE_SECS", 0.05)
+    started: list[str] = []
+    release = threading.Event()
+
+    def parallel_slow(req, timeout):
+        engine = json.loads(req.data)["tools"][0]["parameters"]["engine"]
+        started.append(engine)
+        if engine == "parallel":
+            release.wait(2.0)
+        return Reply(PAYLOAD)
+
+    out = ws.search("x", ws.SearchConfig(engine="openrouter-parallel", timeout_secs=5.0), key="r", opener=parallel_slow)
+    release.set()
+    assert out["ok"] and out["fallback"] == "openrouter-perplexity" and started == ["parallel", "perplexity"]

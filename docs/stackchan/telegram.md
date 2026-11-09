@@ -174,7 +174,7 @@ token without an owner id is off. A door with no allowlist never opens.
 | `EVE_APP_THINK_MODEL` | `gpt-6.1-sol` | The model for an Eve Link app turn sent with the speed dial on **Think** (`"grade": "think"`). The whole turn runs on it. See [Chat in the app](../action-button.md#chat-in-the-app). |
 | `EVE_APP_THINK_EFFORT` | `medium` | Its reasoning effort (`low`, `medium`, `high`, `xhigh`, `max`). Any other value is logged and `medium` is used. |
 | `EVE_GRADE_ROUTER` | `auto` | Whether Jev grades an Eve Link app turn on the speed dial's **Auto** (`"grade": "auto"`) as `think` or `instant` ([Chat in the app](../action-button.md#chat-in-the-app)). Graded `think`, the turn runs on `EVE_APP_THINK_MODEL` at `EVE_APP_THINK_EFFORT`; graded `instant`, it is the chat as it is. `auto` asks Jev (it passed its blind holdout) when a Jev route is set; `on` asks Jev regardless of the holdout; `off` never asks, and every Auto turn is the chat as it is. A Jev error or a timeout (0.8 s) grades `instant`. Telegram turns are never graded. While it is on, your app message and the one before it go to Jev on every Auto app turn. |
-| `EVE_WEB_SEARCH` | `openrouter-perplexity` with an OpenRouter key, else `off` | How every brain searches the web ([below](#web-search)): `openrouter-perplexity`, `openrouter-exa`, `openai` (OpenAI's hosted tool, explicit only), `off`. |
+| `EVE_WEB_SEARCH` | `openrouter-perplexity` with an OpenRouter key, else `off` | How every brain searches the web ([below](#web-search)): `openrouter-perplexity`, `openrouter-exa`, `openrouter-parallel`, `openai` (OpenAI's hosted tool, explicit only), `off`. |
 | `EVE_WEB_SEARCH_MODEL` | `openai/gpt-6-luna` | The OpenRouter model that writes the answer from the search results. Any OpenRouter id, `openai/…` included. |
 | `EVE_WEB_SEARCH_RESULTS` | `5` | Results per search, 1 to 10 (the engines' first price tier). |
 | `EVE_WEB_SEARCH_MAX_USES` | `2` | Searches per question, 1 to 5. |
@@ -377,7 +377,10 @@ Measured 2026-09-24 through eve's own `websearch.search`:
 
 `EVE_WEB_SEARCH=openai` selects OpenAI's hosted search tool (an explicit
 choice only; without an OpenRouter key there is no brain to search, and search is `off`). `openrouter-exa` keeps Exa
-on the same server tool, and `off` disables search. Restart the daemon after
+on the same server tool. `openrouter-parallel` uses Parallel's Search API on that tool, billed in
+OpenRouter credits at $4 per 1,000 results (about $0.02 a search at the default 5 results); when it is slow or
+fails, Perplexity races it. It answered a live question on 2026-10-27 with 5 sources in 7.7 s, but no eval has
+compared it with Perplexity, so it is not the default. `off` disables search. Restart the daemon after
 changing the setting so new voice sessions pick it up.
 
 The hosted search can leave empty citation links in a text reply, such as
