@@ -111,6 +111,20 @@ gets the same answer.
 An older script without these commands answers "update claude-debrief" rather than
 failing silently.
 
+### Measured (2026-11-09)
+
+- **Routing**, blind and pre-registered ([evals/debrief-routing-2026-11-09](evals/debrief-routing-2026-11-09/VERDICT.md)):
+  the chat brain reached the debrief on 26 of 26 past-work questions (24 before
+  these tools) and on none of 14 that belong elsewhere (chat history, memory, the
+  to-do list, the calendar, GitHub, the notes vault).
+- **"No record"**: on a fresh blind set of 30, the production chat model with these
+  tools answered 15 of 15 answerable questions and declined all 15 about things
+  never recorded, searching again on its own when the first hits did not answer. A
+  stricter reading instruction scored the same and was not adopted; the meaning
+  score cannot make this call (claude-debrief `docs/search.md`).
+- **Embedding model**: EmbeddingGemma 2 kept after a blind comparison with
+  Qwen3-Embedding (0.6B, 4B) and BGE-M3 (claude-debrief `docs/search.md`).
+
 ## Safety
 
 All the tools are reads: they never change a note (the script only refreshes its own
