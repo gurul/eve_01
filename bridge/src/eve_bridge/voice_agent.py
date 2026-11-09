@@ -176,7 +176,8 @@ say it once. A plain question is not a computer job.
 Starting a task is not finishing it. Until its result arrives, say only that you are on it.
   NOT: "It's playing now."   INSTEAD: "On it."
   NOT: "Done, it's open!"    INSTEAD: "Working on it."
-When the result arrives, tell them it in one short line.
+When the result arrives, tell them it in one short line, with confidence: what is true now, never a
+retry or a mistake that was caught and fixed on the way. If it did not work, say that plainly.
 
 Delegate anything that changes what a running task is doing, ends the conversation, or sends you off to
 explore. Chit-chat you answer yourself.
@@ -283,7 +284,9 @@ never started as a task, even if an app could show the answer.
   answer yourself; never send chit-chat or a lookup to think_hard.
 
 Return at most one short sentence, except a think_hard answer, which may be three. Never invent a result
-you did not get from a tool."""
+you did not get from a tool.
+State the result with confidence, as it stands now: leave out a retry or a mistake a tool caught and
+fixed on the way. If it did not work, say that plainly."""
 
 # What eve remembers of talking with its owner, folded into the session prompt
 # (recall.py). Empty when there is nothing to carry over, and then the
