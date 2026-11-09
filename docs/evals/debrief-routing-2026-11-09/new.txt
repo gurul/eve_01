@@ -1,0 +1,67 @@
+apps: github__get_me failed: AttributeError
+responses: TLS dropped mid-request (SSLV3_ALERT_BAD_RECORD_MAC); retrying in 0.3 s on a new connection
+responses: TLS dropped mid-request (SSLV3_ALERT_BAD_RECORD_MAC); retrying in 1.0 s on a new connection
+   env: EVE_TELEGRAM_MODEL=gpt-6-luna EVE_JEV_ROUTE=openrouter EVE_TOOLSET_ROUTER=(unset: default) EVE_OPENTABLE=1 EVE_CHIEF=(unset: default) EVE_GRADE_ROUTER=(unset: default) EVE_MENU_TOOLS=on
+   model gpt-6-luna, effort low
+   toolset router: auto (Jev), chief on
+   this checkout has: menu yes, events no, taint gate yes
+   lent: own tools, web_search, memory, chat log, second brain, watch, meet, lights, spotify, firetv, obsbot, debrief, phone location, science search, america, share, opentable, chief, maker, direct apps (gmail, calendar, drive, contacts, github, maps), workspace
+   cases: cases.json, 40
+   40 cases in 123 s
+PASS db-01: primary=debrief accept=debrief got=debrief (debrief_day)
+PASS db-02: primary=debrief accept=debrief|github got=debrief (debrief_day)
+PASS db-03: primary=debrief accept=debrief got=debrief (debrief_day)
+PASS db-04: primary=debrief accept=debrief got=debrief (debrief_day)
+PASS db-05: primary=debrief accept=debrief got=debrief (debrief_day)
+PASS db-06: primary=debrief accept=debrief got=debrief (debrief_day)
+PASS db-07: primary=debrief accept=debrief|github got=debrief (debrief_status)
+PASS db-08: primary=debrief accept=debrief got=debrief (debrief_day)
+PASS db-09: primary=debrief accept=debrief|github got=debrief (debrief_day)
+PASS db-10: primary=debrief accept=debrief got=debrief (debrief_when)
+PASS db-11: primary=debrief accept=debrief|github got=debrief (debrief_when)
+PASS db-12: primary=debrief accept=debrief got=debrief (debrief_when)
+PASS db-13: primary=debrief accept=debrief got=debrief (debrief_when)
+PASS db-14: primary=debrief accept=debrief got=debrief (debrief_status)
+PASS db-15: primary=debrief accept=debrief got=debrief (debrief_status)
+PASS db-16: primary=debrief accept=debrief|github got=debrief (debrief_status)
+PASS db-17: primary=debrief accept=debrief got=debrief (debrief_status)
+PASS db-18: primary=debrief accept=debrief got=debrief (debrief_status)
+PASS db-19: primary=debrief accept=debrief got=debrief (debrief_search)
+PASS db-20: primary=debrief accept=debrief got=memory_recall>debrief (memory_search>debrief_search)
+PASS db-21: primary=debrief accept=debrief got=debrief (debrief_search)
+PASS db-22: primary=debrief accept=debrief|github got=debrief (debrief_status)
+PASS db-23: primary=debrief accept=debrief got=debrief (debrief_day)
+PASS db-24: primary=debrief accept=debrief got=debrief (debrief_status)
+PASS db-25: primary=debrief accept=debrief got=memory_recall>debrief (memory_search>debrief_search)
+PASS db-26: primary=debrief accept=debrief got=debrief (debrief_search)
+PASS hn-01: primary=chat_history_recall accept=chat_history_recall got=chat_history_recall (recent_messages)
+PASS hn-02: primary=chat_history_recall accept=chat_history_recall got=memory_recall>chat_history_recall (memory_search>recent_messages)
+PASS hn-03: primary=memory_recall accept=memory_recall got=memory_recall (memory_search)
+PASS hn-04: primary=memory_recall accept=memory_recall got=memory_recall (memory_search)
+PASS hn-05: primary=todos_read accept=todos_read got=todos_read (list_todos)
+FAIL hn-06: primary=todos_read accept=todos_read got=notes>notes (search_notes>search_notes)
+PASS hn-07: primary=calendar_read accept=calendar_read got=calendar_read (calendar__list_events>calendar__list_events)
+PASS hn-08: primary=calendar_read accept=calendar_read got=calendar_read (calendar__list_events)
+PASS hn-09: primary=github accept=github got=github (github__list_pull_requests)
+PASS hn-10: primary=github accept=github got=github (github__list_commits)
+FAIL hn-11: primary=coding_session accept=coding_session got=ask
+PASS hn-12: primary=web_search accept=web_search got=web_search (web_search)
+PASS hn-13: primary=notes accept=notes got=notes (search_notes)
+PASS hn-14: primary=notes accept=notes got=notes (search_notes>search_notes)
+-- by primary label --
+   calendar_read: 2/2
+   chat_history_recall: 2/2
+   coding_session: 0/1
+   debrief: 26/26
+   github: 2/2
+   memory_recall: 2/2
+   notes: 2/2
+   todos_read: 1/2
+   web_search: 1/1
+TOTAL 38/40 (95.0%)
+NEVER_FIRED 0
+HARD_NEGATIVE_ACTED 0
+JEV_ERRORS 4: db-03 timeout, db-06 timeout, db-12 timeout, hn-10 timeout
+PROVIDER_ERRORS 0
+   cost: $0.1123 over 126 model calls (0 unpriced); scored 2026-11-09T11:35:07
+NEW-DONE 0
