@@ -158,7 +158,9 @@ APPS: tuple[App, ...] = (
     App(slot="debrief", module="debrief", make="make", switch="EVE_DEBRIEF", default_on=False,
         title="Debrief", symbol="book.closed", detail="Past work notes", doc="docs/debrief.md",
         no_control="Debrief is off on this Mac (EVE_DEBRIEF).", label="debrief", tool_prefix="debrief_",
-        sources=_map(debrief_search="your debrief notes", debrief_get="your debrief notes")),
+        sources=_map(debrief_search="your debrief notes", debrief_get="your debrief notes",
+                     debrief_day="your debrief notes", debrief_when="your debrief notes",
+                     debrief_list="your debrief notes")),
     # eve-bridge app new: new apps go above this line
 )
 

@@ -622,6 +622,17 @@ def test_migrate_is_idempotent(tmp_path: Path, fake_records: FakeRecords) -> Non
     assert digests(cfg.store) == snapshot and (legacy / "INDEX.md").exists()
 
 
+def test_migrate_never_moves_the_owners_live_debrief_store(tmp_path: Path, fake_records: FakeRecords) -> None:
+    # EVE_DEBRIEF_DIR names both eve's retired store and the owner's live one (docs/debrief.md, 2026-11-09)
+    legacy, old_mem0 = old_layout(tmp_path)
+    write(legacy / ".system" / "debrief-search.py", "# the store's search script\n")
+    before = digests(legacy)
+    cfg = RecallConfig(store=tmp_path / "memory", notes=tmp_path / "notes")
+    out = migrate(cfg, legacy, old_mem0)
+    assert out["ok"] is False and "live debrief store" in out["reason"]
+    assert digests(legacy) == before and not (cfg.store / ".migrated").exists()
+
+
 def test_migrate_skips_an_existing_target_and_keeps_both(tmp_path: Path, fake_records: FakeRecords,
                                                          caplog: pytest.LogCaptureFixture) -> None:
     legacy, old_mem0 = old_layout(tmp_path)

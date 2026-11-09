@@ -850,6 +850,12 @@ def migrate(cfg: RecallConfig, legacy_store: Path, legacy_mem0: Path) -> dict[st
     if lr == rr or rr.startswith(lr + os.sep) or lr.startswith(rr + os.sep):
         log.warning("memory: the old store and the new memory folder overlap — nothing moved")
         return {"ok": False, "reason": "the old store and the memory folder overlap", **counts}
+    # The owner's Claude Code debrief store keeps its own search script; eve's retired store never had one. Both
+    # are named by EVE_DEBRIEF_DIR (the debrief app reads it too, docs/debrief.md), so a store with the script is
+    # the owner's live notes and is never moved (2026-11-09).
+    if (legacy / ".system" / "debrief-search.py").is_file():
+        log.warning("memory: %s is the owner's live debrief store, not eve's old one — nothing moved", legacy)
+        return {"ok": False, "reason": "the old store path holds the owner's live debrief store", **counts}
     started = time.monotonic()
     _private_dir(root)
 
