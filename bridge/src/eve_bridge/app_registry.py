@@ -161,6 +161,12 @@ APPS: tuple[App, ...] = (
         sources=_map(debrief_search="your debrief notes", debrief_get="your debrief notes",
                      debrief_day="your debrief notes", debrief_when="your debrief notes",
                      debrief_list="your debrief notes", debrief_status="your debrief notes")),
+    # Out loud it is left out: an answer takes ten seconds to a minute (docs/repos.md).
+    App(slot="repos", module="repos", make="make", switch="EVE_REPOS", default_on=False,
+        title="Repos", symbol="chevron.left.forwardslash.chevron.right", detail="Ask about your code",
+        doc="docs/repos.md", no_control="Repos is off on this Mac (EVE_REPOS).", label="repos", tool_prefix="repos_",
+        clean=frozenset({"repos_list"}), sources=_map(repos_ask="your code"),
+        voice_omit=frozenset({"repos_ask", "repos_list"})),
     # eve-bridge app new: new apps go above this line
 )
 

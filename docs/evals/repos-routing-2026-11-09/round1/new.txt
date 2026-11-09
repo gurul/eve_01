@@ -1,0 +1,63 @@
+apps: github__get_me failed: AttributeError
+responses: TLS dropped mid-request (SSLV3_ALERT_BAD_RECORD_MAC); retrying in 0.3 s on a new connection
+responses: TLS dropped mid-request (SSLV3_ALERT_BAD_RECORD_MAC); retrying in 1.0 s on a new connection
+   env: EVE_TELEGRAM_MODEL=gpt-6-luna EVE_JEV_ROUTE=openrouter EVE_TOOLSET_ROUTER=(unset: default) EVE_OPENTABLE=1 EVE_CHIEF=(unset: default) EVE_GRADE_ROUTER=(unset: default) EVE_MENU_TOOLS=on
+   model gpt-6-luna, effort low
+   toolset router: auto (Jev), chief on
+   this checkout has: menu yes, events yes, taint gate yes
+   lent: own tools, web_search, memory, chat log, second brain, watch, meet, lights, spotify, firetv, obsbot, debrief, repos, phone location, science search, america, share, opentable, chief, maker, direct apps (gmail, calendar, drive, contacts, github, maps), workspace
+   cases: cases.json, 40
+   40 cases in 132 s
+FAIL rp-01: primary=repos accept=repos got=debrief (debrief_search)
+FAIL rp-02: primary=repos accept=repos got=debrief (debrief_search)
+FAIL rp-03: primary=repos accept=repos got=debrief (debrief_search)
+PASS rp-04: primary=repos accept=repos got=repos (repos_ask)
+PASS rp-05: primary=repos accept=repos got=repos (repos_list)
+FAIL rp-06: primary=repos accept=repos got=debrief (debrief_search)
+PASS rp-07: primary=repos accept=repos got=repos (repos_list)
+FAIL rp-08: primary=repos accept=repos got=debrief (debrief_search)
+PASS rp-09: primary=repos accept=repos got=repos (repos_list)
+PASS rp-10: primary=repos accept=repos got=repos (repos_list)
+PASS rp-11: primary=repos accept=repos got=repos (repos_ask)
+PASS rp-12: primary=repos accept=repos got=repos (repos_ask)
+FAIL rp-13: primary=repos accept=repos got=debrief (debrief_day)
+FAIL rp-14: primary=repos accept=repos|github got=debrief (debrief_day)
+FAIL rp-15: primary=repos accept=repos got=debrief (debrief_day)
+PASS rp-16: primary=repos accept=repos got=repos (repos_list)
+PASS rp-17: primary=repos accept=repos|github got=github (github__search_repositories)
+FAIL rp-18: primary=repos accept=repos got=debrief (debrief_search)
+PASS rp-19: primary=repos accept=repos got=repos (repos_ask)
+FAIL rp-20: primary=repos accept=repos got=debrief (debrief_search)
+PASS rp-21: primary=repos accept=repos|github got=github (github__get_file_contents)
+FAIL rp-22: primary=repos accept=repos got=debrief (debrief_status)
+PASS rp-23: primary=github accept=github got=github (github__actions_list)
+PASS rp-24: primary=github accept=github got=github (github__list_pull_requests)
+PASS rp-25: primary=github accept=github got=github (open_app)
+FAIL rp-26: primary=github accept=github got=computer_task (start_task)
+PASS rp-27: primary=github accept=github got=github (github__list_issues)
+PASS rp-28: primary=debrief accept=debrief got=debrief (debrief_day)
+PASS rp-29: primary=debrief accept=debrief got=debrief (debrief_day)
+PASS rp-30: primary=debrief accept=debrief got=debrief (debrief_status)
+PASS rp-31: primary=debrief accept=debrief got=debrief (debrief_status)
+PASS rp-32: primary=debrief accept=debrief got=debrief (debrief_day)
+FAIL rp-33: primary=coding_session accept=coding_session got=codex (codex_relay)
+FAIL rp-34: primary=coding_session accept=coding_session got=computer_task (start_task)
+FAIL rp-35: primary=coding_session accept=coding_session got=codex (codex_relay)
+FAIL rp-36: primary=coding_session accept=coding_session got=computer_task (start_task)
+FAIL rp-37: primary=web_search accept=web_search got=none
+PASS rp-38: primary=web_search accept=web_search got=web_search (web_search)
+FAIL rp-39: primary=web_search accept=web_search got=none
+PASS rp-40: primary=none accept=none got=none
+-- by primary label --
+   coding_session: 0/4
+   debrief: 5/5
+   github: 4/5
+   none: 1/1
+   repos: 11/22
+   web_search: 1/3
+TOTAL 22/40 (55.0%)
+NEVER_FIRED 0
+HARD_NEGATIVE_ACTED 1: rp-26->start_task
+JEV_ERRORS 0
+PROVIDER_ERRORS 0
+   cost: $0.4332 over 125 model calls (0 unpriced); scored 2026-11-09T12:14:56

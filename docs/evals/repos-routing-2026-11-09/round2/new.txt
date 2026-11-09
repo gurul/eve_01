@@ -1,0 +1,64 @@
+apps: github__get_me failed: AttributeError
+responses: TLS dropped mid-request (SSLV3_ALERT_BAD_RECORD_MAC); retrying in 0.3 s on a new connection
+responses: TLS dropped mid-request (SSLV3_ALERT_BAD_RECORD_MAC); retrying in 1.0 s on a new connection
+responses: TLS dropped mid-request (SSLV3_ALERT_BAD_RECORD_MAC); retrying in 0.3 s on a new connection
+   env: EVE_TELEGRAM_MODEL=gpt-6-luna EVE_JEV_ROUTE=openrouter EVE_TOOLSET_ROUTER=(unset: default) EVE_OPENTABLE=1 EVE_CHIEF=(unset: default) EVE_GRADE_ROUTER=(unset: default) EVE_MENU_TOOLS=on
+   model gpt-6-luna, effort low
+   toolset router: auto (Jev), chief on
+   this checkout has: menu yes, events yes, taint gate yes
+   lent: own tools, web_search, memory, chat log, second brain, watch, meet, lights, spotify, firetv, obsbot, debrief, repos, phone location, science search, america, share, opentable, chief, maker, direct apps (gmail, calendar, drive, contacts, github, maps), workspace
+   cases: cases.json, 40
+   40 cases in 142 s
+FAIL r2-01: primary=repos accept=repos got=none
+PASS r2-02: primary=repos accept=repos got=repos (repos_ask)
+PASS r2-03: primary=repos accept=repos got=repos (repos_ask)
+FAIL r2-04: primary=repos accept=repos got=none
+PASS r2-05: primary=repos accept=repos got=repos (repos_ask)
+PASS r2-06: primary=repos accept=repos got=repos (repos_list)
+PASS r2-07: primary=repos accept=repos got=repos (repos_ask)
+PASS r2-08: primary=repos accept=repos got=repos (repos_ask)
+PASS r2-09: primary=repos accept=repos got=repos (repos_list)
+PASS r2-10: primary=repos accept=repos got=repos (repos_ask)
+FAIL r2-11: primary=repos accept=repos got=debrief (debrief_search)
+FAIL r2-12: primary=repos accept=repos got=debrief (debrief_search)
+PASS r2-13: primary=repos accept=repos got=repos (repos_list)
+FAIL r2-14: primary=repos accept=repos got=debrief (debrief_search)
+PASS r2-15: primary=repos accept=repos got=repos (repos_ask)
+FAIL r2-16: primary=repos accept=repos|github got=computer_task (start_task)
+FAIL r2-17: primary=repos accept=repos got=debrief (debrief_day)
+PASS r2-18: primary=repos accept=repos|github got=github (github__list_commits)
+FAIL r2-19: primary=repos accept=repos got=debrief (debrief_when)
+PASS r2-20: primary=repos accept=repos got=repos (repos_list)
+PASS r2-21: primary=repos accept=repos got=repos (repos_list)
+PASS r2-22: primary=repos accept=repos got=repos (repos_list)
+PASS r2-23: primary=repos accept=repos got=repos (repos_list)
+FAIL r2-24: primary=repos accept=repos got=debrief (debrief_search)
+FAIL r2-25: primary=github accept=github got=slack (COMPOSIO_SEARCH_TOOLS)
+PASS r2-26: primary=github accept=github got=github (github__actions_list)
+PASS r2-27: primary=github accept=github got=github (github__list_issues)
+FAIL r2-28: primary=github accept=github got=slack (COMPOSIO_SEARCH_TOOLS)
+PASS r2-29: primary=debrief accept=debrief got=memory_recall>debrief (memory_search>debrief_search)
+PASS r2-30: primary=debrief accept=debrief got=debrief (debrief_search)
+PASS r2-31: primary=debrief accept=debrief got=debrief (debrief_day)
+PASS r2-32: primary=debrief accept=debrief got=debrief (debrief_status)
+PASS r2-33: primary=debrief accept=debrief got=debrief (debrief_list)
+FAIL r2-34: primary=coding_session accept=coding_session|codex|computer_task got=repos (repos_list)
+FAIL r2-35: primary=coding_session accept=coding_session|codex|computer_task got=repos (repos_list)
+PASS r2-36: primary=coding_session accept=coding_session|codex|computer_task got=coding_session (start_coding_session)
+FAIL r2-37: primary=web_search accept=web_search got=none
+FAIL r2-38: primary=web_search accept=web_search got=none
+FAIL r2-39: primary=web_search accept=web_search got=none
+PASS r2-40: primary=none accept=none got=none
+-- by primary label --
+   coding_session: 1/3
+   debrief: 5/5
+   github: 2/4
+   none: 1/1
+   repos: 15/24
+   web_search: 0/3
+TOTAL 24/40 (60.0%)
+NEVER_FIRED 0
+HARD_NEGATIVE_ACTED 0
+JEV_ERRORS 0
+PROVIDER_ERRORS 0
+   cost: $0.4884 over 125 model calls (0 unpriced); scored 2026-11-09T12:18:48
