@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ast
 import asyncio
+import json
 from pathlib import Path
 
 import pytest
@@ -141,6 +142,7 @@ ALLOWED = {
     "phone_call.py",     # the call's live ears: OpenAI realtime transcription, opt-in (EVE_CALL_LIVE_STT=1)
     "spend_sync.py",     # the providers' own cost figures, on optional admin keys (never a model call)
     "decisions.py",      # OpenAI's Decisions beta: dev eval tools only; the daemon never builds a client
+    "openrouter.py",     # Claude on Anthropic's own API with ANTHROPIC_API_KEY (owner, 2026-11-09)
 }
 
 
@@ -211,3 +213,69 @@ def test_google_models_prefer_ai_studio_and_keep_fallbacks() -> None:
     assert body["provider"] == {"order": ["google-ai-studio"], "allow_fallbacks": True}
     other = ws.request(ws.SearchConfig(engine="openrouter-perplexity", model="openai/gpt-5.4-nano"), "who won")
     assert "provider" not in other
+
+
+# ---- Claude on Anthropic directly (owner, 2026-11-09) -------------------------------------------------------------
+
+def test_claude_ids_for_anthropic() -> None:
+    assert openrouter.anthropic_model("anthropic/claude-haiku-5.5") == "claude-haiku-5-5"
+    assert openrouter.anthropic_model("claude-opus-5-5") == "claude-opus-5-5"
+    assert openrouter.is_claude("claude-opus-5-5") and openrouter.is_claude("anthropic/claude-haiku-5.5")
+    assert not openrouter.is_claude("gpt-6-luna") and not openrouter.is_claude("google/gemini-3.8-flash")
+
+
+def test_the_direct_key_and_its_switch() -> None:
+    assert openrouter.anthropic_key({"ANTHROPIC_API_KEY": " a-key "}) == "a-key"
+    assert openrouter.anthropic_key({}) == ""
+    assert openrouter.anthropic_key({"ANTHROPIC_API_KEY": "a-key", "EVE_ANTHROPIC_DIRECT": "0"}) == ""
+
+
+def test_a_claude_chat_completion_goes_to_anthropic_and_others_stay(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "an-test")
+    sent: list = []
+    reply = {"id": "msg_1", "object": "chat.completion", "created": 1, "model": "x",
+             "choices": [{"index": 0, "finish_reason": "stop", "message": {"role": "assistant", "content": "ok"}}]}
+    c = _capturing_client(sent, reply)
+    c.chat.completions.create(model="anthropic/claude-haiku-5.5", max_tokens=5,
+                              messages=[{"role": "user", "content": "x"}],
+                              extra_body={"provider": {"order": ["anthropic"]}, "usage": {"include": True},
+                                          "reasoning": {"enabled": False}})
+    c.chat.completions.create(model="gpt-6-luna", max_tokens=5, messages=[{"role": "user", "content": "x"}])
+    claude, luna = sent
+    assert str(claude.url) == "https://api.anthropic.com/v1/chat/completions"
+    assert claude.headers["authorization"] == "Bearer an-test"
+    body = json.loads(claude.content)
+    assert body["model"] == "claude-haiku-5-5" and not {"provider", "usage", "reasoning"} & set(body)
+    assert str(luna.url) == "https://openrouter.ai/api/v1/chat/completions"
+    assert luna.headers["authorization"] == "Bearer or-test"
+    monkeypatch.setenv("EVE_ANTHROPIC_DIRECT", "0")
+    c.chat.completions.create(model="claude-haiku-5-5", max_tokens=5, messages=[{"role": "user", "content": "x"}])
+    assert str(sent[-1].url) == "https://openrouter.ai/api/v1/chat/completions"
+
+
+def test_the_anthropic_client_goes_to_anthropic_with_its_own_ids(monkeypatch: pytest.MonkeyPatch) -> None:
+    pytest.importorskip("anthropic")
+    import httpx2
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "an-test")
+    sent: list = []
+
+    def handler(request):
+        sent.append(request)
+        return httpx2.Response(200, json={
+            "id": "m1", "type": "message", "role": "assistant", "model": "claude-opus-5-5",
+            "content": [{"type": "text", "text": "hi"}], "stop_reason": "end_turn", "stop_sequence": None,
+            "usage": {"input_tokens": 3, "output_tokens": 1}})
+
+    async def go():
+        import anthropic
+
+        c = openrouter.anthropic_client(http_client=anthropic.DefaultAsyncHttpxClient(
+            transport=httpx2.MockTransport(handler)))
+        await c.messages.create(model="anthropic/claude-opus-5.5", max_tokens=5,
+                                messages=[{"role": "user", "content": "x"}])
+
+    asyncio.run(go())
+    [req] = sent
+    assert str(req.url) == "https://api.anthropic.com/v1/messages"
+    assert req.headers["x-api-key"] == "an-test" and b'"model":"claude-opus-5-5"' in req.content

@@ -18,6 +18,14 @@ points at OpenRouter with ``OPENROUTER_API_KEY``.
   and the call's live ears, both left on ``OPENAI_API_KEY`` as opt-ins); OpenAI's Decisions beta and the diarizing
   transcriber. docs/openrouter.md has the whole list.
 
+**Claude goes to Anthropic directly** (owner, 2026-11-09: "replace anthropic use cases with this instead of open
+router for eve ... anthropic models"). With ``ANTHROPIC_API_KEY`` set, a Claude model is sent to Anthropic's own API on
+that key: ``anthropic_client()`` is the SDK on api.anthropic.com, and a Chat Completions call on a Claude model from
+``client()``/``async_client()`` goes to Anthropic's OpenAI-compatible endpoint (``ANTHROPIC_CHAT_URL``), with the
+model's Anthropic id ("anthropic/claude-haiku-5.5" → "claude-haiku-5-5") and without OpenRouter's own body fields
+(``OPENROUTER_ONLY``). A Responses API call on a Claude model stays on OpenRouter (Anthropic has no Responses API).
+``EVE_ANTHROPIC_DIRECT=0`` sends everything to OpenRouter as before. Every other model is unchanged.
+
 Spend (spend.py) is recorded at each call site as before, under the provider ``openrouter``; the model name in the
 row is the call site's own, so pricing.py's tables still read it.
 """
@@ -29,6 +37,11 @@ import re
 from typing import Any, Optional
 
 KEY_ENV = "OPENROUTER_API_KEY"
+ANTHROPIC_KEY_ENV = "ANTHROPIC_API_KEY"
+DIRECT_SWITCH = "EVE_ANTHROPIC_DIRECT"                  # on (default) while ANTHROPIC_API_KEY is set; 0 turns it off
+ANTHROPIC_CHAT_URL = "https://api.anthropic.com/v1/chat/completions"
+# OpenRouter's own body fields: Anthropic's endpoint does not know them.
+OPENROUTER_ONLY = ("provider", "usage", "reasoning", "transforms", "plugins", "models", "route")
 BASE_URL = "https://openrouter.ai/api/v1"
 ANTHROPIC_BASE_URL = "https://openrouter.ai/api"       # the anthropic SDK adds /v1/messages itself
 PROVIDER = "openrouter"                                 # the spend ledger's provider name for these calls
@@ -84,13 +97,51 @@ def model(name: str) -> str:
     return n
 
 
+def anthropic_key(env: Any = None) -> str:
+    """The Anthropic key when Claude goes to Anthropic directly, else "" (no key, or EVE_ANTHROPIC_DIRECT off)."""
+    e = os.environ if env is None else env
+    if str(e.get(DIRECT_SWITCH, "")).strip().lower() in ("0", "false", "no", "off"):
+        return ""
+    return (e.get(ANTHROPIC_KEY_ENV) or "").strip()
+
+
+def anthropic_model(name: str) -> str:
+    """Anthropic's own id for a Claude model name: "anthropic/claude-haiku-5.5" or "claude-haiku-5-5" →
+    "claude-haiku-5-5"."""
+    n = (name or "").strip()
+    if n.lower().startswith("anthropic/"):
+        n = n.split("/", 1)[1]
+    m = re.match(r"^(claude-[a-z]+)-(\d+)\.(\d+)$", n, re.I)
+    return f"{m.group(1)}-{m.group(2)}-{m.group(3)}" if m else n
+
+
+def is_claude(name: str) -> bool:
+    return model(name).lower().startswith("anthropic/claude")
+
+
 def _rewrite(options: Any) -> None:
-    """Put the OpenRouter id in a request's body, in place. Idempotent: a retry re-runs it on the same body."""
+    """Put the provider's id in a request's body, in place, and send a Claude Chat Completions call to Anthropic when
+    its key is set. Idempotent: a retry re-runs it on the same body."""
     data = getattr(options, "json_data", None)
-    if isinstance(data, dict) and isinstance(data.get("model"), str):
-        mapped = model(data["model"])
-        if mapped != data["model"]:
-            options.json_data = {**data, "model": mapped}
+    if not (isinstance(data, dict) and isinstance(data.get("model"), str)):
+        return
+    direct = anthropic_key()
+    url = str(getattr(options, "url", "") or "")
+    if direct and is_claude(data["model"]) and (url.endswith("/chat/completions") or url == ANTHROPIC_CHAT_URL):
+        body = {k: v for k, v in data.items() if k not in OPENROUTER_ONLY}
+        extra = getattr(options, "extra_json", None)       # extra_body: merged into the body after this
+        if isinstance(extra, dict):
+            options.extra_json = {k: v for k, v in extra.items() if k not in OPENROUTER_ONLY}
+        body["model"] = anthropic_model(model(data["model"]))
+        options.json_data = body
+        options.url = ANTHROPIC_CHAT_URL
+        headers = dict(getattr(options, "headers", None) or {})
+        headers["Authorization"] = f"Bearer {direct}"
+        options.headers = headers
+        return
+    mapped = model(data["model"])
+    if mapped != data["model"]:
+        options.json_data = {**data, "model": mapped}
 
 
 class _Rewrites:
@@ -142,11 +193,28 @@ def async_client(api_key: Optional[str] = None, **kwargs: Any) -> Any:
     return _cls("OpenRouterAsyncOpenAI", openai.AsyncOpenAI)(api_key=k, base_url=BASE_URL, **_merge_headers(kwargs))
 
 
+class _AnthropicIds:
+    """Mixed into the anthropic SDK on Anthropic's own API: every request carries Anthropic's model id."""
+
+    def _build_request(self, options: Any, *, retries_taken: int = 0) -> Any:  # type: ignore[override]
+        data = getattr(options, "json_data", None)
+        if isinstance(data, dict) and isinstance(data.get("model"), str):
+            options.json_data = {**data, "model": anthropic_model(data["model"])}
+        return super()._build_request(options, retries_taken=retries_taken)  # type: ignore[misc]
+
+
 def anthropic_client(api_key: Optional[str] = None, **kwargs: Any) -> Any:
-    """An asyncio anthropic SDK client on OpenRouter's Anthropic endpoint. Raises NoKey (and ImportError without
-    the anthropic SDK, the ``miniapp`` extra)."""
+    """An asyncio anthropic SDK client: on Anthropic's own API when ``ANTHROPIC_API_KEY`` is set (and api_key is not
+    given), else on OpenRouter's Anthropic endpoint. Raises NoKey (and ImportError without the anthropic SDK, the
+    ``miniapp`` extra)."""
     import anthropic
 
+    direct = "" if api_key else anthropic_key()
+    if direct:
+        base = anthropic.AsyncAnthropic
+        cls = base if not isinstance(base, type) else _classes.setdefault(
+            ("AnthropicDirect", id(base)), type("AnthropicDirect", (_AnthropicIds, base), {}))
+        return cls(api_key=direct, **kwargs)
     k = _key_or_raise(api_key)
     return _cls("OpenRouterAsyncAnthropic", anthropic.AsyncAnthropic)(
         api_key=k, base_url=ANTHROPIC_BASE_URL, **_merge_headers(kwargs))

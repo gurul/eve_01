@@ -98,7 +98,7 @@ def _no_jev_from_a_telegram_turn(monkeypatch: pytest.MonkeyPatch):
     A test that wants a key sets one itself; the router's own tests pass their environment in."""
     if os.environ.get("EVE_LIVE", "").strip().lower() in ("1", "true", "yes", "on"):
         return
-    for key in ("TYPESAFE_API_KEY", "OPENROUTER_API_KEY"):
+    for key in ("TYPESAFE_API_KEY", "OPENROUTER_API_KEY", "ANTHROPIC_API_KEY", "EVE_ANTHROPIC_DIRECT"):
         monkeypatch.delenv(key, raising=False)
 
 

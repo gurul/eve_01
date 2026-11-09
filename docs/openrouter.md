@@ -92,7 +92,8 @@ Think, Think hard and app-building models retain their existing roles.
 | `key(env)` | The key, stripped, or `""`. |
 | `model(name)` | The OpenRouter id for a model name (table below). |
 | `client()` / `async_client()` | The `openai` SDK client, with base URL `https://openrouter.ai/api/v1`, the key, and eve's `HTTP-Referer` and `X-Title` headers. |
-| `anthropic_client()` | The `anthropic` SDK `AsyncAnthropic` client, with base URL `https://openrouter.ai/api` and the same key. |
+| `anthropic_client()` | The `anthropic` SDK `AsyncAnthropic` client, with base URL `https://openrouter.ai/api` and the same key; on Anthropic's own API instead while `ANTHROPIC_API_KEY` is set (below). |
+| `anthropic_key(env)` | The Anthropic key when Claude goes to Anthropic directly, else `""`. |
 
 The clients rewrite the `model` field of each request when they send it. Call
 sites keep their model names as they were (`gpt-6-luna`), and OpenRouter
@@ -110,6 +111,24 @@ transcription and speech.
 | `gpt-4o-transcribe`, `gpt-4o-mini-transcribe` | `openai/<name>` |
 | `claude-opus-5-5` | `anthropic/claude-opus-5.5` (with a dot, not a dash) |
 | an id with a `/` (`deepgram/aura-2`, `google/gemini-3.1-flash-lite`) | unchanged |
+
+### Claude on Anthropic directly
+
+Owner, 2026-11-09: *"replace anthropic use cases with this instead of open router for
+eve ... anthropic models"*. With `ANTHROPIC_API_KEY` in `~/.config/eve-bridge/env`,
+every Claude model goes to Anthropic's own API on that key; every other model still
+goes to OpenRouter.
+
+| Call | Where it goes with `ANTHROPIC_API_KEY` |
+|---|---|
+| `anthropic_client()` (the app builder's Opus) | `https://api.anthropic.com/v1/messages`, model `claude-opus-5-5` |
+| A Chat Completions call on a Claude model (small talk's Haiku) | Anthropic's OpenAI-compatible `https://api.anthropic.com/v1/chat/completions`, model `claude-haiku-5-5`, without OpenRouter's own fields (`provider`, `usage`, `reasoning`, …) |
+| A Responses API call on a Claude model | still OpenRouter: Anthropic has no Responses API |
+
+`EVE_ANTHROPIC_DIRECT=0` sends Claude to OpenRouter again without removing the key.
+Spending rows for these calls have the provider `anthropic`; a model without a row in
+`pricing.ANTHROPIC_RATES` is recorded unpriced rather than guessed (Haiku 5.5 today).
+eve lite removes the key, so lite stays on OpenRouter.
 
 ### Spending
 

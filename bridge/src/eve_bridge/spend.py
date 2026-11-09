@@ -235,6 +235,15 @@ def record_chat_completion(feature: str, payload: Any, *, model: str = "", provi
         if isinstance(usage.get("cost"), (int, float)):
             record(provider, name, feature, float(usage["cost"]), tokens=tok, source="reported")
             return
+        from . import openrouter
+
+        if openrouter.is_claude(name) and openrouter.anthropic_key():
+            # sent to Anthropic directly (openrouter._rewrite): no reported cost, so its own rates or unpriced
+            usd = pricing.estimate_anthropic_cost(openrouter.anthropic_model(openrouter.model(name)),
+                                                  {"input_tokens": tok["in"], "output_tokens": tok["out"]}) \
+                if usage else None
+            record("anthropic", name, feature, usd, tokens=tok)
+            return
         usd = None
         if usage:
             usd = pricing.estimate_openai_cost(name, {"input_tokens": tok["in"], "output_tokens": tok["out"],
@@ -250,10 +259,14 @@ def _reported_cost(usage: Any) -> Optional[float]:
     return float(cost) if isinstance(cost, (int, float)) and not isinstance(cost, bool) and cost >= 0 else None
 
 
-def record_anthropic(feature: str, model: str, usage: Any, *, provider: str = "openrouter") -> Optional[float]:
+def record_anthropic(feature: str, model: str, usage: Any, *, provider: str = "") -> Optional[float]:
     """One Messages API usage: OpenRouter's reported cost when it is there, else pricing.ANTHROPIC_RATES. Returns
-    the dollars recorded (None: unpriced)."""
+    the dollars recorded (None: unpriced). The provider is Anthropic itself while Claude goes there directly."""
     try:
+        if not provider:
+            from . import openrouter
+
+            provider = "anthropic" if openrouter.anthropic_key() else "openrouter"
         def get(name: str) -> Any:
             return usage.get(name) if isinstance(usage, dict) else getattr(usage, name, None)
 

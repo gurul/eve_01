@@ -210,6 +210,8 @@ LITE_CLASSIFIED: dict[str, str] = {
     **_why("secret-shaped: apply() removes it, so no key or owner id switches a feature on",
            "EVE_TELEGRAM_TOKEN", "EVE_TELEGRAM_OWNER", "EVE_GITHUB_MCP_TOKEN", "EVE_GOOGLE_MAPS_KEY",
            "EVE_OPENAI_ADMIN_KEY", "EVE_ANTHROPIC_ADMIN_KEY", "EVE_ENTER_KEY"),
+    **_why("kept: Claude on Anthropic directly needs ANTHROPIC_API_KEY, which apply() removes in lite",
+           "EVE_ANTHROPIC_DIRECT"),
     # what eve lite runs
     **_why("kept: the chat brain's models and efforts (luna; App Think on sol); the defaults are lite's",
            "EVE_TELEGRAM_MODEL", "EVE_TELEGRAM_EFFORT", "EVE_APP_THINK_MODEL", "EVE_APP_THINK_EFFORT"),
