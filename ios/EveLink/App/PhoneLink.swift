@@ -103,7 +103,8 @@ final class TalkActivity {
             since = given
         }
         lastPhase = phase
-        let state = TalkActivityAttributes.ContentState(phase: phase, since: since, heard: lastHeard)
+        let state = TalkActivityAttributes.ContentState(phase: phase, since: since, heard: lastHeard,
+                                                        who: PhoneLink.relay.voice == "eve" ? nil : PhoneLink.relay.voice)
         let content = ActivityContent(state: state, staleDate: nil)
         if phase != .ended, !Self.isLive(current) {
             // None yet, or the owner swiped it away. Requested synchronously: an AudioRecordingIntent needs the Live

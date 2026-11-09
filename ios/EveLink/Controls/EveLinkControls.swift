@@ -154,7 +154,7 @@ private struct Words: View {
 
     var body: some View {
         VStack(alignment: alignment, spacing: 1) {
-            Text(state.phase.title)
+            Text(state.phase.title(who: state.who ?? "eve"))
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(Look.ink)
                 .lineLimit(1)

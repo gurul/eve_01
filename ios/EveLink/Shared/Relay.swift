@@ -61,6 +61,11 @@ final class Relay: ObservableObject {
     /// Where the phone's own call is; `onPhase` hears every change (the Live Activity).
     @Published private(set) var phase: CallPhase = .ended { didSet { if phase != oldValue { onPhase?(phase) } } }
     var onPhase: ((CallPhase) -> Void)?
+    /// Who answers on the call: "Muse" while the chat is switched to Muse (docs/muse.md), else "eve". The status lines
+    /// and the Live Activity name it ("Muse is thinking…"). The switch is eve's: the composer's switch tells this
+    /// (``museIs``), each call reads it again when it opens, and the last answer is kept for a cold Action Button press.
+    @Published private(set) var voice = UserDefaults.standard.bool(forKey: Relay.museKey) ? "Muse" : "eve"
+    private static let museKey = "museOn"
     /// Called just before the phone's call takes the microphone, in the same main-actor turn: the composer's
     /// dictation stops here, without releasing the audio session the call is about to use.
     var beforeMic: (@MainActor () -> Void)?
@@ -168,12 +173,37 @@ final class Relay: ObservableObject {
         return true
     }
 
+    // ---- Muse ---------------------------------------------------------------------------------------------
+
+    /// The eve/Muse switch as eve last said it: the call's words name who answers.
+    func museIs(_ on: Bool) {
+        UserDefaults.standard.set(on, forKey: Self.museKey)
+        let next = on ? "Muse" : "eve"
+        guard next != voice else { return }
+        voice = next
+        if phase == .thinking { callStatus = "\(voice) is thinking…" }
+        onPhase?(phase)                         // the Live Activity names the new voice
+    }
+
+    /// Read the switch from eve (GET /api/link/muse): it may have been flipped from another door since.
+    private func readMuse() {
+        guard let pairing else { return }
+        let request = ChatRequests.muse(ChatEndpoint(base: pairing.base, token: pairing.token), on: nil)
+        Task { [weak self] in
+            guard let (data, response) = try? await URLSession.shared.data(for: request),
+                  (response as? HTTPURLResponse)?.statusCode == 200,
+                  let state = MuseSwitch.decode(String(decoding: data, as: UTF8.self)) else { return }
+            self?.museIs(state.on)
+        }
+    }
+
     // ---- eve ----------------------------------------------------------------------------------------------
 
     private func fromEve(_ event: CallEvent) {
         switch event {
         case .open:
             diag("call: open")
+            readMuse()
             retriedAddress = false
             connected = true
             generation.bump()
@@ -195,7 +225,7 @@ final class Relay: ObservableObject {
                 reopenAfterPlay?.cancel()           // more of eve: a waiting reopen waits for this reply instead
                 reopenAfterPlay = nil
                 eveSpeaking = true
-                callStatus = notes.active ? callStatus : "eve is speaking"
+                callStatus = notes.active ? callStatus : "\(voice) is speaking"
                 // Voice mode's open microphone has not heard the owner yet, so eve's voice is what is going on.
                 if replyToPhone, !phoneTalking || onset != nil, !notes.active { phase = .speaking }
             }
@@ -607,7 +637,7 @@ final class Relay: ObservableObject {
         if !batch.isEmpty { call.audio(batch) }
         batch.removeAll()
         call.done()
-        callStatus = "eve is thinking…"
+        callStatus = "\(voice) is thinking…"
         phase = .thinking
         armHangUp()
     }

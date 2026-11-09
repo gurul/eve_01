@@ -618,6 +618,10 @@ check(VoiceStatus.text(phase: .listening, connected: false, notes: .off, error: 
       && VoiceStatus.text(phase: .thinking, connected: true, notes: .off, error: nil) == "eve is thinking…"
       && VoiceStatus.text(phase: .ended, connected: false, notes: .off, error: nil) == "Connecting…",
       "voice status from the call's phase")
+check(VoiceStatus.text(phase: .thinking, connected: true, notes: .off, error: nil, who: "Muse") == "Muse is thinking…"
+      && VoiceStatus.text(phase: .speaking, connected: true, notes: .off, error: nil, who: "Muse") == "Muse is speaking"
+      && CallPhase.thinking.title(who: "Muse") == "Muse is thinking…" && CallPhase.thinking.title == "eve is thinking…",
+      "Muse switched on: the call names Muse (docs/muse.md)")
 check(VoiceStatus.text(phase: .ended, connected: false, notes: .off, error: "eve's chat isn't running")
       == "eve's chat isn't running"
       && VoiceStatus.text(phase: .listening, connected: true, notes: .off, error: "") == "Listening",

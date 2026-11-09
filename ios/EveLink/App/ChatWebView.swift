@@ -20,7 +20,7 @@ final class ChatModel: NSObject, ObservableObject {
     }
 
     /// The composer's eve/Muse switch (left of History); hidden unless this Mac has Muse set up.
-    @Published private(set) var muse = MuseSwitch()
+    @Published private(set) var muse = MuseSwitch() { didSet { relay.museIs(muse.on) } }   // calls name Muse too
 
     let relay: Relay
     private(set) lazy var webView: WKWebView = makeWebView()

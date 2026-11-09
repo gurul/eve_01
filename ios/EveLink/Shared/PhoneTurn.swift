@@ -233,7 +233,7 @@ enum VoiceStatus {
     /// Voice mode with nobody talking and eve quiet: talking is the Action Button (2026-10-09).
     static let holdToTalk = "Press the Action Button to talk"
 
-    static func text(phase: CallPhase, connected: Bool, notes: NotesMode, error: String?) -> String {
+    static func text(phase: CallPhase, connected: Bool, notes: NotesMode, error: String?, who: String = "eve") -> String {
         if let error, !error.isEmpty { return error }
         switch notes {
         case .on: return "Taking notes"
@@ -242,8 +242,8 @@ enum VoiceStatus {
         }
         switch phase {
         case .listening, .waiting: return connected ? "Listening" : "Connecting…"
-        case .thinking: return "eve is thinking…"
-        case .speaking: return "eve is speaking"
+        case .thinking: return "\(who) is thinking…"
+        case .speaking: return "\(who) is speaking"
         case .notes: return "Taking notes"
         case .ended: return "Connecting…"
         }
@@ -259,11 +259,14 @@ enum CallPhase: String, Codable, Hashable, Sendable {
     case notes          // the phone is taking notes: the microphone streams until a press stops it
     case ended          // no phone call
 
-    var title: String {
+    var title: String { title(who: "eve") }
+
+    /// The title with who answers named: "Muse" while the chat is switched to Muse, else "eve".
+    func title(who: String) -> String {
         switch self {
         case .listening: "Listening…"
-        case .thinking: "eve is thinking…"
-        case .speaking: "eve is speaking"
+        case .thinking: "\(who) is thinking…"
+        case .speaking: "\(who) is speaking"
         case .waiting: "On a call with eve"
         case .notes: "Taking notes"
         case .ended: "Idle"

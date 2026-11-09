@@ -32,7 +32,10 @@ While Muse is on:
   not the app's, so a call says your words to Muse and reads its answer out.
   While Muse works, the call reads what Muse says it is doing ("Searching the
   web") and, after 30 quiet seconds, "Muse is still working on it.", so the
-  phone does not hang up (it ends a call after 45 quiet seconds).
+  phone does not hang up (it ends a call after 45 quiet seconds). The call's
+  screen and the Live Activity say "Muse is thinking…" and "Muse is
+  speaking" while the switch is on: the app keeps the switch as eve last told
+  it, and reads it again each time a call opens.
 - Muse can take minutes on a question (research, tasks). eve waits up to 15
   minutes. If the app's live reply has ended by then (it stops after five
   minutes), the answer still lands in the chat, titled **Muse**, and stays

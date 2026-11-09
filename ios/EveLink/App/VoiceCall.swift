@@ -73,7 +73,8 @@ struct VoiceCallScreen: View {
         if (error ?? "").isEmpty, !relay.notes.active, relay.phase == .ended || relay.phase == .waiting {
             return VoiceStatus.holdToTalk
         }
-        return VoiceStatus.text(phase: relay.phase, connected: relay.connected, notes: relay.notes, error: error)
+        return VoiceStatus.text(phase: relay.phase, connected: relay.connected, notes: relay.notes, error: error,
+                                who: relay.voice)
     }
 
     private func start() async {

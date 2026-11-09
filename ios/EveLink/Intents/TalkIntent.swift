@@ -84,5 +84,6 @@ struct TalkActivityAttributes: ActivityAttributes {
         var phase: CallPhase
         var since: Date = .now          // when this phase began: the listening timer counts from it
         var heard: String = ""          // what eve heard last, one line
+        var who: String? = nil          // who answers: "Muse" while the chat is switched to Muse; nil is eve
     }
 }

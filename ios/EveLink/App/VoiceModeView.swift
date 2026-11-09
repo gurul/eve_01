@@ -223,7 +223,7 @@ private struct LiveFace: View {
         case .idle: break
         }
         if muted { return .muted }
-        if status.hasPrefix("eve is thinking") || status.hasPrefix("Writing up") { return .thinking }
+        if status.hasSuffix(" is thinking…") || status.hasPrefix("Writing up") { return .thinking }
         if status.hasPrefix("Connecting") { return .connecting }
         return .idle
     }
