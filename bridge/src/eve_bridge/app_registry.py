@@ -155,6 +155,10 @@ APPS: tuple[App, ...] = (
         title="Pika", symbol="car", detail="Drive the car", doc="docs/pika.md",
         no_control="Pika isn't set up on this Mac (EVE_PIKA and pika.json).",
         tools=False, stream=True, native_sheet=True),
+    App(slot="debrief", module="debrief", make="make", switch="EVE_DEBRIEF", default_on=False,
+        title="Debrief", symbol="book.closed", detail="Past work notes", doc="docs/debrief.md",
+        no_control="Debrief is off on this Mac (EVE_DEBRIEF).", label="debrief", tool_prefix="debrief_",
+        sources=_map(debrief_search="your debrief notes", debrief_get="your debrief notes")),
     # eve-bridge app new: new apps go above this line
 )
 
