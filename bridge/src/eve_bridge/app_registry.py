@@ -160,7 +160,7 @@ APPS: tuple[App, ...] = (
         no_control="Debrief is off on this Mac (EVE_DEBRIEF).", label="debrief", tool_prefix="debrief_",
         sources=_map(debrief_search="your debrief notes", debrief_get="your debrief notes",
                      debrief_day="your debrief notes", debrief_when="your debrief notes",
-                     debrief_list="your debrief notes")),
+                     debrief_list="your debrief notes", debrief_status="your debrief notes")),
     # eve-bridge app new: new apps go above this line
 )
 

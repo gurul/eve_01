@@ -6,16 +6,16 @@ Markdown notes that the owner's Claude Code sessions curate: dailies, session no
 local Ollama serves its embedding model, by meaning. eve runs that script for a search, so its ranking is the same one
 the owner's coding sessions see.
 
-**A day is read, not searched** (2026-11-09). "What was I working on yesterday" went wrong live: the search ranks by
-words, meaning and recency, never by date, so vague words brought back older days, and even the date written into a
-query did not reliably surface that day. ``debrief_day`` reads by date instead: the day's row in ``INDEX.md`` (its
-summary, which covers the late-day addenda too) and then the day's own note, ``<date>-*.md`` at the store's root.
-A range answers the rows alone. Relative words (today, yesterday, latest) are turned into dates here, in local
-time, so the model never has to count days.
+**Questions with structure are not searched** (2026-11-09). "What was I working on yesterday" went wrong live: the
+search ranks by words, meaning and recency, never by date. The store's script now also builds tables from the same
+Markdown (days, sessions, the glossary of ``[[name]]`` entries, mentions, open threads, the superseded ledger) and
+answers ``day``, ``when``, ``status``, ``todos`` and ``stars`` from them. eve calls those for time, when, status and
+list questions; the text search is left for the open-ended ones. Time words (yesterday, a weekday, last week) are
+passed through as they are and the script turns them into dates, so the model never counts days.
 
 **The tools.** ``debrief_search(query, n)`` answers the ranked index: one line per hit, with its id, date, file and
-section. ``debrief_get(ids)`` answers the full text of chosen hits. ``debrief_day(date, until)`` answers a day or a
-range of days. ``debrief_when(term)`` answers the days whose note names a thing, with counts. All four are reads. They change nothing in the notes
+section. ``debrief_get(ids)`` answers the full text of chosen hits. ``debrief_day``, ``debrief_when``, ``debrief_status`` and
+``debrief_list`` answer from the script's tables. All are reads. They change nothing in the notes
 (the script only refreshes its own index cache). Neither is CLEAN: a note can quote a web page or a message, so a
 result taints the turn like memory_search's.
 
@@ -33,7 +33,6 @@ into the turn, so they reach the chat or voice model like any tool result.
 from __future__ import annotations
 
 import asyncio
-import datetime as _dt
 import logging
 import os
 import re
@@ -59,13 +58,9 @@ MEANING_SECS = 15.0                    # the script bounds itself near 11 s (8 s
 KEYWORD_SECS = 15.0
 MAX_LIST_ITEMS = 12
 LISTS = ("open", "stars")
-MAX_RANGE_DAYS = 62                    # a debrief_day range: two months of rows, sharing MAX_OUT_CHARS
-FULL_ROWS = 7                          # a range's newest days keep their whole summary; older ones a first sentence
-MAX_WHEN_DAYS = 12
-LATEST = "latest"
-WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
-_ISO = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-_NOTE = re.compile(r"^(\d{4}-\d{2}-\d{2})-[^/]+\.md$")
+MAX_RANGE_DAYS = 62                    # the script's own limit on a debrief_day range
+OLD_SCRIPT = ("This debrief store's search script predates eve's day, when, status and list questions: update "
+              "claude-debrief.")
 
 TOOLS: list[dict[str, Any]] = [
     {
@@ -119,6 +114,19 @@ TOOLS: list[dict[str, Any]] = [
         },
     },
     {
+        "type": "function", "name": "debrief_status", "strict": True,
+        "description": (
+            "Where a project, feature or device stands now, from the debrief's glossary: its entry (kept "
+            "current), later states recorded in other entries, the last days it was worked on, and its open "
+            "threads. Use it for where-does-it-stand and is-it-working questions."),
+        "parameters": {
+            "type": "object", "additionalProperties": False, "required": ["name"],
+            "properties": {
+                "name": {"type": "string", "description": "The project, feature or device, as the owner named it."},
+            },
+        },
+    },
+    {
         "type": "function", "name": "debrief_list", "strict": True,
         "description": (
             "A list kept in the owner's debrief. open: the open threads, the work still to do, each with the day "
@@ -141,7 +149,7 @@ TOOLS: list[dict[str, Any]] = [
         "parameters": {
             "type": "object", "additionalProperties": False, "required": ["term"],
             "properties": {
-                "term": {"type": "string", "description": "The project, feature or word, as the notes would name it."},
+                "term": {"type": "string", "description": "The project, feature or word, as the owner named it."},
             },
         },
     },
@@ -153,10 +161,11 @@ INSTRUCTIONS = (
     "The owner's debrief is the record of the owner's past coding work. For a question about a time (today, "
     "yesterday, a weekday, a date, last week, the latest work), call debrief_day with that day or span; pass the "
     "owner's time words as they are and let it work out the dates. For when something was last or first worked "
-    "on, call debrief_when, then debrief_day for the day it names. For what is still to do, call debrief_list "
-    "open; for what the owner must always remember, debrief_list stars. For a topic (what was decided, why, where "
-    "a project stands), call debrief_search with the topic's own name and a word or two such as status, decision "
-    "or open, then debrief_get for the best two or three hits. A hit from INDEX.md says what is true now: prefer "
+    "on, call debrief_when, then debrief_day for the day it names. For where a project or device stands, call "
+    "debrief_status. For what is still to do, call debrief_list open; for what the owner must always remember, "
+    "debrief_list stars. For anything else (what was decided, why, how something was done), call debrief_search "
+    "with the topic's own name and a word or two such as decision or open, then debrief_get for the best two or "
+    "three hits. A hit from INDEX.md says what is true now: prefer "
     "it for where something stands or what was decided. Within a dated note, a later late-day addendum replaces "
     "that note's title and TL;DR. A hit marked ~ does not contain the words searched for, only something like "
     "them; when every hit is marked ~, say the debrief has no record of it. A hit marked ⊘ was replaced: read "
@@ -183,46 +192,6 @@ def store_dir(environ: Optional[Mapping[str, str]] = None) -> Path:
 
 def _clip(text: str, limit: int = MAX_OUT_CHARS) -> str:
     return text if len(text) <= limit else text[:limit] + "\n… (clipped)"
-
-
-def resolve_span(word: Any, today: _dt.date) -> Optional[tuple[_dt.date, _dt.date]]:
-    """The days a word the model wrote names, first and last (local time), or None.
-
-    A day: YYYY-MM-DD, today, yesterday, day before yesterday, a weekday (its most recent past day, never today; a
-    leading "last" or "on" is allowed). A span: this week and last week (Monday to Sunday), weekend (the most recent
-    past Saturday and Sunday), this month and last month."""
-    text = " ".join(str(word or "").strip().lower().replace("_", " ").split())
-    text = re.sub(r"^(on|the|over the|last|past)\s+(?=(monday|tuesday|wednesday|thursday|friday|saturday|sunday|"
-                  r"weekend)\b)", "", text)
-    one = {"today": 0, "tonight": 0, "yesterday": 1, "last night": 1, "day before yesterday": 2,
-           "the day before yesterday": 2}
-    if text in one:
-        day = today - _dt.timedelta(days=one[text])
-        return day, day
-    if text in WEEKDAYS:
-        back = (today.weekday() - WEEKDAYS.index(text)) % 7 or 7
-        day = today - _dt.timedelta(days=back)
-        return day, day
-    monday = today - _dt.timedelta(days=today.weekday())
-    if text == "this week":
-        return monday, today
-    if text == "last week":
-        return monday - _dt.timedelta(days=7), monday - _dt.timedelta(days=1)
-    if text in ("weekend", "this weekend", "last weekend"):
-        saturday = today - _dt.timedelta(days=(today.weekday() - 5) % 7 or 7)
-        return saturday, min(saturday + _dt.timedelta(days=1), today)
-    if text == "this month":
-        return today.replace(day=1), today
-    if text == "last month":
-        end = today.replace(day=1) - _dt.timedelta(days=1)
-        return end.replace(day=1), end
-    if not _ISO.match(text):
-        return None
-    try:
-        day = _dt.date.fromisoformat(text)
-    except ValueError:
-        return None
-    return day, day
 
 
 # A hit's header, in a search line and at the top of a get: ``[id]`` (``~`` for a meaning-only hit), then the
@@ -262,45 +231,6 @@ def _fit(text: str, limit: int, query: str) -> str:
             left = len(keep) - len(picked)
             return "\n".join([head, *picked]) + (f"\n… ({left} more matching entries not shown)" if left else "")
     return _clip(text, limit)
-
-
-def _headings(text: str) -> list[str]:
-    """A note's ``##`` headings: the day's parts, and each late-day addendum (its session, project and end)."""
-    return [line[3:].strip() for line in text.splitlines() if line.startswith("## ")]
-
-
-def _index_rows(root: Path) -> dict[str, tuple[str, str]]:
-    """INDEX.md's day rows: date -> (title, summary). A row is ``| date | [title](file) | summary | entities |``."""
-    rows: dict[str, tuple[str, str]] = {}
-    try:
-        text = (root / "INDEX.md").read_text(encoding="utf-8", errors="replace")
-    except OSError:
-        return rows
-    for line in text.splitlines():
-        m = re.match(r"^\|\s*(\d{4}-\d{2}-\d{2})\s*\|(.*)\|\s*$", line)
-        if not m:
-            continue
-        cells = [c.strip() for c in re.split(r"(?<!\\)\|", m.group(2))]
-        if len(cells) < 2:
-            continue
-        title = re.sub(r"^\[(.*)\]\([^)]*\)$", r"\1", cells[0])
-        summary = " | ".join(cells[1:-1]) if len(cells) > 2 else cells[1]
-        rows.setdefault(m.group(1), (title, summary))       # the first row for a date: INDEX is newest first
-    return rows
-
-
-def _notes(root: Path) -> dict[str, list[Path]]:
-    """The dated notes at the store's root, date -> files. Drafts under sessions/ are never read."""
-    found: dict[str, list[Path]] = {}
-    try:
-        entries = sorted(root.iterdir())
-    except OSError:
-        return found
-    for path in entries:
-        m = _NOTE.match(path.name)
-        if m and path.is_file() and not path.is_symlink():
-            found.setdefault(m.group(1), []).append(path)
-    return found
 
 
 class Debrief:
@@ -352,6 +282,10 @@ class Debrief:
         if proc.returncode != 0:
             last = (errs.strip().splitlines() or [""])[-1][:200]
             log.warning("debrief: %s %r exited %s: %s", argv[0], argv[-1][:80], proc.returncode, last)
+            if "invalid choice" in errs:
+                return {"ok": False, "reason": OLD_SCRIPT, "err": errs}
+            if proc.returncode == 2 and text:          # the script's own word on a bad argument
+                return {"ok": False, "reason": text[:300], "err": errs}
             return {"ok": False, "reason": "The debrief search failed on this Mac.", "err": errs}
         log.info("debrief: %s %r answered %d chars", argv[0], argv[-1][:80], len(text))
         return {"ok": True, "text": text or "No hits.", "err": errs}
@@ -393,38 +327,15 @@ class Debrief:
             parts.append(_fit(text, share, self._query))
         return {"ok": True, "text": "\n\n".join(parts)}
 
-    def read_list(self, kind: Any, topic: Any) -> dict[str, Any]:
-        """debrief_list: TODO.md's open items (by topic words), or HIGHLIGHTS.md's stars without the template's."""
-        match = _matcher(_words(topic))
-        if kind == "stars":
-            try:
-                text = (self.root / "HIGHLIGHTS.md").read_text(encoding="utf-8", errors="replace")
-            except OSError:
-                return {"ok": True, "text": "The debrief has no starred lessons."}
-            items = [b.strip() for b in re.split(r"(?m)^(?=### )", text) if b.startswith("### ")]
-            items = [b for b in items if "*(example)*" not in b]
-            if match:
-                items = [b for b in items if match.search(b)]
-            return {"ok": True, "text": _clip("\n\n".join(items) or "No starred lessons match.")}
-        if kind != "open":
-            return {"ok": False, "reason": "kind is open or stars"}
-        try:
-            text = (self.root / "TODO.md").read_text(encoding="utf-8", errors="replace")
-        except OSError:
-            return {"ok": True, "text": "The debrief keeps no open threads."}
-        m = re.search(r"(?ms)^## Open\s*$(.*?)(?=^## |\Z)", text)
-        items = [" ".join(b.split()) for b in re.split(r"(?m)^- \[ \] ", m.group(1) if m else "")[1:]]
-        total = len(items)
-        if match:
-            scored = [(len(match.findall(b)), i, b) for i, b in enumerate(items)]
-            items = [b for score, _, b in sorted(scored, key=lambda x: (-x[0], x[1])) if score]
-        if not items:
-            return {"ok": True, "text": f"No open threads match (of {total} open)."}
-        shown = items[:MAX_LIST_ITEMS]
-        head = f"{len(items)} open threads" + (" match" if match else "") + f" (of {total}); "
-        head += f"the first {len(shown)}:" if len(items) > len(shown) else "all of them:"
-        share = (MAX_OUT_CHARS - 200) // len(shown)
-        return {"ok": True, "text": _clip(head + "\n" + "\n".join("- " + _clip(b, share) for b in shown))}
+    async def table(self, *argv: str) -> dict[str, Any]:
+        """One of the script's table answers (day, when, status, todos, stars), clipped for the turn."""
+        out = await self._run(*argv)
+        if not out.get("ok"):
+            return {"ok": False, "reason": out.get("reason", "The debrief failed on this Mac.")}
+        text = out["text"]
+        if len(text) > MAX_OUT_CHARS:
+            text = _clip(text) + " The rest is not shown: debrief_search finds a part by its words."
+        return {"ok": True, "text": text}
 
     async def handle(self, name: str, args: dict[str, Any]) -> dict[str, Any]:
         """One tool call from the chat or the voice."""
@@ -438,11 +349,24 @@ class Debrief:
             n = DEFAULT_N if not isinstance(n, int) or isinstance(n, bool) else max(1, min(MAX_N, n))
             return await self.search(query, n)
         if name == "debrief_day":
-            return await asyncio.to_thread(self.day, args.get("date"), args.get("until"))
-        if name == "debrief_when":
-            return await asyncio.to_thread(self.when, args.get("term"))
+            date = " ".join(str(args.get("date") or "").split())[:40]
+            if not date:
+                return {"ok": False, "reason": "say which day"}
+            until = " ".join(str(args.get("until") or "").split())[:40]
+            return await self.table("day", *(("--until", until) if until else ()), "--", date)
+        if name in ("debrief_when", "debrief_status"):
+            word = " ".join(str(args.get("term" if name == "debrief_when" else "name") or "").split())
+            if len(word) < 2:
+                return {"ok": False, "reason": "say what to look for"}
+            return await self.table(name.split("_")[1], "--", word[:MAX_QUERY_CHARS])
         if name == "debrief_list":
-            return await asyncio.to_thread(self.read_list, args.get("kind"), args.get("topic"))
+            kind = args.get("kind")
+            if kind == "stars":
+                return await self.table("stars")
+            if kind != "open":
+                return {"ok": False, "reason": "kind is open or stars"}
+            topic = " ".join(str(args.get("topic") or "").split())[:MAX_QUERY_CHARS]
+            return await self.table("todos", "-n", str(MAX_LIST_ITEMS), *(("--", *topic.split()) if topic else ()))
         if name == "debrief_get":
             ids = args.get("ids")
             if not isinstance(ids, list) or not ids or not all(isinstance(i, int) and not isinstance(i, bool)
@@ -450,103 +374,6 @@ class Debrief:
                 return {"ok": False, "reason": "ids must be the numbers debrief_search answered"}
             return await self.get(list(dict.fromkeys(ids))[:MAX_IDS])
         return {"ok": False, "reason": f"unknown tool {name}"}
-
-    def day(self, date: Any, until: Any = None, today: Optional[_dt.date] = None) -> dict[str, Any]:
-        """debrief_day: one day's summary, outline and note, or a range's summaries, read by date (no ranking)."""
-        today = today or _dt.date.today()
-        notes, rows = _notes(self.root), _index_rows(self.root)
-        dated = sorted(notes)                 # a day counts when it has a note: INDEX also holds template rows
-        if str(date or "").strip().lower() == LATEST:
-            past = [d for d in dated if d <= today.isoformat()]
-            if not past:
-                return {"ok": True, "text": "The debrief has no dated notes yet."}
-            date, until = past[-1], None
-        span_ = resolve_span(date, today)
-        if span_ is None:
-            return {"ok": False, "reason": "date must be YYYY-MM-DD, today, yesterday, a weekday, latest, this "
-                                           "week, last week, weekend, this month or last month"}
-        first, last = span_
-        if until not in (None, ""):
-            end = resolve_span(until, today)
-            if end is None:
-                return {"ok": False, "reason": "until must be YYYY-MM-DD, today or yesterday, or null"}
-            last = end[1]
-        if last < first:
-            first, last = last, first
-        if (last - first).days >= MAX_RANGE_DAYS:
-            return {"ok": False, "reason": f"a range is at most {MAX_RANGE_DAYS} days"}
-        head = f"Today is {today.isoformat()} ({today:%A})."
-        span = [d for d in dated if first.isoformat() <= d <= last.isoformat()]
-        when = (f"{first.isoformat()} ({first:%A})" if first == last
-                else f"{first.isoformat()} ({first:%a}) to {last.isoformat()} ({last:%a})")
-        if not span:
-            before = [d for d in dated if d < first.isoformat()]
-            after = [d for d in dated if d > last.isoformat()]
-            near = ", ".join(x for x in (before[-1] if before else "", after[0] if after else "") if x)
-            return {"ok": True, "text": f"{head} No debrief notes for {when}: no coding sessions were recorded then."
-                    + (f" The nearest days with notes: {near}." if near else "")}
-        if first == last:
-            day = span[0]
-            parts = [f"{head} Debrief for {when}."]
-            if day in rows:
-                parts.append(f"Summary: {rows[day][0]}. {rows[day][1]}")
-            bodies = []
-            for path in notes[day]:
-                try:
-                    bodies.append((path.name, path.read_text(encoding="utf-8", errors="replace")))
-                except OSError:
-                    continue
-            outline = [h for _, body in bodies for h in _headings(body)]
-            if outline:
-                parts.append("Its parts, in order: " + "; ".join(outline) + ".")
-            parts += [f"Note {name}:\n{body}" for name, body in bodies]
-            text = "\n\n".join(parts)
-            if len(text) > MAX_OUT_CHARS:
-                text = _clip(text) + " The rest of the note is not shown: debrief_search finds a part by its words."
-            return {"ok": True, "text": text}
-        gaps = []
-        if (last - first).days < 31:
-            every = (first + _dt.timedelta(days=i) for i in range((last - first).days + 1))
-            gaps = [f"{d:%a %b} {d.day}" for d in every if d.isoformat() not in notes]
-        parts = [f"{head} Debrief for {when}: {len(span)} days with notes, newest first. Call debrief_day with one "
-                 "date for that day's full note."]
-        if gaps:
-            parts.append("No notes (no coding sessions): " + ", ".join(gaps) + ".")
-        share = max(300, (MAX_OUT_CHARS - sum(map(len, parts))) // len(span))
-        for i, day in enumerate(reversed(span)):
-            title, summary = rows.get(day, (", ".join(p.name for p in notes[day]), ""))
-            if i >= FULL_ROWS and summary:
-                summary = re.split(r"(?<=[.!?])\s", summary, maxsplit=1)[0]
-            line = f"{day} ({_dt.date.fromisoformat(day):%A}): {title}." + (f" {summary}" if summary else "")
-            parts.append(_clip(line, share))
-        return {"ok": True, "text": _clip("\n\n".join(parts))}
-
-    def when(self, term: Any, today: Optional[_dt.date] = None) -> dict[str, Any]:
-        """debrief_when: the days whose note mentions a term, newest first, with counts."""
-        today = today or _dt.date.today()
-        words = " ".join(str(term or "").lower().split())[:MAX_QUERY_CHARS]
-        if len(words) < 2:
-            return {"ok": False, "reason": "say what to look for"}
-        # "voice pe", "voice-pe" and "voicepe" are one name in the notes' spelling
-        pattern = re.compile(r"[\s_-]*".join(re.escape(w) for w in words.replace("-", " ").split()), re.I)
-        counts: list[tuple[str, int]] = []
-        for day, paths in sorted(_notes(self.root).items(), reverse=True):
-            n = 0
-            for path in paths:
-                try:
-                    n += len(pattern.findall(path.read_text(encoding="utf-8", errors="replace")))
-                except OSError:
-                    continue
-            if n:
-                counts.append((day, n))
-        head = f"Today is {today.isoformat()} ({today:%A})."
-        if not counts:
-            return {"ok": True, "text": f"{head} No debrief note mentions {words!r}. debrief_search also matches "
-                                        "by meaning."}
-        shown = ", ".join(f"{d} ({_dt.date.fromisoformat(d):%a}): {n}" for d, n in counts[:MAX_WHEN_DAYS])
-        more = f" and {len(counts) - MAX_WHEN_DAYS} older days" if len(counts) > MAX_WHEN_DAYS else ""
-        return {"ok": True, "text": f"{head} {words!r} is mentioned on {len(counts)} days, newest first, with "
-                                    f"mentions per day: {shown}{more}. First mentioned {counts[-1][0]}."}
 
     async def panel(self, body: dict[str, Any]) -> dict[str, Any]:
         """The phone's generic sheet (POST /api/link/controls/debrief): a status line, no controls."""

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import datetime as dt
 import json
 import re
 from pathlib import Path
@@ -92,7 +91,8 @@ def test_an_unknown_tool_is_refused(store: Path) -> None:
 def test_its_tools_are_its_own_and_strict(store: Path) -> None:
     hub = app_mod.make(on(store))
     names = tuple(t["name"] for t in hub.tools())
-    assert names == app_mod.TOOL_NAMES == ("debrief_search", "debrief_get", "debrief_day", "debrief_list", "debrief_when")
+    assert names == app_mod.TOOL_NAMES == ("debrief_search", "debrief_get", "debrief_day", "debrief_status", "debrief_list",
+                                             "debrief_when")
     for tool in hub.tools():
         params = tool["parameters"]
         assert params["additionalProperties"] is False and set(params["required"]) == set(params["properties"])
@@ -105,7 +105,7 @@ def test_it_is_registered_as_reads_that_taint() -> None:
     assert app is not None and app_registry.check(app) == []
     assert app.switch == "EVE_DEBRIEF" and not app.default_on and not app.acting and not app.clean
     assert app.policies() == {"debrief_search": "read", "debrief_get": "read", "debrief_day": "read",
-                              "debrief_list": "read", "debrief_when": "read"}
+                              "debrief_status": "read", "debrief_list": "read", "debrief_when": "read"}
     for name in app_mod.TOOL_NAMES:      # a note can quote outside words: never clean, never asks
         assert name not in tool_gate.CLEAN and tool_gate.policy(name) == "read"
 
@@ -125,121 +125,73 @@ def test_the_phone_sheet_is_a_status_line(store: Path) -> None:
     assert asyncio.run(hub.panel({"action": "power", "on": True}))["ok"] is False
 
 
-# ---- debrief_day: a day is read by date, never ranked (2026-11-09) ----------------------------------------------
+# ---- the table questions go to the store's script (2026-11-09) -------------------------------------------------
 
-TODAY = dt.date(2026, 11, 9)
-INDEX = """# Index
+def test_table_questions_pass_their_words_to_the_script(store: Path) -> None:
+    hub = app_mod.make(on(store))
 
-## Debriefs (newest first)
+    def call(name: str, args: dict) -> list[str]:
+        return argv(asyncio.run(hub.handle(name, args)))[2:]
 
-| Date | Debrief | TL;DR | Key entities |
-|---|---|---|---|
-| 2026-11-08 | [Matcher day](2026-11-08-matcher.md) | Built the spoken-name matcher. Late addendum: the debrief app. | `[[eve]]` |
-| 2026-11-06 | [Report day](2026-11-06-report.md) | Wrote the unit report. | `[[report]]` |
+    assert call("debrief_day", {"date": " last  week ", "until": None}) == ["day", "--", "last week"]
+    assert call("debrief_day", {"date": "2026-11-02", "until": "today"}) == ["day", "--until", "today", "--",
+                                                                              "2026-11-02"]
+    assert call("debrief_when", {"term": "-voice pe"}) == ["when", "--", "-voice pe"]
+    assert call("debrief_status", {"name": "circles"}) == ["status", "--", "circles"]
+    assert call("debrief_list", {"kind": "open", "topic": "voice pe"}) == ["todos", "-n", "12", "--", "voice", "pe"]
+    assert call("debrief_list", {"kind": "open", "topic": None}) == ["todos", "-n", "12"]
+    assert call("debrief_list", {"kind": "stars", "topic": None}) == ["stars"]
+    for name, args in (("debrief_day", {"date": " ", "until": None}), ("debrief_when", {"term": "x"}),
+                       ("debrief_list", {"kind": "todos", "topic": None})):
+        assert asyncio.run(hub.handle(name, args))["ok"] is False
+
+
+OLD = """import sys
+print("usage: debrief-search ... invalid choice: 'day'", file=sys.stderr)
+sys.exit(2)
+"""
+BAD = """import sys
+print("date must be YYYY-MM-DD, today, yesterday")
+sys.exit(2)
 """
 
 
-@pytest.fixture()
-def days(store: Path) -> app_mod.Debrief:
-    (store / "INDEX.md").write_text(INDEX)
-    (store / "2026-11-08-matcher.md").write_text("# 2026-11-08 matcher\nThe full day note.")
-    (store / "2026-11-06-report.md").write_text("# 2026-11-06 report\nThe report note.")
-    (store / "sessions" / "2026-11-07").mkdir(parents=True)
-    (store / "sessions" / "2026-11-07" / "0900-abc.md").write_text("an unverified draft")
-    return app_mod.make(on(store))
+@pytest.mark.parametrize(("script", "said"), [(OLD, "update claude-debrief"), (BAD, "date must be")])
+def test_an_old_script_or_a_bad_word_is_a_reason(tmp_path: Path, script: str, said: str) -> None:
+    (tmp_path / ".system").mkdir()
+    (tmp_path / app_mod.SCRIPT).write_text(script)
+    out = asyncio.run(app_mod.make(on(tmp_path)).handle("debrief_day", {"date": "x y", "until": None}))
+    assert out["ok"] is False and said in out["reason"]
 
 
-def test_yesterday_reads_that_days_summary_and_note(days: app_mod.Debrief) -> None:
-    out = days.day("yesterday", None, today=TODAY)
-    assert out["ok"] and "2026-11-08" in out["text"] and "Today is 2026-11-09" in out["text"]
-    text = out["text"]
-    assert text.index("spoken-name matcher") < text.index("The full day note.")   # the summary leads
-    assert "[[eve]]" not in text.split("Summary:")[1].split("\n")[0]                # entities cell left out
-    assert days.day("2026-11-08", None, today=TODAY)["text"] == text
+def test_a_long_table_answer_is_clipped_with_a_pointer(tmp_path: Path) -> None:
+    (tmp_path / ".system").mkdir()
+    (tmp_path / app_mod.SCRIPT).write_text(f"print('x' * {app_mod.MAX_OUT_CHARS + 500})")
+    text = asyncio.run(app_mod.make(on(tmp_path)).handle("debrief_status", {"name": "eve"}))["text"]
+    assert len(text) < app_mod.MAX_OUT_CHARS + 200 and "debrief_search finds a part" in text
 
 
-def test_latest_is_the_newest_day_with_a_note(days: app_mod.Debrief) -> None:
-    assert "Debrief for 2026-11-08" in days.day("latest", None, today=TODAY)["text"]
+@pytest.mark.skipif(not (app_mod.store_dir() / app_mod.SCRIPT).is_file(), reason="no debrief store on this Mac")
+def test_the_real_script_answers_the_table_questions(tmp_path: Path) -> None:
+    """The store's own script over a small made-up store: eve's calls are ones it understands."""
+    (tmp_path / ".system").mkdir()
+    (tmp_path / app_mod.SCRIPT).write_text((app_mod.store_dir() / app_mod.SCRIPT).read_text())
+    if "def cmd_day" not in (tmp_path / app_mod.SCRIPT).read_text():
+        pytest.skip("this Mac's debrief script predates the tables")
+    import datetime as dt
+    day = (dt.date.today() - dt.timedelta(days=1)).isoformat()
+    (tmp_path / f"{day}-a.md").write_text(f"# {day}\n\n## What happened\n\nTuned the [[voice-pe]] ring.\n")
+    (tmp_path / "INDEX.md").write_text("# Index\n\n## Glossary\n\n- `[[voice-pe]]` — the desk speaker, ring tuned.\n")
+    (tmp_path / "TODO.md").write_text("# Todo\n\n## Open\n\n- [ ] `[[voice-pe]]`: hear the ring.\n")
+    hub = app_mod.make(on(tmp_path))
 
+    def ask(name: str, args: dict) -> dict:
+        return asyncio.run(hub.handle(name, args))
 
-def test_a_day_without_notes_says_so_and_names_the_nearest(days: app_mod.Debrief) -> None:
-    out = days.day("2026-11-07", None, today=TODAY)     # only a sessions/ draft that day: never read
-    assert out["ok"] and "No debrief notes for 2026-11-07" in out["text"]
-    assert "2026-11-06, 2026-11-08" in out["text"] and "draft" not in out["text"]
-
-
-def test_a_range_answers_summaries_newest_first(days: app_mod.Debrief) -> None:
-    out = days.day("2026-11-02", "today", today=TODAY)
-    text = out["text"]
-    assert out["ok"] and "2 days with notes" in text
-    assert text.index("2026-11-08 (Sunday)") < text.index("2026-11-06 (Friday)")
-    assert "The full day note." not in text                 # a range is rows only
-    assert days.day("today", "2026-11-02", today=TODAY)["text"] == text      # reversed ends are swapped
-
-
-def test_bad_dates_and_long_ranges_are_reasons(days: app_mod.Debrief) -> None:
-    for bad in ("2026-11-31", "next tuesday", "../INDEX", "", None, 20261108):
-        assert days.day(bad, None, today=TODAY)["ok"] is False
-    assert days.day("2026-11-08", "next week", today=TODAY)["ok"] is False
-    assert days.day("2026-08-01", "2026-11-09", today=TODAY)["ok"] is False
-
-
-def test_a_symlinked_note_is_never_read(store: Path, tmp_path: Path) -> None:
-    outside = tmp_path.parent / f"{tmp_path.name}-secret.md"
-    outside.write_text("SECRET")
-    (store / "2026-11-05-link.md").symlink_to(outside)
-    out = app_mod.make(on(store)).day("2026-11-05", None, today=TODAY)
-    assert "SECRET" not in out["text"]
-
-
-def test_day_goes_through_handle(days: app_mod.Debrief) -> None:
-    out = asyncio.run(days.handle("debrief_day", {"date": "2026-11-06", "until": None}))
-    assert out["ok"] and "The report note." in out["text"]
-
-
-@pytest.mark.parametrize(("word", "first", "last"), [
-    ("today", "2026-11-09", "2026-11-09"),
-    ("Yesterday", "2026-11-08", "2026-11-08"),
-    ("day before yesterday", "2026-11-07", "2026-11-07"),
-    ("thursday", "2026-11-05", "2026-11-05"),
-    ("last Monday", "2026-11-02", "2026-11-02"),        # a weekday is never today
-    ("on sunday", "2026-11-08", "2026-11-08"),
-    ("this week", "2026-11-09", "2026-11-09"),
-    ("last week", "2026-11-02", "2026-11-08"),
-    ("weekend", "2026-11-07", "2026-11-08"),
-    ("last month", "2026-10-01", "2026-10-31"),
-    ("this month", "2026-11-01", "2026-11-09"),
-    ("2026-11-03", "2026-11-03", "2026-11-03"),
-])
-def test_time_words_become_dates_here(word: str, first: str, last: str) -> None:
-    got = app_mod.resolve_span(word, TODAY)
-    assert got is not None and (got[0].isoformat(), got[1].isoformat()) == (first, last)
-
-
-def test_a_range_names_its_empty_days_and_skips_template_rows(days: app_mod.Debrief, store: Path) -> None:
-    (store / "INDEX.md").write_text(INDEX + "| 2026-11-04 | [Example row](2026-11-04-x.md) | A template. | x |\n")
-    text = days.day("last week", None, today=TODAY)["text"]
-    assert "No notes (no coding sessions): Mon Nov 2, Tue Nov 3, Wed Nov 4, Thu Nov 5, Sat Nov 7." in text
-    assert "A template." not in text
-
-
-def test_a_long_day_keeps_an_outline_of_every_part(store: Path) -> None:
-    body = "# day\n## TL;DR\nx\n" + "y" * (app_mod.MAX_OUT_CHARS + 100) + "\n## Late-day addendum — evening work\nz"
-    (store / "2026-11-08-long.md").write_text(body)
-    text = app_mod.make(on(store)).day("yesterday", None, today=TODAY)["text"]
-    assert "Its parts, in order: TL;DR; Late-day addendum — evening work." in text
-    assert "not shown" in text
-
-
-def test_when_counts_mentions_per_day_newest_first(days: app_mod.Debrief, store: Path) -> None:
-    (store / "2026-11-06-report.md").write_text("The Voice PE, the voice-pe and VoicePE.")
-    (store / "2026-11-08-matcher.md").write_text("voice pe again")
-    text = days.when("Voice PE", today=TODAY)["text"]
-    assert "on 2 days" in text and text.index("2026-11-08 (Sun): 1") < text.index("2026-11-06 (Fri): 3")
-    assert "First mentioned 2026-11-06" in text
-    assert "No debrief note mentions" in days.when("kubernetes", today=TODAY)["text"]
-    assert days.when(" ", today=TODAY)["ok"] is False
-    assert asyncio.run(days.handle("debrief_when", {"term": "voice pe"}))["ok"]
+    assert "Tuned the [[voice-pe]] ring" in ask("debrief_day", {"date": "yesterday", "until": None})["text"]
+    assert day in ask("debrief_when", {"term": "voice pe"})["text"]
+    assert "the desk speaker, ring tuned" in ask("debrief_status", {"name": "voice pe"})["text"]
+    assert "hear the ring" in ask("debrief_list", {"kind": "open", "topic": "voice pe"})["text"]
 
 
 # ---- the search and get as the model meets them (the swarm's findings, 2026-11-09) ------------------------------
@@ -305,50 +257,6 @@ def test_a_refused_meaning_search_is_said(real: tuple[Path, app_mod.Debrief]) ->
     root, hub = real
     (root / "semoff").write_text("")
     assert "meaning search is off" in asyncio.run(hub.handle("debrief_search", {"query": "day", "n": 6}))["text"]
-
-
-TODO = """# Todo
-
-## The rules
-
-- [ ] a rule example that is not open work
-
-## Open
-
-- [ ] `[[voice-pe]]`: hear the soft limiter on the board.
-  — opened 2026-11-07
-- [ ] `[[circles]]`: check the map migration.
-  — opened 2026-10-29
-
-## Closed (recent)
-
-- [x] done thing
-"""
-STARS = """# Highlights
-
-### ★ A real lesson about voice
-
-Body one.
-
-### ★ Verify the mechanism
-
-*(example)* A template entry.
-"""
-
-
-def test_open_threads_and_stars_are_lists(store: Path) -> None:
-    (store / "TODO.md").write_text(TODO)
-    (store / "HIGHLIGHTS.md").write_text(STARS)
-    hub = app_mod.make(on(store))
-    every = hub.read_list("open", None)["text"]
-    assert "2 open threads (of 2); all of them:" in every and "rule example" not in every and "done" not in every
-    one = hub.read_list("open", "voice pe")["text"]
-    assert "soft limiter" in one and "map migration" not in one
-    assert "No open threads match" in hub.read_list("open", "kubernetes")["text"]
-    stars = hub.read_list("stars", None)["text"]
-    assert "A real lesson" in stars and "template" not in stars
-    assert hub.read_list("todos", None)["ok"] is False
-    assert asyncio.run(hub.handle("debrief_list", {"kind": "open", "topic": None}))["ok"]
 
 
 def test_instructions_name_only_markers_the_script_prints() -> None:
