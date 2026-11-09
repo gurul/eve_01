@@ -54,9 +54,11 @@ past-work questions to the real store):
   ids shift. eve remembers each id's file and section from the search and refuses a
   get whose header no longer matches ("search again"), rather than answer from
   another note.
-- **A hung meaning layer** (Ollama taking connections but not answering) costs 25
-  seconds; the search then runs once more by keyword. A refused one is fast in the
-  script already. Either way the answer says it matched by words only.
+- **A search does not hang.** The store's script (claude-debrief) waits at most 8
+  seconds for the query's embedding and spends at most 3 seconds embedding new
+  notes, handing the rest to a background run. eve keeps a 15-second backstop:
+  past it, the search runs once more by keyword. Either way the answer says when
+  it matched by words only.
 - **One call at a time.** Chat and voice share the app, and the script's index
   rebuild is not safe with two readers, so calls queue behind a lock and run again
   once when another reader (a coding session) was rebuilding it.
