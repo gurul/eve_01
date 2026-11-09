@@ -12,7 +12,7 @@
       "picked": "none",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-0.png"
+        "docs/computer-swarm/results/visual-inputs/target-0.png"
       ],
       "answer": {
         "values": {
@@ -52,7 +52,7 @@
       "picked": "none",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-0.png"
+        "docs/computer-swarm/results/visual-inputs/target-0.png"
       ],
       "answer": {
         "target": "none",
@@ -78,7 +78,7 @@
       "picked": "2",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-1.png"
+        "docs/computer-swarm/results/visual-inputs/target-1.png"
       ],
       "answer": {
         "values": {
@@ -118,7 +118,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-1.png"
+        "docs/computer-swarm/results/visual-inputs/target-1.png"
       ],
       "answer": {
         "target": "none",
@@ -144,7 +144,7 @@
       "picked": "1",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-2.png"
+        "docs/computer-swarm/results/visual-inputs/target-2.png"
       ],
       "answer": {
         "values": {
@@ -184,7 +184,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-2.png"
+        "docs/computer-swarm/results/visual-inputs/target-2.png"
       ],
       "answer": {
         "target": "none",
@@ -210,7 +210,7 @@
       "picked": "1",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-3.png"
+        "docs/computer-swarm/results/visual-inputs/target-3.png"
       ],
       "answer": {
         "values": {
@@ -250,7 +250,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-3.png"
+        "docs/computer-swarm/results/visual-inputs/target-3.png"
       ],
       "answer": {
         "target": "none",
@@ -276,7 +276,7 @@
       "picked": "none",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-4.png"
+        "docs/computer-swarm/results/visual-inputs/target-4.png"
       ],
       "answer": {
         "values": {
@@ -316,7 +316,7 @@
       "picked": "none",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-4.png"
+        "docs/computer-swarm/results/visual-inputs/target-4.png"
       ],
       "answer": {
         "target": "none",
@@ -342,7 +342,7 @@
       "picked": "1",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-5.png"
+        "docs/computer-swarm/results/visual-inputs/target-5.png"
       ],
       "answer": {
         "values": {
@@ -382,7 +382,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-5.png"
+        "docs/computer-swarm/results/visual-inputs/target-5.png"
       ],
       "answer": {
         "target": "none",
@@ -408,7 +408,7 @@
       "picked": "2",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-6.png"
+        "docs/computer-swarm/results/visual-inputs/target-6.png"
       ],
       "answer": {
         "values": {
@@ -448,7 +448,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-6.png"
+        "docs/computer-swarm/results/visual-inputs/target-6.png"
       ],
       "answer": {
         "target": "none",
@@ -474,7 +474,7 @@
       "picked": "3",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-7.png"
+        "docs/computer-swarm/results/visual-inputs/target-7.png"
       ],
       "answer": {
         "values": {
@@ -514,7 +514,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-7.png"
+        "docs/computer-swarm/results/visual-inputs/target-7.png"
       ],
       "answer": {
         "target": "none",
@@ -540,7 +540,7 @@
       "picked": "none",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-8.png"
+        "docs/computer-swarm/results/visual-inputs/target-8.png"
       ],
       "answer": {
         "values": {
@@ -580,7 +580,7 @@
       "picked": "none",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-8.png"
+        "docs/computer-swarm/results/visual-inputs/target-8.png"
       ],
       "answer": {
         "target": "none",
@@ -606,7 +606,7 @@
       "picked": "1",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-9.png"
+        "docs/computer-swarm/results/visual-inputs/target-9.png"
       ],
       "answer": {
         "values": {
@@ -646,7 +646,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-9.png"
+        "docs/computer-swarm/results/visual-inputs/target-9.png"
       ],
       "answer": {
         "target": "1",
@@ -672,7 +672,7 @@
       "picked": "0",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-10.png"
+        "docs/computer-swarm/results/visual-inputs/target-10.png"
       ],
       "answer": {
         "values": {
@@ -712,7 +712,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-10.png"
+        "docs/computer-swarm/results/visual-inputs/target-10.png"
       ],
       "answer": {
         "target": "none",
@@ -738,7 +738,7 @@
       "picked": "3",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-11.png"
+        "docs/computer-swarm/results/visual-inputs/target-11.png"
       ],
       "answer": {
         "values": {
@@ -778,7 +778,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-11.png"
+        "docs/computer-swarm/results/visual-inputs/target-11.png"
       ],
       "answer": {
         "target": "none",
@@ -804,7 +804,7 @@
       "picked": "none",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-12.png"
+        "docs/computer-swarm/results/visual-inputs/target-12.png"
       ],
       "answer": {
         "values": {
@@ -844,7 +844,7 @@
       "picked": "none",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-12.png"
+        "docs/computer-swarm/results/visual-inputs/target-12.png"
       ],
       "answer": {
         "target": "none",
@@ -870,7 +870,7 @@
       "picked": "0",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-13.png"
+        "docs/computer-swarm/results/visual-inputs/target-13.png"
       ],
       "answer": {
         "values": {
@@ -910,7 +910,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-13.png"
+        "docs/computer-swarm/results/visual-inputs/target-13.png"
       ],
       "answer": {
         "target": "none",
@@ -936,7 +936,7 @@
       "picked": "2",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-14.png"
+        "docs/computer-swarm/results/visual-inputs/target-14.png"
       ],
       "answer": {
         "values": {
@@ -976,7 +976,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-14.png"
+        "docs/computer-swarm/results/visual-inputs/target-14.png"
       ],
       "answer": {
         "target": "none",
@@ -1002,7 +1002,7 @@
       "picked": "2",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-15.png"
+        "docs/computer-swarm/results/visual-inputs/target-15.png"
       ],
       "answer": {
         "values": {
@@ -1042,7 +1042,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-15.png"
+        "docs/computer-swarm/results/visual-inputs/target-15.png"
       ],
       "answer": {
         "target": "none",
@@ -1068,7 +1068,7 @@
       "picked": "none",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-16.png"
+        "docs/computer-swarm/results/visual-inputs/target-16.png"
       ],
       "answer": {
         "values": {
@@ -1108,7 +1108,7 @@
       "picked": "none",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-16.png"
+        "docs/computer-swarm/results/visual-inputs/target-16.png"
       ],
       "answer": {
         "target": "none",
@@ -1134,7 +1134,7 @@
       "picked": "0",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-17.png"
+        "docs/computer-swarm/results/visual-inputs/target-17.png"
       ],
       "answer": {
         "values": {
@@ -1174,7 +1174,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-17.png"
+        "docs/computer-swarm/results/visual-inputs/target-17.png"
       ],
       "answer": {
         "target": "none",
@@ -1200,7 +1200,7 @@
       "picked": "3",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-18.png"
+        "docs/computer-swarm/results/visual-inputs/target-18.png"
       ],
       "answer": {
         "values": {
@@ -1240,7 +1240,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-18.png"
+        "docs/computer-swarm/results/visual-inputs/target-18.png"
       ],
       "answer": {
         "target": "none",
@@ -1266,7 +1266,7 @@
       "picked": "0",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-19.png"
+        "docs/computer-swarm/results/visual-inputs/target-19.png"
       ],
       "answer": {
         "values": {
@@ -1306,7 +1306,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-19.png"
+        "docs/computer-swarm/results/visual-inputs/target-19.png"
       ],
       "answer": {
         "target": "none",
@@ -1332,7 +1332,7 @@
       "picked": "none",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-20.png"
+        "docs/computer-swarm/results/visual-inputs/target-20.png"
       ],
       "answer": {
         "values": {
@@ -1372,7 +1372,7 @@
       "picked": "none",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-20.png"
+        "docs/computer-swarm/results/visual-inputs/target-20.png"
       ],
       "answer": {
         "target": "none",
@@ -1398,7 +1398,7 @@
       "picked": "3",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-21.png"
+        "docs/computer-swarm/results/visual-inputs/target-21.png"
       ],
       "answer": {
         "values": {
@@ -1438,7 +1438,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-21.png"
+        "docs/computer-swarm/results/visual-inputs/target-21.png"
       ],
       "answer": {
         "target": "none",
@@ -1464,7 +1464,7 @@
       "picked": "0",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-22.png"
+        "docs/computer-swarm/results/visual-inputs/target-22.png"
       ],
       "answer": {
         "values": {
@@ -1504,7 +1504,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-22.png"
+        "docs/computer-swarm/results/visual-inputs/target-22.png"
       ],
       "answer": {
         "target": "none",
@@ -1530,7 +1530,7 @@
       "picked": "2",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-23.png"
+        "docs/computer-swarm/results/visual-inputs/target-23.png"
       ],
       "answer": {
         "values": {
@@ -1570,7 +1570,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-23.png"
+        "docs/computer-swarm/results/visual-inputs/target-23.png"
       ],
       "answer": {
         "target": "none",
@@ -1596,8 +1596,8 @@
       "picked": true,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-24-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-24-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-24-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-24-after.png"
       ],
       "answer": {
         "values": {
@@ -1630,8 +1630,8 @@
       "picked": false,
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-24-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-24-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-24-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-24-after.png"
       ],
       "answer": {
         "ms": 302.9207920189947,
@@ -1650,8 +1650,8 @@
       "picked": false,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-25-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-25-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-25-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-25-after.png"
       ],
       "answer": {
         "values": {
@@ -1684,8 +1684,8 @@
       "picked": false,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-25-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-25-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-25-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-25-after.png"
       ],
       "answer": {
         "ms": 229.03608399792574,
@@ -1704,8 +1704,8 @@
       "picked": true,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-26-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-26-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-26-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-26-after.png"
       ],
       "answer": {
         "values": {
@@ -1738,8 +1738,8 @@
       "picked": false,
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-26-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-26-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-26-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-26-after.png"
       ],
       "answer": {
         "ms": 286.8141660001129,
@@ -1758,8 +1758,8 @@
       "picked": false,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-27-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-27-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-27-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-27-after.png"
       ],
       "answer": {
         "values": {
@@ -1792,8 +1792,8 @@
       "picked": false,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-27-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-27-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-27-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-27-after.png"
       ],
       "answer": {
         "ms": 293.110416008858,
@@ -1812,8 +1812,8 @@
       "picked": true,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-28-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-28-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-28-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-28-after.png"
       ],
       "answer": {
         "values": {
@@ -1846,8 +1846,8 @@
       "picked": false,
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-28-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-28-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-28-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-28-after.png"
       ],
       "answer": {
         "ms": 271.38987500802614,
@@ -1866,8 +1866,8 @@
       "picked": false,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-29-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-29-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-29-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-29-after.png"
       ],
       "answer": {
         "values": {
@@ -1900,8 +1900,8 @@
       "picked": false,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-29-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-29-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-29-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-29-after.png"
       ],
       "answer": {
         "ms": 257.41679201018997,
@@ -1920,8 +1920,8 @@
       "picked": true,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-30-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-30-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-30-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-30-after.png"
       ],
       "answer": {
         "values": {
@@ -1954,8 +1954,8 @@
       "picked": false,
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-30-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-30-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-30-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-30-after.png"
       ],
       "answer": {
         "ms": 290.6026249984279,
@@ -1974,8 +1974,8 @@
       "picked": false,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-31-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-31-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-31-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-31-after.png"
       ],
       "answer": {
         "values": {
@@ -2008,8 +2008,8 @@
       "picked": false,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-31-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-31-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-31-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-31-after.png"
       ],
       "answer": {
         "ms": 370.41079098707996,
@@ -2028,8 +2028,8 @@
       "picked": true,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-32-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-32-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-32-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-32-after.png"
       ],
       "answer": {
         "values": {
@@ -2062,8 +2062,8 @@
       "picked": false,
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-32-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-32-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-32-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-32-after.png"
       ],
       "answer": {
         "ms": 215.6265829980839,
@@ -2082,8 +2082,8 @@
       "picked": false,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-33-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-33-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-33-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-33-after.png"
       ],
       "answer": {
         "values": {
@@ -2116,8 +2116,8 @@
       "picked": false,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-33-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-33-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-33-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-33-after.png"
       ],
       "answer": {
         "ms": 274.3351250246633,
@@ -2136,8 +2136,8 @@
       "picked": true,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-34-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-34-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-34-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-34-after.png"
       ],
       "answer": {
         "values": {
@@ -2170,8 +2170,8 @@
       "picked": false,
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-34-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-34-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-34-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-34-after.png"
       ],
       "answer": {
         "ms": 417.8420840180479,
@@ -2190,8 +2190,8 @@
       "picked": false,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-35-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-35-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-35-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-35-after.png"
       ],
       "answer": {
         "values": {
@@ -2224,8 +2224,8 @@
       "picked": false,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-35-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-35-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-35-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-35-after.png"
       ],
       "answer": {
         "ms": 235.82445899955928,
@@ -2244,7 +2244,7 @@
       "picked": "none",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-0.png"
+        "docs/computer-swarm/results/visual-inputs/target-0.png"
       ],
       "answer": {
         "values": {
@@ -2284,7 +2284,7 @@
       "picked": "none",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-0.png"
+        "docs/computer-swarm/results/visual-inputs/target-0.png"
       ],
       "answer": {
         "target": "none",
@@ -2310,7 +2310,7 @@
       "picked": "2",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-1.png"
+        "docs/computer-swarm/results/visual-inputs/target-1.png"
       ],
       "answer": {
         "values": {
@@ -2350,7 +2350,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-1.png"
+        "docs/computer-swarm/results/visual-inputs/target-1.png"
       ],
       "answer": {
         "target": "none",
@@ -2376,7 +2376,7 @@
       "picked": "1",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-2.png"
+        "docs/computer-swarm/results/visual-inputs/target-2.png"
       ],
       "answer": {
         "values": {
@@ -2416,7 +2416,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-2.png"
+        "docs/computer-swarm/results/visual-inputs/target-2.png"
       ],
       "answer": {
         "target": "none",
@@ -2442,7 +2442,7 @@
       "picked": "1",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-3.png"
+        "docs/computer-swarm/results/visual-inputs/target-3.png"
       ],
       "answer": {
         "values": {
@@ -2482,7 +2482,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-3.png"
+        "docs/computer-swarm/results/visual-inputs/target-3.png"
       ],
       "answer": {
         "target": "none",
@@ -2508,7 +2508,7 @@
       "picked": "none",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-4.png"
+        "docs/computer-swarm/results/visual-inputs/target-4.png"
       ],
       "answer": {
         "values": {
@@ -2548,7 +2548,7 @@
       "picked": "none",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-4.png"
+        "docs/computer-swarm/results/visual-inputs/target-4.png"
       ],
       "answer": {
         "target": "none",
@@ -2574,7 +2574,7 @@
       "picked": "1",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-5.png"
+        "docs/computer-swarm/results/visual-inputs/target-5.png"
       ],
       "answer": {
         "values": {
@@ -2614,7 +2614,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-5.png"
+        "docs/computer-swarm/results/visual-inputs/target-5.png"
       ],
       "answer": {
         "target": "none",
@@ -2640,7 +2640,7 @@
       "picked": "2",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-6.png"
+        "docs/computer-swarm/results/visual-inputs/target-6.png"
       ],
       "answer": {
         "values": {
@@ -2680,7 +2680,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-6.png"
+        "docs/computer-swarm/results/visual-inputs/target-6.png"
       ],
       "answer": {
         "target": "none",
@@ -2706,7 +2706,7 @@
       "picked": "3",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-7.png"
+        "docs/computer-swarm/results/visual-inputs/target-7.png"
       ],
       "answer": {
         "values": {
@@ -2746,7 +2746,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-7.png"
+        "docs/computer-swarm/results/visual-inputs/target-7.png"
       ],
       "answer": {
         "target": "none",
@@ -2772,7 +2772,7 @@
       "picked": "none",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-8.png"
+        "docs/computer-swarm/results/visual-inputs/target-8.png"
       ],
       "answer": {
         "values": {
@@ -2812,7 +2812,7 @@
       "picked": "none",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-8.png"
+        "docs/computer-swarm/results/visual-inputs/target-8.png"
       ],
       "answer": {
         "target": "none",
@@ -2838,7 +2838,7 @@
       "picked": "1",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-9.png"
+        "docs/computer-swarm/results/visual-inputs/target-9.png"
       ],
       "answer": {
         "values": {
@@ -2878,7 +2878,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-9.png"
+        "docs/computer-swarm/results/visual-inputs/target-9.png"
       ],
       "answer": {
         "target": "none",
@@ -2904,7 +2904,7 @@
       "picked": "0",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-10.png"
+        "docs/computer-swarm/results/visual-inputs/target-10.png"
       ],
       "answer": {
         "values": {
@@ -2944,7 +2944,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-10.png"
+        "docs/computer-swarm/results/visual-inputs/target-10.png"
       ],
       "answer": {
         "target": "none",
@@ -2970,7 +2970,7 @@
       "picked": "3",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-11.png"
+        "docs/computer-swarm/results/visual-inputs/target-11.png"
       ],
       "answer": {
         "values": {
@@ -3010,7 +3010,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-11.png"
+        "docs/computer-swarm/results/visual-inputs/target-11.png"
       ],
       "answer": {
         "target": "none",
@@ -3036,7 +3036,7 @@
       "picked": "none",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-12.png"
+        "docs/computer-swarm/results/visual-inputs/target-12.png"
       ],
       "answer": {
         "values": {
@@ -3076,7 +3076,7 @@
       "picked": "none",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-12.png"
+        "docs/computer-swarm/results/visual-inputs/target-12.png"
       ],
       "answer": {
         "target": "none",
@@ -3102,7 +3102,7 @@
       "picked": "0",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-13.png"
+        "docs/computer-swarm/results/visual-inputs/target-13.png"
       ],
       "answer": {
         "values": {
@@ -3142,7 +3142,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-13.png"
+        "docs/computer-swarm/results/visual-inputs/target-13.png"
       ],
       "answer": {
         "target": "none",
@@ -3168,7 +3168,7 @@
       "picked": "2",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-14.png"
+        "docs/computer-swarm/results/visual-inputs/target-14.png"
       ],
       "answer": {
         "values": {
@@ -3208,7 +3208,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-14.png"
+        "docs/computer-swarm/results/visual-inputs/target-14.png"
       ],
       "answer": {
         "target": "none",
@@ -3234,7 +3234,7 @@
       "picked": "2",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-15.png"
+        "docs/computer-swarm/results/visual-inputs/target-15.png"
       ],
       "answer": {
         "values": {
@@ -3274,7 +3274,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-15.png"
+        "docs/computer-swarm/results/visual-inputs/target-15.png"
       ],
       "answer": {
         "target": "none",
@@ -3300,7 +3300,7 @@
       "picked": "none",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-16.png"
+        "docs/computer-swarm/results/visual-inputs/target-16.png"
       ],
       "answer": {
         "values": {
@@ -3340,7 +3340,7 @@
       "picked": "none",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-16.png"
+        "docs/computer-swarm/results/visual-inputs/target-16.png"
       ],
       "answer": {
         "target": "none",
@@ -3366,7 +3366,7 @@
       "picked": "0",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-17.png"
+        "docs/computer-swarm/results/visual-inputs/target-17.png"
       ],
       "answer": {
         "values": {
@@ -3406,7 +3406,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-17.png"
+        "docs/computer-swarm/results/visual-inputs/target-17.png"
       ],
       "answer": {
         "target": "none",
@@ -3432,7 +3432,7 @@
       "picked": "3",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-18.png"
+        "docs/computer-swarm/results/visual-inputs/target-18.png"
       ],
       "answer": {
         "values": {
@@ -3472,7 +3472,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-18.png"
+        "docs/computer-swarm/results/visual-inputs/target-18.png"
       ],
       "answer": {
         "target": "none",
@@ -3498,7 +3498,7 @@
       "picked": "0",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-19.png"
+        "docs/computer-swarm/results/visual-inputs/target-19.png"
       ],
       "answer": {
         "values": {
@@ -3538,7 +3538,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-19.png"
+        "docs/computer-swarm/results/visual-inputs/target-19.png"
       ],
       "answer": {
         "target": "none",
@@ -3564,7 +3564,7 @@
       "picked": "none",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-20.png"
+        "docs/computer-swarm/results/visual-inputs/target-20.png"
       ],
       "answer": {
         "values": {
@@ -3604,7 +3604,7 @@
       "picked": "none",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-20.png"
+        "docs/computer-swarm/results/visual-inputs/target-20.png"
       ],
       "answer": {
         "target": "none",
@@ -3630,7 +3630,7 @@
       "picked": "3",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-21.png"
+        "docs/computer-swarm/results/visual-inputs/target-21.png"
       ],
       "answer": {
         "values": {
@@ -3670,7 +3670,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-21.png"
+        "docs/computer-swarm/results/visual-inputs/target-21.png"
       ],
       "answer": {
         "target": "none",
@@ -3696,7 +3696,7 @@
       "picked": "0",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-22.png"
+        "docs/computer-swarm/results/visual-inputs/target-22.png"
       ],
       "answer": {
         "values": {
@@ -3736,7 +3736,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-22.png"
+        "docs/computer-swarm/results/visual-inputs/target-22.png"
       ],
       "answer": {
         "target": "none",
@@ -3762,7 +3762,7 @@
       "picked": "2",
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-23.png"
+        "docs/computer-swarm/results/visual-inputs/target-23.png"
       ],
       "answer": {
         "values": {
@@ -3802,7 +3802,7 @@
       "picked": "none",
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/target-23.png"
+        "docs/computer-swarm/results/visual-inputs/target-23.png"
       ],
       "answer": {
         "target": "none",
@@ -3828,8 +3828,8 @@
       "picked": true,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-24-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-24-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-24-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-24-after.png"
       ],
       "answer": {
         "values": {
@@ -3862,8 +3862,8 @@
       "picked": false,
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-24-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-24-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-24-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-24-after.png"
       ],
       "answer": {
         "ms": 304.10262499935925,
@@ -3882,8 +3882,8 @@
       "picked": false,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-25-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-25-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-25-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-25-after.png"
       ],
       "answer": {
         "values": {
@@ -3916,8 +3916,8 @@
       "picked": false,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-25-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-25-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-25-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-25-after.png"
       ],
       "answer": {
         "ms": 298.42483400716446,
@@ -3936,8 +3936,8 @@
       "picked": true,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-26-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-26-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-26-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-26-after.png"
       ],
       "answer": {
         "values": {
@@ -3970,8 +3970,8 @@
       "picked": false,
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-26-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-26-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-26-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-26-after.png"
       ],
       "answer": {
         "ms": 323.25799998943694,
@@ -3990,8 +3990,8 @@
       "picked": false,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-27-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-27-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-27-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-27-after.png"
       ],
       "answer": {
         "values": {
@@ -4024,8 +4024,8 @@
       "picked": false,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-27-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-27-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-27-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-27-after.png"
       ],
       "answer": {
         "ms": 280.4475829761941,
@@ -4044,8 +4044,8 @@
       "picked": true,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-28-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-28-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-28-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-28-after.png"
       ],
       "answer": {
         "values": {
@@ -4078,8 +4078,8 @@
       "picked": false,
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-28-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-28-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-28-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-28-after.png"
       ],
       "answer": {
         "ms": 298.8837079901714,
@@ -4098,8 +4098,8 @@
       "picked": false,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-29-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-29-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-29-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-29-after.png"
       ],
       "answer": {
         "values": {
@@ -4132,8 +4132,8 @@
       "picked": false,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-29-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-29-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-29-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-29-after.png"
       ],
       "answer": {
         "ms": 358.87970798648894,
@@ -4152,8 +4152,8 @@
       "picked": true,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-30-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-30-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-30-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-30-after.png"
       ],
       "answer": {
         "values": {
@@ -4186,8 +4186,8 @@
       "picked": false,
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-30-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-30-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-30-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-30-after.png"
       ],
       "answer": {
         "ms": 373.2350829814095,
@@ -4206,8 +4206,8 @@
       "picked": false,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-31-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-31-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-31-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-31-after.png"
       ],
       "answer": {
         "values": {
@@ -4240,8 +4240,8 @@
       "picked": false,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-31-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-31-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-31-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-31-after.png"
       ],
       "answer": {
         "ms": 257.82683299621567,
@@ -4260,8 +4260,8 @@
       "picked": true,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-32-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-32-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-32-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-32-after.png"
       ],
       "answer": {
         "values": {
@@ -4294,8 +4294,8 @@
       "picked": false,
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-32-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-32-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-32-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-32-after.png"
       ],
       "answer": {
         "ms": 284.06012497725897,
@@ -4314,8 +4314,8 @@
       "picked": false,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-33-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-33-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-33-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-33-after.png"
       ],
       "answer": {
         "values": {
@@ -4348,8 +4348,8 @@
       "picked": false,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-33-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-33-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-33-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-33-after.png"
       ],
       "answer": {
         "ms": 330.7259999855887,
@@ -4368,8 +4368,8 @@
       "picked": true,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-34-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-34-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-34-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-34-after.png"
       ],
       "answer": {
         "values": {
@@ -4402,8 +4402,8 @@
       "picked": false,
       "correct": false,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-34-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-34-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-34-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-34-after.png"
       ],
       "answer": {
         "ms": 247.36204202054068,
@@ -4422,8 +4422,8 @@
       "picked": false,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-35-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-35-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-35-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-35-after.png"
       ],
       "answer": {
         "values": {
@@ -4456,8 +4456,8 @@
       "picked": false,
       "correct": true,
       "images": [
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-35-before.png",
-        "/Users/gurucharan/Documents/personal/eve/docs/computer-swarm/results/visual-inputs/verification-35-after.png"
+        "docs/computer-swarm/results/visual-inputs/verification-35-before.png",
+        "docs/computer-swarm/results/visual-inputs/verification-35-after.png"
       ],
       "answer": {
         "ms": 376.12254099803977,

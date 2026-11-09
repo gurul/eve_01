@@ -12,7 +12,7 @@ stub nmcli    'echo "nmcli $*" >> "$T/log"; [ "$1" = "-t" ] && echo "HOME:802-11
 stub iw       'true'
 stub sleep    'true'
 stub systemctl 'echo "systemctl $*" >> "$T/log"'
-stub journalctl 'printf "%s\n" "Accepted publickey for u from 10.0.0.35 port 50000 ssh2: ED25519 SHA256:x" "Accepted publickey for u from 10.0.0.35 port 50001 ssh2: ED25519 SHA256:x" "Accepted publickey for u from 10.0.0.77 port 1 ssh2: ED25519 SHA256:x"'
+stub journalctl 'printf "%s\n" "Accepted publickey for u from 192.168.50.35 port 50000 ssh2: ED25519 SHA256:x" "Accepted publickey for u from 192.168.50.35 port 50001 ssh2: ED25519 SHA256:x" "Accepted publickey for u from 192.168.50.77 port 1 ssh2: ED25519 SHA256:x"'
 export T PATH="$T/bin:$PATH" EVE_KEEPALIVE_STATE="$T/state" EVE_KEEPALIVE_MCAST="$T/mcast"
 run() { : > "$T/log"; bash "$HERE/eve-wifi-keepalive.sh" > "$T/out" 2>&1; }
 fail() { echo "FAIL: $1"; cat "$T/out" "$T/log"; exit 1; }
@@ -20,8 +20,8 @@ reconnects() { grep -c "connection up" "$T/log"; }
 
 # Healthy: the counter moves every minute -> no reconnect, and each SSH client gets one hello.
 for n in 100 140 190 230 260; do echo "$n" > "$T/mcast"; run; [ "$(reconnects)" = 0 ] || fail "reconnected while healthy"; done
-[ "$(grep -c 'ping -c1 -W1 10.0.0.35' "$T/log")" = 1 ] || fail "no single hello to 10.0.0.35"
-grep -q 'ping -c1 -W1 10.0.0.77' "$T/log" || fail "no hello to 10.0.0.77"
+[ "$(grep -c 'ping -c1 -W1 192.168.50.35' "$T/log")" = 1 ] || fail "no single hello to 192.168.50.35"
+grep -q 'ping -c1 -W1 192.168.50.77' "$T/log" || fail "no hello to 192.168.50.77"
 
 # Broadcast stalls: counter stands still. Runs 1 and 2 still -> wait; run 3 still -> reconnect (positive control).
 echo 260 > "$T/mcast"

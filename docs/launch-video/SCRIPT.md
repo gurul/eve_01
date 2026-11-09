@@ -108,7 +108,7 @@ All paths are relative to the repository root (`eveTinkerer/`).
 |---|---|
 | Brand source of truth (14 slides; follows the film chapter by chapter and embeds it) | `docs/launch-video/reference/show-and-tell.html` |
 | Same brand as a scrolling page | `docs/launch-video/reference/one-pager.html` |
-| Published versions (need the owner's login) | Show-and-Tell: https://claude.ai/code/artifact/9b8eb406-2a54-40f7-a1a3-e77faa8eb820 · one-pager: https://claude.ai/code/artifact/3371cd3d-fa06-409e-9c3b-1922e2e3082a |
+| Published versions (need the owner's login) | Show-and-Tell: <artifact-url> · one-pager: <artifact-url> |
 | Web fonts (woff2) + license | `bridge/src/eve_bridge/learning/web/fonts/` |
 | Font files (ttf) + licenses | `widget/Shared/Fonts/` |
 | Brand CSS as used in the product | `bridge/src/eve_bridge/learning/web/style.css` |

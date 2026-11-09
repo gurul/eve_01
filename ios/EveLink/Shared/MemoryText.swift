@@ -1,7 +1,7 @@
 // What eve remembers, read for a phone screen (App/ControlSheets.swift, the Memory card; docs/stackchan/memory.md).
 //
 // The daemon hands the profile over as the records' own markdown (a `---` front matter, a `#` title, `##`
-// sections, `- ` facts that end in "(said 2026-09-22)." and name records as [[project-storeybox]]), and the search's
+// sections, `- ` facts that end in "(said 2026-09-22)." and name records as [[project-acme]]), and the search's
 // facts and recalled meanings carry the same marks. Shown raw they read like a file (owner, 2026-10-09: "make the
 // memories page look better"). Foundation only, so Tests/main.swift checks it on the Mac.
 import Foundation
@@ -103,11 +103,11 @@ enum MemoryText {
         return (caption, clean(rest))
     }
 
-    /// Wikilinks as words ([[project-storeybox]] → storeybox), ending punctuation, runs of spaces.
+    /// Wikilinks as words ([[project-acme]] → acme), ending punctuation, runs of spaces.
     static func clean(_ s: String) -> String {
         var text = s.trimmingCharacters(in: .whitespacesAndNewlines)
         while text.hasSuffix(".") || text.hasSuffix(" ") { text.removeLast() }
-        // a record named alone in parentheses at the end, "([[project-storeybox]])": a pointer, not words
+        // a record named alone in parentheses at the end, "([[project-acme]])": a pointer, not words
         text = linkTail.stringByReplacingMatches(in: text, range: NSRange(text.startIndex..., in: text), withTemplate: "")
         let whole = NSRange(text.startIndex..., in: text)
         text = wikilink.stringByReplacingMatches(in: text, range: whole, withTemplate: "$1")

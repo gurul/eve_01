@@ -63,10 +63,24 @@ def test_fixture_cases_point_at_real_candidates(path: Path) -> None:
 # ---- redaction denylist (review 2026-09-21): a fixture may not carry the owner's data --------------
 
 
-_DENY = [_re.compile(p, _re.IGNORECASE) for p in (
-    r"gurucharan", r"lingamallu", r"[\w.+-]+@(?!example\.)[\w-]+\.[a-z]{2,}",   # any non-example.* e-mail
-    r"\+?1?\s?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}",                            # US phone numbers
-    r"era\.world", r"claude-501", r"CodePath", r"storeybox")]
+# The owner's own words (their name, their company, their machine) are not written here: this repo is public, and a
+# denylist naming them would carry them. They go one per line in ~/.config/eve-bridge/private-terms.txt, which stays
+# on the Mac; the patterns below are the shapes anyone's data takes.
+_SHAPES = (r"[\w.+-]+@(?!example\.)[\w-]+\.[a-z]{2,}",                     # any non-example.* e-mail
+           r"\+?1?\s?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}",                     # US phone numbers
+           r"/Users/(?!(?:g|a|x|me|owner|sam|someone)/)[a-z][\w.-]+/",          # a real-looking home folder
+           r"zz-owner-canary")                                                 # the positive control's own term
+
+
+def _own_terms() -> tuple[str, ...]:
+    try:
+        text = (Path.home() / ".config/eve-bridge/private-terms.txt").read_text(encoding="utf-8")
+    except OSError:
+        return ()
+    return tuple(_re.escape(w.strip()) for w in text.splitlines() if w.strip() and not w.startswith("#"))
+
+
+_DENY = [_re.compile(p, _re.IGNORECASE) for p in (*_SHAPES, *_own_terms())]
 
 
 def _denied(text: str) -> list[str]:
@@ -74,9 +88,10 @@ def _denied(text: str) -> list[str]:
 
 
 def test_denylist_catches_a_known_positive_control() -> None:
-    bad = 'row "Gurucharan Lingamallu, Apple Account" field "guru.x@gmail.com" text "+1 (425) 555-0100"'
+    bad = 'row "zz-owner-canary, Apple Account" field "jo.x@gmail.com" text "+1 (555) 555-0100" "/Users/jordan/x"'
     hits = _denied(bad)
-    assert any("gurucharan" in h for h in hits) and any("@" in h for h in hits) and any("d{3}" in h for h in hits)
+    assert any("canary" in h for h in hits) and any("@" in h for h in hits) and any("d{3}" in h for h in hits)
+    assert any("Users" in h for h in hits)
     assert _denied('row "Sam Rivera, Apple Account" field "sam@example.org" text "phone redacted"') == []
 
 

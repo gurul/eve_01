@@ -1075,8 +1075,8 @@ def test_an_adopted_session_without_a_transcript_path_shows_its_turns(tmp_path: 
 
 
 def test_the_derived_path_turns_every_non_alphanumeric_into_a_dash(tmp_path: Path) -> None:
-    got = work_sessions.derived_transcript(Path("/tmp/claude-501/my_proj v2"), "abc", tmp_path)
-    assert got == tmp_path / "projects" / "-tmp-claude-501-my-proj-v2" / "abc.jsonl"
+    got = work_sessions.derived_transcript(Path("/tmp/claude-1000/my_proj v2"), "abc", tmp_path)
+    assert got == tmp_path / "projects" / "-tmp-claude-1000-my-proj-v2" / "abc.jsonl"
 
 
 def test_continue_to_a_live_session_is_a_reply_never_a_fork_or_a_window(tmp_path: Path) -> None:

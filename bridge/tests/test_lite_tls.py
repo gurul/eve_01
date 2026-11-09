@@ -140,8 +140,8 @@ def test_mac_names_are_one_dns_label_in_any_case(tls: LocalTls) -> None:
     assert tls.refresh([LAN], "Kitchen-Mac.local") is False
     assert tls.refresh([LAN], "") is False                          # unknown: the leaf keeps its name
     assert tls.refresh([LAN], "not one label") is False
-    assert tls.refresh([LAN], "Den-Mac") is True                    # renamed: the QR code's .local name changes
-    assert san(cert(tls.leaf_cert_path))[0] == ["den-mac.local", "localhost"]
+    assert tls.refresh([LAN], "Attic-Mac") is True                    # renamed: the QR code's .local name changes
+    assert san(cert(tls.leaf_cert_path))[0] == ["attic-mac.local", "localhost"]
 
 
 def test_a_mac_without_a_bonjour_name_still_gets_a_leaf(tmp_path: Path) -> None:
@@ -266,9 +266,9 @@ def test_logs_carry_no_name_and_no_address(tmp_path: Path, caplog: pytest.LogCap
     with caplog.at_level(logging.DEBUG, logger="eve_bridge.lite_tls"):
         t = LocalTls(tmp_path / "web-tls")
         t.refresh([LAN], HOST)
-        t.refresh(["10.0.0.7"], "Den-Mac")
+        t.refresh(["10.0.0.7"], "Attic-Mac")
     assert "issued the LAN certificate" in caplog.text               # control: the lines were captured
-    for secret_ish in (HOST, HOST.lower(), "Den-Mac", "den-mac", LAN, "10.0.0.7"):
+    for secret_ish in (HOST, HOST.lower(), "Attic-Mac", "attic-mac", LAN, "10.0.0.7"):
         assert secret_ish not in caplog.text
 
 
@@ -404,7 +404,7 @@ def test_a_client_that_does_not_trust_the_ca_or_asks_another_name_is_refused(tls
     with pytest.raises(ssl.SSLCertVerificationError):
         handshake(tls.context(), client(stranger.ca_pem()), "localhost")
     with pytest.raises(ssl.SSLCertVerificationError):
-        handshake(tls.context(), client(tls.ca_pem()), "den-mac.local")
+        handshake(tls.context(), client(tls.ca_pem()), "attic-mac.local")
     with pytest.raises(ssl.SSLCertVerificationError):
         handshake(tls.context(), client(tls.ca_pem()), "192.168.1.99")
 

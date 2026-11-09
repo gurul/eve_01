@@ -8,7 +8,7 @@ Scope: Establish whether Eve can invoke Codex's existing desktop Computer Use th
 - [x] G8: Telegram photos and image documents preserve owner checks, captions and active relay routing; bounded downloads reject invalid media and images cannot answer permission prompts.
   CHECK: bridge/.venv/bin/python -m pytest -q -p no:cacheprovider bridge/tests/test_telegram_images.py
   EXPECT: passed
-  EVIDENCE: exit=0; shell=/bin/sh; cwd=/Users/gurucharan/Documents/personal/eve; path=5cdd84c66b04/21 entries; output=..............                                                           [100%] | 14 passed in 0.10s
+  EVIDENCE: exit=0; shell=/bin/sh; cwd=<repo>; path=5cdd84c66b04/21 entries; output=..............                                                           [100%] | 14 passed in 0.10s
 
 - [x] G2: Current official documentation and installed plugin metadata establish the supported integration boundary.
   EVIDENCE: Official app-server, SDK, Computer Use and Remote Control docs compared with installed unified-computer-use 26.917.51856 metadata and cua-repl README; exact sources and version limits recorded in README.md.
@@ -22,14 +22,14 @@ Scope: Establish whether Eve can invoke Codex's existing desktop Computer Use th
 - [x] G5: Adapter tests cover discovery, event relay, approval decisions, unavailable tools, disconnect and cancellation; daemon wiring uses Codex for both voice and text.
   CHECK: bridge/.venv/bin/python -m pytest -q -p no:cacheprovider bridge/tests/test_codex_computer.py
   EXPECT: passed
-  EVIDENCE: exit=0; shell=/bin/sh; cwd=/Users/gurucharan/Documents/personal/eve; path=5cdd84c66b04/21 entries; output=......                                                                   [100%] | 6 passed in 0.09s
+  EVIDENCE: exit=0; shell=/bin/sh; cwd=<repo>; path=5cdd84c66b04/21 entries; output=......                                                                   [100%] | 6 passed in 0.09s
 
 - [x] G6: Changed Python files pass lint and the existing voice, Telegram and daemon tests pass.
   CHECK: bridge/.venv/bin/ruff check bridge/src/eve_bridge/codex_computer.py bridge/src/eve_bridge/telegram.py bridge/src/eve_bridge/telegram_images.py bridge/src/eve_bridge/rundown.py bridge/src/eve_bridge/daemon.py bridge/src/eve_bridge/voice_agent.py bridge/tests/test_codex_computer.py bridge/tests/test_rundown.py bridge/tests/test_telegram_images.py && bridge/.venv/bin/python -m pytest -q -p no:cacheprovider bridge/tests/test_telegram.py bridge/tests/test_voice_agent.py bridge/tests/test_daemon_*.py
   EXPECT: passed
-  EVIDENCE: exit=0; shell=/bin/sh; cwd=/Users/gurucharan/Documents/personal/eve; path=5cdd84c66b04/21 entries; output=.......                                                                  [100%] | 223 passed in 25.13s
+  EVIDENCE: exit=0; shell=/bin/sh; cwd=<repo>; path=5cdd84c66b04/21 entries; output=.......                                                                  [100%] | 223 passed in 25.13s
 
 - [x] G7: Texting rundown loads a packaged skill, reads today's Obsidian todos, requests current email/calendar/Slack through existing app tools, and refuses writes even when Codex relay is selected.
   CHECK: bridge/.venv/bin/python -m pytest -q -p no:cacheprovider bridge/tests/test_rundown.py
   EXPECT: passed
-  EVIDENCE: exit=0; shell=/bin/sh; cwd=/Users/gurucharan/Documents/personal/eve; path=5cdd84c66b04/21 entries; output=.....                                                                    [100%] | 5 passed in 0.09s
+  EVIDENCE: exit=0; shell=/bin/sh; cwd=<repo>; path=5cdd84c66b04/21 entries; output=.....                                                                    [100%] | 5 passed in 0.09s

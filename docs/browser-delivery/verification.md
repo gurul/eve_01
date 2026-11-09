@@ -30,7 +30,7 @@ unspecified browser requests to Chrome; explicit built-in-browser requests remai
 explicit failures. No other browser was silently substituted in that probe.
 
 Folder selection was checked against the live read-only Codex task catalog:
-`eve` resolved to `/Users/gurucharan/Documents/personal/eve`. Unit tests
+`eve` resolved to the repo checkout. Unit tests
 cover latest-task choice, case-insensitive names, spaces, full paths, ambiguous
 duplicate folder names, unknown folders, and the absence of a numbered menu.
 
@@ -41,7 +41,7 @@ That test now awaits the actual turn. See GATES.md for final executed checks.
 ## Fresh folder chats replace task selection
 
 The owner supplied the actual Telegram text. It confirms that the `eve` menu
-entry was internal task `01a0cdb1-92f2-7692-ab40-ca73f67eaa6d`, followed by an
+entry was internal task `<task-id>`, followed by an
 owner-discovery timeout and ordinary messages stuck in disconnected relay mode.
 The read-only catalog identifies its source as `{"subagent":{"other":"guardian"}}`,
 updated at 02:56:02, with no agent nickname. Filtering only nicknames was wrong.
@@ -59,7 +59,7 @@ A live check used the production `TelegramInlet._dispatch` and `CodexChat` with
 the installed Codex binary. Its Telegram receiver captured messages locally;
 the test did not send model-generated test messages to the owner. `codex on`
 returned exactly the accessible-folder list. `codex eve` created fresh thread
-`01a0cdbb-e631-7993-8cbb-2fe4ec544ebf` with the actual Eve cwd. Two harmless turns
+`<thread-id>` with the actual Eve cwd. Two harmless turns
 returned `READY` and then the token `cobalt-pine-73`, demonstrating continuity.
 The test thread was archived through the public protocol, and `codex off` closed
 the session. The probe printed `FRESH_CODEX_CHAT_LIVE_OK` and exited zero.

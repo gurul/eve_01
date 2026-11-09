@@ -2,7 +2,7 @@
   "created_at": "2026-09-21T20:57:16.465783+00:00",
   "manifest": {
     "schema_sha256": "9497d8c0b236b25c8acbb4e9037913f1f7582c0996ee50f6a9dc57421c33b258",
-    "base": "/Users/gurucharan/.config/eve-bridge/models/laya-multilingual-mlx",
+    "base": "~/.config/eve-bridge/models/laya-multilingual-mlx",
     "base_sha256": "7fc5834af4d8fdfb268d272a9d1a66e5819a0daac98241651c4c888cc43adff1",
     "dataset_sha256": "8b99809259d36e00a97f83d8c4d149bf1ae6080408c6f87818d1ceb674d03dfb",
     "temperature": 3.4579109874669487,

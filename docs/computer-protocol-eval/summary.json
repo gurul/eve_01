@@ -134,7 +134,7 @@
   },
   "sources": {
     "ax.json": "e26301e546d1a35a634d0b4f63b40705d9835c37cf5981d4788c811aa27b3350",
-    "visual.json": "1c0866b4568484b677c657979ce4c2cc8a98d27140d2629db24d44a360be883a",
+    "visual.json": "fd1b6269a53973fbb9c906651885a32b2a86f9a0509fcd18d3d2aec632d944ad",
     "browser/runs-gpt-6-astra.jsonl": "a1e027a80bfde0a3676065392dfa11e870c199226aea59034a136f4d1293b880",
     "browser/runs-gpt-6-luna.jsonl": "03f01a6f98595e5c427b733073f7bae62ab4e0475efe1c207ab6488fd12f9df2",
     "browser/runs-gpt-6-sol.jsonl": "bee75d3e9cf40dc51cbb8d65071c647c372bba5b95f846df9d85efb1171bfa22",

@@ -880,7 +880,7 @@ updated: 2026-10-08
 Dreamt from conversations up to 2026-10-08.
 
 ## Life context
-- They co-founded [[project-storeybox]], a booth ([[project-storeybox]]) (said 2026-09-28).
+- They co-founded [[project-acme]], a booth ([[project-acme]]) (said 2026-09-28).
 - A fact that wraps
   onto a second line (said 2026-09-22).
 
@@ -890,7 +890,7 @@ Dreamt from conversations up to 2026-10-08.
 let prof = MemoryText.profile(profileMD)
 check(prof.updated == "2026-10-08" && prof.intro == "Dreamt from conversations up to 2026-10-08", "front matter and intro")
 check(prof.sections.map(\.title) == ["Life context", "Preferences"], "sections by ## heading")
-check(prof.sections[0].items[0] == MemoryItem(text: "They co-founded storeybox, a booth", said: "2026-09-28"), "wikilinks as words, a trailing record name dropped, the said tail as the day")
+check(prof.sections[0].items[0] == MemoryItem(text: "They co-founded acme, a booth", said: "2026-09-28"), "wikilinks as words, a trailing record name dropped, the said tail as the day")
 check(MemoryText.clean("uses [[project-claude-mem]] daily ([[project-x-y]])") == "uses claude-mem daily", "an inline name keeps its hyphens; a trailing one goes")
 check(MemoryText.clean("a (real aside)") == "a (real aside)", "words in parentheses stay")
 check(prof.sections[0].items[1] == MemoryItem(text: "A fact that wraps onto a second line", said: "2026-09-22"), "a wrapped fact is one row")

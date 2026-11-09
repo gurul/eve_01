@@ -2,7 +2,7 @@
   "created_at": "2026-09-21T20:53:52.651370+00:00",
   "dataset": "bridge/tests/fixtures/emotion/scenarios.json",
   "dataset_sha256": "8b99809259d36e00a97f83d8c4d149bf1ae6080408c6f87818d1ceb674d03dfb",
-  "base": "/Users/gurucharan/.config/eve-bridge/models/laya-multilingual-mlx",
+  "base": "~/.config/eve-bridge/models/laya-multilingual-mlx",
   "artifact": ".test-artifacts/laya-emotion",
   "manifest": {
     "schema_sha256": "9497d8c0b236b25c8acbb4e9037913f1f7582c0996ee50f6a9dc57421c33b258",

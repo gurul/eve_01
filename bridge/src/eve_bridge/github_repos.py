@@ -15,7 +15,7 @@ name in a message opens GitHub like any GitHub word.
   ``DESC_CLIP`` characters, in one line of the apps block (``AppsBridge.instructions``). Every name in it is one
   GitHub returned: nothing is made up (the owner's rule for prompts).
 * **Words.** ``names_repo``: a message holding a repository's name as a word (``zorbcar``, ``plantpal-x``) names GitHub.
-  Names shorter than ``MIN_NAME``, or that are everyday words (``WORDS``, and any word in macOS's own
+  Names shorter than ``MIN_NAME``, or that are everyday words (``WORDS``, the owner's own in ``OWN_WORDS``, and any word in macOS's own
   ``/usr/share/dict/words``), are left out, so "remix" or "leap" in a sentence never opens GitHub, whose schemas are
   the largest of the apps; their line still teaches the brain.
 
@@ -40,9 +40,25 @@ SHOWN = 25                       # in the prompt
 DESC_CLIP = 50
 MIN_NAME = 4
 # Repository names that are also everyday words: kept in the brain's line, never a keyword.
-WORDS = frozenset({"atlas", "double", "candid", "lily", "eve", "echoes", "storeybox", "harbor", "notes", "site",
-                   "website", "blog", "app", "bot", "test", "demo", "home", "config", "dotfiles", "resume", "delphi",
+# The owner's own such names (a project, a company) are not written here: they are an inventory, and this repo is
+# public. They go one per line in ``~/.config/eve-bridge/github-words.txt``, which stays on the Mac.
+WORDS = frozenset({"atlas", "double", "candid", "lily", "eve", "echoes", "harbor", "notes", "site",
+                   "website", "blog", "app", "bot", "test", "demo", "home", "config", "dotfiles", "resume",
                    "handyman", "sushi"})
+OWN_WORDS = Path("~/.config/eve-bridge/github-words.txt")
+_own_words: Optional[frozenset[str]] = None
+
+
+def _words() -> frozenset[str]:
+    """``WORDS`` and the owner's own, read once."""
+    global _own_words
+    if _own_words is None:
+        try:
+            text = OWN_WORDS.expanduser().read_text(encoding="utf-8")
+        except OSError:
+            text = ""
+        _own_words = frozenset(w.strip().lower() for w in text.splitlines() if w.strip() and not w.startswith("#"))
+    return WORDS | _own_words
 FILE = "github-repos.json"
 DICTIONARY = Path("/usr/share/dict/words")
 _dictionary: Optional[frozenset[str]] = None
@@ -143,7 +159,7 @@ def keyword_names(repos: Sequence[Mapping[str, str]]) -> frozenset[str]:
     out = set()
     for r in repos:
         name = str(r.get("name") or "").lower()
-        if (len(name) >= MIN_NAME and name not in WORDS and name not in _english()
+        if (len(name) >= MIN_NAME and name not in _words() and name not in _english()
                 and re.fullmatch(r"[a-z0-9][a-z0-9._-]*", name)):
             out.add(name)
     return frozenset(out)

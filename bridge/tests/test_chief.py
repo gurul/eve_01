@@ -595,7 +595,7 @@ def test_an_asked_reminder_waits_for_a_breakpoint_and_goes_outside_quiet_hours(t
 
 
 def test_close_card_closes_a_commitment_the_owner_names_in_chat(tmp_path: Path) -> None:
-    """2026-10-08: the owner said "Storeybox prep is done" and the chat said it would mark it complete, but it had
+    """2026-10-08: the owner said "Acme prep is done" and the chat said it would mark it complete, but it had
     no tool for that; the card stayed active. close_card closes it on the owner's word, as "done c1" does."""
     f, clock = Fakes(), Clock(at(9))
     c = make(tmp_path, f, clock)

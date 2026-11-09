@@ -11,7 +11,7 @@ Companion index of the vendored repos: [repos.md](repos.md).
 ## Bench findings (this unit, 2026-09-05)
 
 - Enumerates as Espressif `USB JTAG_serial debug unit`, VID 0x303a PID 0x1001,
-  serial `80:45:6B:54:7F:44`, port `/dev/cu.usbmodem3101`. Same peripheral as the
+  serial `XX:XX:XX:XX:XX:XX`, port `/dev/cu.usbmodem3101`. Same peripheral as the
   Freenove pet, so the bridge's serial transport applies unchanged.
 - Factory firmware is on the unit, paired with the StackChan World app and on WiFi.
   It prints one ESP-IDF log line every 10 s and nothing else:

@@ -4,7 +4,7 @@
 // ESP32-S3, 16 MB flash, 8 MB octal PSRAM.
 //
 // sb_i2s.* and sb_codec.* come unchanged from homeboxV0
-// (firmware/storeybox_esp32, commit 9c8a4f8), whose scripts/check-pins.mjs and
+// (commit 9c8a4f8), whose scripts/check-pins.mjs and
 // scripts/check-aic3204.mjs compare them against the upstream ESPHome
 // firmware. This header supplies the defines those two files read, with the
 // values from homeboxV0's sb_board_voice_pe.h.
