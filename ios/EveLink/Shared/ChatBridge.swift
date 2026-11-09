@@ -153,6 +153,41 @@ struct ChatUploaded: Equatable, Sendable {
     }
 }
 
+/// The message the composer just sent, held for a moment after it empties the field (owner, 2026-11-09: "sometimes
+/// after I send a message it leaves the message in the text box"). The keyboard can put the words back: dictation's
+/// last result landing after the tap, or a prediction, autocorrect or composing text committing as the field empties.
+/// That comes back whole, in one change; a new message starts with one key, so it never matches.
+struct ComposerEcho: Sendable {
+    let words: [String]
+    let at: Date
+    /// How long after a send a change can still be the keyboard putting the words back.
+    static let window: TimeInterval = 1.5
+
+    /// nil for a send with no words (attachments only): there is nothing to come back.
+    init?(_ sent: String, at: Date = Date()) {
+        let words = Self.words(sent)
+        guard !words.isEmpty else { return nil }
+        self.words = words
+        self.at = at
+    }
+
+    /// `draft` is the sent message coming back: the same words (case and punctuation aside), the same with the last
+    /// word finished or corrected, or the same with more after it.
+    func matches(_ draft: String, now: Date = Date()) -> Bool {
+        let age = now.timeIntervalSince(at)
+        guard age >= 0, age <= Self.window else { return false }
+        let back = Self.words(draft)
+        guard !back.isEmpty else { return false }
+        if back.count > words.count { return back.starts(with: words) }
+        if back.count == words.count { return back == words || (words.count >= 2 && back.dropLast() == words.dropLast()) }
+        return false
+    }
+
+    static func words(_ text: String) -> [String] {
+        text.lowercased().split { !$0.isLetter && !$0.isNumber }.map(String.init)
+    }
+}
+
 /// Opening an attachment full size (docs/app-chat.md, "eve's pictures and files"): which kinds there are, and the
 /// local file name it is shown under. The name is the owner's or eve's, so it is cleaned to one safe path component;
 /// the bytes are written under a folder named by the id, never a path from the name.

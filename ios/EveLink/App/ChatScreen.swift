@@ -333,6 +333,8 @@ struct ChatComposer: View {
     @State private var picked: [PhotosPickerItem] = []
     @State private var uploading = false
     @State private var attachProblem: String?
+    /// The message just sent, for a moment: words the keyboard puts back in the field are cleared again.
+    @State private var echo: ComposerEcho?
     @FocusState private var focused: Bool
 
     private var trimmed: String { draft.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -402,6 +404,15 @@ struct ChatComposer: View {
         .onChange(of: relay.phase) { _, now in if now != .ended { dictation.stop(releaseSession: false) } }
         .onDisappear { dictation.stop() }
         .onChange(of: focusRequest) { if chat.ready { focused = true } }
+        .onChange(of: draft) { _, now in
+            guard let sentEcho = echo else { return }
+            if sentEcho.matches(now) {
+                draft = ""
+                diag("composer: the keyboard put the sent words back; cleared again")
+            } else if !now.isEmpty {
+                echo = nil          // the owner is typing something new
+            }
+        }
         .photosPicker(isPresented: $showPhotos, selection: $picked, maxSelectionCount: max(roomLeft, 1),
                       selectionBehavior: .ordered, matching: .images, preferredItemEncoding: .compatible)
         .onChange(of: picked) { _, items in
@@ -524,21 +535,23 @@ struct ChatComposer: View {
         }
     }
 
+    /// The field empties at the tap, before anything goes; the words travel in `text` and come back only if the send
+    /// fails (owner, 2026-11-09: the sent message sometimes stayed in the box).
     private func send() {
         guard canSend else { return }
+        let text = trimmed, items = attachments
         sentAt = Date()
         dictation.stop()
         attachProblem = nil
-        guard !attachments.isEmpty else {
-            chat.send(trimmed)
-            draft = ""
-            sent += 1
+        clearSent(text)
+        sent += 1
+        guard !items.isEmpty else {
+            chat.send(text)
             return
         }
-        // Upload first, then the turn names them. A failed upload keeps everything here, with one line saying why.
-        let text = trimmed, items = attachments
+        // Upload first, then the turn names them. A failed upload keeps the attachments here and puts the words
+        // back, with one line saying why.
         uploading = true
-        sent += 1
         Task {
             var done: [ChatUploaded] = []
             for item in items {
@@ -549,15 +562,59 @@ struct ChatComposer: View {
                 case .failure(let f):
                     attachProblem = f.message
                     uploading = false
+                    restore(text)
                     return
                 }
             }
             chat.send(text, attachments: done)
-            if draft.trimmingCharacters(in: .whitespacesAndNewlines) == text { draft = "" }
             attachments.removeAll { item in items.contains { $0.id == item.id } }
             uploading = false
         }
     }
+
+    /// Empty the field for a send, and keep it empty. The keyboard can undo a clear: text it is still composing (a
+    /// word, an inline prediction) commits after it, or a dictation result lands after the tap. So commit first,
+    /// then clear, then clear again whatever brings the sent words back in the next moment (`echo`, and the look
+    /// below for a commit that undid the clear in the same update, which no change shows).
+    private func clearSent(_ text: String) {
+        KeyboardText.commitComposing()
+        draft = ""
+        echo = ComposerEcho(text)
+        Task {
+            try? await Task.sleep(for: .milliseconds(150))
+            if let sentEcho = echo, sentEcho.matches(draft) {
+                draft = ""
+                diag("composer: the sent words were still in the field; cleared again")
+            }
+        }
+    }
+
+    /// A send that did not go: its words back in the field, before anything typed since.
+    private func restore(_ text: String) {
+        echo = nil
+        let typed = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        draft = [text, typed].filter { !$0.isEmpty }.joined(separator: " ")
+    }
+}
+
+/// The text field that has the keyboard, found the way UIKit finds an action's target (the first responder).
+@MainActor
+private enum KeyboardText {
+    fileprivate static weak var found: UIResponder?
+
+    /// Commit what the keyboard is still composing in the focused field (marked text), so it cannot commit after a
+    /// clear and put the words back.
+    static func commitComposing() {
+        found = nil
+        UIApplication.shared.sendAction(#selector(UIResponder.eveCaptureFirstResponder), to: nil, from: nil, for: nil)
+        defer { found = nil }
+        guard let input = found as? UITextInput, input.markedTextRange != nil else { return }
+        input.unmarkText()
+    }
+}
+
+private extension UIResponder {
+    @objc func eveCaptureFirstResponder() { KeyboardText.found = self }
 }
 
 /// Auto, Instant or Think, remembered; sent with each turn as its grade.

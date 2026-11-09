@@ -434,8 +434,9 @@ as Telegram does.
    its `error` is the line the composer shows. The answer is
    `{"ok": true, "id", "kind", "name", "mime", "size"}`; `kind` is `image`,
    `pdf`, `text` or `doc`.
-2. If any upload fails, nothing is sent: the attachments and the words stay in
-   the composer, with one red line saying why.
+2. If any upload fails, nothing is sent: the attachments stay in the composer
+   and the words, which left the field at the tap, come back, with one red line
+   saying why.
 3. Native calls `window.eveNative.send(text, json)`: `json` is
    `[{id, name, kind, thumb?}]`, where `thumb` is a 240 px JPEG made on the
    phone, as a `data:` URL. The page puts them in the owner's message (AG-UI

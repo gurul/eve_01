@@ -235,6 +235,25 @@ let callJS = ChatJS.call("onChunk", [ChatJS.literal("t1"), ChatJS.literal("x")])
 check(callJS.contains("n.onChunk(\"t1\",\"x\")") && callJS.contains("typeof n.onChunk==='function'"),
       "calls go through window.eveNative, guarded")
 
+// The composer after a send (ComposerEcho): the keyboard putting the sent words back is cleared again; typing is not.
+let sentAt = Date(timeIntervalSince1970: 1_000_000)
+let soon = sentAt.addingTimeInterval(0.3)
+let echo = ComposerEcho("Set a timer for ten minutes", at: sentAt)!
+check(echo.matches("Set a timer for ten minutes", now: soon), "the same words come back: an echo")
+check(echo.matches("set a timer for ten minutes.", now: soon), "dictation's final case and punctuation: an echo")
+check(echo.matches("Set a timer for ten minute", now: soon), "the last word corrected as it commits: an echo")
+check(echo.matches("Set a timer for ten minutes please", now: soon), "dictation's last result runs on: an echo")
+check(!echo.matches("Set a timer for ten minutes", now: sentAt.addingTimeInterval(ComposerEcho.window + 0.1)),
+      "after the window the same words are the owner's")
+check(!echo.matches("S", now: soon) && !echo.matches("Set", now: soon), "a new message typed key by key is kept")
+check(!echo.matches("Set an alarm for ten minutes", now: soon), "a different message is kept")
+check(!echo.matches("", now: soon) && !echo.matches("  \n", now: soon), "an empty field is not an echo")
+check(!echo.matches("Set a timer", now: soon), "part of the message is not an echo")
+check(ComposerEcho("", at: sentAt) == nil && ComposerEcho(" !? ", at: sentAt) == nil, "no words sent: nothing to echo")
+let oneWord = ComposerEcho("ok", at: sentAt)!
+check(oneWord.matches("OK", now: soon) && !oneWord.matches("on", now: soon),
+      "a one-word message: only that word comes back")
+
 // Message dispatch: each JS -> native message, and what is refused.
 check(ChatBridgeMessage(body: ["type": "ready"]) == .ready, "ready")
 check(ChatBridgeMessage(body: ["type": "topics", "id": "q1"]) == .topics(id: "q1"), "topics")
