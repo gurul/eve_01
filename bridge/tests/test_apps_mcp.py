@@ -49,9 +49,9 @@ def test_a_tool_reads_only_when_its_hint_and_its_name_agree(tool: dict[str, Any]
 
 
 def test_the_policy_has_the_owners_defaults_and_an_env_override() -> None:
-    # Private routine writes run; consequential acts still ask. Contacts and Maps only look.
+    # Private routine writes run; consequential acts still ask. Contacts, Maps and Wispr only look.
     assert apps_mcp.policy({}) == {"gmail": "auto", "calendar": "auto", "drive": "auto", "contacts": "read",
-                                   "github": "auto", "maps": "read"}
+                                   "github": "auto", "maps": "read", "wispr": "read"}
     pol = apps_mcp.policy({"EVE_APPS_POLICY": "github=write, drive=read, maps=never, =x"})
     assert pol["github"] == "write" and pol["drive"] == "read" and pol["maps"] == "read"   # "never" ignored
 

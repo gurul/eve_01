@@ -1,7 +1,7 @@
 # Connected accounts: direct, and Composio for the rest
 
 This page is about **connected accounts**: services eve signs in to on your behalf
-(Google, GitHub, Maps, and Composio for the rest). eve's own **apps** (lights, music,
+(Google, GitHub, Maps, Wispr Flow, and Composio for the rest). eve's own **apps** (lights, music,
 a camera, a TV, a car: modules in this repository that drive a device) are a different
 thing; to build one, see [adding an app](adding-an-app.md).
 
@@ -15,6 +15,7 @@ eve reaches your everyday accounts **directly**, with no broker in the middle:
 | Google Contacts | Google's People API | Read only: find a person's email address or phone number, among your saved contacts and the people you have emailed. |
 | GitHub | GitHub's MCP server | Read repos, issues, pull requests and CI runs. Create an explicitly private personal repository without asking. Publishing, issues, comments, PRs and other changes ask first. |
 | Google Maps | Google's Maps MCP server (Grounding Lite) | Read only: places, routes, weather. Replies keep Google's Maps links, as its terms ask. |
+| Wispr Flow | Wispr's MCP server (`api.wisprflow.ai/connect/mcp`) | Read only: the meetings Wispr Flow's Meeting Recorder captured (notes, summary and action items, transcript, who was there), recurring series, folders, your scratchpad notes, and the calendar Wispr sees with upcoming meetings' pre-reads. |
 
 **Slack, Notion, Linear** and anything else you connect stay on
 [Composio](stackchan/telegram.md#the-apps-composio). Drive and GitHub are kept
@@ -122,7 +123,14 @@ All the files live in `~/.config/eve-bridge/`, owner-only (0600).
    3. Restrict the key to that API.
    4. Put the key in the env file as `EVE_GOOGLE_MAPS_KEY=…`.
 
-5. **Check and restart.** `eve-bridge apps status` lists each app: up or
+5. **Wispr Flow.** `eve-bridge apps login wispr` opens Wispr's sign-in in
+   your browser. eve registers itself with Wispr as a client (Wispr allows
+   that; there is no key to make), you approve, and the token is kept in
+   `~/.config/eve-bridge/wispr-token.json` (0600). Wispr's device-code sign-in
+   fails for outside apps ("Missing external_auth_id"), so eve uses the browser
+   redirect to `127.0.0.1`.
+
+6. **Check and restart.** `eve-bridge apps status` lists each app: up or
    not, how it is reached (`rest` or `mcp`), its tool count and its policy. Then
    restart the daemon:
    `launchctl kickstart -k gui/$(id -u)/com.github.eve-bridge.daemon`.
@@ -132,9 +140,9 @@ All the files live in `~/.config/eve-bridge/`, owner-only (0600).
 | Variable | Default | What it does |
 |---|---|---|
 | `EVE_APPS` | `0` | `1` turns the direct apps on. Each app comes up only when its sign-in or key is present. |
-| `EVE_APPS_POLICY` | `gmail=auto,calendar=auto,drive=auto,contacts=read,github=auto,maps=read` | `auto` runs supported routine private changes and asks for consequential or unknown changes. `write` has the same protection; it cannot bypass confirmation for sending or deleting. `read` refuses changes and hides their tools. `ask` asks for every change, including routine ones. Reads run. Moving Gmail or Calendar between `read` and a writable policy changes the requested Google permissions, so sign in again afterwards. |
+| `EVE_APPS_POLICY` | `gmail=auto,calendar=auto,drive=auto,contacts=read,github=auto,maps=read,wispr=read` | `auto` runs supported routine private changes and asks for consequential or unknown changes. `write` has the same protection; it cannot bypass confirmation for sending or deleting. `read` refuses changes and hides their tools. `ask` asks for every change, including routine ones. Reads run. Moving Gmail or Calendar between `read` and a writable policy changes the requested Google permissions, so sign in again afterwards. |
 | `EVE_APPS_TIMEOUT_SECS` | `60` | One call's timeout. |
-| `EVE_APPS_DIR` | `~/.config/eve-bridge` | Where the Google client and token files are kept. |
+| `EVE_APPS_DIR` | `~/.config/eve-bridge` | Where the Google client and the Google and Wispr token files are kept. |
 | `EVE_GITHUB_MCP_TOKEN` | unset | GitHub's fine-grained token. |
 | `EVE_GOOGLE_MAPS_KEY` | unset | The Maps Grounding Lite API key. |
 
@@ -155,6 +163,7 @@ turns use no app. So:
   | Drive | drive (not "drive to"), doc, Google Doc, document, sheet, spreadsheet, slides, folder, PDF |
   | GitHub | GitHub, repo, PR, pull request, commit, branch, CI, "the build", "build passed", workflow, "actions run"/"actions failed"; "issue" only when the message names no other home for it (Linear, Notion, Slack, Jira, an order) |
   | Maps | map, maps link, directions, navigate, route, how long, how far, get there, drive/walk/bike to, commute, traffic, ETA, nearby, near me, nearest, where's, where is, address (not "email address"), location, weather, forecast, rain, restaurants, cafés, coffee/food near |
+  | Wispr Flow | Wispr, meeting, "call with", transcript, recording, recorded, standup, 1:1, one-on-one, sync, action items, "what did Sam say", "what did we decide/discuss", discussed, scratchpad, pre-read, "prep me" |
 
   So "look for my next class on my calendar and give me a maps link" opens the
   calendar and Maps at once, and "where's my next lecture" does too. Bare
@@ -305,6 +314,24 @@ These are Google's own APIs, checked against Google's reference on 2026-10-04.
   - Contacts open by their words alone ("Ana's number", "email Sam that …",
     "her email address"); the toolset router asks Jev nothing about them
     (`toolset_router.KEYWORD_ONLY`).
+- **Wispr Flow** (read only; every tool Wispr serves is marked read-only):
+  - Its tools are Wispr's own, named `wispr__<tool>`: meeting search (by words,
+    by day, by attendee email), a meeting's notes, summary, action items and
+    transcript, its participants, recurring series, folders, scratchpad notes,
+    calendar events and upcoming meetings with pre-reads. eve tells the model to
+    answer from the transcript (the notes are a summary) and to say Wispr's UTC
+    times in your local time.
+  - Its share-link tool is not offered: under `read`, a tool whose name has a
+    writing word ("share") is hidden, even when Wispr marks it read-only. So a
+    pasted Wispr share link is not read through Wispr; your own meetings are
+    found by search instead.
+  - Meetings open by their words alone, never asked of Jev
+    (`toolset_router.KEYWORD_ONLY`): the router's gates were fitted before
+    Wispr was added. "Meeting" opens the calendar too, so "my meeting with Ana
+    yesterday" has both when it happened and what was said.
+  - Chat only (Eve Link and Telegram); the voice does not load the direct apps.
+  - What leaves the Mac: the model's search words and ids go to Wispr, and the
+    meetings Wispr returns go into the turn, so they reach the chat model.
 - **Calendar** (`calendar`):
   - `list_events` shows recurring events as single occurrences, soonest first.
     With no `calendarId` it reads every calendar you see except holiday,
@@ -489,6 +516,10 @@ so the session id never reaches a log.
     and API-key headers.
   - Token refresh.
   - Each Google call's parameters.
+- `bridge/tests/test_apps_wispr.py`: Wispr's opening words and negative controls,
+  read-only offering (the share-link tool hidden), its token refresh (a rotated
+  refresh token kept, a refusal recorded), and the sign-in: registration, PKCE
+  and the loopback redirect, over a mock transport.
   - A real PDF read through PDFKit.
 - `bridge/tests/test_telegram.py::test_direct_app_tools_are_opened_by_the_message_and_executed_through_the_bridge`
   drives the whole chat path.

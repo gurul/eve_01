@@ -69,7 +69,10 @@ TOOLSETS = (CALENDAR, MAPS, GMAIL, DRIVE, GITHUB, SHARE, WORKSPACE)
 # Opened by their words alone, never asked of Jev (2026-10-09): Google Contacts is one small read tool, so a false
 # open costs a few hundred tokens, and a Noul of its own would change the call the gates above were fitted on.
 CONTACTS = "contacts"
-KEYWORD_ONLY = (CONTACTS,)
+# Wispr Flow's meetings (2026-11-11) the same way: added after the gates were fitted, so a Noul of its own would need a
+# refit and a new blind holdout. Its words (apps_mcp.APP_WORDS) open it; open_app reaches it for the rest.
+WISPR = "wispr"
+KEYWORD_ONLY = (CONTACTS, WISPR)
 
 # The toolsets every turn carries, outside the routed seven (2026-10-08, owner: "expose all the menu items natively
 # as well"). They are never routed: each is a few small tools whose schemas are fixed, so carrying them on every turn

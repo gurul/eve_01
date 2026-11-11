@@ -407,14 +407,15 @@ def main(argv: list[str] | None = None) -> int:
 
     p_apps = sub.add_parser(
         "apps",
-        help="The owner's direct apps (Gmail, Calendar, Drive, GitHub, Maps): sign in, or show what is up",
+        help="The owner's direct apps (Gmail, Calendar, Drive, GitHub, Maps, Wispr Flow): sign in, or show what is up",
         description="login google: browser sign-in with the Desktop OAuth client in "
-                    "~/.config/eve-bridge/google-oauth-client.json. GitHub and Maps read "
+                    "~/.config/eve-bridge/google-oauth-client.json. login wispr: browser sign-in to Wispr "
+                    "Flow's meetings. GitHub and Maps read "
                     "EVE_GITHUB_MCP_TOKEN and EVE_GOOGLE_MAPS_KEY from the env file. status: each app's "
                     "sign-in, path (mcp or rest) and tool count. See docs/apps.md.")
     apps_sub = p_apps.add_subparsers(dest="apps_cmd")
-    p_apps_login = apps_sub.add_parser("login", help="One-time browser sign-in for Google")
-    p_apps_login.add_argument("service", choices=("google",))
+    p_apps_login = apps_sub.add_parser("login", help="One-time browser sign-in for Google or Wispr Flow")
+    p_apps_login.add_argument("service", choices=("google", "wispr"))
     apps_sub.add_parser("status", help="Which apps are signed in and answering")
 
     p_link = sub.add_parser(
@@ -1488,12 +1489,21 @@ def _run_refresh(args: argparse.Namespace) -> int:
 
 
 def _run_apps(args: argparse.Namespace) -> int:
-    """``apps login google`` and ``apps status`` (apps_mcp.py). Prints no token, ever."""
+    """``apps login google|wispr`` and ``apps status`` (apps_mcp.py). Prints no token, ever."""
     import webbrowser
 
     from . import apps_mcp
 
     cfg = apps_mcp.configured()
+    if args.apps_cmd == "login" and args.service == "wispr":
+        try:
+            apps_mcp.wispr_login(cfg, webbrowser.open)
+        except Exception as e:  # noqa: BLE001 — the reason, for the owner at the terminal
+            print(f"Sign-in failed: {e}")
+            return 1
+        print("Signed in to Wispr Flow. Restart the daemon so eve loads it "
+              "(launchctl kickstart -k gui/$(id -u)/com.github.eve-bridge.daemon).")
+        return 0
     if args.apps_cmd == "login":
         try:
             print("Signed in to Google. Scopes:", apps_mcp.google_login(cfg, webbrowser.open))
