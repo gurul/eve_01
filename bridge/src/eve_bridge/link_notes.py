@@ -23,6 +23,13 @@ Bodies:
 * ``{"action": "move", "path", "into"}``: into another folder of ``folders`` (``move_note``).
 * ``{"action": "search", "query"}``: ``{"ok", "hits": [{path, title, snippet}]}``, the brain's own keyword search.
 
+**Meeting notes** (owner, 2026-11-11: "i am unable to see the notes on eve notes app"). The notes eve takes when
+asked ("start taking notes", a Meet call, a phone call: notes.py, meet.py) live with eve's memory, under
+``transcripts/meetings/<date>/``, where memory_search finds them and forget reaches them, not in the vault. The list
+shows them too, in one folder, ``MEETINGS`` ("Meeting notes" on the phone), with paths ``meeting-notes/<date>/<file>``.
+They are read only here: a save, move, delete or undo of one is refused with a line saying so, and they stay where
+they are (forget removes them). Search finds them by their words as well.
+
 ``available`` is false while the second brain is off (EVE_SECOND_BRAIN) or the vault is not there; the
 controls listing says so and the app shows no Notes. Counts and file names go to the log, never a note's words.
 """
@@ -35,6 +42,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from . import second_brain
+from .transcripts import MEETINGS_SUBDIR
 
 log = logging.getLogger(__name__)
 
@@ -48,13 +56,36 @@ OFF_LINE = "Your notes are off on this Mac (EVE_SECOND_BRAIN)."
 CHANGED_LINE = "This note changed on the Mac. Open it again to see the new version."
 TOO_LONG_LINE = "This note is too long to save from the phone. Edit it on the Mac."
 NOT_A_NOTE = "That note isn't there any more."
+MEETINGS = "meeting-notes"     # the list's folder for eve's meeting notes; never a vault path (_is_meeting)
+READ_ONLY_LINE = "Meeting notes are kept with eve's memory and can't be changed from the phone."
+MAX_MEETINGS = 300             # newest first: enough to scroll back months
+
+
+def meetings_dir() -> Path:
+    """Where eve's meeting notes are (notes.notes_dir): the memory folder's transcripts/meetings."""
+    from . import recall
+
+    return recall.configured().transcripts_dir / MEETINGS_SUBDIR
+
+
+def _is_meeting(rel: str) -> bool:
+    return rel == MEETINGS or rel.startswith(MEETINGS + "/")
 
 
 class NotesPanel:
     """The Notes app's ``panel(body)``, over ``config()`` -> second_brain.VaultConfig (read per call)."""
 
-    def __init__(self, config: Callable[[], second_brain.VaultConfig] = second_brain.configured) -> None:
+    def __init__(self, config: Callable[[], second_brain.VaultConfig] = second_brain.configured,
+                 meetings: Callable[[], Path] = meetings_dir) -> None:
         self._config = config
+        self._meetings = meetings
+
+    def _meeting_root(self) -> Path | None:
+        try:
+            root = self._meetings()
+        except Exception:  # noqa: BLE001 — no memory folder: no meeting notes, the vault still shows
+            return None
+        return root if root.is_dir() else None
 
     def _root(self) -> Path | None:
         try:
@@ -88,16 +119,18 @@ class NotesPanel:
         sb = second_brain
         if action == "list":
             notes = sb.list_notes(root)
-            log.info("link notes: list → %d", len(notes))
-            return {"ok": True, "notes": notes, "folders": sb.note_folders(root)}
+            meetings = _meeting_list(self._meeting_root())
+            log.info("link notes: list → %d, %d meeting notes", len(notes), len(meetings))
+            return {"ok": True, "notes": notes + meetings, "folders": sb.note_folders(root)}
         if action == "search":
             query = " ".join(str(body.get("query") or "").split())[:MAX_QUERY_CHARS]
             if not query:
                 return {"ok": False, "line": "Type a word or two to search for."}
-            hits = sb.search(root, query, limit=30, include_archive=True)
+            hits = [{"path": h.path, "title": h.title, "snippet": h.snippet}
+                    for h in sb.search(root, query, limit=30, include_archive=True)]
+            hits += _meeting_search(self._meeting_root(), query, limit=max(0, 30 - len(hits)))
             log.info("link notes: search → %d", len(hits))
-            return {"ok": True, "hits": [{"path": h.path, "title": h.title, "snippet": h.snippet} for h in hits],
-                    "line": "" if hits else "No note has those words."}
+            return {"ok": True, "hits": hits, "line": "" if hits else "No note has those words."}
         if action == "create":
             text = str(body.get("body") or "")
             if len(text) > MAX_BODY_CHARS:
@@ -110,6 +143,10 @@ class NotesPanel:
         path = _short(body.get("path"), MAX_PATH_CHARS)
         if not path:
             return {"ok": False, "line": "Which note?"}
+        if _is_meeting(path):
+            if action != "read":
+                return {"ok": False, "line": READ_ONLY_LINE}
+            return _read_meeting(self._meeting_root(), path)
         if action == "read":
             return _read(root, path)
         if action == "move":
@@ -142,6 +179,78 @@ def _read(root: Path, rel: str) -> dict[str, Any]:
             "front": [f"{k}: {v}" for k, v in meta.items()], "revision": sb._revision(text),
             "modified": int(path.stat().st_mtime), "editable": not clipped and len(body) <= MAX_BODY_CHARS,
             "undo_id": sb._latest_edit(root, rel, text)}
+
+
+def _meeting_files(mroot: Path | None) -> list[Path]:
+    """Every meeting note, newest first: ``<date>/<file>.md``, no hidden or linked files."""
+    if mroot is None:
+        return []
+    files = [f for f in mroot.glob("*/*.md")
+             if f.is_file() and not f.is_symlink() and not f.name.startswith(".") and not f.parent.name.startswith(".")]
+    return sorted(files, key=lambda f: (-f.stat().st_mtime, f.name))[:MAX_MEETINGS]
+
+
+def _meeting_rel(mroot: Path, f: Path) -> str:
+    return f"{MEETINGS}/{f.relative_to(mroot).as_posix()}"
+
+
+def _meeting_list(mroot: Path | None) -> list[dict[str, Any]]:
+    sb = second_brain
+    out: list[dict[str, Any]] = []
+    for f in _meeting_files(mroot):
+        try:
+            text = f.read_text(encoding="utf-8", errors="replace")
+            modified = int(f.stat().st_mtime)
+        except OSError:
+            continue
+        _, body = sb.split_frontmatter(text)
+        title = sb.title_of(text, f.stem)
+        out.append({"path": _meeting_rel(mroot, f), "folder": MEETINGS, "title": title,
+                    "preview": sb._preview(body, title), "modified": modified})
+    return out
+
+
+def _meeting_path(mroot: Path | None, rel: str) -> Path:
+    """``meeting-notes/<date>/<file>.md`` to its file, refusing anything that leaves the meetings folder."""
+    parts = rel.split("/")
+    if mroot is None or len(parts) != 3 or parts[0] != MEETINGS or not parts[2].endswith(".md") \
+            or any(not p or p.startswith(".") or p in ("..",) or "\\" in p for p in parts[1:]):
+        raise ValueError("no such markdown note")
+    path = mroot / parts[1] / parts[2]
+    if path.is_symlink() or not path.is_file() or path.resolve().parent.parent != mroot.resolve():
+        raise ValueError("no such markdown note")
+    return path
+
+
+def _read_meeting(mroot: Path | None, rel: str) -> dict[str, Any]:
+    sb = second_brain
+    path = _meeting_path(mroot, rel)
+    text = path.read_text(encoding="utf-8", errors="replace")
+    meta, body = sb.split_frontmatter(text)
+    return {"ok": True, "path": rel, "title": sb.title_of(text, path.stem), "body": body[:MAX_READ_CHARS],
+            "front": [f"{k}: {v}" for k, v in meta.items()], "revision": sb._revision(text),
+            "modified": int(path.stat().st_mtime), "editable": False}
+
+
+def _meeting_search(mroot: Path | None, query: str, limit: int) -> list[dict[str, Any]]:
+    """Meeting notes holding every word of the query (case ignored), newest first, each with a snippet."""
+    words = query.lower().split()
+    hits: list[dict[str, Any]] = []
+    for f in _meeting_files(mroot):
+        if len(hits) >= limit:
+            break
+        try:
+            text = f.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        low = text.lower()
+        if not all(w in low for w in words):
+            continue
+        at = low.find(words[0])
+        snippet = " ".join(text[max(0, at - 60): at + 140].split())
+        hits.append({"path": _meeting_rel(mroot, f), "title": second_brain.title_of(text, f.stem),
+                     "snippet": snippet})
+    return hits
 
 
 def _short(value: Any, limit: int) -> str:

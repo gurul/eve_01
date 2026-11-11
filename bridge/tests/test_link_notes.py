@@ -26,8 +26,10 @@ def vault(tmp_path: Path) -> Path:
     return root
 
 
-def panel(root: Path, enabled: bool = True) -> link_notes.NotesPanel:
-    return link_notes.NotesPanel(lambda: second_brain.VaultConfig(enabled=enabled, root=root))
+def panel(root: Path, enabled: bool = True, meetings: Path | None = None) -> link_notes.NotesPanel:
+    # never the Mac's own memory folder: no meeting notes unless a test makes some
+    mroot = meetings if meetings is not None else root.parent / "no-meetings"
+    return link_notes.NotesPanel(lambda: second_brain.VaultConfig(enabled=enabled, root=root), meetings=lambda: mroot)
 
 
 def run(p: link_notes.NotesPanel, body: dict[str, Any]) -> dict[str, Any]:
@@ -193,3 +195,57 @@ def test_a_save_writes_unix_newlines(tmp_path: Path, body: str) -> None:
     note = second_brain.read_note(root, "03-projects/garden/beds.md")
     second_brain.write_note(root, "03-projects/garden/beds.md", note["revision"], body)
     assert (root / "03-projects" / "garden" / "beds.md").read_text(encoding="utf-8") == "a\nb\n"
+
+
+# ---- meeting notes: eve's own, from the memory folder, read only --------------------------------------------------
+
+def meetings(tmp_path: Path) -> Path:
+    mroot = tmp_path / "memory" / "transcripts" / "meetings"
+    (mroot / "2026-11-11").mkdir(parents=True)
+    (mroot / "2026-11-11" / "0130-thinking-about-ideas.md").write_text(
+        "---\nsource: phone\n---\n# Thinking about ideas\n\nA garden app for the balcony.\n", encoding="utf-8")
+    (tmp_path / "memory" / "secret.md").write_text("# Not a meeting\n", encoding="utf-8")
+    return mroot
+
+
+def test_meeting_notes_are_listed_in_their_own_folder(tmp_path: Path) -> None:
+    root, mroot = vault(tmp_path), meetings(tmp_path)
+    out = run(panel(root, meetings=mroot), {"action": "list"})
+    got = [n for n in out["notes"] if n["folder"] == link_notes.MEETINGS]
+    assert [(n["path"], n["title"]) for n in got] == [
+        ("meeting-notes/2026-11-11/0130-thinking-about-ideas.md", "Thinking about ideas")]
+    assert "balcony" in got[0]["preview"]
+    assert {n["path"] for n in out["notes"]} >= {"01-inbox/tea.md", "03-projects/garden/beds.md"}   # the vault too
+    assert run(panel(root), {"action": "list"})["notes"] and all(                # no memory folder: vault only
+        n["folder"] != link_notes.MEETINGS for n in run(panel(root), {"action": "list"})["notes"])
+
+
+def test_a_meeting_note_reads_and_is_never_changed_from_the_phone(tmp_path: Path) -> None:
+    root, mroot = vault(tmp_path), meetings(tmp_path)
+    p = panel(root, meetings=mroot)
+    path = "meeting-notes/2026-11-11/0130-thinking-about-ideas.md"
+    page = run(p, {"action": "read", "path": path})
+    assert page["ok"] and page["editable"] is False and page["title"] == "Thinking about ideas"
+    assert "balcony" in page["body"] and page["front"] == ["source: phone"]
+    before = (mroot / "2026-11-11" / "0130-thinking-about-ideas.md").read_text()
+    for action in ("save", "delete", "move", "undo"):
+        out = run(p, {"action": action, "path": path, "revision": page["revision"], "body": "x", "into": "01-inbox",
+                      "undo_id": "u"})
+        assert out == {"ok": False, "line": link_notes.READ_ONLY_LINE}
+    assert (mroot / "2026-11-11" / "0130-thinking-about-ideas.md").read_text() == before
+
+
+@pytest.mark.parametrize("bad", ["meeting-notes/../secret.md", "meeting-notes/2026-11-11/../../secret.md",
+                                 "meeting-notes/..", "meeting-notes/2026-11-11/nope.md", "meeting-notes/x.md",
+                                 "meeting-notes/.hidden/a.md"])
+def test_a_meeting_path_never_leaves_the_meetings_folder(tmp_path: Path, bad: str) -> None:
+    root, mroot = vault(tmp_path), meetings(tmp_path)
+    out = run(panel(root, meetings=mroot), {"action": "read", "path": bad})
+    assert out["ok"] is False and out["line"] == link_notes.NOT_A_NOTE
+
+
+def test_search_finds_meeting_notes_by_their_words(tmp_path: Path) -> None:
+    root, mroot = vault(tmp_path), meetings(tmp_path)
+    out = run(panel(root, meetings=mroot), {"action": "search", "query": "BALCONY"})
+    assert [h["path"] for h in out["hits"]] == ["meeting-notes/2026-11-11/0130-thinking-about-ideas.md"]
+    assert "balcony" in out["hits"][0]["snippet"].lower()
