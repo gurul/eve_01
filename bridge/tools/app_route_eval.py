@@ -2,8 +2,9 @@
 """Fit and score the app router (app_router.py): whether a request is for one of the owner's devices.
 
     .venv/bin/python tools/app_route_eval.py --fit        # live Jev once over app_tuning.json (cached), fit the gates
-    .venv/bin/python tools/app_route_eval.py --holdout    # live Jev ONCE over the blind app_holdout.json
-    .venv/bin/python tools/app_route_eval.py --report     # the bar again from the kept holdout answers, no network
+    .venv/bin/python tools/app_route_eval.py --holdout    # round 1: live Jev ONCE over the blind app_holdout.json
+    .venv/bin/python tools/app_route_eval.py --holdout2   # round 2: live Jev ONCE over the blind app_holdout2.json
+    .venv/bin/python tools/app_route_eval.py --report     # the bar again from the kept answers, no network
 
 The house recipe (tools/toolset_eval.py): fit on the tuning set only, then score ONCE on a holdout written blind by
 another writer, against a bar written before any result existed (app_router's docstring and docs/app-router.md hold
@@ -25,9 +26,19 @@ docstring is the rule) and writes app_gates.json beside the module, which app_ro
 app_holdout_answers.json and the verdict in app_holdout_result.json, and REFUSES to run again once the result file
 exists. A Jev answer slower than app_router.TIMEOUT_S claims nothing, as it would in a turn.
 
---report: recomputes the bar from the kept answers with the gates the holdout was scored with (a gates file that
-changed since then fails the report: that is a refit after the holdout). Prints each bar line with its measured
-value, then APP_ROUTER_BAR_OK when lines 1-4 all hold, else APP_ROUTER_BAR_FAILED and exit 1.
+--holdout2 (round 2): the same, once, over app_holdout2.json (answers in app_holdout2_answers.json, the verdict in
+app_holdout2_result.json), scored with the LIVE path's whole decision: app_router.mac_app_only first, then the gates
+as a turn loads them (app_router.load_gates: the fitted gates, never looser than app_router.FLOOR). The installed
+apps mac_app_only reads are a fixed list here (MAC_APPS), so the score does not depend on the host; the list, the
+floor, the fitted gates and the gates used are all recorded in the result. Round 1 was scored before the floor and
+before mac_app_only existed; its files are never rewritten.
+
+--report: recomputes the bar from the kept answers of the LATEST scored round, with the gates (and, for round 2,
+the app list) that round was scored with, and prints each bar line with its measured value, then
+APP_ROUTER_BAR_OK when lines 1-4 all hold, else APP_ROUTER_BAR_FAILED and exit 1. Once round 2 is scored, round 1
+is printed above it as history, marked as seen data. A gates file that changed since a round was scored fails the
+report for that round (a refit after the holdout). The floor is not a change of that file: it is a code rule
+applied at load, and a round scored after it records it, so a floor that moved since then fails the report too.
 
 The request TEXT (synthetic, from the datasets) leaves the Mac to Jev on EVE_JEV_ROUTE.
 """
@@ -40,6 +51,7 @@ import json
 import statistics
 import sys
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Optional, Sequence
 
@@ -50,6 +62,27 @@ from eve_bridge import app_router as ar  # noqa: E402
 ROUTES = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "routes"
 TUNING, HOLDOUT = "app_tuning.json", "app_holdout.json"
 TUNING_ANSWERS, HOLDOUT_ANSWERS, RESULT = "app_tuning_answers.json", "app_holdout_answers.json", "app_holdout_result.json"
+HOLDOUT2, HOLDOUT2_ANSWERS, RESULT2 = "app_holdout2.json", "app_holdout2_answers.json", "app_holdout2_result.json"
+# The installed apps round 2 hands to app_router.mac_app_only: common Mac app names, fixed here so the score is the
+# same on every host (a turn reads the Mac's real list). Recorded in the result file.
+MAC_APPS: tuple[str, ...] = (
+    "Spotify", "Slack", "Safari", "Google Chrome", "Notes", "Mail", "Calendar", "Zoom", "Photo Booth", "Calculator",
+    "Finder", "System Settings", "Messages", "Preview", "TV", "Music", "Home")
+
+
+@dataclass(frozen=True)
+class Round:
+    """One blind round: its three files, and whether it is scored with the live path's whole decision (mac_app_only
+    with MAC_APPS, then the floored gates) or, as round 1 was, with the fitted gates alone."""
+    n: int
+    holdout: str
+    answers: str
+    result: str
+    live: bool
+
+
+ROUND1 = Round(1, HOLDOUT, HOLDOUT_ANSWERS, RESULT, live=False)
+ROUND2 = Round(2, HOLDOUT2, HOLDOUT2_ANSWERS, RESULT2, live=True)
 
 TRUTHS = (*ar.KEYS, ar.MAC, "none")
 # PRE-REGISTERED BAR (the orchestrator, 2026-11-11, before any tuning or holdout result existed).
@@ -146,10 +179,14 @@ def latency(answers: Sequence[ar.AppAnswer]) -> tuple[float, float]:
     return (statistics.median(ms), ms[int(0.95 * (len(ms) - 1))]) if ms else (0.0, float("inf"))
 
 
-def score(data: list[dict[str, Any]], answers: Sequence[ar.AppAnswer], gates: dict[str, ar.Gate]) -> dict[str, Any]:
-    """Every number the bar and the report read, from the answers and the gates alone."""
+def score(data: list[dict[str, Any]], answers: Sequence[ar.AppAnswer], gates: dict[str, ar.Gate],
+          mac_apps: Optional[Sequence[str]] = None) -> dict[str, Any]:
+    """Every number the bar and the report read, from the answers and the gates alone. With ``mac_apps`` (round 2)
+    it is the turn's whole decision: a case app_router.mac_app_only answers is no claim, whatever Jev said (in a
+    turn Jev is not asked for it at all)."""
     budget = ar.TIMEOUT_S * 1000.0
-    routes = [ar.decide(a, gates, budget) for a in answers]
+    ruled = [mac_apps is not None and ar.mac_app_only(str(c["text"]), mac_apps) for c in data]
+    routes = [ar.NO_CLAIM if r else ar.decide(a, gates, budget) for a, r in zip(answers, ruled, strict=True)]
     truth = [str(c["app"]) for c in data]
     device = [i for i, t in enumerate(truth) if t in ar.KEYS]
     mac = [i for i, t in enumerate(truth) if t == ar.MAC]
@@ -183,6 +220,9 @@ def score(data: list[dict[str, Any]], answers: Sequence[ar.AppAnswer], gates: di
         "missed": [data[i]["id"] for i in device if i not in right],
     }
     out["mac_rate"], out["none_rate"] = rate(out["mac_claimed"], mac), rate(out["none_claimed"], none)
+    if mac_apps is not None:
+        # the cases the code rule answered before the gates, by truth: a device case here is a claim the rule cost
+        out["mac_rule"] = {t: [data[i]["id"] for i, r in enumerate(ruled) if r and truth[i] == t] for t in TRUTHS}
     return out
 
 
@@ -231,6 +271,10 @@ def print_reported(s: dict[str, Any]) -> None:
                       ("device cases not named", s["missed"])):
         if ids:
             print(f"      {name}: {', '.join(ids)}")
+    if "mac_rule" in s:
+        fired = {t: ids for t, ids in s["mac_rule"].items() if ids}
+        print("      mac_app_only answered before the gates: "
+              + (", ".join(f"{t} {len(ids)}" for t, ids in fired.items()) if fired else "no case"))
 
 
 def gates_json(gates: dict[str, ar.Gate]) -> dict[str, dict[str, float]]:
@@ -268,62 +312,130 @@ def fit_main(predict: Optional[Callable[..., Any]] = None, data_dir: Path = ROUT
     return gates
 
 
-def holdout_main(predict: Optional[Callable[..., Any]] = None, data_dir: Path = ROUTES,
-                 gates_path: Path = ar.GATES_FILE) -> bool:
-    result = data_dir / RESULT
-    if result.exists():
-        raise SystemExit(f"the holdout was already scored ({result.name} exists); it is scored once. Use --report.")
+def _fitted_or_stop(gates_path: Path) -> None:
     fitted = json.loads(gates_path.read_text(encoding="utf-8")) if gates_path.exists() else {}
     if not fitted.get("fitted"):
         raise SystemExit("fit the gates first (--fit): app_gates.json still holds the starting values")
     if fitted.get("questions") != ar.fingerprint(ar.live(ar.ALL_TOOLS)):
         raise SystemExit("the questions changed since the gates were fitted: run --fit again before the holdout")
-    gates = ar.load_gates(gates_path)
-    data = cases(data_dir / HOLDOUT)
-    print(f"app router / holdout {HOLDOUT}: {len(data)} cases, gates from {gates_path.name} (never refitted here)")
-    answers = answers_for(data, data_dir / HOLDOUT_ANSWERS, predict, once=True)
-    s = score(data, answers, gates)
-    b = bar(s)
-    result.write_text(json.dumps({
-        "scored": time.strftime("%Y-%m-%d %H:%M"),
-        "holdout_sha256": hashlib.sha256((data_dir / HOLDOUT).read_bytes()).hexdigest(),
-        "questions": ar.fingerprint(ar.live(ar.ALL_TOOLS)), "gates": gates_json(gates), "bar": b,
-        "score": s}, indent=1) + "\n", encoding="utf-8")
+
+
+def _floor_json() -> dict[str, float]:
+    return {"noul": ar.FLOOR.noul, "choice": ar.FLOOR.choice, "lead": ar.FLOOR.lead}
+
+
+def holdout_main(predict: Optional[Callable[..., Any]] = None, data_dir: Path = ROUTES,
+                 gates_path: Path = ar.GATES_FILE, rnd: Round = ROUND1) -> bool:
+    """Score one round, once. Round 1: the fitted gates alone, as it was scored on 2026-11-11 (before the floor).
+    Round 2: the live path's whole decision, with everything it was decided by recorded in the result."""
+    result = data_dir / rnd.result
+    if result.exists():
+        raise SystemExit(f"round {rnd.n}'s holdout was already scored ({result.name} exists); it is scored once. "
+                         "Use --report.")
+    _fitted_or_stop(gates_path)
+    fitted = ar.fitted_gates(gates_path)
+    gates = ar.load_gates(gates_path) if rnd.live else fitted
+    apps = MAC_APPS if rnd.live else None
+    data = cases(data_dir / rnd.holdout)
+    print(f"app router / round {rnd.n} holdout {rnd.holdout}: {len(data)} cases, gates from {gates_path.name} "
+          "(never refitted here)" + (f", floored at {_floor_json()}; mac_app_only with {len(MAC_APPS)} fixed app "
+                                     "names" if rnd.live else ""))
+    answers = answers_for(data, data_dir / rnd.answers, predict, once=True)
+    s = score(data, answers, gates, apps)
+    kept: dict[str, Any] = {
+        "round": rnd.n, "scored": time.strftime("%Y-%m-%d %H:%M"),
+        "holdout_sha256": hashlib.sha256((data_dir / rnd.holdout).read_bytes()).hexdigest(),
+        "questions": ar.fingerprint(ar.live(ar.ALL_TOOLS)), "gates": gates_json(gates)}
+    if rnd.live:
+        kept.update({
+            "decision": "the live path: app_router.mac_app_only with mac_apps, then app_router.decide with gates "
+                        "(the fitted gates, each claim gate raised to the floor; can as fitted)",
+            "fitted": gates_json(fitted), "floor": _floor_json(), "mac_apps": list(MAC_APPS)})
+    else:
+        del kept["round"]                       # round 1's file, as it was written on 2026-11-11
+    kept.update({"bar": bar(s), "score": s})
+    result.write_text(json.dumps(kept, indent=1) + "\n", encoding="utf-8")
     print(f"   wrote {result.name}")
     return report_main(data_dir, gates_path)
 
 
-def report_main(data_dir: Path = ROUTES, gates_path: Path = ar.GATES_FILE) -> bool:
-    """The bar from the kept holdout answers: no network. True when lines 1-4 all hold."""
-    result, kept = data_dir / RESULT, data_dir / HOLDOUT_ANSWERS
+def _recomputed(rnd: Round, data_dir: Path, gates_path: Path) -> Optional[tuple[Optional[dict[str, Any]], list[str],
+                                                                                dict[str, Any]]]:
+    """One scored round again from its kept answers: (the score, or None when the answers do not cover the cases;
+    what no longer matches the scoring; the result file). None when the round has not been scored."""
+    result, kept = data_dir / rnd.result, data_dir / rnd.answers
     if not result.exists() or not kept.exists():
-        print(f"app router / report: the holdout has not been scored ({RESULT} or {HOLDOUT_ANSWERS} is missing)")
-        print(FAILED)
-        return False
+        return None
     was = json.loads(result.read_text(encoding="utf-8"))
-    data = cases(data_dir / HOLDOUT)
+    data = cases(data_dir / rnd.holdout)
     problems = []
-    if hashlib.sha256((data_dir / HOLDOUT).read_bytes()).hexdigest() != was.get("holdout_sha256"):
-        problems.append(f"{HOLDOUT} is not the file that was scored")
-    if gates_json(ar.load_gates(gates_path)) != was.get("gates"):
+    if hashlib.sha256((data_dir / rnd.holdout).read_bytes()).hexdigest() != was.get("holdout_sha256"):
+        problems.append(f"{rnd.holdout} is not the file that was scored")
+    if rnd.live:
+        # the floor is a code rule applied at load and this round recorded it: both it and the file must still match
+        if gates_json(ar.fitted_gates(gates_path)) != was.get("fitted"):
+            problems.append(f"{gates_path.name} is not the fitted gates round {rnd.n} was scored with (a refit "
+                            "after the holdout)")
+        if _floor_json() != was.get("floor"):
+            problems.append(f"app_router.FLOOR is not the floor round {rnd.n} was scored with (a rule changed "
+                            "after the holdout)")
+        if gates_json(ar.load_gates(gates_path)) != was.get("gates"):
+            problems.append(f"the gates a turn loads are not the gates round {rnd.n} was scored with")
+    elif gates_json(ar.fitted_gates(gates_path)) != was.get("gates"):
+        # round 1 was scored with the file's gates as fitted, before the floor: the floor is not a change of the file
         problems.append(f"{gates_path.name} is not the gates the holdout was scored with (a refit after the holdout)")
     rows = json.loads(kept.read_text(encoding="utf-8")).get("answers") or {}
     if any(c["id"] not in rows or rows[c["id"]].get("case") != case_hash(c) for c in data):
-        problems.append(f"{HOLDOUT_ANSWERS} does not cover the holdout's cases")
-        print(f"app router / report: {'; '.join(problems)}")
-        print(FAILED)
-        return False
+        problems.append(f"{rnd.answers} does not cover the holdout's cases")
+        return None, problems, was
     gates = {k: ar.Gate(**v) for k, v in was["gates"].items()}
     answers = [ar.AppAnswer.from_json(rows[c["id"]]["answer"]) for c in data]
-    s = score(data, answers, gates)
-    print(f"app router / report on {HOLDOUT}: {s['n']} cases ({s['device']} device, {s['mac']} Mac, {s['none']} "
+    return score(data, answers, gates, was.get("mac_apps") if rnd.live else None), problems, was
+
+
+def _print_round(rnd: Round, s: dict[str, Any], was: dict[str, Any], head: str) -> dict[str, bool]:
+    print(f"app router / {head} on {rnd.holdout}: {s['n']} cases ({s['device']} device, {s['mac']} Mac, {s['none']} "
           f"neither), scored {was.get('scored')}, no Jev calls")
+    if rnd.live:
+        print(f"   the live path: mac_app_only with {len(was.get('mac_apps') or ())} fixed app names, then the "
+              f"fitted gates floored at {was.get('floor')}")
     b = print_bar(s)
     print_reported(s)
+    return b
+
+
+def report_main(data_dir: Path = ROUTES, gates_path: Path = ar.GATES_FILE) -> bool:
+    """The bar from the kept answers of the latest scored round: no network. True when lines 1-4 all hold for it.
+    With round 2 scored, round 1 is printed first as history (seen data): it does not decide."""
+    one, two = _recomputed(ROUND1, data_dir, gates_path), _recomputed(ROUND2, data_dir, gates_path)
+    if one is None and two is None:
+        print(f"app router / report: the holdout has not been scored ({RESULT} or {HOLDOUT_ANSWERS} is missing)")
+        print(FAILED)
+        return False
+    if two is not None and one is not None:
+        s1, problems1, was1 = one
+        if s1 is None:
+            print(f"app router / history, round 1: {'; '.join(problems1)}")
+        else:
+            _print_round(ROUND1, s1, was1, "history, round 1 (SEEN DATA: read after it was scored, and the floor, "
+                                           "the guard and the Mac rule were changed on it; it decides nothing)")
+            for p in problems1:
+                print(f"   NOTE: {p}")
+        print()
+    rnd, (s, problems, was) = (ROUND2, two) if two is not None else (ROUND1, one)  # type: ignore[misc]
+    if s is None:
+        print(f"app router / report, round {rnd.n}: {'; '.join(problems)}")
+        print(FAILED)
+        return False
+    b = _print_round(rnd, s, was, f"report, round {rnd.n}")
     for p in problems:
         print(f"   PROBLEM: {p}")
+    if not rnd.live and gates_json(ar.load_gates(gates_path)) != was.get("gates"):
+        print(f"   NOTE: this is round 1, scored with the gates as fitted. A turn now loads them floored at "
+              f"{_floor_json()} (a code rule, not a refit of {gates_path.name}), so these numbers are not the live "
+              f"rule's. Round 2 (--holdout2) scores the live rule.")
     ok = b["shipped"] and not problems
-    print(f"   app_router.SHIPPED is {ar.SHIPPED}; the bar says {b['shipped']}")
+    print(f"   app_router.SHIPPED is {ar.SHIPPED}; round {rnd.n}'s bar (lines 1-4) says {b['shipped']}")
     print(OK if ok else FAILED)
     return ok
 
@@ -332,13 +444,18 @@ def main(argv: Optional[list[str]] = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     g = p.add_mutually_exclusive_group(required=True)
     g.add_argument("--fit", action="store_true", help="fit the gates on app_tuning.json")
-    g.add_argument("--holdout", action="store_true", help="score once on the blind app_holdout.json")
-    g.add_argument("--report", action="store_true", help="the bar from the kept holdout answers, no network")
+    g.add_argument("--holdout", action="store_true", help="round 1: score once on the blind app_holdout.json")
+    g.add_argument("--holdout2", action="store_true",
+                   help="round 2: score once on the blind app_holdout2.json, with the live path's whole decision")
+    g.add_argument("--report", action="store_true",
+                   help="the bar for the latest scored round from its kept answers, no network")
     args = p.parse_args(argv)
     if args.fit:
         fit_main()
         return 0
-    return 0 if (holdout_main() if args.holdout else report_main()) else 1
+    if args.holdout or args.holdout2:
+        return 0 if holdout_main(rnd=ROUND2 if args.holdout2 else ROUND1) else 1
+    return 0 if report_main() else 1
 
 
 if __name__ == "__main__":

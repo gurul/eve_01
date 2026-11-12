@@ -9,9 +9,11 @@ and a device's tools ride every turn.
 What this decides, before the chat model runs: is the request for one of the devices eve drives (the TV, the lights,
 the music, the camera), which of that device's methods it asks for, and whether the device can do it. A claim never
 changes the cached prefix (the tool list and the instruction blocks stay byte for byte): telegram._think adds one
-line to the turn's developer note (``note_line``) and, while the claim stands, refuses a start_task call with a
-reason that names the device's own tools (``refusal``), so the model gets another round and either uses them or
-tells the owner in one line that the device can't do it.
+line to the turn's developer note (``note_line``) and refuses a start_task call ONCE, with a reason (``refusal``),
+so the model gets another round and either uses the device's own tools or tells the owner in one line that the
+device can't do it. The guard is a nudge, not a wall: it refuses at most one call a turn, and it lifts as soon as
+one of the claimed device's own tools has run ("turn off the lights and open the spreadsheet" gets both), when the
+owner types more into the turn, or when they withdraw a gated question with new words.
 
 One Jev request carries both layers (docs.typesafe.ai's function-calling pattern: every question in one request,
 the tree lives in code and reads only the chosen branch). It is its OWN call, beside the toolset router's and the
@@ -34,8 +36,9 @@ grade router's: a question added to either would change the call their gates wer
 
 Which devices are asked about is read from the tools the turn offers (``live``): a Mac without a TV sends no
 question about one. The camera is live when its own tools are offered or when take_photo is (the Mac's camera).
-Every question is in the owner's words for things and names no tool, model or app the answer could land on (the
-owner's rule: a name in a prompt is an option the model may fill a slot with).
+Every question is in the owner's words for things and names none of eve's tools, no model and no device's brand
+name (the owner's rule: a name in a prompt is an option the model may fill a slot with). One app is named, a right
+name: the TV's method words say "search YouTube on it", the one app its search works in.
 
 Fitting (tools/app_route_eval.py, the house recipe of tools/toolset_eval.py): live Jev runs once over the tuning
 set (app_tuning.json; answers cached by case id and by a hash of the questions) and ``fit`` picks, per device, the
@@ -43,6 +46,11 @@ gates that claim NO tuning case of another truth (a Mac case, a "neither" case, 
 many of the device's own cases as that allows; between the strictest such gates and the loosest each gate could go
 alone, it takes the halfway point rounded to the strict side. Then live Jev runs ONCE over the blind holdout
 (app_holdout.json) against the bar below. Nothing is refitted after the holdout.
+
+After round 1 (2026-11-11, a review of this branch): a floor under the fitted gates (``FLOOR``, applied by
+``load_gates``), the nudge-once guard, three rules in ``mac_app_only`` and new wording for a request the device
+can't do. Round 1's sets are seen data now, so SHIPPED is False until a second blind round is scored with all of
+that in place (tools/app_route_eval.py --holdout2); docs/app-router.md, "Round 2".
 
 PRE-REGISTERED BAR (written 2026-11-11 by the orchestrator, before any tuning or holdout result existed), verbatim:
   Router level, scored ONCE on the blind holdout (writer B, 120 cases, never seen by the builder), gates fitted on
@@ -85,10 +93,12 @@ LEAD_GRID = (-1.0,) + tuple(round(0.1 * i, 1) for i in range(-5, 10))     # -1.0
 # Beside this module and in package-data, so an installed eve carries it (grade_gate.json's lesson: under
 # tests/fixtures a wheel had no file and fell back without a word). tools/app_route_eval.py --fit writes it.
 GATES_FILE = Path(__file__).resolve().parent / "app_gates.json"
-# True since the blind holdout was scored once against the bar above, 2026-11-11 (tools/app_route_eval.py --report
-# prints APP_ROUTER_BAR_OK): 80/80 device cases named, 0/24 Mac and 0/16 neither cases claimed, Jev p95 418 ms; the
-# end-to-end lines held too (docs/evals/app-router-2026-11-11/VERDICT.md). The verdict is in docs/app-router.md.
-SHIPPED = True
+# Round 2 decides it; the orchestrator flips it. Round 1 (2026-11-11) held every line of the bar (80/80 device cases
+# named, 0/24 Mac and 0/16 neither cases claimed, Jev p95 418 ms), but the gate floor, the nudge-once guard, the
+# mac_app_only rules and the can't wording were all changed after it, on its data. A rule changed on seen data has
+# no blind verdict, so this is False again until tools/app_route_eval.py --holdout2 and the end-to-end arms are
+# scored on sets nobody here has read (docs/app-router.md, "Round 2").
+SHIPPED = False
 
 MAC, OTHER = "mac", "other"            # the Choice's two options that claim nothing
 START_TASK = "start_task"              # the one call a claim refuses (telegram._think)
@@ -374,6 +384,14 @@ class Gate:
 # Used only until app_gates.json is fitted (tools/app_route_eval.py --fit): Jev's own documented starting point for
 # a yes (0.7), the Choice better than even, the device's Noul not behind the Mac's.
 DEFAULT_GATE = Gate(noul=0.7, choice=0.5, lead=0.0, can=0.5)
+# A claim's gates are never looser than this, whatever app_gates.json says (``floored``, applied by ``load_gates``):
+# the device's own Noul at least even, the Choice at least even, the device's Noul not behind the Mac's. DEFAULT_GATE's
+# choice and lead, and an even Noul. ``can`` has no floor: it is read after the claim and is left as fitted.
+# Why: on the tuning set the Choice never picked the lights, the music or the camera for a Mac or a "neither" case,
+# so nothing held their fitted gates up and each landed "halfway to the grid floor" (music: Noul 0.15, Choice 0.35,
+# lead -0.5). Gates that low are the Choice alone deciding, and this module's own lesson is that a relative Choice is
+# not a gate. The fit found no negative; that is not evidence that there is none.
+FLOOR = Gate(noul=0.5, choice=0.5, lead=0.0, can=0.0)
 
 
 @dataclass(frozen=True)
@@ -455,27 +473,33 @@ def owned(route: AppRoute, offered: Iterable[str]) -> tuple[str, ...]:
 def note_line(route: AppRoute, offered: Iterable[str]) -> str:
     """The line a claim adds to the turn's developer note, or "": which device the request is for, the tools that
     are that device's this turn, the method read as a hint, and, when it reads as something the device can't do,
-    that the answer is one line saying so. Built by code from the claim; positive wording only."""
+    that the answer is one line saying so (with no invitation to call a tool just to check). Built by code from
+    the claim; positive wording only."""
     t = thing(route.app)
     tools = owned(route, offered)
     if t is None or not tools:
         return ""
     head = f"This request is for {t.name}. Its tools this turn: {', '.join(tools)}."
     if not route.can:
-        return (f"{head} It reads as something {t.name} can't do: check it against what those tools take, and when "
-                f"it can't be done with them, tell the owner so in one line.")
+        return (f"{head} It reads as something {t.name} can't do. If that is so, tell the owner in one line that "
+                f"{t.name} can't do it.")
     m = next((m for m in t.methods if m.key == route.method and m.tool in tools), None)
     hint = f" It reads as a request to {m.words} ({m.tool})." if m is not None else ""
     return f"{head}{hint} Use them now; when they can't do what was asked, tell the owner so in one line."
 
 
 def refusal(route: AppRoute, offered: Iterable[str]) -> str:
-    """Why a start_task call is refused while a device is claimed, or "" when nothing is: it names the tools that
-    are that device's, and says what to do when they can't do it. Never repeats a wrong name."""
+    """Why a start_task call is refused while a device is claimed, or "" when nothing is. It branches as
+    ``note_line`` does. When the device can do it: the tools that are that device's, and what to do when they can't
+    do it. When it reads as something the device can't do: only that, and to tell the owner so in one line; no
+    tool is named, so nothing invites a call on a device judged unable. Never repeats a wrong name."""
     t = thing(route.app)
     tools = owned(route, offered)
     if t is None or not tools:
         return ""
+    if not route.can:
+        return (f"not started: this request is for {t.name}, and it reads as something {t.name} can't do. Tell the "
+                f"owner so in one line.")
     return (f"not started: this request is for {t.name}, which you work with {', '.join(tools)}. Use one of those "
             f"this turn; when they can't do what the owner asked, tell the owner so in one line.")
 
@@ -575,14 +599,29 @@ def fit(answers: Sequence[AppAnswer], truths: Sequence[str], cans: Sequence[Opti
     return gates, seen
 
 
-def load_gates(path: Path = GATES_FILE) -> dict[str, Gate]:
-    """app_gates.json's gates; DEFAULT_GATE for every device when the file is missing or unreadable."""
+def fitted_gates(path: Path = GATES_FILE) -> dict[str, Gate]:
+    """app_gates.json's gates exactly as the fit wrote them (history: the turn never reads these, ``load_gates``
+    does); DEFAULT_GATE for every device when the file is missing or unreadable."""
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))["gates"]
         return {key: Gate(float(raw[key]["noul"]), float(raw[key]["choice"]), float(raw[key]["lead"]),
                           float(raw[key]["can"])) for key in KEYS}
     except Exception:  # noqa: BLE001
         return dict.fromkeys(KEYS, DEFAULT_GATE)
+
+
+def floored(gates: Mapping[str, Gate]) -> dict[str, Gate]:
+    """``gates`` with each claim gate (noul, choice, lead) raised to FLOOR's where the fit left it looser; ``can``
+    as fitted. A gate already at or over the floor is unchanged, so the floor can only remove claims."""
+    return {key: Gate(max(g.noul, FLOOR.noul), max(g.choice, FLOOR.choice), max(g.lead, FLOOR.lead), g.can)
+            for key, g in gates.items()}
+
+
+def load_gates(path: Path = GATES_FILE) -> dict[str, Gate]:
+    """The gates a turn is decided with: app_gates.json's, never looser than FLOOR (the max per claim field, in
+    code, whatever the file says). The file keeps what the fit wrote. DEFAULT_GATE for every device when the file
+    is missing or unreadable."""
+    return floored(fitted_gates(path))
 
 
 GATES: dict[str, Gate] = load_gates()          # read once, at import: the file changes only on a refit
@@ -636,18 +675,29 @@ def make_router(environ: Optional[Mapping[str, str]] = None) -> Optional[Router]
         return cached
 
 
+# Installed apps whose name is itself a word for one of the devices or for the home (on a Mac: TV, Music, Home).
+# "open the tv" or "start the music" may be the device, so mac_app_only does not answer for them: Jev is asked.
+DEVICE_WORD_APPS = frozenset({"tv", "music", "home"})
+
+
 def mac_app_only(text: str, apps: Optional[Iterable[str]] = None) -> bool:
-    """True when the message is nothing but opening or quitting an app installed on this Mac ("open Spotify",
-    "quit Slack"): the Mac's own rule for those (task_router) reads the words exactly, so code answers before Jev
-    is asked and no device claims it. Jev reads a bare "open Spotify" as the TV's (seen live 2026-11-11, after the
-    holdout); a message that names where ("open Spotify on the tv") is not only an app's name and is still asked.
+    """True when the message is NOTHING BUT opening or quitting an app installed on this Mac ("open Spotify",
+    "quit Slack"): code answers before Jev is asked and no device claims it. Jev reads a bare "open Spotify" as the
+    TV's (seen live 2026-11-11, after the holdout). Three rules:
+
+    1. Nothing but: a launch with anything after it ("open Spotify and play something") is not one, and neither is
+       a message that names where ("open Spotify on the tv"). Those are asked.
+    2. The wording is the planner's: task_router.bare_launch_or_quit is ``classify``'s own verdict, so the polite and
+       spoken lead-ins it knows count too ("can you open Spotify", "okay, open Spotify.", "could you quit Slack?").
+    3. Not for an app whose name is a word for a device or the home (DEVICE_WORD_APPS): "open the tv" is asked.
+
     ``apps`` is the installed apps (task_router.installed_apps() when None, read once a process)."""
     from . import task_router
 
     try:
         names = task_router.installed_apps() if apps is None else tuple(apps)
-        said = (text or "").strip()
-        return bool(task_router._launch(said, names) or task_router._quit(said.rstrip("?").strip(), names))
+        app = task_router.bare_launch_or_quit(text or "", names)
+        return bool(app) and app.casefold() not in DEVICE_WORD_APPS
     except Exception:  # noqa: BLE001 — a rule that fails decides nothing: Jev is asked as before
         return False
 

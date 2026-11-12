@@ -5714,6 +5714,8 @@ class TelegramInlet:
                 claiming = asyncio.ensure_future(asyncio.to_thread(
                     app_router.route_turn, self._turn_said, self._previous_said(), self._app_route, device_tools,
                     None, app_router.TIMEOUT_S))
+                # its exception is always retrieved, also when this turn fails before it is awaited
+                claiming.add_done_callback(lambda f: f.cancelled() or f.exception())
         # The direct apps this turn starts with: the ones its words name, or the rundown's (apps_mcp.APP_WORDS).
         up = set(self._direct.apps) if self._direct is not None and getattr(self._direct, "started", False) else set()
         self._lent = set()
@@ -5757,24 +5759,36 @@ class TelegramInlet:
         # A claim rides the turn's developer note (one line, after the history: the tool list and the instruction
         # blocks stay byte for byte, so the cached prefix holds) and arms the start_task guard below. No claim, an
         # error or a timeout: ``claim_reason`` is "" and nothing of this turn's request changes.
-        claim, claim_reason = app_router.NO_CLAIM, ""
+        # ``claim_reason`` is the guard (the refusal's text while it stands, "" once it is spent or dropped);
+        # ``claim_tools`` are the claimed device's own tools while the claim stands; ``base_note`` is the note
+        # without the claim's line, put back when the claim is dropped.
+        claim, claim_reason, claim_tools, base_note = app_router.NO_CLAIM, "", (), note
         if claiming is not None:
-            claim = await claiming
+            try:
+                # route_turn bounds Jev itself; this bounds the thread's own start (a full executor) as well
+                claim = await asyncio.wait_for(claiming, app_router.TIMEOUT_S + 0.2)
+            except Exception as e:  # noqa: BLE001 — an error or a timeout is no claim: the turn as it was
+                log.info("telegram: app router: no answer (%s)", type(e).__name__)
+                claim = app_router.NO_CLAIM
             log.info("telegram: app router: %s", claim.log_line())      # names and numbers, never the message
             line = app_router.note_line(claim, device_tools)
             claim_reason = app_router.refusal(claim, device_tools) if line else ""
             if claim_reason:
                 self._app_claim = claim
+                claim_tools = app_router.owned(claim, device_tools)
                 note += "\n\n" + line
         text = ""
         said_on_call = False
         for round_no in range(1, MAX_TOOL_ROUNDS + 1):
             if self._steering is not None:
                 folded = self._steer_into(items, round_no)
-                if folded is not items:
+                if folded is not items and claim_tools:
                     # the owner typed more into this turn (EVE_CHAT_STEER): the claim was read from the first
-                    # message alone, so its guard no longer stands for what the turn now asks
-                    claim_reason = ""
+                    # message alone, so it no longer stands for what the turn now asks. The guard goes, the note
+                    # is the one before the claim's line (which would sit right before the new words), and the
+                    # turn reports no claim.
+                    claim_reason, claim_tools, note = "", (), base_note
+                    self._app_claim = app_router.NO_CLAIM
                 items = folded
             payload = request(self.config, items, context=note, app_block=app_block, **parts)
             if round_no == 1:
@@ -5810,10 +5824,12 @@ class TelegramInlet:
             if not calls:
                 return text, round_no
             log.info("telegram: round %d: %s", round_no, call_names(calls))
+            # the one start_task call the claim's guard is about to refuse (the round's first; a second goes through)
+            nudged = next((c for c in calls if c["name"] == app_router.START_TASK), None) if claim_reason else None
             if (call_say is not None and not text.strip() and not said_on_call
                     and any(c["name"] in {"start_task", "opentable_search"} for c in calls
-                            # a start_task the claim's guard is about to refuse starts nothing: no "On it."
-                            if not (claim_reason and c["name"] == app_router.START_TASK))):
+                            # a start_task the guard is about to refuse starts nothing: no "On it."
+                            if c is not nudged)):
                 # a long job gets a short "On it."; a lookup says nothing until it has the answer (owner,
                 # 2026-10-04, of "One sec, checking.": "i dont need one sec checking", "its annoying")
                 said_on_call = True
@@ -5839,16 +5855,27 @@ class TelegramInlet:
                     result = {"ok": False, "reason": MAIL_SEND_REASON}
                 elif call["name"] == app_router.START_TASK and claim_reason:
                     # The request is for one of the owner's devices (app_router.py): the Mac agent is not started
-                    # for it, in any round of this turn. The reason names the device's own tools, so the next
-                    # round uses them or tells the owner in one line that the device can't do it.
+                    # for it, ONCE. The guard is a nudge, not a wall: the reason sends the next round to the
+                    # device's own tools or to one line for the owner, and a second start_task call in this turn
+                    # goes through (the model has read the claim twice and still means the Mac).
                     self._app_refused += 1
                     log.info("telegram: start_task refused: the request is for a device (%s)", claim.app)
-                    result = {"ok": False, "reason": claim_reason}
-                elif tool_gate.needs_confirmation(call["name"], call["args"], self._taint):
-                    # Only consequential native calls ask; delegated tools own their final action's approval.
-                    result = await self._gated_tool(call["name"], call["args"], chat_id)
+                    result, claim_reason = {"ok": False, "reason": claim_reason}, ""
                 else:
-                    result = await self._tool(call["name"], call["args"], chat_id)
+                    if tool_gate.needs_confirmation(call["name"], call["args"], self._taint):
+                        # Only consequential native calls ask; delegated tools own their final action's approval.
+                        result = await self._gated_tool(call["name"], call["args"], chat_id)
+                    else:
+                        result = await self._tool(call["name"], call["args"], chat_id)
+                    if claim_tools and tool_gate.was_withdrawn(result):
+                        # the owner withdrew a gated question with new words (EVE_GATE_WITHDRAW): as a steered
+                        # message, they are words the claim never read. Guard, note line and claim all go.
+                        claim_reason, claim_tools, note = "", (), base_note
+                        self._app_claim = app_router.NO_CLAIM
+                    elif call["name"] in claim_tools:
+                        # the claimed device's own tool has run: the device's part is under way, so what is
+                        # left of the request may be the Mac's ("turn off the lights and open the spreadsheet")
+                        claim_reason = ""
                 results.append(result)
                 if call["name"] in TRANSCRIBED_TOOLS and result.get("ok", True) is not False:
                     self._record("eve", "tool", _tool_line(result), call["name"])

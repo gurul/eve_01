@@ -9,6 +9,7 @@ timeout leave the request byte for byte what it was. Nothing here reaches Jev, a
 from __future__ import annotations
 
 import asyncio
+import gc
 import json
 import logging
 import sys
@@ -20,7 +21,7 @@ from typing import Any, Iterable, Optional
 import pytest
 from test_telegram import OWNER, FakeApi, FakeCreate, Rig, _FakeTV, call, say, settle
 
-from eve_bridge import app_registry, app_router, profile, system_context, telegram
+from eve_bridge import app_registry, app_router, profile, system_context, task_router, telegram, tool_gate
 from eve_bridge import app_router as ar
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
@@ -101,7 +102,9 @@ def test_every_schema_action_of_every_device_is_one_of_its_methods() -> None:
     assert ar.START_TASK in own and ar.START_TASK not in ar.ALL_TOOLS
 
 
-def test_the_questions_and_the_state_name_no_tool_model_or_app() -> None:
+def test_the_questions_and_the_state_name_none_of_eves_tools_models_or_device_brands() -> None:
+    # what this checks: a fixed list (every tool name eve offers, the model names, the devices' brand names). It is
+    # not "no app is named": the TV's method words name YouTube, which is a right name (the one app it searches).
     things = ar.live(ar.ALL_TOOLS)
     read = json.dumps([ar.state("x", "y", things), ar.questions(things)]).lower()
     names = {n for a in app_registry.with_tools() for n in a.mod().TOOL_NAMES} | {t["name"] for t in telegram.TOOLS}
@@ -225,14 +228,22 @@ def test_what_a_claim_tells_the_turn_names_only_tools_the_turn_offers() -> None:
         "This request is for the TV. Its tools this turn: firetv_control, firetv_status. It reads as a request to "
         "open an app on it by name (firetv_control). Use them now; when they can't do what was asked, tell the owner "
         "so in one line.")
+    assert ar.refusal(can, offered) == (
+        "not started: this request is for the TV, which you work with firetv_control, firetv_status. Use one of "
+        "those this turn; when they can't do what the owner asked, tell the owner so in one line.")
+    # what the device can't do: the note and the refusal say only that, and to tell the owner. Neither tells the
+    # model to use a tool, or to call one just to check (the review: both arms of the end-to-end run ended such a
+    # case in the device's control tool).
     cant = ar.AppRoute("tv", False, "", 0.9, asked=True)
     assert ar.note_line(cant, offered) == (
         "This request is for the TV. Its tools this turn: firetv_control, firetv_status. It reads as something the "
-        "TV can't do: check it against what those tools take, and when it can't be done with them, tell the owner so "
-        "in one line.")
+        "TV can't do. If that is so, tell the owner in one line that the TV can't do it.")
     assert ar.refusal(cant, offered) == (
-        "not started: this request is for the TV, which you work with firetv_control, firetv_status. Use one of "
-        "those this turn; when they can't do what the owner asked, tell the owner so in one line.")
+        "not started: this request is for the TV, and it reads as something the TV can't do. Tell the owner so in "
+        "one line.")
+    assert ar.refusal(cant, offered) != ar.refusal(can, offered)
+    for text in (ar.refusal(cant, ar.ALL_TOOLS), ar.note_line(cant, ar.ALL_TOOLS).split("this turn:")[1].split(".", 1)[1]):
+        assert not any(tool in text for tool in ar.ALL_TOOLS) and "Use " not in text and "check" not in text
     # a method whose tool is not offered is no hint; a device with no tool offered is no claim at all
     shot = ar.AppRoute("tv", True, "picture", 0.9, asked=True)
     assert "It reads as" not in ar.note_line(shot, offered) and "firetv_screenshot" not in ar.note_line(shot, offered)
@@ -263,16 +274,21 @@ def test_the_switch_parses_as_the_toolset_routers_does(raw: str, want: str) -> N
 def test_the_router_is_made_only_when_it_is_on_and_jev_has_a_route(monkeypatch: pytest.MonkeyPatch) -> None:
     key = {"OPENROUTER_API_KEY": "k-test", "EVE_JEV_ROUTE": "openrouter"}
     monkeypatch.setattr(ar, "_JEV", {})
-    assert ar.SHIPPED is True                                       # the blind holdout's verdict, 2026-11-11
-    assert ar.make_router({**key, "EVE_APP_ROUTER": "off"}) is None
+    # SHIPPED is the blind rounds' to set (round 2 decides it; the orchestrator flips it), so its value is not
+    # asserted here: the router's behaviour is, under both values
+    assert isinstance(ar.SHIPPED, bool)
+    monkeypatch.setattr(ar, "SHIPPED", True)
+    assert ar.make_router({**key, "EVE_APP_ROUTER": "off"}) is None             # off wins over SHIPPED
     monkeypatch.setattr(ar, "SHIPPED", False)
+    assert ar.make_router({**key, "EVE_APP_ROUTER": "off"}) is None
     assert ar.make_router({**key}) is None                          # auto, and not SHIPPED
     assert ar.make_router({"EVE_APP_ROUTER": "on", "EVE_JEV_ROUTE": "openrouter"}) is None      # no key
     on = ar.make_router({**key, "EVE_APP_ROUTER": "on"})
     assert on is not None and ar.make_router({**key, "EVE_APP_ROUTER": "on"}) is on            # once a process
     assert ar.make_router({**key, "OPENROUTER_API_KEY": "k-new", "EVE_APP_ROUTER": "on"}) is not on
     monkeypatch.setattr(ar, "SHIPPED", True)
-    assert ar.make_router({**key, "OPENROUTER_API_KEY": "k-new"}) is not None
+    assert ar.make_router({**key, "OPENROUTER_API_KEY": "k-new"}) is not None     # auto, and SHIPPED
+    assert ar.make_router({**key, "OPENROUTER_API_KEY": "k-new", "EVE_APP_ROUTER": "auto"}) is not None
 
 
 def test_eve_lite_forces_the_switch_off() -> None:
@@ -293,6 +309,34 @@ def test_the_gates_file_is_beside_the_module_and_packaged(tmp_path: Path) -> Non
     assert ar.load_gates(tmp_path / "none.json") == dict.fromkeys(ar.KEYS, ar.DEFAULT_GATE)
     (tmp_path / "bad.json").write_text('{"gates": {"tv": {"noul": 0.5}}}', encoding="utf-8")
     assert ar.load_gates(tmp_path / "bad.json") == dict.fromkeys(ar.KEYS, ar.DEFAULT_GATE)
+
+
+def test_a_claims_gates_are_never_looser_than_the_floor_whatever_the_file_says(tmp_path: Path) -> None:
+    assert (ar.FLOOR.noul, ar.FLOOR.choice, ar.FLOOR.lead) == (0.5, 0.5, 0.0)
+    assert ar.FLOOR.choice == ar.DEFAULT_GATE.choice and ar.FLOOR.lead == ar.DEFAULT_GATE.lead
+    loose = {"tv": [0.9, 0.8, 0.3, 0.5], "lights": [0.4, 0.3, -0.2, 0.1], "music": [0.15, 0.35, -0.5, 0.6],
+             "camera": [0.05, 0.95, -1.0, 0.2]}
+    path = tmp_path / "gates.json"
+    path.write_text(json.dumps({"gates": {k: dict(zip(("noul", "choice", "lead", "can"), v, strict=True))
+                                          for k, v in loose.items()}}), encoding="utf-8")
+    # the file as fitted is still readable (history), and the turn's gates take the max per claim field
+    assert ar.fitted_gates(path)["music"] == ar.Gate(0.15, 0.35, -0.5, 0.6)
+    got = ar.load_gates(path)
+    assert got == ar.floored(ar.fitted_gates(path))
+    assert got["tv"] == ar.Gate(0.9, 0.8, 0.3, 0.5)                    # stricter than the floor: unchanged
+    assert got["lights"] == ar.Gate(0.5, 0.5, 0.0, 0.1) and got["music"] == ar.Gate(0.5, 0.5, 0.0, 0.6)
+    assert got["camera"] == ar.Gate(0.5, 0.95, 0.0, 0.2)               # per field; ``can`` is left as fitted
+    # the shipped file keeps what the fit wrote, and the module's gates are floored
+    raw = json.loads(ar.GATES_FILE.read_text(encoding="utf-8"))["gates"]
+    assert raw["music"] == {"noul": 0.15, "choice": 0.35, "lead": -0.5, "can": 0.6}
+    for key, g in ar.GATES.items():
+        assert g.noul >= 0.5 and g.choice >= 0.5 and g.lead >= 0.0 and g.can == raw[key]["can"], key
+    # what the floor is for: the Choice picks the music, its own Noul is low and the Mac's is ahead. The fitted
+    # gates claim it (the Choice alone deciding); the turn's gates do not.
+    weak = answer("music", 0.4, noul=0.2, mac=0.65)
+    assert ar.decide(weak, ar.fitted_gates()).app == "music" and not ar.decide(weak, ar.GATES)
+    assert not ar.route_turn("make a playlist called road trip", "", FakeAppRouter(weak), ar.ALL_TOOLS, mac_apps=())
+    assert ar.decide(answer("music", 0.9, noul=0.8, mac=0.3), ar.GATES).app == "music"
 
 
 class FakeAppRouter:
@@ -334,6 +378,8 @@ def test_route_turn_never_lets_jev_hurt_the_turn() -> None:
     assert not late and late.error == "timeout" and late.asked and time.perf_counter() - t0 < 2.0
     # the module's gates when none are given
     assert ar.route_turn(INCIDENT, "", FakeAppRouter(answer("tv", 0.99)), ar.ALL_TOOLS).asked
+    # the installed apps are the fixture's (none), never the host's: conftest pins task_router's cache
+    assert task_router.installed_apps() == ()
 
 
 # ---- the fit --------------------------------------------------------------------------------------------------------
@@ -456,7 +502,7 @@ def test_the_eval_fits_caches_by_question_and_scores_the_holdout_once(tmp_path: 
     # --fit: Jev once per case, the gates written with the questions they were fitted on
     gates = ev.fit_main(predict, data, gates_file)
     assert len(predict.calls) == len(CASES) and "APP_ROUTER_FIT_COMPLETE" in capsys.readouterr().out
-    assert ar.load_gates(gates_file) == gates == _fit()[0]
+    assert ar.fitted_gates(gates_file) == gates == _fit()[0] and ar.load_gates(gates_file) == ar.floored(gates)
     assert json.loads(gates_file.read_text(encoding="utf-8"))["questions"] == ar.fingerprint(ar.live(ar.ALL_TOOLS))
     ev.fit_main(predict, data, gates_file)                           # again: from the cache
     assert len(predict.calls) == len(CASES)
@@ -527,6 +573,118 @@ def test_the_eval_bar_fails_on_a_claimed_mac_case_a_miss_or_a_slow_jev(tmp_path:
         ev.cases(tmp_path / ev.TUNING)
     with pytest.raises(SystemExit, match="NO_CASES"):
         ev.cases(tmp_path / "missing.json")
+
+
+# Round 2's made-up holdout: CASES, plus the shapes the two rules added after round 1 are for.
+CASES2: list[dict[str, Any]] = CASES + [
+    {"id": "k4", "door": "call", "previous": "", "text": "can you open Spotify", "app": "mac", "can": None,
+     "why": "nothing but opening an app installed on the Mac, said politely"},
+    {"id": "k5", "door": "app", "previous": "", "text": "record my screen for a minute", "app": "mac", "can": None,
+     "why": "the Mac, with no Mac word"},
+    {"id": "m2", "door": "app", "previous": "", "text": "open Spotify and play something mellow", "app": "music",
+     "can": True, "why": "a launch with a rest: the rule does not answer, the music does"},
+    {"id": "t4", "door": "call", "previous": "", "text": "open the tv", "app": "tv", "can": True,
+     "why": "TV is an installed Mac app's name and a device's: Jev is asked"},
+]
+JEV2: dict[str, ar.AppAnswer] = {
+    **JEV,
+    "k4": answer("tv", 0.97, noul=0.9, mac=0.2),                    # Jev reads a bare "open Spotify" as the TV's
+    "k5": answer("camera", 0.40, noul=0.45, mac=0.30, can=0.2),     # the Choice alone: the fitted gates would claim it
+    "m2": answer("music", 0.95, noul=0.9, mac=0.3, can=0.9, how="play"),
+    "t4": answer("tv", 0.95, noul=0.9, mac=0.2, can=0.9, how="power"),
+}
+LOOSE = {"tv": ar.Gate(0.5, 0.5, -0.1, 0.5), "lights": ar.Gate(0.4, 0.3, -0.2, 0.5),
+         "music": ar.Gate(0.15, 0.35, -0.1, 0.5), "camera": ar.Gate(0.2, 0.35, 0.0, 0.5)}
+
+
+def _write_gates(path: Path, gates: dict[str, ar.Gate]) -> None:
+    path.write_text(json.dumps({"fitted": "2026-01-01", "questions": ar.fingerprint(ar.live(ar.ALL_TOOLS)),
+                                "gates": ev.gates_json(gates)}), encoding="utf-8")
+
+
+def test_round_two_scores_the_live_path_once_and_the_report_is_the_latest_rounds(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+    data, gates_file = tmp_path / "routes", tmp_path / "app_gates.json"
+    _dataset(data, ev.HOLDOUT, CASES)
+    _dataset(data, ev.HOLDOUT2, CASES2)
+    _write_gates(gates_file, LOOSE)
+    by_text = {" ".join(c["text"].split()): jev_body(JEV2[c["id"]]) for c in CASES2}
+    predict = FakePredict(lambda state: by_text[state["request"]])
+    # the fixed app list: the names asked for, and nothing read from the host
+    assert set(ev.MAC_APPS) == {"Spotify", "Slack", "Safari", "Google Chrome", "Notes", "Mail", "Calendar", "Zoom",
+                                "Photo Booth", "Calculator", "Finder", "System Settings", "Messages", "Preview", "TV",
+                                "Music", "Home"} and len(ev.MAC_APPS) == 17
+    # the two rules, on the answers alone: the fitted gates claim both Mac cases, the live path neither
+    answers = [JEV2[c["id"]] for c in CASES2]
+    assert ev.score(CASES2, answers, LOOSE)["mac_claimed"] == ["k4", "k5"]
+    assert ev.score(CASES2, answers, ar.floored(LOOSE))["mac_claimed"] == ["k4"]                # the floor: k5
+    live = ev.score(CASES2, answers, ar.floored(LOOSE), ev.MAC_APPS)                            # the Mac rule: k4
+    assert live["mac_claimed"] == [] and live["device_right"] == live["device"] == 9
+    assert live["mac_rule"] == {"tv": [], "lights": [], "music": [], "camera": [], "mac": ["k4"], "none": []}
+    # round 1 first, as it was scored: the fitted gates alone
+    assert ev.holdout_main(predict, data, gates_file) is True
+    one = {name: (data / name).read_bytes() for name in (ev.HOLDOUT, ev.HOLDOUT_ANSWERS, ev.RESULT)}
+    assert json.loads(one[ev.RESULT])["gates"] == ev.gates_json(LOOSE) and b"floor" not in one[ev.RESULT]
+    out = capsys.readouterr().out
+    assert "report, round 1" in out and out.rstrip().endswith(ev.OK)
+    assert "NOTE: this is round 1, scored with the gates as fitted" in out      # the floor is not called a refit
+    assert "a refit after the holdout" not in out
+    # --holdout2: once, the live path's whole decision, everything it was decided by in the result
+    asked = len(predict.calls)
+    assert ev.main.__module__ == ev.__name__ and ev.holdout_main(predict, data, gates_file, ev.ROUND2) is True
+    assert len(predict.calls) == asked + len(CASES2)
+    kept = json.loads((data / ev.RESULT2).read_text(encoding="utf-8"))
+    assert kept["round"] == 2 and kept["mac_apps"] == list(ev.MAC_APPS)
+    assert kept["floor"] == {"noul": 0.5, "choice": 0.5, "lead": 0.0}
+    assert kept["fitted"] == ev.gates_json(LOOSE) and kept["gates"] == ev.gates_json(ar.floored(LOOSE))
+    assert kept["bar"]["shipped"] is True and kept["score"]["mac_claimed"] == [] and (data / ev.HOLDOUT2_ANSWERS).exists()
+    out = capsys.readouterr().out
+    # the report: round 1 as history marked as seen data, then round 2, whose verdict is the last line
+    assert out.index("history, round 1 (SEEN DATA") < out.index("report, round 2") and out.rstrip().endswith(ev.OK)
+    assert "(2) Mac cases claimed for a device 0/5" in out and "mac_app_only answered before the gates: mac 1" in out
+    assert "round 2's bar (lines 1-4) says True" in out
+    with pytest.raises(SystemExit, match="round 2's holdout was already scored"):
+        ev.holdout_main(predict, data, gates_file, ev.ROUND2)
+    assert len(predict.calls) == asked + len(CASES2)
+    # round 1's files are untouched by all of it
+    assert one == {name: (data / name).read_bytes() for name in one}
+    # a floor that moved after round 2 fails the report: it is a rule in code, recorded when the round was scored
+    monkeypatch.setattr(ar, "FLOOR", ar.Gate(0.6, 0.5, 0.0, 0.0))
+    assert ev.report_main(data, gates_file) is False
+    out = capsys.readouterr().out
+    assert "app_router.FLOOR is not the floor round 2 was scored with" in out and out.rstrip().endswith(ev.FAILED)
+    monkeypatch.undo()
+    # and so does a refit of the file
+    _write_gates(gates_file, {**LOOSE, "tv": ar.Gate(0.9, 0.9, 0.5, 0.5)})
+    assert ev.report_main(data, gates_file) is False
+    assert "a refit after the holdout" in capsys.readouterr().out
+    _write_gates(gates_file, LOOSE)
+    assert ev.report_main(data, gates_file) is True
+    capsys.readouterr()
+    # a failed round 2 is the verdict, whatever round 1 said: here Jev claims a Mac case the rules do not stop
+    (data / ev.RESULT2).unlink()
+    (data / ev.HOLDOUT2_ANSWERS).unlink()
+    by_text["record my screen for a minute"] = jev_body(answer("camera", 0.9, noul=0.9, mac=0.2))
+    assert ev.holdout_main(predict, data, gates_file, ev.ROUND2) is False
+    out = capsys.readouterr().out
+    assert "(2) Mac cases claimed for a device 1/5 = 20.0% (need <= 3%): FAIL" in out and out.rstrip().endswith(ev.FAILED)
+    # the command line: --holdout2 is round 2's
+    seen: list[Any] = []
+    monkeypatch.setattr(ev, "holdout_main", lambda **kw: seen.append(kw["rnd"]) or True)
+    assert ev.main(["--holdout2"]) == 0 and ev.main(["--holdout"]) == 0 and seen == [ev.ROUND2, ev.ROUND1]
+
+
+def test_the_shipped_fixtures_round_one_is_untouched_and_reports_as_it_was_scored(
+        capsys: pytest.CaptureFixture[str]) -> None:
+    was = json.loads((ev.ROUTES / ev.RESULT).read_text(encoding="utf-8"))
+    assert was["gates"] == ev.gates_json(ar.fitted_gates()) and "floor" not in was and was["score"]["device_right"] == 80
+    ev.report_main()
+    out = capsys.readouterr().out
+    assert "a refit after the holdout" not in out
+    if not (ev.ROUTES / ev.RESULT2).exists():
+        assert "report, round 1" in out and "Round 2 (--holdout2) scores the live rule" in out
+    else:
+        assert out.index("history, round 1 (SEEN DATA") < out.index("report, round 2")
 
 
 def test_a_holdout_jev_never_answered_is_not_spent(tmp_path: Path) -> None:
@@ -635,16 +793,116 @@ def test_a_claim_the_tv_can_do_leads_to_its_own_tool(clock: None) -> None:
     assert rig.api.sent[-1] == (OWNER, "Opened Prime Video.")
 
 
-def test_the_guard_holds_for_every_round_of_the_turn_and_only_for_start_task(clock: None) -> None:
+POWER_OFF = {"action": "power_off", "app": None, "query": None, "text": None, "volume": None, "volume_change": None,
+             "repeat": None}
+
+
+def test_the_guard_is_a_nudge_start_task_is_refused_at_most_once_a_turn(clock: None) -> None:
     tv = _FakeTV()
     rig = turn("put the tv on the other input", call("start_task", {"goal": "switch the input"}),
                call("start_task", {"goal": "switch the input in settings"}, "call_2"),
-               call("firetv_status", {}, "call_3"), say("It can't switch inputs."),
                app_route=FakeAppRouter(tv_answer(can=0.1)), firetv=tv)
-    assert rig.agents == [] and rig.inlet._app_refused == 2 and tv.handled == [("firetv_status", {})]
-    assert rig.api.sent[-1] == (OWNER, "It can't switch inputs.")
-    last = outputs(rig.create.requests[-1])
-    assert [o.get("ok") for o in last] == [False, False, True]
+    # the first call is refused with the claim's reason; the second, in the same turn, goes through
+    assert rig.inlet._app_refused == 1 and [a.goal for a in rig.agents] == ["switch the input in settings"]
+    first, second = rig.create.requests
+    assert outputs(second) == [{"ok": False, "reason": ar.refusal(rig.inlet._app_claim, TV_TOOLS)}]
+    # the claim itself still stands (the note's line is in both rounds): only the guard is spent
+    assert rig.inlet._app_claim.app == "tv" and note_of(first) == note_of(second)
+    assert "This request is for the TV." in note_of(second)
+    # only start_task is ever refused: the device's own tool runs in a claimed turn
+    rig = turn("is the tv on", call("firetv_status", {}), say("It is on."),
+               app_route=FakeAppRouter(tv_answer(how="status")), firetv=tv)
+    assert tv.handled[-1] == ("firetv_status", {}) and rig.inlet._app_refused == 0
+
+
+def test_the_guard_lifts_once_the_claimed_devices_own_tool_has_run(clock: None) -> None:
+    # "turn off the tv and open the spreadsheet": the Choice has to pick one, and it picks the TV. Both halves happen.
+    tv = _FakeTV()
+    rig = turn("turn off the tv and open the budget spreadsheet", call("firetv_control", POWER_OFF),
+               call("start_task", {"goal": "open the budget spreadsheet"}, "call_2"),
+               app_route=FakeAppRouter(tv_answer(how="power")), firetv=tv)
+    assert tv.handled == [("firetv_control", POWER_OFF)]
+    assert [a.goal for a in rig.agents] == ["open the budget spreadsheet"] and rig.inlet._app_refused == 0
+    assert rig.inlet._app_claim.app == "tv"
+    # a call that is not the claimed device's tool (here a name this turn does not offer) does not lift it
+    rig = turn("turn off the tv and open the budget spreadsheet", call("lights_status", {}),
+               call("start_task", {"goal": "open the budget spreadsheet"}, "call_2"), say("The TV is off."),
+               app_route=FakeAppRouter(tv_answer(how="power")), firetv=_FakeTV())
+    assert rig.agents == [] and rig.inlet._app_refused == 1
+
+
+def test_a_steered_turn_drops_the_guard_the_note_line_and_the_claim(clock: None,
+                                                                    monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(telegram.CHAT_STEER_ENV, "1")
+    release = asyncio.Event()
+
+    async def held() -> dict[str, Any]:
+        await release.wait()
+        return call("lights_status", {})
+
+    create = FakeCreate(held, call("start_task", {"goal": "open the settings window"}, "call_2"))
+    rig = Rig(FakeApi(), create, app_route=FakeAppRouter(tv_answer(can=0.1)), small_talk_ask=None, firetv=_FakeTV())
+    seen: dict[str, Any] = {}
+
+    async def go() -> None:
+        running = asyncio.ensure_future(rig.inlet._turn(telegram.Inbound(OWNER, OWNER, "switch the tv's input",
+                                                                         message_id=7)))
+        for _ in range(500):
+            if len(create.requests) == 1:
+                break
+            await asyncio.sleep(0.01)
+        seen["claim"] = rig.inlet._app_claim                # the claim stands while round 1 is in flight
+        rig.inlet._handle(telegram.Inbound(OWNER, OWNER, "no, do it on the Mac", message_id=8))
+        await settle()
+        release.set()
+        await asyncio.wait_for(running, 2.0)
+
+    asyncio.run(go())
+    first, second = create.requests
+    line = ar.note_line(seen["claim"], TV_TOOLS)
+    assert seen["claim"].app == "tv" and line and note_of(first).endswith("\n\n" + line)
+    # the owner's new words are in round 2; the claim's line is not, and the note is the one before it
+    assert any(c.get("text") == "no, do it on the Mac" for i in second["input"] if i.get("role") == "user"
+               for c in i["content"])
+    assert "This request is for" not in note_of(second) and note_of(first) == note_of(second) + "\n\n" + line
+    # the guard is gone (the Mac agent starts, nothing was refused) and the turn reports no claim
+    assert [a.goal for a in rig.agents] == ["open the settings window"] and rig.inlet._app_refused == 0
+    assert rig.inlet._app_claim == ar.NO_CLAIM
+
+
+def test_a_withdrawn_gate_question_drops_the_guard_the_note_line_and_the_claim(
+        clock: None, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    from test_telegram import FakeMemory
+
+    monkeypatch.setenv(telegram.GATE_WITHDRAW_ENV, "1")
+    create = FakeCreate(call("forget_apply", {"token": "t-tv"}),
+                        call("start_task", {"goal": "open the settings window"}, "call_2"))
+    rig = Rig(FakeApi(), create, app_route=FakeAppRouter(tv_answer(can=0.1)), small_talk_ask=None, firetv=_FakeTV(),
+              memory=FakeMemory(tmp_path))
+    seen: dict[str, Any] = {}
+    words = "no, do it on the Mac instead"
+
+    async def go() -> None:
+        running = asyncio.ensure_future(rig.inlet._turn(telegram.Inbound(OWNER, OWNER, "switch the tv's input",
+                                                                         message_id=7)))
+        for _ in range(500):
+            live = rig.inlet._live_question()
+            if live is not None and rig.api.keyboards:
+                break
+            await asyncio.sleep(0.01)
+        seen["claim"] = rig.inlet._app_claim
+        rig.inlet._handle(telegram.Inbound(OWNER, OWNER, words, message_id=8))
+        await asyncio.wait_for(running, 2.0)
+
+    asyncio.run(go())
+    first, second = create.requests
+    line = ar.note_line(seen["claim"], TV_TOOLS)
+    assert seen["claim"].app == "tv" and note_of(first).endswith("\n\n" + line)
+    assert outputs(second)[0] == tool_gate.withdrawn(words) and tool_gate.was_withdrawn(outputs(second)[0])
+    assert not tool_gate.was_withdrawn(tool_gate.REFUSED) and not tool_gate.was_withdrawn({"ok": True})
+    assert "This request is for" not in note_of(second) and note_of(first) == note_of(second) + "\n\n" + line
+    assert [a.goal for a in rig.agents] == ["open the settings window"] and rig.inlet._app_refused == 0
+    assert rig.inlet._app_claim == ar.NO_CLAIM
 
 
 def _bodies(rig: Rig) -> str:
@@ -657,6 +915,9 @@ def test_no_claim_an_error_and_a_timeout_leave_the_request_bytes_as_they_were(
         return turn("open the calculator", call("start_task", {"goal": "open the calculator"}), app_route=app_route,
                     firetv=_FakeTV())
 
+    # the installed apps are pinned to none (conftest), so mac_app_only does not answer and every router is asked,
+    # on a Mac with Calculator as on one without
+    assert task_router.installed_apps() == () and not ar.mac_app_only("open the calculator")
     off = run(None)
     assert len(off.create.requests) == 1 and off.agents[0].goal == "open the calculator"
     want = _bodies(off)
@@ -671,16 +932,102 @@ def test_no_claim_an_error_and_a_timeout_leave_the_request_bytes_as_they_were(
         "not an answer": FakeAppRouter({"app": "tv"}),
         "timeout": slow,
     }
+    ran = []
     for name, router in routers.items():
         rig = run(router)
         assert _bodies(rig) == want, name
         assert len(router.asked) == 1 and rig.agents[0].goal == "open the calculator", name      # never refused
         assert not rig.inlet._app_claim and rig.inlet._app_refused == 0, name
+        ran.append(name)
     slow.release.set()
+    assert ran == list(routers)                             # every comparison above ran, the timeout's included
+    # with the app installed, the code rule answers before Jev: the router is not asked, and the bytes are the same
+    monkeypatch.setattr(task_router, "_INSTALLED", ("Calculator",))
+    unasked = FakeAppRouter(tv_answer())
+    rig = run(unasked)
+    assert _bodies(rig) == want and unasked.asked == [] and rig.agents[0].goal == "open the calculator"
+    monkeypatch.setattr(task_router, "_INSTALLED", ())
     # and on a call: the warm-up and the turn, with the call's note
     quiet, _ = call_turn(INCIDENT, say("ok"), say("It can't."), firetv=_FakeTV())
     asked, _ = call_turn(INCIDENT, say("ok"), say("It can't."), app_route=FakeAppRouter(), firetv=_FakeTV())
     assert _bodies(asked) == _bodies(quiet) and note_of(quiet.create.requests[1]).endswith(telegram.CALL_NOTE)
+
+
+def test_the_turn_awaits_the_router_safely_an_exception_or_a_late_thread_is_no_claim(
+        clock: None, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture) -> None:
+    def run(app_route: Any) -> Rig:
+        return turn(INCIDENT, call("start_task", {"goal": "switch the input"}), app_route=app_route, firetv=_FakeTV())
+
+    want = _bodies(run(None))
+    # route_turn itself raises (a thread that cannot start): no claim, the turn as it was, the Mac agent not refused
+    def boom(*_a: Any, **_k: Any) -> ar.AppRoute:
+        raise RuntimeError("can't start new thread")
+
+    monkeypatch.setattr(app_router, "route_turn", boom)
+    caplog.set_level(logging.INFO)
+    rig = run(FakeAppRouter(tv_answer()))
+    assert _bodies(rig) == want and not rig.inlet._app_claim and rig.agents[0].goal == "switch the input"
+    assert "telegram: app router: no answer (RuntimeError)" in caplog.text
+    # route_turn does not come back inside its budget plus 0.2 s (a full executor): the turn stops waiting
+    monkeypatch.setattr(app_router, "TIMEOUT_S", 0.05)
+    release = threading.Event()
+
+    def late(*_a: Any, **_k: Any) -> ar.AppRoute:
+        release.wait(5.0)
+        return ar.AppRoute("tv", True, "power", 0.9, asked=True)
+
+    monkeypatch.setattr(app_router, "route_turn", late)
+    rig = Rig(FakeApi(), FakeCreate(call("start_task", {"goal": "switch the input"})),
+              app_route=FakeAppRouter(tv_answer()), small_talk_ask=None, firetv=_FakeTV())
+
+    async def go() -> float:
+        t0 = time.perf_counter()
+        await rig.inlet._turn(telegram.Inbound(OWNER, OWNER, INCIDENT, message_id=9))
+        waited = time.perf_counter() - t0
+        release.set()                                       # only now does the late thread come back
+        return waited
+
+    waited = asyncio.run(go())
+    assert _bodies(rig) == want and not rig.inlet._app_claim and rig.agents[0].goal == "switch the input"
+    assert waited < 3.0 and "telegram: app router: no answer (TimeoutError)" in caplog.text
+
+
+def test_a_router_that_fails_in_a_turn_that_fails_first_leaves_no_unretrieved_exception(
+        clock: None, monkeypatch: pytest.MonkeyPatch) -> None:
+    started, release = threading.Event(), threading.Event()
+
+    def boom(*_a: Any, **_k: Any) -> ar.AppRoute:
+        started.set()
+        release.wait(5.0)
+        raise RuntimeError("router down")
+
+    monkeypatch.setattr(app_router, "route_turn", boom)
+    rig = Rig(FakeApi(), FakeCreate(), app_route=FakeAppRouter(), small_talk_ask=None, firetv=_FakeTV())
+
+    async def parts(*_a: Any, **_k: Any) -> Any:
+        raise ValueError("the prompt could not be built")
+
+    monkeypatch.setattr(rig.inlet, "_turn_parts", parts)
+    reported: list[dict[str, Any]] = []
+
+    async def go() -> None:
+        loop = asyncio.get_running_loop()
+        loop.set_exception_handler(lambda _loop, context: reported.append(context))
+        await rig.inlet._turn(telegram.Inbound(OWNER, OWNER, INCIDENT, message_id=9))     # dies before the await
+        for _ in range(200):                                # the router's thread outlives the turn that died
+            if started.is_set():
+                break
+            await asyncio.sleep(0.01)
+        assert started.is_set()
+        release.set()
+        for _ in range(50):
+            await asyncio.sleep(0.01)
+        gc.collect()
+        await asyncio.sleep(0.05)
+
+    asyncio.run(go())
+    gc.collect()
+    assert not [c for c in reported if "never retrieved" in str(c.get("message"))], reported
 
 
 def test_the_switch_off_builds_no_router_and_the_turn_is_the_one_before(
@@ -765,16 +1112,59 @@ def test_the_turns_log_line_has_no_message_text(clock: None, caplog: pytest.LogC
         assert word not in logged
 
 
-APPS = ("Slack", "Spotify", "TV")
+APPS = ("Home", "Music", "Slack", "Spotify", "TV")
 
 
 @pytest.mark.parametrize("text, mac", [
-    ("Open Spotify", True), ("quit slack", True), ("open the tv app", True),
-    ("open spotify on the tv", False), ("Open Lumen Stream", False), ("play some jazz", False),
-    ("Change TV input to HDMI 1.", False), ("", False),
+    ("Open Spotify", True), ("quit slack", True), ("Open Spotify on my Mac", True), ("quit everything", True),
+    # (a) nothing but a launch or a quit: anything after it, or a place, is not one
+    ("open Spotify and play something", False), ("open Spotify and play Don Toliver", False),
+    ("quit Slack and open Spotify", False), ("open spotify on the tv", False),
+    # (b) the planner's own polite and spoken lead-ins
+    ("can you open Spotify", True), ("Could you open Spotify?", True), ("okay, open Spotify.", True),
+    ("could you quit Slack?", True), ("would you mind opening Spotify", True), ("hey eve, open spotify", True),
+    # (c) an app whose name is a word for a device or the home goes to Jev, as before the rule
+    ("open the tv app", False), ("open the tv", False), ("switch to tv", False), ("start the music", False),
+    ("open Music", False), ("open home", False), ("quit Music", False), ("can you open TV", False),
+    ("Open Lumen Stream", False), ("play some jazz", False), ("Change TV input to HDMI 1.", False), ("", False),
 ])
 def test_a_bare_open_or_quit_of_an_installed_mac_app_is_the_macs(text: str, mac: bool) -> None:
     assert ar.mac_app_only(text, APPS) is mac
+
+
+def test_the_mac_app_rule_reads_the_planners_own_verdict_through_one_public_function() -> None:
+    assert task_router.bare_launch_or_quit("can you open Spotify", APPS) == "Spotify"
+    assert task_router.bare_launch_or_quit("could you quit Slack?", APPS) == "Slack"
+    assert task_router.bare_launch_or_quit("open the tv app", APPS) == "TV"         # the Mac's rule knows it;
+    assert not ar.mac_app_only("open the tv app", APPS)                             # the app router leaves it to Jev
+    assert task_router.bare_launch_or_quit("open Spotify and play something", APPS) == ""
+    assert task_router.bare_launch_or_quit("quit everything", APPS) == "*"
+    assert task_router.bare_launch_or_quit("open spotify", ()) == "" and task_router.bare_launch_or_quit("", APPS) == ""
+    # it is classify's verdict: a bare launch or quit here is exactly a request the planner answers by reflex alone
+    for said in ("can you open Spotify", "okay, open Spotify.", "could you quit Slack?", "open Spotify and play x"):
+        plan = task_router.classify(said, apps=APPS)
+        assert bool(task_router.bare_launch_or_quit(said, APPS)) is (plan.tiers == ("reflex",) and not plan.rest)
+    assert {"tv", "music", "home"} == set(ar.DEVICE_WORD_APPS)
+    assert "task_router._" not in Path(ar.__file__).read_text(encoding="utf-8")     # no private function is called
+
+
+def test_the_limits_sentences_attach_the_one_line_only_to_what_the_device_cannot_do() -> None:
+    from eve_bridge import firetv, spotify
+
+    tv = ("Limits: the TV can't switch HDMI inputs, and it can't search inside any app except YouTube. When the owner "
+          "asks for\neither, say so in one line. In deep standby the TV can't be reached until the remote or Alexa "
+          "wakes it.")
+    for text in (firetv.INSTRUCTIONS, firetv.INSTRUCTIONS_NO_SCREENSHOT):
+        assert text.endswith(tv) and "one of these" not in text
+    # the one-line instruction comes before the standby sentence, so powering on is not one of the two it covers
+    limits = firetv.INSTRUCTIONS.split("Limits:")[1]
+    assert limits.index("say so in one line") < limits.index("deep standby")
+    music = ("Limits: its actions are exactly the ones listed above. When the owner asks for anything else, tell them "
+             "so in one\nline.")
+    assert spotify.INSTRUCTIONS.endswith(music)
+    # the set is stated positively: no action the tool lacks is named anywhere in the block
+    for absent in ("queue", "shuffle", "repeat", "seek", "liking", "saving", "like ", "save "):
+        assert absent not in spotify.INSTRUCTIONS.lower(), absent
 
 
 def test_the_mac_app_rule_answers_before_jev_is_asked() -> None:

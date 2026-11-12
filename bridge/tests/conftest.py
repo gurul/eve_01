@@ -188,6 +188,17 @@ def _taint_marks_per_test():
 
 
 @pytest.fixture(autouse=True)
+def _no_installed_apps_from_the_host(monkeypatch: pytest.MonkeyPatch):
+    """No test reads the Mac's installed apps: task_router.installed_apps() answers with none, so a turn that
+    reaches it (app_router.mac_app_only, through a router a test lends) decides the same on every host. Before, a
+    turn test that said "open the calculator" passed or failed by whether Calculator was installed. A test about
+    installed apps passes its own list (``apps=``, ``mac_apps=``, or installed_apps(dirs, listdir))."""
+    from eve_bridge import task_router
+
+    monkeypatch.setattr(task_router, "_INSTALLED", ())
+
+
+@pytest.fixture(autouse=True)
 def _menu_tools_pinned_off(monkeypatch: pytest.MonkeyPatch):
     """The menu tools ship on (menu_tools.SHIPPED, 2026-10-09), but the suite's request-body and prompt checks were
     written against the switch-off bytes, which stay byte for byte as before: a plain test runs with it off. The menu,

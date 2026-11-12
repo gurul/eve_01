@@ -1,15 +1,18 @@
 # App router
 
 `bridge/src/eve_bridge/app_router.py` decides, before the chat model runs, whether a request is for one of
-the devices eve drives: the TV, the lights, the music or the camera. When it is, the turn is told so and the
-Mac agent cannot be started for it. The eval is `bridge/tools/app_route_eval.py`.
+the devices eve drives: the TV, the lights, the music or the camera. When it is, the turn is told so, and the
+first call that would start the Mac agent for it is refused once. The eval is `bridge/tools/app_route_eval.py`.
 
-It is **on by default** (`app_router.SHIPPED = True`) since its blind holdout and its end-to-end set were scored
-against the bar at the end of this page on 2026-11-11. `EVE_APP_ROUTER=off` turns it off.
+It is **off by default** (`app_router.SHIPPED = False`) until [round 2](#round-2) is scored. Round 1 held every
+line of the bar on 2026-11-11, and a review of the branch then changed the rule on round 1's data: a floor under
+the gates, a guard that refuses once, three rules for a bare Mac app, and new wording for a request a device can't
+do. `EVE_APP_ROUTER=on` runs it now; `off` turns it off.
 
 Before Jev is asked, one code rule answers: a message that is nothing but opening or quitting an app installed on
-this Mac ("open Spotify", "quit Slack") is the Mac's, and no device claims it (`app_router.mac_app_only`, the task
-router's own launch and quit rules). A message that says where ("open Spotify on the tv") is still asked.
+this Mac ("open Spotify", "quit Slack") is the Mac's, and no device claims it
+([`app_router.mac_app_only`](#the-mac-app-rule)). A message that says where ("open Spotify on the tv") is still
+asked.
 
 ## Why
 
@@ -106,9 +109,11 @@ Per live device, in the same request:
 
 Code reads only the claimed device's two answers.
 
-Every question is in the owner's words for things. None names a tool, a model or an app
-([AGENTS.md](../AGENTS.md) rule 7: a name in a prompt is an option the model may fill a slot with); a test
-checks it.
+Every question is in the owner's words for things. None names one of eve's tools, a model, or a device's
+brand name ([AGENTS.md](../AGENTS.md) rule 7: a name in a prompt is an option the model may fill a slot with).
+The test checks exactly that: a fixed list of every tool name eve offers, the model names and the devices' brand
+names, none of which may appear in the state or the questions. It does not check that no app is named, and one
+is: the TV's method words say "search YouTube on it". That is a right name, the one app the TV's search works in.
 
 ## The rule
 
@@ -129,6 +134,46 @@ computer or something else, any of the three edges is short, or the claimed devi
 The gates are in `bridge/src/eve_bridge/app_gates.json`, read once at import. Until the first fit they hold
 the starting values (`noul` 0.7, `choice` 0.5, `lead` 0.0, `can` 0.5 for every device).
 
+### The floor
+
+A claim's gates are never looser than `app_router.FLOOR`: `noul` 0.5, `choice` 0.5, `lead` 0.0. It is a rule in
+code. `app_router.load_gates` takes the higher of the fitted value and the floor, per field, whatever the file
+says. The `can` gate has no floor; it is left as fitted.
+
+| Device | Fitted (`app_gates.json`) | What a turn uses |
+|---|---|---|
+| `tv` | noul 0.5, choice 0.5, lead -0.1 | noul 0.5, choice 0.5, lead 0.0 |
+| `lights` | noul 0.4, choice 0.3, lead -0.2 | noul 0.5, choice 0.5, lead 0.0 |
+| `music` | noul 0.15, choice 0.35, lead -0.5 | noul 0.5, choice 0.5, lead 0.0 |
+| `camera` | noul 0.2, choice 0.35, lead -0.4 | noul 0.5, choice 0.5, lead 0.0 |
+
+Why: on the tuning set the Choice never picked the lights, the music or the camera for a Mac case or a "neither"
+case. Nothing held their gates up, so step 4 of the fit put each one halfway to the bottom of the grid. Gates that
+low are the Choice alone deciding, and this repository's own lesson is that a relative Choice is not a gate. The
+music could be claimed with its own Noul at 0.15 and the Mac's Noul at 0.65. The fit found no negative; that is
+not evidence that there is none: no tuning or round 1 Mac case says "record my screen" or "play the lecture video"
+without a Mac word.
+
+`app_gates.json` is kept as fitted. It is the fit's record, and round 1 was scored with it. The floor was chosen
+after round 1, on its data: on the kept answers it gives up 6 of 160 tuning and 3 of 80 round 1 device claims
+(77/80), and claims no Mac or neither case in either set. Those are seen-data numbers, not a verdict.
+
+### The Mac app rule
+
+`app_router.mac_app_only(text)` answers before Jev is asked: no claim. Jev read a bare "open Spotify" as the
+TV's in a live check after round 1. Three rules:
+
+1. **Nothing but a launch or a quit.** "Open Spotify" and "quit Slack" are. "Open Spotify and play something" has
+   a rest, and "open Spotify on the tv" names a place: neither is, and both are asked.
+2. **The planner's own wording.** It reads `task_router.bare_launch_or_quit`, which is the Mac planner's own
+   verdict (`task_router.classify`) that a request is answered by a launch or a quit alone. So the polite and
+   spoken lead-ins the planner knows count: "can you open Spotify", "okay, open Spotify.", "could you quit Slack?".
+3. **Not for an app whose name is a word for a device or the home.** On a Mac these are the apps named TV, Music
+   and Home (`app_router.DEVICE_WORD_APPS`). "Open the tv" or "start the music" may be the device, so they go to
+   Jev as they did before the rule.
+
+The rule can only remove claims. In a turn it reads the Mac's installed apps; the tests and the eval pass a list.
+
 ## What a claim changes in the turn
 
 The router runs in `TelegramInlet._think` as a third thread beside the toolset router's call and the
@@ -145,19 +190,40 @@ builds it from the claim, with only the tools the turn really offers:
   firetv_screenshot. It reads as a request to open an app on it by name (firetv_control). Use them now; when
   they can't do what was asked, tell the owner so in one line."
 - When it reads as something the device can't do: "This request is for the TV. Its tools this turn: ... It
-  reads as something the TV can't do: check it against what those tools take, and when it can't be done with
-  them, tell the owner so in one line."
+  reads as something the TV can't do. If that is so, tell the owner in one line that the TV can't do it." The
+  line does not ask the model to call a tool to check. In round 1's end-to-end run, both cases claimed this way
+  ended in the TV's control tool.
 
-**A guard on `start_task`**, beside the existing mail guard. While a device is claimed for the turn, a
-`start_task` call is refused in every round, and the model gets another round with this result:
+**A guard on `start_task`**, beside the existing mail guard. It is a nudge, not a wall. The first `start_task`
+call of a claimed turn is refused, and the model gets another round with one of these results:
 
 > not started: this request is for the TV, which you work with firetv_status, firetv_control,
 > firetv_screenshot. Use one of those this turn; when they can't do what the owner asked, tell the owner so
 > in one line.
 
+> not started: this request is for the TV, and it reads as something the TV can't do. Tell the owner so in one
+> line.
+
+The second is for a claim the device can't do. It names no tool, so it does not send the model to a device the
+router judged unable.
+
+The guard refuses **at most once per turn**. A second `start_task` call in the same turn goes through: the model
+has read the claim twice and still means the Mac, and the router can be wrong. The guard also lifts, with nothing
+refused, **as soon as one of the claimed device's own tools has run** in the turn. "Turn off the lights and open
+the budget spreadsheet" is one request with two halves; the Choice has to pick one, and once the lights' tool
+has run, the rest may be the Mac's.
+
 On a call, the short "On it." that a started task gets is not said for a refused one. Only `start_task` is
-refused; every other tool runs as before. If the owner types more into a running turn (`EVE_CHAT_STEER`),
-the guard is dropped for the rest of that turn, because the claim was read from the first message alone.
+refused; every other tool runs as before.
+
+**New words from the owner drop the claim.** The claim was read from the first message alone. When the owner
+types more into a running turn (`EVE_CHAT_STEER`), or withdraws a gated question by typing something else
+(`EVE_GATE_WITHDRAW`), three things happen: the guard is dropped, the claim's line is taken out of the note (the
+note is the one from before the line, so the line never sits right before the new words), and the turn reports no
+claim.
+
+The turn waits for the router for its 0.8 s budget plus 0.2 s, and no longer. An exception or a timeout on that
+wait is no claim.
 
 The log has one line per routed turn, names and numbers only, never the message:
 
@@ -170,18 +236,24 @@ telegram: start_task refused: the request is for a device (tv)
 
 ### The limits are in the prompt too
 
-The TV's block used to state the HDMI limit with no instruction. It now reads: "Limits: HDMI inputs can't be
-switched, search works in YouTube only, and in deep standby the TV can't be reached (the remote or Alexa
-wakes it). When the owner asks for one of these, say so in one line." Spotify's block gained a matching
-sentence for what its tool has no action for (liking or saving, the queue, editing a playlist, shuffle,
-repeat, seeking). These two changes are in every turn, whatever the switch says. The lights' block was left
-alone: it is part of the owner golden snapshot, which is recorded only from main's code.
+The TV's block used to state the HDMI limit with no instruction. It now reads: "Limits: the TV can't switch
+HDMI inputs, and it can't search inside any app except YouTube. When the owner asks for either, say so in one
+line. In deep standby the TV can't be reached until the remote or Alexa wakes it." The one-line instruction is
+attached to the two things the TV can't do. A YouTube search and turning the TV on are things it can do, so they
+are not covered by it; round 1's wording listed all three and said "one of these".
+
+Spotify's block ends: "Limits: its actions are exactly the ones listed above. When the owner asks for anything
+else, tell them so in one line." The set is stated positively and no missing action is named (round 1's wording
+named six, which the owner's rule about names in a prompt forbids).
+
+These two sentences are in every turn, whatever the switch says. The lights' block was left alone: it is part of
+the owner golden snapshot, which is recorded only from main's code.
 
 ## Settings
 
 | Variable | Values | Effect |
 |---|---|---|
-| `EVE_APP_ROUTER` | `auto` (default) | On when `app_router.SHIPPED` is True, which it is since 2026-11-11. |
+| `EVE_APP_ROUTER` | `auto` (default) | On when `app_router.SHIPPED` is True. It is False until [round 2](#round-2) is scored. |
 | | `on` | On before or despite the bar, for a live trial. |
 | | `off` | No call, no note line, no guard. |
 | `EVE_JEV_ROUTE`, `OPENROUTER_API_KEY` / `TYPESAFE_API_KEY` | | The Jev route (`jev.route_config`). With no key, there is no router. |
@@ -233,6 +305,7 @@ From `bridge/`, with the Jev key scoped to the one command:
 ```bash
 env $(grep -E '^(OPENROUTER_API_KEY)=' ~/.config/eve-bridge/env | xargs) .venv/bin/python tools/app_route_eval.py --fit
 env $(grep -E '^(OPENROUTER_API_KEY)=' ~/.config/eve-bridge/env | xargs) .venv/bin/python tools/app_route_eval.py --holdout
+env $(grep -E '^(OPENROUTER_API_KEY)=' ~/.config/eve-bridge/env | xargs) .venv/bin/python tools/app_route_eval.py --holdout2
 .venv/bin/python tools/app_route_eval.py --report
 ```
 
@@ -241,9 +314,21 @@ env $(grep -E '^(OPENROUTER_API_KEY)=' ~/.config/eve-bridge/env | xargs) .venv/b
   `app_holdout_answers.json` and the verdict in `app_holdout_result.json`, and refuses to run again once the
   result file exists. It also refuses gates that are not fitted, or that were fitted on other questions. If
   Jev answers no case at all (an outage), nothing is kept and the holdout is not spent.
-- `--report` recomputes the bar from the kept answers with no network call. It prints each bar line with its
-  measured value, then `APP_ROUTER_BAR_OK` when lines 1 to 4 all hold; otherwise `APP_ROUTER_BAR_FAILED` and
-  exit 1. A gates file that changed since the holdout fails the report: that is a refit after the holdout.
+  This is round 1. It was scored with the gates as fitted, before the floor and the Mac app rule existed.
+- `--holdout2` is round 2: live Jev **once** over `app_holdout2.json`, answers in `app_holdout2_answers.json`,
+  the verdict in `app_holdout2_result.json`, and a second run is refused. It scores the **live path's whole
+  decision**: `mac_app_only` first, then the gates as a turn loads them (fitted, never under the floor). The
+  installed apps `mac_app_only` reads are a fixed list of 17 common Mac app names in the tool
+  (`app_route_eval.MAC_APPS`), so the score is the same on every host. The result file records that list, the
+  floor, the fitted gates and the gates used. Round 1's three files are never rewritten.
+- `--report` recomputes the bar from the kept answers of the **latest scored round**, with no network call. It
+  prints each bar line with its measured value, then `APP_ROUTER_BAR_OK` when lines 1 to 4 all hold for that
+  round; otherwise `APP_ROUTER_BAR_FAILED` and exit 1. Once round 2 is scored, round 1 is printed above it as
+  history, marked as seen data; it decides nothing. While only round 1 is scored, the report is round 1's, with
+  a note that a turn now loads floored gates, so the numbers are not the live rule's.
+- A gates file that changed since a round was scored fails the report for that round: that is a refit after
+  the holdout. The floor is not a change of that file. It is a code rule applied at load, and a round scored
+  after it records the floor, so a floor that is moved later fails the report too.
 
 A worktree has no `bridge/.venv`; there, use `uv run --project bridge python bridge/tools/app_route_eval.py`
 from the root.
@@ -256,7 +341,8 @@ from the root.
   it). A case may carry `"door": "call" | "app"` to choose for itself.
 - `--app-router on|off` forces `EVE_APP_ROUTER` for one arm. Each case's line then shows the claim
   (`router=tv:cannot,refused-start_task-x1`), and the totals add an `APP_ROUTER` line. A refused `start_task`
-  starts nothing, so it is not one of the case's actions; the next action is scored.
+  starts nothing, so it is not one of the case's actions; the next action is scored. The guard refuses once, so
+  a second `start_task` in the same case is an action and is scored as one.
 
 ```bash
 cd bridge
@@ -283,7 +369,7 @@ Written 2026-11-11 by the orchestrator, before any tuning or holdout result exis
 > 7. NEW overall accuracy >= BASE overall accuracy - 3 points (the documented noise floor).
 > The router is switched on by default only if 1-7 all hold. The bar is never changed after results exist.
 
-### Verdict
+### Verdict, round 1
 
 | Line | Measured | Verdict |
 |---|---|---|
@@ -291,7 +377,7 @@ Written 2026-11-11 by the orchestrator, before any tuning or holdout result exis
 | 2. Mac cases claimed, <= 0.03 | 0/24 | pass |
 | 3. neither cases claimed, <= 0.05 | 0/16 | pass |
 | 4. Jev p95, <= 800 ms | p95 418 ms, p50 262 ms, 0 errors | pass |
-| 5. device-app cases ending in the Mac agent, 0 | NEW 0/24 (BASE 1/24) | pass (see the note on its wording)  |
+| 5. device-app cases ending in the Mac agent, 0 | NEW 0/24 (BASE 1/24), first action only | pass (see the two notes on it) |
 | 6. Mac-task cases reaching the Mac agent, >= 0.90 | NEW 10/10 | pass |
 | 7. NEW overall >= BASE overall - 3 points | NEW 36/40 = 90.0%, BASE 34/40 = 85.0% | pass |
 
@@ -303,10 +389,16 @@ dataset case carries a method label, so method accuracy is not measured; no devi
 
 Three things a reader should know before trusting these numbers:
 
-- **Line 5's parenthesis was badly worded.** The line is "zero device-app cases end in the Mac agent", and that
-  held (0 of 24). Its parenthesis names `HARD_NEGATIVE_ACTED`, which the harness also counts when a device's own
-  tool is called on a request the device can't do (an accepted answer in this set). That count was 4 in NEW and 9
-  in BASE; none of NEW's four is the Mac agent.
+- **Line 5 was scored on the first action only.** The harness reads the first tool a case's turn calls and does
+  not follow what that tool starts. On first actions the line held: no device case's first action was
+  `start_task` (0 of 24).
+- **One NEW case ended in a chief job.** Line 5's parenthesis names `HARD_NEGATIVE_ACTED`, which the harness counts
+  for any action on a case that should have none. That count was 4 in NEW and 9 in BASE. Three of NEW's four are a
+  device's own tool called on a request the device can't do (an accepted answer in this set). The fourth, e2e-19,
+  was claimed for the lights and ended in `take_on`, a chief job. That is neither a device tool nor the guarded
+  `start_task` call. A chief job can start the Mac agent through its own path (`chief.py`), which this guard does
+  not cover and the eval does not follow, so "zero cases end in the Mac agent" is shown for first actions and not
+  for what a chief job did next.
 - **The end-to-end effect is small.** Both arms carry the new Limits sentences, and with those alone the chat
   model sent 1 of 24 device cases to the Mac agent. The router took that to 0. The guard refused no call in the
   run: the note was enough.
@@ -316,21 +408,60 @@ Three things a reader should know before trusting these numbers:
   6 holdout and 13 tuning cases, every one of them a Mac case, so no scored line moves; it is a rule added on seen
   data all the same, and it has no blind test of its own.
 
-`SHIPPED = True` since 2026-11-11: lines 1 to 7 all held.
+Lines 1 to 7 all held in round 1, and `SHIPPED` was True for it. It is False again: see round 2.
+
+## Round 2
+
+Round 1's sets are **seen data** now. A review of the branch read the holdout's answers and the end-to-end runs,
+and the changes below were made after round 1, on what it showed:
+
+- **The floor** under the fitted gates (`app_router.FLOOR`), because three devices' gates had no negative to hold
+  them up.
+- **The guard** refuses once, lifts when the claimed device's own tool has run, and is dropped with the note
+  line and the claim when the owner steers the turn or withdraws a gated question.
+- **The Mac app rule**: nothing but a launch or a quit, the planner's own wording, and not for the apps named
+  TV, Music and Home.
+- **The Limits wording** in the TV's and Spotify's blocks.
+- **The refusal and the note line** for a request the device can't do: neither tells the model to use a tool.
+
+A rule changed on seen data has no blind verdict. So `SHIPPED` is False, and **round 2 decides it**: a new
+router holdout (`app_holdout2.json`, scored once by `--holdout2` with the live path's whole decision) and a new
+end-to-end set, both written blind, against the same bar. The bar is not changed.
+
+| Line | Measured | Verdict |
+|---|---|---|
+| 1. device cases named right, >= 0.90 | | VERDICT: pending |
+| 2. Mac cases claimed, <= 0.03 | | VERDICT: pending |
+| 3. neither cases claimed, <= 0.05 | | VERDICT: pending |
+| 4. Jev p95, <= 800 ms | | VERDICT: pending |
+| 5. device-app cases ending in the Mac agent, 0 | | VERDICT: pending |
+| 6. Mac-task cases reaching the Mac agent, >= 0.90 | | VERDICT: pending |
+| 7. NEW overall >= BASE overall - 3 points | | VERDICT: pending |
 
 ## What is not covered
 
 - **The gates are fitted with every device live.** A Mac that lacks one sends fewer options to the Choice,
   so the remaining options' probabilities read a little higher than the fit saw. The device's own Noul and
   its lead over the Mac still have to clear, but the fit does not measure this.
-- **The wake-word voice** (`voice_agent.py`) is a separate brain with its own prompt. This router does not
-  run there.
+- **The wake-word voice brain** (`voice_agent.py`) is a separate brain with its own prompt and its own tool
+  loop. This router does not run there: no claim, no note line, no guard.
+- **Chief jobs.** `take_on` starts a chief job, and a chief job can start the Mac agent through its own path. The
+  guard refuses only the chat brain's own `start_task` call, so a claimed turn that ends in `take_on` is not
+  guarded, and the end-to-end eval scores the first action and does not follow the job (round 1's e2e-19).
+- **The layer-1 yes/no questions each hold more than one idea.** Every `for_<device>` Noul asks "something to
+  happen, or to be told something", then adds a "yes also" and one to three "no" exclusions; the Mac's has two
+  exclusions. One yes/no over several ideas reads lower than each idea alone would, which is consistent with the
+  low fitted Noul gates (music 0.15, camera 0.2). Splitting them into one question per idea, combined in code,
+  changes what Jev is asked, so it needs a refit and a new holdout. It was not done; the floor is the stopgap.
 - **Apps without tools** (Pika) and apps that are not devices (Debrief, Repos) are not in the table.
 - **Slot values** ("HDMI 1", "20 percent") stay the chat model's job. The method is a hint, not a call.
 
 ## Tests
 
 `bridge/tests/test_app_router.py`: the table against the schemas, the questions, the parsing, the rule, the
-fit, the eval tool, and the turn on fakes: the incident on a call (claimed for the TV, `start_task` refused,
-no agent started, one spoken line), a claim that leads to `firetv_control`, and request bodies that are
-byte for byte the same with no router, no claim, an error and a timeout.
+fit, the floor, the Mac app rule, the eval tool (both rounds), and the turn on fakes: the incident on a call
+(claimed for the TV, `start_task` refused, no agent started, one spoken line), a claim that leads to
+`firetv_control`, the guard refusing once and lifting after the device's own tool, a steered turn and a
+withdrawn question dropping the claim, and request bodies that are byte for byte the same with no router, no
+claim, an error and a timeout. No test reads the Mac's installed apps: `conftest.py` pins the list to none, and
+a test about apps passes its own.

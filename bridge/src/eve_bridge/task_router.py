@@ -458,3 +458,17 @@ def classify(goal: str, *, frontmost_app: str = "", apps: Iterable[str] = (), mo
             return Plan("launch", ("reflex",), app=app, reasons=("the rules did not know the wording; the model "
                                                                  "named a bare launch of an installed app",))
     return Plan("lane", ("lane", "astra"), reasons=("the lane may try; it declines unless one control covers every word",))
+
+
+def bare_launch_or_quit(goal: str, apps: Iterable[str]) -> str:
+    """The installed app a request is NOTHING BUT a launch or a quit of ("can you open Spotify", "okay, quit
+    Slack."), "*" for quit all, "" for anything else ("open Spotify and play something" has a rest, so it is not
+    one). It is ``classify``'s own verdict with no model, so the wording it knows is the planner's: the same polite
+    and spoken lead-ins, the same launch and quit rules. app_router.mac_app_only reads it; never raises."""
+    try:
+        plan = classify(goal, apps=tuple(apps))
+    except Exception:  # noqa: BLE001 — a rule that fails decides nothing
+        return ""
+    if plan.tiers != ("reflex",) or plan.rest:
+        return ""
+    return "*" if plan.kind == "quit_all" else plan.app if plan.kind in ("launch", "quit") else ""

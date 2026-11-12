@@ -444,8 +444,8 @@ INSTRUCTIONS = """You can control the owner's Spotify with spotify_control (play
 transfer to another device) and read it with spotify_now_playing. To play something by name, pass it as the query:
 an artist's name with kind artist plays that artist; a mood ("something chill") is a playlist query. "Turn it up"
 is volume_change 10. Say what you did in a few words.
-Limits: liking or saving a song, the queue, editing a playlist, shuffle, repeat and seeking are not among its
-actions; when the owner asks for one, say so in one line."""
+Limits: its actions are exactly the ones listed above. When the owner asks for anything else, tell them so in one
+line."""
 
 
 # ---- the code path -------------------------------------------------------------------------------------------

@@ -279,13 +279,22 @@ def about(name: str, read: str) -> str:
 REFUSED = {"ok": False, "reason": "the owner did not approve it; it did not run. Do not try it again this turn."}
 
 
+_WITHDRAWN_HEAD = 'the owner did not approve this, so it did not run; instead they wrote: "'
+
+
 def withdrawn(text: str) -> dict[str, Any]:
     """The result of a call whose question the owner withdrew by typing something else (EVE_GATE_WITHDRAW): it did
     not run, and the owner's own words are handed to the same turn to act on. The words are the owner's, typed in the
     chat, so they taint nothing. Model-visible text: it ships behind the switch until its blind eval passes."""
-    return {"ok": False, "reason": ('the owner did not approve this, so it did not run; instead they wrote: "'
-                                    + str(text) + '". Act on that now; do not retry the refused call unless '
-                                    "their words ask for it.")}
+    return {"ok": False, "reason": (_WITHDRAWN_HEAD + str(text) + '". Act on that now; do not retry the refused '
+                                    "call unless their words ask for it.")}
+
+
+def was_withdrawn(result: Any) -> bool:
+    """Whether a call's result is ``withdrawn``'s: the owner typed new words instead of answering its question, so
+    the turn now reads words that what was decided from its first message (the app router's claim) never saw."""
+    return (isinstance(result, dict) and result.get("ok") is False
+            and str(result.get("reason") or "").startswith(_WITHDRAWN_HEAD))
 TOO_LONG = {"ok": False, "reason": "too long to show the owner whole in a question, so it did not run; ask the owner "
                                    "to say what they want in their own words."}
 

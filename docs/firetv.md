@@ -261,9 +261,10 @@ its chip suspends. So:
 
 - **No HDMI input switching.** The TV's input switcher needs an
   Amazon-signed permission that the ADB shell does not have. The chat brain's
-  instructions name this limit, YouTube-only search and deep standby, and tell it
-  to say so in one line when you ask for one. With `EVE_APP_ROUTER=on`, such a
-  request is also kept away from the Mac agent ([app router](app-router.md)).
+  instructions name this limit and YouTube-only search, and tell it to say so in
+  one line when you ask for either; deep standby is stated separately. With
+  `EVE_APP_ROUTER=on`, the first call that would start the Mac agent for such a
+  request is refused once ([app router](app-router.md)).
 - **Search is YouTube only.** There is no Netflix or Prime Video search.
 - **Typing is plain ASCII**: English letters, digits and punctuation, up to
   200 characters.

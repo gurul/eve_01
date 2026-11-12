@@ -10,9 +10,11 @@ import asyncio
 import json
 from pathlib import Path
 
+import pytest
 from test_computer_agent import FakeClient, FakeWorker, _agent, _message, _response
 
 from eve_bridge import plan_contract as pc
+from eve_bridge import task_router
 from eve_bridge.computer_agent import PLAN_EXEC_DEFAULT, AgentConfig, configured
 
 PLAN = {"needs_eyes": False, "why": "", "final_say": "Calendar is on the year view.", "success": None, "steps": [
@@ -58,7 +60,10 @@ def test_it_ships_off_and_the_owner_has_a_switch() -> None:
     assert configured({"EVE_PLAN_EXEC": "1"}).plan_exec is True
 
 
-def test_a_plan_that_runs_costs_one_planner_call_and_none_at_the_end(tmp_path: Path) -> None:
+def test_a_plan_that_runs_costs_one_planner_call_and_none_at_the_end(tmp_path: Path,
+                                                                      monkeypatch: pytest.MonkeyPatch) -> None:
+    # the installed apps are this test's, never the host's (conftest pins them to none): the request names Calendar
+    monkeypatch.setattr(task_router, "_INSTALLED", ("Calendar", "Finder"))
     client = FakeClient([_plan_response(PLAN)])               # a second request would raise "ran out of responses"
     worker = PlanWorker([DONE])
     a, events = _agent(client, worker, tmp_path, config=_cfg(tmp_path))
