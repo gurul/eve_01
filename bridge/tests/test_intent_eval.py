@@ -376,3 +376,94 @@ def test_never_labels_are_reported_and_miss_the_bar(capsys: pytest.CaptureFixtur
     assert "NEVER_FIRED 1: n1->camera_aim" in capsys.readouterr().out
     assert ev.bars([moved, searched], ["web_search=0"]) == ["NEVER_FIRED n1"]
     assert ev.bars([searched], ["web_search=100"]) == []
+
+
+# ---- the call door, and the app router's arm (2026-11-11) ------------------------------------------------------------
+
+def _note(body: dict[str, Any]) -> str:
+    return "\n".join(c["text"] for i in body["input"] if i.get("role") == "developer" for c in i["content"])
+
+
+def test_the_call_door_carries_the_calls_note_and_the_default_door_is_unchanged() -> None:
+    from eve_bridge import telegram
+    from eve_bridge.link_chat import app_block
+
+    case = {"id": "c", "text": "what should i cook tonight", "primary": "none"}
+    rig = Rig(FakeApi(), FakeCreate(say("Pasta."), say("Pasta."), say("Pasta."), say("Pasta.")))
+    listener = object()
+    rig.inlet._call_say = listener
+    app = asyncio.run(ev._ask(rig.inlet, case, 0, set()))                        # the default: an app turn
+    called = asyncio.run(ev._ask(rig.inlet, case, 0, set(), "call"))             # --door call
+    own = asyncio.run(ev._ask(rig.inlet, {**case, "door": "call"}, 0, set()))    # the case's own door wins
+    typed = asyncio.run(ev._ask(rig.inlet, {**case, "door": "telegram"}, 0, set(), "call"))
+    first, second, third, fourth = rig.create.requests
+    block = app_block().strip()[:40]
+    assert block in first["instructions"] and telegram.CALL_NOTE not in _note(first)
+    for body in (second, third):
+        assert telegram.CALL_NOTE in _note(body) and block not in body["instructions"]
+    assert telegram.CALL_NOTE not in _note(fourth) and block not in fourth["instructions"]
+    assert app.passed and called.passed and own.passed and typed.passed
+    assert (app.extra, called.extra, own.extra, typed.extra) == ({}, {"door": "call"}, {"door": "call"},
+                                                                 {"door": "telegram"})
+    # the turn's marks are put back: nothing of the call leaks into the next case or the inlet
+    assert rig.inlet._call_say is listener and telegram._FROM_CALL.get() is None and telegram._FROM_APP.get() is None
+    assert ev.door_of({"door": "CALL"}) == "call" and ev.door_of({"door": "fax"}, "call") == "call"
+    assert ev.door_of({}) == "app" and ev.door_of({}, "fax") == "app"
+
+
+def test_a_case_shows_the_app_routers_claim_and_a_refused_start_task_is_not_an_action(
+        capsys: pytest.CaptureFixture[str]) -> None:
+    from test_app_router import FakeAppRouter, answer
+    from test_telegram import _FakeTV
+
+    from eve_bridge import app_router
+
+    case = {"id": "hdmi", "door": "call", "text": "Change TV input to HDMI 1.", "primary": "none",
+            "expect": ["tv_control"], "group": "hard_negative", "never": ["computer_task"]}
+    cant = FakeAppRouter(lambda offered: answer("tv", can=0.1, offered=offered))
+    rig = Rig(FakeApi(), FakeCreate(call("start_task", {"goal": "switch the input"}), say("The TV can't do that.")),
+              app_route=cant, firetv=_FakeTV())
+    row = asyncio.run(ev._ask(rig.inlet, case, 0, set()))
+    assert row.passed and row.got == "none" and not row.acted and not row.never_fired and rig.agents == []
+    assert row.extra == {"door": "call", "router": "tv:cannot,refused-start_task-x1"}
+    # the same model with the router off: the Mac agent's call is the action, and the case fails as it does today
+    off = Rig(FakeApi(), FakeCreate(call("start_task", {"goal": "switch the input"})), firetv=_FakeTV())
+    base = asyncio.run(ev._ask(off.inlet, case, 0, set()))
+    assert not base.passed and base.acted and base.never_fired == ["computer_task"] and "router" not in base.extra
+    # a claim the device can do, and no claim
+    can = Rig(FakeApi(), FakeCreate(call("firetv_control", {"action": "open_app", "app": "Prime Video"})),
+              app_route=FakeAppRouter(lambda offered: answer("tv", how="open_app", offered=offered)), firetv=_FakeTV())
+    opened = asyncio.run(ev._ask(can.inlet, {"id": "prime", "text": "open prime", "primary": "tv_control"}, 0, set()))
+    assert opened.passed and opened.extra == {"router": "tv:open_app"}
+    none = Rig(FakeApi(), FakeCreate(say("Hi.")), app_route=FakeAppRouter(), firetv=_FakeTV())
+    quiet = asyncio.run(ev._ask(none.inlet, {"id": "hi", "text": "hello there", "primary": "none"}, 0, set()))
+    assert quiet.extra == {"router": "none"} and ev.router_note(off.inlet) == ""
+    ev.report([row, base, opened, quiet])
+    out = capsys.readouterr().out
+    assert "PASS hdmi: primary=none accept=none|tv_control got=none door=call router=tv:cannot,refused-start_task-x1" in out
+    assert "FAIL hdmi: primary=none accept=none|tv_control got=computer_task (start_task) door=call\n" in out
+    assert "APP_ROUTER asked 3, claimed 2, start_task refused on 1: hdmi" in out
+    assert app_router.START_TASK == "start_task"
+    # a run with no router and the default door prints what it always printed
+    ev.report([_row("p", "none", ("none",), ("", "none"))])
+    plain = capsys.readouterr().out
+    assert "PASS p: primary=none accept=none got=none\n" in plain and "APP_ROUTER" not in plain and "door=" not in plain
+
+
+def test_the_app_router_flag_sets_the_switch_for_one_arm(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import os
+
+    monkeypatch.setattr(os, "environ", {"EVE_APP_ROUTER": "off"})
+    notes = ev._environment(tmp_path, "", "", "on")
+    assert os.environ["EVE_APP_ROUTER"] == "on" and "EVE_APP_ROUTER=on" in notes
+    monkeypatch.setattr(os, "environ", {"EVE_APP_ROUTER": "off"})
+    assert "EVE_APP_ROUTER=off" in ev._environment(tmp_path, "", "")              # the shell's, when no flag is given
+    monkeypatch.setattr(os, "environ", {})
+    assert "EVE_APP_ROUTER=(unset: default)" in ev._environment(tmp_path, "", "")
+    seen: dict[str, Any] = {}
+    monkeypatch.setattr(ev, "run", lambda *a: seen.update(args=a) or 0)
+    assert ev.main(["cases.json", "--door", "call", "--app-router", "on"]) == 0
+    assert seen["args"][-2:] == ("call", "on")
+    assert ev.main(["cases.json"]) == 0 and seen["args"][-2:] == ("app", "")
+    with pytest.raises(SystemExit):
+        ev.main(["cases.json", "--door", "fax"])

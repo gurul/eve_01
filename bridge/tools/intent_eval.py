@@ -25,7 +25,10 @@ acting tool fired at ANY step is listed apart (HARD_NEGATIVE_ACTED), whatever it
 (4) events >= 80%, restaurant_booking >= 90%, tv_control >= 80%; (5) PROVIDER_ERRORS is 0.
 
 **The turn is production's.** Each case is the first message of a fresh chat, as an Eve Link app turn (the app's
-block rides the instructions, and Jev grades it as production does). First every path TelegramInlet._handle answers
+block rides the instructions, and Jev grades it as production does). ``--door call`` scores the call door instead: the
+turn is marked as a call's (what TelegramInlet.hear sets for a push-to-talk turn), so the call's note rides the
+turn's developer message, the app's block does not, and nothing is graded. A case may carry ``"door": "call" | "app"``
+(or ``"telegram"``: a typed Telegram turn) to choose for itself; ``--door`` is the default for the cases that do not. First every path TelegramInlet._handle answers
 before any model call is checked, in its order ("/spend", "claude on", a /rundown phrasing, the chief's words, then
 the Fire TV, lights, Spotify and quick-answer matchers): such a message never reaches the brain, so it is scored by
 the code path (``code_route``) as the tool it runs. Everything else goes through TelegramInlet._think itself, with
@@ -39,8 +42,11 @@ toolsets), so the call it leads to is the one scored: the app the owner meant, n
 EVE_TELEGRAM_MODEL=gpt-6-luna, EVE_JEV_ROUTE=openrouter (Jev over OpenRouter's decisions endpoint),
 EVE_TOOLSET_ROUTER unset (auto: Jev on, toolset_router.SHIPPED), EVE_OPENTABLE=1, the chief and the grade
 router at their defaults (auto: on). The harness sets each of those that the shell has not set (``PRODUCTION``), and
-EVE_MENU_TOOLS=on unless the shell sets it (pass --menu-tools off to score the switch off). The run prints
-the configuration it used and refuses to run on keywords alone unless --allow-keywords is given.
+EVE_MENU_TOOLS=on unless the shell sets it (pass --menu-tools off to score the switch off). The app router
+(app_router.py) follows EVE_APP_ROUTER as production does (auto: on only once it has SHIPPED); ``--app-router on`` or
+``off`` forces it for one arm, and each case's line then shows what the router claimed and how many start_task calls
+its guard refused (a refused call starts nothing, so it is not one of the case's actions: the next one is scored).
+The run prints the configuration it used and refuses to run on keywords alone unless --allow-keywords is given.
 
 **What is lent**, with real schemas where eve defines them and nothing that can act: eve's own tools, web_search,
 memory (its real tool schemas over an empty stub), the chat log (a temporary file), the second brain (its real tools
@@ -559,6 +565,8 @@ def report(rows: Sequence[Row]) -> None:
         mark = "PASS" if r.passed else "FAIL"
         what = f"ERROR {r.error}" if r.error else f"got={r.got}" + (f" ({r.tool})" if r.tool else "") + (
             " [code word]" if r.via == "code" else "")
+        # the door and the app router's claim, only when the run has one to show (the default run prints neither)
+        what += "".join(f" {k}={r.extra[k]}" for k in ("door", "router") if r.extra.get(k))
         print(f"{mark} {r.id}: primary={r.primary} accept={'|'.join(r.accept)} {what}")
     print("-- by primary label --")
     for key, (p, n) in sorted(totals(rows).items()):
@@ -576,6 +584,12 @@ def report(rows: Sequence[Row]) -> None:
     print(f"JEV_ERRORS {len(jev)}" + (": " + ", ".join(f"{r.id} {r.jev}" for r in jev) if jev else ""))
     errors = [r for r in rows if r.error]
     print(f"PROVIDER_ERRORS {len(errors)}" + (": " + ", ".join(f"{r.id} {r.error}" for r in errors) if errors else ""))
+    routed = [r for r in rows if r.extra.get("router")]
+    if routed:
+        claimed = [r for r in routed if not str(r.extra["router"]).startswith("none")]
+        refused = [r for r in routed if "refused" in str(r.extra["router"])]
+        print(f"APP_ROUTER asked {len(routed)}, claimed {len(claimed)}, start_task refused on {len(refused)}"
+              + (": " + ", ".join(r.id for r in refused) if refused else ""))
 
 
 # ---- the lent services: real schemas, nothing that can act --------------------------------------------------
@@ -719,7 +733,7 @@ class _Workspace:
         return ""
 
 
-def _environment(scratch: Path, model: str, menu: str) -> list[str]:
+def _environment(scratch: Path, model: str, menu: str, app_router: str = "") -> list[str]:
     """The production switches the shell has not set, the door's placeholders, and every file the turn writes in
     ``scratch``. Keys are only the ones already exported; nothing is read from the owner's env file."""
     notes = []
@@ -732,6 +746,8 @@ def _environment(scratch: Path, model: str, menu: str) -> list[str]:
         os.environ["EVE_MENU_TOOLS"] = menu
     elif not os.environ.get("EVE_MENU_TOOLS"):
         os.environ["EVE_MENU_TOOLS"] = "on"
+    if app_router:
+        os.environ["EVE_APP_ROUTER"] = app_router        # one arm of a two-arm run; else the shell's, else auto
     os.environ.update({
         "EVE_TELEGRAM": "1", "EVE_TELEGRAM_TOKEN": "0:eval", "EVE_TELEGRAM_OWNER": "1",
         "EVE_SPEND_DIR": str(scratch / "spend"), "EVE_WATCH_FILE": str(scratch / "watches.json"),
@@ -739,7 +755,7 @@ def _environment(scratch: Path, model: str, menu: str) -> list[str]:
         "EVE_PHONE_LOCATION_FILE": str(scratch / "phone-location.json"),
     })
     for key in ("EVE_TELEGRAM_MODEL", "EVE_JEV_ROUTE", "EVE_TOOLSET_ROUTER", "EVE_OPENTABLE",
-                "EVE_CHIEF", "EVE_GRADE_ROUTER", "EVE_MENU_TOOLS"):
+                "EVE_CHIEF", "EVE_GRADE_ROUTER", "EVE_MENU_TOOLS", "EVE_APP_ROUTER"):
         notes.append(f"{key}={os.environ.get(key, '') or '(unset: default)'}")
     return notes
 
@@ -805,6 +821,7 @@ def _brain(scratch: Path, allow_keywords: bool) -> tuple[Any, list[str], Any]:
     notes = [f"model {cfg.model}, effort {cfg.effort}",
              f"toolset router: {toolset_router.mode()} ({'Jev' if jev else 'keywords only'}), "
              f"chief {'on' if inlet.chief is not None else 'off'}",
+             "app router: " + ("on (Jev)" if getattr(inlet, "_app_route", None) is not None else "off"),
              "this checkout has: " + ", ".join(f"{k} {'yes' if v else 'no'}" for k, v in have.items()),
              "lent: own tools, web_search, memory, chat log, second brain, watch, meet, "
              + "".join(f"{slot}, " for slot in lent_apps) + "phone location, science search, "
@@ -851,6 +868,19 @@ def _watch_jev() -> None:
         return out
 
     toolset_router.route_turn = route_turn
+    try:
+        from eve_bridge import app_router
+    except ImportError:              # an older checkout (BASE) has no app router
+        return
+    real_app = app_router.route_turn
+
+    def app_route_turn(*a: Any, **k: Any) -> Any:
+        out = real_app(*a, **k)
+        if getattr(out, "error", ""):
+            _JEV_SEEN.append(f"app-router {out.error}")
+        return out
+
+    app_router.route_turn = app_route_turn
 
 
 # A code path's label that changes something when it runs (lights, the TV, a session, a booking's browser task).
@@ -859,9 +889,35 @@ CODE_ACTING = frozenset({"stealth", "claude_relay", "codex", "coding_session", "
                          "screenshot"}) | {a.label for a in app_registry.by_code()}
 
 
-async def _ask(inlet: Any, case: Mapping[str, Any], i: int, writes: set[str]) -> Row:
+DOORS = ("app", "call", "telegram")
+
+
+def door_of(case: Mapping[str, Any], default: str = "app") -> str:
+    """The door a case is scored through: its own ``door`` when it names one of DOORS, else the run's."""
+    own = str(case.get("door") or "").strip().lower()
+    return own if own in DOORS else default if default in DOORS else "app"
+
+
+def router_note(inlet: Any) -> str:
+    """What the app router said on the turn just run, for the case's line: "" when the inlet has no router (the
+    switch is off, or an older checkout), else its claim ("tv can't", "music play", "none") and how many
+    start_task calls its guard refused. Names and counts only."""
+    if getattr(inlet, "_app_route", None) is None:
+        return ""
+    claim = getattr(inlet, "_app_claim", None)
+    app = str(getattr(claim, "app", "") or "")
+    if not app:
+        return "none"
+    what = app + ("" if getattr(claim, "can", True) else ":cannot") + (
+        f":{claim.method}" if getattr(claim, "method", "") else "")
+    refused = int(getattr(inlet, "_app_refused", 0) or 0)
+    return what + (f",refused-start_task-x{refused}" if refused else "")
+
+
+async def _ask(inlet: Any, case: Mapping[str, Any], i: int, writes: set[str], door: str = "app") -> Row:
     from eve_bridge import telegram as tg
 
+    door = door_of(case, door)
     text = str(case["text"])
     ident, want, first = str(case.get("id") or i), acceptable(case), primary(case)
     group = str(case.get("group") or "")
@@ -923,7 +979,17 @@ async def _ask(inlet: Any, case: Mapping[str, Any], i: int, writes: set[str]) ->
         tool_gate.MARKS.clear()                  # each case is a fresh chat
     except ImportError:
         pass
-    mark = tg._FROM_APP.set(f"eval-{ident}")      # an app turn: link_chat's block rides the request
+    # The door. An app turn: link_chat's block rides the request. A call turn: what TelegramInlet.hear sets for a
+    # push-to-talk turn (``_FROM_CALL`` and the inlet's listener are the same reader, telegram._call_reader), so
+    # the call's note rides the turn's developer message; what the turn would read out goes nowhere.
+    heard: list[str] = []
+    mark = tg._FROM_APP.set(f"eval-{ident}" if door == "app" else None)
+    call_mark = tg._FROM_CALL.set(heard.append if door == "call" else None)
+    was_listening = getattr(inlet, "_call_say", None)
+    if door == "call":
+        inlet._call_say = heard.append
+    # the door on the case's line only when it is not the default one, the router's claim only when one is on
+    extra: dict[str, Any] = {"door": door} if door != "app" else {}
     reply: Optional[str] = None
     try:
         reply, _rounds = await inlet._think([tg.message_item("user", text)], 0, daily=False, tail=0)
@@ -931,28 +997,34 @@ async def _ask(inlet: Any, case: Mapping[str, Any], i: int, writes: set[str]) ->
         pass
     except Exception as e:  # noqa: BLE001 — the type only
         return Row(ident, first, want, tuple(steps), "brain", group, type(e).__name__, jev=",".join(_JEV_SEEN),
-                   never=never)
+                   extra=extra, never=never)
     finally:
+        tg._FROM_CALL.reset(call_mark)
         tg._FROM_APP.reset(mark)
+        if door == "call":
+            inlet._call_say = was_listening
         inlet._turn_said = ""
         inlet._create = real_create
         tg.parse_response = real_parse
     jev = ",".join(_JEV_SEEN)
+    claimed = router_note(inlet)
+    if claimed:
+        extra["router"] = claimed
     if reply is not None:
         if not steps and opened:
             # open_app, then a reply: the app the owner meant (open_app_label)
             steps.append(Step("open_app", open_app_label(opened[0], text), False, rounds[0]))
         else:
             steps.append(Step("", reply_label(reply or "", first), False, rounds[0]))
-    return Row(ident, first, want, tuple(steps), "brain", group, jev=jev, never=never)
+    return Row(ident, first, want, tuple(steps), "brain", group, jev=jev, extra=extra, never=never)
 
 
 def run(path: Path, model: str = "", menu: str = "", allow_keywords: bool = False,
-        require: Sequence[str] = ()) -> int:
+        require: Sequence[str] = (), door: str = "app", app_router: str = "") -> int:
     cases = load_cases(path)
     with tempfile.TemporaryDirectory(prefix="intent-eval-") as tmp:
         scratch = Path(tmp)
-        env_notes = _environment(scratch, model, menu)
+        env_notes = _environment(scratch, model, menu, app_router)
         from eve_bridge import spend
 
         spend.set_dir(scratch / "spend")
@@ -961,13 +1033,13 @@ def run(path: Path, model: str = "", menu: str = "", allow_keywords: bool = Fals
         print("   env: " + " ".join(env_notes))
         for n in notes:
             print("   " + n)
-        print(f"   cases: {path.name}, {len(cases)}")
+        print(f"   cases: {path.name}, {len(cases)}" + (f"; door {door}" if door != "app" else ""))
 
         async def go() -> list[Row]:
             rows = []
             t0 = time.monotonic()
             for i, case in enumerate(cases):
-                rows.append(await _ask(inlet, case, i, writes))
+                rows.append(await _ask(inlet, case, i, writes, door))
             print(f"   {len(rows)} cases in {time.monotonic() - t0:.0f} s")
             return rows
 
@@ -1022,8 +1094,14 @@ def main(argv: Optional[list[str]] = None) -> int:
     p.add_argument("--require", action="append", default=[], metavar="LABEL=PCT",
                    help="a bar for this run: the cases whose primary is LABEL score at least PCT%%; with any --require, "
                         "HARD_NEGATIVE_ACTED and PROVIDER_ERRORS must also be 0. Prints INTENT_BAR_OK when all hold")
+    p.add_argument("--door", default="app", choices=DOORS,
+                   help="the door each case is scored through unless it carries its own \"door\" (default: app, "
+                        "the Eve Link app; call: a push-to-talk call turn, with the call's note)")
+    p.add_argument("--app-router", default="", choices=("", "on", "off", "auto"),
+                   help="EVE_APP_ROUTER for the run (default: the shell's, else auto): one arm of a two-arm run")
     args = p.parse_args(argv)
-    return run(Path(args.cases), args.model, args.menu_tools, args.allow_keywords, args.require)
+    return run(Path(args.cases), args.model, args.menu_tools, args.allow_keywords, args.require, args.door,
+               args.app_router)
 
 
 if __name__ == "__main__":
