@@ -1,0 +1,6366 @@
+{
+ "asked": "2026-11-11 20:36",
+ "questions": "04e08c3885f6538c",
+ "answers": {
+  "hold-001": {
+   "case": "1b0b37cc2971",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "tv",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 1.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.03,
+     "tv": 0.99,
+     "lights": 0.01,
+     "music": 0.03,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "power",
+      1.0
+     ],
+     "lights": [
+      "power",
+      0.79
+     ],
+     "music": [
+      "play",
+      0.58
+     ],
+     "camera": [
+      "status",
+      0.47
+     ]
+    },
+    "can": {
+     "tv": 0.99,
+     "lights": 0.05,
+     "music": 0.03,
+     "camera": 0.06
+    },
+    "ms": 340.0,
+    "error": ""
+   }
+  },
+  "hold-002": {
+   "case": "d911cbb8cb88",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "tv",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 1.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.05,
+     "tv": 0.95,
+     "lights": 0.02,
+     "music": 0.04,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "open_app",
+      1.0
+     ],
+     "lights": [
+      "power",
+      0.66
+     ],
+     "music": [
+      "play",
+      0.7
+     ],
+     "camera": [
+      "status",
+      0.44
+     ]
+    },
+    "can": {
+     "tv": 0.93,
+     "lights": 0.03,
+     "music": 0.05,
+     "camera": 0.05
+    },
+    "ms": 265.5,
+    "error": ""
+   }
+  },
+  "hold-003": {
+   "case": "f85e8884f227",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "tv",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 1.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.04,
+     "tv": 0.98,
+     "lights": 0.01,
+     "music": 0.1,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "volume",
+      1.0
+     ],
+     "lights": [
+      "brightness",
+      0.77
+     ],
+     "music": [
+      "volume",
+      1.0
+     ],
+     "camera": [
+      "status",
+      0.86
+     ]
+    },
+    "can": {
+     "tv": 0.97,
+     "lights": 0.02,
+     "music": 0.1,
+     "camera": 0.02
+    },
+    "ms": 220.5,
+    "error": ""
+   }
+  },
+  "hold-004": {
+   "case": "0a155e65ed3d",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "tv",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 1.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.04,
+     "tv": 0.99,
+     "lights": 0.01,
+     "music": 0.07,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "volume",
+      1.0
+     ],
+     "lights": [
+      "status",
+      0.48
+     ],
+     "music": [
+      "volume",
+      0.94
+     ],
+     "camera": [
+      "status",
+      0.72
+     ]
+    },
+    "can": {
+     "tv": 0.99,
+     "lights": 0.01,
+     "music": 0.03,
+     "camera": 0.02
+    },
+    "ms": 303.6,
+    "error": ""
+   }
+  },
+  "hold-005": {
+   "case": "ed3f69a3501a",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "tv",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 1.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.03,
+     "tv": 0.99,
+     "lights": 0.01,
+     "music": 0.02,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "status",
+      1.0
+     ],
+     "lights": [
+      "status",
+      0.98
+     ],
+     "music": [
+      "status",
+      0.98
+     ],
+     "camera": [
+      "status",
+      0.97
+     ]
+    },
+    "can": {
+     "tv": 0.99,
+     "lights": 0.06,
+     "music": 0.04,
+     "camera": 0.04
+    },
+    "ms": 259.4,
+    "error": ""
+   }
+  },
+  "hold-006": {
+   "case": "35710a35d3fa",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "tv",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 1.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.04,
+     "tv": 0.96,
+     "lights": 0.02,
+     "music": 0.04,
+     "camera": 0.02
+    },
+    "how": {
+     "tv": [
+      "keys",
+      1.0
+     ],
+     "lights": [
+      "status",
+      0.58
+     ],
+     "music": [
+      "skip",
+      0.67
+     ],
+     "camera": [
+      "aim",
+      0.77
+     ]
+    },
+    "can": {
+     "tv": 0.98,
+     "lights": 0.02,
+     "music": 0.04,
+     "camera": 0.04
+    },
+    "ms": 264.5,
+    "error": ""
+   }
+  },
+  "hold-007": {
+   "case": "4624374d900b",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "tv",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 1.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.04,
+     "tv": 0.99,
+     "lights": 0.01,
+     "music": 0.04,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "youtube",
+      1.0
+     ],
+     "lights": [
+      "status",
+      0.65
+     ],
+     "music": [
+      "play",
+      0.59
+     ],
+     "camera": [
+      "status",
+      0.63
+     ]
+    },
+    "can": {
+     "tv": 0.99,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.03
+    },
+    "ms": 255.6,
+    "error": ""
+   }
+  },
+  "hold-008": {
+   "case": "5b58cd071915",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "tv",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 1.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.06,
+     "tv": 0.94,
+     "lights": 0.02,
+     "music": 0.03,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "typing",
+      0.98
+     ],
+     "lights": [
+      "status",
+      0.65
+     ],
+     "music": [
+      "play",
+      0.7
+     ],
+     "camera": [
+      "status",
+      0.42
+     ]
+    },
+    "can": {
+     "tv": 0.92,
+     "lights": 0.04,
+     "music": 0.05,
+     "camera": 0.04
+    },
+    "ms": 267.7,
+    "error": ""
+   }
+  },
+  "hold-009": {
+   "case": "7bd5dbaa44d8",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "tv",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 1.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.04,
+     "tv": 0.98,
+     "lights": 0.01,
+     "music": 0.09,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "playback",
+      1.0
+     ],
+     "lights": [
+      "status",
+      0.56
+     ],
+     "music": [
+      "skip",
+      0.97
+     ],
+     "camera": [
+      "status",
+      0.51
+     ]
+    },
+    "can": {
+     "tv": 0.91,
+     "lights": 0.02,
+     "music": 0.04,
+     "camera": 0.03
+    },
+    "ms": 230.5,
+    "error": ""
+   }
+  },
+  "hold-010": {
+   "case": "a5f990468d5c",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "tv",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.97,
+     "lights": 0.0,
+     "music": 0.03,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.04,
+     "tv": 0.91,
+     "lights": 0.02,
+     "music": 0.15,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "volume",
+      1.0
+     ],
+     "lights": [
+      "brightness",
+      0.83
+     ],
+     "music": [
+      "volume",
+      0.99
+     ],
+     "camera": [
+      "status",
+      0.63
+     ]
+    },
+    "can": {
+     "tv": 0.97,
+     "lights": 0.03,
+     "music": 0.4,
+     "camera": 0.04
+    },
+    "ms": 295.5,
+    "error": ""
+   }
+  },
+  "hold-011": {
+   "case": "beb8149c9fdd",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "tv",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 1.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.04,
+     "tv": 0.98,
+     "lights": 0.01,
+     "music": 0.03,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "keys",
+      1.0
+     ],
+     "lights": [
+      "power",
+      0.58
+     ],
+     "music": [
+      "skip",
+      0.67
+     ],
+     "camera": [
+      "aim",
+      0.36
+     ]
+    },
+    "can": {
+     "tv": 0.98,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.02
+    },
+    "ms": 248.0,
+    "error": ""
+   }
+  },
+  "hold-012": {
+   "case": "d94590a81cc0",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "tv",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 1.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.04,
+     "tv": 0.99,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "status",
+      1.0
+     ],
+     "lights": [
+      "status",
+      0.99
+     ],
+     "music": [
+      "status",
+      0.98
+     ],
+     "camera": [
+      "status",
+      0.97
+     ]
+    },
+    "can": {
+     "tv": 0.99,
+     "lights": 0.05,
+     "music": 0.05,
+     "camera": 0.06
+    },
+    "ms": 272.9,
+    "error": ""
+   }
+  },
+  "hold-013": {
+   "case": "f3724339118e",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "tv",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 1.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.05,
+     "tv": 0.97,
+     "lights": 0.02,
+     "music": 0.05,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "open_app",
+      1.0
+     ],
+     "lights": [
+      "power",
+      0.56
+     ],
+     "music": [
+      "transfer",
+      0.39
+     ],
+     "camera": [
+      "status",
+      0.48
+     ]
+    },
+    "can": {
+     "tv": 0.95,
+     "lights": 0.02,
+     "music": 0.03,
+     "camera": 0.03
+    },
+    "ms": 266.3,
+    "error": ""
+   }
+  },
+  "hold-014": {
+   "case": "c56009ccff73",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "tv",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 1.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.05,
+     "tv": 0.96,
+     "lights": 0.02,
+     "music": 0.04,
+     "camera": 0.02
+    },
+    "how": {
+     "tv": [
+      "keys",
+      1.0
+     ],
+     "lights": [
+      "status",
+      0.52
+     ],
+     "music": [
+      "status",
+      0.56
+     ],
+     "camera": [
+      "preset",
+      0.66
+     ]
+    },
+    "can": {
+     "tv": 0.96,
+     "lights": 0.02,
+     "music": 0.04,
+     "camera": 0.04
+    },
+    "ms": 259.5,
+    "error": ""
+   }
+  },
+  "hold-015": {
+   "case": "3b7334bcea75",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "tv",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 1.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.04,
+     "tv": 0.99,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "power",
+      1.0
+     ],
+     "lights": [
+      "power",
+      0.91
+     ],
+     "music": [
+      "pause",
+      0.4
+     ],
+     "camera": [
+      "power",
+      0.73
+     ]
+    },
+    "can": {
+     "tv": 0.99,
+     "lights": 0.04,
+     "music": 0.02,
+     "camera": 0.03
+    },
+    "ms": 233.5,
+    "error": ""
+   }
+  },
+  "hold-016": {
+   "case": "b7c87a4d0ada",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "tv",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.97,
+     "lights": 0.0,
+     "music": 0.03,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.05,
+     "tv": 0.9,
+     "lights": 0.03,
+     "music": 0.12,
+     "camera": 0.02
+    },
+    "how": {
+     "tv": [
+      "playback",
+      1.0
+     ],
+     "lights": [
+      "power",
+      0.52
+     ],
+     "music": [
+      "play",
+      0.99
+     ],
+     "camera": [
+      "status",
+      0.56
+     ]
+    },
+    "can": {
+     "tv": 0.95,
+     "lights": 0.05,
+     "music": 0.4,
+     "camera": 0.07
+    },
+    "ms": 290.3,
+    "error": ""
+   }
+  },
+  "hold-017": {
+   "case": "988bd3a8e617",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "tv",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 1.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.04,
+     "tv": 0.99,
+     "lights": 0.01,
+     "music": 0.23,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "youtube",
+      0.73
+     ],
+     "lights": [
+      "status",
+      0.62
+     ],
+     "music": [
+      "play",
+      0.9
+     ],
+     "camera": [
+      "status",
+      0.7
+     ]
+    },
+    "can": {
+     "tv": 0.94,
+     "lights": 0.03,
+     "music": 0.07,
+     "camera": 0.04
+    },
+    "ms": 225.5,
+    "error": ""
+   }
+  },
+  "hold-018": {
+   "case": "dd534ae06bb5",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "tv",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 1.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.04,
+     "tv": 0.99,
+     "lights": 0.01,
+     "music": 0.06,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "playback",
+      1.0
+     ],
+     "lights": [
+      "status",
+      0.55
+     ],
+     "music": [
+      "skip",
+      0.69
+     ],
+     "camera": [
+      "status",
+      0.58
+     ]
+    },
+    "can": {
+     "tv": 0.96,
+     "lights": 0.01,
+     "music": 0.02,
+     "camera": 0.03
+    },
+    "ms": 298.1,
+    "error": ""
+   }
+  },
+  "hold-019": {
+   "case": "ac549395f59a",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "tv",
+    "probs": {
+     "other": 0.01,
+     "mac": 0.0,
+     "tv": 0.99,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.04,
+     "tv": 0.96,
+     "lights": 0.02,
+     "music": 0.04,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "keys",
+      0.98
+     ],
+     "lights": [
+      "power",
+      0.58
+     ],
+     "music": [
+      "transfer",
+      0.38
+     ],
+     "camera": [
+      "status",
+      0.59
+     ]
+    },
+    "can": {
+     "tv": 0.16,
+     "lights": 0.02,
+     "music": 0.03,
+     "camera": 0.04
+    },
+    "ms": 226.5,
+    "error": ""
+   }
+  },
+  "hold-020": {
+   "case": "16dc9c5779c9",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "tv",
+    "probs": {
+     "other": 0.1,
+     "mac": 0.0,
+     "tv": 0.9,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.05,
+     "tv": 0.95,
+     "lights": 0.01,
+     "music": 0.03,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "power",
+      0.58
+     ],
+     "lights": [
+      "power",
+      0.65
+     ],
+     "music": [
+      "play",
+      0.59
+     ],
+     "camera": [
+      "power",
+      0.73
+     ]
+    },
+    "can": {
+     "tv": 0.05,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.03
+    },
+    "ms": 417.6,
+    "error": ""
+   }
+  },
+  "hold-021": {
+   "case": "33ce40b890a4",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "tv",
+    "probs": {
+     "other": 0.03,
+     "mac": 0.0,
+     "tv": 0.97,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.04,
+     "tv": 0.94,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "keys",
+      0.67
+     ],
+     "lights": [
+      "colour",
+      0.51
+     ],
+     "music": [
+      "mode",
+      0.5
+     ],
+     "camera": [
+      "status",
+      0.43
+     ]
+    },
+    "can": {
+     "tv": 0.09,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.03
+    },
+    "ms": 210.3,
+    "error": ""
+   }
+  },
+  "hold-022": {
+   "case": "30aa9896ffb1",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "tv",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 1.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.04,
+     "tv": 0.98,
+     "lights": 0.01,
+     "music": 0.04,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "open_app",
+      0.74
+     ],
+     "lights": [
+      "status",
+      0.68
+     ],
+     "music": [
+      "play",
+      0.65
+     ],
+     "camera": [
+      "status",
+      0.65
+     ]
+    },
+    "can": {
+     "tv": 0.23,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.05
+    },
+    "ms": 230.7,
+    "error": ""
+   }
+  },
+  "hold-023": {
+   "case": "a8cbc73385da",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "tv",
+    "probs": {
+     "other": 0.01,
+     "mac": 0.0,
+     "tv": 0.99,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.04,
+     "tv": 0.96,
+     "lights": 0.01,
+     "music": 0.03,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "keys",
+      0.63
+     ],
+     "lights": [
+      "power",
+      0.57
+     ],
+     "music": [
+      "transfer",
+      0.52
+     ],
+     "camera": [
+      "status",
+      0.51
+     ]
+    },
+    "can": {
+     "tv": 0.1,
+     "lights": 0.02,
+     "music": 0.03,
+     "camera": 0.03
+    },
+    "ms": 321.1,
+    "error": ""
+   }
+  },
+  "hold-024": {
+   "case": "c99c6c1b6616",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "tv",
+    "probs": {
+     "other": 0.01,
+     "mac": 0.0,
+     "tv": 0.99,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.05,
+     "tv": 0.97,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "power",
+      1.0
+     ],
+     "lights": [
+      "power",
+      0.86
+     ],
+     "music": [
+      "status",
+      0.37
+     ],
+     "camera": [
+      "power",
+      0.51
+     ]
+    },
+    "can": {
+     "tv": 0.14,
+     "lights": 0.04,
+     "music": 0.02,
+     "camera": 0.03
+    },
+    "ms": 201.9,
+    "error": ""
+   }
+  },
+  "hold-025": {
+   "case": "c6c9980fd4e3",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "tv",
+    "probs": {
+     "other": 0.01,
+     "mac": 0.0,
+     "tv": 0.99,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.05,
+     "tv": 0.94,
+     "lights": 0.02,
+     "music": 0.05,
+     "camera": 0.03
+    },
+    "how": {
+     "tv": [
+      "typing",
+      0.8
+     ],
+     "lights": [
+      "status",
+      0.67
+     ],
+     "music": [
+      "play",
+      0.78
+     ],
+     "camera": [
+      "photo",
+      0.34
+     ]
+    },
+    "can": {
+     "tv": 0.52,
+     "lights": 0.03,
+     "music": 0.06,
+     "camera": 0.05
+    },
+    "ms": 224.6,
+    "error": ""
+   }
+  },
+  "hold-026": {
+   "case": "c958c9ab5fc7",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "tv",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 1.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.05,
+     "tv": 0.95,
+     "lights": 0.02,
+     "music": 0.23,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "volume",
+      0.98
+     ],
+     "lights": [
+      "brightness",
+      0.45
+     ],
+     "music": [
+      "volume",
+      1.0
+     ],
+     "camera": [
+      "status",
+      0.76
+     ]
+    },
+    "can": {
+     "tv": 0.15,
+     "lights": 0.02,
+     "music": 0.07,
+     "camera": 0.02
+    },
+    "ms": 262.6,
+    "error": ""
+   }
+  },
+  "hold-027": {
+   "case": "a0afc59c87c5",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "lights",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 1.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.03,
+     "tv": 0.02,
+     "lights": 0.99,
+     "music": 0.01,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "power",
+      0.96
+     ],
+     "lights": [
+      "power",
+      1.0
+     ],
+     "music": [
+      "mode",
+      0.4
+     ],
+     "camera": [
+      "power",
+      0.51
+     ]
+    },
+    "can": {
+     "tv": 0.06,
+     "lights": 1.0,
+     "music": 0.03,
+     "camera": 0.04
+    },
+    "ms": 235.0,
+    "error": ""
+   }
+  },
+  "hold-028": {
+   "case": "29b6de0560b1",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "lights",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 1.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.03,
+     "tv": 0.02,
+     "lights": 0.98,
+     "music": 0.02,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "volume",
+      0.73
+     ],
+     "lights": [
+      "brightness",
+      1.0
+     ],
+     "music": [
+      "volume",
+      0.93
+     ],
+     "camera": [
+      "status",
+      0.49
+     ]
+    },
+    "can": {
+     "tv": 0.02,
+     "lights": 0.91,
+     "music": 0.04,
+     "camera": 0.04
+    },
+    "ms": 290.6,
+    "error": ""
+   }
+  },
+  "hold-029": {
+   "case": "235c58b0ada7",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "lights",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 1.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.05,
+     "tv": 0.02,
+     "lights": 0.96,
+     "music": 0.01,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "power",
+      0.46
+     ],
+     "lights": [
+      "colour",
+      1.0
+     ],
+     "music": [
+      "mode",
+      0.7
+     ],
+     "camera": [
+      "status",
+      0.37
+     ]
+    },
+    "can": {
+     "tv": 0.01,
+     "lights": 0.97,
+     "music": 0.02,
+     "camera": 0.02
+    },
+    "ms": 280.1,
+    "error": ""
+   }
+  },
+  "hold-030": {
+   "case": "4d54bd90d979",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "lights",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 1.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.05,
+     "tv": 0.07,
+     "lights": 0.98,
+     "music": 0.04,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "power",
+      0.47
+     ],
+     "lights": [
+      "brightness",
+      0.89
+     ],
+     "music": [
+      "play",
+      0.55
+     ],
+     "camera": [
+      "preset",
+      0.48
+     ]
+    },
+    "can": {
+     "tv": 0.04,
+     "lights": 0.41,
+     "music": 0.03,
+     "camera": 0.03
+    },
+    "ms": 267.3,
+    "error": ""
+   }
+  },
+  "hold-031": {
+   "case": "3ef5aa00c54d",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "lights",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 1.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.04,
+     "tv": 0.02,
+     "lights": 0.97,
+     "music": 0.02,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "status",
+      0.99
+     ],
+     "lights": [
+      "status",
+      1.0
+     ],
+     "music": [
+      "status",
+      0.99
+     ],
+     "camera": [
+      "status",
+      0.99
+     ]
+    },
+    "can": {
+     "tv": 0.05,
+     "lights": 0.98,
+     "music": 0.04,
+     "camera": 0.05
+    },
+    "ms": 306.7,
+    "error": ""
+   }
+  },
+  "hold-032": {
+   "case": "deb3b6cc583f",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "lights",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 1.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.03,
+     "tv": 0.02,
+     "lights": 0.97,
+     "music": 0.03,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "volume",
+      0.74
+     ],
+     "lights": [
+      "brightness",
+      1.0
+     ],
+     "music": [
+      "volume",
+      0.92
+     ],
+     "camera": [
+      "zoom",
+      0.64
+     ]
+    },
+    "can": {
+     "tv": 0.05,
+     "lights": 0.98,
+     "music": 0.06,
+     "camera": 0.07
+    },
+    "ms": 255.8,
+    "error": ""
+   }
+  },
+  "hold-033": {
+   "case": "a2f69e01ebd4",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "lights",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 1.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.04,
+     "tv": 0.02,
+     "lights": 0.98,
+     "music": 0.01,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "status",
+      0.56
+     ],
+     "lights": [
+      "match",
+      1.0
+     ],
+     "music": [
+      "status",
+      0.35
+     ],
+     "camera": [
+      "status",
+      0.5
+     ]
+    },
+    "can": {
+     "tv": 0.02,
+     "lights": 0.99,
+     "music": 0.02,
+     "camera": 0.03
+    },
+    "ms": 232.0,
+    "error": ""
+   }
+  },
+  "hold-034": {
+   "case": "2712a459d07e",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "lights",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 1.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.04,
+     "tv": 0.03,
+     "lights": 0.91,
+     "music": 0.06,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "open_app",
+      0.39
+     ],
+     "lights": [
+      "colour",
+      0.75
+     ],
+     "music": [
+      "play",
+      0.67
+     ],
+     "camera": [
+      "status",
+      0.3
+     ]
+    },
+    "can": {
+     "tv": 0.03,
+     "lights": 0.14,
+     "music": 0.07,
+     "camera": 0.03
+    },
+    "ms": 234.3,
+    "error": ""
+   }
+  },
+  "hold-035": {
+   "case": "937dc91b1e81",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "lights",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 1.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.04,
+     "tv": 0.02,
+     "lights": 0.98,
+     "music": 0.02,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "power",
+      0.46
+     ],
+     "lights": [
+      "colour",
+      1.0
+     ],
+     "music": [
+      "play",
+      0.45
+     ],
+     "camera": [
+      "status",
+      0.39
+     ]
+    },
+    "can": {
+     "tv": 0.05,
+     "lights": 0.96,
+     "music": 0.03,
+     "camera": 0.04
+    },
+    "ms": 219.4,
+    "error": ""
+   }
+  },
+  "hold-036": {
+   "case": "47c99188fee6",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "lights",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 1.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.04,
+     "tv": 0.02,
+     "lights": 0.98,
+     "music": 0.01,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "status",
+      0.52
+     ],
+     "lights": [
+      "colour",
+      1.0
+     ],
+     "music": [
+      "play",
+      0.38
+     ],
+     "camera": [
+      "status",
+      0.53
+     ]
+    },
+    "can": {
+     "tv": 0.01,
+     "lights": 0.81,
+     "music": 0.02,
+     "camera": 0.03
+    },
+    "ms": 298.2,
+    "error": ""
+   }
+  },
+  "hold-037": {
+   "case": "ada6b69a4981",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "lights",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 1.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.04,
+     "tv": 0.02,
+     "lights": 0.98,
+     "music": 0.02,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "power",
+      0.97
+     ],
+     "lights": [
+      "power",
+      1.0
+     ],
+     "music": [
+      "mode",
+      0.35
+     ],
+     "camera": [
+      "power",
+      0.84
+     ]
+    },
+    "can": {
+     "tv": 0.03,
+     "lights": 0.93,
+     "music": 0.03,
+     "camera": 0.03
+    },
+    "ms": 232.5,
+    "error": ""
+   }
+  },
+  "hold-038": {
+   "case": "bdc8395b3b54",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "lights",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 1.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.05,
+     "tv": 0.04,
+     "lights": 0.94,
+     "music": 0.02,
+     "camera": 0.03
+    },
+    "how": {
+     "tv": [
+      "power",
+      0.82
+     ],
+     "lights": [
+      "power",
+      0.78
+     ],
+     "music": [
+      "play",
+      0.58
+     ],
+     "camera": [
+      "power",
+      0.3
+     ]
+    },
+    "can": {
+     "tv": 0.03,
+     "lights": 0.7,
+     "music": 0.02,
+     "camera": 0.03
+    },
+    "ms": 291.6,
+    "error": ""
+   }
+  },
+  "hold-039": {
+   "case": "6220640cc844",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "lights",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 1.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.05,
+     "tv": 0.03,
+     "lights": 0.96,
+     "music": 0.02,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "status",
+      0.99
+     ],
+     "lights": [
+      "status",
+      0.99
+     ],
+     "music": [
+      "status",
+      0.99
+     ],
+     "camera": [
+      "status",
+      0.99
+     ]
+    },
+    "can": {
+     "tv": 0.07,
+     "lights": 0.94,
+     "music": 0.05,
+     "camera": 0.08
+    },
+    "ms": 256.7,
+    "error": ""
+   }
+  },
+  "hold-040": {
+   "case": "ce47f58d9447",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "lights",
+    "probs": {
+     "other": 0.01,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.99,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.04,
+     "tv": 0.02,
+     "lights": 0.97,
+     "music": 0.02,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "power",
+      0.96
+     ],
+     "lights": [
+      "power",
+      1.0
+     ],
+     "music": [
+      "play",
+      0.32
+     ],
+     "camera": [
+      "power",
+      0.45
+     ]
+    },
+    "can": {
+     "tv": 0.03,
+     "lights": 0.65,
+     "music": 0.02,
+     "camera": 0.03
+    },
+    "ms": 267.5,
+    "error": ""
+   }
+  },
+  "hold-041": {
+   "case": "a480d550be3d",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "lights",
+    "probs": {
+     "other": 0.02,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.98,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.04,
+     "tv": 0.02,
+     "lights": 0.97,
+     "music": 0.1,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "status",
+      0.28
+     ],
+     "lights": [
+      "brightness",
+      0.57
+     ],
+     "music": [
+      "mode",
+      0.61
+     ],
+     "camera": [
+      "tracking",
+      0.48
+     ]
+    },
+    "can": {
+     "tv": 0.02,
+     "lights": 0.02,
+     "music": 0.03,
+     "camera": 0.02
+    },
+    "ms": 326.0,
+    "error": ""
+   }
+  },
+  "hold-042": {
+   "case": "291139748da8",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "lights",
+    "probs": {
+     "other": 0.33,
+     "mac": 0.01,
+     "tv": 0.0,
+     "lights": 0.66,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.14,
+     "tv": 0.04,
+     "lights": 0.64,
+     "music": 0.02,
+     "camera": 0.02
+    },
+    "how": {
+     "tv": [
+      "status",
+      0.49
+     ],
+     "lights": [
+      "colour",
+      0.9
+     ],
+     "music": [
+      "status",
+      0.56
+     ],
+     "camera": [
+      "preset",
+      0.93
+     ]
+    },
+    "can": {
+     "tv": 0.03,
+     "lights": 0.07,
+     "music": 0.03,
+     "camera": 0.03
+    },
+    "ms": 216.9,
+    "error": ""
+   }
+  },
+  "hold-043": {
+   "case": "213a2abccba1",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "lights",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 1.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.05,
+     "tv": 0.02,
+     "lights": 0.96,
+     "music": 0.01,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "power",
+      0.96
+     ],
+     "lights": [
+      "power",
+      1.0
+     ],
+     "music": [
+      "play",
+      0.44
+     ],
+     "camera": [
+      "power",
+      0.59
+     ]
+    },
+    "can": {
+     "tv": 0.03,
+     "lights": 0.34,
+     "music": 0.02,
+     "camera": 0.03
+    },
+    "ms": 237.7,
+    "error": ""
+   }
+  },
+  "hold-044": {
+   "case": "f67ec9e9d795",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "lights",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 1.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.04,
+     "tv": 0.03,
+     "lights": 0.95,
+     "music": 0.02,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "status",
+      0.39
+     ],
+     "lights": [
+      "colour",
+      0.99
+     ],
+     "music": [
+      "play",
+      0.74
+     ],
+     "camera": [
+      "status",
+      0.33
+     ]
+    },
+    "can": {
+     "tv": 0.02,
+     "lights": 0.08,
+     "music": 0.02,
+     "camera": 0.02
+    },
+    "ms": 269.3,
+    "error": ""
+   }
+  },
+  "hold-045": {
+   "case": "c8bc84d2a406",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "music",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 1.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.07,
+     "tv": 0.08,
+     "lights": 0.01,
+     "music": 0.99,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "youtube",
+      0.44
+     ],
+     "lights": [
+      "power",
+      0.48
+     ],
+     "music": [
+      "play",
+      1.0
+     ],
+     "camera": [
+      "status",
+      0.57
+     ]
+    },
+    "can": {
+     "tv": 0.08,
+     "lights": 0.03,
+     "music": 0.98,
+     "camera": 0.03
+    },
+    "ms": 246.1,
+    "error": ""
+   }
+  },
+  "hold-046": {
+   "case": "723355d4d6ee",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "music",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 1.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.05,
+     "tv": 0.04,
+     "lights": 0.01,
+     "music": 0.99,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "playback",
+      1.0
+     ],
+     "lights": [
+      "status",
+      0.57
+     ],
+     "music": [
+      "pause",
+      1.0
+     ],
+     "camera": [
+      "status",
+      0.64
+     ]
+    },
+    "can": {
+     "tv": 0.12,
+     "lights": 0.02,
+     "music": 1.0,
+     "camera": 0.03
+    },
+    "ms": 281.6,
+    "error": ""
+   }
+  },
+  "hold-047": {
+   "case": "ef762f4a0ae7",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "music",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 1.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.06,
+     "tv": 0.06,
+     "lights": 0.02,
+     "music": 0.95,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "volume",
+      0.99
+     ],
+     "lights": [
+      "brightness",
+      0.99
+     ],
+     "music": [
+      "volume",
+      1.0
+     ],
+     "camera": [
+      "zoom",
+      0.6
+     ]
+    },
+    "can": {
+     "tv": 0.28,
+     "lights": 0.05,
+     "music": 0.95,
+     "camera": 0.03
+    },
+    "ms": 250.5,
+    "error": ""
+   }
+  },
+  "hold-048": {
+   "case": "0aa0cc7668f3",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "music",
+    "probs": {
+     "other": 0.01,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.99,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.08,
+     "tv": 0.06,
+     "lights": 0.03,
+     "music": 0.93,
+     "camera": 0.02
+    },
+    "how": {
+     "tv": [
+      "status",
+      0.68
+     ],
+     "lights": [
+      "status",
+      0.99
+     ],
+     "music": [
+      "status",
+      0.99
+     ],
+     "camera": [
+      "status",
+      0.79
+     ]
+    },
+    "can": {
+     "tv": 0.1,
+     "lights": 0.05,
+     "music": 0.74,
+     "camera": 0.05
+    },
+    "ms": 267.7,
+    "error": ""
+   }
+  },
+  "hold-049": {
+   "case": "7da6d58de649",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "music",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 1.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.08,
+     "tv": 0.07,
+     "lights": 0.03,
+     "music": 0.97,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "youtube",
+      0.42
+     ],
+     "lights": [
+      "colour",
+      0.75
+     ],
+     "music": [
+      "play",
+      1.0
+     ],
+     "camera": [
+      "status",
+      0.5
+     ]
+    },
+    "can": {
+     "tv": 0.09,
+     "lights": 0.04,
+     "music": 0.95,
+     "camera": 0.02
+    },
+    "ms": 251.6,
+    "error": ""
+   }
+  },
+  "hold-050": {
+   "case": "d15d82b53911",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "music",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 1.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.07,
+     "tv": 0.07,
+     "lights": 0.03,
+     "music": 0.95,
+     "camera": 0.02
+    },
+    "how": {
+     "tv": [
+      "playback",
+      1.0
+     ],
+     "lights": [
+      "power",
+      0.61
+     ],
+     "music": [
+      "skip",
+      1.0
+     ],
+     "camera": [
+      "tracking",
+      0.4
+     ]
+    },
+    "can": {
+     "tv": 0.42,
+     "lights": 0.04,
+     "music": 0.95,
+     "camera": 0.07
+    },
+    "ms": 272.6,
+    "error": ""
+   }
+  },
+  "hold-051": {
+   "case": "52db1318de18",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "music",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 1.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.05,
+     "tv": 0.03,
+     "lights": 0.01,
+     "music": 0.99,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "playback",
+      0.44
+     ],
+     "lights": [
+      "status",
+      0.4
+     ],
+     "music": [
+      "transfer",
+      1.0
+     ],
+     "camera": [
+      "status",
+      0.69
+     ]
+    },
+    "can": {
+     "tv": 0.02,
+     "lights": 0.01,
+     "music": 0.98,
+     "camera": 0.02
+    },
+    "ms": 272.1,
+    "error": ""
+   }
+  },
+  "hold-052": {
+   "case": "03f81926720d",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "music",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 1.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.07,
+     "tv": 0.1,
+     "lights": 0.01,
+     "music": 0.98,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "youtube",
+      0.55
+     ],
+     "lights": [
+      "status",
+      0.5
+     ],
+     "music": [
+      "play",
+      1.0
+     ],
+     "camera": [
+      "status",
+      0.5
+     ]
+    },
+    "can": {
+     "tv": 0.16,
+     "lights": 0.02,
+     "music": 0.94,
+     "camera": 0.02
+    },
+    "ms": 250.0,
+    "error": ""
+   }
+  },
+  "hold-053": {
+   "case": "82e9e023b9d0",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "music",
+    "probs": {
+     "other": 0.07,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.93,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.1,
+     "tv": 0.08,
+     "lights": 0.06,
+     "music": 0.76,
+     "camera": 0.07
+    },
+    "how": {
+     "tv": [
+      "playback",
+      0.91
+     ],
+     "lights": [
+      "power",
+      0.42
+     ],
+     "music": [
+      "play",
+      0.94
+     ],
+     "camera": [
+      "tracking",
+      0.48
+     ]
+    },
+    "can": {
+     "tv": 0.16,
+     "lights": 0.12,
+     "music": 0.73,
+     "camera": 0.13
+    },
+    "ms": 236.4,
+    "error": ""
+   }
+  },
+  "hold-054": {
+   "case": "62d336c8d00a",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "music",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.01,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.99,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.08,
+     "tv": 0.1,
+     "lights": 0.01,
+     "music": 0.95,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "volume",
+      0.93
+     ],
+     "lights": [
+      "brightness",
+      0.87
+     ],
+     "music": [
+      "volume",
+      1.0
+     ],
+     "camera": [
+      "status",
+      0.79
+     ]
+    },
+    "can": {
+     "tv": 0.25,
+     "lights": 0.02,
+     "music": 0.91,
+     "camera": 0.02
+    },
+    "ms": 288.4,
+    "error": ""
+   }
+  },
+  "hold-055": {
+   "case": "457d1c223750",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "music",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 1.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.06,
+     "tv": 0.08,
+     "lights": 0.01,
+     "music": 0.97,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "playback",
+      0.96
+     ],
+     "lights": [
+      "status",
+      0.52
+     ],
+     "music": [
+      "skip",
+      1.0
+     ],
+     "camera": [
+      "preset",
+      0.62
+     ]
+    },
+    "can": {
+     "tv": 0.15,
+     "lights": 0.02,
+     "music": 0.99,
+     "camera": 0.02
+    },
+    "ms": 245.2,
+    "error": ""
+   }
+  },
+  "hold-056": {
+   "case": "1dfa11fe96cf",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "music",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 1.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.07,
+     "tv": 0.06,
+     "lights": 0.01,
+     "music": 0.99,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "playback",
+      0.69
+     ],
+     "lights": [
+      "power",
+      0.52
+     ],
+     "music": [
+      "play",
+      1.0
+     ],
+     "camera": [
+      "status",
+      0.51
+     ]
+    },
+    "can": {
+     "tv": 0.05,
+     "lights": 0.02,
+     "music": 0.97,
+     "camera": 0.02
+    },
+    "ms": 279.5,
+    "error": ""
+   }
+  },
+  "hold-057": {
+   "case": "5b6f27afa5bd",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "music",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 1.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.07,
+     "tv": 0.1,
+     "lights": 0.01,
+     "music": 0.96,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "status",
+      0.92
+     ],
+     "lights": [
+      "status",
+      0.99
+     ],
+     "music": [
+      "status",
+      1.0
+     ],
+     "camera": [
+      "status",
+      0.96
+     ]
+    },
+    "can": {
+     "tv": 0.12,
+     "lights": 0.03,
+     "music": 0.9,
+     "camera": 0.03
+    },
+    "ms": 271.9,
+    "error": ""
+   }
+  },
+  "hold-058": {
+   "case": "b40e0c3ccd44",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "music",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 1.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.07,
+     "tv": 0.05,
+     "lights": 0.01,
+     "music": 0.96,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "playback",
+      0.95
+     ],
+     "lights": [
+      "power",
+      0.53
+     ],
+     "music": [
+      "pause",
+      1.0
+     ],
+     "camera": [
+      "status",
+      0.45
+     ]
+    },
+    "can": {
+     "tv": 0.09,
+     "lights": 0.02,
+     "music": 0.92,
+     "camera": 0.04
+    },
+    "ms": 253.6,
+    "error": ""
+   }
+  },
+  "hold-059": {
+   "case": "03294b2ba102",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "music",
+    "probs": {
+     "other": 0.07,
+     "mac": 0.01,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.92,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.13,
+     "tv": 0.09,
+     "lights": 0.02,
+     "music": 0.36,
+     "camera": 0.02
+    },
+    "how": {
+     "tv": [
+      "playback",
+      0.48
+     ],
+     "lights": [
+      "status",
+      0.33
+     ],
+     "music": [
+      "play",
+      0.86
+     ],
+     "camera": [
+      "photo",
+      0.73
+     ]
+    },
+    "can": {
+     "tv": 0.05,
+     "lights": 0.02,
+     "music": 0.03,
+     "camera": 0.02
+    },
+    "ms": 227.0,
+    "error": ""
+   }
+  },
+  "hold-060": {
+   "case": "6df188e0fe33",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "music",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.01,
+     "lights": 0.0,
+     "music": 0.99,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.1,
+     "tv": 0.16,
+     "lights": 0.02,
+     "music": 0.87,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "playback",
+      0.82
+     ],
+     "lights": [
+      "status",
+      0.51
+     ],
+     "music": [
+      "play",
+      0.95
+     ],
+     "camera": [
+      "status",
+      0.4
+     ]
+    },
+    "can": {
+     "tv": 0.15,
+     "lights": 0.02,
+     "music": 0.12,
+     "camera": 0.02
+    },
+    "ms": 296.7,
+    "error": ""
+   }
+  },
+  "hold-061": {
+   "case": "3646a1f9f469",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "music",
+    "probs": {
+     "other": 0.06,
+     "mac": 0.01,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.93,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.17,
+     "tv": 0.09,
+     "lights": 0.02,
+     "music": 0.36,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "open_app",
+      0.53
+     ],
+     "lights": [
+      "power",
+      0.32
+     ],
+     "music": [
+      "play",
+      0.99
+     ],
+     "camera": [
+      "photo",
+      0.56
+     ]
+    },
+    "can": {
+     "tv": 0.03,
+     "lights": 0.01,
+     "music": 0.02,
+     "camera": 0.02
+    },
+    "ms": 230.0,
+    "error": ""
+   }
+  },
+  "hold-062": {
+   "case": "952a7dd7e76e",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "music",
+    "probs": {
+     "other": 0.01,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.99,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.1,
+     "tv": 0.13,
+     "lights": 0.04,
+     "music": 0.62,
+     "camera": 0.02
+    },
+    "how": {
+     "tv": [
+      "playback",
+      0.84
+     ],
+     "lights": [
+      "power",
+      0.7
+     ],
+     "music": [
+      "mode",
+      0.72
+     ],
+     "camera": [
+      "tracking",
+      0.89
+     ]
+    },
+    "can": {
+     "tv": 0.08,
+     "lights": 0.02,
+     "music": 0.04,
+     "camera": 0.02
+    },
+    "ms": 293.8,
+    "error": ""
+   }
+  },
+  "hold-063": {
+   "case": "2b534ddc02a1",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "music",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.01,
+     "lights": 0.0,
+     "music": 0.99,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.08,
+     "tv": 0.12,
+     "lights": 0.02,
+     "music": 0.79,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "playback",
+      1.0
+     ],
+     "lights": [
+      "status",
+      0.49
+     ],
+     "music": [
+      "skip",
+      0.69
+     ],
+     "camera": [
+      "preset",
+      0.58
+     ]
+    },
+    "can": {
+     "tv": 0.37,
+     "lights": 0.01,
+     "music": 0.03,
+     "camera": 0.01
+    },
+    "ms": 271.9,
+    "error": ""
+   }
+  },
+  "hold-064": {
+   "case": "2b279d3f5bb2",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "music",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 1.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.08,
+     "tv": 0.06,
+     "lights": 0.02,
+     "music": 0.73,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "playback",
+      0.99
+     ],
+     "lights": [
+      "status",
+      0.39
+     ],
+     "music": [
+      "play",
+      0.89
+     ],
+     "camera": [
+      "tracking",
+      0.59
+     ]
+    },
+    "can": {
+     "tv": 0.07,
+     "lights": 0.02,
+     "music": 0.04,
+     "camera": 0.03
+    },
+    "ms": 250.9,
+    "error": ""
+   }
+  },
+  "hold-065": {
+   "case": "4f54686b655d",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "camera",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 1.0
+    },
+    "nouls": {
+     "mac": 0.16,
+     "tv": 0.03,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.97
+    },
+    "how": {
+     "tv": [
+      "picture",
+      1.0
+     ],
+     "lights": [
+      "status",
+      0.63
+     ],
+     "music": [
+      "play",
+      0.56
+     ],
+     "camera": [
+      "photo",
+      1.0
+     ]
+    },
+    "can": {
+     "tv": 0.08,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.99
+    },
+    "ms": 290.5,
+    "error": ""
+   }
+  },
+  "hold-066": {
+   "case": "42a8f9f31099",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "camera",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 1.0
+    },
+    "nouls": {
+     "mac": 0.09,
+     "tv": 0.02,
+     "lights": 0.01,
+     "music": 0.01,
+     "camera": 0.98
+    },
+    "how": {
+     "tv": [
+      "keys",
+      0.81
+     ],
+     "lights": [
+      "status",
+      0.57
+     ],
+     "music": [
+      "status",
+      0.53
+     ],
+     "camera": [
+      "aim",
+      1.0
+     ]
+    },
+    "can": {
+     "tv": 0.03,
+     "lights": 0.01,
+     "music": 0.02,
+     "camera": 0.99
+    },
+    "ms": 263.3,
+    "error": ""
+   }
+  },
+  "hold-067": {
+   "case": "646aa27ae9be",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "camera",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 1.0
+    },
+    "nouls": {
+     "mac": 0.12,
+     "tv": 0.01,
+     "lights": 0.01,
+     "music": 0.01,
+     "camera": 0.99
+    },
+    "how": {
+     "tv": [
+      "picture",
+      0.49
+     ],
+     "lights": [
+      "status",
+      0.46
+     ],
+     "music": [
+      "status",
+      0.41
+     ],
+     "camera": [
+      "zoom",
+      1.0
+     ]
+    },
+    "can": {
+     "tv": 0.01,
+     "lights": 0.01,
+     "music": 0.01,
+     "camera": 0.96
+    },
+    "ms": 240.1,
+    "error": ""
+   }
+  },
+  "hold-068": {
+   "case": "fe4fe33d1a13",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "camera",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 1.0
+    },
+    "nouls": {
+     "mac": 0.08,
+     "tv": 0.02,
+     "lights": 0.01,
+     "music": 0.02,
+     "camera": 0.95
+    },
+    "how": {
+     "tv": [
+      "power",
+      0.48
+     ],
+     "lights": [
+      "power",
+      0.76
+     ],
+     "music": [
+      "mode",
+      0.83
+     ],
+     "camera": [
+      "tracking",
+      1.0
+     ]
+    },
+    "can": {
+     "tv": 0.01,
+     "lights": 0.01,
+     "music": 0.02,
+     "camera": 0.97
+    },
+    "ms": 261.1,
+    "error": ""
+   }
+  },
+  "hold-069": {
+   "case": "db0b4d3f3ba3",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "camera",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 1.0
+    },
+    "nouls": {
+     "mac": 0.21,
+     "tv": 0.02,
+     "lights": 0.01,
+     "music": 0.01,
+     "camera": 0.99
+    },
+    "how": {
+     "tv": [
+      "picture",
+      0.96
+     ],
+     "lights": [
+      "status",
+      0.72
+     ],
+     "music": [
+      "status",
+      0.58
+     ],
+     "camera": [
+      "photo",
+      1.0
+     ]
+    },
+    "can": {
+     "tv": 0.03,
+     "lights": 0.02,
+     "music": 0.01,
+     "camera": 0.98
+    },
+    "ms": 723.0,
+    "error": ""
+   }
+  },
+  "hold-070": {
+   "case": "857a9abdeb9e",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "camera",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 1.0
+    },
+    "nouls": {
+     "mac": 0.1,
+     "tv": 0.01,
+     "lights": 0.01,
+     "music": 0.01,
+     "camera": 0.97
+    },
+    "how": {
+     "tv": [
+      "picture",
+      0.46
+     ],
+     "lights": [
+      "status",
+      0.66
+     ],
+     "music": [
+      "status",
+      0.47
+     ],
+     "camera": [
+      "aim",
+      1.0
+     ]
+    },
+    "can": {
+     "tv": 0.01,
+     "lights": 0.01,
+     "music": 0.02,
+     "camera": 0.99
+    },
+    "ms": 638.3,
+    "error": ""
+   }
+  },
+  "hold-071": {
+   "case": "2becb9e45585",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "camera",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 1.0
+    },
+    "nouls": {
+     "mac": 0.08,
+     "tv": 0.02,
+     "lights": 0.02,
+     "music": 0.01,
+     "camera": 0.99
+    },
+    "how": {
+     "tv": [
+      "status",
+      0.96
+     ],
+     "lights": [
+      "status",
+      1.0
+     ],
+     "music": [
+      "status",
+      0.99
+     ],
+     "camera": [
+      "status",
+      1.0
+     ]
+    },
+    "can": {
+     "tv": 0.03,
+     "lights": 0.04,
+     "music": 0.05,
+     "camera": 0.99
+    },
+    "ms": 299.9,
+    "error": ""
+   }
+  },
+  "hold-072": {
+   "case": "fef415ac497a",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "camera",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 1.0
+    },
+    "nouls": {
+     "mac": 0.07,
+     "tv": 0.02,
+     "lights": 0.02,
+     "music": 0.01,
+     "camera": 0.96
+    },
+    "how": {
+     "tv": [
+      "keys",
+      0.77
+     ],
+     "lights": [
+      "status",
+      0.47
+     ],
+     "music": [
+      "status",
+      0.49
+     ],
+     "camera": [
+      "aim",
+      1.0
+     ]
+    },
+    "can": {
+     "tv": 0.09,
+     "lights": 0.03,
+     "music": 0.04,
+     "camera": 0.82
+    },
+    "ms": 276.5,
+    "error": ""
+   }
+  },
+  "hold-073": {
+   "case": "9fc7dc854603",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "camera",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 1.0
+    },
+    "nouls": {
+     "mac": 0.11,
+     "tv": 0.02,
+     "lights": 0.01,
+     "music": 0.01,
+     "camera": 0.99
+    },
+    "how": {
+     "tv": [
+      "power",
+      0.65
+     ],
+     "lights": [
+      "power",
+      0.76
+     ],
+     "music": [
+      "mode",
+      0.72
+     ],
+     "camera": [
+      "power",
+      1.0
+     ]
+    },
+    "can": {
+     "tv": 0.01,
+     "lights": 0.01,
+     "music": 0.02,
+     "camera": 0.99
+    },
+    "ms": 244.7,
+    "error": ""
+   }
+  },
+  "hold-074": {
+   "case": "4f25c433813a",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "camera",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 1.0
+    },
+    "nouls": {
+     "mac": 0.09,
+     "tv": 0.02,
+     "lights": 0.01,
+     "music": 0.01,
+     "camera": 0.95
+    },
+    "how": {
+     "tv": [
+      "picture",
+      0.37
+     ],
+     "lights": [
+      "status",
+      0.44
+     ],
+     "music": [
+      "status",
+      0.5
+     ],
+     "camera": [
+      "preset",
+      1.0
+     ]
+    },
+    "can": {
+     "tv": 0.02,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.88
+    },
+    "ms": 220.5,
+    "error": ""
+   }
+  },
+  "hold-075": {
+   "case": "cec46a6b4957",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "camera",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 1.0
+    },
+    "nouls": {
+     "mac": 0.1,
+     "tv": 0.02,
+     "lights": 0.01,
+     "music": 0.02,
+     "camera": 0.99
+    },
+    "how": {
+     "tv": [
+      "power",
+      0.55
+     ],
+     "lights": [
+      "power",
+      0.63
+     ],
+     "music": [
+      "status",
+      0.38
+     ],
+     "camera": [
+      "power",
+      1.0
+     ]
+    },
+    "can": {
+     "tv": 0.03,
+     "lights": 0.03,
+     "music": 0.03,
+     "camera": 0.99
+    },
+    "ms": 256.6,
+    "error": ""
+   }
+  },
+  "hold-076": {
+   "case": "cb1007a92fc4",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "camera",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 1.0
+    },
+    "nouls": {
+     "mac": 0.11,
+     "tv": 0.02,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.86
+    },
+    "how": {
+     "tv": [
+      "picture",
+      0.39
+     ],
+     "lights": [
+      "status",
+      0.53
+     ],
+     "music": [
+      "status",
+      0.35
+     ],
+     "camera": [
+      "preset",
+      0.54
+     ]
+    },
+    "can": {
+     "tv": 0.02,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.37
+    },
+    "ms": 230.6,
+    "error": ""
+   }
+  },
+  "hold-077": {
+   "case": "59cfc75057fa",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "camera",
+    "probs": {
+     "other": 0.16,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.84
+    },
+    "nouls": {
+     "mac": 0.14,
+     "tv": 0.03,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.92
+    },
+    "how": {
+     "tv": [
+      "picture",
+      0.69
+     ],
+     "lights": [
+      "status",
+      0.66
+     ],
+     "music": [
+      "mode",
+      0.36
+     ],
+     "camera": [
+      "photo",
+      1.0
+     ]
+    },
+    "can": {
+     "tv": 0.02,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.02
+    },
+    "ms": 246.8,
+    "error": ""
+   }
+  },
+  "hold-078": {
+   "case": "2c331930c5ee",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "camera",
+    "probs": {
+     "other": 0.06,
+     "mac": 0.01,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.93
+    },
+    "nouls": {
+     "mac": 0.12,
+     "tv": 0.02,
+     "lights": 0.05,
+     "music": 0.02,
+     "camera": 0.46
+    },
+    "how": {
+     "tv": [
+      "picture",
+      0.77
+     ],
+     "lights": [
+      "brightness",
+      0.97
+     ],
+     "music": [
+      "volume",
+      0.6
+     ],
+     "camera": [
+      "photo",
+      0.56
+     ]
+    },
+    "can": {
+     "tv": 0.02,
+     "lights": 0.06,
+     "music": 0.02,
+     "camera": 0.03
+    },
+    "ms": 217.8,
+    "error": ""
+   }
+  },
+  "hold-079": {
+   "case": "3604912d9dcf",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "camera",
+    "probs": {
+     "other": 0.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 1.0
+    },
+    "nouls": {
+     "mac": 0.14,
+     "tv": 0.02,
+     "lights": 0.01,
+     "music": 0.01,
+     "camera": 0.89
+    },
+    "how": {
+     "tv": [
+      "picture",
+      0.44
+     ],
+     "lights": [
+      "status",
+      0.5
+     ],
+     "music": [
+      "mode",
+      0.52
+     ],
+     "camera": [
+      "tracking",
+      0.99
+     ]
+    },
+    "can": {
+     "tv": 0.01,
+     "lights": 0.01,
+     "music": 0.01,
+     "camera": 0.78
+    },
+    "ms": 209.5,
+    "error": ""
+   }
+  },
+  "hold-080": {
+   "case": "b46b053c99a7",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "camera",
+    "probs": {
+     "other": 0.12,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.88
+    },
+    "nouls": {
+     "mac": 0.21,
+     "tv": 0.05,
+     "lights": 0.03,
+     "music": 0.03,
+     "camera": 0.88
+    },
+    "how": {
+     "tv": [
+      "picture",
+      0.67
+     ],
+     "lights": [
+      "status",
+      0.63
+     ],
+     "music": [
+      "play",
+      0.64
+     ],
+     "camera": [
+      "photo",
+      0.99
+     ]
+    },
+    "can": {
+     "tv": 0.06,
+     "lights": 0.04,
+     "music": 0.04,
+     "camera": 0.03
+    },
+    "ms": 336.9,
+    "error": ""
+   }
+  },
+  "hold-081": {
+   "case": "d1e736385388",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "mac",
+    "probs": {
+     "other": 0.02,
+     "mac": 0.94,
+     "tv": 0.01,
+     "lights": 0.0,
+     "music": 0.03,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.8,
+     "tv": 0.05,
+     "lights": 0.01,
+     "music": 0.21,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "open_app",
+      1.0
+     ],
+     "lights": [
+      "status",
+      0.55
+     ],
+     "music": [
+      "play",
+      0.86
+     ],
+     "camera": [
+      "status",
+      0.65
+     ]
+    },
+    "can": {
+     "tv": 0.17,
+     "lights": 0.02,
+     "music": 0.04,
+     "camera": 0.02
+    },
+    "ms": 284.4,
+    "error": ""
+   }
+  },
+  "hold-082": {
+   "case": "04bc2d96ae18",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "mac",
+    "probs": {
+     "other": 0.04,
+     "mac": 0.66,
+     "tv": 0.3,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.44,
+     "tv": 0.28,
+     "lights": 0.02,
+     "music": 0.07,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "youtube",
+      0.92
+     ],
+     "lights": [
+      "status",
+      0.6
+     ],
+     "music": [
+      "play",
+      0.97
+     ],
+     "camera": [
+      "photo",
+      0.49
+     ]
+    },
+    "can": {
+     "tv": 0.43,
+     "lights": 0.02,
+     "music": 0.03,
+     "camera": 0.03
+    },
+    "ms": 218.9,
+    "error": ""
+   }
+  },
+  "hold-083": {
+   "case": "3bdd72bcb5e0",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "mac",
+    "probs": {
+     "other": 0.03,
+     "mac": 0.74,
+     "tv": 0.23,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.33,
+     "tv": 0.36,
+     "lights": 0.02,
+     "music": 0.03,
+     "camera": 0.02
+    },
+    "how": {
+     "tv": [
+      "open_app",
+      1.0
+     ],
+     "lights": [
+      "status",
+      0.58
+     ],
+     "music": [
+      "transfer",
+      0.53
+     ],
+     "camera": [
+      "status",
+      0.59
+     ]
+    },
+    "can": {
+     "tv": 0.29,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.02
+    },
+    "ms": 303.5,
+    "error": ""
+   }
+  },
+  "hold-084": {
+   "case": "c548759f076f",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "mac",
+    "probs": {
+     "other": 0.04,
+     "mac": 0.96,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.74,
+     "tv": 0.03,
+     "lights": 0.02,
+     "music": 0.03,
+     "camera": 0.02
+    },
+    "how": {
+     "tv": [
+      "power",
+      0.54
+     ],
+     "lights": [
+      "power",
+      0.76
+     ],
+     "music": [
+      "mode",
+      0.49
+     ],
+     "camera": [
+      "power",
+      0.53
+     ]
+    },
+    "can": {
+     "tv": 0.01,
+     "lights": 0.01,
+     "music": 0.02,
+     "camera": 0.01
+    },
+    "ms": 224.2,
+    "error": ""
+   }
+  },
+  "hold-085": {
+   "case": "abe032853e00",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "mac",
+    "probs": {
+     "other": 0.13,
+     "mac": 0.87,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.8,
+     "tv": 0.07,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "open_app",
+      1.0
+     ],
+     "lights": [
+      "status",
+      0.63
+     ],
+     "music": [
+      "play",
+      0.53
+     ],
+     "camera": [
+      "status",
+      0.5
+     ]
+    },
+    "can": {
+     "tv": 0.08,
+     "lights": 0.01,
+     "music": 0.01,
+     "camera": 0.02
+    },
+    "ms": 300.7,
+    "error": ""
+   }
+  },
+  "hold-086": {
+   "case": "d44cce8a981d",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "mac",
+    "probs": {
+     "other": 0.06,
+     "mac": 0.9,
+     "tv": 0.04,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.66,
+     "tv": 0.09,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.02
+    },
+    "how": {
+     "tv": [
+      "open_app",
+      0.43
+     ],
+     "lights": [
+      "power",
+      0.6
+     ],
+     "music": [
+      "pause",
+      0.4
+     ],
+     "camera": [
+      "status",
+      0.45
+     ]
+    },
+    "can": {
+     "tv": 0.06,
+     "lights": 0.03,
+     "music": 0.04,
+     "camera": 0.04
+    },
+    "ms": 238.0,
+    "error": ""
+   }
+  },
+  "hold-087": {
+   "case": "1c394f54d3c6",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "mac",
+    "probs": {
+     "other": 0.04,
+     "mac": 0.95,
+     "tv": 0.01,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.77,
+     "tv": 0.1,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "open_app",
+      0.75
+     ],
+     "lights": [
+      "status",
+      0.66
+     ],
+     "music": [
+      "status",
+      0.5
+     ],
+     "camera": [
+      "status",
+      0.48
+     ]
+    },
+    "can": {
+     "tv": 0.05,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.02
+    },
+    "ms": 285.0,
+    "error": ""
+   }
+  },
+  "hold-088": {
+   "case": "581828d64d0b",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "mac",
+    "probs": {
+     "other": 0.09,
+     "mac": 0.91,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.71,
+     "tv": 0.04,
+     "lights": 0.06,
+     "music": 0.02,
+     "camera": 0.02
+    },
+    "how": {
+     "tv": [
+      "open_app",
+      0.42
+     ],
+     "lights": [
+      "colour",
+      0.62
+     ],
+     "music": [
+      "mode",
+      0.47
+     ],
+     "camera": [
+      "status",
+      0.62
+     ]
+    },
+    "can": {
+     "tv": 0.03,
+     "lights": 0.05,
+     "music": 0.02,
+     "camera": 0.02
+    },
+    "ms": 265.0,
+    "error": ""
+   }
+  },
+  "hold-089": {
+   "case": "9755c9346d27",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "mac",
+    "probs": {
+     "other": 0.01,
+     "mac": 0.98,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.01
+    },
+    "nouls": {
+     "mac": 0.81,
+     "tv": 0.04,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.15
+    },
+    "how": {
+     "tv": [
+      "open_app",
+      1.0
+     ],
+     "lights": [
+      "status",
+      0.53
+     ],
+     "music": [
+      "play",
+      0.61
+     ],
+     "camera": [
+      "photo",
+      0.61
+     ]
+    },
+    "can": {
+     "tv": 0.17,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.04
+    },
+    "ms": 260.0,
+    "error": ""
+   }
+  },
+  "hold-090": {
+   "case": "632099a1cf55",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "mac",
+    "probs": {
+     "other": 0.06,
+     "mac": 0.92,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.02
+    },
+    "nouls": {
+     "mac": 0.75,
+     "tv": 0.04,
+     "lights": 0.02,
+     "music": 0.03,
+     "camera": 0.14
+    },
+    "how": {
+     "tv": [
+      "open_app",
+      0.63
+     ],
+     "lights": [
+      "power",
+      0.59
+     ],
+     "music": [
+      "pause",
+      0.74
+     ],
+     "camera": [
+      "zoom",
+      0.81
+     ]
+    },
+    "can": {
+     "tv": 0.03,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.17
+    },
+    "ms": 227.1,
+    "error": ""
+   }
+  },
+  "hold-091": {
+   "case": "65183d1e5bcc",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "mac",
+    "probs": {
+     "other": 0.16,
+     "mac": 0.64,
+     "tv": 0.2,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.55,
+     "tv": 0.23,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.03
+    },
+    "how": {
+     "tv": [
+      "picture",
+      0.46
+     ],
+     "lights": [
+      "status",
+      0.63
+     ],
+     "music": [
+      "play",
+      0.54
+     ],
+     "camera": [
+      "photo",
+      0.98
+     ]
+    },
+    "can": {
+     "tv": 0.08,
+     "lights": 0.03,
+     "music": 0.03,
+     "camera": 0.04
+    },
+    "ms": 294.9,
+    "error": ""
+   }
+  },
+  "hold-092": {
+   "case": "5a64885d7052",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "mac",
+    "probs": {
+     "other": 0.04,
+     "mac": 0.96,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.74,
+     "tv": 0.03,
+     "lights": 0.03,
+     "music": 0.02,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "status",
+      0.34
+     ],
+     "lights": [
+      "brightness",
+      0.97
+     ],
+     "music": [
+      "volume",
+      0.89
+     ],
+     "camera": [
+      "status",
+      0.7
+     ]
+    },
+    "can": {
+     "tv": 0.02,
+     "lights": 0.04,
+     "music": 0.02,
+     "camera": 0.01
+    },
+    "ms": 234.1,
+    "error": ""
+   }
+  },
+  "hold-093": {
+   "case": "5f8eb58fe527",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "mac",
+    "probs": {
+     "other": 0.03,
+     "mac": 0.82,
+     "tv": 0.15,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.63,
+     "tv": 0.2,
+     "lights": 0.02,
+     "music": 0.06,
+     "camera": 0.02
+    },
+    "how": {
+     "tv": [
+      "open_app",
+      0.99
+     ],
+     "lights": [
+      "status",
+      0.56
+     ],
+     "music": [
+      "play",
+      0.76
+     ],
+     "camera": [
+      "status",
+      0.56
+     ]
+    },
+    "can": {
+     "tv": 0.12,
+     "lights": 0.02,
+     "music": 0.04,
+     "camera": 0.03
+    },
+    "ms": 487.8,
+    "error": ""
+   }
+  },
+  "hold-094": {
+   "case": "25b10f85c523",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "mac",
+    "probs": {
+     "other": 0.02,
+     "mac": 0.98,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.85,
+     "tv": 0.03,
+     "lights": 0.01,
+     "music": 0.12,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "open_app",
+      0.61
+     ],
+     "lights": [
+      "status",
+      0.51
+     ],
+     "music": [
+      "transfer",
+      0.99
+     ],
+     "camera": [
+      "status",
+      0.78
+     ]
+    },
+    "can": {
+     "tv": 0.01,
+     "lights": 0.01,
+     "music": 0.06,
+     "camera": 0.01
+    },
+    "ms": 525.2,
+    "error": ""
+   }
+  },
+  "hold-095": {
+   "case": "9f9f498e62bf",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "mac",
+    "probs": {
+     "other": 0.21,
+     "mac": 0.79,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.79,
+     "tv": 0.03,
+     "lights": 0.02,
+     "music": 0.01,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "open_app",
+      0.45
+     ],
+     "lights": [
+      "power",
+      0.64
+     ],
+     "music": [
+      "status",
+      0.5
+     ],
+     "camera": [
+      "photo",
+      0.57
+     ]
+    },
+    "can": {
+     "tv": 0.01,
+     "lights": 0.01,
+     "music": 0.01,
+     "camera": 0.01
+    },
+    "ms": 522.6,
+    "error": ""
+   }
+  },
+  "hold-096": {
+   "case": "1ff3a7bd008e",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "mac",
+    "probs": {
+     "other": 0.14,
+     "mac": 0.86,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.9,
+     "tv": 0.03,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "open_app",
+      0.83
+     ],
+     "lights": [
+      "status",
+      0.53
+     ],
+     "music": [
+      "status",
+      0.51
+     ],
+     "camera": [
+      "status",
+      0.51
+     ]
+    },
+    "can": {
+     "tv": 0.01,
+     "lights": 0.01,
+     "music": 0.01,
+     "camera": 0.01
+    },
+    "ms": 327.7,
+    "error": ""
+   }
+  },
+  "hold-097": {
+   "case": "7e21d0004b27",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "mac",
+    "probs": {
+     "other": 0.01,
+     "mac": 0.97,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.02,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.82,
+     "tv": 0.05,
+     "lights": 0.02,
+     "music": 0.13,
+     "camera": 0.02
+    },
+    "how": {
+     "tv": [
+      "open_app",
+      0.99
+     ],
+     "lights": [
+      "status",
+      0.72
+     ],
+     "music": [
+      "play",
+      0.54
+     ],
+     "camera": [
+      "status",
+      0.54
+     ]
+    },
+    "can": {
+     "tv": 0.15,
+     "lights": 0.02,
+     "music": 0.05,
+     "camera": 0.02
+    },
+    "ms": 238.8,
+    "error": ""
+   }
+  },
+  "hold-098": {
+   "case": "bc6e7578d222",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "mac",
+    "probs": {
+     "other": 0.27,
+     "mac": 0.73,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.83,
+     "tv": 0.04,
+     "lights": 0.02,
+     "music": 0.01,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "open_app",
+      0.78
+     ],
+     "lights": [
+      "status",
+      0.72
+     ],
+     "music": [
+      "play",
+      0.67
+     ],
+     "camera": [
+      "status",
+      0.56
+     ]
+    },
+    "can": {
+     "tv": 0.02,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.02
+    },
+    "ms": 286.7,
+    "error": ""
+   }
+  },
+  "hold-099": {
+   "case": "1b21acd84f90",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "mac",
+    "probs": {
+     "other": 0.02,
+     "mac": 0.95,
+     "tv": 0.03,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.68,
+     "tv": 0.14,
+     "lights": 0.04,
+     "music": 0.02,
+     "camera": 0.02
+    },
+    "how": {
+     "tv": [
+      "open_app",
+      0.55
+     ],
+     "lights": [
+      "status",
+      0.36
+     ],
+     "music": [
+      "status",
+      0.4
+     ],
+     "camera": [
+      "status",
+      0.52
+     ]
+    },
+    "can": {
+     "tv": 0.27,
+     "lights": 0.04,
+     "music": 0.04,
+     "camera": 0.05
+    },
+    "ms": 204.5,
+    "error": ""
+   }
+  },
+  "hold-100": {
+   "case": "d5572c857cc7",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "mac",
+    "probs": {
+     "other": 0.09,
+     "mac": 0.6,
+     "tv": 0.16,
+     "lights": 0.0,
+     "music": 0.15,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.25,
+     "tv": 0.2,
+     "lights": 0.03,
+     "music": 0.39,
+     "camera": 0.03
+    },
+    "how": {
+     "tv": [
+      "volume",
+      1.0
+     ],
+     "lights": [
+      "power",
+      0.63
+     ],
+     "music": [
+      "volume",
+      0.95
+     ],
+     "camera": [
+      "power",
+      0.57
+     ]
+    },
+    "can": {
+     "tv": 0.56,
+     "lights": 0.02,
+     "music": 0.22,
+     "camera": 0.03
+    },
+    "ms": 317.8,
+    "error": ""
+   }
+  },
+  "hold-101": {
+   "case": "af9fc026af2f",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "mac",
+    "probs": {
+     "other": 0.02,
+     "mac": 0.96,
+     "tv": 0.02,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.78,
+     "tv": 0.05,
+     "lights": 0.07,
+     "music": 0.02,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "open_app",
+      1.0
+     ],
+     "lights": [
+      "status",
+      0.52
+     ],
+     "music": [
+      "play",
+      0.49
+     ],
+     "camera": [
+      "status",
+      0.64
+     ]
+    },
+    "can": {
+     "tv": 0.17,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.02
+    },
+    "ms": 248.3,
+    "error": ""
+   }
+  },
+  "hold-102": {
+   "case": "558053f351ff",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "mac",
+    "probs": {
+     "other": 0.12,
+     "mac": 0.88,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.78,
+     "tv": 0.04,
+     "lights": 0.01,
+     "music": 0.01,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "open_app",
+      0.97
+     ],
+     "lights": [
+      "power",
+      0.55
+     ],
+     "music": [
+      "play",
+      0.73
+     ],
+     "camera": [
+      "photo",
+      0.69
+     ]
+    },
+    "can": {
+     "tv": 0.03,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.02
+    },
+    "ms": 572.2,
+    "error": ""
+   }
+  },
+  "hold-103": {
+   "case": "c564c8b65586",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "mac",
+    "probs": {
+     "other": 0.03,
+     "mac": 0.89,
+     "tv": 0.08,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.6,
+     "tv": 0.16,
+     "lights": 0.03,
+     "music": 0.04,
+     "camera": 0.02
+    },
+    "how": {
+     "tv": [
+      "keys",
+      0.7
+     ],
+     "lights": [
+      "status",
+      0.38
+     ],
+     "music": [
+      "play",
+      0.6
+     ],
+     "camera": [
+      "zoom",
+      0.57
+     ]
+    },
+    "can": {
+     "tv": 0.08,
+     "lights": 0.02,
+     "music": 0.04,
+     "camera": 0.04
+    },
+    "ms": 228.4,
+    "error": ""
+   }
+  },
+  "hold-104": {
+   "case": "5f4a5810efbf",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "mac",
+    "probs": {
+     "other": 0.08,
+     "mac": 0.9,
+     "tv": 0.02,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.71,
+     "tv": 0.08,
+     "lights": 0.02,
+     "music": 0.03,
+     "camera": 0.02
+    },
+    "how": {
+     "tv": [
+      "open_app",
+      0.81
+     ],
+     "lights": [
+      "power",
+      0.48
+     ],
+     "music": [
+      "status",
+      0.55
+     ],
+     "camera": [
+      "status",
+      0.42
+     ]
+    },
+    "can": {
+     "tv": 0.19,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.02
+    },
+    "ms": 285.3,
+    "error": ""
+   }
+  },
+  "hold-105": {
+   "case": "6bddde76a98c",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "other",
+    "probs": {
+     "other": 0.89,
+     "mac": 0.0,
+     "tv": 0.11,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.08,
+     "tv": 0.36,
+     "lights": 0.01,
+     "music": 0.05,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "youtube",
+      0.54
+     ],
+     "lights": [
+      "status",
+      0.88
+     ],
+     "music": [
+      "status",
+      0.54
+     ],
+     "camera": [
+      "status",
+      0.68
+     ]
+    },
+    "can": {
+     "tv": 0.02,
+     "lights": 0.03,
+     "music": 0.02,
+     "camera": 0.03
+    },
+    "ms": 259.6,
+    "error": ""
+   }
+  },
+  "hold-106": {
+   "case": "1bab39f30727",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "other",
+    "probs": {
+     "other": 0.98,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.02,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.08,
+     "tv": 0.03,
+     "lights": 0.13,
+     "music": 0.01,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "youtube",
+      0.55
+     ],
+     "lights": [
+      "status",
+      0.5
+     ],
+     "music": [
+      "status",
+      0.69
+     ],
+     "camera": [
+      "status",
+      0.71
+     ]
+    },
+    "can": {
+     "tv": 0.04,
+     "lights": 0.02,
+     "music": 0.01,
+     "camera": 0.02
+    },
+    "ms": 282.2,
+    "error": ""
+   }
+  },
+  "hold-107": {
+   "case": "5dd4aeb56e5f",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "other",
+    "probs": {
+     "other": 1.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.54,
+     "tv": 0.03,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "status",
+      0.67
+     ],
+     "lights": [
+      "status",
+      0.98
+     ],
+     "music": [
+      "status",
+      0.9
+     ],
+     "camera": [
+      "status",
+      0.83
+     ]
+    },
+    "can": {
+     "tv": 0.01,
+     "lights": 0.02,
+     "music": 0.01,
+     "camera": 0.02
+    },
+    "ms": 242.9,
+    "error": ""
+   }
+  },
+  "hold-108": {
+   "case": "c41b3c8d04ed",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "other",
+    "probs": {
+     "other": 1.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.2,
+     "tv": 0.15,
+     "lights": 0.01,
+     "music": 0.02,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "status",
+      0.42
+     ],
+     "lights": [
+      "status",
+      0.68
+     ],
+     "music": [
+      "play",
+      0.48
+     ],
+     "camera": [
+      "status",
+      0.53
+     ]
+    },
+    "can": {
+     "tv": 0.02,
+     "lights": 0.02,
+     "music": 0.01,
+     "camera": 0.03
+    },
+    "ms": 224.4,
+    "error": ""
+   }
+  },
+  "hold-109": {
+   "case": "fcf202bf5f3a",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "other",
+    "probs": {
+     "other": 0.93,
+     "mac": 0.0,
+     "tv": 0.03,
+     "lights": 0.0,
+     "music": 0.04,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.1,
+     "tv": 0.09,
+     "lights": 0.02,
+     "music": 0.1,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "youtube",
+      0.81
+     ],
+     "lights": [
+      "status",
+      0.96
+     ],
+     "music": [
+      "play",
+      0.61
+     ],
+     "camera": [
+      "status",
+      0.63
+     ]
+    },
+    "can": {
+     "tv": 0.38,
+     "lights": 0.02,
+     "music": 0.04,
+     "camera": 0.02
+    },
+    "ms": 276.7,
+    "error": ""
+   }
+  },
+  "hold-110": {
+   "case": "b93fd8113176",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "other",
+    "probs": {
+     "other": 1.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.11,
+     "tv": 0.03,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "youtube",
+      0.66
+     ],
+     "lights": [
+      "status",
+      0.97
+     ],
+     "music": [
+      "status",
+      0.75
+     ],
+     "camera": [
+      "status",
+      0.73
+     ]
+    },
+    "can": {
+     "tv": 0.04,
+     "lights": 0.02,
+     "music": 0.01,
+     "camera": 0.02
+    },
+    "ms": 234.7,
+    "error": ""
+   }
+  },
+  "hold-111": {
+   "case": "363f65b6fdeb",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "other",
+    "probs": {
+     "other": 0.96,
+     "mac": 0.04,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.71,
+     "tv": 0.04,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "open_app",
+      0.52
+     ],
+     "lights": [
+      "status",
+      0.94
+     ],
+     "music": [
+      "status",
+      0.85
+     ],
+     "camera": [
+      "photo",
+      0.57
+     ]
+    },
+    "can": {
+     "tv": 0.02,
+     "lights": 0.01,
+     "music": 0.01,
+     "camera": 0.01
+    },
+    "ms": 288.0,
+    "error": ""
+   }
+  },
+  "hold-112": {
+   "case": "035fde1bd401",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "other",
+    "probs": {
+     "other": 0.99,
+     "mac": 0.01,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.38,
+     "tv": 0.03,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "youtube",
+      0.46
+     ],
+     "lights": [
+      "status",
+      0.97
+     ],
+     "music": [
+      "status",
+      0.79
+     ],
+     "camera": [
+      "status",
+      0.78
+     ]
+    },
+    "can": {
+     "tv": 0.02,
+     "lights": 0.01,
+     "music": 0.01,
+     "camera": 0.01
+    },
+    "ms": 232.9,
+    "error": ""
+   }
+  },
+  "hold-113": {
+   "case": "1c7c7536d3f4",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "other",
+    "probs": {
+     "other": 0.86,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.14,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.1,
+     "tv": 0.03,
+     "lights": 0.11,
+     "music": 0.01,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "typing",
+      0.4
+     ],
+     "lights": [
+      "status",
+      0.41
+     ],
+     "music": [
+      "play",
+      0.52
+     ],
+     "camera": [
+      "photo",
+      0.65
+     ]
+    },
+    "can": {
+     "tv": 0.02,
+     "lights": 0.03,
+     "music": 0.02,
+     "camera": 0.02
+    },
+    "ms": 290.6,
+    "error": ""
+   }
+  },
+  "hold-114": {
+   "case": "69478296d2ac",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "other",
+    "probs": {
+     "other": 1.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.19,
+     "tv": 0.03,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.03
+    },
+    "how": {
+     "tv": [
+      "youtube",
+      0.6
+     ],
+     "lights": [
+      "status",
+      0.88
+     ],
+     "music": [
+      "status",
+      0.61
+     ],
+     "camera": [
+      "status",
+      0.67
+     ]
+    },
+    "can": {
+     "tv": 0.11,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.02
+    },
+    "ms": 234.5,
+    "error": ""
+   }
+  },
+  "hold-115": {
+   "case": "10f50339ead9",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "other",
+    "probs": {
+     "other": 0.91,
+     "mac": 0.01,
+     "tv": 0.08,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.18,
+     "tv": 0.1,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "youtube",
+      0.78
+     ],
+     "lights": [
+      "status",
+      0.91
+     ],
+     "music": [
+      "status",
+      0.63
+     ],
+     "camera": [
+      "status",
+      0.64
+     ]
+    },
+    "can": {
+     "tv": 0.33,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.02
+    },
+    "ms": 290.4,
+    "error": ""
+   }
+  },
+  "hold-116": {
+   "case": "88216595db31",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "other",
+    "probs": {
+     "other": 1.0,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.07,
+     "tv": 0.03,
+     "lights": 0.03,
+     "music": 0.03,
+     "camera": 0.02
+    },
+    "how": {
+     "tv": [
+      "status",
+      0.59
+     ],
+     "lights": [
+      "status",
+      0.76
+     ],
+     "music": [
+      "status",
+      0.54
+     ],
+     "camera": [
+      "photo",
+      0.51
+     ]
+    },
+    "can": {
+     "tv": 0.02,
+     "lights": 0.04,
+     "music": 0.04,
+     "camera": 0.03
+    },
+    "ms": 229.4,
+    "error": ""
+   }
+  },
+  "hold-117": {
+   "case": "e4d5a71d2552",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "other",
+    "probs": {
+     "other": 0.98,
+     "mac": 0.01,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.01,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.15,
+     "tv": 0.05,
+     "lights": 0.02,
+     "music": 0.03,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "youtube",
+      0.57
+     ],
+     "lights": [
+      "status",
+      0.94
+     ],
+     "music": [
+      "status",
+      0.77
+     ],
+     "camera": [
+      "status",
+      0.71
+     ]
+    },
+    "can": {
+     "tv": 0.08,
+     "lights": 0.02,
+     "music": 0.02,
+     "camera": 0.03
+    },
+    "ms": 294.3,
+    "error": ""
+   }
+  },
+  "hold-118": {
+   "case": "e9a00fbd97b2",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "other",
+    "probs": {
+     "other": 0.9,
+     "mac": 0.0,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.1
+    },
+    "nouls": {
+     "mac": 0.09,
+     "tv": 0.02,
+     "lights": 0.02,
+     "music": 0.01,
+     "camera": 0.09
+    },
+    "how": {
+     "tv": [
+      "status",
+      0.62
+     ],
+     "lights": [
+      "status",
+      0.98
+     ],
+     "music": [
+      "status",
+      0.92
+     ],
+     "camera": [
+      "status",
+      0.8
+     ]
+    },
+    "can": {
+     "tv": 0.02,
+     "lights": 0.03,
+     "music": 0.02,
+     "camera": 0.06
+    },
+    "ms": 268.9,
+    "error": ""
+   }
+  },
+  "hold-119": {
+   "case": "1c45611a8044",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "other",
+    "probs": {
+     "other": 0.97,
+     "mac": 0.01,
+     "tv": 0.0,
+     "lights": 0.0,
+     "music": 0.02,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.14,
+     "tv": 0.06,
+     "lights": 0.02,
+     "music": 0.05,
+     "camera": 0.02
+    },
+    "how": {
+     "tv": [
+      "youtube",
+      0.54
+     ],
+     "lights": [
+      "status",
+      0.94
+     ],
+     "music": [
+      "status",
+      0.54
+     ],
+     "camera": [
+      "status",
+      0.79
+     ]
+    },
+    "can": {
+     "tv": 0.36,
+     "lights": 0.03,
+     "music": 0.04,
+     "camera": 0.03
+    },
+    "ms": 255.5,
+    "error": ""
+   }
+  },
+  "hold-120": {
+   "case": "d956169b8d1c",
+   "answer": {
+    "asked": [
+     "tv",
+     "lights",
+     "music",
+     "camera"
+    ],
+    "which": "other",
+    "probs": {
+     "other": 0.99,
+     "mac": 0.0,
+     "tv": 0.01,
+     "lights": 0.0,
+     "music": 0.0,
+     "camera": 0.0
+    },
+    "nouls": {
+     "mac": 0.09,
+     "tv": 0.44,
+     "lights": 0.02,
+     "music": 0.01,
+     "camera": 0.01
+    },
+    "how": {
+     "tv": [
+      "youtube",
+      0.57
+     ],
+     "lights": [
+      "status",
+      0.86
+     ],
+     "music": [
+      "status",
+      0.52
+     ],
+     "camera": [
+      "status",
+      0.56
+     ]
+    },
+    "can": {
+     "tv": 0.03,
+     "lights": 0.02,
+     "music": 0.01,
+     "camera": 0.02
+    },
+    "ms": 227.4,
+    "error": ""
+   }
+  }
+ }
+}

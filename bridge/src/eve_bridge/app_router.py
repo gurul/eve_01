@@ -85,9 +85,10 @@ LEAD_GRID = (-1.0,) + tuple(round(0.1 * i, 1) for i in range(-5, 10))     # -1.0
 # Beside this module and in package-data, so an installed eve carries it (grade_gate.json's lesson: under
 # tests/fixtures a wheel had no file and fell back without a word). tools/app_route_eval.py --fit writes it.
 GATES_FILE = Path(__file__).resolve().parent / "app_gates.json"
-# False until the blind holdout has been scored against the bar above (tools/app_route_eval.py --report prints
-# APP_ROUTER_BAR_OK). The verdict is recorded in docs/app-router.md.
-SHIPPED = False
+# True since the blind holdout was scored once against the bar above, 2026-11-11 (tools/app_route_eval.py --report
+# prints APP_ROUTER_BAR_OK): 80/80 device cases named, 0/24 Mac and 0/16 neither cases claimed, Jev p95 418 ms; the
+# end-to-end lines held too (docs/evals/app-router-2026-11-11/VERDICT.md). The verdict is in docs/app-router.md.
+SHIPPED = True
 
 MAC, OTHER = "mac", "other"            # the Choice's two options that claim nothing
 START_TASK = "start_task"              # the one call a claim refuses (telegram._think)
@@ -635,13 +636,32 @@ def make_router(environ: Optional[Mapping[str, str]] = None) -> Optional[Router]
         return cached
 
 
+def mac_app_only(text: str, apps: Optional[Iterable[str]] = None) -> bool:
+    """True when the message is nothing but opening or quitting an app installed on this Mac ("open Spotify",
+    "quit Slack"): the Mac's own rule for those (task_router) reads the words exactly, so code answers before Jev
+    is asked and no device claims it. Jev reads a bare "open Spotify" as the TV's (seen live 2026-11-11, after the
+    holdout); a message that names where ("open Spotify on the tv") is not only an app's name and is still asked.
+    ``apps`` is the installed apps (task_router.installed_apps() when None, read once a process)."""
+    from . import task_router
+
+    try:
+        names = task_router.installed_apps() if apps is None else tuple(apps)
+        said = (text or "").strip()
+        return bool(task_router._launch(said, names) or task_router._quit(said.rstrip("?").strip(), names))
+    except Exception:  # noqa: BLE001 — a rule that fails decides nothing: Jev is asked as before
+        return False
+
+
 def route_turn(text: str, previous: str = "", router: Optional[Router] = None, offered: Iterable[str] = (),
-               gates: Optional[Mapping[str, Gate]] = None, timeout_s: float = TIMEOUT_S) -> AppRoute:
+               gates: Optional[Mapping[str, Gate]] = None, timeout_s: float = TIMEOUT_S,
+               mac_apps: Optional[Iterable[str]] = None) -> AppRoute:
     """One turn's claim. Blocking (call it with asyncio.to_thread). Jev runs in a worker waited on for
     ``timeout_s`` at most; a router that is None, raises, errs, answers with anything else or is slower than that
     claims nothing, and so does a turn that offers no device's tool (then Jev is not asked at all)."""
     tools = frozenset(str(n) for n in offered) & ALL_TOOLS
     if router is None or not live(tools):
+        return NO_CLAIM
+    if mac_app_only(text, mac_apps):
         return NO_CLAIM
     box: dict[str, Any] = {}
     done = threading.Event()

@@ -296,8 +296,8 @@ The [Telegram door](docs/stackchan/telegram.md) is **off by default**. With it o
 - **Keeps a request for a device on that device.** "Change the TV input to HDMI 1"
   is for the TV, not for the Mac's screen. One Jev call per turn reads whether a
   request is for the TV, the lights, the music or the camera; when it is, the turn
-  is told so and the Mac agent can't be started for it (`EVE_APP_ROUTER`; off until
-  its blind eval passes, `on` to try it). See [app router](docs/app-router.md).
+  is told so and the Mac agent can't be started for it (`EVE_APP_ROUTER`; on since
+  its blind eval passed on 2026-11-11, `off` to turn it off). See [app router](docs/app-router.md).
 - **Asks before consequential actions.** Routine reads, notes, lights, music,
   local app edits and ordinary computer tasks proceed without another check.
   Sending, deleting, purchasing, publishing and permission changes get a
@@ -697,8 +697,8 @@ uses Jev labels/roles rather than legal prose.
 See [government-source data and limits](docs/america.md#data-and-provider-terms).
 With a TinyFish key, a computer task's text goes to Jev (TypeSafe's model,
 through TypeSafe or OpenRouter) to choose where it runs,
-and a public-web lookup's text goes to TinyFish as a search. With `EVE_APP_ROUTER=on`
-(off by default), your message and the one before it also go to Jev on every chat turn
+and a public-web lookup's text goes to TinyFish as a search. With the app router on
+(the default; `EVE_APP_ROUTER=off` turns it off), your message and the one before it also go to Jev on every chat turn
 that has a device's tools, as they already do for the toolset router. The watcher sends only the page you asked it to watch.
 
 **eve lite** ([what leaves the Mac](docs/lite.md#what-leaves-the-mac)) listens on two

@@ -1,0 +1,63 @@
+responses: TLS dropped mid-request (SSLV3_ALERT_BAD_RECORD_MAC); retrying in 0.3 s on a new connection
+   env: EVE_TELEGRAM_MODEL=gpt-6-luna EVE_JEV_ROUTE=openrouter EVE_TOOLSET_ROUTER=(unset: default) EVE_OPENTABLE=1 EVE_CHIEF=(unset: default) EVE_GRADE_ROUTER=(unset: default) EVE_MENU_TOOLS=on EVE_APP_ROUTER=on
+   model gpt-6-luna, effort low
+   toolset router: auto (Jev), chief on
+   app router: on (Jev)
+   this checkout has: menu yes, events no, taint gate yes
+   lent: own tools, web_search, memory, chat log, second brain, watch, meet, lights, spotify, firetv, obsbot, debrief, repos, phone location, science search, america, share, opentable, chief, maker, direct apps (gmail, calendar, drive, contacts, github, maps), workspace
+   cases: cases.json, 40
+   40 cases in 90 s
+PASS e2e-01: primary=tv_control accept=tv_control got=tv_control (firetv_control) door=call router=tv:power
+PASS e2e-02: primary=tv_control accept=tv_control got=tv_control [code word]
+PASS e2e-03: primary=tv_control accept=tv_control got=tv_control (firetv_control) door=call router=tv:youtube
+PASS e2e-04: primary=tv_control accept=tv_control got=tv_control (firetv_control) router=tv:volume
+PASS e2e-05: primary=tv_control accept=tv_control got=tv_control (firetv_status) door=call router=tv:status
+PASS e2e-06: primary=lights accept=lights got=lights [code word]
+PASS e2e-07: primary=lights accept=lights got=lights (lights_set) door=call router=lights:colour
+PASS e2e-08: primary=lights accept=lights got=lights (lights_status) router=lights:status
+PASS e2e-09: primary=music accept=music got=music (spotify_control) door=call router=music:play
+PASS e2e-10: primary=music accept=music got=music [code word]
+PASS e2e-11: primary=music accept=music got=music (spotify_now_playing) door=call router=music:transfer
+PASS e2e-12: primary=camera_aim accept=camera_aim got=camera_aim (camera_control) router=camera:zoom
+PASS e2e-13: primary=camera_aim accept=camera_aim got=camera_aim (camera_control) door=call router=camera:tracking
+FAIL e2e-14: primary=camera_aim accept=camera_aim got=camera_photo (take_photo) router=camera:aim
+PASS e2e-15: primary=none accept=none|tv_control got=tv_control (firetv_control) door=call router=tv:cannot
+PASS e2e-16: primary=none accept=none|tv_control got=tv_control (firetv_control) router=tv:cannot
+PASS e2e-17: primary=none accept=none|tv_control got=tv_control (firetv_status) door=call router=tv:cannot
+PASS e2e-18: primary=none accept=none|tv_control got=none router=tv:cannot
+FAIL e2e-19: primary=none accept=none|lights got=jobs_and_reminders (take_on) door=call router=lights:power
+PASS e2e-20: primary=none accept=none|lights got=none router=lights:cannot
+PASS e2e-21: primary=none accept=none|music got=none router=music:cannot
+PASS e2e-22: primary=none accept=none|music got=music (spotify_now_playing) door=call router=music:cannot
+PASS e2e-23: primary=none accept=none|camera_aim got=camera_aim (camera_status) door=call router=camera:cannot
+PASS e2e-24: primary=none accept=none|camera_aim got=camera_aim (camera_control) router=camera:tracking
+PASS e2e-25: primary=computer_task accept=computer_task got=computer_task (start_task) router=none
+PASS e2e-26: primary=computer_task accept=computer_task got=computer_task (start_task) door=call router=none
+PASS e2e-27: primary=computer_task accept=computer_task got=computer_task (start_task) router=none
+PASS e2e-28: primary=computer_task accept=computer_task got=computer_task (start_task) door=call router=none
+PASS e2e-29: primary=computer_task accept=computer_task got=computer_task (start_task) router=none
+PASS e2e-30: primary=computer_task accept=computer_task got=computer_task (start_task) door=call router=none
+PASS e2e-31: primary=computer_task accept=computer_task got=computer_task (start_task) router=none
+PASS e2e-32: primary=computer_task accept=computer_task got=computer_task (start_task) door=call router=none
+PASS e2e-33: primary=computer_task accept=computer_task got=computer_task (start_task) router=none
+PASS e2e-34: primary=computer_task accept=computer_task got=computer_task (start_task) door=call router=none
+FAIL e2e-35: primary=none accept=none|ask got=web_search (web_search) door=call router=none
+PASS e2e-36: primary=none accept=none|ask got=none router=none
+PASS e2e-37: primary=none accept=none|ask got=calendar_read>none (calendar__list_events) door=call router=none
+PASS e2e-38: primary=none accept=none|ask got=none router=none
+FAIL e2e-39: primary=none accept=none|ask got=web_search (web_search) door=call router=none
+PASS e2e-40: primary=none accept=none|ask got=none router=none
+-- by primary label --
+   camera_aim: 2/3
+   computer_task: 10/10
+   lights: 3/3
+   music: 3/3
+   none: 13/16
+   tv_control: 5/5
+TOTAL 36/40 (90.0%)
+NEVER_FIRED 0
+HARD_NEGATIVE_ACTED 4: e2e-15->firetv_control, e2e-16->firetv_control, e2e-19->take_on, e2e-24->camera_control
+JEV_ERRORS 0
+PROVIDER_ERRORS 0
+APP_ROUTER asked 37, claimed 21, start_task refused on 0
+   cost: $0.0917 over 129 model calls (0 unpriced); scored 2026-11-11T20:37:53

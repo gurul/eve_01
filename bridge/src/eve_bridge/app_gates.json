@@ -1,11 +1,33 @@
 {
- "fitted": null,
- "on": null,
- "note": "not fitted yet: the starting gates (app_router.DEFAULT_GATE). tools/app_route_eval.py --fit writes this file.",
+ "fitted": "2026-11-11",
+ "on": "app_tuning.json",
+ "n": 240,
+ "questions": "04e08c3885f6538c",
+ "rule": "per device: no tuning case of another truth claimed, then the most own cases, then halfway between the strictest such gates and the loosest each could go alone, rounded strict (app_router.fit)",
  "gates": {
-  "tv": {"noul": 0.7, "choice": 0.5, "lead": 0.0, "can": 0.5},
-  "lights": {"noul": 0.7, "choice": 0.5, "lead": 0.0, "can": 0.5},
-  "music": {"noul": 0.7, "choice": 0.5, "lead": 0.0, "can": 0.5},
-  "camera": {"noul": 0.7, "choice": 0.5, "lead": 0.0, "can": 0.5}
+  "tv": {
+   "noul": 0.5,
+   "choice": 0.5,
+   "lead": -0.1,
+   "can": 0.5
+  },
+  "lights": {
+   "noul": 0.4,
+   "choice": 0.3,
+   "lead": -0.2,
+   "can": 0.1
+  },
+  "music": {
+   "noul": 0.15,
+   "choice": 0.35,
+   "lead": -0.5,
+   "can": 0.6
+  },
+  "camera": {
+   "noul": 0.2,
+   "choice": 0.35,
+   "lead": -0.4,
+   "can": 0.2
+  }
  }
 }

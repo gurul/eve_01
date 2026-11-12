@@ -4,8 +4,12 @@
 the devices eve drives: the TV, the lights, the music or the camera. When it is, the turn is told so and the
 Mac agent cannot be started for it. The eval is `bridge/tools/app_route_eval.py`.
 
-It is **off by default** (`app_router.SHIPPED = False`) until its blind holdout has been scored against the
-bar at the end of this page.
+It is **on by default** (`app_router.SHIPPED = True`) since its blind holdout and its end-to-end set were scored
+against the bar at the end of this page on 2026-11-11. `EVE_APP_ROUTER=off` turns it off.
+
+Before Jev is asked, one code rule answers: a message that is nothing but opening or quitting an app installed on
+this Mac ("open Spotify", "quit Slack") is the Mac's, and no device claims it (`app_router.mac_app_only`, the task
+router's own launch and quit rules). A message that says where ("open Spotify on the tv") is still asked.
 
 ## Why
 
@@ -177,7 +181,7 @@ alone: it is part of the owner golden snapshot, which is recorded only from main
 
 | Variable | Values | Effect |
 |---|---|---|
-| `EVE_APP_ROUTER` | `auto` (default) | On when `app_router.SHIPPED` is True. It is False until the bar below holds. |
+| `EVE_APP_ROUTER` | `auto` (default) | On when `app_router.SHIPPED` is True, which it is since 2026-11-11. |
 | | `on` | On before or despite the bar, for a live trial. |
 | | `off` | No call, no note line, no guard. |
 | `EVE_JEV_ROUTE`, `OPENROUTER_API_KEY` / `TYPESAFE_API_KEY` | | The Jev route (`jev.route_config`). With no key, there is no router. |
@@ -283,17 +287,36 @@ Written 2026-11-11 by the orchestrator, before any tuning or holdout result exis
 
 | Line | Measured | Verdict |
 |---|---|---|
-| 1. device cases named right, >= 0.90 | | VERDICT: pending |
-| 2. Mac cases claimed, <= 0.03 | | VERDICT: pending |
-| 3. neither cases claimed, <= 0.05 | | VERDICT: pending |
-| 4. Jev p95, <= 800 ms | | VERDICT: pending |
-| 5. device-app cases ending in the Mac agent, 0 | | VERDICT: pending |
-| 6. Mac-task cases reaching the Mac agent, >= 0.90 | | VERDICT: pending |
-| 7. NEW overall >= BASE overall - 3 points | | VERDICT: pending |
+| 1. device cases named right, >= 0.90 | 80/80 = 100% | pass |
+| 2. Mac cases claimed, <= 0.03 | 0/24 | pass |
+| 3. neither cases claimed, <= 0.05 | 0/16 | pass |
+| 4. Jev p95, <= 800 ms | p95 418 ms, p50 262 ms, 0 errors | pass |
+| 5. device-app cases ending in the Mac agent, 0 | NEW 0/24 (BASE 1/24) | pass (see the note on its wording)  |
+| 6. Mac-task cases reaching the Mac agent, >= 0.90 | NEW 10/10 | pass |
+| 7. NEW overall >= BASE overall - 3 points | NEW 36/40 = 90.0%, BASE 34/40 = 85.0% | pass |
 
-Reported, not gated: can/can't accuracy, method accuracy, per-app confusion: VERDICT: pending.
+Scored once on 2026-11-11: the router holdout (`app_holdout.json`, 120 cases, writer B) and the end-to-end set
+(`docs/evals/app-router-2026-11-11/`, 40 cases, writer C, both arms). Gates were fitted on `app_tuning.json` only.
 
-`SHIPPED`: VERDICT: pending (False until lines 1 to 4 hold; on by default only if 1 to 7 all hold).
+Reported, not gated: can/can't right on 76/80 named device cases (19/23 of the ones the device can't do); no
+dataset case carries a method label, so method accuracy is not measured; no device was confused with another.
+
+Three things a reader should know before trusting these numbers:
+
+- **Line 5's parenthesis was badly worded.** The line is "zero device-app cases end in the Mac agent", and that
+  held (0 of 24). Its parenthesis names `HARD_NEGATIVE_ACTED`, which the harness also counts when a device's own
+  tool is called on a request the device can't do (an accepted answer in this set). That count was 4 in NEW and 9
+  in BASE; none of NEW's four is the Mac agent.
+- **The end-to-end effect is small.** Both arms carry the new Limits sentences, and with those alone the chat
+  model sent 1 of 24 device cases to the Mac agent. The router took that to 0. The guard refused no call in the
+  run: the note was enough.
+- **One rule was added after the holdout.** A live check on real requests showed Jev reading a bare "open
+  Spotify" as the TV's. `app_router.mac_app_only` now answers before Jev: a message that is nothing but opening
+  or quitting an app installed on this Mac is never claimed. It can only remove claims. On this Mac it fires on
+  6 holdout and 13 tuning cases, every one of them a Mac case, so no scored line moves; it is a rule added on seen
+  data all the same, and it has no blind test of its own.
+
+`SHIPPED = True` since 2026-11-11: lines 1 to 7 all held.
 
 ## What is not covered
 

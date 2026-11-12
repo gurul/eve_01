@@ -1,0 +1,103 @@
+{
+ "scored": "2026-11-11 20:36",
+ "holdout_sha256": "1a6905c4a119044bff066501ddd6c830703cc6dafe5bbdf945fbb64931b485e0",
+ "questions": "04e08c3885f6538c",
+ "gates": {
+  "tv": {
+   "noul": 0.5,
+   "choice": 0.5,
+   "lead": -0.1,
+   "can": 0.5
+  },
+  "lights": {
+   "noul": 0.4,
+   "choice": 0.3,
+   "lead": -0.2,
+   "can": 0.1
+  },
+  "music": {
+   "noul": 0.15,
+   "choice": 0.35,
+   "lead": -0.5,
+   "can": 0.6
+  },
+  "camera": {
+   "noul": 0.2,
+   "choice": 0.35,
+   "lead": -0.4,
+   "can": 0.2
+  }
+ },
+ "bar": {
+  "1": true,
+  "2": true,
+  "3": true,
+  "4": true,
+  "shipped": true
+ },
+ "score": {
+  "n": 120,
+  "device": 80,
+  "mac": 24,
+  "none": 16,
+  "device_right": 80,
+  "device_rate": 1.0,
+  "mac_claimed": [],
+  "none_claimed": [],
+  "p50_ms": 261.9,
+  "p95_ms": 417.6,
+  "errors": 0,
+  "slow": 0,
+  "per": {
+   "tv": {
+    "cases": 26,
+    "named": 26,
+    "claimed": 26
+   },
+   "lights": {
+    "cases": 18,
+    "named": 18,
+    "claimed": 18
+   },
+   "music": {
+    "cases": 20,
+    "named": 20,
+    "claimed": 20
+   },
+   "camera": {
+    "cases": 16,
+    "named": 16,
+    "claimed": 16
+   }
+  },
+  "can_cases": 80,
+  "can_right": 76,
+  "cant_cases": 23,
+  "cant_right": 19,
+  "method_cases": 0,
+  "method_right": 0,
+  "confusion": {
+   "tv": {
+    "tv": 26
+   },
+   "lights": {
+    "lights": 18
+   },
+   "music": {
+    "music": 20
+   },
+   "camera": {
+    "camera": 16
+   },
+   "mac": {
+    "no claim": 24
+   },
+   "none": {
+    "no claim": 16
+   }
+  },
+  "missed": [],
+  "mac_rate": 0.0,
+  "none_rate": 0.0
+ }
+}

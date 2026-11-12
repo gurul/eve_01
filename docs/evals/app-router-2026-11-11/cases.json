@@ -1,0 +1,571 @@
+{
+  "about": "Blind end-to-end set (writer C): made-up owner requests to a personal assistant, labelled by the first tool it should reach for. Each case stands alone. Written from a plain-words brief only.",
+  "cases": [
+    {
+      "id": "e2e-01",
+      "door": "call",
+      "text": "can you turn the tv off i'm heading to bed",
+      "primary": "tv_control",
+      "expect": [
+        "tv_control"
+      ],
+      "group": "device",
+      "never": [
+        "computer_task"
+      ]
+    },
+    {
+      "id": "e2e-02",
+      "door": "app",
+      "text": "open Netflix on the tv",
+      "primary": "tv_control",
+      "expect": [
+        "tv_control"
+      ],
+      "group": "device",
+      "never": [
+        "computer_task"
+      ]
+    },
+    {
+      "id": "e2e-03",
+      "door": "call",
+      "text": "search youtube on the tv for sourdough starter videos",
+      "primary": "tv_control",
+      "expect": [
+        "tv_control"
+      ],
+      "group": "device",
+      "never": [
+        "computer_task"
+      ]
+    },
+    {
+      "id": "e2e-04",
+      "door": "app",
+      "text": "tv volume down to 12",
+      "primary": "tv_control",
+      "expect": [
+        "tv_control"
+      ],
+      "group": "device",
+      "never": [
+        "computer_task"
+      ]
+    },
+    {
+      "id": "e2e-05",
+      "door": "call",
+      "text": "what's on the tv right now is it even on",
+      "primary": "tv_control",
+      "expect": [
+        "tv_control"
+      ],
+      "group": "device",
+      "never": [
+        "computer_task"
+      ]
+    },
+    {
+      "id": "e2e-06",
+      "door": "app",
+      "text": "dim the desk lamp to 30%",
+      "primary": "lights",
+      "expect": [
+        "lights"
+      ],
+      "group": "device",
+      "never": [
+        "computer_task"
+      ]
+    },
+    {
+      "id": "e2e-07",
+      "door": "call",
+      "text": "set the living room lights to the movie mood please",
+      "primary": "lights",
+      "expect": [
+        "lights"
+      ],
+      "group": "device",
+      "never": [
+        "computer_task"
+      ]
+    },
+    {
+      "id": "e2e-08",
+      "door": "app",
+      "text": "are the bedroom lights still on?",
+      "primary": "lights",
+      "expect": [
+        "lights"
+      ],
+      "group": "device",
+      "never": [
+        "computer_task"
+      ]
+    },
+    {
+      "id": "e2e-09",
+      "door": "call",
+      "text": "put on some khruangbin on spotify",
+      "primary": "music",
+      "expect": [
+        "music"
+      ],
+      "group": "device",
+      "never": [
+        "computer_task"
+      ]
+    },
+    {
+      "id": "e2e-10",
+      "door": "app",
+      "text": "skip this track on Spotify",
+      "primary": "music",
+      "expect": [
+        "music"
+      ],
+      "group": "device",
+      "never": [
+        "computer_task"
+      ]
+    },
+    {
+      "id": "e2e-11",
+      "door": "call",
+      "text": "move the music over to the kitchen speaker",
+      "primary": "music",
+      "expect": [
+        "music"
+      ],
+      "group": "device",
+      "never": [
+        "computer_task"
+      ]
+    },
+    {
+      "id": "e2e-12",
+      "door": "app",
+      "text": "zoom the desk cam in a bit",
+      "primary": "camera_aim",
+      "expect": [
+        "camera_aim"
+      ],
+      "group": "device",
+      "never": [
+        "computer_task"
+      ]
+    },
+    {
+      "id": "e2e-13",
+      "door": "call",
+      "text": "hey turn off person tracking on the webcam",
+      "primary": "camera_aim",
+      "expect": [
+        "camera_aim"
+      ],
+      "group": "device",
+      "never": [
+        "computer_task"
+      ]
+    },
+    {
+      "id": "e2e-14",
+      "door": "app",
+      "text": "point the camera left, toward the window",
+      "primary": "camera_aim",
+      "expect": [
+        "camera_aim"
+      ],
+      "group": "device",
+      "never": [
+        "computer_task"
+      ]
+    },
+    {
+      "id": "e2e-15",
+      "door": "call",
+      "text": "switch the tv over to hdmi two",
+      "primary": "none",
+      "expect": [
+        "none",
+        "tv_control"
+      ],
+      "group": "device_cannot",
+      "never": [
+        "computer_task"
+      ]
+    },
+    {
+      "id": "e2e-16",
+      "door": "app",
+      "text": "set a 45 min sleep timer on the tv",
+      "primary": "none",
+      "expect": [
+        "none",
+        "tv_control"
+      ],
+      "group": "device_cannot",
+      "never": [
+        "computer_task"
+      ]
+    },
+    {
+      "id": "e2e-17",
+      "door": "call",
+      "text": "the tv picture looks washed out can you bump up the contrast",
+      "primary": "none",
+      "expect": [
+        "none",
+        "tv_control"
+      ],
+      "group": "device_cannot",
+      "never": [
+        "computer_task"
+      ]
+    },
+    {
+      "id": "e2e-18",
+      "door": "app",
+      "text": "change the TV's sound mode to dialogue boost",
+      "primary": "none",
+      "expect": [
+        "none",
+        "tv_control"
+      ],
+      "group": "device_cannot",
+      "never": [
+        "computer_task"
+      ]
+    },
+    {
+      "id": "e2e-19",
+      "door": "call",
+      "text": "have the bedroom lights come on by themselves at six thirty tomorrow morning",
+      "primary": "none",
+      "expect": [
+        "none",
+        "lights"
+      ],
+      "group": "device_cannot",
+      "never": [
+        "computer_task"
+      ]
+    },
+    {
+      "id": "e2e-20",
+      "door": "app",
+      "text": "run a rainbow fade effect on the strip lights",
+      "primary": "none",
+      "expect": [
+        "none",
+        "lights"
+      ],
+      "group": "device_cannot",
+      "never": [
+        "computer_task"
+      ]
+    },
+    {
+      "id": "e2e-21",
+      "door": "app",
+      "text": "add this song to my liked songs on spotify",
+      "primary": "none",
+      "expect": [
+        "none",
+        "music"
+      ],
+      "group": "device_cannot",
+      "never": [
+        "computer_task"
+      ]
+    },
+    {
+      "id": "e2e-22",
+      "door": "call",
+      "text": "turn shuffle on in spotify",
+      "primary": "none",
+      "expect": [
+        "none",
+        "music"
+      ],
+      "group": "device_cannot",
+      "never": [
+        "computer_task"
+      ]
+    },
+    {
+      "id": "e2e-23",
+      "door": "call",
+      "text": "start recording video on the desk camera",
+      "primary": "none",
+      "expect": [
+        "none",
+        "camera_aim"
+      ],
+      "group": "device_cannot",
+      "never": [
+        "computer_task"
+      ]
+    },
+    {
+      "id": "e2e-24",
+      "door": "app",
+      "text": "lock the webcam's focus, it keeps hunting",
+      "primary": "none",
+      "expect": [
+        "none",
+        "camera_aim"
+      ],
+      "group": "device_cannot",
+      "never": [
+        "computer_task"
+      ]
+    },
+    {
+      "id": "e2e-25",
+      "door": "app",
+      "text": "open Spotify on my Mac",
+      "primary": "computer_task",
+      "expect": [
+        "computer_task"
+      ],
+      "group": "mac",
+      "never": [
+        "tv_control",
+        "lights",
+        "music",
+        "camera_aim"
+      ]
+    },
+    {
+      "id": "e2e-26",
+      "door": "call",
+      "text": "play the dune trailer on youtube in chrome",
+      "primary": "computer_task",
+      "expect": [
+        "computer_task"
+      ],
+      "group": "mac",
+      "never": [
+        "tv_control",
+        "lights",
+        "music",
+        "camera_aim"
+      ]
+    },
+    {
+      "id": "e2e-27",
+      "door": "app",
+      "text": "open the TV app on my laptop",
+      "primary": "computer_task",
+      "expect": [
+        "computer_task"
+      ],
+      "group": "mac",
+      "never": [
+        "tv_control",
+        "lights",
+        "music",
+        "camera_aim"
+      ]
+    },
+    {
+      "id": "e2e-28",
+      "door": "call",
+      "text": "turn on dark mode on the mac",
+      "primary": "computer_task",
+      "expect": [
+        "computer_task"
+      ],
+      "group": "mac",
+      "never": [
+        "tv_control",
+        "lights",
+        "music",
+        "camera_aim"
+      ]
+    },
+    {
+      "id": "e2e-29",
+      "door": "app",
+      "text": "pull up the budget spreadsheet in Numbers",
+      "primary": "computer_task",
+      "expect": [
+        "computer_task"
+      ],
+      "group": "mac",
+      "never": [
+        "tv_control",
+        "lights",
+        "music",
+        "camera_aim"
+      ]
+    },
+    {
+      "id": "e2e-30",
+      "door": "call",
+      "text": "open my downloads folder in finder and sort it by date",
+      "primary": "computer_task",
+      "expect": [
+        "computer_task"
+      ],
+      "group": "mac",
+      "never": [
+        "tv_control",
+        "lights",
+        "music",
+        "camera_aim"
+      ]
+    },
+    {
+      "id": "e2e-31",
+      "door": "app",
+      "text": "go to the Hacker News front page in Safari",
+      "primary": "computer_task",
+      "expect": [
+        "computer_task"
+      ],
+      "group": "mac",
+      "never": [
+        "tv_control",
+        "lights",
+        "music",
+        "camera_aim"
+      ]
+    },
+    {
+      "id": "e2e-32",
+      "door": "call",
+      "text": "quit slack on my mac it's frozen",
+      "primary": "computer_task",
+      "expect": [
+        "computer_task"
+      ],
+      "group": "mac",
+      "never": [
+        "tv_control",
+        "lights",
+        "music",
+        "camera_aim"
+      ]
+    },
+    {
+      "id": "e2e-33",
+      "door": "app",
+      "text": "connect the Mac to my headphones in Bluetooth settings",
+      "primary": "computer_task",
+      "expect": [
+        "computer_task"
+      ],
+      "group": "mac",
+      "never": [
+        "tv_control",
+        "lights",
+        "music",
+        "camera_aim"
+      ]
+    },
+    {
+      "id": "e2e-34",
+      "door": "call",
+      "text": "open the lease pdf on my desktop and scroll to the last page",
+      "primary": "computer_task",
+      "expect": [
+        "computer_task"
+      ],
+      "group": "mac",
+      "never": [
+        "tv_control",
+        "lights",
+        "music",
+        "camera_aim"
+      ]
+    },
+    {
+      "id": "e2e-35",
+      "door": "call",
+      "text": "what's a good soundbar for my tv",
+      "primary": "none",
+      "expect": [
+        "none",
+        "ask"
+      ],
+      "group": "other",
+      "never": [
+        "computer_task"
+      ]
+    },
+    {
+      "id": "e2e-36",
+      "door": "app",
+      "text": "how many lumens is a 60 watt bulb",
+      "primary": "none",
+      "expect": [
+        "none",
+        "ask"
+      ],
+      "group": "other",
+      "never": [
+        "computer_task"
+      ]
+    },
+    {
+      "id": "e2e-37",
+      "door": "call",
+      "text": "what's on my calendar tomorrow afternoon",
+      "primary": "none",
+      "expect": [
+        "none",
+        "ask"
+      ],
+      "group": "other",
+      "never": [
+        "computer_task"
+      ]
+    },
+    {
+      "id": "e2e-38",
+      "door": "app",
+      "text": "remind me to water the plants at 7",
+      "primary": "none",
+      "expect": [
+        "none",
+        "ask"
+      ],
+      "group": "other",
+      "never": [
+        "computer_task"
+      ]
+    },
+    {
+      "id": "e2e-39",
+      "door": "call",
+      "text": "is it going to rain this weekend",
+      "primary": "none",
+      "expect": [
+        "none",
+        "ask"
+      ],
+      "group": "other",
+      "never": [
+        "computer_task"
+      ]
+    },
+    {
+      "id": "e2e-40",
+      "door": "app",
+      "text": "who produced the first Daft Punk album?",
+      "primary": "none",
+      "expect": [
+        "none",
+        "ask"
+      ],
+      "group": "other",
+      "never": [
+        "computer_task"
+      ]
+    }
+  ]
+}

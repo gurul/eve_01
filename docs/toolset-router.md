@@ -337,7 +337,7 @@ Privacy: while the router is on, the owner's message and the previous message go
 This router opens the owner's accounts. A device's tools (the TV, the lights, the music, the camera) ride
 every turn and are not routed here. Whether a request is for one of them, and whether the Mac agent may be
 started for it, is the [app router](app-router.md)'s decision: its own Jev call beside this one, with its own
-gates and its own blind holdout (`EVE_APP_ROUTER`, off by default).
+gates and its own blind holdout (`EVE_APP_ROUTER`, on by default since its bar held on 2026-11-11).
 
 ## Commands
 

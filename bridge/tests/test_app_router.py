@@ -263,8 +263,9 @@ def test_the_switch_parses_as_the_toolset_routers_does(raw: str, want: str) -> N
 def test_the_router_is_made_only_when_it_is_on_and_jev_has_a_route(monkeypatch: pytest.MonkeyPatch) -> None:
     key = {"OPENROUTER_API_KEY": "k-test", "EVE_JEV_ROUTE": "openrouter"}
     monkeypatch.setattr(ar, "_JEV", {})
-    assert ar.SHIPPED is False                                      # until the blind holdout says otherwise
+    assert ar.SHIPPED is True                                       # the blind holdout's verdict, 2026-11-11
     assert ar.make_router({**key, "EVE_APP_ROUTER": "off"}) is None
+    monkeypatch.setattr(ar, "SHIPPED", False)
     assert ar.make_router({**key}) is None                          # auto, and not SHIPPED
     assert ar.make_router({"EVE_APP_ROUTER": "on", "EVE_JEV_ROUTE": "openrouter"}) is None      # no key
     on = ar.make_router({**key, "EVE_APP_ROUTER": "on"})
@@ -762,3 +763,28 @@ def test_the_turns_log_line_has_no_message_text(clock: None, caplog: pytest.LogC
     assert "telegram: app router: none; jev" in logged and "(RuntimeError)" in logged
     for word in ("zebra", "marmalade"):
         assert word not in logged
+
+
+APPS = ("Slack", "Spotify", "TV")
+
+
+@pytest.mark.parametrize("text, mac", [
+    ("Open Spotify", True), ("quit slack", True), ("open the tv app", True),
+    ("open spotify on the tv", False), ("Open Lumen Stream", False), ("play some jazz", False),
+    ("Change TV input to HDMI 1.", False), ("", False),
+])
+def test_a_bare_open_or_quit_of_an_installed_mac_app_is_the_macs(text: str, mac: bool) -> None:
+    assert ar.mac_app_only(text, APPS) is mac
+
+
+def test_the_mac_app_rule_answers_before_jev_is_asked() -> None:
+    asked: list[str] = []
+
+    def router(text: str, previous: str, offered: Any) -> ar.AppAnswer:
+        asked.append(text)
+        return ar.AppAnswer(error="unused")
+
+    assert ar.route_turn("Open Spotify", "", router, ar.ALL_TOOLS, mac_apps=APPS) == ar.NO_CLAIM
+    assert asked == []
+    ar.route_turn("open spotify on the tv", "", router, ar.ALL_TOOLS, mac_apps=APPS)
+    assert asked == ["open spotify on the tv"]
