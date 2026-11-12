@@ -91,7 +91,7 @@ LITE_FORCED: dict[str, str] = {
     "EVE_TELEGRAM": "app", "EVE_MINIAPP": "0", "EVE_LINK_RENDEZVOUS": "0", "EVE_NOTIFY": "0",
     # routing: the routers were fitted to full eve's split; Jev, for anything left that calls it, on OpenRouter
     "EVE_JEV_ROUTE": "openrouter", "EVE_TOOLSET_ROUTER": "off", "EVE_GRADE_ROUTER": "off",
-    "EVE_SEARCH_ROUTER": "off", "EVE_MENU_TOOLS": "off",
+    "EVE_SEARCH_ROUTER": "off", "EVE_MENU_TOOLS": "off", "EVE_APP_ROUTER": "off",
     # memory: on, with OpenRouter's embedder; no second-brain vault, claude-mem or ROS bridge
     "EVE_MEMORY": "1", "EVE_MEM0_EMBEDDER": "openrouter", "EVE_SECOND_BRAIN": "0", "EVE_CLAUDE_MEM": "0",
     "EVE_ROSBRIDGE": "0",

@@ -23,6 +23,7 @@ from eve_bridge import (
     agentcard,
     america,
     app_registry,
+    app_router,
     apps_mcp,
     browser_lane,
     canvas,
@@ -144,6 +145,7 @@ CHECKS: dict[str, tuple[Callable[[Mapping[str, str]], Any], Any, dict[str, str]]
     "EVE_TOOLSET_ROUTER": (toolset_router.mode, "off", {}),
     "EVE_GRADE_ROUTER": (grade_router.mode, "off", {}),
     "EVE_SEARCH_ROUTER": (search_router.mode, "off", {}),
+    "EVE_APP_ROUTER": (app_router.mode, "off", {}),
     "EVE_MENU_TOOLS": (menu_tools.enabled, False, {"EVE_MENU_TOOLS": "on"}),
     # memory
     "EVE_MEMORY": (lambda e: transcripts.configured(e).enabled, True, {"EVE_MEMORY": "0"}),

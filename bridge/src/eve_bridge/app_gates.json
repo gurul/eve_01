@@ -1,0 +1,11 @@
+{
+ "fitted": null,
+ "on": null,
+ "note": "not fitted yet: the starting gates (app_router.DEFAULT_GATE). tools/app_route_eval.py --fit writes this file.",
+ "gates": {
+  "tv": {"noul": 0.7, "choice": 0.5, "lead": 0.0, "can": 0.5},
+  "lights": {"noul": 0.7, "choice": 0.5, "lead": 0.0, "can": 0.5},
+  "music": {"noul": 0.7, "choice": 0.5, "lead": 0.0, "can": 0.5},
+  "camera": {"noul": 0.7, "choice": 0.5, "lead": 0.0, "can": 0.5}
+ }
+}

@@ -43,7 +43,7 @@ same Mac are watched through hooks, so eve can relay their questions to the phon
    Write the pass bar down *before* any result exists, score each arm once on a set
    written by someone (an agent) who did not see the change, and ship only if the
    bar holds. Spent sets are development data from then on. The harnesses are in
-   `bridge/tools/` (`intent_eval.py`, `toolset_eval.py`, `route_eval.py`); the
+   `bridge/tools/` (`intent_eval.py`, `toolset_eval.py`, `route_eval.py`, `app_route_eval.py`); the
    bars and verdicts of past rounds are in `docs/evals/` and the docs they shipped in.
 7. **Never write a wrong *name* into a prompt**, not even as a "never say this"
    example: a tool name, a model id, an app name, a file. The model will emit it.
@@ -377,7 +377,7 @@ are on) and `share: on`. Then send one message from the phone.
   `eve-bridge trace <id>`, [turn ledger](docs/turn-ledger.md)). eve's apps: `app_registry.py` (one line
   each; every wiring site reads it), `app_template/` (`eve-bridge app new`), and the
   phone's generic sheet `ios/EveLink/App/GenericAppSheet.swift`. Routing: `toolset_router.py`,
-  `grade_router.py`, `search_router.py`. Connected accounts: `apps_mcp.py`,
+  `grade_router.py`, `search_router.py`, `app_router.py` ([app router](docs/app-router.md)). Connected accounts: `apps_mcp.py`,
   `google_rest.py`, `github_repos.py`, `composio_tools.py`. Sharing files:
   `share.py`. The phone: `link_chat.py`, `phone_call.py`, `stick_link.py`,
   `link_uploads.py`, `link_reactions.py`, `notify.py`. Memory: `memory.py`,

@@ -94,6 +94,7 @@ from . import (
     america,
     app_reflex,
     app_registry,
+    app_router,
     apps_maker,
     apps_mcp,
     canvas,
@@ -2721,6 +2722,7 @@ class TelegramInlet:
                  toolset_mode: Optional[str] = None,
                  toolset_route: Any = _FROM_ENV,
                  grader: Any = _FROM_ENV,
+                 app_route: Any = _FROM_ENV,
                  small_talk_ask: Any = _FROM_ENV,
                  screen: Callable[[], Optional[Path]] = capture_screen,
                  scene: Any = None, head: Any = None,
@@ -2803,6 +2805,14 @@ class TelegramInlet:
         # Jev's grade of an "auto" app turn (grade_router.py): made once here; None (EVE_GRADE_ROUTER=off, or
         # no Jev route) leaves every auto turn as it was.
         self._grader = grade_router.make_grader() if grader is _FROM_ENV else grader
+        # Whether a turn's request is for one of the owner's devices (app_router.py, EVE_APP_ROUTER): Jev's call,
+        # made once here; None (off, auto while not SHIPPED, no Jev route, or eve lite) leaves every turn as it
+        # was. ``_app_claim`` and ``_app_refused`` are the last turn's verdict and how many start_task calls it
+        # refused: written by _think for the intent eval and the tests to read, never read by a turn.
+        self._app_route = ((None if _lite() else app_router.make_router()) if app_route is _FROM_ENV
+                           else app_route)
+        self._app_claim = app_router.NO_CLAIM
+        self._app_refused = 0
         # Small talk answered fast by Haiku (small_talk.py, EVE_SMALL_TALK): its one call, or None (off: every turn
         # goes to the brain, today's behaviour). Tests lend a fake.
         self._small_talk_ask = ((small_talk.ask if small_talk.enabled() else None) if small_talk_ask is _FROM_ENV
@@ -5692,6 +5702,18 @@ class TelegramInlet:
             grading = asyncio.ensure_future(asyncio.to_thread(
                 grade_router.grade_turn, self._turn_said, self._previous_said(), self._grader, None,
                 grade_router.TIMEOUT_S))
+        # Whether the request is for one of the owner's devices (app_router.py): its own Jev call, a third thread
+        # beside the toolset router's and the prompt's building, so it usually adds no wall time (with the toolset
+        # router off or on keywords, the turn can wait up to 0.8 s for it). Never on a rundown, never in eve lite.
+        claiming: Optional[asyncio.Future[app_router.AppRoute]] = None
+        device_tools: frozenset[str] = frozenset()
+        self._app_claim, self._app_refused = app_router.NO_CLAIM, 0
+        if self._app_route is not None and not daily and not lite and self._turn_said.strip():
+            device_tools = self._device_tools()
+            if device_tools:
+                claiming = asyncio.ensure_future(asyncio.to_thread(
+                    app_router.route_turn, self._turn_said, self._previous_said(), self._app_route, device_tools,
+                    None, app_router.TIMEOUT_S))
         # The direct apps this turn starts with: the ones its words name, or the rundown's (apps_mcp.APP_WORDS).
         up = set(self._direct.apps) if self._direct is not None and getattr(self._direct, "started", False) else set()
         self._lent = set()
@@ -5732,11 +5754,28 @@ class TelegramInlet:
             log.info("telegram: grade: %s", g.log_line())            # numbers only, never the message
             if g.grade == grade_router.THINK:
                 grade = "think"                 # as the explicit think grade; instant keeps auto, today's turn
+        # A claim rides the turn's developer note (one line, after the history: the tool list and the instruction
+        # blocks stay byte for byte, so the cached prefix holds) and arms the start_task guard below. No claim, an
+        # error or a timeout: ``claim_reason`` is "" and nothing of this turn's request changes.
+        claim, claim_reason = app_router.NO_CLAIM, ""
+        if claiming is not None:
+            claim = await claiming
+            log.info("telegram: app router: %s", claim.log_line())      # names and numbers, never the message
+            line = app_router.note_line(claim, device_tools)
+            claim_reason = app_router.refusal(claim, device_tools) if line else ""
+            if claim_reason:
+                self._app_claim = claim
+                note += "\n\n" + line
         text = ""
         said_on_call = False
         for round_no in range(1, MAX_TOOL_ROUNDS + 1):
             if self._steering is not None:
-                items = self._steer_into(items, round_no)
+                folded = self._steer_into(items, round_no)
+                if folded is not items:
+                    # the owner typed more into this turn (EVE_CHAT_STEER): the claim was read from the first
+                    # message alone, so its guard no longer stands for what the turn now asks
+                    claim_reason = ""
+                items = folded
             payload = request(self.config, items, context=note, app_block=app_block, **parts)
             if round_no == 1:
                 usage["instr"] = len(payload["instructions"])
@@ -5772,7 +5811,9 @@ class TelegramInlet:
                 return text, round_no
             log.info("telegram: round %d: %s", round_no, call_names(calls))
             if (call_say is not None and not text.strip() and not said_on_call
-                    and any(c["name"] in {"start_task", "opentable_search"} for c in calls)):
+                    and any(c["name"] in {"start_task", "opentable_search"} for c in calls
+                            # a start_task the claim's guard is about to refuse starts nothing: no "On it."
+                            if not (claim_reason and c["name"] == app_router.START_TASK))):
                 # a long job gets a short "On it."; a lookup says nothing until it has the answer (owner,
                 # 2026-10-04, of "One sec, checking.": "i dont need one sec checking", "its annoying")
                 said_on_call = True
@@ -5796,6 +5837,13 @@ class TelegramInlet:
                 elif call["name"] == "start_task" and self._mail_task(call["args"]):
                     log.info("telegram: start_task refused: email goes through Gmail's tool")
                     result = {"ok": False, "reason": MAIL_SEND_REASON}
+                elif call["name"] == app_router.START_TASK and claim_reason:
+                    # The request is for one of the owner's devices (app_router.py): the Mac agent is not started
+                    # for it, in any round of this turn. The reason names the device's own tools, so the next
+                    # round uses them or tells the owner in one line that the device can't do it.
+                    self._app_refused += 1
+                    log.info("telegram: start_task refused: the request is for a device (%s)", claim.app)
+                    result = {"ok": False, "reason": claim_reason}
                 elif tool_gate.needs_confirmation(call["name"], call["args"], self._taint):
                     # Only consequential native calls ask; delegated tools own their final action's approval.
                     result = await self._gated_tool(call["name"], call["args"], chat_id)
@@ -6171,6 +6219,14 @@ class TelegramInlet:
         if len(good) < len(wanted):
             out["note"] = "some names asked for are not toolsets here; the ones here: " + ", ".join(here)
         return out
+
+    def _device_tools(self) -> frozenset[str]:
+        """The tools this turn offers that are a device's (app_router.ALL_TOOLS): each live device app's own tools
+        as its hub lends them, and take_photo when eve's own tools have it. Empty when the turn has none, and then
+        the app router is not asked."""
+        names = {str(t.get("name")) for app, hub in self._live_apps() for t in hub.tools()}
+        names |= {str(t.get("name")) for t in own_tools()}
+        return frozenset(names) & app_router.ALL_TOOLS
 
     def _previous_said(self) -> str:
         """The owner's message before this turn's (a follow-up's context for the router). _answer_turn notes the

@@ -91,7 +91,9 @@ negatives (primary `none` or `ask`) that fired an acting tool, Jev's errors and 
 The environment it needs, and sets when the shell has not: `EVE_TELEGRAM_MODEL=gpt-6-luna`,
 `EVE_JEV_ROUTE=openrouter`, `EVE_OPENTABLE=1`, `EVE_MENU_TOOLS=on` (pass `--menu-tools off` to score
 the switch off). `EVE_TOOLSET_ROUTER`, `EVE_CHIEF` and `EVE_GRADE_ROUTER` stay at their defaults,
-as in production. Keys: only `OPENROUTER_API_KEY` (every model call and Jev) and `TICKETMASTER_API_KEY` (for
+as in production. `--app-router on|off` forces `EVE_APP_ROUTER` for one arm, and `--door call` (or a case's
+own `"door": "call"`) scores the push-to-talk call's turn, not the app's
+([app router](app-router.md#the-end-to-end-arms)). Keys: only `OPENROUTER_API_KEY` (every model call and Jev) and `TICKETMASTER_API_KEY` (for
 `events_search` to be lent), scoped to the one command with `env` (never `export $(…)`: with a key missing it
 prints every exported variable):
 
@@ -329,6 +331,13 @@ keeps its fixed sources in every mode. The tests are in `bridge/tests/test_teleg
 | `EVE_JEV_ROUTE`, `OPENROUTER_API_KEY` / `TYPESAFE_API_KEY` | | The Jev route (`jev.route_config`). With no key, the router is keywords only. |
 
 Privacy: while the router is on, the owner's message and the previous message go to Jev on every Telegram turn.
+
+## Devices are routed separately
+
+This router opens the owner's accounts. A device's tools (the TV, the lights, the music, the camera) ride
+every turn and are not routed here. Whether a request is for one of them, and whether the Mac agent may be
+started for it, is the [app router](app-router.md)'s decision: its own Jev call beside this one, with its own
+gates and its own blind holdout (`EVE_APP_ROUTER`, off by default).
 
 ## Commands
 

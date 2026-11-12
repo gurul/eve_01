@@ -293,6 +293,11 @@ The [Telegram door](docs/stackchan/telegram.md) is **off by default**. With it o
   Notion and Linear a turn starts with, so most turns need no extra round to
   load them (`EVE_TOOLSET_ROUTER`; `off` keeps the turn as it was). See
   [toolset router](docs/toolset-router.md).
+- **Keeps a request for a device on that device.** "Change the TV input to HDMI 1"
+  is for the TV, not for the Mac's screen. One Jev call per turn reads whether a
+  request is for the TV, the lights, the music or the camera; when it is, the turn
+  is told so and the Mac agent can't be started for it (`EVE_APP_ROUTER`; off until
+  its blind eval passes, `on` to try it). See [app router](docs/app-router.md).
 - **Asks before consequential actions.** Routine reads, notes, lights, music,
   local app edits and ordinary computer tasks proceed without another check.
   Sending, deleting, purchasing, publishing and permission changes get a
@@ -692,7 +697,9 @@ uses Jev labels/roles rather than legal prose.
 See [government-source data and limits](docs/america.md#data-and-provider-terms).
 With a TinyFish key, a computer task's text goes to Jev (TypeSafe's model,
 through TypeSafe or OpenRouter) to choose where it runs,
-and a public-web lookup's text goes to TinyFish as a search. The watcher sends only the page you asked it to watch.
+and a public-web lookup's text goes to TinyFish as a search. With `EVE_APP_ROUTER=on`
+(off by default), your message and the one before it also go to Jev on every chat turn
+that has a device's tools, as they already do for the toolset router. The watcher sends only the page you asked it to watch.
 
 **eve lite** ([what leaves the Mac](docs/lite.md#what-leaves-the-mac)) listens on two
 ports of its own: 48780, the Mac's page, on loopback only; and 48781, the door for phones
@@ -772,6 +779,8 @@ bridge/.venv/bin/python -m pip install -e './bridge[dev]'
   when asked: `(cd bridge && EVE_LIVE=1 .venv/bin/pytest -q -m live)`.
 - **Routing evals.** These call Jev, which receives the request text, and print their
   ship decision: `(cd bridge && .venv/bin/python tools/route_eval.py [--quit | --browser | --model jev --native])`.
+  The app router's is `tools/app_route_eval.py [--fit | --holdout | --report]`
+  ([app router](docs/app-router.md#commands)).
 - **Firmware.** Host tests live in `firmware/claude_pet_stackchan/host/`; the
   [build guide](docs/stackchan/build.md) covers hardware setup and bench conventions.
 - **Widget file reads.** `sh widget/Tests/run.sh` checks the Foundation-only readers;
