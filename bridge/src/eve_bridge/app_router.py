@@ -96,8 +96,10 @@ GATES_FILE = Path(__file__).resolve().parent / "app_gates.json"
 # Round 2 decides it; the orchestrator flips it. Round 1 (2026-11-11) held every line of the bar (80/80 device cases
 # named, 0/24 Mac and 0/16 neither cases claimed, Jev p95 418 ms), but the gate floor, the nudge-once guard, the
 # mac_app_only rules and the can't wording were all changed after it, on its data. A rule changed on seen data has
-# no blind verdict, so this is False again until tools/app_route_eval.py --holdout2 and the end-to-end arms are
-# scored on sets nobody here has read (docs/app-router.md, "Round 2").
+# no blind verdict, so round 2 decided it: tools/app_route_eval.py --holdout2 and the end-to-end arms, scored once
+# on 2026-11-11 on sets nobody here had read. The bar did NOT hold: 4/40 Mac cases were claimed for a device (the
+# bar allows 3%), and one device case still reached the Mac agent end to end. So this stays False and the router
+# is off unless EVE_APP_ROUTER=on (docs/app-router.md, "Round 2").
 SHIPPED = False
 
 MAC, OTHER = "mac", "other"            # the Choice's two options that claim nothing

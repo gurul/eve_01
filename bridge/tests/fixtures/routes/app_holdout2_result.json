@@ -1,0 +1,181 @@
+{
+ "round": 2,
+ "scored": "2026-11-11 20:59",
+ "holdout_sha256": "9cc899702e0814a0b97a39c6249fa68e4217c9e66600cfefe134fd27609daeb9",
+ "questions": "04e08c3885f6538c",
+ "gates": {
+  "tv": {
+   "noul": 0.5,
+   "choice": 0.5,
+   "lead": 0.0,
+   "can": 0.5
+  },
+  "lights": {
+   "noul": 0.5,
+   "choice": 0.5,
+   "lead": 0.0,
+   "can": 0.1
+  },
+  "music": {
+   "noul": 0.5,
+   "choice": 0.5,
+   "lead": 0.0,
+   "can": 0.6
+  },
+  "camera": {
+   "noul": 0.5,
+   "choice": 0.5,
+   "lead": 0.0,
+   "can": 0.2
+  }
+ },
+ "decision": "the live path: app_router.mac_app_only with mac_apps, then app_router.decide with gates (the fitted gates, each claim gate raised to the floor; can as fitted)",
+ "fitted": {
+  "tv": {
+   "noul": 0.5,
+   "choice": 0.5,
+   "lead": -0.1,
+   "can": 0.5
+  },
+  "lights": {
+   "noul": 0.4,
+   "choice": 0.3,
+   "lead": -0.2,
+   "can": 0.1
+  },
+  "music": {
+   "noul": 0.15,
+   "choice": 0.35,
+   "lead": -0.5,
+   "can": 0.6
+  },
+  "camera": {
+   "noul": 0.2,
+   "choice": 0.35,
+   "lead": -0.4,
+   "can": 0.2
+  }
+ },
+ "floor": {
+  "noul": 0.5,
+  "choice": 0.5,
+  "lead": 0.0
+ },
+ "mac_apps": [
+  "Spotify",
+  "Slack",
+  "Safari",
+  "Google Chrome",
+  "Notes",
+  "Mail",
+  "Calendar",
+  "Zoom",
+  "Photo Booth",
+  "Calculator",
+  "Finder",
+  "System Settings",
+  "Messages",
+  "Preview",
+  "TV",
+  "Music",
+  "Home"
+ ],
+ "bar": {
+  "1": true,
+  "2": false,
+  "3": true,
+  "4": true,
+  "shipped": false
+ },
+ "score": {
+  "n": 140,
+  "device": 80,
+  "mac": 40,
+  "none": 20,
+  "device_right": 77,
+  "device_rate": 0.9625,
+  "mac_claimed": [
+   "hold2-081",
+   "hold2-082",
+   "hold2-084",
+   "hold2-087"
+  ],
+  "none_claimed": [
+   "hold2-136"
+  ],
+  "p50_ms": 269.1,
+  "p95_ms": 455.0,
+  "errors": 0,
+  "slow": 0,
+  "per": {
+   "tv": {
+    "cases": 26,
+    "named": 26,
+    "claimed": 28
+   },
+   "lights": {
+    "cases": 18,
+    "named": 18,
+    "claimed": 19
+   },
+   "music": {
+    "cases": 20,
+    "named": 18,
+    "claimed": 18
+   },
+   "camera": {
+    "cases": 16,
+    "named": 15,
+    "claimed": 17
+   }
+  },
+  "can_cases": 77,
+  "can_right": 73,
+  "cant_cases": 20,
+  "cant_right": 16,
+  "method_cases": 0,
+  "method_right": 0,
+  "confusion": {
+   "tv": {
+    "tv": 26
+   },
+   "lights": {
+    "lights": 18
+   },
+   "music": {
+    "music": 18,
+    "no claim": 2
+   },
+   "camera": {
+    "camera": 15,
+    "no claim": 1
+   },
+   "mac": {
+    "camera": 2,
+    "no claim": 36,
+    "tv": 2
+   },
+   "none": {
+    "no claim": 19,
+    "lights": 1
+   }
+  },
+  "missed": [
+   "hold2-059",
+   "hold2-062",
+   "hold2-080"
+  ],
+  "mac_rate": 0.1,
+  "none_rate": 0.05,
+  "mac_rule": {
+   "tv": [],
+   "lights": [],
+   "music": [],
+   "camera": [],
+   "mac": [
+    "hold2-100"
+   ],
+   "none": []
+  }
+ }
+}

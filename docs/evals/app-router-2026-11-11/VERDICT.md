@@ -48,12 +48,42 @@ Round 2 decides `SHIPPED`: a new blind router holdout (`app_holdout2.json`, scor
 `tools/app_route_eval.py --holdout2`, the live path's whole decision with a fixed app list) and a new blind
 end-to-end set, against the same bar (`BAR.md`, unchanged).
 
+### Round 2 verdict
+
 | Line | Measured | Verdict |
 |---|---|---|
-| 1. device cases named right, >= 0.90 | | VERDICT: pending |
-| 2. Mac cases claimed, <= 0.03 | | VERDICT: pending |
-| 3. neither cases claimed, <= 0.05 | | VERDICT: pending |
-| 4. Jev p95 <= 800 ms | | VERDICT: pending |
-| 5. device cases ending in the Mac agent, 0 | | VERDICT: pending |
-| 6. Mac cases reaching the Mac agent, >= 0.90 | | VERDICT: pending |
-| 7. NEW >= BASE - 3 points | | VERDICT: pending |
+| 1. device cases named right, >= 0.90 | 77/80 = 96.2% | pass |
+| 2. Mac cases claimed, <= 0.03 | 4/40 = 10.0% | **fail** |
+| 3. neither cases claimed, <= 0.05 | 1/20 = 5.0% | pass |
+| 4. Jev p95, <= 800 ms | p95 455 ms, p50 269 ms, 0 errors | pass |
+| 5. device-app cases ending in the Mac agent, 0 | NEW 1/26 (BASE 3/26, main 3/26) | **fail** |
+| 6. Mac-task cases reaching the Mac agent, >= 0.90 | NEW 15/16 (BASE 14/16, main 15/16) | pass |
+| 7. NEW overall >= BASE overall - 3 points | NEW 41/48 = 85.4%, BASE 38/48 = 79.2% | pass |
+
+**Round 2 verdict (scored once, 2026-11-11): the bar did not hold. `SHIPPED = False`; the router is off by
+default.** `EVE_APP_ROUTER=on` runs it as a live trial.
+
+Sets: `app_holdout2.json` (140 cases, writer D; 26 of its 40 Mac cases never say Mac, laptop, computer, desktop,
+screen or browser) and `docs/evals/app-router-2026-11-11/round2/cases.json` (48 cases, writer E). Three end-to-end
+arms: `main.txt` is the code before this branch, `base.txt` is this branch with the router off, `new.txt` with it on.
+
+What failed, and what the runs show:
+
+- **Line 2.** Four Mac cases were claimed for a device: a screen recording of a slide walk-through and a video
+  call's camera (claimed for the camera), a login in a music app's desktop window and mirroring a window to a
+  display (claimed for the TV). These are the shapes round 1's sets did not hold. One plain question about light
+  colour was claimed for the lights.
+- **Line 5.** One device case still reached the Mac agent with the router on (a camera exposure request the
+  router did not claim), against three with it off.
+- **A wrong claim cost a Mac task.** In the NEW arm one Mac case was claimed for the TV as something it can't do;
+  `start_task` was refused once and the model then told the owner it couldn't, instead of calling again. The
+  nudge-once guard bounds the harm to one case here, but it is the harm the bar's line 2 exists to stop.
+- **The Limits wording alone measured no gain.** main and BASE both sent 3 of 26 device cases to the Mac agent.
+  The sentences ship anyway: they state the tools' real limits and what to do about them, and the arms show no
+  loss (39/48 against 38/48 is inside the three-point noise floor).
+- **With the router on the end-to-end numbers were the best of the three arms** (device cases to the Mac agent
+  1 against 3, overall 85.4% against 79.2% and 81.2%), which is why the switch stays for a trial. It is one run of
+  48 cases; the bar decides the default, not this.
+
+What a next round would need: Mac cases like the four above in the tuning set, the layer-1 questions split so
+each holds one idea (act, or be told), a refit, and a third blind set. Round 2's sets are seen data now.
