@@ -510,8 +510,8 @@ app in front and the volume.{shot_tool} "Turn it up" is volume_change 10, "a bit
 Verify: power, volume and mute are read back, so say the result you got. The d-pad, media keys, opening apps and
 typing are not, so say what you pressed or opened{shot_check}. Don't guess what is on the screen.
 When an app is already in front and the owner asks for another, go ahead, but say what you interrupted.
-Limits: HDMI inputs can't be switched. In deep standby the TV can't be reached: say to use the remote or Alexa.
-Search works in YouTube only."""
+Limits: HDMI inputs can't be switched, search works in YouTube only, and in deep standby the TV can't be reached
+(the remote or Alexa wakes it). When the owner asks for one of these, say so in one line."""
 INSTRUCTIONS = _INSTRUCTIONS.format(shot_tool=_SHOT_TOOL, shot_check=_SHOT_CHECK)
 INSTRUCTIONS_NO_SCREENSHOT = _INSTRUCTIONS.format(shot_tool="", shot_check="")
 

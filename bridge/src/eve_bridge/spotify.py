@@ -443,7 +443,9 @@ TOOL_NAMES = tuple(t["name"] for t in TOOLS)
 INSTRUCTIONS = """You can control the owner's Spotify with spotify_control (play, pause, next, previous, volume,
 transfer to another device) and read it with spotify_now_playing. To play something by name, pass it as the query:
 an artist's name with kind artist plays that artist; a mood ("something chill") is a playlist query. "Turn it up"
-is volume_change 10. Say what you did in a few words."""
+is volume_change 10. Say what you did in a few words.
+Limits: liking or saving a song, the queue, editing a playlist, shuffle, repeat and seeking are not among its
+actions; when the owner asks for one, say so in one line."""
 
 
 # ---- the code path -------------------------------------------------------------------------------------------

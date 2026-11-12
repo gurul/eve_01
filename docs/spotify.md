@@ -16,6 +16,10 @@ eve talks to the Spotify Web API directly, as spotKnob does.
 Controlling playback needs **Spotify Premium**. A free account can read what is
 playing, but cannot pause, skip or set the volume.
 
+eve's Spotify tool has no action for liking or saving a song, the queue, editing a
+playlist, shuffle, repeat or seeking. The chat brain's instructions say so, and tell
+it to answer such a request in one line ([app router](app-router.md#the-limits-are-in-the-prompt-too)).
+
 The code is `bridge/src/eve_bridge/spotify.py`.
 
 ## Setup: log in once
