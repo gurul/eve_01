@@ -159,6 +159,15 @@ without a Mac word.
 after round 1, on its data: on the kept answers it gives up 6 of 160 tuning and 3 of 80 round 1 device claims
 (77/80), and claims no Mac or neither case in either set. Those are seen-data numbers, not a verdict.
 
+### The owner's word for a Mac task
+
+The owner, 2026-11-11: "for mac tasks i will say do it on computer". `app_router.says_computer(text)` reads that
+in code, before Jev is asked: a message that says where with the computer's name ("do it on computer", "play it
+on my Mac", "open netflix on the laptop"; a few common slips of the word too) is never claimed for a device. Jev
+alone was not enough: it kept "join the standup and turn my camera on, on my computer" for the camera. One
+exception is still asked of Jev: a photo ("take a picture from my Mac"), because the camera on the computer is
+the owner's camera. The rule was added after round 2. It only removes claims, and it has no blind test of its own.
+
 ### The Mac app rule
 
 `app_router.mac_app_only(text)` answers before Jev is asked: no claim. Jev read a bare "open Spotify" as the

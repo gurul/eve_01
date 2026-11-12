@@ -74,6 +74,7 @@ import hashlib
 import json
 import logging
 import os
+import re
 import threading
 import time
 from dataclasses import dataclass, field
@@ -682,6 +683,25 @@ def make_router(environ: Optional[Mapping[str, str]] = None) -> Optional[Router]
 DEVICE_WORD_APPS = frozenset({"tv", "music", "home"})
 
 
+# The owner's own word for a Mac task (2026-11-11: "for mac tasks i will say do it on computer"). Typed fast and
+# heard by speech-to-text, so the common slips of the word are read too.
+_COMPUTER = re.compile(
+    r"\b(?:on|in|from|with|using|use|to|at)\s+(?:(?:my|the|this|that)\s+)?"
+    r"(?:computer|comuter|compter|computr|mac|macbook|mac\s?book|laptop|desktop)\b", re.IGNORECASE)
+_PHOTO = re.compile(r"\b(?:photo|photos|picture|pictures|pic|selfie|snapshot)\b", re.IGNORECASE)
+
+
+def says_computer(text: str) -> bool:
+    """True when the owner's words say the computer is where it happens ("do it on computer", "play it on my
+    Mac", "open netflix on the laptop"): the owner's rule, so code answers before Jev is asked and no device claims
+    the request. Jev alone kept "join the standup and turn my camera on, on my computer" for the camera (live,
+    2026-11-11). One thing is still asked of Jev: a photo, because the camera on the computer is the owner's
+    camera and "take a picture from my Mac" is a photo, not a task on the screen. Added after round 2, on the
+    owner's word; it only removes claims and has no blind test of its own."""
+    said = text or ""
+    return bool(_COMPUTER.search(said)) and not _PHOTO.search(said)
+
+
 def mac_app_only(text: str, apps: Optional[Iterable[str]] = None) -> bool:
     """True when the message is NOTHING BUT opening or quitting an app installed on this Mac ("open Spotify",
     "quit Slack"): code answers before Jev is asked and no device claims it. Jev reads a bare "open Spotify" as the
@@ -713,7 +733,7 @@ def route_turn(text: str, previous: str = "", router: Optional[Router] = None, o
     tools = frozenset(str(n) for n in offered) & ALL_TOOLS
     if router is None or not live(tools):
         return NO_CLAIM
-    if mac_app_only(text, mac_apps):
+    if mac_app_only(text, mac_apps) or says_computer(text):
         return NO_CLAIM
     box: dict[str, Any] = {}
     done = threading.Event()

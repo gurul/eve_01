@@ -1178,3 +1178,29 @@ def test_the_mac_app_rule_answers_before_jev_is_asked() -> None:
     assert asked == []
     ar.route_turn("open spotify on the tv", "", router, ar.ALL_TOOLS, mac_apps=APPS)
     assert asked == ["open spotify on the tv"]
+
+
+@pytest.mark.parametrize("text, computer", [
+    ("do it on computer", True), ("Do it on the computer.", True), ("play some jazz on my Mac", True),
+    ("open netflix on the laptop", True), ("join the standup and turn my camera on, on my computer", True),
+    ("do it on comuter", True), ("use my macbook for it", True),
+    ("take a picture from my Mac", False), ("Take a photo with my camera on my computer.", False),
+    ("turn on the tv", False), ("is a computer science degree worth it", False), ("mac and cheese recipe", False),
+    ("", False),
+])
+def test_the_owners_word_for_a_mac_task_is_read_by_code(text: str, computer: bool) -> None:
+    assert ar.says_computer(text) is computer
+
+
+def test_a_request_that_says_the_computer_is_never_asked_of_jev_or_claimed() -> None:
+    asked: list[str] = []
+
+    def router(text: str, previous: str, offered: Any) -> ar.AppAnswer:
+        asked.append(text)
+        return ar.AppAnswer(error="unused")
+
+    assert ar.route_turn("turn my camera on, on my computer", "", router, ar.ALL_TOOLS, mac_apps=APPS) == ar.NO_CLAIM
+    assert ar.route_turn("do it on computer", "open netflix", router, ar.ALL_TOOLS, mac_apps=APPS) == ar.NO_CLAIM
+    assert asked == []
+    ar.route_turn("take a picture from my Mac", "", router, ar.ALL_TOOLS, mac_apps=APPS)
+    assert asked == ["take a picture from my Mac"]

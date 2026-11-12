@@ -297,7 +297,8 @@ The [Telegram door](docs/stackchan/telegram.md) is **off by default**. With it o
   is for the TV, not for the Mac's screen. One Jev call per turn reads whether a
   request is for the TV, the lights, the music or the camera; when it is, the turn
   is told so and the first call that would start the Mac agent for it is refused once
-  (`EVE_APP_ROUTER=on`; off by default: its second blind round did not hold its bar on 2026-11-11). See
+  (`EVE_APP_ROUTER=on`; off by default: its second blind round did not hold its bar on 2026-11-11). Say
+  "on my computer" and the request is never taken for a device. See
   [app router](docs/app-router.md).
 - **Asks before consequential actions.** Routine reads, notes, lights, music,
   local app edits and ordinary computer tasks proceed without another check.
