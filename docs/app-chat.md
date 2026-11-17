@@ -1025,6 +1025,29 @@ its lines arrive and never goes backwards (`selectCard`). The rules below
 (what a finished card requires, the one repair, the picture gradients, the
 two actions) are the same in Swift, held by the parity fixtures.
 
+**Staying on the newest json-render** (owner, 2026-11-17: "whenever the git
+repo is updated our system should also be updated").
+`sh tools/json_render_update.sh` reads the newest `vX.Y.Z` tag of
+json-render's repository and compares it with the pin in
+`Packages/EveCards/Package.swift`. When the tag is newer and npm has
+`@json-render/core` and `@json-render/react` at that version, it raises every
+pin (both Swift packages, `Web/package.json`, the two entries in
+`pnpm-workspace.yaml`'s `minimumReleaseAgeExclude`) in a worktree of its own
+(`../eve-json-render-update`, never the live checkout). There it runs
+`pnpm install`, generates the card rules, the Swift catalog and the parity
+cards again, and runs the web tests, the type check, the web build, the Swift
+tests of `EveCards` and `EveChat`, the app's logic tests, the bridge's card
+tests and an app build. All green and the iPhone reachable: it installs the
+app, fast-forwards the live checkout and restarts the daemon, so the card
+rules (Mac) and the renderer (phone) change together. Anything failing
+changes nothing live, and eve says what failed (ntfy). `--dry-run` only
+reports. `--verify [version]` runs every check and stops before the commit
+and the install. `--schedule` runs it every night at 04:50 (LaunchAgent
+`com.github.eve-bridge.json-render-update`, log
+`~/Library/Logs/eve-json-render-update.log`); `--unschedule` stops it. It
+never pushes. A change in the repository between two releases is not
+followed: the Swift package and the npm packages exist per release.
+
 **What changes with the switch, and what does not.** The decision of when to
 write a card is the same sentence for both engines (`link_chat.JSON_APP_RULE`
 is `APP_RULE` with the block's name and format changed, and a test holds them

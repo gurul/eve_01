@@ -35,6 +35,8 @@ Use Node 22.18 or later and pnpm (the json-render scripts run their TypeScript s
   come from the catalog in `src/jsonCatalog.ts`; `pnpm check-json-prompt` exits
   1 when the committed file is stale. `pnpm validate-spec [file]` checks a
   json-render block as the app does. See `docs/app-chat.md`, "The card engine".
+- `sh tools/json_render_update.sh` (from the repository root) moves these pins and the Swift package's to
+  json-render's newest release, nightly once scheduled. See `docs/app-chat.md`, "The card engine".
 - `pnpm preview-cards` serves `preview.html`, a development page that draws a
   json-render block as the app does and lists what each tap sends. It is not
   part of either build.
