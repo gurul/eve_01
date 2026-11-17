@@ -1,0 +1,560 @@
+{
+ "about": "The cases behind link_chat.APP_AFTER_TOOL (tools/openui_eval.py --engine json-render --cases this file --repeat 8): facts from a saved web search should be a card on an empty history and after five plain quotes; talk, a refused task and an outright ask for plain text should stay plain. Every figure, time and forecast here is made up.",
+ "cases": [
+  {
+   "id": "quote-fresh",
+   "label": "ui",
+   "grade": "instant",
+   "text": "Voo price",
+   "results": {
+    "web_search": {
+     "ok": true,
+     "answer": "VOO was $674.51 at 10:37 a.m. ET on November 17, 2026, down $5.75 (0.85%), according to “Vanguard S&P 500 ETF (VOO) Latest Prices, Charts & News” from Nasdaq. Prices change throughout the trading day.",
+     "sources": [
+      {
+       "title": "Vanguard S&P 500 ETF (VOO) Latest Prices, Charts & News | Nasdaq",
+       "url": "https://www.nasdaq.com/market-activity/etf/voo",
+       "snippet": "VOO $674.51 -5.75 (-0.85%) as of 10:37 AM ET. Previous close $680.26. Day range $673.90 - $679.12."
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "quote-after-plain",
+   "label": "ui",
+   "grade": "instant",
+   "text": "Voo price",
+   "history": [
+    {
+     "role": "owner",
+     "text": "Voo stock price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO closed at **$680.26** on November 16, down **$13.12 (1.89%)** for the day. [Yahoo Finance](https://finance.yahoo.com/quote/VOO/history/)"
+    },
+    {
+     "role": "owner",
+     "text": "Voo stock price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$680.42** in pre-market trading, up **$0.16 (0.02%)** from Monday’s close of $680.26. [Yahoo Finance](https://finance.yahoo.com/quote/VOO/)"
+    },
+    {
+     "role": "owner",
+     "text": "Voo price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$674.51**, down **$5.75 (0.85%)** as of 10:37 a.m. ET today. Prices move during market hours. [Nasdaq](https://www.nasdaq.com/market-activity/etf/voo)"
+    },
+    {
+     "role": "owner",
+     "text": "Voo price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$674.60**, down **$5.66 (0.83%)** as of 10:52 a.m. ET today. Prices move during market hours. [Nasdaq](https://www.nasdaq.com/market-activity/etf/voo)"
+    },
+    {
+     "role": "owner",
+     "text": "voo"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$674.72**, down **$5.54 (0.81%)** as of 11:05 a.m. ET today. [Nasdaq](https://www.nasdaq.com/market-activity/etf/voo)"
+    }
+   ],
+   "results": {
+    "web_search": {
+     "ok": true,
+     "answer": "VOO was $674.51 at 10:37 a.m. ET on November 17, 2026, down $5.75 (0.85%), according to “Vanguard S&P 500 ETF (VOO) Latest Prices, Charts & News” from Nasdaq. Prices change throughout the trading day.",
+     "sources": [
+      {
+       "title": "Vanguard S&P 500 ETF (VOO) Latest Prices, Charts & News | Nasdaq",
+       "url": "https://www.nasdaq.com/market-activity/etf/voo",
+       "snippet": "VOO $674.51 -5.75 (-0.85%) as of 10:37 AM ET. Previous close $680.26. Day range $673.90 - $679.12."
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "other-quote-after-plain",
+   "label": "ui",
+   "grade": "instant",
+   "text": "how is apple stock doing",
+   "history": [
+    {
+     "role": "owner",
+     "text": "Voo stock price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO closed at **$680.26** on November 16, down **$13.12 (1.89%)** for the day. [Yahoo Finance](https://finance.yahoo.com/quote/VOO/history/)"
+    },
+    {
+     "role": "owner",
+     "text": "Voo stock price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$680.42** in pre-market trading, up **$0.16 (0.02%)** from Monday’s close of $680.26. [Yahoo Finance](https://finance.yahoo.com/quote/VOO/)"
+    },
+    {
+     "role": "owner",
+     "text": "Voo price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$674.51**, down **$5.75 (0.85%)** as of 10:37 a.m. ET today. Prices move during market hours. [Nasdaq](https://www.nasdaq.com/market-activity/etf/voo)"
+    },
+    {
+     "role": "owner",
+     "text": "Voo price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$674.60**, down **$5.66 (0.83%)** as of 10:52 a.m. ET today. Prices move during market hours. [Nasdaq](https://www.nasdaq.com/market-activity/etf/voo)"
+    },
+    {
+     "role": "owner",
+     "text": "voo"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$674.72**, down **$5.54 (0.81%)** as of 11:05 a.m. ET today. [Nasdaq](https://www.nasdaq.com/market-activity/etf/voo)"
+    }
+   ],
+   "results": {
+    "web_search": {
+     "ok": true,
+     "answer": "AAPL was $268.40 at 10:37 a.m. ET on November 17, 2026, up $1.92 (0.72%), according to “Apple Inc. (AAPL) Latest Prices, Charts & News” from Nasdaq. Prices change throughout the trading day.",
+     "sources": [
+      {
+       "title": "Apple Inc. (AAPL) Latest Prices, Charts & News | Nasdaq",
+       "url": "https://www.nasdaq.com/market-activity/stocks/aapl",
+       "snippet": "AAPL $268.40 +1.92 (+0.72%) as of 10:37 AM ET. Previous close $266.48. Day range $265.10 - $269.05."
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "weather-after-plain",
+   "label": "ui",
+   "grade": "instant",
+   "text": "whats the weather in seattle",
+   "history": [
+    {
+     "role": "owner",
+     "text": "Voo stock price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO closed at **$680.26** on November 16, down **$13.12 (1.89%)** for the day. [Yahoo Finance](https://finance.yahoo.com/quote/VOO/history/)"
+    },
+    {
+     "role": "owner",
+     "text": "Voo stock price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$680.42** in pre-market trading, up **$0.16 (0.02%)** from Monday’s close of $680.26. [Yahoo Finance](https://finance.yahoo.com/quote/VOO/)"
+    },
+    {
+     "role": "owner",
+     "text": "Voo price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$674.51**, down **$5.75 (0.85%)** as of 10:37 a.m. ET today. Prices move during market hours. [Nasdaq](https://www.nasdaq.com/market-activity/etf/voo)"
+    },
+    {
+     "role": "owner",
+     "text": "Voo price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$674.60**, down **$5.66 (0.83%)** as of 10:52 a.m. ET today. Prices move during market hours. [Nasdaq](https://www.nasdaq.com/market-activity/etf/voo)"
+    },
+    {
+     "role": "owner",
+     "text": "voo"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$674.72**, down **$5.54 (0.81%)** as of 11:05 a.m. ET today. [Nasdaq](https://www.nasdaq.com/market-activity/etf/voo)"
+    }
+   ],
+   "results": {
+    "web_search": {
+     "ok": true,
+     "answer": "Seattle is 52°F and cloudy right now, with light rain likely after 4 p.m. High 55°F, low 46°F, wind 8 mph from the south, according to the National Weather Service.",
+     "sources": [
+      {
+       "title": "Seattle, WA forecast",
+       "url": "https://forecast.weather.gov/MapClick.php?lat=47.6&lon=-122.3"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "thanks-after-card",
+   "label": "plain",
+   "grade": "instant",
+   "text": "ok thanks",
+   "history": [
+    {
+     "role": "owner",
+     "text": "Voo price"
+    },
+    {
+     "role": "eve",
+     "text": "Here it is.\n\n```json-render\n{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"VOO\"},\"children\":[\"facts\"]}}\n{\"op\":\"add\",\"path\":\"/elements/facts\",\"value\":{\"type\":\"Facts\",\"props\":{\"rows\":[{\"label\":\"Price\",\"value\":\"$674.51\"},{\"label\":\"Today\",\"value\":\"-$5.75 (0.85%)\"}]},\"children\":[]}}\n```"
+    }
+   ]
+  },
+  {
+   "id": "thanks-after-plain",
+   "label": "plain",
+   "grade": "instant",
+   "text": "ok thanks",
+   "history": [
+    {
+     "role": "owner",
+     "text": "Voo stock price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO closed at **$680.26** on November 16, down **$13.12 (1.89%)** for the day. [Yahoo Finance](https://finance.yahoo.com/quote/VOO/history/)"
+    },
+    {
+     "role": "owner",
+     "text": "Voo stock price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$680.42** in pre-market trading, up **$0.16 (0.02%)** from Monday’s close of $680.26. [Yahoo Finance](https://finance.yahoo.com/quote/VOO/)"
+    },
+    {
+     "role": "owner",
+     "text": "Voo price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$674.51**, down **$5.75 (0.85%)** as of 10:37 a.m. ET today. Prices move during market hours. [Nasdaq](https://www.nasdaq.com/market-activity/etf/voo)"
+    },
+    {
+     "role": "owner",
+     "text": "Voo price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$674.60**, down **$5.66 (0.83%)** as of 10:52 a.m. ET today. Prices move during market hours. [Nasdaq](https://www.nasdaq.com/market-activity/etf/voo)"
+    },
+    {
+     "role": "owner",
+     "text": "voo"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$674.72**, down **$5.54 (0.81%)** as of 11:05 a.m. ET today. [Nasdaq](https://www.nasdaq.com/market-activity/etf/voo)"
+    }
+   ]
+  },
+  {
+   "id": "known-fact",
+   "label": "plain",
+   "grade": "instant",
+   "text": "whats the capital of australia",
+   "history": [
+    {
+     "role": "owner",
+     "text": "Voo stock price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO closed at **$680.26** on November 16, down **$13.12 (1.89%)** for the day. [Yahoo Finance](https://finance.yahoo.com/quote/VOO/history/)"
+    },
+    {
+     "role": "owner",
+     "text": "Voo stock price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$680.42** in pre-market trading, up **$0.16 (0.02%)** from Monday’s close of $680.26. [Yahoo Finance](https://finance.yahoo.com/quote/VOO/)"
+    },
+    {
+     "role": "owner",
+     "text": "Voo price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$674.51**, down **$5.75 (0.85%)** as of 10:37 a.m. ET today. Prices move during market hours. [Nasdaq](https://www.nasdaq.com/market-activity/etf/voo)"
+    },
+    {
+     "role": "owner",
+     "text": "Voo price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$674.60**, down **$5.66 (0.83%)** as of 10:52 a.m. ET today. Prices move during market hours. [Nasdaq](https://www.nasdaq.com/market-activity/etf/voo)"
+    },
+    {
+     "role": "owner",
+     "text": "voo"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$674.72**, down **$5.54 (0.81%)** as of 11:05 a.m. ET today. [Nasdaq](https://www.nasdaq.com/market-activity/etf/voo)"
+    }
+   ]
+  },
+  {
+   "id": "chat-after-card",
+   "label": "plain",
+   "grade": "instant",
+   "text": "lol nice, i should have bought more last year",
+   "history": [
+    {
+     "role": "owner",
+     "text": "Voo price"
+    },
+    {
+     "role": "eve",
+     "text": "Here it is.\n\n```json-render\n{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"VOO\"},\"children\":[\"facts\"]}}\n{\"op\":\"add\",\"path\":\"/elements/facts\",\"value\":{\"type\":\"Facts\",\"props\":{\"rows\":[{\"label\":\"Price\",\"value\":\"$674.51\"},{\"label\":\"Today\",\"value\":\"-$5.75 (0.85%)\"}]},\"children\":[]}}\n```"
+    }
+   ]
+  },
+  {
+   "id": "hello",
+   "label": "plain",
+   "grade": "instant",
+   "text": "hey"
+  },
+  {
+   "id": "yes-no-from-search",
+   "label": "plain",
+   "grade": "instant",
+   "text": "is the stock market open on thanksgiving",
+   "history": [
+    {
+     "role": "owner",
+     "text": "Voo stock price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO closed at **$680.26** on November 16, down **$13.12 (1.89%)** for the day. [Yahoo Finance](https://finance.yahoo.com/quote/VOO/history/)"
+    },
+    {
+     "role": "owner",
+     "text": "Voo stock price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$680.42** in pre-market trading, up **$0.16 (0.02%)** from Monday’s close of $680.26. [Yahoo Finance](https://finance.yahoo.com/quote/VOO/)"
+    },
+    {
+     "role": "owner",
+     "text": "Voo price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$674.51**, down **$5.75 (0.85%)** as of 10:37 a.m. ET today. Prices move during market hours. [Nasdaq](https://www.nasdaq.com/market-activity/etf/voo)"
+    },
+    {
+     "role": "owner",
+     "text": "Voo price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$674.60**, down **$5.66 (0.83%)** as of 10:52 a.m. ET today. Prices move during market hours. [Nasdaq](https://www.nasdaq.com/market-activity/etf/voo)"
+    },
+    {
+     "role": "owner",
+     "text": "voo"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$674.72**, down **$5.54 (0.81%)** as of 11:05 a.m. ET today. [Nasdaq](https://www.nasdaq.com/market-activity/etf/voo)"
+    }
+   ],
+   "results": {
+    "web_search": {
+     "ok": true,
+     "answer": "U.S. stock markets are closed on Thanksgiving Day, Thursday, November 26, 2026, and close early at 1 p.m. ET on Friday, November 27, according to the NYSE holiday calendar.",
+     "sources": [
+      {
+       "title": "Holidays & Trading Hours | NYSE",
+       "url": "https://www.nyse.com/markets/hours-calendars"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "feeling",
+   "label": "plain",
+   "grade": "instant",
+   "text": "kind of a rough day honestly",
+   "history": [
+    {
+     "role": "owner",
+     "text": "Voo stock price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO closed at **$680.26** on November 16, down **$13.12 (1.89%)** for the day. [Yahoo Finance](https://finance.yahoo.com/quote/VOO/history/)"
+    },
+    {
+     "role": "owner",
+     "text": "Voo stock price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$680.42** in pre-market trading, up **$0.16 (0.02%)** from Monday’s close of $680.26. [Yahoo Finance](https://finance.yahoo.com/quote/VOO/)"
+    },
+    {
+     "role": "owner",
+     "text": "Voo price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$674.51**, down **$5.75 (0.85%)** as of 10:37 a.m. ET today. Prices move during market hours. [Nasdaq](https://www.nasdaq.com/market-activity/etf/voo)"
+    },
+    {
+     "role": "owner",
+     "text": "Voo price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$674.60**, down **$5.66 (0.83%)** as of 10:52 a.m. ET today. Prices move during market hours. [Nasdaq](https://www.nasdaq.com/market-activity/etf/voo)"
+    },
+    {
+     "role": "owner",
+     "text": "voo"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$674.72**, down **$5.54 (0.81%)** as of 11:05 a.m. ET today. [Nasdaq](https://www.nasdaq.com/market-activity/etf/voo)"
+    }
+   ]
+  },
+  {
+   "id": "refused-task-after-card",
+   "label": "plain",
+   "grade": "instant",
+   "text": "open spotify on my mac and play my liked songs",
+   "history": [
+    {
+     "role": "owner",
+     "text": "Voo price"
+    },
+    {
+     "role": "eve",
+     "text": "Here it is.\n\n```json-render\n{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"VOO\"},\"children\":[\"facts\"]}}\n{\"op\":\"add\",\"path\":\"/elements/facts\",\"value\":{\"type\":\"Facts\",\"props\":{\"rows\":[{\"label\":\"Price\",\"value\":\"$674.51\"},{\"label\":\"Today\",\"value\":\"-$5.75 (0.85%)\"}]},\"children\":[]}}\n```"
+    }
+   ]
+  },
+  {
+   "id": "refused-task-after-plain",
+   "label": "plain",
+   "grade": "instant",
+   "text": "can you download the latest xcode on my mac",
+   "history": [
+    {
+     "role": "owner",
+     "text": "Voo stock price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO closed at **$680.26** on November 16, down **$13.12 (1.89%)** for the day. [Yahoo Finance](https://finance.yahoo.com/quote/VOO/history/)"
+    },
+    {
+     "role": "owner",
+     "text": "Voo stock price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$680.42** in pre-market trading, up **$0.16 (0.02%)** from Monday’s close of $680.26. [Yahoo Finance](https://finance.yahoo.com/quote/VOO/)"
+    },
+    {
+     "role": "owner",
+     "text": "Voo price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$674.51**, down **$5.75 (0.85%)** as of 10:37 a.m. ET today. Prices move during market hours. [Nasdaq](https://www.nasdaq.com/market-activity/etf/voo)"
+    },
+    {
+     "role": "owner",
+     "text": "Voo price"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$674.60**, down **$5.66 (0.83%)** as of 10:52 a.m. ET today. Prices move during market hours. [Nasdaq](https://www.nasdaq.com/market-activity/etf/voo)"
+    },
+    {
+     "role": "owner",
+     "text": "voo"
+    },
+    {
+     "role": "eve",
+     "text": "VOO is **$674.72**, down **$5.54 (0.81%)** as of 11:05 a.m. ET today. [Nasdaq](https://www.nasdaq.com/market-activity/etf/voo)"
+    }
+   ]
+  },
+  {
+   "id": "asked-plain-after-card",
+   "label": "plain",
+   "grade": "instant",
+   "text": "voo price, just say it in one sentence, no card",
+   "history": [
+    {
+     "role": "owner",
+     "text": "Voo price"
+    },
+    {
+     "role": "eve",
+     "text": "Here it is.\n\n```json-render\n{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"VOO\"},\"children\":[\"facts\"]}}\n{\"op\":\"add\",\"path\":\"/elements/facts\",\"value\":{\"type\":\"Facts\",\"props\":{\"rows\":[{\"label\":\"Price\",\"value\":\"$674.51\"},{\"label\":\"Today\",\"value\":\"-$5.75 (0.85%)\"}]},\"children\":[]}}\n```"
+    }
+   ],
+   "results": {
+    "web_search": {
+     "ok": true,
+     "answer": "VOO was $674.51 at 10:37 a.m. ET on November 17, 2026, down $5.75 (0.85%), according to “Vanguard S&P 500 ETF (VOO) Latest Prices, Charts & News” from Nasdaq. Prices change throughout the trading day.",
+     "sources": [
+      {
+       "title": "Vanguard S&P 500 ETF (VOO) Latest Prices, Charts & News | Nasdaq",
+       "url": "https://www.nasdaq.com/market-activity/etf/voo",
+       "snippet": "VOO $674.51 -5.75 (-0.85%) as of 10:37 AM ET. Previous close $680.26. Day range $673.90 - $679.12."
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "asked-plain-fresh",
+   "label": "plain",
+   "grade": "instant",
+   "text": "whats apple stock at, plain text please no card",
+   "results": {
+    "web_search": {
+     "ok": true,
+     "answer": "AAPL was $268.40 at 10:37 a.m. ET on November 17, 2026, up $1.92 (0.72%), according to “Apple Inc. (AAPL) Latest Prices, Charts & News” from Nasdaq. Prices change throughout the trading day.",
+     "sources": [
+      {
+       "title": "Apple Inc. (AAPL) Latest Prices, Charts & News | Nasdaq",
+       "url": "https://www.nasdaq.com/market-activity/stocks/aapl",
+       "snippet": "AAPL $268.40 +1.92 (+0.72%) as of 10:37 AM ET. Previous close $266.48. Day range $265.10 - $269.05."
+      }
+     ]
+    }
+   }
+  }
+ ]
+}

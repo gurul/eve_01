@@ -145,6 +145,86 @@ def test_the_committed_reference_is_what_the_catalog_generates() -> None:
     assert run.returncode == 0, run.stderr or run.stdout
 
 
+# ---- a patch line with miscounted closing brackets -----------------------------------------------------------
+
+ROOT_LINE = '{"op":"add","path":"/root","value":"card"}'
+CARD_LINE = ('{"op":"add","path":"/elements/card","value":{"type":"Card","props":{"title":"ABC","subtitle":"Today"},'
+             '"children":["facts"]}}')
+FACTS_LINE = ('{"op":"add","path":"/elements/facts","value":{"type":"Facts","props":{"rows":[{"label":"Price",'
+              '"value":"$12.34"},{"label":"Note","value":"a } and a [ in words"}]},"children":[]}}')
+
+
+def block_of(*lines: str) -> str:
+    return "```json-render\n" + "\n".join(lines) + "\n```"
+
+
+def test_a_patch_line_one_closer_short_is_closed_and_nothing_else_changes() -> None:
+    """The line as the model wrote it on 2026-11-17: the card's own object closed, the patch around it left open."""
+    good = block_of(ROOT_LINE, CARD_LINE, FACTS_LINE)
+    short = block_of(ROOT_LINE, CARD_LINE[:-1], FACTS_LINE)
+    assert short != good and link_chat.repair_cards(short) == good
+    assert link_chat.repair_cards(block_of(ROOT_LINE, CARD_LINE, FACTS_LINE[:-2])) == good        # two short
+    assert link_chat.repair_cards(block_of(ROOT_LINE, CARD_LINE, FACTS_LINE[:-3])) == good        # "]}}" → the list too
+    reply = f"Here it is.\n\n{short}\n\nAnything { '{' } else?"
+    assert link_chat.repair_cards(reply) == f"Here it is.\n\n{good}\n\nAnything { '{' } else?"  # prose is untouched
+    assert link_chat.repair_cards(good) == good                                                   # and so is good JSON
+
+
+def test_surplus_closers_at_the_end_of_a_patch_line_are_dropped() -> None:
+    good = block_of(ROOT_LINE, CARD_LINE, FACTS_LINE)
+    for extra in ("}", "}}", "]}", "}}}"):
+        assert link_chat.repair_cards(block_of(ROOT_LINE, CARD_LINE + extra, FACTS_LINE)) == good
+    four = block_of(ROOT_LINE, CARD_LINE + "}}}}", FACTS_LINE)
+    assert link_chat.repair_cards(four) == four                    # more than the cap: left for the app to refuse
+
+
+@pytest.mark.parametrize("line", [
+    '{"op":"add","path":"/elements/card","value":{"type":"Card","props":{"title":"AB',      # ends inside a string
+    '{"op":"add","path":"/elements/card","value":{"type":"Card","props":{"title":"ABC"]}',  # a closer of the wrong kind
+    '{"op":"add","path":"/elements/card","value":{"type":"Card",}',                         # a fault that is not a bracket
+    '{"type":"Card","props":{"title":"ABC"}',                                               # closes, but is no patch
+    '{"op":"add","value":{"type":"Card"}',                                                  # closes, but has no path
+    'root = Card([t])',                                                                     # not JSON at all
+])
+def test_any_other_fault_is_left_exactly_as_written(line: str) -> None:
+    text = block_of(ROOT_LINE, line)
+    assert link_chat.repair_cards(text) == text
+
+
+def test_only_a_json_render_blocks_patch_lines_are_read() -> None:
+    whole = "```json-render\n" + json.dumps({"root": "card", "elements": {"card": {"type": "Card"}}}, indent=1) + "\n```"
+    assert link_chat.repair_cards(whole) == whole                  # one whole JSON spec, over several lines
+    openui = "```openui-lang\nroot = Card([t])\nt = TextContent(\"{\")\n```"
+    code = "```json\n" + CARD_LINE[:-1] + "\n```"
+    for text in (openui, code, CARD_LINE[:-1], "", "No card here."):
+        assert link_chat.repair_cards(text) is text
+    unclosed = "```json-render\n" + ROOT_LINE + "\n" + CARD_LINE[:-1]          # a fence that runs to the end
+    assert link_chat.repair_cards(unclosed) == "```json-render\n" + ROOT_LINE + "\n" + CARD_LINE
+    two = block_of(ROOT_LINE, CARD_LINE[:-1]) + "\n\nAnd:\n\n" + block_of(ROOT_LINE, CARD_LINE + "}")
+    assert link_chat.repair_cards(two) == block_of(ROOT_LINE, CARD_LINE) + "\n\nAnd:\n\n" + block_of(ROOT_LINE, CARD_LINE)
+
+
+def test_a_replys_text_is_repaired_where_it_is_read() -> None:
+    """parse_response is where every reply's text is read, so the app, the transcript and the next turn's history
+    hold the repaired line. A reply with no json-render block is the same string."""
+    def reply(text: str) -> dict[str, Any]:
+        return {"output": [{"type": "message", "role": "assistant", "content": [{"type": "output_text", "text": text}]}]}
+
+    short, good = block_of(ROOT_LINE, CARD_LINE[:-1], FACTS_LINE), block_of(ROOT_LINE, CARD_LINE, FACTS_LINE)
+    assert telegram.parse_response(reply("Here.\n" + short), frozenset())[1] == "Here.\n" + good
+    assert telegram.parse_response(reply("Plain { words."), frozenset())[1] == "Plain { words."
+    assert telegram._repair_cards("Plain { words.") == "Plain { words."
+
+
+@needs_parser
+def test_the_repaired_block_passes_the_apps_validator_and_the_unrepaired_one_does_not() -> None:
+    short = block_of(ROOT_LINE, CARD_LINE[:-1], FACTS_LINE)
+    blocks = [fenced(short)[0], fenced(link_chat.repair_cards(short))[0]]
+    run = subprocess.run(["node", str(VALIDATOR), "--batch"], input=json.dumps(blocks), capture_output=True,
+                         text=True, timeout=120)
+    assert [r["ok"] for r in json.loads(run.stdout)] == [False, True], run.stdout
+
+
 # ---- the whole request ---------------------------------------------------------------------------------------
 
 def instructions(app: bool = True) -> str:

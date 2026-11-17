@@ -15,10 +15,19 @@ should be a block; ``plain`` (or ``text``, ``no``, false) means it should not; a
 scored. Optional ``history``: earlier lines, ``[{"role": "owner" | "eve", "text": ...}]``, noted as a turn notes
 them. tests/fixtures/openui_dev.json holds ten dev cases.
 
+A case can also say what a tool answers and how the turn is graded. ``results``: ``{tool name: result}``, a saved
+result handed back when the brain calls that tool (every other call is still refused); a case with a saved
+``web_search`` result is offered web search, and no search runs. ``grade``: the app's speed dial for the turn
+(``instant``, ``think``; default ``auto``). ``--repeat N`` answers every case N times and adds a line per case, since
+the form of a reply is a rate, not a yes or no. tests/fixtures/card_after_tool.json holds the cases behind the line
+an app turn reads after a tool's result (link_chat.APP_AFTER_TOOL): a quote and the weather from a saved search, on
+an empty history and after five plain quotes, with the turns that must stay plain text.
+
 Each case is a real app turn: a fresh ``TelegramInlet`` answers it with ``_FROM_APP`` set, exactly as
 ``hear(app=...)`` sets it for a turn from link_chat, so the request is built by the inlet itself (the app block,
 link_chat.app_block, included) and the reply goes to ``app_out``, which records it. Nothing reaches Telegram (the Bot
-API is a recorder) and every tool call is refused as its result, so no task, app or message leaves the eval. The
+API is a recorder) and every tool call is refused as its result (or answered with the case's saved one), so no task,
+app or message leaves the eval. The
 environment is built here, not read from the owner's env file: Telegram on with a made-up token and owner, memory,
 records and web search off, spend written to a temp folder, and only ``OPENROUTER_API_KEY`` (every model call is on
 OpenRouter) and ``PATH`` kept. ``--model`` / ``--effort`` set the brain (default: the code's DEFAULT_MODEL).
@@ -67,6 +76,8 @@ DEV_CASES = BRIDGE / "tests" / "fixtures" / "openui_dev.json"
 UI_LABELS = {"ui", "openui", "yes", "true"}
 PLAIN_LABELS = {"plain", "text", "no", "false"}
 TEXT_KEYS = ("text", "message", "prompt", "ask", "input")
+WEB_SEARCH_ON = "openrouter-perplexity"     # websearch.py's own default with an OpenRouter key: web_search is offered
+WEB_SEARCH_TOOL = "web_search"
 ATTEMPTS = 3
 KEEP_ENV = ("PATH", "OPENROUTER_API_KEY")
 
@@ -203,8 +214,10 @@ class Recorder:
         return nothing
 
 
-def environment(model: str, effort: str, scratch: Path, engine: str = "openui") -> None:
-    """os.environ as a made-up install: only PATH and the OpenRouter key survive (see the module text)."""
+def environment(model: str, effort: str, scratch: Path, engine: str = "openui", web_search: bool = False) -> None:
+    """os.environ as a made-up install: only PATH and the OpenRouter key survive (see the module text).
+    ``web_search``: the brain is offered web search (a case holds a saved result for it; run_case answers the call,
+    so nothing is searched)."""
     keep = {k: os.environ[k] for k in KEEP_ENV if k in os.environ}
     if not keep.get("OPENROUTER_API_KEY"):
         raise SystemExit("OPENROUTER_API_KEY is not set: every model call goes through OpenRouter")
@@ -220,7 +233,7 @@ def environment(model: str, effort: str, scratch: Path, engine: str = "openui") 
         "EVE_TELEGRAM_OWNER": "1",
         "EVE_MEMORY": "0",
         "EVE_RECORDS": "0",
-        "EVE_WEB_SEARCH": "off",
+        "EVE_WEB_SEARCH": WEB_SEARCH_ON if web_search else "off",
         "EVE_SPEND_DIR": str(scratch / "spend"),
     })
     if engine == "json-render":
@@ -263,8 +276,12 @@ async def run_case(case: dict[str, Any], create: Any) -> dict[str, Any]:
     inlet = tg.TelegramInlet(cfg, Recorder(), counted, toolset_route=None, grader=None)
     inlet._chat_id = 1
 
+    saved = case.get("results") if isinstance(case.get("results"), dict) else {}
+
     async def refuse(name: str, args: dict[str, Any], chat_id: int) -> dict[str, Any]:
         calls.append(name)
+        if isinstance(saved.get(name), dict):
+            return dict(saved[name])            # the case's saved result for this tool; nothing runs
         return {"ok": False, "reason": "that tool is not available right now"}
 
     inlet._tool = refuse
@@ -284,6 +301,8 @@ async def run_case(case: dict[str, Any], create: Any) -> dict[str, Any]:
         inlet._note(role, str(line.get("text") or ""))
     text = case_text(case)
     mark = tg._FROM_APP.set(f"openui-eval-{case['id']}")
+    dial = getattr(tg, "_APP_GRADE", None)      # the app's speed dial; an older checkout has none
+    graded = dial.set(str(case["grade"])) if dial is not None and case.get("grade") else None
     t0 = time.monotonic()
     error = ""
     try:
@@ -292,6 +311,8 @@ async def run_case(case: dict[str, Any], create: Any) -> dict[str, Any]:
         error = type(e).__name__
     finally:
         tg._FROM_APP.reset(mark)
+        if graded is not None:
+            dial.reset(graded)
     said = [t for k, t in out if k == "say"]
     reply = said[-1] if said else ""
     if not reply and not error:
@@ -299,6 +320,16 @@ async def run_case(case: dict[str, Any], create: Any) -> dict[str, Any]:
     return {"id": case["id"], "label": case.get("label"), "text": text, "reply": reply, "lines": len(out),
             "tools": calls, "error": error, "secs": round(time.monotonic() - t0, 2),
             "instr_chars": sizes[0] if sizes else 0, "model": cfg.model}
+
+
+def wants_web_search(cases: list[dict[str, Any]]) -> bool:
+    """Whether a case holds a saved web_search result: the run then offers web search to every case."""
+    return any(isinstance(c.get("results"), dict) and WEB_SEARCH_TOOL in c["results"] for c in cases)
+
+
+def repeated(cases: list[dict[str, Any]], times: int) -> list[dict[str, Any]]:
+    """Every case ``times`` times, kept together and in order."""
+    return [c for c in cases for _ in range(max(1, times))]
 
 
 async def run_all(cases: list[dict[str, Any]], jobs: int) -> list[dict[str, Any]]:
@@ -358,6 +389,14 @@ def report(rows: list[dict[str, Any]], arm: str) -> dict[str, Any]:
         print(f"== [{arm}] label={label}: n={t['n']} uses_ui={t['uses_ui']}/{t['n']} parse_ok={t['parse_ok']}/"
               f"{t['uses_ui']} parse_bad={t['parse_bad']} errors={t['errors']}"
               + (f" pass={t['pass']}/{t['n']}" if scored else " (not scored)"))
+    by_id: dict[str, list[dict[str, Any]]] = {}
+    for r in rows:
+        by_id.setdefault(str(r.get("id")), []).append(r)
+    if any(len(runs) > 1 for runs in by_id.values()):
+        for case_id, runs in by_id.items():
+            scored = [r for r in runs if r.get("pass") is not None]
+            print(f"== [{arm}] case={case_id}: uses_ui={sum(bool(r.get('uses_ui')) for r in runs)}/{len(runs)}"
+                  + (f" pass={sum(r['pass'] for r in scored)}/{len(scored)}" if scored else " (not scored)"))
     scored_rows = [r for r in rows if r.get("pass") is not None]
     overall = sum(r["pass"] for r in scored_rows)
     print(f"== [{arm}] all: pass={overall}/{len(scored_rows)} uses_ui={sum(bool(r.get('uses_ui')) for r in rows)}/"
@@ -375,6 +414,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     p.add_argument("--effort", default="", help="its reasoning effort (default: the code's DEFAULT_EFFORT)")
     p.add_argument("--jobs", type=int, default=4, help="cases answered at once")
     p.add_argument("--only", default="", help="run one case by id")
+    p.add_argument("--repeat", type=int, default=1, help="answer every case this many times (a line per case is added)")
     p.add_argument("--validator", default="", help="validate.mjs to use (default: this checkout's, or $OPENUI_VALIDATOR)")
     p.add_argument("--rescore", nargs="*", default=None, help="score saved --out files again, offline")
     p.add_argument("--engine", default="openui", choices=ENGINES,
@@ -399,8 +439,8 @@ def main(argv: Optional[list[str]] = None) -> int:
     if args.only:
         cases = [c for c in cases if c["id"] == args.only]
     with tempfile.TemporaryDirectory(prefix="openui-eval-") as tmp:
-        environment(args.model, args.effort, Path(tmp), args.engine)
-        rows = asyncio.run(run_all(cases, args.jobs))
+        environment(args.model, args.effort, Path(tmp), args.engine, wants_web_search(cases))
+        rows = asyncio.run(run_all(repeated(cases, args.repeat), args.jobs))
     for r in rows:
         r["arm"] = args.arm
         r["engine"] = args.engine

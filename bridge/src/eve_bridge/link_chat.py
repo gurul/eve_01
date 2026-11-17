@@ -533,6 +533,96 @@ _OPENUI_BARE_LINE = re.compile(r"(?:^|\n)[ \t]*root[ \t]*=[ \t]*[A-Z][A-Za-z0-9]
 _SPEC_FENCE = re.compile(r"```json-render[ \t]*\n.*?(?:\n```|\Z)", re.DOTALL)
 
 
+_SPEC_BODY = re.compile(r"(```json-render[ \t]*\n)(.*?)(\n```|\Z)", re.DOTALL)
+MAX_SURPLUS_CLOSERS = 3
+
+
+def _is_patch(line: str) -> bool:
+    """Whether ``line`` is one patch as the app reads it: a JSON object with an ``op`` and a ``path``."""
+    try:
+        value = json.loads(line)
+    except ValueError:
+        return False
+    return isinstance(value, dict) and bool(value.get("op")) and "path" in value
+
+
+def _closed(line: str) -> Optional[str]:
+    """``line`` with the brackets it left open closed, in order; None when none is open, a closer does not match its
+    opener, or the line ends inside a string. Brackets inside strings are text."""
+    open_: list[str] = []
+    in_string = escaped = False
+    for ch in line:
+        if in_string:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                in_string = False
+        elif ch == '"':
+            in_string = True
+        elif ch in "{[":
+            open_.append("}" if ch == "{" else "]")
+        elif ch in "}]":
+            if not open_ or open_.pop() != ch:
+                return None
+    return line + "".join(reversed(open_)) if open_ and not in_string else None
+
+
+def _repaired_patch(line: str) -> Optional[str]:
+    """A patch line that is not JSON only because its closing brackets are miscounted, made JSON: the open ones closed,
+    or up to ``MAX_SURPLUS_CLOSERS`` extra ones at the end dropped. None for any other line: nothing is guessed."""
+    closed = _closed(line)
+    if closed is not None:
+        return closed if _is_patch(closed) else None
+    cut = line
+    for _ in range(MAX_SURPLUS_CLOSERS):
+        if not cut or cut[-1] not in "}]":
+            return None
+        cut = cut[:-1].rstrip()
+        if _is_patch(cut):
+            return cut
+    return None
+
+
+def repair_cards(text: str) -> str:
+    """``text`` with each json-render block's miscounted patch lines repaired (``_repaired_patch``), and everything
+    else exactly as written: prose, the other engine's blocks, a block that is one whole JSON spec, every line that
+    already is JSON, and every line whose fault is anything but its closing brackets.
+
+    The model sometimes ends a patch line one ``}`` short (2026-11-17: 1 card in 32 in tools/openui_eval.py's
+    after-tool cases, and the phone then shows "This card couldn't be displayed"). The fix is lossless: no value is
+    added, dropped or changed. It runs once, where a reply's text is read (telegram.parse_response), so the app, the
+    transcript and the next turn's history all hold the repaired line."""
+    if "```json-render" not in text:
+        return text
+    fixed = 0
+
+    def block(match: re.Match[str]) -> str:
+        nonlocal fixed
+        body = match.group(2)
+        try:
+            json.loads(body)
+            return match.group(0)               # one whole JSON spec: not ours to touch
+        except ValueError:
+            pass
+        lines = body.split("\n")
+        for i, raw in enumerate(lines):
+            line = raw.strip()
+            if not line.startswith("{") or _is_patch(line):
+                continue
+            better = _repaired_patch(line)
+            if better is not None:
+                lines[i] = better
+                fixed += 1
+        return match.group(1) + "\n".join(lines) + match.group(3)
+
+    out = _SPEC_BODY.sub(block, text)
+    if fixed:
+        log.info("link chat: repaired the closing brackets of %d card line(s)", fixed)
+    return out
+
+
 def _strip_openui_only(text: str, line: str) -> str:
     """``text`` with each OpenUI Lang program swapped for ``line``."""
     # a program at the start, or after some prose, as replyParts.ts draws it (`root = Card(` at a line start, no ``` before it):

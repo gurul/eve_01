@@ -1069,6 +1069,17 @@ an OpenUI card does. One repair is made: an element that no children list
 names is shown at the end of the card rather than dropped (the brain wrote
 it and forgot to hang it on the card; seen on the first live run).
 
+**One repair on the Mac, before the card is sent** (`link_chat.repair_cards`,
+2026-11-17). The brain sometimes ends a patch line one `}` short, and the
+whole card then fails (1 card in 32 in the after-tool cases below). Where a
+reply's text is read (`telegram.parse_response`), a line of a json-render
+block that is not JSON only because its closing brackets are miscounted is
+made JSON: the open ones are closed in order, or up to three extra ones at
+the end are dropped. Nothing else is guessed. A line that ends inside a
+string, has a closer of the wrong kind, or would still not be a patch stays
+as written, and so does a block that is one whole JSON spec. The app, the
+transcript and the next turn's history all hold the repaired line.
+
 **Other turns.** Telegram, voice, calls and notifications read a json-render
 block as the same one plain line as an OpenUI one (`strip_openui`). An app
 turn's history shows the current engine's cards whole and a card the other
@@ -1094,6 +1105,13 @@ before the file is written.
 - `uv run python tools/openui_eval.py --engine json-render` scores real app
   turns on this engine; `tools/card_eval_gate.py` runs the ten dev cases
   against a fixed bar.
+- `uv run python tools/openui_eval.py --engine json-render --cases
+  tests/fixtures/card_after_tool.json --repeat 8` runs the after-tool cases
+  ([When a reply uses OpenUI](#when-a-reply-uses-openui), point 3): fifteen
+  app turns at the instant grade, where a case's `results` hold what a tool
+  answers (a saved web search, so nothing is searched), four that should be a
+  card and eleven that should stay plain text. `--repeat` adds a line per
+  case, because the form of a reply is a rate.
 
 **Measured, 2026-11-16, gpt-6-luna, the ten dev cases** (six want a card,
 four want plain text). These cases were read while the prompt was written,
@@ -1179,6 +1197,15 @@ use". In the week before, 1 of 24 app replies used OpenUI.
    (thanks, a greeting, a known fact, feelings, a started task, a yes or no
    from a search, and "no card" asked outright; the one miss drew market
    hours as a card).
+
+   The cases are in the repository (`tests/fixtures/card_after_tool.json`,
+   run with `tools/openui_eval.py --repeat 8`; see
+   [The card engine](#the-card-engine), Tools). Two runs of it on the code as
+   committed: 64 cards in 64 where a card is wanted, and 173 of 176 plain
+   where plain is wanted. All three misses are the yes or no from a search,
+   drawn as a card. One of the 64 cards had a line one brace short, which is
+   what `link_chat.repair_cards` now closes; in the run after it, every card
+   passed the app's validator.
 
 **The trimmed reference.** `ios/EveLink/Web/scripts/gen-prompt.mjs` builds
 the reference from the library's own spec (`generateSystemPrompt`). It keeps

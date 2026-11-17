@@ -2038,6 +2038,16 @@ _UNLABELLED_LINK = re.compile(r"[ \t]*\[\s*\]\([^)]*\)")
 _ADDRESSLESS_LINK = re.compile(r"\[([^\]\n]+)\]\(\s*\)")
 
 
+def _repair_cards(text: str) -> str:
+    """link_chat.repair_cards for a reply that holds a json-render block (an app turn's); any other text as it is,
+    without loading link_chat."""
+    if "```json-render" not in text:
+        return text
+    from .link_chat import repair_cards
+
+    return repair_cards(text)
+
+
 def strip_empty_links(text: str) -> str:
     """`text` without empty markdown links ("([]())", "[](url)", "[label]()" → "label"). Code spans and
     fenced blocks are left exactly as written: there "[]()" may be code."""
@@ -2137,7 +2147,7 @@ def parse_response(response: Any, allowed: Collection[str] = (), *,
         elif kind == "message":
             for part in item.get("content") or []:
                 if part.get("type") == "output_text" and part.get("text"):
-                    texts.append(strip_empty_links(part["text"]))
+                    texts.append(strip_empty_links(_repair_cards(part["text"])))
                 elif part.get("type") == "refusal":
                     texts.append(part.get("refusal") or "I can't do that.")
     return calls, "\n".join(t.strip() for t in texts if t.strip()), carry

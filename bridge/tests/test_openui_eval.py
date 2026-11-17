@@ -8,6 +8,7 @@ from __future__ import annotations
 import asyncio
 import importlib.util
 import json
+import os
 import re
 import shutil
 import sys
@@ -270,6 +271,85 @@ def test_a_case_runs_as_an_app_turn_with_the_app_block_and_refused_tools(ev: Any
     after = telegram.message_item("developer", link_chat.APP_AFTER_TOOL)
     assert requests[1]["input"][-1] == after and requests[1]["input"][-2]["type"] == "function_call_output"
     assert after not in requests[0]["input"] and requests[1]["input"].count(after) == 1
+
+
+def test_a_case_can_hold_a_tools_saved_result_and_the_turns_grade(ev: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    """``results``: the named tool is answered with the case's saved result and every other call is still refused.
+    ``grade``: the turn runs as the app's speed dial would grade it, and the dial is put back after the case."""
+    for k, v in {"EVE_TELEGRAM": "1", "EVE_TELEGRAM_TOKEN": "0:test", "EVE_TELEGRAM_OWNER": "1", "EVE_MEMORY": "0",
+                 "EVE_WEB_SEARCH": ev.WEB_SEARCH_ON, "OPENROUTER_API_KEY": "test-key"}.items():
+        monkeypatch.setenv(k, v)
+    quote = {"ok": True, "answer": "ABC was $12.34, up $0.10 (0.82%)."}
+    script = [call("web_search", {"query": "ABC price"}), call("start_task", {"goal": "open it"}, "call_2"),
+              say("Here.")]
+    requests: list[dict[str, Any]] = []
+
+    async def create(payload: dict[str, Any]) -> dict[str, Any]:
+        requests.append(payload)
+        return script.pop(0)
+
+    before = telegram._APP_GRADE.get()
+    case = {"id": "q", "label": "ui", "text": "ABC price", "grade": "instant", "results": {"web_search": quote}}
+    row = asyncio.run(ev.run_case(case, create))
+    assert row["error"] == "" and row["reply"] == "Here." and row["tools"] == ["web_search", "start_task"]
+    results = [json.loads(i["output"]) for i in requests[2]["input"] if i.get("type") == "function_call_output"]
+    assert results == [quote, {"ok": False, "reason": "that tool is not available right now"}]
+    names = [telegram.offered_names(r["tools"]) for r in requests]
+    assert all("web_search" in n and "think_hard" not in n for n in names)      # instant: think_hard is not offered
+    assert telegram._APP_GRADE.get() == before
+    # the control: the same case with no grade is offered think_hard
+    script[:] = [say("Here.")]
+    requests.clear()
+    asyncio.run(ev.run_case({"id": "q2", "label": "ui", "text": "ABC price"}, create))
+    assert "think_hard" in telegram.offered_names(requests[0]["tools"])
+
+
+def test_web_search_is_offered_only_to_a_run_with_a_saved_result_for_it(ev: Any, tmp_path: Path,
+                                                                        monkeypatch: pytest.MonkeyPatch) -> None:
+    plain = [{"id": "a", "text": "hi"}, {"id": "b", "text": "x", "results": {"start_task": {"ok": True}}}]
+    saved = plain + [{"id": "c", "text": "y", "results": {"web_search": {"ok": True}}}]
+    assert ev.wants_web_search(plain) is False and ev.wants_web_search(saved) is True
+    assert ev.wants_web_search([{"id": "d", "text": "z", "results": "web_search"}]) is False     # not a mapping
+    # environment() replaces os.environ: it is given a stand-in to replace, so nothing of it reaches another test
+    stand_in: dict[str, str] = {"OPENROUTER_API_KEY": "test-key", "PATH": "/usr/bin", "EVE_PROFILE": "lite"}
+    monkeypatch.setattr(os, "environ", stand_in)
+    ev.environment("", "", tmp_path / "off")
+    assert stand_in["EVE_WEB_SEARCH"] == "off" and "EVE_PROFILE" not in stand_in
+    ev.environment("", "", tmp_path / "on", "json-render", True)
+    assert stand_in["EVE_WEB_SEARCH"] == ev.WEB_SEARCH_ON and stand_in["EVE_CARD_ENGINE"] == "json-render"
+    assert stand_in["OPENROUTER_API_KEY"] == "test-key"
+
+
+def test_repeat_answers_every_case_that_many_times_and_reports_each_case(ev: Any, capsys: Any) -> None:
+    cases = [{"id": "a"}, {"id": "b"}]
+    assert [c["id"] for c in ev.repeated(cases, 3)] == ["a", "a", "a", "b", "b", "b"]
+    assert ev.repeated(cases, 0) == cases and ev.repeated(cases, 1) == cases
+    card = "```json-render\n{}\n```"
+    rows = [{"id": "a", "label": "ui", "reply": card}, {"id": "a", "label": "ui", "reply": "No card."},
+            {"id": "b", "label": "plain", "reply": "Hi."}, {"id": "b", "label": "plain", "reply": "Hello."}]
+    ev.score_rows(rows, None, "json-render")
+    for r in rows:
+        r["pass"] = ev.passed(r["label"], {**r, "parse_ok": True if r["uses_ui"] else None})
+    ev.report(rows, "t")
+    out = capsys.readouterr().out
+    assert "== [t] case=a: uses_ui=1/2 pass=1/2" in out and "== [t] case=b: uses_ui=0/2 pass=2/2" in out
+    ev.report(rows[1:3], "once")                              # no case answered twice: no line per case
+    assert "case=" not in capsys.readouterr().out
+
+
+def test_the_after_tool_cases_are_well_formed_and_made_up(ev: Any) -> None:
+    path = BRIDGE / "tests" / "fixtures" / "card_after_tool.json"
+    cases = ev.load_cases(path)
+    assert len(cases) == len({c["id"] for c in cases}) == 15
+    assert {ev.expected(c["label"]) for c in cases} == {True, False}
+    assert all(c["grade"] == "instant" and ev.case_text(c) for c in cases)
+    assert ev.wants_web_search(cases)
+    for c in cases:
+        assert all(line["role"] in ("owner", "eve") and line["text"] for line in c.get("history") or [])
+        assert all(r.get("ok") is True and r.get("answer") for r in (c.get("results") or {}).values())
+    wants_card = [c for c in cases if ev.expected(c["label"])]
+    assert all("web_search" in (c.get("results") or {}) for c in wants_card)   # a card here is always a tool's facts
+    assert sum(len(c.get("history") or []) == 10 for c in wants_card) == 3     # three of them after five plain quotes
 
 
 def test_a_text_turn_through_the_same_inlet_gets_no_app_block(ev: Any, monkeypatch: pytest.MonkeyPatch) -> None:
