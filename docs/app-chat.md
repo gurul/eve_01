@@ -1067,6 +1067,13 @@ values when the card passes them); `open_url` opens a link. Both go through
 the code OpenUI cards use (`cardActions.ts`), so the busy check, the
 one-tap-at-a-time guard and the "User clicked" context are the same.
 
+**A picture list with gaps** (owner, 2026-11-16: "just so it doesnt look
+empty"). When a List asks for pictures and at least half its items have one,
+an item with none gets a soft colour gradient in the picture's place, the
+same one every time for the same title (`gradientFor` in `jsonRegistry.tsx`).
+When fewer than half have a picture, the list is drawn numbered, with no
+pictures. A picture whose link fails to load is not covered.
+
 **What the app requires of a finished card** (`specProgram.ts`): every line
 is a patch, the root is a Card with a child, every element is in the catalog
 with props its component takes, and every child named is there. A card that

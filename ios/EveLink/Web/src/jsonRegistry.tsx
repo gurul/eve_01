@@ -80,15 +80,36 @@ function PanelAccordion({ names, children }: { names: string[]; children: ReactN
   );
 }
 
-function LinkList({ variant, items }: {
+/**
+ * A picture for a list item that has none: a soft two-colour gradient, the same one every time for the same title,
+ * so a list where most items have a picture has no empty squares. An inline SVG, so nothing is fetched.
+ */
+export function gradientFor(title: string): string {
+  let h = 0;
+  for (const ch of title) h = (h * 31 + ch.codePointAt(0)!) % 360;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">` +
+    `<stop offset="0" stop-color="hsl(${h} 70% 62%)"/><stop offset="1" stop-color="hsl(${(h + 50) % 360} 70% 46%)"/></linearGradient></defs>` +
+    `<rect width="96" height="96" fill="url(#g)"/></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
+/** Pictures are shown when the block asks for them and at least half the items have one; the rest get a gradient. */
+export function showsPictures(variant: string, items: { image?: { src?: unknown } | null }[]): boolean {
+  const withPicture = items.filter((item) => !!str(item?.image?.src)).length;
+  return variant === "image" && withPicture > 0 && withPicture * 2 >= items.length;
+}
+
+function LinkList({ variant: asked, items: given }: {
   variant: "number" | "image";
   items: { title?: unknown; subtitle?: unknown; image?: { src?: unknown; alt?: unknown } | null; url?: unknown }[];
 }) {
   const host = useContext(CardHostContext);
+  const items = given.filter(Boolean);
+  const variant = showsPictures(asked, items) ? "image" : "number";
   const hasSubtitle = items.some((item) => !!str(item?.subtitle));
   return (
     <ListBlock variant={variant}>
-      {items.filter(Boolean).map((item, i) => {
+      {items.map((item, i) => {
         const url = str(item.url);
         const src = str(item.image?.src);
         return (
@@ -97,7 +118,7 @@ function LinkList({ variant, items }: {
             title={str(item.title)}
             subtitle={str(item.subtitle) || undefined}
             listHasSubtitle={hasSubtitle}
-            image={variant === "image" && src ? { src, alt: str(item.image?.alt) } : undefined}
+            image={variant === "image" ? { src: src || gradientFor(str(item.title)), alt: src ? str(item.image?.alt) : "" } : undefined}
             onClick={url ? () => host.open(url) : undefined}
           />
         );

@@ -58,3 +58,30 @@ describe("a json-render card", () => {
     expect(draw(CARD)).not.toContain("Reset inputs");
   });
 });
+
+describe("a picture list where some items have no picture", () => {
+  const list = (items: unknown[]) => [
+    line("/root", "card"),
+    el("card", "Card", { title: "Concerts" }, ["shows"]),
+    el("shows", "List", { variant: "image", items }),
+  ].join("\n");
+  const pic = (n: number) => ({ src: `https://example.com/${n}.jpg`, alt: `Show ${n}` });
+
+  it("fills the gaps with a gradient when at least half have a picture", () => {
+    const html = draw(list([{ title: "A", image: pic(1) }, { title: "B", image: pic(2) }, { title: "C" }]));
+    expect(html.match(/<img/g)?.length).toBe(3);
+    expect(html).toContain("data:image/svg+xml");
+    expect(html).toContain("https://example.com/1.jpg");
+  });
+
+  it("draws a numbered list when fewer than half have a picture", () => {
+    const html = draw(list([{ title: "A", image: pic(1) }, { title: "B" }, { title: "C" }]));
+    expect(html).not.toContain("<img");
+  });
+
+  it("gives one title the same gradient every time, and two titles different ones", async () => {
+    const { gradientFor } = await import("../jsonRegistry");
+    expect(gradientFor("Jazz night")).toBe(gradientFor("Jazz night"));
+    expect(gradientFor("Jazz night")).not.toBe(gradientFor("Rock night"));
+  });
+});
