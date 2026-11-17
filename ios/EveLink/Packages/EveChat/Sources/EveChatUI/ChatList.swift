@@ -53,7 +53,9 @@ public struct ChatList: View {
                         .transition(reduceMotion ? .opacity : .opacity.combined(with: .offset(y: 8)))
                 }
                 if engine.showsTyping { TypingDots().modifier(Column()).id("chat-typing") }
-                Color.clear.frame(height: 1).id(Self.end)
+                // What the composer and the keyboard cover is part of the content, so a change in it is a change of
+                // size, which the bottom anchor follows on its own: the last message never ends up under the composer.
+                Color.clear.frame(height: bottom + 16).id(Self.end)
             }
             .animation(reduceMotion ? nil : .easeOut(duration: 0.22), value: engine.queued)
         }
@@ -64,14 +66,13 @@ public struct ChatList: View {
         // a lazily measured row can change the content's height on every pass, and a scroll per change never ends.
         .defaultScrollAnchor(pinned ? .bottom : nil, for: .sizeChanges)
         .contentMargins(.top, top + 8, for: .scrollContent)
-        .contentMargins(.bottom, bottom + 16, for: .scrollContent)
         .contentMargins(.top, top, for: .scrollIndicators)
         .contentMargins(.bottom, bottom, for: .scrollIndicators)
         .scrollDismissesKeyboard(.interactively)
         // A tap on the conversation puts the keyboard away, as a drag down does.
         .simultaneousGesture(TapGesture().onEnded { ChatKeyboard.dismiss() })
         .onScrollGeometryChange(for: Bool.self) { g in
-            g.contentSize.height - g.contentOffset.y - g.containerSize.height + g.contentInsets.bottom <= Self.pinSlack
+            g.contentSize.height - g.contentOffset.y - g.containerSize.height <= Self.pinSlack
         } action: { _, now in
             atBottom = now
             if now && !dragging { pinned = true }

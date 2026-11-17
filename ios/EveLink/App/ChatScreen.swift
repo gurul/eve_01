@@ -38,17 +38,50 @@ struct HomeScreen: View {
     private var chatShown: Bool { relay.pairing != nil && mode == .chat }
 
     var body: some View {
-        ZStack(alignment: .top) {
-            Color.eveBackground.ignoresSafeArea()
+        VStack(spacing: 0) {
+            TopBar(mode: $mode, needsYou: work.needsYou > 0, callLive: relay.phase != .ended || relay.notes.active,
+                   settings: { showSettings = true },
+                   talk: {
+                       dictation.stop(releaseSession: relay.phase == .ended)   // voice mode is about to take the mic
+                       showVoice = true
+                   })
+                .background(alignment: .top) { if chatShown { TopFade().padding(.bottom, -TopFade.overhang) } }
+                .onGeometryChange(for: CGFloat.self) { $0.frame(in: .global).maxY } action: {
+                    barBottom = $0
+                    sendInsets()
+                }
+            if relay.pairing == nil {
+                PairPrompt(relay: relay)
+            } else if mode == .chat {
+                Spacer(minLength: 0)
+                ChatComposer(chat: chat, relay: relay, dictation: dictation, focusRequest: composerFocus)
+                    .padding(.bottom, keyboardSpace)
+                    .background(alignment: .top) { ComposerFloor() }
+                    .onGeometryChange(for: CGFloat.self) { $0.frame(in: .global).minY } action: {
+                        composerTop = $0
+                        sendInsets()
+                    }
+            } else if mode == .updates {
+                UpdatesView(model: updates, ask: ask)
+            } else {
+                WorkView(work: work, shows: mode)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        // The list is a background, so nothing it does can size or move the bar and the composer (2026-11-17: as a
+        // sibling it pushed the bar over the clock and the composer under the keyboard). It fills the whole screen,
+        // keyboard included, and pads itself by what covers it (ChatModel.setInsets). Measured inside
+        // ignoresSafeArea: outside it the reader sees the safe-area frame, not the view's. Kept alive on Apps and
+        // Work, only hidden, so the list keeps its place across a tab switch.
+        .background {
             if relay.pairing != nil {
-                // The whole screen, keyboard included, under the top bar and the composer: the list pads itself by
-                // what covers it (ChatModel.setInsets), so nothing sits under the chrome at rest.
-                // Measured inside ignoresSafeArea: outside it the reader sees the safe-area frame, not the view's.
-                // Kept alive on Apps and Work, only hidden, so the list keeps its place across a tab switch.
-                ChatList(engine: chat.engine, top: chat.insets.top, bottom: chat.insets.bottom)
-                    .chatActions(chat.actions)
-                    .chatTheme(ChatTheme(ownerBubble: { _ in .eveFill }, surface: { _ in .eveFill },
-                                         background: { _ in .eveBackground }, line: { _ in .eveEdge }))
+                Color.clear
+                    .overlay {
+                        ChatList(engine: chat.engine, top: chat.insets.top, bottom: chat.insets.bottom)
+                            .chatActions(chat.actions)
+                            .chatTheme(ChatTheme(ownerBubble: { _ in .eveFill }, surface: { _ in .eveFill },
+                                                 background: { _ in .eveBackground }, line: { _ in .eveEdge }))
+                    }
                     .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: {
                         webFrame = $0
                         sendInsets()
@@ -58,36 +91,8 @@ struct HomeScreen: View {
                     .allowsHitTesting(chatShown)
                     .accessibilityHidden(!chatShown)
             }
-            VStack(spacing: 0) {
-                TopBar(mode: $mode, needsYou: work.needsYou > 0, callLive: relay.phase != .ended || relay.notes.active,
-                       settings: { showSettings = true },
-                       talk: {
-                           dictation.stop(releaseSession: relay.phase == .ended)   // voice mode is about to take the mic
-                           showVoice = true
-                       })
-                    .background(alignment: .top) { if chatShown { TopFade().padding(.bottom, -TopFade.overhang) } }
-                    .onGeometryChange(for: CGFloat.self) { $0.frame(in: .global).maxY } action: {
-                        barBottom = $0
-                        sendInsets()
-                    }
-                if relay.pairing == nil {
-                    PairPrompt(relay: relay)
-                } else if mode == .chat {
-                    Spacer(minLength: 0)
-                    ChatComposer(chat: chat, relay: relay, dictation: dictation, focusRequest: composerFocus)
-                        .padding(.bottom, keyboardSpace)
-                        .background(alignment: .top) { ComposerFloor() }
-                        .onGeometryChange(for: CGFloat.self) { $0.frame(in: .global).minY } action: {
-                            composerTop = $0
-                            sendInsets()
-                        }
-                } else if mode == .updates {
-                    UpdatesView(model: updates, ask: ask)
-                } else {
-                    WorkView(work: work, shows: mode)
-                }
-            }
         }
+        .background { Color.eveBackground.ignoresSafeArea() }
         // A call (voice mode, the Action Button) stops dictation before it starts the mic, and leaves the session alone.
         .onAppear {
             let mic = dictation

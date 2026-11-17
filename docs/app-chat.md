@@ -748,6 +748,9 @@ failed call: the first-message title and the rules above.
   to a layout change: the first build did, and on the phone the keyboard coming up sent it into an endless
   layout loop (2026-11-17: the keyboard stuck, the history gone, the arrow left on).
 - A tap on the conversation, or a drag down, puts the keyboard away.
+- The list is a background of the bar and the composer (`HomeScreen`), never their sibling, so nothing it does can
+  size or move them; what the composer and the keyboard cover is the last row of the list's own content, so the
+  newest message always rests above the composer.
 - The keyboard pushes the composer up. A chat that was at its last message
   stays there; a chat scrolled up keeps its place.
 - Haptics: the composer's on send, one soft one when the first words of a
