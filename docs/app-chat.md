@@ -1141,18 +1141,44 @@ use". In the week before, 1 of 24 app replies used OpenUI.
    the reply to the app section (`telegram.app_instructions`).
 2. At the end of the stable instructions, `link_chat.app_block()` adds three
    parts in this order:
-   - `APP_RULE`: a two-way decision. Use one openui-lang block when the answer
-     has a shape the owner will scan: a comparison, options to pick from,
-     steps, a plan or schedule, numbers for a chart, articles, books or
-     headlines from a tool, or a tap choice. Use one
-     to three short plain sentences for chat, greetings, thanks, feelings, a
-     single fact, a yes or no, or a question back. For a how-to or a plan,
+   - `APP_RULE`: a two-way decision that leans to the card (owner,
+     2026-11-17: "a bias towards json-renderer when possible"). Use one block
+     when the answer has a shape the owner will scan: a comparison, options to
+     pick from, steps, a plan or schedule, numbers for a chart, articles,
+     books or headlines from a tool, a tap choice, or facts a tool just
+     returned that are worth seeing at a glance (a stock or price quote, the
+     weather, a score, a place, an event). Use one to three short plain
+     sentences for talk: chat, greetings, thanks, feelings, a yes or no, a
+     confirmation, a question back, or a single fact eve already knew. When
+     either form would do, the card wins. Earlier replies never decide the
+     form: the rule and what the owner asks for do. For a how-to or a plan,
      give the usual answer first and ask about a detail in one sentence after
      the block. The next app turn sees the block (see above), so the owner's
      answer can change it. It ends with one small, complete example reply
      (`APP_EXAMPLE`).
    - The openui-lang reference (`openui_prompt.txt`).
    - `APP_LINE`: a one-line reminder of the same decision.
+3. After a tool's result, the round that writes the reply reads one more
+   developer message, placed after the result (`telegram.with_after_tool`,
+   `link_chat.APP_AFTER_TOOL`, and `JSON_APP_AFTER_TOOL` for the json-render
+   engine): facts worth seeing at a glance go in one block, whatever form
+   earlier replies took, unless the owner asked for plain text; a
+   confirmation, a yes or no and chat stay plain. It is not added on a call,
+   on a rundown, on a Telegram turn, in eve lite (not measured there), or to a
+   round with no tool result.
+
+   **Why it sits there** (2026-11-17). The rule alone did not hold once the
+   conversation had plain answers in it: the instructions come before the
+   history, and the model copied the form of its own earlier replies. Replayed
+   against the chat's model at the instant grade, with web search answered by
+   a saved result, a stock quote got a card 6 times in 6 on an empty history
+   and 6 times in 12 after five plain quotes. The reminder repeated in the
+   turn's note, before the owner's message, changed nothing (5 in 12). Placed after the
+   tool's result it gave 32 cards in 32 (two stocks and the weather, with and
+   without the plain history), while 43 of 44 turns that should stay plain did
+   (thanks, a greeting, a known fact, feelings, a started task, a yes or no
+   from a search, and "no card" asked outright; the one miss drew market
+   hours as a card).
 
 **The trimmed reference.** `ios/EveLink/Web/scripts/gen-prompt.mjs` builds
 the reference from the library's own spec (`generateSystemPrompt`). It keeps

@@ -266,6 +266,10 @@ def test_a_case_runs_as_an_app_turn_with_the_app_block_and_refused_tools(ev: Any
     assert row["instr_chars"] == len(first)
     ev.score_rows([row], None)
     assert row["uses_ui"] is True
+    # the round that answers the tool's result reads the form's line last; the first round, with no result, does not
+    after = telegram.message_item("developer", link_chat.APP_AFTER_TOOL)
+    assert requests[1]["input"][-1] == after and requests[1]["input"][-2]["type"] == "function_call_output"
+    assert after not in requests[0]["input"] and requests[1]["input"].count(after) == 1
 
 
 def test_a_text_turn_through_the_same_inlet_gets_no_app_block(ev: Any, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -282,3 +286,41 @@ def test_a_text_turn_through_the_same_inlet_gets_no_app_block(ev: Any, monkeypat
     asyncio.run(inlet._turn(telegram.Inbound(1, 1, "hi", message_id=5)))
     assert link_chat.APP_RULE not in requests[0]["instructions"]
     assert telegram._TEXT_STYLE in requests[0]["instructions"]
+
+
+def test_a_text_turns_tool_round_gets_no_line_after_the_result(ev: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    """The control for the line after a tool's result: a Telegram turn's request ends on the result itself."""
+    monkeypatch.setenv("EVE_WEB_SEARCH", "off")
+    script = [call("start_task", {"goal": "open the browser"}), say("On it.")]
+    requests: list[dict[str, Any]] = []
+
+    async def create(payload: dict[str, Any]) -> dict[str, Any]:
+        requests.append(payload)
+        return script.pop(0)
+
+    inlet = telegram.TelegramInlet(CFG, ev.Recorder(), create, toolset_route=None, grader=None)
+    inlet._chat_id = 1
+
+    async def refuse(name: str, args: dict[str, Any], chat_id: int) -> dict[str, Any]:
+        return {"ok": False, "reason": "that tool is not available right now"}
+
+    async def no_owner_to_ask(name: str, args: Any, chat_id: int) -> None:
+        return None
+
+    inlet._tool, inlet._gate = refuse, no_owner_to_ask
+    asyncio.run(inlet._turn(telegram.Inbound(1, 1, "open the browser", message_id=5)))
+    assert len(requests) == 2 and requests[1]["input"][-1]["type"] == "function_call_output"
+    texts = json.dumps(requests)
+    assert link_chat.APP_AFTER_TOOL not in texts and link_chat.JSON_APP_AFTER_TOOL not in texts
+
+
+def test_the_line_after_a_result_is_added_only_to_a_request_that_ends_on_one() -> None:
+    result = {"type": "function_call_output", "call_id": "c", "output": "{}"}
+    user = telegram.message_item("user", "hi")
+    ends_on_result = {"input": [user, result], "model": "m"}
+    out = telegram.with_after_tool(ends_on_result, "LINE")
+    assert out["input"] == [user, result, telegram.message_item("developer", "LINE")] and out["model"] == "m"
+    assert ends_on_result["input"] == [user, result]                       # the caller's payload is not changed
+    for same in ({"input": [result, user]}, {"input": [user]}, {"input": []}, {"input": "text"}, {}):
+        assert telegram.with_after_tool(same, "LINE") is same
+    assert telegram.with_after_tool(ends_on_result, "") is ends_on_result  # a turn with no line (Telegram, a call)

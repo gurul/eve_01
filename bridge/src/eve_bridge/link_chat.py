@@ -314,6 +314,8 @@ APP_RULE = (
     "- Write plain text, one to three short sentences, for talk: chat, a greeting, thanks, feelings, a yes or no, a "
     "confirmation that you started something, a question back to the owner, or a single fact you already knew.\n"
     "When either form would do, write the block: the owner prefers a card to a sentence.\n"
+    "Earlier replies in this conversation may have the other form. Choose each reply's form by this section and by "
+    "what the owner asks for, never by copying an earlier reply.\n"
     "In the app, a table, a list of options or a set of steps goes in the openui-lang block rather than in "
     "Markdown. When the owner asks how to do something or for a plan, give the usual answer in the block first; "
     "if a detail would change it, ask about that in one short sentence after the block. You will see the block in "
@@ -324,8 +326,8 @@ APP_RULE = (
     "a list.\n\n"
     "A complete reply with a block:\n" + APP_EXAMPLE)
 APP_LINE = ("This turn is from the Eve Link app: use one openui-lang block for a comparison, options, steps, a "
-            "schedule, a chart, articles or books, a quote or facts from a tool, or tap choices; when either form "
-            "would do, use the block; short plain sentences for chat and confirmations.")
+            "schedule, a chart, articles or books, a quote or facts from a tool, or tap choices, whatever "
+            "form an earlier reply took; when either form would do, use the block; short plain sentences for chat.")
 
 # ---- the card engine (trial, 2026-11-16) ---------------------------------------------------------------------
 # Owner, 2026-11-16: "lets start by testing just json renderer for this week". The app draws a card from one of two
@@ -402,6 +404,8 @@ JSON_APP_RULE = (
     "- Write plain text, one to three short sentences, for talk: chat, a greeting, thanks, feelings, a yes or no, a "
     "confirmation that you started something, a question back to the owner, or a single fact you already knew.\n"
     "When either form would do, write the block: the owner prefers a card to a sentence.\n"
+    "Earlier replies in this conversation may have the other form. Choose each reply's form by this section and by "
+    "what the owner asks for, never by copying an earlier reply.\n"
     "In the app, a table, a list of options or a set of steps goes in the json-render block rather than in "
     "Markdown. When the owner asks how to do something or for a plan, give the usual answer in the block first; "
     "if a detail would change it, ask about that in one short sentence after the block. You will see the block in "
@@ -412,8 +416,8 @@ JSON_APP_RULE = (
     "tool's answer can be shown this way too: a list of events, results or prices is a table or a list.\n\n"
     "A complete reply with a block:\n" + JSON_APP_EXAMPLE)
 JSON_APP_LINE = ("This turn is from the Eve Link app: use one json-render block for a comparison, options, steps, a "
-            "schedule, a chart, articles or books, a quote or facts from a tool, or tap choices; when either form "
-            "would do, use the block; short plain sentences for chat and confirmations.")
+            "schedule, a chart, articles or books, a quote or facts from a tool, or tap choices, whatever "
+            "form an earlier reply took; when either form would do, use the block; short plain sentences for chat.")
 # The app style (telegram.APP_STYLE, APP_STYLE_LITE) names the block an app reply may hold; ``card_words`` swaps the
 # name for the json-render engine's. tests/test_card_engine.py holds that the words are still there to swap.
 BLOCK_WORDS = ("an openui-lang block", "a json-render block")
@@ -498,6 +502,26 @@ def app_block(path: Optional[Path] = None, engine: Optional[str] = None) -> str:
         return ""
     rule, line = (JSON_APP_RULE, JSON_APP_LINE) if is_json else (APP_RULE, APP_LINE)
     return rule + "\n\n" + _prompt["text"] + "\n\n" + line
+
+
+# After a tool's result on an app turn (telegram.with_after_tool): the last thing read before the reply is written.
+# The rule and the reminder sit in the instructions, before the history, and there a history of plain replies decided
+# the form: replayed against the chat's model on 2026-11-17, a stock quote from web search got a card 6 times in 6 on
+# an empty history and 6 times in 12 after five plain quotes (5 in 12 with the reminder also in the turn's note,
+# before the owner's message). With this line after the result: 32 in 32 (quotes and the weather), with thanks, a
+# greeting, a known fact, feelings, a started task and "no card" all still plain text.
+APP_AFTER_TOOL = (
+    "A tool's result is above. When it holds facts worth seeing at a glance (a quote or price, the weather, a score, "
+    "a place, an event, a list), show them in one openui-lang block, whatever form earlier replies took, unless the "
+    "owner asked for plain text. A confirmation that something was done or started, a yes or no, and chat stay short "
+    "plain text.")
+JSON_APP_AFTER_TOOL = APP_AFTER_TOOL.replace("one openui-lang block", "one json-render block")
+
+
+def app_after_tool(engine: Optional[str] = None) -> str:
+    """The line an app turn reads after a tool's result: ``JSON_APP_AFTER_TOOL`` or ``APP_AFTER_TOOL`` by ``engine``
+    (default: ``card_engine()``, read now)."""
+    return JSON_APP_AFTER_TOOL if (engine or card_engine()) == ENGINE_JSON else APP_AFTER_TOOL
 
 
 OPENUI_PLACEHOLDER = "(A table or chart is here: open Eve Link to see it.)"

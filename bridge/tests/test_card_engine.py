@@ -86,6 +86,25 @@ def test_each_engines_block_is_its_rule_its_reference_and_its_reminder() -> None
     assert openui == link_chat.app_block() and openui.startswith(link_chat.APP_RULE)
 
 
+def test_the_line_after_a_tools_result_is_one_sentence_pair_with_only_the_block_changed(
+        monkeypatch: pytest.MonkeyPatch) -> None:
+    """Each engine's line names its own block and nothing of the other's (the presence shows the search can find
+    the name); the engine is the turn's, read when asked."""
+    openui, js = link_chat.APP_AFTER_TOOL, link_chat.JSON_APP_AFTER_TOOL
+    assert js == openui.replace("one openui-lang block", "one json-render block") and js != openui
+    assert "openui-lang" in openui and "json-render" not in openui
+    assert "json-render" in js and "openui" not in js.lower()
+    assert link_chat.app_after_tool("openui") == openui and link_chat.app_after_tool("json-render") == js
+    assert link_chat.app_after_tool() == openui
+    monkeypatch.setenv(link_chat.CARD_ENGINE_ENV, "json-render")
+    assert link_chat.app_after_tool() == js
+    monkeypatch.delenv(link_chat.CARD_ENGINE_ENV)
+    with link_chat.drawing("json-render"):                 # the engine the turn's client named
+        assert link_chat.app_after_tool() == js
+    for line in (openui, js):
+        assert len(line) < 400 and "Eve Link" not in line  # short, and no app's name for eve lite to swap
+
+
 def test_one_engines_block_never_names_the_other() -> None:
     """Both ways, so each absence sits beside the presence that shows the search can find the name."""
     json_block = link_chat.app_block(engine="json-render").lower()

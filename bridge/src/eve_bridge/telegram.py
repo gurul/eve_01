@@ -1842,6 +1842,20 @@ def with_turn_context(items: list[dict[str, Any]], context: str) -> list[dict[st
     return list(items) + [note]
 
 
+def with_after_tool(payload: dict[str, Any], text: str) -> dict[str, Any]:
+    """``payload`` with ``text`` as one developer message after its last item, when that item is a tool's result (a
+    round that answers a tool call); ``payload`` itself otherwise, or with no ``text``. The line is the last thing the
+    model reads before it writes, and it follows the newest result in every such round, so nothing before it in the
+    request changes and the cached prefix is the turn's own."""
+    items = payload.get("input")
+    if not text or not isinstance(items, list) or not items:
+        return payload
+    last = items[-1]
+    if not (isinstance(last, dict) and last.get("type") == "function_call_output"):
+        return payload
+    return {**payload, "input": [*items, message_item("developer", text)]}
+
+
 def spoken_question(text: str, choices: Sequence[Choice]) -> str:
     """A question with buttons, as words to hear: the question, then how to answer it out loud. Buttons that
     mean yes and no (Yes/No, Allow/Deny) are asked as "Yes or no?"."""
@@ -5701,12 +5715,18 @@ class TelegramInlet:
         if call_say is not None:
             note += "\n\n" + (CALL_NOTE_LITE if lite else CALL_NOTE)       # eve lite's calls are its web app's
         # A turn from the Eve Link app: the app renders OpenUI Lang, so the brain is told how (link_chat.py).
-        app_block = ""
+        app_block, after_tool = "", ""
         grade = _APP_GRADE.get() if _FROM_APP.get() is not None else "auto"   # the speed dial's (GRADES)
         if _FROM_APP.get() is not None:
-            from .link_chat import app_block as _app_block
+            from .link_chat import app_after_tool as _app_after_tool, app_block as _app_block
 
             app_block = _app_block()
+            # After a tool's result the turn reads one more line on the reply's form (link_chat.APP_AFTER_TOOL: with
+            # the rule only in the instructions, earlier plain replies decided it). Never on a call (the reply is read
+            # aloud), on a rundown (its form is its own), without the reference (no block was asked for), or in eve
+            # lite (measured on full eve's chat model only; lite's requests stay as they were).
+            if app_block and call_say is None and not daily and not lite:
+                after_tool = _app_after_tool()
         # An "auto" app turn is graded by Jev beside the toolset router and the prompt's building (a thread each,
         # awaited once both are under way), so it usually adds no wall time. When the toolset router is off or
         # keywords-only, the turn can wait up to 0.8 s for the grade. Telegram turns are never graded.
@@ -5803,7 +5823,8 @@ class TelegramInlet:
                     claim_reason, claim_tools, note = "", (), base_note
                     self._app_claim = app_router.NO_CLAIM
                 items = folded
-            payload = request(self.config, items, context=note, app_block=app_block, **parts)
+            payload = with_after_tool(request(self.config, items, context=note, app_block=app_block, **parts),
+                                      after_tool)
             if round_no == 1:
                 usage["instr"] = len(payload["instructions"])
                 if not self._taint:
