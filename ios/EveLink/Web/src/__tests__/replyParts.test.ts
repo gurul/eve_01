@@ -80,3 +80,37 @@ describe("history: an owner's component action", () => {
     expect(splitReply(`${LIVE_MARK}Hi`, true)).toEqual([{ kind: "markdown", text: "Hi" }]);
   });
 });
+
+describe("splitReply: json-render blocks", () => {
+  const SPEC = '{"op":"add","path":"/root","value":"card"}\n{"op":"add","path":"/elements/card","value":{"type":"Card","props":{},"children":[]}}';
+
+  it("reads a json-render fence as a spec part, with the prose around it as markdown", () => {
+    expect(splitReply(`Here.\n\`\`\`json-render\n${SPEC}\n\`\`\`\nAnything else?`, false)).toEqual([
+      { kind: "markdown", text: "Here." },
+      { kind: "spec", code: SPEC, complete: true },
+      { kind: "markdown", text: "Anything else?" },
+    ]);
+  });
+
+  it("keeps a streaming block open until its fence closes, and hides a half-typed opener", () => {
+    expect(splitReply(`Here.\n\`\`\`json-render\n${SPEC.slice(0, 30)}`, true)).toEqual([
+      { kind: "markdown", text: "Here." },
+      { kind: "spec", code: SPEC.slice(0, 30), complete: false },
+    ]);
+    expect(splitReply("Here.\n```json-re", true)).toEqual([{ kind: "markdown", text: "Here." }]);
+    expect(splitReply("Here.\n```json-render", true)).toEqual([
+      { kind: "markdown", text: "Here." },
+      { kind: "spec", code: "", complete: false },
+    ]);
+  });
+
+  it("draws each engine's fence with its own engine when one reply holds both", () => {
+    const parts = splitReply(`\`\`\`json-render\n${SPEC}\n\`\`\`\nThen:\n\`\`\`openui-lang\nroot = Card([])\n\`\`\``, false);
+    expect(parts.map((p) => p.kind)).toEqual(["spec", "markdown", "ui"]);
+  });
+
+  it("leaves an ordinary json code fence as markdown", () => {
+    const text = "Like this:\n```json\n{\"a\": 1}\n```";
+    expect(splitReply(text, false)).toEqual([{ kind: "markdown", text }]);
+  });
+});

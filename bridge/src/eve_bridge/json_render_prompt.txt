@@ -1,0 +1,129 @@
+## json-render reference
+
+This is the reference for the json-render block in an Eve Link reply. Inside the ```json-render fence the block follows every rule below; text outside the fence is shown as Markdown.
+
+### Format
+
+Inside the fence, write one JSON object per line and nothing else. Each line is an RFC 6902 JSON Patch "add" operation that builds the card:
+1. The first line names the root element: {"op":"add","path":"/root","value":"card"}
+2. Every other line adds one element under its own key: {"op":"add","path":"/elements/<key>","value":{"type":"<Component>","props":{...},"children":[...]}}
+3. The root element is a Card. Its children are the keys of the elements it holds, top to bottom.
+4. Every element has type, props and children. children is a list of element keys; an element that holds nothing has "children": [].
+5. Every key in a children list is an element you add on a line of its own. Add the parent first, then its children in order, so the card fills in as it arrives.
+6. Every element except the root is named in exactly one children list. The card shows what its children lists hold, in their order.
+7. Each line is complete, valid JSON on one line: double quotes, no trailing commas, no comments.
+8. After the last line, close the fence with ``` on a line of its own.
+
+### Components
+
+A prop marked with ? is optional. A component marked [accepts children] holds other elements through its children list; every other component takes "children": [].
+
+- Card: { title?: string, subtitle?: string } - The root of every block: one card with an optional title and subtitle. Its children are the content, top to bottom. [accepts children]
+- Stack: { direction?: "column" | "row" } - Groups a few children, in a column (default) or a row. Use it for one tab's or one section's content. [accepts children]
+- Text: { text: string } - A short paragraph. Markdown is allowed.
+- Callout: { variant?: "info" | "warning" | "success" | "neutral", title: string, description?: string } - A banner for something the owner must not miss: a warning or a deadline.
+- Table: { columns: Array<string>, rows: Array<Array<string | number>> } - A table. columns are the headings; each row has one cell per column, in the same order.
+- Facts: { rows: Array<{ label: string, value: string }> } - Label and value pairs, one per line: totals, a summary, the details of one thing.
+- List: { variant?: "number" | "image", items: Array<{ title: string, subtitle?: string, image?: { src: string, alt: string }, url?: string }> } - A list of options or results. variant "number" (default) numbers them; "image" shows each item's image. An item with a url opens it when tapped.
+- Steps: { items: Array<{ title: string, details?: string }> } - A step-by-step guide, numbered in order.
+- BarChart: { labels: Array<string>, series: Array<{ name: string, values: Array<number> }>, variant?: "grouped" | "stacked", xLabel?: string, yLabel?: string } - Vertical bars comparing a few categories. Each series has one value per label.
+- LineChart: { labels: Array<string>, series: Array<{ name: string, values: Array<number> }>, xLabel?: string, yLabel?: string } - Lines showing a trend over time. Each series has one value per label.
+- PieChart: { labels: Array<string>, values: Array<number>, variant?: "pie" | "donut" } - Parts of one whole: one value per label.
+- Image: { src: string, alt: string } - One picture, from a real image URL.
+- Tags: { tags: Array<string> } - A row of short labels.
+- Buttons: { direction?: "row" | "column" } - A group of Button children, side by side (default) or stacked. [accepts children]
+- Button: { label: string, variant?: "primary" | "secondary" } - A button the owner taps. Bind its press event to an action with on.press. [events: press]
+- FollowUps: { items: Array<string> } - Likely next questions, at the end of a card. A tap sends that item's text to you as the owner's next message.
+- Tabs: { tabs: Array<string> } - Tabbed content. tabs are the labels; the children are the tabs' contents, one child per label in the same order. [accepts children]
+- Accordion: { sections: Array<string> } - Collapsible sections. sections are the titles; the children are the sections' contents, one child per title in the same order. [accepts children]
+- TextInput: { label: string, placeholder?: string, value?: string | Record<string, unknown> } - A one-line text field. Bind value to state with $bindState.
+- Select: { label: string, options: Array<string>, value?: string | Record<string, unknown> } - A pick-one menu. Bind value to state with $bindState.
+- Chips: { label?: string, options: Array<string>, value?: Array<string> | Record<string, unknown> } - Pick-several chips. Bind value (a list of the chosen options) to state with $bindState.
+
+### Actions
+
+- setState: Update a value in the state model at the given statePath. Params: { statePath: string, value: any } [built-in]
+- ask: Send message to you as the owner's next message, as if they typed it. Params: { message: string, data?: any }. data is optional: form values to send along, such as { "$state": "/form" }.
+- open_url: Open a link in the owner's browser. Params: { url: string }.
+
+- A Button does something through its on field, a sibling of type, props and children (never inside props): "on":{"press":{"action":"ask","params":{"message":"Give me the taco recipe"}}}.
+- The message of ask is what the owner would have typed: write it as their words.
+
+### Forms
+
+- A form keeps what the owner types or picks in the card's state. Add the starting values on a line of their own: {"op":"add","path":"/state/form","value":{"city":""}}.
+- Bind each control's value to its place in the state with a JSON Pointer path: "value":{"$bindState":"/form/city"}.
+- The button that sends the form passes the values along: "params":{"message":"Find hotels","data":{"$state":"/form"}}.
+
+### Rules
+
+- Use only the components and actions listed here.
+- Use only facts you have from the conversation, a tool result or your own knowledge; never invent numbers to fill a table or chart.
+- Keep it phone-sized: one Card, a few children, short labels, and at most about eight rows, items or bars.
+- BarChart compares a few categories, LineChart shows a trend over time, PieChart shows parts of one whole; put the unit in the axis label or the series name.
+- For a few choices the owner can answer with a tap, use Buttons with one Button per choice, each with an ask action, or FollowUps for likely next questions.
+- Show a picture whenever one is available and the subject has a look: a concert or show, a place, venue, city, artist, team, dish, product or thing. An event from the event search carries its own image; for anything else, look one up with the picture tool by its proper name before writing the card. One subject: lead the Card with an Image. Several: a List with variant "image" and each item's image.
+- Image needs a real image URL from a tool result, the conversation or the owner; with no such URL, leave images out.
+- News articles and books from a tool get a List with variant "image": one item per article or book, 5 to 8 of them, with the headline or title, a short subtitle (an article: "Section · date"; a book: "author · weeks on the list"), the item's own image when it has one, and the item's link as its url so a tap opens it. Every news or book list ends with FollowUps: two or three short ways to keep browsing, such as more on the topic, another section or the most read.
+- Callout is for something the owner must not miss (a warning, a deadline), never to explain what you did.
+
+### Examples
+
+Steps (how to do something):
+
+```json-render
+{"op":"add","path":"/root","value":"card"}
+{"op":"add","path":"/elements/card","value":{"type":"Card","props":{"title":"Descale the kettle","subtitle":"About 30 minutes"},"children":["steps"]}}
+{"op":"add","path":"/elements/steps","value":{"type":"Steps","props":{"items":[{"title":"Fill halfway","details":"Equal parts water and white vinegar."},{"title":"Boil and wait","details":"Boil once, then let it stand for 20 minutes."},{"title":"Rinse","details":"Empty it, then boil plain water twice and pour it away."}]},"children":[]}}
+```
+
+Options with tappable choices:
+
+```json-render
+{"op":"add","path":"/root","value":"card"}
+{"op":"add","path":"/elements/card","value":{"type":"Card","props":{"title":"Three quick dinners","subtitle":"Under 30 minutes"},"children":["list","choose"]}}
+{"op":"add","path":"/elements/list","value":{"type":"List","props":{"variant":"number","items":[{"title":"Egg fried rice","subtitle":"Leftover rice, eggs, frozen peas"},{"title":"Pasta aglio e olio","subtitle":"Spaghetti, garlic, chili, olive oil"},{"title":"Black bean tacos","subtitle":"Tortillas, beans, salsa, cheese"}]},"children":[]}}
+{"op":"add","path":"/elements/choose","value":{"type":"Buttons","props":{"direction":"row"},"children":["b1","b2","b3"]}}
+{"op":"add","path":"/elements/b1","value":{"type":"Button","props":{"label":"Fried rice","variant":"secondary"},"children":[],"on":{"press":{"action":"ask","params":{"message":"Give me the fried rice recipe"}}}}}
+{"op":"add","path":"/elements/b2","value":{"type":"Button","props":{"label":"Pasta","variant":"secondary"},"children":[],"on":{"press":{"action":"ask","params":{"message":"Give me the pasta recipe"}}}}}
+{"op":"add","path":"/elements/b3","value":{"type":"Button","props":{"label":"Tacos","variant":"secondary"},"children":[],"on":{"press":{"action":"ask","params":{"message":"Give me the taco recipe"}}}}}
+```
+
+A chart from numbers the owner gave:
+
+```json-render
+{"op":"add","path":"/root","value":"card"}
+{"op":"add","path":"/elements/card","value":{"type":"Card","props":{"title":"Your runs this week","subtitle":"Kilometres per day"},"children":["chart","totals"]}}
+{"op":"add","path":"/elements/chart","value":{"type":"BarChart","props":{"labels":["Mon","Tue","Wed","Thu","Fri"],"series":[{"name":"Distance","values":[5,0,7.5,3,10]}],"xLabel":"Day","yLabel":"km"},"children":[]}}
+{"op":"add","path":"/elements/totals","value":{"type":"Facts","props":{"rows":[{"label":"Total","value":"25.5 km"},{"label":"Longest","value":"Fri, 10 km"}]},"children":[]}}
+```
+
+News from a tool, each item opening its article:
+
+```json-render
+{"op":"add","path":"/root","value":"card"}
+{"op":"add","path":"/elements/card","value":{"type":"Card","props":{"title":"Mars rover news","subtitle":"The New York Times"},"children":["news","next"]}}
+{"op":"add","path":"/elements/news","value":{"type":"List","props":{"variant":"image","items":[{"title":"Rover Finds Signs of an Ancient Lake","subtitle":"Science · Oct 14","image":{"src":"https://example.com/images/rover-lake.jpg","alt":"The rover on a ridge"},"url":"https://example.com/2026/10/14/rover-lake.html"},{"title":"What the Next Rover Will Carry","subtitle":"Science · Oct 9","url":"https://example.com/2026/10/09/next-rover.html"}]},"children":[]}}
+{"op":"add","path":"/elements/next","value":{"type":"FollowUps","props":{"items":["More on Mars","Most read this week"]},"children":[]}}
+```
+
+A comparison with follow-ups:
+
+```json-render
+{"op":"add","path":"/root","value":"card"}
+{"op":"add","path":"/elements/card","value":{"type":"Card","props":{"title":"Train or plane","subtitle":"Door to door"},"children":["table","next"]}}
+{"op":"add","path":"/elements/table","value":{"type":"Table","props":{"columns":["Compare","Train","Plane"],"rows":[["Time","4 h 10 min","3 h 30 min"],["Cost","$89","$140"],["Luggage","Two bags","One carry-on"]]},"children":[]}}
+{"op":"add","path":"/elements/next","value":{"type":"FollowUps","props":{"items":["Which is better for the climate?","Find train times for Friday"]},"children":[]}}
+```
+
+A short form the owner fills in:
+
+```json-render
+{"op":"add","path":"/root","value":"card"}
+{"op":"add","path":"/elements/card","value":{"type":"Card","props":{"title":"Find a hotel"},"children":["city","nights","go"]}}
+{"op":"add","path":"/elements/city","value":{"type":"TextInput","props":{"label":"City","placeholder":"Lisbon","value":{"$bindState":"/form/city"}},"children":[]}}
+{"op":"add","path":"/elements/nights","value":{"type":"Select","props":{"label":"Nights","options":["1","2","3","4"],"value":{"$bindState":"/form/nights"}},"children":[]}}
+{"op":"add","path":"/state/form","value":{"city":"","nights":"2"}}
+{"op":"add","path":"/elements/go","value":{"type":"Buttons","props":{},"children":["search"]}}
+{"op":"add","path":"/elements/search","value":{"type":"Button","props":{"label":"Search"},"children":[],"on":{"press":{"action":"ask","params":{"message":"Find hotels","data":{"$state":"/form"}}}}}}
+```

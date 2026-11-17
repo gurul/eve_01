@@ -169,6 +169,7 @@ import asyncio
 import contextlib
 import json
 import logging
+import os
 import re
 import secrets
 import time
@@ -320,6 +321,69 @@ APP_LINE = ("This turn is from the Eve Link app: use one openui-lang block when 
             "schedule, a chart, articles or books from a tool, or tap choices make the answer easier to scan, and "
             "one to three short plain sentences otherwise.")
 
+# ---- the card engine (trial, 2026-11-16) ---------------------------------------------------------------------
+# Owner, 2026-11-16: "lets start by testing just json renderer for this week". The app draws a card from one of two
+# engines, and EVE_CARD_ENGINE says which one an app turn is told to write: unset (or any other value) is OpenUI Lang,
+# as before; "json-render" is a json-render block (vercel-labs/json-render: JSON patches over eve's own catalog,
+# ios/EveLink/Web/src/jsonCatalog.ts). It is read on every turn. The app draws both fences whatever the switch says.
+# One engine's rule, reference and history never name the other (an app turn's history shows the other engine's old
+# cards as CARD_ELSEWHERE): a prompt that named both would hand the brain a second format to pick, which is the
+# choice the switch exists to make.
+CARD_ENGINE_ENV = "EVE_CARD_ENGINE"
+ENGINE_OPENUI = "openui"
+ENGINE_JSON = "json-render"
+JSON_PROMPT_PATH = Path(__file__).with_name("json_render_prompt.txt")
+
+
+def card_engine(environ: Any = None) -> str:
+    """``ENGINE_JSON`` when EVE_CARD_ENGINE says json-render (case and "_" for "-" forgiven), else ``ENGINE_OPENUI``."""
+    env = os.environ if environ is None else environ
+    value = str(env.get(CARD_ENGINE_ENV) or "").strip().lower().replace("_", "-")
+    return ENGINE_JSON if value in ("json-render", "jsonrender", "json") else ENGINE_OPENUI
+
+
+# The json-render engine's rule and reminder: APP_RULE and APP_LINE with the block's name and format changed and
+# nothing else, so a week on this engine differs from OpenUI in the engine alone. The example is one small block the
+# app's own validator accepts (tests/test_card_engine.py runs ios/EveLink/Web/scripts/validate-spec.mjs on it).
+JSON_APP_EXAMPLE = """Here's how they compare.
+```json-render
+{"op":"add","path":"/root","value":"card"}
+{"op":"add","path":"/elements/card","value":{"type":"Card","props":{"title":"Tea or coffee","subtitle":"One cup"},"children":["table","next"]}}
+{"op":"add","path":"/elements/table","value":{"type":"Table","props":{"columns":["Drink","Caffeine (mg)"],"rows":[["Tea",47],["Coffee",95]]},"children":[]}}
+{"op":"add","path":"/elements/next","value":{"type":"FollowUps","props":{"items":["Which is better in the evening?","What about green tea?"]},"children":[]}}
+```"""
+JSON_APP_RULE = (
+    "## Replying in the Eve Link app\n\n"
+    "This message came from the Eve Link app on the owner's iPhone. The app shows plain text as Markdown and "
+    "draws a json-render block as native cards, tables, charts and buttons.\n\n"
+    "Before you write, decide the form of the reply:\n"
+    "- Write a json-render block when the answer has a shape the owner will scan: a comparison of two or more "
+    "things, options to pick from, steps to follow, a plan or schedule by time or day, numbers that make a chart, "
+    "articles, books or headlines from a tool, or a question the owner can answer with a tap.\n"
+    "- Write plain text, one to three short sentences, for everything else: chat, a greeting, thanks, feelings, a "
+    "single fact or number, a yes or no, a confirmation that you started something, or a question back to the "
+    "owner.\n"
+    "In the app, a table, a list of options or a set of steps goes in the json-render block rather than in "
+    "Markdown. When the owner asks how to do something or for a plan, give the usual answer in the block first; "
+    "if a detail would change it, ask about that in one short sentence after the block. You will see the block in "
+    "the next turn, so the owner's answer can change it.\n\n"
+    "The block: at most one short sentence of plain text before it, then the card in a fence that opens with "
+    "```json-render and closes with ```. Inside the fence is one JSON object per line: the first names the root, "
+    "and each one after adds an element. The root is a Card, and the card stays small enough for a phone screen. A "
+    "tool's answer can be shown this way too: a list of events, results or prices is a table or a list.\n\n"
+    "A complete reply with a block:\n" + JSON_APP_EXAMPLE)
+JSON_APP_LINE = ("This turn is from the Eve Link app: use one json-render block when a comparison, options, steps, a "
+                 "schedule, a chart, articles or books from a tool, or tap choices make the answer easier to scan, "
+                 "and one to three short plain sentences otherwise.")
+# The app style (telegram.APP_STYLE, APP_STYLE_LITE) names the block an app reply may hold; ``card_words`` swaps the
+# name for the json-render engine's. tests/test_card_engine.py holds that the words are still there to swap.
+BLOCK_WORDS = ("an openui-lang block", "a json-render block")
+
+
+def card_words(text: str, environ: Any = None) -> str:
+    """``text`` (an app turn's instructions, before the app block) naming the block the current engine writes."""
+    return text.replace(*BLOCK_WORDS) if card_engine(environ) == ENGINE_JSON else text
+
 
 # ---- the generative UI prompt ----------------------------------------------------------------------------
 
@@ -371,12 +435,15 @@ def controls_listing(get: Callable[[str], Any]) -> dict[str, Any]:
     return legacy
 
 
-def app_block(path: Optional[Path] = None) -> str:
-    """What an app turn's instructions end with: ``APP_RULE`` (when to use OpenUI, with one example), the
-    openui-lang reference (``PROMPT_PATH``) and ``APP_LINE``. The file is read once per change (mtime and size). An
+def app_block(path: Optional[Path] = None, engine: Optional[str] = None) -> str:
+    """What an app turn's instructions end with: the rule (when to write a card, with one example), the engine's
+    reference and the reminder line. ``engine`` (default: ``card_engine()``, read now) picks OpenUI Lang (``APP_RULE``,
+    ``PROMPT_PATH``, ``APP_LINE``) or json-render (``JSON_APP_RULE``, ``JSON_PROMPT_PATH``, ``JSON_APP_LINE``); a
+    ``path`` is that engine's reference from somewhere else. The file is read once per change (mtime and size). An
     absent or empty file means no addition at all, logged once: the brain then answers in plain Markdown, which
     the app also shows, and is never told to write a language it has no reference for."""
-    path = path or PROMPT_PATH
+    is_json = (engine or card_engine()) == ENGINE_JSON
+    path = path or (JSON_PROMPT_PATH if is_json else PROMPT_PATH)
     try:
         st = path.stat()
         key = (str(path), st.st_mtime_ns, st.st_size)
@@ -387,10 +454,11 @@ def app_block(path: Optional[Path] = None) -> str:
     if not _prompt["text"]:
         if not _prompt["warned"]:
             _prompt["warned"] = True
-            log.warning("link chat: %s is missing or empty; app turns get no OpenUI guide "
-                        "(run ios/EveLink/Web/scripts/gen-prompt.mjs)", path.name)
+            log.warning("link chat: %s is missing or empty; app turns get no card guide "
+                        "(run pnpm gen-prompt and pnpm gen-json-prompt in ios/EveLink/Web)", path.name)
         return ""
-    return APP_RULE + "\n\n" + _prompt["text"] + "\n\n" + APP_LINE
+    rule, line = (JSON_APP_RULE, JSON_APP_LINE) if is_json else (APP_RULE, APP_LINE)
+    return rule + "\n\n" + _prompt["text"] + "\n\n" + line
 
 
 OPENUI_PLACEHOLDER = "(A table or chart is here: open Eve Link to see it.)"
@@ -398,37 +466,60 @@ _OPENUI_FENCE = re.compile(r"```openui-lang[ \t]*\n.*?(?:\n```|\Z)", re.DOTALL)
 _OPENUI_BARE_LINE = re.compile(r"(?:^|\n)[ \t]*root[ \t]*=[ \t]*[A-Z][A-Za-z0-9]*\(")   # replyParts.ts ROOT_RE
 
 
-def strip_openui(text: str) -> str:
-    """``text`` with each OpenUI Lang program (a ```openui-lang fence, or a whole reply that is a bare ``root =``
-    program, as the app's replyParts.ts reads them) swapped for one plain line. For an app turn's line that goes
-    to Telegram after all (nobody reading in the app), and for eve's lines in the history of a Telegram, voice or
-    call turn (``history_text``), so Telegram never shows a raw program and those turns never read past replies in
-    OpenUI Lang and copy the format. An unclosed fence runs to the end, as the app renders it."""
+# A json-render block (the other card engine): always a fence, never bare. An unclosed one runs to the end.
+_SPEC_FENCE = re.compile(r"```json-render[ \t]*\n.*?(?:\n```|\Z)", re.DOTALL)
+
+
+def _strip_openui_only(text: str, line: str) -> str:
+    """``text`` with each OpenUI Lang program swapped for ``line``."""
     # a program at the start, or after some prose, as replyParts.ts draws it (`root = Card(` at a line start, no ``` before it):
     # the prose stays, the program goes (review, 2026-10-08: it reached Telegram and voice history unstripped)
     at = _OPENUI_BARE_LINE.search(text)
     if at and "```" not in text[: at.start() + 1]:
         before = text[: at.start()].rstrip()
-        return f"{before}\n{OPENUI_PLACEHOLDER}".strip() if before else OPENUI_PLACEHOLDER
+        return f"{before}\n{line}".strip() if before else line
     if "```openui-lang" not in text:
         return text
-    return _OPENUI_FENCE.sub(OPENUI_PLACEHOLDER, text).strip()
+    return _OPENUI_FENCE.sub(line, text).strip()
+
+
+def _strip_spec_only(text: str, line: str) -> str:
+    """``text`` with each json-render block swapped for ``line``."""
+    return _SPEC_FENCE.sub(line, text).strip() if "```json-render" in text else text
+
+
+def strip_openui(text: str) -> str:
+    """``text`` with each card swapped for one plain line: an OpenUI Lang program (a ```openui-lang fence, or a whole
+    reply that is a bare ``root =`` program, as the app's replyParts.ts reads them) and a json-render block (a
+    ```json-render fence), whichever engine wrote it. For an app turn's line that goes to Telegram after all (nobody
+    reading in the app), and for eve's lines in the history of a Telegram, voice or call turn (``history_text``), so
+    Telegram never shows a raw card and those turns never read past replies in a card format and copy it. An unclosed
+    fence runs to the end, as the app renders it."""
+    return _strip_spec_only(_strip_openui_only(text, OPENUI_PLACEHOLDER), OPENUI_PLACEHOLDER)
 
 
 # An eve line the chat log holds from before app history kept programs (2026-10-08): the placeholder is all that is
 # left of its block. An app turn is shown this instead, since "open Eve Link" makes no sense to a turn in the app.
 OPENUI_GONE = "(A card was shown here; what it held is no longer in this history.)"
+# A card the other engine wrote, as an app turn's history shows it (EVE_CARD_ENGINE changed since): the turn is told
+# to write one format, and a past reply in the other would be a second one to copy.
+CARD_ELSEWHERE = "(A card was shown here.)"
 
 
-def history_text(text: str, app: bool) -> str:
-    """One of eve's lines as the model's history shows it. The chat log keeps the reply whole, programs included.
-    An app turn (``app``) reads it as written, so a follow-up ("make it 4 days", "the second one", a tapped
-    button's words) has the block's titles, rows and options to work from. A Telegram, voice or call turn reads
-    each program as ``OPENUI_PLACEHOLDER`` (``strip_openui``): those channels cannot draw it, and a reply there
-    must not copy the format."""
+def history_text(text: str, app: bool, engine: Optional[str] = None) -> str:
+    """One of eve's lines as the model's history shows it. The chat log keeps the reply whole, cards included.
+    An app turn (``app``) reads the current engine's cards as written, so a follow-up ("make it 4 days", "the second
+    one", a tapped button's words) has the block's titles, rows and options to work from; a card the other engine
+    wrote reads as ``CARD_ELSEWHERE`` (``engine``: default ``card_engine()``). A Telegram, voice or call turn reads
+    every card as ``OPENUI_PLACEHOLDER`` (``strip_openui``): those channels cannot draw it, and a reply there must
+    not copy the format."""
     if not app:
         return strip_openui(text)
-    return text.replace(OPENUI_PLACEHOLDER, OPENUI_GONE) if OPENUI_PLACEHOLDER in text else text
+    if OPENUI_PLACEHOLDER in text:
+        text = text.replace(OPENUI_PLACEHOLDER, OPENUI_GONE)
+    if (engine or card_engine()) == ENGINE_JSON:
+        return _strip_openui_only(text, CARD_ELSEWHERE)
+    return _strip_spec_only(text, CARD_ELSEWHERE)
 
 
 # ---- the conversation, read back from the transcript -------------------------------------------------------

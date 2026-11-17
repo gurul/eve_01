@@ -5,12 +5,27 @@
 // fence (the generated prompt asks for that). Text outside a fence is
 // markdown. An unfenced reply that starts a program with `root =` is OpenUI
 // Lang as a whole (the library's own convention).
+//
+// With the json-render engine on (the bridge's EVE_CARD_ENGINE), the card is
+// a ```json-render fence instead: SpecStream lines, drawn by JsonCard.tsx.
+// The page reads both fences whatever the switch says, so the history of one
+// engine still draws after a change to the other.
 
 export type ReplyPart =
   | { kind: "markdown"; text: string }
-  | { kind: "ui"; code: string; complete: boolean };
+  | { kind: "ui"; code: string; complete: boolean }
+  | { kind: "spec"; code: string; complete: boolean };
 
 const FENCE = "```openui-lang";
+const SPEC_FENCE = "```json-render";
+const FENCES = [FENCE, SPEC_FENCE];
+/** The first card fence in `text`: where it opens and which engine it is for. */
+function nextFence(text: string): { at: number; kind: "ui" | "spec" } | undefined {
+  const ui = text.indexOf(FENCE);
+  const spec = text.indexOf(SPEC_FENCE);
+  if (ui === -1 && spec === -1) return undefined;
+  return spec === -1 || (ui !== -1 && ui < spec) ? { at: ui, kind: "ui" } : { at: spec, kind: "spec" };
+}
 // `root = Card(` at the start of a line: a program, not prose that says "root = 5".
 const ROOT_RE = /(^|\n)[ \t]*root[ \t]*=[ \t]*[A-Z][A-Za-z0-9]*\(/;
 
@@ -18,7 +33,7 @@ const ROOT_RE = /(^|\n)[ \t]*root[ \t]*=[ \t]*[A-Z][A-Za-z0-9]*\(/;
 function trimPartialFence(text: string): string {
   const nl = text.lastIndexOf("\n");
   const tail = text.slice(nl + 1);
-  if (tail.startsWith("`") && FENCE.startsWith(tail)) return text.slice(0, nl + 1);
+  if (tail.startsWith("`") && FENCES.some((f) => f.startsWith(tail))) return text.slice(0, nl + 1);
   return text;
 }
 
@@ -37,7 +52,7 @@ export function splitReply(raw: string, streaming: boolean): ReplyPart[] {
   const text = (raw ?? "").startsWith(LIVE_MARK) ? raw.slice(LIVE_MARK.length) : (raw ?? "");
   const parts: ReplyPart[] = [];
 
-  if (!text.includes(FENCE)) {
+  if (!nextFence(text)) {
     if (ROOT_RE.test(text) && !/```/.test(text.slice(0, text.search(ROOT_RE) + 1))) {
       // A bare program: everything before `root =` that is prose stays prose.
       const at = text.search(ROOT_RE);
@@ -51,24 +66,26 @@ export function splitReply(raw: string, streaming: boolean): ReplyPart[] {
 
   let rest = text;
   while (rest.length) {
-    const open = rest.indexOf(FENCE);
-    if (open === -1) {
+    const fence = nextFence(rest);
+    if (!fence) {
       pushMarkdown(parts, streaming ? trimPartialFence(rest) : rest);
       break;
     }
+    const open = fence.at;
+    const kind = fence.kind;
     pushMarkdown(parts, rest.slice(0, open));
     const bodyStart = rest.indexOf("\n", open);
     if (bodyStart === -1) {
       // Only the opener has arrived.
-      parts.push({ kind: "ui", code: "", complete: false });
+      parts.push({ kind, code: "", complete: false });
       break;
     }
     const close = rest.indexOf("\n```", bodyStart);
     if (close === -1) {
-      parts.push({ kind: "ui", code: rest.slice(bodyStart + 1), complete: false });
+      parts.push({ kind, code: rest.slice(bodyStart + 1), complete: false });
       break;
     }
-    parts.push({ kind: "ui", code: rest.slice(bodyStart + 1, close), complete: true });
+    parts.push({ kind, code: rest.slice(bodyStart + 1, close), complete: true });
     const after = rest.indexOf("\n", close + 4);
     rest = after === -1 ? "" : rest.slice(after + 1);
   }

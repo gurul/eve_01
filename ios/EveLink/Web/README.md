@@ -7,7 +7,7 @@ haptics, network) is native.
 The same page also runs in a browser as eve lite's web app, with a shell of its
 own in place of the native code: see [eve lite's web app](#eve-lites-web-app-srcweb).
 
-Use Node 22.12 or later and pnpm. `sh ios/EveLink/build.sh` from the repository
+Use Node 22.18 or later and pnpm (the json-render scripts run their TypeScript sources as they are). `sh ios/EveLink/build.sh` from the repository
 root installs the locked web dependencies and rebuilds the chat before building
 the app. When building directly in Xcode, first run `pnpm install --frozen-lockfile`
 and `pnpm build` in this directory. Generated bundle changes stay out of commits.
@@ -28,6 +28,15 @@ and `pnpm build` in this directory. Generated bundle changes stay out of commits
   parses a program with the app's parser and library, and exits 1 on a parse
   error, an unknown component, an undefined name, or a cut-off program.
   `--batch` reads a JSON array of programs.
+- `pnpm gen-json-prompt` writes `bridge/src/eve_bridge/json_render_prompt.txt`:
+  the json-render reference for app turns while the card engine is json-render
+  (`EVE_CARD_ENGINE=json-render` on the Mac). Its component and action lists
+  come from the catalog in `src/jsonCatalog.ts`; `pnpm check-json-prompt` exits
+  1 when the committed file is stale. `pnpm validate-spec [file]` checks a
+  json-render block as the app does. See `docs/app-chat.md`, "The card engine".
+- `pnpm preview-cards` serves `preview.html`, a development page that draws a
+  json-render block as the app does and lists what each tap sends. It is not
+  part of either build.
 - `pnpm build:web` writes eve lite's web app to
   `bridge/src/eve_bridge/web_lite/`, from `web.html` and `vite.web.config.ts`
   (below). It never touches `../App/ChatWeb/`.
@@ -43,8 +52,10 @@ Source map:
 | `src/sync.ts` | Transcript lines to messages; the ledger that drops poll copies of a streamed turn |
 | `src/reactions.ts`, `src/Reaction.tsx` | eve's reaction on an owner bubble (Telegram's receipts) and its badge |
 | `src/sources.ts`, `src/SourceList.tsx` | "Sources · N" under a reply: the memory lines it leaned on, kept by message id |
-| `src/replyParts.ts` | Splits a reply into markdown and OpenUI Lang parts |
+| `src/replyParts.ts` | Splits a reply into markdown, OpenUI Lang and json-render parts |
 | `src/GeneratedCard.tsx`, `src/uiProgram.ts` | Validated streaming cards, readable static text, per-card input reset and bounded page-local state |
+| `src/jsonCatalog.ts`, `src/jsonRegistry.tsx` | The json-render engine: the components and actions a block may use, and how each is drawn (with OpenUI's own components) |
+| `src/specProgram.ts`, `src/JsonCard.tsx` | A json-render block to a checked spec, and its card: streaming, readable text, input reset |
 | `src/cardActions.ts` | Existing conversation/link action routing, with busy and duplicate-send protection |
 | `src/AssistantMessage.tsx` | Renders those parts (MarkDownRenderer / react-lang Renderer), and eve's own pictures and files above them |
 | `src/attachments.ts` | Attachments: sanitizing, the owner's binary parts, eve's media kept by message id |

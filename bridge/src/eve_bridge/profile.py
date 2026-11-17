@@ -215,6 +215,8 @@ LITE_CLASSIFIED: dict[str, str] = {
     # what eve lite runs
     **_why("kept: the chat brain's models and efforts (luna; App Think on sol); the defaults are lite's",
            "EVE_TELEGRAM_MODEL", "EVE_TELEGRAM_EFFORT", "EVE_APP_THINK_MODEL", "EVE_APP_THINK_EFFORT"),
+    **_why("kept: which card format an app turn writes (OpenUI Lang when unset, json-render as a trial); the web "
+           "app draws both, and lite's wording covers both (telegram.LITE_APP_SWAPS_JSON)", "EVE_CARD_ENGINE"),
     **_why("kept: think_hard (astra), on in lite", "EVE_THINK", "EVE_THINK_MODEL", "EVE_THINK_EFFORT",
            "EVE_THINK_TIMEOUT_SECS"),
     **_why("kept: small talk, on in lite", "EVE_SMALL_TALK", "EVE_SMALL_TALK_MODEL"),

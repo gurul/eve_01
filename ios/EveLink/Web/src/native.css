@@ -544,6 +544,22 @@ textarea,
   gap: 16px;
 }
 
+/* A form control in a json-render card (jsonRegistry.tsx Field): its label on a line of its own, above it. */
+.eve-spec-field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+}
+.eve-spec-field > :not(.eve-spec-field__label) { max-width: 100%; }
+.eve-spec-field > input { width: 100%; }
+.eve-spec-field__label {
+  color: light-dark(#636366, #AEAEB2);
+  font-size: 13px;
+  line-height: 1.3;
+}
+
 /* Horizontal History (HorizontalHistory.tsx): topic cards that slide up above the composer, swiped sideways. */
 .eve-mid {
   display: contents;

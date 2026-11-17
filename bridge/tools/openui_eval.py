@@ -29,6 +29,12 @@ ios/EveLink/Web/scripts/validate.mjs (the app's parser and component library: no
 component, nothing undefined, not cut off); None when there is no program. A ``ui`` case passes with uses_ui and
 parse_ok, a ``plain`` case passes without a block (an unclosed fence fails it).
 
+``--engine json-render`` scores the other card engine (EVE_CARD_ENGINE=json-render, link_chat.card_engine): the turn
+is told to write a json-render block, ``uses_ui`` is a complete ```json-render fence, and ``parse_ok`` comes from
+ios/EveLink/Web/scripts/validate-spec.mjs (the app's own spec reader and eve's catalog). A reply that holds the other
+engine's block is marked ``other_engine`` and does not count as a card. Saved rows carry their engine, so
+``--rescore`` scores each file with the engine it was run on.
+
 The code under test is whatever ``src`` this file sits beside, and this file imports only what existed at 25d2728,
 so a copy dropped into an older checkout's bridge/tools scores that checkout. The validator is that checkout's
 validate.mjs when it has one, else ``--validator`` or $OPENUI_VALIDATOR (a validate.mjs from any checkout with
@@ -55,6 +61,8 @@ REPO = BRIDGE.parent
 sys.path.insert(0, str(BRIDGE / "src"))
 
 DEFAULT_VALIDATOR = REPO / "ios" / "EveLink" / "Web" / "scripts" / "validate.mjs"
+SPEC_VALIDATOR = REPO / "ios" / "EveLink" / "Web" / "scripts" / "validate-spec.mjs"
+ENGINES = ("openui", "json-render")
 DEV_CASES = BRIDGE / "tests" / "fixtures" / "openui_dev.json"
 UI_LABELS = {"ui", "openui", "yes", "true"}
 PLAIN_LABELS = {"plain", "text", "no", "false"}
@@ -63,17 +71,22 @@ ATTEMPTS = 3
 KEEP_ENV = ("PATH", "OPENROUTER_API_KEY")
 
 FENCE = "```openui-lang"
+SPEC_FENCE = "```json-render"
 # `root = Card(` at the start of a line: a program, not prose that says "root = 5" (replyParts.ts ROOT_RE)
 ROOT_RE = re.compile(r"(^|\n)[ \t]*root[ \t]*=[ \t]*[A-Z][A-Za-z0-9]*\(")
 
 
 # ---- reading a reply the way the app does (ios/EveLink/Web/src/replyParts.ts splitReply) ---------------------
 
-def programs(reply: str) -> tuple[list[str], bool]:
-    """The complete OpenUI Lang programs in ``reply`` and whether a fence was left open. A reply with no fence that
-    holds a ``root =`` program (with no ``` before it) is that program, from ``root =`` to the end."""
+def programs(reply: str, engine: str = "openui") -> tuple[list[str], bool]:
+    """The complete cards in ``reply`` and whether a fence was left open. OpenUI: the programs in ```openui-lang
+    fences, and a reply with no fence that holds a ``root =`` program (with no ``` before it) is that program, from
+    ``root =`` to the end. json-render: the blocks in ```json-render fences; there is no bare form."""
     text = reply or ""
-    if FENCE not in text:
+    fence = SPEC_FENCE if engine == "json-render" else FENCE
+    if fence not in text:
+        if engine == "json-render":
+            return [], False
         m = ROOT_RE.search(text)
         if m and "```" not in text[:m.start() + 1]:
             return [text[m.start():].lstrip("\n")], False
@@ -81,7 +94,7 @@ def programs(reply: str) -> tuple[list[str], bool]:
     found: list[str] = []
     rest = text
     while True:
-        at = rest.find(FENCE)
+        at = rest.find(fence)
         if at == -1:
             return found, False
         body = rest.find("\n", at)
@@ -94,9 +107,9 @@ def programs(reply: str) -> tuple[list[str], bool]:
         rest = rest[close + 4:]
 
 
-def uses_ui(reply: str) -> bool:
-    """A complete fence or a bare ``root =`` program."""
-    return bool(programs(reply)[0])
+def uses_ui(reply: str, engine: str = "openui") -> bool:
+    """A complete fence or (OpenUI) a bare ``root =`` program."""
+    return bool(programs(reply, engine)[0])
 
 
 def expected(label: Any) -> Optional[bool]:
@@ -116,7 +129,9 @@ def passed(label: Any, row: dict[str, Any]) -> Optional[bool]:
 
 # ---- the validator ---------------------------------------------------------------------------------------------
 
-def find_validator(arg: str = "") -> Optional[Path]:
+def find_validator(arg: str = "", engine: str = "openui") -> Optional[Path]:
+    if engine == "json-render":
+        return SPEC_VALIDATOR.resolve() if SPEC_VALIDATOR.is_file() else None
     for candidate in (arg, os.environ.get("OPENUI_VALIDATOR", ""), str(DEFAULT_VALIDATOR)):
         if candidate and Path(candidate).is_file():
             return Path(candidate).resolve()
@@ -137,13 +152,18 @@ def validate(codes: list[str], validator: Path, node: str = "") -> list[dict[str
     return results
 
 
-def score_rows(rows: list[dict[str, Any]], validator: Optional[Path]) -> None:
-    """Fill uses_ui, unclosed_fence, parse_ok, parse_errors and pass on each row, in place."""
+def score_rows(rows: list[dict[str, Any]], validator: Optional[Path], engine: str = "openui") -> None:
+    """Fill uses_ui, unclosed_fence, parse_ok, parse_errors and pass on each row, in place. ``engine`` is the engine
+    every row was run on (one file is one engine); ``other_engine`` marks a reply holding the other engine's card."""
     codes: list[str] = []
     spans: list[tuple[int, int]] = []
+    other = "openui" if engine == "json-render" else "json-render"
     for r in rows:
-        found, unclosed = programs(r.get("reply") or "")
+        found, unclosed = programs(r.get("reply") or "", engine)
         r["uses_ui"], r["unclosed_fence"], r["programs"] = bool(found), unclosed, len(found)
+        r["engine"] = engine
+        theirs, theirs_open = programs(r.get("reply") or "", other)
+        r["other_engine"] = bool(theirs) or theirs_open
         spans.append((len(codes), len(codes) + len(found)))
         codes.extend(found)
     results = validate(codes, validator) if (codes and validator is not None) else []
@@ -183,7 +203,7 @@ class Recorder:
         return nothing
 
 
-def environment(model: str, effort: str, scratch: Path) -> None:
+def environment(model: str, effort: str, scratch: Path, engine: str = "openui") -> None:
     """os.environ as a made-up install: only PATH and the OpenRouter key survive (see the module text)."""
     keep = {k: os.environ[k] for k in KEEP_ENV if k in os.environ}
     if not keep.get("OPENROUTER_API_KEY"):
@@ -203,6 +223,8 @@ def environment(model: str, effort: str, scratch: Path) -> None:
         "EVE_WEB_SEARCH": "off",
         "EVE_SPEND_DIR": str(scratch / "spend"),
     })
+    if engine == "json-render":
+        os.environ["EVE_CARD_ENGINE"] = "json-render"
     if model:
         os.environ["EVE_TELEGRAM_MODEL"] = model
     if effort:
@@ -317,6 +339,7 @@ def report(rows: list[dict[str, Any]], arm: str) -> dict[str, Any]:
         parse = {True: "ok", False: "BAD", None: "-"}[r.get("parse_ok")]
         extra = f"  ERROR {r['error']}" if r.get("error") else ""
         extra += "  unclosed fence" if r.get("unclosed_fence") else ""
+        extra += "  OTHER ENGINE'S BLOCK" if r.get("other_engine") else ""
         extra += f"  {'; '.join(r['parse_errors'])[:160]}" if r.get("parse_ok") is False else ""
         print(f"{mark}  [{arm}] {r['id']:<28} label={str(r.get('label')):<6} ui={'yes' if r.get('uses_ui') else 'no ':<3} "
               f"parse={parse:<3} {r.get('secs', 0):>5}s{extra}", flush=True)
@@ -354,26 +377,34 @@ def main(argv: Optional[list[str]] = None) -> int:
     p.add_argument("--only", default="", help="run one case by id")
     p.add_argument("--validator", default="", help="validate.mjs to use (default: this checkout's, or $OPENUI_VALIDATOR)")
     p.add_argument("--rescore", nargs="*", default=None, help="score saved --out files again, offline")
+    p.add_argument("--engine", default="openui", choices=ENGINES,
+                   help="the card engine the turn is told to write and the replies are scored for (default: openui)")
     args = p.parse_args(argv)
-    validator = find_validator(args.validator)
+    def validator_for(engine: str) -> Optional[Path]:
+        # the OpenUI call keeps its one-argument form: a copy of this file scores an older checkout too
+        return find_validator(args.validator) if engine == "openui" else find_validator(args.validator, engine)
+
+    validator = validator_for(args.engine)
     if validator is None:
         raise SystemExit("no validate.mjs: pass --validator or set OPENUI_VALIDATOR (and run pnpm install beside it)")
     if args.rescore is not None:
         for path in args.rescore:
             data = json.loads(Path(path).read_text(encoding="utf-8"))
             rows = data["rows"] if isinstance(data, dict) else data
-            score_rows(rows, validator)
+            engine = str(rows[0].get("engine") or args.engine) if rows else args.engine
+            score_rows(rows, validator_for(engine), engine)
             report(rows, str(rows[0].get("arm", Path(path).stem)) if rows else Path(path).stem)
         return 0
     cases = load_cases(Path(args.cases))
     if args.only:
         cases = [c for c in cases if c["id"] == args.only]
     with tempfile.TemporaryDirectory(prefix="openui-eval-") as tmp:
-        environment(args.model, args.effort, Path(tmp))
+        environment(args.model, args.effort, Path(tmp), args.engine)
         rows = asyncio.run(run_all(cases, args.jobs))
     for r in rows:
         r["arm"] = args.arm
-    return finish(rows, args.arm, validator, Path(args.out) if args.out else None)
+        r["engine"] = args.engine
+    return finish(rows, args.arm, validator, Path(args.out) if args.out else None, args.engine)
 
 
 def save(path: Path, rows: list[dict[str, Any]], summary: Optional[dict[str, Any]]) -> None:
@@ -384,7 +415,8 @@ def save(path: Path, rows: list[dict[str, Any]], summary: Optional[dict[str, Any
     tmp.replace(path)
 
 
-def finish(rows: list[dict[str, Any]], arm: str, validator: Optional[Path], out: Optional[Path]) -> int:
+def finish(rows: list[dict[str, Any]], arm: str, validator: Optional[Path], out: Optional[Path],
+           engine: str = "openui") -> int:
     """Save the raw replies, then score them. The replies cost model calls and scoring is free to redo, so they are on
     disk before the validator runs (with no --out, in a temp file named here) and a scoring failure keeps them:
     ``--rescore`` scores that file again. The file is written a second time with the scores once they exist."""
@@ -395,7 +427,7 @@ def finish(rows: list[dict[str, Any]], arm: str, validator: Optional[Path], out:
     save(out, rows, None)
     print(f"replies saved: {out}", flush=True)
     try:
-        score_rows(rows, validator)
+        score_rows(rows, validator, engine)
     except (Exception, SystemExit) as e:  # noqa: BLE001 — the replies are already saved; say how to score them again
         print(f"scoring failed ({type(e).__name__}: {str(e)[:300]}); the replies are in {out}; "
               f"score them with: --rescore {out}", file=sys.stderr, flush=True)

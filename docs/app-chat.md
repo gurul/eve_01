@@ -1019,6 +1019,110 @@ only an image URL from a tool result, the conversation or the owner, never an in
 - **Voice is spoken, not drawn**: a call, voice mode or the Action Button is not an app turn, so it gets neither the
   card rules (`app_block`) nor `find_image`, and the app-only speed grading does not run; its prompt stays short.
 
+## The card engine
+
+Owner, 2026-11-16: "lets start by testing just json renderer for this week".
+
+The app can draw a card from two engines. One switch on the Mac says which
+one eve writes:
+
+| `EVE_CARD_ENGINE` | What an app turn is told to write | What draws it |
+|---|---|---|
+| unset, or anything else (default) | an `openui-lang` block ([When a reply uses OpenUI](#when-a-reply-uses-openui)) | OpenUI's renderer (`GeneratedCard.tsx`) |
+| `json-render` | a `json-render` block | [json-render](https://github.com/vercel-labs/json-render)'s renderer (`JsonCard.tsx`) |
+
+**To try it:** add `EVE_CARD_ENGINE=json-render` to `~/.config/eve-bridge/env`
+and restart the daemon. **To go back:** remove the line and restart. The
+phone needs an Eve Link built from a commit that has `JsonCard.tsx`
+(`sh ios/EveLink/build.sh --install`); an older app shows a json-render block
+as a block of code. The app draws both kinds of block whatever the switch
+says, so cards from before a change still draw after it.
+
+**What changes with the switch, and what does not.** The decision of when to
+write a card is the same sentence for both engines (`link_chat.JSON_APP_RULE`
+is `APP_RULE` with the block's name and format changed, and a test holds them
+to that), so a week on json-render differs from OpenUI in the engine alone.
+The look is the same too: json-render decides what is on the card, and each
+part is drawn with the same OpenUI React components and theme
+(`jsonRegistry.tsx`).
+
+**A json-render block** is a ```` ```json-render ```` fence holding one JSON
+object per line. Each line is a JSON Patch "add": the first names the root,
+and each one after adds one element (a component from eve's catalog, its
+props and the keys of its children). The card fills in line by line as the
+reply streams.
+
+```json-render
+{"op":"add","path":"/root","value":"card"}
+{"op":"add","path":"/elements/card","value":{"type":"Card","props":{"title":"Tea or coffee"},"children":["table"]}}
+{"op":"add","path":"/elements/table","value":{"type":"Table","props":{"columns":["Drink","Caffeine (mg)"],"rows":[["Tea",47],["Coffee",95]]},"children":[]}}
+```
+
+**The catalog** (`ios/EveLink/Web/src/jsonCatalog.ts`) is the whole set a
+block may use: Card, Stack, Text, Callout, Table, Facts, List, Steps,
+BarChart, LineChart, PieChart, Image, Tags, Buttons, Button, FollowUps, Tabs,
+Accordion, TextInput, Select and Chips, and two actions. `ask` sends a
+message to eve as the owner's next message (a Button's tap, with the form's
+values when the card passes them); `open_url` opens a link. Both go through
+the code OpenUI cards use (`cardActions.ts`), so the busy check, the
+one-tap-at-a-time guard and the "User clicked" context are the same.
+
+**What the app requires of a finished card** (`specProgram.ts`): every line
+is a patch, the root is a Card with a child, every element is in the catalog
+with props its component takes, and every child named is there. A card that
+fails shows "This card couldn't be displayed" with the text it could read, as
+an OpenUI card does. One repair is made: an element that no children list
+names is shown at the end of the card rather than dropped (the brain wrote
+it and forgot to hang it on the card; seen on the first live run).
+
+**Other turns.** Telegram, voice, calls and notifications read a json-render
+block as the same one plain line as an OpenUI one (`strip_openui`). An app
+turn's history shows the current engine's cards whole and a card the other
+engine wrote as "(A card was shown here.)", so the brain is never shown a
+second format to copy. One engine's instructions never name the other:
+`tools/card_engine_check.py` reads the whole request both ways.
+
+**The reference the brain reads** is `bridge/src/eve_bridge/json_render_prompt.txt`,
+written by `pnpm gen-json-prompt` from the catalog (about 12,600 characters;
+OpenUI's is about 18,700). The component and action lists are the library's
+own text. The format, the rules and the six examples are eve's, because the
+library's prompt is written for a page builder: it asks for sample data and
+says to use no code fence. Every example is checked by the app's validator
+before the file is written.
+
+**Tools.**
+
+- `pnpm validate-spec [file]` in `ios/EveLink/Web` checks a block as the app
+  does; `--batch` reads a JSON array.
+- `pnpm preview-cards` opens a page that draws a block holding every
+  component, in light or dark, streams it, and lists what each tap sends.
+  Paste any block into it.
+- `uv run python tools/openui_eval.py --engine json-render` scores real app
+  turns on this engine; `tools/card_eval_gate.py` runs the ten dev cases
+  against a fixed bar.
+
+**Measured, 2026-11-16, gpt-6-luna, the ten dev cases** (six want a card,
+four want plain text). These cases were read while the prompt was written,
+so they show the engine works end to end and nothing about how often.
+
+| Run | Cards on the six | Cards that validate | Blocks on the four plain |
+|---|---|---|---|
+| json-render, first | 4 of 6 | 4 of 4 | 0 |
+| json-render, after two format rules and the repair above | 5 of 6 | 5 of 5 | 0 |
+| OpenUI, same day | 5 of 6 | 5 of 5 | 0 |
+
+In the first run one reply left its fence open and left two lists hanging on
+no parent; the other miss, in both json-render runs, was a question back
+where a card was wanted. The bar was 5 of 6. The app's script grew from
+3,463 kB to 3,550 kB (1,002 to 1,030 kB gzipped).
+
+**Not done.** Whether json-render is better than OpenUI for anything is not
+measured: that takes a blind set, and the default stays OpenUI until one is
+scored. Choosing an engine per reply (the owner's next idea: Jev picks) is
+not built. json-render ships an experimental composer that has a decision
+model, Jev by default, pick and arrange pre-made elements
+(`experimental_composeSpec` in `@json-render/core`); it is not used here.
+
 ## When a reply uses OpenUI
 
 Owner, 2026-10-08: "make sure it uses openui features when its good for it to

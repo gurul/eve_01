@@ -1,5 +1,6 @@
-// Renders one eve reply: markdown parts with OpenUI's MarkDownRenderer and
-// OpenUI Lang parts with the react-lang Renderer and openuiChatLibrary.
+// Renders one eve reply: markdown parts with OpenUI's MarkDownRenderer,
+// OpenUI Lang parts with the react-lang Renderer and openuiChatLibrary, and
+// json-render parts with JsonCard (json-render's renderer and eve's catalog).
 //
 // AgentInterface's built-in GenUI message hands EVERY reply to the Lang
 // Renderer when a componentLibrary is set, and a plain markdown reply then
@@ -14,8 +15,9 @@ import type { ActionEvent } from "@openuidev/react-lang";
 import { MarkDownRenderer } from "@openuidev/react-ui";
 import { memo, useCallback, useMemo, useState } from "react";
 import { AttachmentList } from "./AttachmentList";
-import { dispatchCardAction } from "./cardActions";
+import { dispatchCardAction, sendCardMessage } from "./cardActions";
 import { GeneratedCard } from "./GeneratedCard";
+import { JsonCard } from "./JsonCard";
 import { eveMediaOf } from "./attachments";
 import { compactLinks, openExternal } from "./links";
 import { splitReply } from "./replyParts";
@@ -27,11 +29,14 @@ function UiPart({
   index,
   code,
   streaming,
+  engine,
 }: {
   messageId: string;
   index: number;
   code: string;
   streaming: boolean;
+  /** "ui": an openui-lang program. "spec": a json-render block. */
+  engine: "ui" | "spec";
 }) {
   const processMessage = useThread((s) => s.processMessage);
   const busy = useThread((s) => s.isRunning);
@@ -43,8 +48,15 @@ function UiPart({
     void dispatchCardAction(event, processMessage, busy, openExternal).then(setActionStatus);
   }, [processMessage, busy]);
 
+  const onAsk = useCallback((human: string, data?: unknown) => {
+    setActionStatus("");
+    void sendCardMessage(human, data === undefined ? [] : [data], processMessage, busy).then(setActionStatus);
+  }, [processMessage, busy]);
+
   return <>
-    <GeneratedCard key={key} stateKey={key} code={code} streaming={streaming} onAction={onAction} />
+    {engine === "spec"
+      ? <JsonCard key={key} stateKey={key} code={code} streaming={streaming} onAsk={onAsk} onOpen={openExternal} />
+      : <GeneratedCard key={key} stateKey={key} code={code} streaming={streaming} onAction={onAction} />}
     {actionStatus && <p className="eve-generated-card__status" role="status">{actionStatus}</p>}
   </>;
 }
@@ -83,6 +95,7 @@ export const EveAssistantMessage = memo(function EveAssistantMessage({
               messageId={message.id}
               index={i}
               code={part.code}
+              engine={part.kind}
               streaming={isStreaming && !part.complete}
             />
           ),

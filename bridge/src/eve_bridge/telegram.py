@@ -655,6 +655,15 @@ LITE_APP_SWAPS: tuple[tuple[str, str], ...] = (
     # the reference's first line (openui_prompt.txt, written by ios/EveLink/Web/scripts/gen-prompt.mjs)
     ("the openui-lang block in an Eve Link reply", "the openui-lang block in a reply in eve's web app"),
 )
+# The same swaps for the json-render card engine's block (link_chat.JSON_APP_RULE and json_render_prompt.txt). The
+# second swap above covers both engines' reminder lines, which open alike.
+LITE_APP_SWAPS_JSON: tuple[tuple[str, str], ...] = (
+    ("## Replying in the Eve Link app\n\nThis message came from the Eve Link app on the owner's iPhone. The app shows "
+     "plain text as Markdown and draws a json-render block as native cards, tables, charts and buttons.",
+     "## Replying in eve's web app\n\nThis message came from eve's web app, on the owner's phone or a computer. The "
+     "app shows plain text as Markdown and draws a json-render block as cards, tables, charts and buttons."),
+    ("the json-render block in an Eve Link reply", "the json-render block in a reply in eve's web app"),
+)
 _LITE_APP_WARNED: list[bool] = []
 
 
@@ -684,7 +693,7 @@ def lite_app_block(block: str) -> str:
     """link_chat.app_block() as an eve lite app turn reads it: the Eve Link app's words swapped for eve's web app's
     (LITE_APP_SWAPS); "" stays "". A block that still names the phone app after the swaps (link_chat.py or the
     reference reworded) is logged once, with no words from it, and test_lite_brain.py fails on it."""
-    for old, new in LITE_APP_SWAPS:
+    for old, new in LITE_APP_SWAPS + LITE_APP_SWAPS_JSON:      # one engine's texts are not in the other's block
         block = block.replace(old, new)
     if block and "Eve Link" in block and not _LITE_APP_WARNED:
         _LITE_APP_WARNED.append(True)
@@ -1955,6 +1964,10 @@ def request(config: TelegramConfig, items: list[dict[str, Any]], brief: str = ""
             instructions = menu_instructions(instructions)  # the screen and the files are their own tools' (switch on)
         if app_block:
             instructions = app_instructions(instructions)     # the app draws lists and tables (APP_STYLE)
+    if app_block:
+        from .link_chat import card_words
+
+        instructions = card_words(instructions)            # the app style names the block this engine writes
     instructions += config.about + recall
     if profile:
         instructions += PROFILE_HEADER + "\n" + profile

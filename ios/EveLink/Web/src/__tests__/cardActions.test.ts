@@ -1,6 +1,6 @@
 import { BuiltinActionType, type ActionEvent } from "@openuidev/react-lang";
 import { describe, expect, it, vi } from "vitest";
-import { dispatchCardAction } from "../cardActions";
+import { dispatchCardAction, sendCardMessage } from "../cardActions";
 import { ownerText } from "../replyParts";
 
 const choice: ActionEvent = {
@@ -57,5 +57,15 @@ describe("card actions", () => {
     expect(open).toHaveBeenCalledWith("https://example.com");
     await dispatchCardAction({ type: "other", params: {}, humanFriendlyMessage: "Other" }, send, false, open);
     expect(send).not.toHaveBeenCalled();
+  });
+
+  it("sends a json-render card's ask through the same envelope, with the data the card passed", async () => {
+    const send = vi.fn(async (_message: { role: "user"; content: string }) => {});
+    expect(await sendCardMessage("Find hotels", [{ city: "Lisbon" }], send, false)).toBe("");
+    const message = send.mock.calls[0]?.[0] as { role: string; content: string };
+    expect(ownerText(message.content)).toBe('Find hotels\n\n["User clicked: Find hotels",{"city":"Lisbon"}]');
+    // busy: nothing goes, and the owner is told why
+    expect(await sendCardMessage("Find hotels", [], send, true)).toContain("Wait for Eve");
+    expect(send).toHaveBeenCalledOnce();
   });
 });

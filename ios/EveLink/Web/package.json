@@ -9,11 +9,17 @@
     "build:web": "vite build --config vite.web.config.ts",
     "gen-prompt": "node scripts/gen-prompt.mjs",
     "check-prompt": "node scripts/gen-prompt.mjs --check",
+    "gen-json-prompt": "node scripts/gen-json-prompt.mjs",
+    "check-json-prompt": "node scripts/gen-json-prompt.mjs --check",
+    "validate-spec": "node scripts/validate-spec.mjs",
+    "preview-cards": "vite --host 127.0.0.1 --port 5199 --open /preview.html",
     "validate": "node scripts/validate.mjs",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@json-render/core": "0.23.1",
+    "@json-render/react": "0.23.1",
     "@openuidev/react-headless": "0.18.1",
     "@openuidev/react-lang": "1.0.1",
     "@openuidev/react-ui": "0.18.1",
