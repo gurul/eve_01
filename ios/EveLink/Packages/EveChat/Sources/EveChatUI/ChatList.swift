@@ -3,6 +3,9 @@
 // and Horizontal History's cards above the composer.
 import EveChatCore
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
 
 public struct ChatList: View {
     private let engine: ChatEngine
@@ -52,26 +55,26 @@ public struct ChatList: View {
                 if engine.showsTyping { TypingDots().modifier(Column()).id("chat-typing") }
                 Color.clear.frame(height: 1).id(Self.end)
             }
-            .scrollTargetLayout()
             .animation(reduceMotion ? nil : .easeOut(duration: 0.22), value: engine.queued)
         }
         .scrollPosition($position)
         .defaultScrollAnchor(.bottom)
+        // A list at its end stays there when its content or its room changes (a reply growing, a card laid out
+        // late, the keyboard), done by the scroll view itself. Nothing here scrolls in answer to a layout change:
+        // a lazily measured row can change the content's height on every pass, and a scroll per change never ends.
+        .defaultScrollAnchor(pinned ? .bottom : nil, for: .sizeChanges)
         .contentMargins(.top, top + 8, for: .scrollContent)
         .contentMargins(.bottom, bottom + 16, for: .scrollContent)
         .contentMargins(.top, top, for: .scrollIndicators)
         .contentMargins(.bottom, bottom, for: .scrollIndicators)
         .scrollDismissesKeyboard(.interactively)
-        .onScrollGeometryChange(for: Reach.self) { g in
-            Reach(height: g.contentSize.height.rounded(),
-                  atEnd: g.contentSize.height - g.contentOffset.y - g.containerSize.height + g.contentInsets.bottom
-                      <= Self.pinSlack)
+        // A tap on the conversation puts the keyboard away, as a drag down does.
+        .simultaneousGesture(TapGesture().onEnded { ChatKeyboard.dismiss() })
+        .onScrollGeometryChange(for: Bool.self) { g in
+            g.contentSize.height - g.contentOffset.y - g.containerSize.height + g.contentInsets.bottom <= Self.pinSlack
         } action: { _, now in
-            atBottom = now.atEnd
-            // Rows are laid out lazily, and a card or a picture can grow after it shows: a pinned list that is
-            // left short of its end goes back to it. Only when it is short: a list already at its end is never
-            // scrolled again, so a row that keeps re-measuring cannot drive the list in a loop.
-            if pinned && !dragging && !now.atEnd { toEnd(animated: false) }
+            atBottom = now
+            if now && !dragging { pinned = true }
         }
         .onScrollPhaseChange { _, now in
             switch now {
@@ -103,7 +106,6 @@ public struct ChatList: View {
         }
         // A line came on its own, a reply grew, or the dots came up: follow only from the end.
         .onChange(of: engine.arrivalTick) { if pinned { toEnd(animated: true) } }
-        .onChange(of: engine.messages.last?.text) { if pinned { toEnd(animated: false) } }
         .onChange(of: engine.showsTyping) { if pinned { toEnd(animated: true) } }
         // The keyboard or the composer moved: a list at its end stays there.
         .onChange(of: bottom) { if pinned { toEnd(animated: false) } }
@@ -172,10 +174,14 @@ public struct ChatList: View {
     }
 }
 
-/// How tall the list's content is, and whether its end shows.
-private struct Reach: Equatable {
-    var height: CGFloat
-    var atEnd: Bool
+/// The keyboard, put away from anywhere.
+@MainActor
+enum ChatKeyboard {
+    static func dismiss() {
+        #if canImport(UIKit)
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        #endif
+    }
 }
 
 /// Every row spans the list, so a row scrolled to by id never moves the list sideways; its content keeps the side

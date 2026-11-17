@@ -19,6 +19,8 @@ struct HomeScreen: View {
     @ObservedObject var log: Diag
     @Binding var talkError: String?
     @AppStorage("home.mode") private var mode: HomeMode = .chat
+    /// Simulator only (the design hook): space under the composer, standing in for the keyboard.
+    @State private var keyboardSpace: CGFloat = 0
     @State private var showSettings = false
     @State private var showVoice = false
     /// Bumped to put the cursor in the composer (voice mode's "Ask eve").
@@ -73,6 +75,7 @@ struct HomeScreen: View {
                 } else if mode == .chat {
                     Spacer(minLength: 0)
                     ChatComposer(chat: chat, relay: relay, dictation: dictation, focusRequest: composerFocus)
+                        .padding(.bottom, keyboardSpace)
                         .background(alignment: .top) { ComposerFloor() }
                         .onGeometryChange(for: CGFloat.self) { $0.frame(in: .global).minY } action: {
                             composerTop = $0
@@ -167,6 +170,12 @@ struct HomeScreen: View {
         switch DesignHook.screen {
         case "chat":
             mode = .chat
+            if DesignHook.keyboardSpace > 0 {
+                Task {
+                    try? await Task.sleep(for: .seconds(3))
+                    withAnimation(.easeOut(duration: 0.3)) { keyboardSpace = DesignHook.keyboardSpace }
+                }
+            }
             if DesignHook.history {
                 Task {
                     try? await Task.sleep(for: .seconds(2))

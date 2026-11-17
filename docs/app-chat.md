@@ -743,6 +743,11 @@ failed call: the first-message title and the rules above.
   line from eve scroll into view when you are at the end; when you have
   scrolled up the chat stays where it is, and a round button brings you back.
 - An older page is added above without moving what you are reading.
+- A list at its end stays there through a growing reply, a card laid out late and the keyboard, by the scroll
+  view's own bottom anchor (`defaultScrollAnchor(.bottom, for: .sizeChanges)`). The list never scrolls in answer
+  to a layout change: the first build did, and on the phone the keyboard coming up sent it into an endless
+  layout loop (2026-11-17: the keyboard stuck, the history gone, the arrow left on).
+- A tap on the conversation, or a drag down, puts the keyboard away.
 - The keyboard pushes the composer up. A chat that was at its last message
   stays there; a chat scrolled up keeps its place.
 - Haptics: the composer's on send, one soft one when the first words of a
@@ -768,6 +773,8 @@ has none of it (checked: the strings `EVE_PAIR_URL`, `eveScreen` and
 - `-eveSend "<words>"` (with `chat`): sends them as the owner once the chat is open; several messages are
   separated by ` | `.
 - `-eveHistory YES` (with `chat`): opens Horizontal History's row.
+- `-eveKeyboardSpace <points>` (with `chat`): lifts the composer by that much after 3 s, as the keyboard would
+  (the simulator run from the command line shows no software keyboard).
 - `-eveControl notes|spotify|lights|firetv|pika|obsbot|memory|<app id>` (with `apps`): opens that control's sheet;
   any other id the Mac lists opens its generic sheet.
 - `-eveNote <vault path>` (with `-eveControl notes`): opens that note's page.

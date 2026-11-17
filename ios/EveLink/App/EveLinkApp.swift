@@ -114,6 +114,9 @@ enum DesignHook {
     static var send: String? { UserDefaults.standard.string(forKey: "eveSend") }
     /// -eveHistory YES (with -eveScreen chat): opens Horizontal History's row of topic cards.
     static var history: Bool { UserDefaults.standard.bool(forKey: "eveHistory") }
+    /// -eveKeyboardSpace <points> (with -eveScreen chat): lifts the composer by that much after 3 s, as the software
+    /// keyboard would (the simulator run from the command line shows none), to check the list under it.
+    static var keyboardSpace: Double { UserDefaults.standard.double(forKey: "eveKeyboardSpace") }
     static var control: String? { UserDefaults.standard.string(forKey: "eveControl") }
     /// -eveMemoryQuery <words> (with -eveControl memory): runs that search in the Memory card, for screenshots.
     static var memoryQuery: String? { UserDefaults.standard.string(forKey: "eveMemoryQuery") }
