@@ -113,16 +113,3 @@ entry around the chat page (`App.tsx`), which the iPhone app also ran until 2026
 
 `pnpm test` runs `src/web/__tests__/` with the rest (vitest's `src/**/*.test.ts`). How the chat
 reaches the Mac: [the chat in a browser](../../../docs/app-chat.md#eve-lite-the-same-chat-in-a-browser).
-
-## Staying on the newest OpenUI
-
-`sh tools/openui_update.sh` (from the repository root) checks npm for newer `@openuidev/react-lang`, `react-ui` and
-`react-headless`. When there is one, it bumps the pins in a worktree of its own (`../eve-openui-update`, never the
-live checkout), moves every `@openuidev` entry in `pnpm-workspace.yaml`'s `minimumReleaseAgeExclude` to npm's newest
-(so a release younger than pnpm's minimum age still installs), runs `pnpm install`, the tests, the type check, `gen-prompt` + `check-prompt`, the app's logic tests,
-the bridge's chat tests and an app build; all green and the iPhone reachable, it installs the app, fast-forwards the
-live checkout and restarts the daemon, so the card rules (Mac) and the renderer (phone) change together. Anything
-failing changes nothing live and eve says what failed. `--dry-run` only reports; `--schedule` runs it every night at
-04:50 (LaunchAgent `com.github.eve-bridge.openui-update`, log `~/Library/Logs/eve-openui-update.log`);
-`--unschedule` stops it. It never pushes.
-

@@ -308,11 +308,12 @@ APP_RULE = (
     "Before you write, decide the form of the reply:\n"
     "- Write an openui-lang block when the answer has a shape the owner will scan: a comparison of two or more "
     "things, options to pick from, steps to follow, a plan or schedule by time or day, numbers that make a chart, "
-    "articles, books or headlines from a tool, a stock or price quote from a tool (the price, its change and the "
-    "day), or a question the owner can answer with a tap.\n"
-    "- Write plain text, one to three short sentences, for everything else: chat, a greeting, thanks, feelings, a "
-    "single fact or number that is not a quote, a yes or no, a confirmation that you started something, or a question back to the "
-    "owner.\n"
+    "articles, books or headlines from a tool, a question the owner can answer with a tap, or facts a tool just "
+    "returned that are worth seeing at a glance: a stock or price quote (the price, its change and the day), the "
+    "weather, a score, a place, an event.\n"
+    "- Write plain text, one to three short sentences, for talk: chat, a greeting, thanks, feelings, a yes or no, a "
+    "confirmation that you started something, a question back to the owner, or a single fact you already knew.\n"
+    "When either form would do, write the block: the owner prefers a card to a sentence.\n"
     "In the app, a table, a list of options or a set of steps goes in the openui-lang block rather than in "
     "Markdown. When the owner asks how to do something or for a plan, give the usual answer in the block first; "
     "if a detail would change it, ask about that in one short sentence after the block. You will see the block in "
@@ -322,9 +323,9 @@ APP_RULE = (
     "phone screen. A tool's answer can be shown this way too: a list of events, results or prices is a table or "
     "a list.\n\n"
     "A complete reply with a block:\n" + APP_EXAMPLE)
-APP_LINE = ("This turn is from the Eve Link app: use one openui-lang block when a comparison, options, steps, a "
-            "schedule, a chart, articles or books from a tool, or tap choices make the answer easier to scan, and "
-            "one to three short plain sentences otherwise.")
+APP_LINE = ("This turn is from the Eve Link app: use one openui-lang block for a comparison, options, steps, a "
+            "schedule, a chart, articles or books, a quote or facts from a tool, or tap choices; when either form "
+            "would do, use the block; short plain sentences for chat and confirmations.")
 
 # ---- the card engine (trial, 2026-11-16) ---------------------------------------------------------------------
 # Owner, 2026-11-16: "lets start by testing just json renderer for this week". The app draws a card from one of two
@@ -395,11 +396,12 @@ JSON_APP_RULE = (
     "Before you write, decide the form of the reply:\n"
     "- Write a json-render block when the answer has a shape the owner will scan: a comparison of two or more "
     "things, options to pick from, steps to follow, a plan or schedule by time or day, numbers that make a chart, "
-    "articles, books or headlines from a tool, a stock or price quote from a tool (the price, its change and the "
-    "day), or a question the owner can answer with a tap.\n"
-    "- Write plain text, one to three short sentences, for everything else: chat, a greeting, thanks, feelings, a "
-    "single fact or number that is not a quote, a yes or no, a confirmation that you started something, or a question back to the "
-    "owner.\n"
+    "articles, books or headlines from a tool, a question the owner can answer with a tap, or facts a tool just "
+    "returned that are worth seeing at a glance: a stock or price quote (the price, its change and the day), the "
+    "weather, a score, a place, an event.\n"
+    "- Write plain text, one to three short sentences, for talk: chat, a greeting, thanks, feelings, a yes or no, a "
+    "confirmation that you started something, a question back to the owner, or a single fact you already knew.\n"
+    "When either form would do, write the block: the owner prefers a card to a sentence.\n"
     "In the app, a table, a list of options or a set of steps goes in the json-render block rather than in "
     "Markdown. When the owner asks how to do something or for a plan, give the usual answer in the block first; "
     "if a detail would change it, ask about that in one short sentence after the block. You will see the block in "
@@ -409,9 +411,9 @@ JSON_APP_RULE = (
     "and each one after adds an element. The root is a Card, and the card stays small enough for a phone screen. A "
     "tool's answer can be shown this way too: a list of events, results or prices is a table or a list.\n\n"
     "A complete reply with a block:\n" + JSON_APP_EXAMPLE)
-JSON_APP_LINE = ("This turn is from the Eve Link app: use one json-render block when a comparison, options, steps, a "
-                 "schedule, a chart, articles or books from a tool, or tap choices make the answer easier to scan, "
-                 "and one to three short plain sentences otherwise.")
+JSON_APP_LINE = ("This turn is from the Eve Link app: use one json-render block for a comparison, options, steps, a "
+            "schedule, a chart, articles or books, a quote or facts from a tool, or tap choices; when either form "
+            "would do, use the block; short plain sentences for chat and confirmations.")
 # The app style (telegram.APP_STYLE, APP_STYLE_LITE) names the block an app reply may hold; ``card_words`` swaps the
 # name for the json-render engine's. tests/test_card_engine.py holds that the words are still there to swap.
 BLOCK_WORDS = ("an openui-lang block", "a json-render block")

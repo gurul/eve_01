@@ -1,6 +1,6 @@
 #!/bin/sh
 # Keep eve's local Steel browser on the newest steel-browser (owner, 2026-10-13: "setup a hook for steel opensource
-# repo like we did for openui"). The same shape as tools/openui_update.sh.
+# repo like we did for openui").
 #
 #   sh tools/steel_update.sh                 check now; update when steel-browser has new commits
 #   sh tools/steel_update.sh --dry-run       say what would change, change nothing
