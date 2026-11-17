@@ -1,0 +1,15 @@
+{
+  "originHash" : "431feaf7b2b532fde34a77c82844743671ebdb1438cfa18881613ac97744290f",
+  "pins" : [
+    {
+      "identity" : "json-render",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vercel-labs/json-render",
+      "state" : {
+        "revision" : "5e99a387536a1528d8113eb929ab4b7e611701ae",
+        "version" : "0.23.1"
+      }
+    }
+  ],
+  "version" : 3
+}

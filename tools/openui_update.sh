@@ -113,7 +113,6 @@ sh ios/EveLink/Tests/run.sh >/dev/null 2>&1 || fail "the app's tests"
 ( cd bridge && PYTHONPATH="$WT/bridge/src" HOME="${TMPDIR:-/tmp}" "$PY" -m pytest -q -p no:cacheprovider \
     tests/test_link_chat.py tests/test_link_topics.py >/dev/null 2>&1 ) || fail "the bridge's chat tests"
 sh ios/EveLink/build.sh >/dev/null 2>&1 || fail "the app build"
-git -C "$WT" checkout -q -- ios/EveLink/App/ChatWeb 2>/dev/null || true
 git -C "$WT" add ios/EveLink/Web/package.json ios/EveLink/Web/pnpm-lock.yaml ios/EveLink/Web/pnpm-workspace.yaml bridge/src/eve_bridge/openui_prompt.txt
 git -C "$WT" commit -q -m "OpenUI:$changes
 

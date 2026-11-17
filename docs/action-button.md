@@ -202,8 +202,7 @@ accepts Telegram's initData, and `/api/call` never accepts the token.
 ## Chat in the app
 
 The owner asked on 2026-10-08 to text eve in Eve Link instead of Telegram.
-The app draws the conversation with OpenUI in a web view, and its native code
-does all the networking. The daemon's half is `link_chat.py`. It adds HTTP
+The app draws the conversation natively in SwiftUI ([app-chat.md](app-chat.md#how-it-is-built)). The daemon's half is `link_chat.py`. It adds HTTP
 paths (the chat, the conversation, jobs and apps) to the Mini App's server, next to `/api/stick`, and the app reaches them
 through the same tunnel.
 

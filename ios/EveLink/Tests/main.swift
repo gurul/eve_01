@@ -220,20 +220,8 @@ check(NotifyTopic.topic(token: String(repeating: "a", count: 40)) != Rendezvous.
 check(LinkRoute(URL(string: "evelink://chat")!) == .chat, "a notification's tap routes to the Chat")
 print("RENDEZVOUS_OK")
 
-// ---- the chat bridge (Shared/ChatBridge.swift, Shared/ChatTransport.swift, docs/app-chat.md) ------------------
-// JS literals: whatever eve says stays a string. Each literal must parse back to the same text as JSON.
-let nasty = "a\"b\\c\nd\re\tf\u{0}\u{1f}\u{7f}</script>\u{2028}\u{2029}é😀';alert(1)//"
-let nastyLit = ChatJS.literal(nasty)
-let nastyBack = try? JSONSerialization.jsonObject(with: Data(nastyLit.utf8), options: .fragmentsAllowed) as? String
-check(nastyBack == nasty, "a JS literal decodes back to the same text")
-check(!nastyLit.contains("\n") && !nastyLit.contains("\r") && !nastyLit.contains("\u{2028}") && !nastyLit.contains("</"),
-      "no raw line breaks or </ inside a literal")
-check(nastyLit.dropFirst().dropLast().replacingOccurrences(of: "\\\"", with: "").contains("\"") == false,
-      "every quote inside is escaped")
-check(ChatJS.literal("") == "\"\"" && ChatJS.literal(true) == "true", "empty string and bool literals")
-let callJS = ChatJS.call("onChunk", [ChatJS.literal("t1"), ChatJS.literal("x")])
-check(callJS.contains("n.onChunk(\"t1\",\"x\")") && callJS.contains("typeof n.onChunk==='function'"),
-      "calls go through window.eveNative, guarded")
+// ---- the chat's rules and transport (Shared/ChatLimits.swift, Shared/ChatTransport.swift, docs/app-chat.md) ----
+// The chat's own logic (the thread, the ledger, the queue, cards) is tested in Packages/*/Tests with `swift test`.
 
 // The composer after a send (ComposerEcho): the keyboard putting the sent words back is cleared again; typing is not.
 let sentAt = Date(timeIntervalSince1970: 1_000_000)
@@ -254,13 +242,11 @@ let oneWord = ComposerEcho("ok", at: sentAt)!
 check(oneWord.matches("OK", now: soon) && !oneWord.matches("on", now: soon),
       "a one-word message: only that word comes back")
 
-// Message dispatch: each JS -> native message, and what is refused.
-check(ChatBridgeMessage(body: ["type": "ready"]) == .ready, "ready")
-check(ChatBridgeMessage(body: ["type": "topics", "id": "q1"]) == .topics(id: "q1"), "topics")
-check(ChatBridgeMessage(body: ["type": "messages", "id": "m1", "before": "2026-10-01:7", "wait": 25])
-      == .messages(id: "m1", after: nil, wait: 0, before: "2026-10-01:7"), "older page: before, never a wait")
-check(ChatBridgeMessage(body: ["type": "messages", "id": "m1", "before": "../x"]) == .messages(id: "m1", after: nil, wait: 0),
-      "older page: a malformed before is dropped")
+// Links a reply or a card may open: the web in Safari, a few app schemes in their apps, and nothing else.
+check(ChatLinks.external(URL(string: "https://example.com/a")!) == .safari, "an https link opens in Safari")
+for bad in ["javascript:alert(1)", "file:///etc/passwd", "evelink://pair?u=x", "data:text/html,hi", "https:///nohost"] {
+    check(ChatLinks.external(URL(string: bad)!) == nil, "never opened: \(bad)")
+}
 // The composer's eve/Muse switch (docs/muse.md)
 do {
     let ep = ChatEndpoint(base: URL(string: "https://eve.example")!, token: "t0k")
@@ -276,99 +262,18 @@ do {
           "muse: never on without a Pi")
     check(MuseSwitch.decode(#"{"ok": true}"#) == nil && MuseSwitch.decode("nope") == nil, "muse: junk refused")
 }
-check(ChatBridgeMessage(body: ["type": "bookmark", "id": "q2", "topic": "2026-10-13:12", "on": true])
-      == .bookmark(id: "q2", topic: "2026-10-13:12", on: true), "bookmark")
-check(ChatBridgeMessage(body: ["type": "bookmark", "id": "q2", "topic": "../x", "on": true]) == nil,
-      "bookmark: a topic id that is not <day>:<line> is refused")
-check(ChatBridgeMessage(body: ["type": "bookmark", "id": "q2", "topic": "2026-10-13:12", "on": "yes"]) == nil,
-      "bookmark: on must be a bool")
-check(ChatBridgeMessage(body: ["type": "turn", "id": "t1", "text": "  hi there \n", "client_id": "c1"])
-      == .turn(id: "t1", text: "hi there", clientID: "c1"), "turn, text trimmed")
-check(ChatBridgeMessage(body: ["type": "turn", "id": "t1", "text": "   ", "client_id": "c1"]) == nil, "blank turn refused")
-check(ChatBridgeMessage(body: ["type": "turn", "id": "t1", "text": String(repeating: "x", count: 4001), "client_id": "c"])
-      == nil, "a turn over 4000 characters refused")
-check(ChatBridgeMessage(body: ["type": "turn", "id": "t1", "text": String(repeating: "x", count: 4000), "client_id": "c"])
-      != nil, "4000 characters allowed (control)")
-// A refused turn still ends on the page: native answers onError for its id, so the page never waits forever.
-let longTurn: [String: Any] = ["type": "turn", "id": "t1", "text": String(repeating: "x", count: 4001), "client_id": "c"]
-check(ChatBridgeMessage.refusedTurn(longTurn)?.id == "t1"
-      && ChatBridgeMessage.refusedTurn(longTurn)?.line == "Too long: 4000 characters at most.", "a long turn hears why")
-check(ChatBridgeMessage.refusedTurn(["type": "turn", "id": "t2", "text": "hi"])?.line
-      == "That message couldn't be sent. Send it again.", "a turn refused for another reason still hears onError")
-check(ChatBridgeMessage.refusedTurn(["type": "turn", "text": "hi"]) == nil
-      && ChatBridgeMessage.refusedTurn(["type": "topics", "id": "q1"]) == nil, "no turn id, or not a turn: nothing to answer")
-check(ChatBridgeMessage(body: ["type": "turn", "id": "t1", "text": "hi", "client_id": String(repeating: "c", count: 65)])
-      == nil, "client_id over 64 refused")
-check(ChatBridgeMessage(body: ["type": "turn", "id": "t1", "text": "hi"]) == nil, "turn without client_id refused")
-check(ChatBridgeMessage(body: ["type": "cancel", "id": "t1"]) == .cancel(id: "t1"), "cancel")
-check(ChatBridgeMessage(body: ["type": "cancel"]) == nil, "cancel without id refused")
-check(ChatBridgeMessage(body: ["type": "messages", "id": "m1", "after": "c9", "wait": NSNumber(value: 25)])
-      == .messages(id: "m1", after: "c9", wait: 25), "messages with a cursor")
-check(ChatBridgeMessage(body: ["type": "messages", "id": "m1", "wait": NSNumber(value: 99)])
-      == .messages(id: "m1", after: nil, wait: 25), "wait capped at 25, no cursor")
-check(ChatBridgeMessage(body: ["type": "messages", "id": "m1", "after": NSNull(), "wait": NSNumber(value: -3)])
-      == .messages(id: "m1", after: nil, wait: 0), "negative wait is 0, null cursor is none")
-check(ChatBridgeMessage(body: ["type": "haptic", "style": "success"]) == .haptic(.success), "haptic")
-check(ChatBridgeMessage(body: ["type": "haptic", "style": "heavy"]) == nil, "unknown haptic refused")
-check(ChatBridgeMessage(body: ["type": "openURL", "url": "https://example.com/a"])
-      == .openURL(URL(string: "https://example.com/a")!), "openURL https")
-check(ChatBridgeMessage(body: ["type": "openURL", "url": "javascript:alert(1)"]) == nil, "openURL javascript: refused")
-check(ChatBridgeMessage(body: ["type": "openURL", "url": "file:///etc/passwd"]) == nil, "openURL file: refused")
-check(ChatBridgeMessage(body: ["type": "openURL", "url": "evelink://pair?u=x"]) == nil, "openURL to the app refused")
 for link in ["maps://?q=coffee", "facetime:+15551234567", "facetime-audio:+15551234567", "tel:+15551234567"] {
-    check(ChatBridgeMessage(body: ["type": "openURL", "url": link]) == .openURL(URL(string: link)!)
-          && ChatLinks.external(URL(string: link)!) == .system, "openURL \(link) goes to its app, as links.ts allows")
+    check(ChatLinks.external(URL(string: link)!) == .system, "\(link) goes to its app")
 }
 // The 4000 limit counts Unicode scalars, as the daemon's len() does: 2000 flags are 2000 Characters but 4000 scalars.
 let flags = String(repeating: "\u{1F1EF}\u{1F1F5}", count: 2000)
-check(flags.count == 2000 && !ChatBridgeMessage.tooLong(flags)
-      && ChatBridgeMessage(body: ["type": "turn", "id": "t1", "text": flags, "client_id": "c"]) != nil,
-      "4000 scalars pass")
+check(flags.count == 2000 && !ChatLimits.tooLong(flags), "4000 scalars pass")
 let flagsOver = flags + "\u{1F1EF}"
-check(flagsOver.count == 2001 && ChatBridgeMessage.tooLong(flagsOver)
-      && ChatBridgeMessage(body: ["type": "turn", "id": "t1", "text": flagsOver, "client_id": "c"]) == nil,
-      "4001 scalars refused though only 2001 Characters")
+check(flagsOver.count == 2001 && ChatLimits.tooLong(flagsOver), "4001 scalars refused though only 2001 Characters")
 let combining = String(repeating: "e\u{301}", count: 2001)
-check(combining.count == 2001 && ChatBridgeMessage.tooLong(combining), "combining marks count as the daemon counts them")
-check(ChatBridgeMessage(body: ["type": "eval", "id": "x"]) == nil && ChatBridgeMessage(body: "ready") == nil
-      && ChatBridgeMessage(body: ["id": "x"]) == nil, "unknown types and shapes dropped")
+check(combining.count == 2001 && ChatLimits.tooLong(combining), "combining marks count as the daemon counts them")
 
-// Navigation: only the bundled page; any other URL is refused, and a tapped link opens outside.
-check(ChatNavigation.decide(URL(string: "eveapp://chat/index.html"), linkActivated: false) == .allow, "bundled page")
-check(ChatNavigation.decide(URL(string: "eveapp://chat/index.html#x"), linkActivated: true) == .allow, "in-page anchor")
-for bad in ["https://example.com", "http://127.0.0.1:8080/", "about:blank", "about:srcdoc", "data:text/html,hi",
-            "blob:eveapp://chat/1", "file:///etc/hosts", "javascript:alert(1)", "eveapp://evil/index.html",
-            "evelink://pair?u=x"] {
-    check(ChatNavigation.decide(URL(string: bad), linkActivated: false) == .refuse, "refused: \(bad)")
-}
-check(ChatNavigation.decide(URL(string: "https://example.com/x"), linkActivated: true)
-      == .open(URL(string: "https://example.com/x")!), "a tapped https link opens in Safari")
-check(ChatNavigation.decide(URL(string: "javascript:alert(1)"), linkActivated: true) == .refuse,
-      "a tapped javascript: link is refused")
-check(ChatNavigation.decide(nil, linkActivated: false) == .refuse, "no URL refused")
 
-// Bundled files: inside ChatWeb only.
-let assetRoot = URL(fileURLWithPath: "/bundle/ChatWeb")
-let anyFile: (URL) -> Bool = { _ in true }
-check(ChatAssets.resolve(URL(string: "eveapp://chat/index.html")!, root: assetRoot, exists: anyFile)?.path
-      == "/bundle/ChatWeb/index.html", "index.html")
-check(ChatAssets.resolve(URL(string: "eveapp://chat/")!, root: assetRoot, exists: anyFile)?.path
-      == "/bundle/ChatWeb/index.html", "the root is index.html")
-check(ChatAssets.resolve(URL(string: "eveapp://chat/assets/index-abc.js")!, root: assetRoot, exists: anyFile)?.path
-      == "/bundle/ChatWeb/assets/index-abc.js", "a file in a subfolder")
-check(ChatAssets.resolve(URL(string: "eveapp://chat/../Info.plist")!, root: assetRoot, exists: anyFile) == nil
-      && ChatAssets.resolve(URL(string: "eveapp://chat/assets/%2E%2E/%2E%2E/x")!, root: assetRoot, exists: anyFile) == nil
-      && ChatAssets.resolve(URL(string: "eveapp://chat/.hidden")!, root: assetRoot, exists: anyFile) == nil,
-      "nothing outside ChatWeb, no dot files")
-check(ChatAssets.resolve(URL(string: "eveapp://other/index.html")!, root: assetRoot, exists: anyFile) == nil
-      && ChatAssets.resolve(URL(string: "https://chat/index.html")!, root: assetRoot, exists: anyFile) == nil,
-      "other hosts and schemes")
-check(ChatAssets.resolve(URL(string: "eveapp://chat/missing.js")!, root: assetRoot, exists: { _ in false }) == nil,
-      "a missing file")
-check(ChatAssets.mimeType(URL(fileURLWithPath: "/a/x.js")).hasPrefix("text/javascript")
-      && ChatAssets.mimeType(URL(fileURLWithPath: "/a/x.css")).hasPrefix("text/css")
-      && ChatAssets.mimeType(URL(fileURLWithPath: "/a/index.html")).hasPrefix("text/html"), "content types")
-check(ChatAssets.contentSecurityPolicy.contains("connect-src 'none'"), "the page cannot fetch")
 
 // Requests: the token rides in the Authorization header only.
 let ep = ChatEndpoint(base: URL(string: "https://a-b.trycloudflare.com")!, token: String(repeating: "k", count: 40))
@@ -377,7 +282,7 @@ let turnBody = (try? JSONSerialization.jsonObject(with: turnReq.httpBody ?? Data
 check(turnReq.httpMethod == "POST" && turnReq.url?.absoluteString == "https://a-b.trycloudflare.com/api/link/turn"
       && turnReq.value(forHTTPHeaderField: "Authorization") == "Bearer " + ep.token
       && turnReq.value(forHTTPHeaderField: "Origin") == nil
-      && turnBody == ["text": "hi", "client_id": "c1", "grade": "auto"], "the turn request (auto by default)")
+      && turnBody == ["text": "hi", "client_id": "c1", "grade": "auto", "cards": "json-render"], "the turn request (auto by default)")
 for g in ChatGrade.allCases {
     let body = (try? JSONSerialization.jsonObject(with: ChatRequests.turn(ep, text: "hi", clientID: "c1", grade: g)
         .httpBody ?? Data())) as? [String: String]
@@ -648,26 +553,10 @@ check(VoiceStatus.text(phase: .ended, connected: false, notes: .off, error: "eve
 check(VoiceStatus.text(phase: .notes, connected: true, notes: .on, error: nil) == "Taking notes"
       && VoiceStatus.text(phase: .thinking, connected: true, notes: .stopping, error: nil) == "Writing up your notes…",
       "notes")
-check(ChatJS.insets(top: 103.26, bottom: 92) == "{top:103.3,bottom:92.0}"
-      && ChatJS.insets(top: -4, bottom: .nan) == "{top:0.0,bottom:0.0}"
-      && ChatJS.insets(top: .infinity, bottom: 1) == "{top:0.0,bottom:1.0}", "setInsets numbers only, finite, ≥ 0")
-check(ChatJS.call("setInsets", [ChatJS.insets(top: 1, bottom: 2)]).contains("n.setInsets({top:1.0,bottom:2.0})"),
-      "setInsets call")
 print("VOICE_MODE_OK")
 
 // Attachments (docs/app-chat.md, "Attachments"): the ids a turn may carry, the upload request, the daemon's answer.
 let upID = "0123456789abcdef0123456789abcdef"
-check(ChatBridgeMessage(body: ["type": "turn", "id": "t1", "text": " look ", "client_id": "c1", "attachments": [upID]])
-      == .turn(id: "t1", text: "look", clientID: "c1", attachments: [upID]), "turn with an attachment")
-check(ChatBridgeMessage(body: ["type": "turn", "id": "t1", "text": "", "client_id": "c1", "attachments": [upID]])
-      == .turn(id: "t1", text: "", clientID: "c1", attachments: [upID]), "an attachment alone is a turn")
-check(ChatBridgeMessage(body: ["type": "turn", "id": "t1", "text": "", "client_id": "c1", "attachments": [String]()])
-      == nil, "no words and nothing attached is refused")
-for bad: Any in [["../../etc/passwd"], [upID.uppercased()], [upID, upID], Array(repeating: upID, count: 5),
-                 [String(upID.dropLast())], "nope", [7]] {
-    check(ChatBridgeMessage(body: ["type": "turn", "id": "t1", "text": "x", "client_id": "c1", "attachments": bad])
-          == nil, "attachments refused: \(bad)")
-}
 let fourIDs = (0..<4).map { String(repeating: String($0), count: 32) }
 check(ChatAttachments.valid(fourIDs) && !ChatAttachments.valid(fourIDs + ["a" + String(repeating: "0", count: 31)]),
       "four ids pass, five do not")
@@ -681,6 +570,8 @@ check(upReq.value(forHTTPHeaderField: "X-Filename") == "Beach%20day%2F%C3%BC.jpg
 let attTurnBody = { (r: URLRequest) in (try? JSONSerialization.jsonObject(with: r.httpBody ?? Data())) as? [String: Any] ?? [:] }
 check((attTurnBody(ChatRequests.turn(upEP, text: "x", clientID: "c", attachments: [upID]))["attachments"] as? [String])
       == [upID], "a turn request carries the ids")
+check(attTurnBody(ChatRequests.turn(upEP, text: "x", clientID: "c"))["cards"] as? String == "json-render",
+      "every turn names the card engine the app draws")
 check(attTurnBody(ChatRequests.turn(upEP, text: "x", clientID: "c"))["attachments"] == nil,
       "a turn without attachments has no attachments key")
 check(ChatUploaded.decode(Data(#"{"ok":true,"id":"\#(upID)","kind":"pdf","name":"lease.pdf"}"#.utf8))
@@ -688,32 +579,11 @@ check(ChatUploaded.decode(Data(#"{"ok":true,"id":"\#(upID)","kind":"pdf","name":
 check(ChatUploaded.decode(Data(#"{"ok":true,"id":"../x","kind":"pdf","name":"a"}"#.utf8)) == nil
       && ChatUploaded.decode(Data(#"{"ok":true,"id":"\#(upID)","kind":"exe","name":"a"}"#.utf8)) == nil
       && ChatUploaded.decode(Data(#"{"ok":false,"error":"too large"}"#.utf8)) == nil, "a bad upload answer is refused")
-let pageJSON = ChatAttachments.pageJSON([ChatUploaded(id: upID, kind: "image", name: "a\"b.jpg", thumb: "data:image/jpeg;base64,AA==")])
-let pageBack = (try? JSONSerialization.jsonObject(with: Data(pageJSON.utf8))) as? [[String: String]]
-check(pageBack?.first?["name"] == "a\"b.jpg" && pageBack?.first?["thumb"] == "data:image/jpeg;base64,AA==",
-      "the page's attachments JSON round-trips")
 check(ChatFailure.from(status: 415, body: Data(#"{"ok":false,"error":"eve takes photos"}"#.utf8)).message
       == "eve takes photos", "a refused type says why")
 print("ATTACHMENTS_OK")
 
-// Opening an attachment full size (docs/app-chat.md, "eve's pictures and files"): the page's ask, the request,
-// the local name.
-check(ChatBridgeMessage(body: ["type": "openAttachment", "id": upID, "name": "desk.jpg", "kind": "image"])
-      == .openAttachment(id: upID, name: "desk.jpg", kind: "image"), "openAttachment")
-check(ChatBridgeMessage(body: ["type": "openAttachment", "id": upID, "kind": "file"])
-      == .openAttachment(id: upID, name: "", kind: "file"), "openAttachment without a name; eve's file kind")
-for bad: [String: Any] in [["id": "../../etc/passwd", "kind": "pdf"], ["id": upID.uppercased(), "kind": "pdf"],
-                           ["id": upID, "kind": "exe"], ["id": upID], ["kind": "pdf"]] {
-    check(ChatBridgeMessage(body: bad.merging(["type": "openAttachment"]) { a, _ in a }) == nil,
-          "openAttachment refused: \(bad)")
-}
-let longName = String(repeating: "n", count: 500)
-if case .openAttachment(_, let name, _)? = ChatBridgeMessage(body: ["type": "openAttachment", "id": upID, "name": longName,
-                                                                   "kind": "doc"]) {
-    check(name.count == ChatFiles.maxName, "a long name is cut")
-} else {
-    check(false, "a long name still opens")
-}
+// Opening an attachment full size (docs/app-chat.md, "eve's pictures and files"): the request, the local name.
 let fileReq = ChatRequests.file(upEP, id: upID)
 check(fileReq?.httpMethod == "GET" && fileReq?.url?.absoluteString == "https://x.trycloudflare.com/api/link/file/\(upID)"
       && fileReq?.value(forHTTPHeaderField: "Authorization") == "Bearer tok" && fileReq?.httpBody == nil,

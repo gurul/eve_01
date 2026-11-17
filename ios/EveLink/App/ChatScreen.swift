@@ -1,7 +1,7 @@
 // Eve Link's one screen (docs/app-chat.md): a top bar (Settings, the Updates | Chat | Apps | Work pill, Talk) over the
-// Updates pane (docs/updates.md), the chat or the Work lists. The app opens on Chat (EveLinkApp.init). The chat is eve's messages, drawn by OpenUI in the bundled web view, above a native composer.
-// Typing goes to the page with window.eveNative.send, so a typed turn looks exactly as one typed in OpenUI.
+// Updates pane (docs/updates.md), the chat or the Work lists. The app opens on Chat (EveLinkApp.init). The chat is eve's messages, a native list (Packages/EveChat), above a native composer.
 import PhotosUI
+import EveChatUI
 import SwiftUI
 import UIKit
 
@@ -23,7 +23,7 @@ struct HomeScreen: View {
     @State private var showVoice = false
     /// Bumped to put the cursor in the composer (voice mode's "Ask eve").
     @State private var composerFocus = 0
-    /// Where the native chrome covers the web view, in global points: the page pads its list by them (setInsets).
+    /// Where the native chrome covers the list, in global points: the list pads itself by them (setInsets).
     @State private var webFrame = CGRect.zero
     @State private var barBottom: CGFloat = 0
     @State private var composerTop: CGFloat = 0
@@ -39,12 +39,14 @@ struct HomeScreen: View {
         ZStack(alignment: .top) {
             Color.eveBackground.ignoresSafeArea()
             if relay.pairing != nil {
-                // The whole screen, keyboard included, under the top bar and the composer: the page pads its list
-                // by what covers it (window.eveNative.setInsets), so nothing sits under the chrome at rest.
+                // The whole screen, keyboard included, under the top bar and the composer: the list pads itself by
+                // what covers it (ChatModel.setInsets), so nothing sits under the chrome at rest.
                 // Measured inside ignoresSafeArea: outside it the reader sees the safe-area frame, not the view's.
-                // Kept alive on Apps and Work, only hidden: tearing it down reloaded the page on every tab switch
-                // (owner, 2026-10-08: "the switched between tabs are jittery").
-                ChatWebView(model: chat)
+                // Kept alive on Apps and Work, only hidden, so the list keeps its place across a tab switch.
+                ChatList(engine: chat.engine, top: chat.insets.top, bottom: chat.insets.bottom)
+                    .chatActions(chat.actions)
+                    .chatTheme(ChatTheme(ownerBubble: { _ in .eveFill }, surface: { _ in .eveFill },
+                                         background: { _ in .eveBackground }, line: { _ in .eveEdge }))
                     .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: {
                         webFrame = $0
                         sendInsets()
@@ -90,6 +92,7 @@ struct HomeScreen: View {
         }
         // The app keeps audio in the background for calls; dictation must not keep the mic on there.
         .onChange(of: scenePhase) { _, now in if now == .background { dictation.stop() } }
+        .onChange(of: relay.pairing?.token, initial: true) { _, token in chat.start(paired: token != nil) }
         .onChange(of: chat.ready) { _, ready in
             guard ready, let text = pendingAsk else { return }
             pendingAsk = nil
@@ -124,7 +127,7 @@ struct HomeScreen: View {
         #endif
     }
 
-    /// The top bar's bottom and the composer's top, as the web view's own top and bottom insets (CSS px are points).
+    /// The top bar's bottom and the composer's top, as the list's own top and bottom insets.
     private func sendInsets() {
         guard chatShown, webFrame.height > 0, barBottom > 0, composerTop > 0 else { return }
         chat.setInsets(top: barBottom - webFrame.minY + TopFade.overhang, bottom: webFrame.maxY - composerTop)
@@ -164,6 +167,20 @@ struct HomeScreen: View {
         switch DesignHook.screen {
         case "chat":
             mode = .chat
+            if DesignHook.history {
+                Task {
+                    try? await Task.sleep(for: .seconds(2))
+                    chat.toggleHistory()
+                }
+            }
+            if let words = DesignHook.send {
+                Task {
+                    for text in words.components(separatedBy: " | ") {
+                        try? await Task.sleep(for: .seconds(2.5))
+                        chat.send(text)
+                    }
+                }
+            }
             if DesignHook.keyboard {
                 Task {
                     try? await Task.sleep(for: .seconds(2))     // the page says ready first
@@ -338,14 +355,14 @@ struct ChatComposer: View {
     @FocusState private var focused: Bool
 
     private var trimmed: String { draft.trimmingCharacters(in: .whitespacesAndNewlines) }
-    private var tooLong: Bool { ChatBridgeMessage.tooLong(trimmed) }
+    private var tooLong: Bool { ChatLimits.tooLong(trimmed) }
     private var canSend: Bool { chat.ready && !uploading && (!trimmed.isEmpty || !attachments.isEmpty) && !tooLong }
     private var roomLeft: Int { ChatAttachments.maxCount - attachments.count }
 
     var body: some View {
         VStack(spacing: 6) {
             if tooLong {
-                note("Too long: \(ChatBridgeMessage.maxText) characters at most.", .red)
+                note("Too long: \(ChatLimits.maxText) characters at most.", .red)
             } else if let attachProblem {
                 note(attachProblem, .red)
             } else if let problem = dictation.problem {

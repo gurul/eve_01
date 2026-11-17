@@ -45,6 +45,9 @@ enum ChatGrade: String, CaseIterable, Sendable {
 }
 
 enum ChatRequests {
+    /// The card engine this app draws.
+    static let cards = "json-render"
+
     static func turn(_ ep: ChatEndpoint, text: String, clientID: String, grade: ChatGrade = .auto,
                      attachments: [String] = []) -> URLRequest {
         var r = URLRequest(url: ep.base.appendingPathComponent("api/link/turn"))
@@ -52,7 +55,9 @@ enum ChatRequests {
         r.setValue("Bearer \(ep.token)", forHTTPHeaderField: "Authorization")
         r.setValue("application/json", forHTTPHeaderField: "Content-Type")
         r.setValue("text/event-stream", forHTTPHeaderField: "Accept")
-        var body: [String: Any] = ["text": text, "client_id": clientID, "grade": grade.rawValue]
+        // "cards": the app draws its cards natively, with json-render's Swift renderer, so every turn it starts is
+        // told to write that engine's blocks whatever the Mac's switch says (link_chat.turn_engine).
+        var body: [String: Any] = ["text": text, "client_id": clientID, "grade": grade.rawValue, "cards": Self.cards]
         if !attachments.isEmpty { body["attachments"] = attachments }
         r.httpBody = try? JSONSerialization.data(withJSONObject: body)
         r.timeoutInterval = 45            // between bytes: the daemon pings every 15 s

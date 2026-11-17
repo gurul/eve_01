@@ -12,6 +12,10 @@ packages:
   WebRTC:
     url: https://github.com/stasel/WebRTC
     exactVersion: 154.0.0
+  # The chat, native (docs/app-chat.md): the message list and its logic, cards drawn by json-render's Swift renderer,
+  # and markdown. Local packages, so `swift test` runs their tests on the Mac.
+  EveChat:
+    path: Packages/EveChat
 settings:
   base:
     DEVELOPMENT_TEAM: SJ8BKXTNUS
@@ -27,12 +31,7 @@ targets:
     platform: iOS
     sources:
       - path: App
-        excludes: ["ChatWeb/**", "*.entitlements"]
-      # The chat page (docs/app-chat.md), built by ios/EveLink/Web: a folder reference, so it keeps its layout in
-      # the bundle and the eveapp:// scheme handler serves it as ChatWeb/...
-      - path: App/ChatWeb
-        type: folder
-        buildPhase: resources
+        excludes: ["*.entitlements"]
       - path: Shared
       - path: Intents
     # The pairing's Keychain item is in a group the widget extension lists too (Shared/Pairing.swift, docs/widget.md).
@@ -44,6 +43,10 @@ targets:
     dependencies:
       - target: EveLinkControls
       - package: WebRTC
+      - package: EveChat
+        product: EveChatCore
+      - package: EveChat
+        product: EveChatUI
     info:
       path: App/Info.plist
       properties:

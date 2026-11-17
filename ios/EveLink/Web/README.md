@@ -1,22 +1,23 @@
-# Eve Link chat web layer
+# eve's chat page and card catalog
 
-The message list of the Eve Link chat, rendered by OpenUI inside the app's
-WKWebView. Everything the owner touches around it (composer, navigation,
-haptics, network) is native.
+Two things live here:
 
-The same page also runs in a browser as eve lite's web app, with a shell of its
-own in place of the native code: see [eve lite's web app](#eve-lites-web-app-srcweb).
+- **eve lite's web app**: the chat as a web page, drawn with OpenUI and json-render in React
+  ([below](#eve-lites-web-app-srcweb)).
+- **The card catalog** (`src/jsonCatalog.ts`): the one list of card components and actions. The reference
+  the brain reads and the native iPhone app's Swift catalog are both generated from it.
 
-Use Node 22.18 or later and pnpm (the json-render scripts run their TypeScript sources as they are). `sh ios/EveLink/build.sh` from the repository
-root installs the locked web dependencies and rebuilds the chat before building
-the app. When building directly in Xcode, first run `pnpm install --frozen-lockfile`
-and `pnpm build` in this directory. Generated bundle changes stay out of commits.
+The iPhone app does not use this page any more. Its chat is native SwiftUI
+(`../Packages`, [docs/app-chat.md](../../../docs/app-chat.md#how-it-is-built)), and `sh ios/EveLink/build.sh`
+builds nothing here.
 
-- `pnpm build` writes `../App/ChatWeb/` (index.html, chat.js, chat.css). The
-  app serves those files from its bundle on `eveapp://chat/index.html`.
-  The script is a classic deferred IIFE (no module/CORS loads on the custom
-  scheme). A CSP meta tag sets `connect-src 'none'`, so the page cannot reach
-  the network itself.
+Use Node 22.18 or later and pnpm (the json-render scripts run their TypeScript sources as they are).
+
+- `pnpm gen-swift-catalog` writes `../Packages/EveCards/Sources/EveCardCore/Resources/card-catalog.json`
+  from the catalog; `pnpm check-swift-catalog` fails when that file is stale.
+- `pnpm gen-card-fixtures` writes `../Packages/EveCards/Tests/EveCardCoreTests/Fixtures/card-parity.json`:
+  55 cards, whole and damaged, with what the web reader makes of each. The Swift tests must read every one
+  the same way. `pnpm check-card-fixtures` fails when it is stale.
 - `pnpm gen-prompt` writes `bridge/src/eve_bridge/openui_prompt.txt`:
   the openui-lang reference for app turns. It is the library's own prompt,
   trimmed to the components a phone chat uses (`CHAT_COMPONENTS`), with four
@@ -39,7 +40,7 @@ and `pnpm build` in this directory. Generated bundle changes stay out of commits
   part of either build.
 - `pnpm build:web` writes eve lite's web app to
   `bridge/src/eve_bridge/web_lite/`, from `web.html` and `vite.web.config.ts`
-  (below). It never touches `../App/ChatWeb/`.
+  (below).
 - `pnpm test` (vitest), `pnpm exec tsc --noEmit`.
 
 Source map:
@@ -72,11 +73,10 @@ sends install telemetry).
 [eve lite](../../../docs/lite.md) has no iPhone app: the Mac serves this chat as a web page
 (`bridge/src/eve_bridge/lite_web.py`), to its own browser at `http://localhost:48780` and to
 phones and laptops on the same Wi-Fi over HTTPS. `web.html` and `src/web/` are a second Vite
-entry around the iOS page.
+entry around the chat page (`App.tsx`), which the iPhone app also ran until 2026-11-17.
 
-- **Shared, unchanged.** `App.tsx`, `nativeBridge.ts`, `llm.ts`, `storage.ts` and `sync.ts` are the
-  iOS page's own, and so are `vite.config.ts` and `../App/ChatWeb/`; `pnpm build` and the app are
-  as they were. `createBridge(webPost)` stands in for the app's native code: `src/web/host.ts`
+- **The page.** `App.tsx`, `nativeBridge.ts`, `llm.ts`, `storage.ts` and `sync.ts` were written for
+  the app's web view and keep its bridge. `createBridge(webPost)` stands in for the app's native code: `src/web/host.ts`
   answers the page's bridge messages over WebRTC or HTTPS, and the shell draws the top bar, the
   composer, voice, settings, setup and pairing outside `App`.
 - **`pnpm build:web`** (`vite.web.config.ts`) writes `bridge/src/eve_bridge/web_lite/`:

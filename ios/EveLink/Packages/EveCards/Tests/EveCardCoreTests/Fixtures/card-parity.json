@@ -1,0 +1,1130 @@
+{
+  "cases": [
+    {
+      "name": "prompt example 1",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"Descale the kettle\",\"subtitle\":\"About 30 minutes\"},\"children\":[\"steps\"]}}\n{\"op\":\"add\",\"path\":\"/elements/steps\",\"value\":{\"type\":\"Steps\",\"props\":{\"items\":[{\"title\":\"Fill halfway\",\"details\":\"Equal parts water and white vinegar.\"},{\"title\":\"Boil and wait\",\"details\":\"Boil once, then let it stand for 20 minutes.\"},{\"title\":\"Rinse\",\"details\":\"Empty it, then boil plain water twice and pour it away.\"}]},\"children\":[]}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": true,
+      "hasControls": false,
+      "issueCount": 0,
+      "adopted": [],
+      "text": "Descale the kettle\n\nAbout 30 minutes\n\n1. Fill halfway: Equal parts water and white vinegar.\n\n2. Boil and wait: Boil once, then let it stand for 20 minutes.\n\n3. Rinse: Empty it, then boil plain water twice and pour it away.",
+      "elements": [
+        "card",
+        "steps"
+      ],
+      "rootChildren": [
+        "steps"
+      ]
+    },
+    {
+      "name": "prompt example 2",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"Three quick dinners\",\"subtitle\":\"Under 30 minutes\"},\"children\":[\"list\",\"choose\"]}}\n{\"op\":\"add\",\"path\":\"/elements/list\",\"value\":{\"type\":\"List\",\"props\":{\"variant\":\"number\",\"items\":[{\"title\":\"Egg fried rice\",\"subtitle\":\"Leftover rice, eggs, frozen peas\"},{\"title\":\"Pasta aglio e olio\",\"subtitle\":\"Spaghetti, garlic, chili, olive oil\"},{\"title\":\"Black bean tacos\",\"subtitle\":\"Tortillas, beans, salsa, cheese\"}]},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/choose\",\"value\":{\"type\":\"Buttons\",\"props\":{\"direction\":\"row\"},\"children\":[\"b1\",\"b2\",\"b3\"]}}\n{\"op\":\"add\",\"path\":\"/elements/b1\",\"value\":{\"type\":\"Button\",\"props\":{\"label\":\"Fried rice\",\"variant\":\"secondary\"},\"children\":[],\"on\":{\"press\":{\"action\":\"ask\",\"params\":{\"message\":\"Give me the fried rice recipe\"}}}}}\n{\"op\":\"add\",\"path\":\"/elements/b2\",\"value\":{\"type\":\"Button\",\"props\":{\"label\":\"Pasta\",\"variant\":\"secondary\"},\"children\":[],\"on\":{\"press\":{\"action\":\"ask\",\"params\":{\"message\":\"Give me the pasta recipe\"}}}}}\n{\"op\":\"add\",\"path\":\"/elements/b3\",\"value\":{\"type\":\"Button\",\"props\":{\"label\":\"Tacos\",\"variant\":\"secondary\"},\"children\":[],\"on\":{\"press\":{\"action\":\"ask\",\"params\":{\"message\":\"Give me the taco recipe\"}}}}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": true,
+      "hasControls": false,
+      "issueCount": 0,
+      "adopted": [],
+      "text": "Three quick dinners\n\nUnder 30 minutes\n\nEgg fried rice: Leftover rice, eggs, frozen peas\n\nPasta aglio e olio: Spaghetti, garlic, chili, olive oil\n\nBlack bean tacos: Tortillas, beans, salsa, cheese\n\nFried rice\n\nPasta\n\nTacos",
+      "elements": [
+        "b1",
+        "b2",
+        "b3",
+        "card",
+        "choose",
+        "list"
+      ],
+      "rootChildren": [
+        "list",
+        "choose"
+      ]
+    },
+    {
+      "name": "prompt example 3",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"Your runs this week\",\"subtitle\":\"Kilometres per day\"},\"children\":[\"chart\",\"totals\"]}}\n{\"op\":\"add\",\"path\":\"/elements/chart\",\"value\":{\"type\":\"BarChart\",\"props\":{\"labels\":[\"Mon\",\"Tue\",\"Wed\",\"Thu\",\"Fri\"],\"series\":[{\"name\":\"Distance\",\"values\":[5,0,7.5,3,10]}],\"xLabel\":\"Day\",\"yLabel\":\"km\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/totals\",\"value\":{\"type\":\"Facts\",\"props\":{\"rows\":[{\"label\":\"Total\",\"value\":\"25.5 km\"},{\"label\":\"Longest\",\"value\":\"Fri, 10 km\"}]},\"children\":[]}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": true,
+      "hasControls": false,
+      "issueCount": 0,
+      "adopted": [],
+      "text": "Your runs this week\n\nKilometres per day\n\nDay\n\nkm\n\nMon · Distance · 5\n\nTue · Distance · 0\n\nWed · Distance · 7.5\n\nThu · Distance · 3\n\nFri · Distance · 10\n\nTotal: 25.5 km\n\nLongest: Fri, 10 km",
+      "elements": [
+        "card",
+        "chart",
+        "totals"
+      ],
+      "rootChildren": [
+        "chart",
+        "totals"
+      ]
+    },
+    {
+      "name": "prompt example 4",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"Mars rover news\",\"subtitle\":\"The New York Times\"},\"children\":[\"news\",\"next\"]}}\n{\"op\":\"add\",\"path\":\"/elements/news\",\"value\":{\"type\":\"List\",\"props\":{\"variant\":\"image\",\"items\":[{\"title\":\"Rover Finds Signs of an Ancient Lake\",\"subtitle\":\"Science · Oct 14\",\"image\":{\"src\":\"https://example.com/images/rover-lake.jpg\",\"alt\":\"The rover on a ridge\"},\"url\":\"https://example.com/2026/10/14/rover-lake.html\"},{\"title\":\"What the Next Rover Will Carry\",\"subtitle\":\"Science · Oct 9\",\"url\":\"https://example.com/2026/10/09/next-rover.html\"}]},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/next\",\"value\":{\"type\":\"FollowUps\",\"props\":{\"items\":[\"More on Mars\",\"Most read this week\"]},\"children\":[]}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": true,
+      "hasControls": false,
+      "issueCount": 0,
+      "adopted": [],
+      "text": "Mars rover news\n\nThe New York Times\n\nRover Finds Signs of an Ancient Lake: Science · Oct 14\n\nWhat the Next Rover Will Carry: Science · Oct 9\n\nMore on Mars\n\nMost read this week",
+      "elements": [
+        "card",
+        "news",
+        "next"
+      ],
+      "rootChildren": [
+        "news",
+        "next"
+      ]
+    },
+    {
+      "name": "prompt example 5",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"Train or plane\",\"subtitle\":\"Door to door\"},\"children\":[\"table\",\"next\"]}}\n{\"op\":\"add\",\"path\":\"/elements/table\",\"value\":{\"type\":\"Table\",\"props\":{\"columns\":[\"Compare\",\"Train\",\"Plane\"],\"rows\":[[\"Time\",\"4 h 10 min\",\"3 h 30 min\"],[\"Cost\",\"$89\",\"$140\"],[\"Luggage\",\"Two bags\",\"One carry-on\"]]},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/next\",\"value\":{\"type\":\"FollowUps\",\"props\":{\"items\":[\"Which is better for the climate?\",\"Find train times for Friday\"]},\"children\":[]}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": true,
+      "hasControls": false,
+      "issueCount": 0,
+      "adopted": [],
+      "text": "Train or plane\n\nDoor to door\n\nCompare: Time · Train: 4 h 10 min · Plane: 3 h 30 min\n\nCompare: Cost · Train: $89 · Plane: $140\n\nCompare: Luggage · Train: Two bags · Plane: One carry-on\n\nWhich is better for the climate?\n\nFind train times for Friday",
+      "elements": [
+        "card",
+        "next",
+        "table"
+      ],
+      "rootChildren": [
+        "table",
+        "next"
+      ]
+    },
+    {
+      "name": "prompt example 6",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"Find a hotel\"},\"children\":[\"city\",\"nights\",\"go\"]}}\n{\"op\":\"add\",\"path\":\"/elements/city\",\"value\":{\"type\":\"TextInput\",\"props\":{\"label\":\"City\",\"placeholder\":\"Lisbon\",\"value\":{\"$bindState\":\"/form/city\"}},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/nights\",\"value\":{\"type\":\"Select\",\"props\":{\"label\":\"Nights\",\"options\":[\"1\",\"2\",\"3\",\"4\"],\"value\":{\"$bindState\":\"/form/nights\"}},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/state/form\",\"value\":{\"city\":\"\",\"nights\":\"2\"}}\n{\"op\":\"add\",\"path\":\"/elements/go\",\"value\":{\"type\":\"Buttons\",\"props\":{},\"children\":[\"search\"]}}\n{\"op\":\"add\",\"path\":\"/elements/search\",\"value\":{\"type\":\"Button\",\"props\":{\"label\":\"Search\"},\"children\":[],\"on\":{\"press\":{\"action\":\"ask\",\"params\":{\"message\":\"Find hotels\",\"data\":{\"$state\":\"/form\"}}}}}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": true,
+      "hasControls": true,
+      "issueCount": 0,
+      "adopted": [],
+      "text": "Find a hotel\n\nCity\n\nNights\n\nSearch",
+      "elements": [
+        "card",
+        "city",
+        "go",
+        "nights",
+        "search"
+      ],
+      "rootChildren": [
+        "city",
+        "nights",
+        "go"
+      ]
+    },
+    {
+      "name": "every component",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"A weekend in Porto\",\"subtitle\":\"Two days, on foot\"},\"children\":[\"intro\",\"note\",\"picture\",\"tags\",\"facts\",\"tabs\",\"places\",\"steps\",\"more\",\"bars\",\"line\",\"pie\",\"form\",\"choose\",\"next\"]}}\n{\"op\":\"add\",\"path\":\"/elements/intro\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"A **short** plan for two days by the river, with *one* hill.\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/note\",\"value\":{\"type\":\"Callout\",\"props\":{\"variant\":\"warning\",\"title\":\"Book the cellar tour\",\"description\":\"Tours fill up by **Thursday**.\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/picture\",\"value\":{\"type\":\"Image\",\"props\":{\"src\":\"https://example.com/images/river.jpg\",\"alt\":\"A river with a two-level iron bridge\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/tags\",\"value\":{\"type\":\"Tags\",\"props\":{\"tags\":[\"Walkable\",\"Food\",\"River\",\"Under $300\"]},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/facts\",\"value\":{\"type\":\"Facts\",\"props\":{\"rows\":[{\"label\":\"Train from Lisbon\",\"value\":\"2 h 50 min\"},{\"label\":\"Budget\",\"value\":\"$280\"}]},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/tabs\",\"value\":{\"type\":\"Tabs\",\"props\":{\"tabs\":[\"Saturday\",\"Sunday\"]},\"children\":[\"sat\",\"sun\"]}}\n{\"op\":\"add\",\"path\":\"/elements/sat\",\"value\":{\"type\":\"Stack\",\"props\":{\"direction\":\"column\"},\"children\":[\"satText\",\"satTable\"]}}\n{\"op\":\"add\",\"path\":\"/elements/satText\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Old town in the morning, the river after lunch.\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/satTable\",\"value\":{\"type\":\"Table\",\"props\":{\"columns\":[\"Time\",\"Place\",\"Cost\"],\"rows\":[[\"9:00\",\"Market hall\",0],[\"11:30\",\"Tile museum\",8.5],[\"15:00\",\"River walk\",0]]},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/sun\",\"value\":{\"type\":\"Stack\",\"props\":{\"direction\":\"row\"},\"children\":[\"sunText\",\"sunTags\"]}}\n{\"op\":\"add\",\"path\":\"/elements/sunText\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Across the bridge for the cellars.\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/sunTags\",\"value\":{\"type\":\"Tags\",\"props\":{\"tags\":[\"Slow start\"]},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/places\",\"value\":{\"type\":\"List\",\"props\":{\"variant\":\"image\",\"items\":[{\"title\":\"Market hall\",\"subtitle\":\"Breakfast · opens 8:00\",\"image\":{\"src\":\"https://example.com/images/market.jpg\",\"alt\":\"Stalls under a glass roof\"},\"url\":\"https://example.com/places/market\"},{\"title\":\"Tile museum\",\"subtitle\":\"Closed Mondays\",\"image\":{\"src\":\"https://example.com/images/tiles.jpg\",\"alt\":\"Blue and white tiles\"}},{\"title\":\"River walk\",\"subtitle\":\"Flat, 3 km\"}]},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/steps\",\"value\":{\"type\":\"Steps\",\"props\":{\"items\":[{\"title\":\"Buy a day ticket\",\"details\":\"At any metro machine; it covers the **funicular**.\"},{\"title\":\"Start at the top\",\"details\":\"Walk downhill to the river.\"},{\"title\":\"Cross on the upper deck\"}]},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/more\",\"value\":{\"type\":\"Accordion\",\"props\":{\"sections\":[\"What to pack\",\"If it rains\"]},\"children\":[\"pack\",\"rain\"]}}\n{\"op\":\"add\",\"path\":\"/elements/pack\",\"value\":{\"type\":\"List\",\"props\":{\"variant\":\"number\",\"items\":[{\"title\":\"Flat shoes\",\"subtitle\":\"The streets are cobbled\"},{\"title\":\"A light jacket\"}]},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/rain\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Swap the river walk for the tile museum.\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/bars\",\"value\":{\"type\":\"BarChart\",\"props\":{\"labels\":[\"Food\",\"Sights\",\"Transit\"],\"series\":[{\"name\":\"Saturday\",\"values\":[60,25,12]},{\"name\":\"Sunday\",\"values\":[45,40,8]}],\"variant\":\"grouped\",\"xLabel\":\"Category\",\"yLabel\":\"USD\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/line\",\"value\":{\"type\":\"LineChart\",\"props\":{\"labels\":[\"8:00\",\"12:00\",\"16:00\",\"20:00\"],\"series\":[{\"name\":\"Temperature\",\"values\":[14,19.5,21,16]}],\"xLabel\":\"Time\",\"yLabel\":\"°C\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/pie\",\"value\":{\"type\":\"PieChart\",\"props\":{\"labels\":[\"Food\",\"Sights\",\"Transit\"],\"values\":[105,65,20],\"variant\":\"donut\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/form\",\"value\":{\"type\":\"Stack\",\"props\":{},\"children\":[\"name\",\"pace\",\"likes\"]}}\n{\"op\":\"add\",\"path\":\"/elements/name\",\"value\":{\"type\":\"TextInput\",\"props\":{\"label\":\"Travelling from\",\"placeholder\":\"Lisbon\",\"value\":{\"$bindState\":\"/form/from\"}},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/pace\",\"value\":{\"type\":\"Select\",\"props\":{\"label\":\"Pace\",\"options\":[\"Slow\",\"Steady\",\"Fast\"],\"value\":{\"$bindState\":\"/form/pace\"}},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/likes\",\"value\":{\"type\":\"Chips\",\"props\":{\"label\":\"Interests\",\"options\":[\"Food\",\"Museums\",\"Views\",\"Music\"],\"value\":{\"$bindState\":\"/form/likes\"}},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/state/form\",\"value\":{\"from\":\"\",\"pace\":\"Steady\",\"likes\":[\"Food\"]}}\n{\"op\":\"add\",\"path\":\"/elements/choose\",\"value\":{\"type\":\"Buttons\",\"props\":{\"direction\":\"row\"},\"children\":[\"plan\",\"map\"]}}\n{\"op\":\"add\",\"path\":\"/elements/plan\",\"value\":{\"type\":\"Button\",\"props\":{\"label\":\"Plan it\"},\"children\":[],\"on\":{\"press\":{\"action\":\"ask\",\"params\":{\"message\":\"Plan my Porto weekend\",\"data\":{\"$state\":\"/form\"}}}}}}\n{\"op\":\"add\",\"path\":\"/elements/map\",\"value\":{\"type\":\"Button\",\"props\":{\"label\":\"Open the map\",\"variant\":\"secondary\"},\"children\":[],\"on\":{\"press\":{\"action\":\"open_url\",\"params\":{\"url\":\"https://example.com/maps/porto\"}}}}}\n{\"op\":\"add\",\"path\":\"/elements/next\",\"value\":{\"type\":\"FollowUps\",\"props\":{\"items\":[\"Where should we eat on Saturday?\",\"Make it three days\"]},\"children\":[]}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": true,
+      "hasControls": true,
+      "issueCount": 0,
+      "adopted": [],
+      "text": "A weekend in Porto\n\nTwo days, on foot\n\nA **short** plan for two days by the river, with *one* hill.\n\nBook the cellar tour\n\nTours fill up by **Thursday**.\n\nA river with a two-level iron bridge\n\nWalkable · Food · River · Under $300\n\nTrain from Lisbon: 2 h 50 min\n\nBudget: $280\n\nSaturday\n\nOld town in the morning, the river after lunch.\n\nTime: 9:00 · Place: Market hall · Cost: 0\n\nTime: 11:30 · Place: Tile museum · Cost: 8.5\n\nTime: 15:00 · Place: River walk · Cost: 0\n\nSunday\n\nAcross the bridge for the cellars.\n\nSlow start\n\nMarket hall: Breakfast · opens 8:00\n\nTile museum: Closed Mondays\n\nRiver walk: Flat, 3 km\n\n1. Buy a day ticket: At any metro machine; it covers the **funicular**.\n\n2. Start at the top: Walk downhill to the river.\n\n3. Cross on the upper deck\n\nWhat to pack\n\nFlat shoes: The streets are cobbled\n\nA light jacket\n\nIf it rains\n\nSwap the river walk for the tile museum.\n\nCategory\n\nUSD\n\nFood · Saturday · 60\n\nSights · Saturday · 25\n\nTransit · Saturday · 12\n\nFood · Sunday · 45\n\nSights · Sunday · 40\n\nTransit · Sunday · 8\n\nTime\n\n°C\n\n8:00 · Temperature · 14\n\n12:00 · Temperature · 19.5\n\n16:00 · Temperature · 21\n\n20:00 · Temperature · 16\n\nFood: 105\n\nSights: 65\n\nTransit: 20\n\nTravelling from\n\nPace\n\nInterests\n\nPlan it\n\nOpen the map\n\nWhere should we eat on Saturday?\n\nMake it three days",
+      "elements": [
+        "bars",
+        "card",
+        "choose",
+        "facts",
+        "form",
+        "intro",
+        "likes",
+        "line",
+        "map",
+        "more",
+        "name",
+        "next",
+        "note",
+        "pace",
+        "pack",
+        "picture",
+        "pie",
+        "places",
+        "plan",
+        "rain",
+        "sat",
+        "satTable",
+        "satText",
+        "steps",
+        "sun",
+        "sunTags",
+        "sunText",
+        "tabs",
+        "tags"
+      ],
+      "rootChildren": [
+        "intro",
+        "note",
+        "picture",
+        "tags",
+        "facts",
+        "tabs",
+        "places",
+        "steps",
+        "more",
+        "bars",
+        "line",
+        "pie",
+        "form",
+        "choose",
+        "next"
+      ]
+    },
+    {
+      "name": "every component, streaming",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"A weekend in Porto\",\"subtitle\":\"Two days, on foot\"},\"children\":[\"intro\",\"note\",\"picture\",\"tags\",\"facts\",\"tabs\",\"places\",\"steps\",\"more\",\"bars\",\"line\",\"pie\",\"form\",\"choose\",\"next\"]}}\n{\"op\":\"add\",\"path\":\"/elements/intro\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"A **short** plan for two days by the river, with *one* hill.\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/note\",\"value\":{\"type\":\"Callout\",\"props\":{\"variant\":\"warning\",\"title\":\"Book the cellar tour\",\"description\":\"Tours fill up by **Thursday**.\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/picture\",\"value\":{\"type\":\"Image\",\"props\":{\"src\":\"https://example.com/images/river.jpg\",\"alt\":\"A river with a two-level iron bridge\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/tags\",\"value\":{\"type\":\"Tags\",\"props\":{\"tags\":[\"Walkable\",\"Food\",\"River\",\"Under $300\"]},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/facts\",\"value\":{\"type\":\"Facts\",\"props\":{\"rows\":[{\"label\":\"Train from Lisbon\",\"value\":\"2 h 50 min\"},{\"label\":\"Budget\",\"value\":\"$280\"}]},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/tabs\",\"value\":{\"type\":\"Tabs\",\"props\":{\"tabs\":[\"Saturday\",\"Sunday\"]},\"children\":[\"sat\",\"sun\"]}}\n{\"op\":\"add\",\"path\":\"/elements/sat\",\"value\":{\"type\":\"Stack\",\"props\":{\"direction\":\"column\"},\"children\":[\"satText\",\"satTable\"]}}\n{\"op\":\"add\",\"path\":\"/elements/satText\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Old town in the morning, the river after lunch.\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/satTable\",\"value\":{\"type\":\"Table\",\"props\":{\"columns\":[\"Time\",\"Place\",\"Cost\"],\"rows\":[[\"9:00\",\"Market hall\",0],[\"11:30\",\"Tile museum\",8.5],[\"15:00\",\"River walk\",0]]},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/sun\",\"value\":{\"type\":\"Stack\",\"props\":{\"direction\":\"row\"},\"children\":[\"sunText\",\"sunTags\"]}}\n{\"op\":\"add\",\"path\":\"/elements/sunText\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Across the bridge for the cellars.\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/sunTags\",\"value\":{\"type\":\"Tags\",\"props\":{\"tags\":[\"Slow start\"]},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/places\",\"value\":{\"type\":\"List\",\"props\":{\"variant\":\"image\",\"items\":[{\"title\":\"Market hall\",\"subtitle\":\"Breakfast · opens 8:00\",\"image\":{\"src\":\"https://example.com/images/market.jpg\",\"alt\":\"Stalls under a glass roof\"},\"url\":\"https://example.com/places/market\"},{\"title\":\"Tile museum\",\"subtitle\":\"Closed Mondays\",\"image\":{\"src\":\"https://example.com/images/tiles.jpg\",\"alt\":\"Blue and white tiles\"}},{\"title\":\"River walk\",\"subtitle\":\"Flat, 3 km\"}]},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/steps\",\"value\":{\"type\":\"Steps\",\"props\":{\"items\":[{\"title\":\"Buy a day ticket\",\"details\":\"At any metro machine; it covers the **funicular**.\"},{\"title\":\"Start at the top\",\"details\":\"Walk downhill to the river.\"},{\"title\":\"Cross on the upper deck\"}]},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/more\",\"value\":{\"type\":\"Accordion\",\"props\":{\"sections\":[\"What to pack\",\"If it rains\"]},\"children\":[\"pack\",\"rain\"]}}\n{\"op\":\"add\",\"path\":\"/elements/pack\",\"value\":{\"type\":\"List\",\"props\":{\"variant\":\"number\",\"items\":[{\"title\":\"Flat shoes\",\"subtitle\":\"The streets are cobbled\"},{\"title\":\"A light jacket\"}]},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/rain\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Swap the river walk for the tile museum.\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/bars\",\"value\":{\"type\":\"BarChart\",\"props\":{\"labels\":[\"Food\",\"Sights\",\"Transit\"],\"series\":[{\"name\":\"Saturday\",\"values\":[60,25,12]},{\"name\":\"Sunday\",\"values\":[45,40,8]}],\"variant\":\"grouped\",\"xLabel\":\"Category\",\"yLabel\":\"USD\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/line\",\"value\":{\"type\":\"LineChart\",\"props\":{\"labels\":[\"8:00\",\"12:00\",\"16:00\",\"20:00\"],\"series\":[{\"name\":\"Temperature\",\"values\":[14,19.5,21,16]}],\"xLabel\":\"Time\",\"yLabel\":\"°C\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/pie\",\"value\":{\"type\":\"PieChart\",\"props\":{\"labels\":[\"Food\",\"Sights\",\"Transit\"],\"values\":[105,65,20],\"variant\":\"donut\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/form\",\"value\":{\"type\":\"Stack\",\"props\":{},\"children\":[\"name\",\"pace\",\"likes\"]}}\n{\"op\":\"add\",\"path\":\"/elements/name\",\"value\":{\"type\":\"TextInput\",\"props\":{\"label\":\"Travelling from\",\"placeholder\":\"Lisbon\",\"value\":{\"$bindState\":\"/form/from\"}},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/pace\",\"value\":{\"type\":\"Select\",\"props\":{\"label\":\"Pace\",\"options\":[\"Slow\",\"Steady\",\"Fast\"],\"value\":{\"$bindState\":\"/form/pace\"}},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/likes\",\"value\":{\"type\":\"Chips\",\"props\":{\"label\":\"Interests\",\"options\":[\"Food\",\"Museums\",\"Views\",\"Music\"],\"value\":{\"$bindState\":\"/form/likes\"}},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/state/form\",\"value\":{\"from\":\"\",\"pace\":\"Steady\",\"likes\":[\"Food\"]}}\n{\"op\":\"add\",\"path\":\"/elements/choose\",\"value\":{\"type\":\"Buttons\",\"props\":{\"direction\":\"row\"},\"children\":[\"plan\",\"map\"]}}\n{\"op\":\"add\",\"path\":\"/elements/plan\",\"value\":{\"type\":\"Button\",\"props\":{\"label\":\"Plan it\"},\"children\":[],\"on\":{\"press\":{\"action\":\"ask\",\"params\":{\"message\":\"Plan my Porto weekend\",\"data\":{\"$state\":\"/form\"}}}}}}\n{\"op\":\"add\",\"path\":\"/elements/map\",\"value\":{\"type\":\"Button\",\"props\":{\"label\":\"Open the map\",\"variant\":\"secondary\"},\"children\":[],\"on\":{\"press\":{\"action\":\"open_url\",\"params\":{\"url\":\"https://example.com/maps/porto\"}}}}}\n{\"op\":\"add\",\"path\":\"/elements/next\",\"value\":{\"type\":\"FollowUps\",\"props\":{\"items\":[\"Where should we eat on Saturday?\",\"Make it three days\"]},\"children\":[]}}",
+      "streaming": true,
+      "renderable": true,
+      "complete": true,
+      "hasControls": true,
+      "issueCount": 0,
+      "adopted": [],
+      "text": "A weekend in Porto\n\nTwo days, on foot\n\nA **short** plan for two days by the river, with *one* hill.\n\nBook the cellar tour\n\nTours fill up by **Thursday**.\n\nA river with a two-level iron bridge\n\nWalkable · Food · River · Under $300\n\nTrain from Lisbon: 2 h 50 min\n\nBudget: $280\n\nSaturday\n\nOld town in the morning, the river after lunch.\n\nTime: 9:00 · Place: Market hall · Cost: 0\n\nTime: 11:30 · Place: Tile museum · Cost: 8.5\n\nTime: 15:00 · Place: River walk · Cost: 0\n\nSunday\n\nAcross the bridge for the cellars.\n\nSlow start\n\nMarket hall: Breakfast · opens 8:00\n\nTile museum: Closed Mondays\n\nRiver walk: Flat, 3 km\n\n1. Buy a day ticket: At any metro machine; it covers the **funicular**.\n\n2. Start at the top: Walk downhill to the river.\n\n3. Cross on the upper deck\n\nWhat to pack\n\nFlat shoes: The streets are cobbled\n\nA light jacket\n\nIf it rains\n\nSwap the river walk for the tile museum.\n\nCategory\n\nUSD\n\nFood · Saturday · 60\n\nSights · Saturday · 25\n\nTransit · Saturday · 12\n\nFood · Sunday · 45\n\nSights · Sunday · 40\n\nTransit · Sunday · 8\n\nTime\n\n°C\n\n8:00 · Temperature · 14\n\n12:00 · Temperature · 19.5\n\n16:00 · Temperature · 21\n\n20:00 · Temperature · 16\n\nFood: 105\n\nSights: 65\n\nTransit: 20\n\nTravelling from\n\nPace\n\nInterests\n\nPlan it\n\nOpen the map\n\nWhere should we eat on Saturday?\n\nMake it three days",
+      "elements": [
+        "bars",
+        "card",
+        "choose",
+        "facts",
+        "form",
+        "intro",
+        "likes",
+        "line",
+        "map",
+        "more",
+        "name",
+        "next",
+        "note",
+        "pace",
+        "pack",
+        "picture",
+        "pie",
+        "places",
+        "plan",
+        "rain",
+        "sat",
+        "satTable",
+        "satText",
+        "steps",
+        "sun",
+        "sunTags",
+        "sunText",
+        "tabs",
+        "tags"
+      ],
+      "rootChildren": [
+        "intro",
+        "note",
+        "picture",
+        "tags",
+        "facts",
+        "tabs",
+        "places",
+        "steps",
+        "more",
+        "bars",
+        "line",
+        "pie",
+        "form",
+        "choose",
+        "next"
+      ]
+    },
+    {
+      "name": "a whole JSON spec",
+      "code": "{\n  \"root\": \"card\",\n  \"elements\": {\n    \"card\": {\n      \"type\": \"Card\",\n      \"props\": {\n        \"title\": \"Dinner\",\n        \"subtitle\": \"For two\"\n      },\n      \"children\": [\n        \"text\",\n        \"table\"\n      ]\n    },\n    \"text\": {\n      \"type\": \"Text\",\n      \"props\": {\n        \"text\": \"Roast vegetables\"\n      },\n      \"children\": []\n    },\n    \"table\": {\n      \"type\": \"Table\",\n      \"props\": {\n        \"columns\": [\n          \"Dish\",\n          \"Minutes\"\n        ],\n        \"rows\": [\n          [\n            \"Soup\",\n            20\n          ],\n          [\n            \"Tart\",\n            45\n          ]\n        ]\n      },\n      \"children\": []\n    }\n  }\n}",
+      "streaming": false,
+      "renderable": true,
+      "complete": true,
+      "hasControls": false,
+      "issueCount": 0,
+      "adopted": [],
+      "text": "Dinner\n\nFor two\n\nRoast vegetables\n\nDish: Soup · Minutes: 20\n\nDish: Tart · Minutes: 45",
+      "elements": [
+        "card",
+        "table",
+        "text"
+      ],
+      "rootChildren": [
+        "text",
+        "table"
+      ]
+    },
+    {
+      "name": "a whole JSON spec with state",
+      "code": "{\"root\":\"c\",\"elements\":{\"c\":{\"type\":\"Card\",\"props\":{},\"children\":[\"t\"]},\"t\":{\"type\":\"Text\",\"props\":{\"text\":\"Hi\"},\"children\":[]}},\"state\":{\"n\":1}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": true,
+      "hasControls": true,
+      "issueCount": 0,
+      "adopted": [],
+      "text": "Hi",
+      "elements": [
+        "c",
+        "t"
+      ],
+      "rootChildren": [
+        "t"
+      ]
+    },
+    {
+      "name": "patch lines",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"Dinner\",\"subtitle\":\"For two\"},\"children\":[\"text\",\"table\"]}}\n{\"op\":\"add\",\"path\":\"/elements/text\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Roast vegetables\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/table\",\"value\":{\"type\":\"Table\",\"props\":{\"columns\":[\"Dish\",\"Minutes\"],\"rows\":[[\"Soup\",20],[\"Tart\",45]]},\"children\":[]}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": true,
+      "hasControls": false,
+      "issueCount": 0,
+      "adopted": [],
+      "text": "Dinner\n\nFor two\n\nRoast vegetables\n\nDish: Soup · Minutes: 20\n\nDish: Tart · Minutes: 45",
+      "elements": [
+        "card",
+        "table",
+        "text"
+      ],
+      "rootChildren": [
+        "text",
+        "table"
+      ]
+    },
+    {
+      "name": "a streaming block cut mid-line",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"Dinner\",\"subtitle\":\"For two\"},\"children\":[\"text\",\"table\"]}}\n{\"op\":\"add\",\"path\":\"/elements/text\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Roast vegetables\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/table\",\"v",
+      "streaming": true,
+      "renderable": true,
+      "complete": false,
+      "hasControls": false,
+      "issueCount": 1,
+      "adopted": [],
+      "text": "Dinner\n\nFor two\n\nRoast vegetables",
+      "elements": [
+        "card",
+        "text"
+      ],
+      "rootChildren": [
+        "text"
+      ]
+    },
+    {
+      "name": "the same cut block, finished",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"Dinner\",\"subtitle\":\"For two\"},\"children\":[\"text\",\"table\"]}}\n{\"op\":\"add\",\"path\":\"/elements/text\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Roast vegetables\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/table\",\"v",
+      "streaming": false,
+      "renderable": true,
+      "complete": false,
+      "hasControls": false,
+      "issueCount": 2,
+      "adopted": [],
+      "text": "Dinner\n\nFor two\n\nRoast vegetables",
+      "elements": [
+        "card",
+        "text"
+      ],
+      "rootChildren": [
+        "text"
+      ]
+    },
+    {
+      "name": "streaming, only half a first line",
+      "code": "{\"op\":\"add\",\"path\":\"/ro",
+      "streaming": true,
+      "renderable": false,
+      "complete": false,
+      "hasControls": false,
+      "issueCount": 1,
+      "adopted": [],
+      "text": "",
+      "elements": null,
+      "rootChildren": null
+    },
+    {
+      "name": "streaming, a root and nothing else",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}",
+      "streaming": true,
+      "renderable": false,
+      "complete": false,
+      "hasControls": false,
+      "issueCount": 1,
+      "adopted": [],
+      "text": "",
+      "elements": null,
+      "rootChildren": null
+    },
+    {
+      "name": "streaming, a child before its parent",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/text\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Early\"},\"children\":[]}}",
+      "streaming": true,
+      "renderable": false,
+      "complete": false,
+      "hasControls": false,
+      "issueCount": 1,
+      "adopted": [],
+      "text": "",
+      "elements": null,
+      "rootChildren": null
+    },
+    {
+      "name": "an orphan element",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"Dinner\",\"subtitle\":\"For two\"},\"children\":[\"text\",\"table\"]}}\n{\"op\":\"add\",\"path\":\"/elements/text\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Roast vegetables\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/table\",\"value\":{\"type\":\"Table\",\"props\":{\"columns\":[\"Dish\",\"Minutes\"],\"rows\":[[\"Soup\",20],[\"Tart\",45]]},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/extra\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"One more thing\"},\"children\":[]}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": true,
+      "hasControls": false,
+      "issueCount": 0,
+      "adopted": [
+        "extra"
+      ],
+      "text": "Dinner\n\nFor two\n\nRoast vegetables\n\nDish: Soup · Minutes: 20\n\nDish: Tart · Minutes: 45\n\nOne more thing",
+      "elements": [
+        "card",
+        "extra",
+        "table",
+        "text"
+      ],
+      "rootChildren": [
+        "text",
+        "table",
+        "extra"
+      ]
+    },
+    {
+      "name": "an orphan element, streaming",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"Dinner\",\"subtitle\":\"For two\"},\"children\":[\"text\",\"table\"]}}\n{\"op\":\"add\",\"path\":\"/elements/text\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Roast vegetables\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/table\",\"value\":{\"type\":\"Table\",\"props\":{\"columns\":[\"Dish\",\"Minutes\"],\"rows\":[[\"Soup\",20],[\"Tart\",45]]},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/extra\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"One more thing\"},\"children\":[]}}",
+      "streaming": true,
+      "renderable": true,
+      "complete": true,
+      "hasControls": false,
+      "issueCount": 0,
+      "adopted": [],
+      "text": "Dinner\n\nFor two\n\nRoast vegetables\n\nDish: Soup · Minutes: 20\n\nDish: Tart · Minutes: 45",
+      "elements": [
+        "card",
+        "extra",
+        "table",
+        "text"
+      ],
+      "rootChildren": [
+        "text",
+        "table"
+      ]
+    },
+    {
+      "name": "orphans with number keys, shown smallest first",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{},\"children\":[\"a\"]}}\n{\"op\":\"add\",\"path\":\"/elements/a\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"First\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/b\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Named\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/10\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Ten\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/2\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Two\"},\"children\":[]}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": true,
+      "hasControls": false,
+      "issueCount": 0,
+      "adopted": [
+        "2",
+        "10",
+        "b"
+      ],
+      "text": "First\n\nTwo\n\nTen\n\nNamed",
+      "elements": [
+        "10",
+        "2",
+        "a",
+        "b",
+        "card"
+      ],
+      "rootChildren": [
+        "a",
+        "2",
+        "10",
+        "b"
+      ]
+    },
+    {
+      "name": "a leaf with no children list",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"c\"}\n{\"op\":\"add\",\"path\":\"/elements/c\",\"value\":{\"type\":\"Card\",\"props\":{},\"children\":[\"t\"]}}\n{\"op\":\"add\",\"path\":\"/elements/t\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Hi\"}}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": true,
+      "hasControls": false,
+      "issueCount": 0,
+      "adopted": [],
+      "text": "Hi",
+      "elements": [
+        "c",
+        "t"
+      ],
+      "rootChildren": [
+        "t"
+      ]
+    },
+    {
+      "name": "windows line endings and blank lines",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\r\n\r\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"Dinner\",\"subtitle\":\"For two\"},\"children\":[\"text\",\"table\"]}}\r\n\r\n{\"op\":\"add\",\"path\":\"/elements/text\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Roast vegetables\"},\"children\":[]}}\r\n\r\n{\"op\":\"add\",\"path\":\"/elements/table\",\"value\":{\"type\":\"Table\",\"props\":{\"columns\":[\"Dish\",\"Minutes\"],\"rows\":[[\"Soup\",20],[\"Tart\",45]]},\"children\":[]}}\r\n",
+      "streaming": false,
+      "renderable": true,
+      "complete": true,
+      "hasControls": false,
+      "issueCount": 0,
+      "adopted": [],
+      "text": "Dinner\n\nFor two\n\nRoast vegetables\n\nDish: Soup · Minutes: 20\n\nDish: Tart · Minutes: 45",
+      "elements": [
+        "card",
+        "table",
+        "text"
+      ],
+      "rootChildren": [
+        "text",
+        "table"
+      ]
+    },
+    {
+      "name": "props set by a later patch",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"Dinner\",\"subtitle\":\"For two\"},\"children\":[\"text\",\"table\"]}}\n{\"op\":\"add\",\"path\":\"/elements/text\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Roast vegetables\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/table\",\"value\":{\"type\":\"Table\",\"props\":{\"columns\":[\"Dish\",\"Minutes\"],\"rows\":[[\"Soup\",20],[\"Tart\",45]]},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/card/props/title\",\"value\":\"Supper\"}\n{\"op\":\"add\",\"path\":\"/elements/card/children/-\",\"value\":\"late\"}\n{\"op\":\"add\",\"path\":\"/elements/late\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Added late\"},\"children\":[]}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": true,
+      "hasControls": false,
+      "issueCount": 0,
+      "adopted": [],
+      "text": "Supper\n\nFor two\n\nRoast vegetables\n\nDish: Soup · Minutes: 20\n\nDish: Tart · Minutes: 45\n\nAdded late",
+      "elements": [
+        "card",
+        "late",
+        "table",
+        "text"
+      ],
+      "rootChildren": [
+        "text",
+        "table",
+        "late"
+      ]
+    },
+    {
+      "name": "replace, remove, move, copy and test",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"Dinner\",\"subtitle\":\"For two\"},\"children\":[\"text\",\"table\"]}}\n{\"op\":\"add\",\"path\":\"/elements/text\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Roast vegetables\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/table\",\"value\":{\"type\":\"Table\",\"props\":{\"columns\":[\"Dish\",\"Minutes\"],\"rows\":[[\"Soup\",20],[\"Tart\",45]]},\"children\":[]}}\n{\"op\":\"replace\",\"path\":\"/elements/text/props/text\",\"value\":\"Roast roots\"}\n{\"op\":\"copy\",\"from\":\"/elements/text\",\"path\":\"/elements/again\"}\n{\"op\":\"add\",\"path\":\"/elements/card/children/1\",\"value\":\"again\"}\n{\"op\":\"move\",\"from\":\"/elements/table\",\"path\":\"/elements/grid\"}\n{\"op\":\"replace\",\"path\":\"/elements/card/children/2\",\"value\":\"grid\"}\n{\"op\":\"test\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"remove\",\"path\":\"/elements/card/props/subtitle\"}",
+      "streaming": false,
+      "renderable": true,
+      "complete": true,
+      "hasControls": false,
+      "issueCount": 0,
+      "adopted": [],
+      "text": "Dinner\n\nRoast roots\n\nRoast roots\n\nDish: Soup · Minutes: 20\n\nDish: Tart · Minutes: 45",
+      "elements": [
+        "again",
+        "card",
+        "grid",
+        "text"
+      ],
+      "rootChildren": [
+        "text",
+        "again",
+        "grid"
+      ]
+    },
+    {
+      "name": "a test patch that fails",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"Dinner\",\"subtitle\":\"For two\"},\"children\":[\"text\",\"table\"]}}\n{\"op\":\"add\",\"path\":\"/elements/text\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Roast vegetables\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/table\",\"value\":{\"type\":\"Table\",\"props\":{\"columns\":[\"Dish\",\"Minutes\"],\"rows\":[[\"Soup\",20],[\"Tart\",45]]},\"children\":[]}}\n{\"op\":\"test\",\"path\":\"/root\",\"value\":\"other\"}",
+      "streaming": false,
+      "renderable": true,
+      "complete": false,
+      "hasControls": false,
+      "issueCount": 1,
+      "adopted": [],
+      "text": "Dinner\n\nFor two\n\nRoast vegetables\n\nDish: Soup · Minutes: 20\n\nDish: Tart · Minutes: 45",
+      "elements": [
+        "card",
+        "table",
+        "text"
+      ],
+      "rootChildren": [
+        "text",
+        "table"
+      ]
+    },
+    {
+      "name": "a patch through a null",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"Dinner\",\"subtitle\":\"For two\"},\"children\":[\"text\",\"table\"]}}\n{\"op\":\"add\",\"path\":\"/elements/text\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Roast vegetables\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/table\",\"value\":{\"type\":\"Table\",\"props\":{\"columns\":[\"Dish\",\"Minutes\"],\"rows\":[[\"Soup\",20],[\"Tart\",45]]},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/state\",\"value\":null}\n{\"op\":\"add\",\"path\":\"/state/form/city\",\"value\":\"x\"}",
+      "streaming": false,
+      "renderable": true,
+      "complete": false,
+      "hasControls": false,
+      "issueCount": 1,
+      "adopted": [],
+      "text": "Dinner\n\nFor two\n\nRoast vegetables\n\nDish: Soup · Minutes: 20\n\nDish: Tart · Minutes: 45",
+      "elements": [
+        "card",
+        "table",
+        "text"
+      ],
+      "rootChildren": [
+        "text",
+        "table"
+      ]
+    },
+    {
+      "name": "a patch with a path that is not a string",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"Dinner\",\"subtitle\":\"For two\"},\"children\":[\"text\",\"table\"]}}\n{\"op\":\"add\",\"path\":\"/elements/text\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Roast vegetables\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/table\",\"value\":{\"type\":\"Table\",\"props\":{\"columns\":[\"Dish\",\"Minutes\"],\"rows\":[[\"Soup\",20],[\"Tart\",45]]},\"children\":[]}}\n{\"op\":\"add\",\"path\":5,\"value\":1}",
+      "streaming": false,
+      "renderable": true,
+      "complete": false,
+      "hasControls": false,
+      "issueCount": 1,
+      "adopted": [],
+      "text": "Dinner\n\nFor two\n\nRoast vegetables\n\nDish: Soup · Minutes: 20\n\nDish: Tart · Minutes: 45",
+      "elements": [
+        "card",
+        "table",
+        "text"
+      ],
+      "rootChildren": [
+        "text",
+        "table"
+      ]
+    },
+    {
+      "name": "an op the stream does not know",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"Dinner\",\"subtitle\":\"For two\"},\"children\":[\"text\",\"table\"]}}\n{\"op\":\"add\",\"path\":\"/elements/text\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Roast vegetables\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/table\",\"value\":{\"type\":\"Table\",\"props\":{\"columns\":[\"Dish\",\"Minutes\"],\"rows\":[[\"Soup\",20],[\"Tart\",45]]},\"children\":[]}}\n{\"op\":\"merge\",\"path\":\"/root\",\"value\":\"x\"}",
+      "streaming": false,
+      "renderable": true,
+      "complete": true,
+      "hasControls": false,
+      "issueCount": 0,
+      "adopted": [],
+      "text": "Dinner\n\nFor two\n\nRoast vegetables\n\nDish: Soup · Minutes: 20\n\nDish: Tart · Minutes: 45",
+      "elements": [
+        "card",
+        "table",
+        "text"
+      ],
+      "rootChildren": [
+        "text",
+        "table"
+      ]
+    },
+    {
+      "name": "numbers as text",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"c\"}\n{\"op\":\"add\",\"path\":\"/elements/c\",\"value\":{\"type\":\"Card\",\"props\":{},\"children\":[\"t\",\"p\"]}}\n{\"op\":\"add\",\"path\":\"/elements/t\",\"value\":{\"type\":\"Table\",\"props\":{\"columns\":[\"A\",\"B\",\"C\",\"D\",\"E\",\"F\"],\"rows\":[[0.1,1e+21,1e-7,100,1.5,-2.25],[123456789012,0.000001,1e+300,5e-324,0,12345.678]]},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/p\",\"value\":{\"type\":\"PieChart\",\"props\":{\"labels\":[\"x\",\"y\"],\"values\":[33.3,1e+22]},\"children\":[]}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": true,
+      "hasControls": false,
+      "issueCount": 0,
+      "adopted": [],
+      "text": "A: 0.1 · B: 1e+21 · C: 1e-7 · D: 100 · E: 1.5 · F: -2.25\n\nA: 123456789012 · B: 0.000001 · C: 1e+300 · D: 5e-324 · E: 0 · F: 12345.678\n\nx: 33.3\n\ny: 1e+22",
+      "elements": [
+        "c",
+        "p",
+        "t"
+      ],
+      "rootChildren": [
+        "t",
+        "p"
+      ]
+    },
+    {
+      "name": "tabs and an accordion as text",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"c\"}\n{\"op\":\"add\",\"path\":\"/elements/c\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"T\"},\"children\":[\"tabs\",\"acc\"]}}\n{\"op\":\"add\",\"path\":\"/elements/tabs\",\"value\":{\"type\":\"Tabs\",\"props\":{\"tabs\":[\"One\",\"Two\"]},\"children\":[\"a\",\"b\",\"x\"]}}\n{\"op\":\"add\",\"path\":\"/elements/a\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"A\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/b\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"B\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/x\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"X\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/acc\",\"value\":{\"type\":\"Accordion\",\"props\":{\"sections\":[\"S1\"]},\"children\":[\"d\"]}}\n{\"op\":\"add\",\"path\":\"/elements/d\",\"value\":{\"type\":\"Facts\",\"props\":{\"rows\":[{\"label\":\"L\",\"value\":\"V\"}]},\"children\":[]}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": true,
+      "hasControls": false,
+      "issueCount": 0,
+      "adopted": [],
+      "text": "T\n\nOne\n\nA\n\nTwo\n\nB\n\nX\n\nS1\n\nL: V",
+      "elements": [
+        "a",
+        "acc",
+        "b",
+        "c",
+        "d",
+        "tabs",
+        "x"
+      ],
+      "rootChildren": [
+        "tabs",
+        "acc"
+      ]
+    },
+    {
+      "name": "a child named twice",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"c\"}\n{\"op\":\"add\",\"path\":\"/elements/c\",\"value\":{\"type\":\"Card\",\"props\":{},\"children\":[\"t\",\"t\"]}}\n{\"op\":\"add\",\"path\":\"/elements/t\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Once\"},\"children\":[]}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": true,
+      "hasControls": false,
+      "issueCount": 0,
+      "adopted": [],
+      "text": "Once",
+      "elements": [
+        "c",
+        "t"
+      ],
+      "rootChildren": [
+        "t",
+        "t"
+      ]
+    },
+    {
+      "name": "state and no controls",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"Dinner\",\"subtitle\":\"For two\"},\"children\":[\"text\",\"table\"]}}\n{\"op\":\"add\",\"path\":\"/elements/text\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Roast vegetables\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/table\",\"value\":{\"type\":\"Table\",\"props\":{\"columns\":[\"Dish\",\"Minutes\"],\"rows\":[[\"Soup\",20],[\"Tart\",45]]},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/state/count\",\"value\":1}",
+      "streaming": false,
+      "renderable": true,
+      "complete": true,
+      "hasControls": true,
+      "issueCount": 0,
+      "adopted": [],
+      "text": "Dinner\n\nFor two\n\nRoast vegetables\n\nDish: Soup · Minutes: 20\n\nDish: Tart · Minutes: 45",
+      "elements": [
+        "card",
+        "table",
+        "text"
+      ],
+      "rootChildren": [
+        "text",
+        "table"
+      ]
+    },
+    {
+      "name": "a nullish prop set to null",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"c\"}\n{\"op\":\"add\",\"path\":\"/elements/c\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":null},\"children\":[\"l\"]}}\n{\"op\":\"add\",\"path\":\"/elements/l\",\"value\":{\"type\":\"List\",\"props\":{\"variant\":null,\"items\":[{\"title\":\"A\",\"subtitle\":null,\"image\":null,\"url\":null}]},\"children\":[]}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": true,
+      "hasControls": false,
+      "issueCount": 0,
+      "adopted": [],
+      "text": "A",
+      "elements": [
+        "c",
+        "l"
+      ],
+      "rootChildren": [
+        "l"
+      ]
+    },
+    {
+      "name": "on written inside props",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"c\"}\n{\"op\":\"add\",\"path\":\"/elements/c\",\"value\":{\"type\":\"Card\",\"props\":{},\"children\":[\"b\"]}}\n{\"op\":\"add\",\"path\":\"/elements/b\",\"value\":{\"type\":\"Button\",\"props\":{\"label\":\"Go\",\"on\":{\"press\":{\"action\":\"ask\",\"params\":{\"message\":\"Go\"}}}},\"children\":[]}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": true,
+      "hasControls": false,
+      "issueCount": 0,
+      "adopted": [],
+      "text": "Go",
+      "elements": [
+        "b",
+        "c"
+      ],
+      "rootChildren": [
+        "b"
+      ]
+    },
+    {
+      "name": "a $state value inside a table cell and an image",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"c\"}\n{\"op\":\"add\",\"path\":\"/elements/c\",\"value\":{\"type\":\"Card\",\"props\":{},\"children\":[\"t\",\"l\"]}}\n{\"op\":\"add\",\"path\":\"/elements/t\",\"value\":{\"type\":\"Table\",\"props\":{\"columns\":[\"A\"],\"rows\":[[{\"$state\":\"/a\"}]]},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/l\",\"value\":{\"type\":\"List\",\"props\":{\"items\":[{\"title\":\"A\",\"image\":{\"src\":{\"$state\":\"/src\"},\"alt\":\"x\"}}]},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/state\",\"value\":{\"a\":\"1\",\"src\":\"https://example.com/a.jpg\"}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": true,
+      "hasControls": true,
+      "issueCount": 0,
+      "adopted": [],
+      "text": "A: —\n\nA",
+      "elements": [
+        "c",
+        "l",
+        "t"
+      ],
+      "rootChildren": [
+        "t",
+        "l"
+      ]
+    },
+    {
+      "name": "a $bindState value where a string is expected",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"c\"}\n{\"op\":\"add\",\"path\":\"/elements/c\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":{\"$bindState\":\"/title\"}},\"children\":[\"t\"]}}\n{\"op\":\"add\",\"path\":\"/elements/t\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":{\"$bindState\":\"/text\"}},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/state\",\"value\":{\"title\":\"T\",\"text\":\"Body\"}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": true,
+      "hasControls": true,
+      "issueCount": 0,
+      "adopted": [],
+      "text": "",
+      "elements": [
+        "c",
+        "t"
+      ],
+      "rootChildren": [
+        "t"
+      ]
+    },
+    {
+      "name": "props that are one dynamic value",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"c\"}\n{\"op\":\"add\",\"path\":\"/elements/c\",\"value\":{\"type\":\"Card\",\"props\":{},\"children\":[\"t\"]}}\n{\"op\":\"add\",\"path\":\"/elements/t\",\"value\":{\"type\":\"Text\",\"props\":{\"$state\":\"/props\"},\"children\":[]}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": true,
+      "hasControls": false,
+      "issueCount": 0,
+      "adopted": [],
+      "text": "",
+      "elements": [
+        "c",
+        "t"
+      ],
+      "rootChildren": [
+        "t"
+      ]
+    },
+    {
+      "name": "bad: no block at all",
+      "code": "",
+      "streaming": false,
+      "renderable": false,
+      "complete": false,
+      "hasControls": false,
+      "issueCount": 1,
+      "adopted": [],
+      "text": "",
+      "elements": null,
+      "rootChildren": null
+    },
+    {
+      "name": "bad: not a patch line",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"Dinner\",\"subtitle\":\"For two\"},\"children\":[\"text\",\"table\"]}}\n{\"op\":\"add\",\"path\":\"/elements/text\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Roast vegetables\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/table\",\"value\":{\"type\":\"Table\",\"props\":{\"columns\":[\"Dish\",\"Minutes\"],\"rows\":[[\"Soup\",20],[\"Tart\",45]]},\"children\":[]}}\nThat is the plan.",
+      "streaming": false,
+      "renderable": true,
+      "complete": false,
+      "hasControls": false,
+      "issueCount": 1,
+      "adopted": [],
+      "text": "Dinner\n\nFor two\n\nRoast vegetables\n\nDish: Soup · Minutes: 20\n\nDish: Tart · Minutes: 45",
+      "elements": [
+        "card",
+        "table",
+        "text"
+      ],
+      "rootChildren": [
+        "text",
+        "table"
+      ]
+    },
+    {
+      "name": "bad: a JSON line that is not a patch",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"Dinner\",\"subtitle\":\"For two\"},\"children\":[\"text\",\"table\"]}}\n{\"op\":\"add\",\"path\":\"/elements/text\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Roast vegetables\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/table\",\"value\":{\"type\":\"Table\",\"props\":{\"columns\":[\"Dish\",\"Minutes\"],\"rows\":[[\"Soup\",20],[\"Tart\",45]]},\"children\":[]}}\n{\"note\":\"done\"}",
+      "streaming": false,
+      "renderable": true,
+      "complete": false,
+      "hasControls": false,
+      "issueCount": 1,
+      "adopted": [],
+      "text": "Dinner\n\nFor two\n\nRoast vegetables\n\nDish: Soup · Minutes: 20\n\nDish: Tart · Minutes: 45",
+      "elements": [
+        "card",
+        "table",
+        "text"
+      ],
+      "rootChildren": [
+        "text",
+        "table"
+      ]
+    },
+    {
+      "name": "bad: root not a Card",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Stack\",\"props\":{\"title\":\"Dinner\",\"subtitle\":\"For two\"},\"children\":[\"text\",\"table\"]}}\n{\"op\":\"add\",\"path\":\"/elements/text\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Roast vegetables\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/table\",\"value\":{\"type\":\"Table\",\"props\":{\"columns\":[\"Dish\",\"Minutes\"],\"rows\":[[\"Soup\",20],[\"Tart\",45]]},\"children\":[]}}",
+      "streaming": false,
+      "renderable": false,
+      "complete": false,
+      "hasControls": false,
+      "issueCount": 1,
+      "adopted": [],
+      "text": "Roast vegetables\n\nDish: Soup · Minutes: 20\n\nDish: Tart · Minutes: 45",
+      "elements": [
+        "card",
+        "table",
+        "text"
+      ],
+      "rootChildren": [
+        "text",
+        "table"
+      ]
+    },
+    {
+      "name": "bad: root with no children",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"Empty\"},\"children\":[]}}",
+      "streaming": false,
+      "renderable": false,
+      "complete": false,
+      "hasControls": false,
+      "issueCount": 1,
+      "adopted": [],
+      "text": "Empty",
+      "elements": [
+        "card"
+      ],
+      "rootChildren": []
+    },
+    {
+      "name": "bad: root names an element that is not there",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"main\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{},\"children\":[\"t\"]}}\n{\"op\":\"add\",\"path\":\"/elements/t\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Hi\"},\"children\":[]}}",
+      "streaming": false,
+      "renderable": false,
+      "complete": false,
+      "hasControls": false,
+      "issueCount": 1,
+      "adopted": [],
+      "text": "",
+      "elements": null,
+      "rootChildren": null
+    },
+    {
+      "name": "bad: unknown component",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"Dinner\",\"subtitle\":\"For two\"},\"children\":[\"text\",\"table\"]}}\n{\"op\":\"add\",\"path\":\"/elements/text\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Roast vegetables\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/table\",\"value\":{\"type\":\"Grid\",\"props\":{\"columns\":[\"Dish\",\"Minutes\"],\"rows\":[[\"Soup\",20],[\"Tart\",45]]},\"children\":[]}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": false,
+      "hasControls": false,
+      "issueCount": 1,
+      "adopted": [],
+      "text": "Dinner\n\nFor two\n\nRoast vegetables",
+      "elements": [
+        "card",
+        "text"
+      ],
+      "rootChildren": [
+        "text"
+      ]
+    },
+    {
+      "name": "bad: missing child",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"Dinner\",\"subtitle\":\"For two\"},\"children\":[\"text\",\"table\",\"gone\"]}}\n{\"op\":\"add\",\"path\":\"/elements/text\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Roast vegetables\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/table\",\"value\":{\"type\":\"Table\",\"props\":{\"columns\":[\"Dish\",\"Minutes\"],\"rows\":[[\"Soup\",20],[\"Tart\",45]]},\"children\":[]}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": false,
+      "hasControls": false,
+      "issueCount": 1,
+      "adopted": [],
+      "text": "Dinner\n\nFor two\n\nRoast vegetables\n\nDish: Soup · Minutes: 20\n\nDish: Tart · Minutes: 45",
+      "elements": [
+        "card",
+        "table",
+        "text"
+      ],
+      "rootChildren": [
+        "text",
+        "table"
+      ]
+    },
+    {
+      "name": "bad: wrong prop type",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"Dinner\",\"subtitle\":\"For two\"},\"children\":[\"text\",\"table\"]}}\n{\"op\":\"add\",\"path\":\"/elements/text\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Roast vegetables\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/table\",\"value\":{\"type\":\"Table\",\"props\":{\"columns\":[\"Dish\",\"Minutes\"],\"rows\":\"Soup, 20\"},\"children\":[]}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": false,
+      "hasControls": false,
+      "issueCount": 1,
+      "adopted": [],
+      "text": "Dinner\n\nFor two\n\nRoast vegetables",
+      "elements": [
+        "card",
+        "table",
+        "text"
+      ],
+      "rootChildren": [
+        "text",
+        "table"
+      ]
+    },
+    {
+      "name": "bad: a number where a string is expected",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"Dinner\",\"subtitle\":\"For two\"},\"children\":[\"text\",\"table\"]}}\n{\"op\":\"add\",\"path\":\"/elements/text\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":12},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/table\",\"value\":{\"type\":\"Table\",\"props\":{\"columns\":[\"Dish\",\"Minutes\"],\"rows\":[[\"Soup\",20],[\"Tart\",45]]},\"children\":[]}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": false,
+      "hasControls": false,
+      "issueCount": 1,
+      "adopted": [],
+      "text": "Dinner\n\nFor two\n\n12\n\nDish: Soup · Minutes: 20\n\nDish: Tart · Minutes: 45",
+      "elements": [
+        "card",
+        "table",
+        "text"
+      ],
+      "rootChildren": [
+        "text",
+        "table"
+      ]
+    },
+    {
+      "name": "bad: an enum value outside the set",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"c\"}\n{\"op\":\"add\",\"path\":\"/elements/c\",\"value\":{\"type\":\"Card\",\"props\":{},\"children\":[\"k\"]}}\n{\"op\":\"add\",\"path\":\"/elements/k\",\"value\":{\"type\":\"Callout\",\"props\":{\"variant\":\"danger\",\"title\":\"Careful\"},\"children\":[]}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": false,
+      "hasControls": false,
+      "issueCount": 1,
+      "adopted": [],
+      "text": "Careful",
+      "elements": [
+        "c",
+        "k"
+      ],
+      "rootChildren": [
+        "k"
+      ]
+    },
+    {
+      "name": "bad: missing required prop",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"c\"}\n{\"op\":\"add\",\"path\":\"/elements/c\",\"value\":{\"type\":\"Card\",\"props\":{},\"children\":[\"f\"]}}\n{\"op\":\"add\",\"path\":\"/elements/f\",\"value\":{\"type\":\"Facts\",\"props\":{\"rows\":[{\"label\":\"Only a label\"}]},\"children\":[]}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": false,
+      "hasControls": false,
+      "issueCount": 1,
+      "adopted": [],
+      "text": "Only a label",
+      "elements": [
+        "c",
+        "f"
+      ],
+      "rootChildren": [
+        "f"
+      ]
+    },
+    {
+      "name": "bad: a required prop set to null",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"c\"}\n{\"op\":\"add\",\"path\":\"/elements/c\",\"value\":{\"type\":\"Card\",\"props\":{},\"children\":[\"t\"]}}\n{\"op\":\"add\",\"path\":\"/elements/t\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":null},\"children\":[]}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": false,
+      "hasControls": false,
+      "issueCount": 1,
+      "adopted": [],
+      "text": "",
+      "elements": [
+        "c",
+        "t"
+      ],
+      "rootChildren": [
+        "t"
+      ]
+    },
+    {
+      "name": "bad: a list where chips take strings",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"c\"}\n{\"op\":\"add\",\"path\":\"/elements/c\",\"value\":{\"type\":\"Card\",\"props\":{},\"children\":[\"k\"]}}\n{\"op\":\"add\",\"path\":\"/elements/k\",\"value\":{\"type\":\"Chips\",\"props\":{\"options\":[\"a\"],\"value\":[1,2]},\"children\":[]}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": false,
+      "hasControls": true,
+      "issueCount": 1,
+      "adopted": [],
+      "text": "",
+      "elements": [
+        "c",
+        "k"
+      ],
+      "rootChildren": [
+        "k"
+      ]
+    },
+    {
+      "name": "bad: an image that is not an object",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"c\"}\n{\"op\":\"add\",\"path\":\"/elements/c\",\"value\":{\"type\":\"Card\",\"props\":{},\"children\":[\"l\"]}}\n{\"op\":\"add\",\"path\":\"/elements/l\",\"value\":{\"type\":\"List\",\"props\":{\"items\":[{\"title\":\"A\",\"image\":\"https://example.com/a.jpg\"}]},\"children\":[]}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": false,
+      "hasControls": false,
+      "issueCount": 1,
+      "adopted": [],
+      "text": "A",
+      "elements": [
+        "c",
+        "l"
+      ],
+      "rootChildren": [
+        "l"
+      ]
+    },
+    {
+      "name": "bad: an invalid visible condition",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"c\"}\n{\"op\":\"add\",\"path\":\"/elements/c\",\"value\":{\"type\":\"Card\",\"props\":{},\"children\":[\"t\"]}}\n{\"op\":\"add\",\"path\":\"/elements/t\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Hi\"},\"children\":[],\"visible\":{\"$state\":\"/a\",\"$item\":\"b\"}}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": false,
+      "hasControls": false,
+      "issueCount": 1,
+      "adopted": [],
+      "text": "Hi",
+      "elements": [
+        "c",
+        "t"
+      ],
+      "rootChildren": [
+        "t"
+      ]
+    },
+    {
+      "name": "bad: repeat with no children",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"c\"}\n{\"op\":\"add\",\"path\":\"/elements/c\",\"value\":{\"type\":\"Card\",\"props\":{},\"children\":[\"t\"]}}\n{\"op\":\"add\",\"path\":\"/elements/t\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Hi\"},\"children\":[],\"repeat\":{\"statePath\":\"/rows\"}}}\n{\"op\":\"add\",\"path\":\"/state/rows\",\"value\":[1]}",
+      "streaming": false,
+      "renderable": true,
+      "complete": false,
+      "hasControls": true,
+      "issueCount": 1,
+      "adopted": [],
+      "text": "Hi",
+      "elements": [
+        "c",
+        "t"
+      ],
+      "rootChildren": [
+        "t"
+      ]
+    },
+    {
+      "name": "bad: slots that are not lists",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"c\"}\n{\"op\":\"add\",\"path\":\"/elements/c\",\"value\":{\"type\":\"Card\",\"props\":{},\"children\":[\"t\"]}}\n{\"op\":\"add\",\"path\":\"/elements/t\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Hi\"},\"children\":[],\"slots\":{\"header\":\"x\"}}}",
+      "streaming": false,
+      "renderable": true,
+      "complete": false,
+      "hasControls": false,
+      "issueCount": 2,
+      "adopted": [],
+      "text": "Hi",
+      "elements": [
+        "c",
+        "t"
+      ],
+      "rootChildren": [
+        "t"
+      ]
+    },
+    {
+      "name": "bad: a cut-off stream read as finished",
+      "code": "{\"op\":\"add\",\"path\":\"/root\",\"value\":\"card\"}\n{\"op\":\"add\",\"path\":\"/elements/card\",\"value\":{\"type\":\"Card\",\"props\":{\"title\":\"Dinner\",\"subtitle\":\"For two\"},\"children\":[\"text\",\"table\"]}}\n{\"op\":\"add\",\"path\":\"/elements/text\",\"value\":{\"type\":\"Text\",\"props\":{\"text\":\"Roast vegetables\"},\"children\":[]}}\n{\"op\":\"add\",\"path\":\"/elements/table\",\"value\":{\"type\":\"Table\",\"props\":{\"columns\":[\"Dish\",\"Minutes\"],\"rows\":[[\"Soup\",20]",
+      "streaming": false,
+      "renderable": true,
+      "complete": false,
+      "hasControls": false,
+      "issueCount": 2,
+      "adopted": [],
+      "text": "Dinner\n\nFor two\n\nRoast vegetables",
+      "elements": [
+        "card",
+        "text"
+      ],
+      "rootChildren": [
+        "text"
+      ]
+    }
+  ]
+}

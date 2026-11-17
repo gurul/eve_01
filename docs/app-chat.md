@@ -3,15 +3,16 @@
 The owner is moving from Telegram to texting eve in Eve Link, the iPhone
 app. On 2026-10-08 the owner asked for it to be "very simple minimal very very
 clean", like the ChatGPT app, and "I just don't want to interact with a webpage
-on my app". So the app is one native screen with no tab bar. Only eve's
-messages are a web view.
+on my app". So the app is one native screen with no tab bar. Since 2026-11-17
+the messages are native too (owner: "i want everything to be native swfit
+now"): the chat has no web view. See [How it is built](#how-it-is-built).
 
 The app opens on Chat every time (owner, 2026-10-12: "when I open, chat should
 still be main pane"). Left of Chat is **Updates**, a short list of things to
 act on that eve found in your mail, calendar, notes, memory and the chief's
 jobs. See [Updates](updates.md).
 
-[eve lite](lite.md) runs this same chat page in a browser, on the Mac and on phones
+[eve lite](lite.md) runs the same chat as a web page in a browser, on the Mac and on phones
 on the same Wi-Fi, with a shell of its own around it and WebRTC in place of the
 tunnel: see [eve lite: the same chat in a browser](#eve-lite-the-same-chat-in-a-browser).
 
@@ -29,8 +30,7 @@ screen but the controls below until there are messages.
   content at once and only the highlight slides. Every cold launch opens on
   Chat, whatever tab was shown last; a link that opens the app
   (`evelink://updates`, the widget's `evelink://work`) still wins. The chat's
-  web view stays alive, hidden, on Updates, Apps and Work:
-  rebuilding it on every switch reloaded the page and made switching jittery. At right, a round 44 pt button
+  list stays alive, hidden, on Updates, Apps and Work, so it keeps its place. At right, a round 44 pt button
   opens **voice mode**. Its waveform is red and moves while a call is open.
   While the chat shows, the bar sits on a fade: the screen's color behind the
   status bar, fading to clear at the bar's bottom edge. A message scrolled up
@@ -279,7 +279,8 @@ screen but the controls below until there are messages.
 ### What the owner sees in the chat
 
 - eve's replies stream in as they are written. A reply can hold a table, a
-  chart, a list, steps or choices, drawn by OpenUI.
+  chart, a list, steps or choices, drawn natively as a card
+  ([The card engine](#the-card-engine)).
 - Messages from Telegram and from voice show in the same history.
 - eve reacts to the owner's message the way it does in Telegram: 👀 while it
   reads a photo or file, ✍ when a note is kept or note taking starts, 🏆 when a
@@ -340,7 +341,11 @@ works. Before this, the composer had only Stop while eve replied.
   started then could stay open with nobody reading it. That message waits,
   still marked Queued, and goes when the chat shows again.
 
-How it is built. The page keeps the queue (`Web/src/sendQueue.ts`): native's
+How it is built. In the app the queue is `SendQueue` and `StartGate`
+(`Packages/EveChat/Sources/EveChatCore/SendQueue.swift`), held by `ChatEngine`,
+with the same rules; the queued bubbles are owner bubbles after the thread.
+The rest of this paragraph describes eve lite's page, which the Swift follows
+rule for rule. The page keeps the queue (`Web/src/sendQueue.ts`): native's
 `send(text, attachments)` goes to the end of it, and a send starts only when no
 turn of the page's is in flight or running and the history has loaded, the same
 guard as before (`inFlight`). It leaves the queue in the same call that hands it
@@ -362,49 +367,51 @@ change is in `ChatComposer.sendButton` (`App/ChatScreen.swift`).
 
 ## How it is built
 
-Three parts. Only the middle one is a web page.
+All of it is native SwiftUI. There is no web view, no page and no JavaScript
+in the chat.
 
-1. **The composer is native SwiftUI** (`App/ChatScreen.swift`). It is a
-   `TextField` with a vertical axis, the system font, Dynamic Type and
-   VoiceOver labels. Sending calls `window.eveNative.send(text)` on the page,
-   so the page runs the turn through OpenUI. The typed message and the streamed
-   reply then look exactly as if they were typed in OpenUI's own composer.
-2. **The message list is OpenUI in a WKWebView** (`App/ChatWebView.swift`). The
-   page is built by `ios/EveLink/Web` into `App/ChatWeb` and is part of the
-   app. A `WKURLSchemeHandler` serves it at `eveapp://chat/index.html`. It is
-   never loaded from a URL.
-3. **All network is native** (`Shared/ChatTransport.swift`). The page asks the
-   app through the `eve` message handler. The app calls the daemon through
-   the Mini App's tunnel with the link token, and passes the answer back as
-   text. The token is in the Keychain and in the `Authorization` header. It is
-   never in JavaScript and never in a URL.
+1. **The composer** (`App/ChatScreen.swift`): a `TextField` with a vertical
+   axis, the system font, Dynamic Type and VoiceOver labels.
+2. **The message list** is three local Swift packages under
+   `ios/EveLink/Packages/` (Swift 6, iOS 18):
 
-The page and the app talk only through these calls
-(`Shared/ChatBridge.swift`):
+   | Package | What it does |
+   |---|---|
+   | `EveChat` | `EveChatCore` (Foundation only, tested on the Mac): the daemon's answers read leniently (`Wire.swift`), the thread and its ledger (`Thread.swift`), the send queue, topics, a reply cut into prose and cards (`ReplyParts.swift`), and `ChatEngine`, which runs turns, the long poll, older pages and Horizontal History through a `ChatDoor` it is handed. `EveChatUI`: the list (`ChatList.swift`), bubbles, attachments, reactions, sources, the typing dots and the history row. |
+   | `EveMarkdown` | Prose. Foundation's markdown parser with repairs for task boxes, empty table cells and rules, drawn as SwiftUI text, lists, quotes, tables, code and pictures. While a reply streams, half-written marks are hidden and only the last block is parsed again. |
+   | `EveCards` | Cards. [json-render](https://github.com/vercel-labs/json-render)'s Swift package (pinned to 0.23.1) with eve's catalog, drawn with SwiftUI and Swift Charts ([The card engine](#the-card-engine)). |
 
-| Page to app (`postMessage`) | What the app does |
+   `App/ChatModel.swift` joins them to the app: it is the engine's `ChatDoor`
+   over the transport, and it opens links, Quick Look and haptics.
+3. **All network** is `Shared/ChatTransport.swift`. It calls the daemon
+   through the Mini App's tunnel with the link token, which is in the Keychain
+   and in the `Authorization` header and never in a URL.
+
+What the engine asks of the door:
+
+| Call | What the app does |
 |---|---|
-| `{type:"ready"}` | Turns the composer on and shows the page. |
-| `{type:"turn", id, text, client_id, attachments?}` | `POST /api/link/turn` with the speed dial's `grade` added by native, streams the reply to `onChunk`, then `onDone` or `onError`. `attachments` is up to four upload ids (32 lowercase hex each, none twice; anything else and the message is dropped); with one, `text` may be empty. |
-| `{type:"cancel", id}` | Stops that turn or poll. The page hears nothing more about it. |
-| `{type:"messages", id, after, wait}` | `GET /api/link/messages`, gives the JSON to `onMessages` as a string. |
-| `{type:"haptic", style}` | Plays a light, soft or success haptic. |
-| `{type:"openURL", url}` | Opens http(s) in the site's own app when one is installed and claims the link (a universal link: the NYT, Slack, Notion...), otherwise in Safari inside the app; mail, phone, messages, Maps and FaceTime links in their apps. |
-| `{type:"openAttachment", id, name, kind}` | `GET /api/link/file/<id>`, then Quick Look with share. `id` must be 32 lowercase hex and `kind` one of image, pdf, text, doc, file, or the message is dropped. See "Attachments". |
+| `turn` | `POST /api/link/turn` with `{text, client_id, grade, cards, attachments?}`. `grade` is the speed dial's (`"auto"`, `"instant"` or `"think"`); `cards` is always `"json-render"`, the one card format the app draws. `attachments` is up to four upload ids; with one, `text` may be empty. The reply streams in as it is written, and a character split between two network reads is held until it is whole. |
+| `messages(after:wait:before:)` | `GET /api/link/messages`: the history, the long poll, or an older page. |
+| `topics`, `bookmark` | Horizontal History's routes. |
 
-The app calls `window.eveNative.onChunk(id, text)`, `onDone(id)`,
-`onError(id, message)`, `onMessages(id, json)`, `send(text, attachmentsJSON?)`, `setBusy(bool)`,
-`scrollToBottom()` and `setInsets({top, bottom})` (see "The cut-off"). Every string goes in as an escaped JavaScript literal,
-so text from eve cannot run as code. A call the page has not set up yet is
-skipped.
+A tapped link opens in the site's own app when one is installed and claims it
+(a universal link), otherwise in Safari inside the app; mail, phone, messages,
+Maps and FaceTime links open in their apps. A tapped attachment is fetched
+(`GET /api/link/file/<id>`) and shown in Quick Look.
 
-The stream bytes go to `onChunk` in order. Bytes that arrive during one turn of
-the main run loop go as one call. A character split between two network reads
-is held until it is whole.
+**Up to 2026-11-17** the list was OpenUI's React page in a `WKWebView`
+(`App/ChatWebView.swift`, a bundle in `App/ChatWeb`, and a message bridge in
+`Shared/ChatBridge.swift`). All three are gone. The page lives on as eve
+lite's web app ([below](#eve-lite-the-same-chat-in-a-browser)). Where a later
+section names a file under `Web/src` or a call on `window.eveNative`, it
+describes that page; the Swift follows the same rules, and `EveChatCore`'s
+tests hold the ones that matter (the ledger, the queue, merging, reactions,
+sources).
 
-The page's `{type:"turn"}` message did not change for the speed dial: native
-adds `"grade": "auto" | "instant" | "think"` to the request body
-(`ChatRequests.turn`).
+**An older card.** A card written in the OpenUI format, from before the
+change, shows in the app as one quiet line: "This card was made in an older
+format. Ask eve again to see it." eve lite still draws both formats.
 
 When a call cannot reach eve, the app asks the rendezvous for eve's new
 address (the same path a call uses) and tries once more. Trying a turn
@@ -724,77 +731,27 @@ failed call: the first-message title and the rules above.
   (`ChatTransport.json`) and answers with `eveNative.onLink(id, json)` or `onError`. The button calls
   `eveNative.toggleHistory()`. Each bubble carries its message id as `data-mid` for the jump.
 
-## Why it does not feel like a web page
+## Native feel
 
-- The page is in the app. There is no load from the network and no loading
-  flash: the web view stays hidden until the page says it is ready (or for 2
-  seconds at most).
-- No zoom, no bounce of the page itself, no tap highlight, no link previews, no
-  long-press menus outside the message text, no back or forward swipe.
-- The web view is clear, with the screen's background behind it (pure black
-  in dark mode, `EveStyle.background`; the page's own background is
-  transparent), so light and dark mode match. It fills the whole screen, under
-  the top bar and the composer, and the page pads its list by what covers it
-  (below).
-- The web view goes nowhere. Every navigation except the bundled page is
-  cancelled. A tapped link opens in its own app when one claims it, otherwise in Safari inside the app.
-- The page cannot fetch anything itself: its Content-Security-Policy has
-  `connect-src 'none'`.
-- Haptics come from native code. The send haptic is the composer's; the page
-  asks for one soft haptic when the first words of a reply arrive (a keep-alive
-  ping is not words) and when a new eve line comes in from the long poll.
-- No web loading screen and no web error box. OpenUI's "Loading conversation…"
-  loader and its "Something went wrong" callout are hidden. The page retries
-  the history quietly with backoff (1 s, doubling to 15 s), and the list fills
-  when eve answers.
-- No OpenUI branding and no lighter pane. Since react-ui 0.18.1 OpenUI draws
-  its mascot in the "Working" row before a reply, in the Behind the scenes
-  header, in its loaders and on the welcome screen; all of them are hidden
-  (`native.css`). The Thinking and tool icons in the same row stay. 0.18.1
-  also boxes the thread in a lighter rounded pane when the container is not
-  "mobile" (under 768 px wide, measured), which on the phone is the first
-  frame; the pane is flattened, so the native background is the only one.
-- No sticky hover. iOS keeps `:hover` on a tapped element until the next tap,
-  so the build moves every `:hover` rule into `@media (hover: hover)`
-  (`vite.config.ts`, `hoverOnlyWithPointer`). A tapped button does not stay
-  highlighted.
-- A markdown reply streams in word by word. OpenUI (react-ui 0.18.1) shows a live reply
-  only when its text has an OpenUI Lang fence, so the page puts an empty
-  ```` ```openui-lang ```` fence in front of each live reply
-  (`llm.ts`, `liveMarkdownAdapter`) and the renderer drops it (`replyParts.ts`,
-  `LIVE_MARK`).
-- A new line from the long poll scrolls into view when you are at the bottom
-  of the chat. When you have scrolled up, the chat stays where it is.
+- The list is a SwiftUI `ScrollView` over a lazy stack, clear, on the screen's
+  background (pure black in dark mode, `EveStyle.background`). It fills the
+  whole screen, under the top bar and the composer, and pads its content by
+  what covers it (`ChatList(top:bottom:)`, measured by `HomeScreen.sendInsets`):
+  the first message never starts under the bar and the last rests above the
+  composer.
+- It opens at the newest message with no animation. A sent message and a new
+  line from eve scroll into view when you are at the end; when you have
+  scrolled up the chat stays where it is, and a round button brings you back.
+- An older page is added above without moving what you are reading.
 - The keyboard pushes the composer up. A chat that was at its last message
   stays there; a chat scrolled up keeps its place.
-
-## The cut-off (fixed 2026-10-08)
-
-On the owner's phone the newest message sat under a fade above the composer
-while the keyboard was up, and messages scrolled up under the status bar with
-nothing behind them. Now:
-
-- The web view fills the screen, keyboard area included, so the keyboard never
-  resizes or scrolls it.
-- Native measures the top bar's bottom edge and the composer's top edge (on the
-  keyboard when it is up) on every layout change and calls
-  `window.eveNative.setInsets({top, bottom})` in CSS px (points): `top` is
-  the bar's bottom, `bottom` is the web view's bottom minus the composer's top
-  (`HomeScreen.sendInsets`, `ChatModel.setInsets`). It is sent again when the
-  page says ready.
-- The page sets `--eve-inset-top` and `--eve-inset-bottom` on `<html>`
-  (`insets.ts`). The list's top padding is the bar's bottom plus 8 px, so the
-  first message never starts under the bar; its bottom padding is the inset
-  plus 16 px, so the last message rests 16 px above the composer. The
-  scroll-to-latest arrow and the typing dots move with it.
-- If the list was at its end before the change, it is scrolled to the end after
-  the new padding is laid out and again 320 ms later, after the keyboard's
-  animation. A list scrolled up is left alone.
-- OpenUI's own top and bottom fades are off; the bottom one was the fade over
-  the newest message. The only fade is native, under the top bar, and ends at
-  the bar's bottom edge. Behind the composer the screen's color starts at the
-  card's top edge (18 pt of fade inside the card's height), so no fade covers
-  the last message at rest.
+- Haptics: the composer's on send, one soft one when the first words of a
+  reply arrive and when a new eve line comes in from the long poll.
+- No loading screen and no error box. The history is retried quietly with
+  backoff, and the list fills when eve answers.
+- Text is the system font in the system text styles, so Dynamic Type applies
+  to prose and cards alike. Light and dark follow the system.
+- The only fade is under the top bar and ends at the bar's bottom edge.
 
 ## Design hook (simulator only)
 
@@ -808,6 +765,9 @@ has none of it (checked: the strings `EVE_PAIR_URL`, `eveScreen` and
   screen open).
 - `-eveGrade auto | instant | think`: preselects the speed dial.
 - `-eveKeyboard YES` (with `chat`): puts the cursor in the composer.
+- `-eveSend "<words>"` (with `chat`): sends them as the owner once the chat is open; several messages are
+  separated by ` | `.
+- `-eveHistory YES` (with `chat`): opens Horizontal History's row.
 - `-eveControl notes|spotify|lights|firetv|pika|obsbot|memory|<app id>` (with `apps`): opens that control's sheet;
   any other id the Mac lists opens its generic sheet.
 - `-eveNote <vault path>` (with `-eveControl notes`): opens that note's page.
@@ -818,6 +778,13 @@ has none of it (checked: the strings `EVE_PAIR_URL`, `eveScreen` and
 SIMCTL_CHILD_EVE_PAIR_URL='evelink://pair?u=http://127.0.0.1:8765&t=<32+ chars>' \
   xcrun simctl launch booted com.github.eve-bridge.EveLink -eveScreen chat
 ```
+
+With no Mac daemon to pair with, `python3 ios/EveLink/tools/fake_link.py`
+stands in for the link door on `127.0.0.1:8765`: a made-up conversation with
+prose, every example card, a picture, a file, sources, a reaction, an older
+page and topics, and turns that stream ("card", "photo", "slow" or "fail" in
+the message picks the reply). Nothing in it is real and it listens on this
+Mac only.
 
 ## Work: how it is built
 
@@ -868,19 +835,21 @@ The home-screen widget ([widget.md](widget.md)) shows the same jobs, plus the
 watches, the calendar and what plays, from its own read. A tap on it opens
 Work (`evelink://work`). The app asks it to refresh when Work's jobs change.
 
-## Why OpenUI in a web view, with a native composer
+## Why native, and why it was a web view before
 
-eve's replies can be generative UI: OpenUI Lang that becomes tables, charts,
-steps and choices. OpenUI renders that with React. A native renderer for every
-component would be a second copy of OpenUI that drifts. So the message list is
-OpenUI as it is. What the owner touches most (the field, the keyboard, the send
-and mic buttons, haptics) is native, so it feels like an iPhone app.
+Until 2026-11-17 the list was OpenUI in a web view: eve's replies can be
+generative UI, OpenUI renders that with React, and a native renderer for
+every component would have been a second copy that drifts. json-render
+changed that: one catalog describes the components, and the library ships a
+Swift renderer beside its React one. The Swift catalog is generated from the
+web one (`pnpm gen-swift-catalog`), and 55 fixture cards are checked to read
+the same in both (`pnpm gen-card-fixtures`, `CardParityTests`), so the two
+cannot drift quietly.
 
 ## Background and foreground
 
-When the app goes to the background, or Work is showing (the web view leaves
-the window; the page is kept, so coming back does not reload it), WebKit tells
-the page it is hidden (`visibilitychange`), and the page stops its long poll. In
+When the app goes to the background, or Work is showing, the engine is told
+the chat is hidden (`ChatEngine.setVisible`) and stops its long poll. In
 the background the app holds a background task for up to 25 seconds, then
 stops any stream that is still open (or sooner, if iOS ends the background
 task first). Without the background task, iOS suspends the app in a few
@@ -976,11 +945,9 @@ wrapper stays mounted through streaming completion and text/card switches; only
 an explicit reset restarts the renderer. Initial state is captured once per
 mount, so stream updates do not reapply stale form defaults.
 
-To include source changes in the phone app, `sh ios/EveLink/build.sh` now installs
-the locked web dependencies and rebuilds the page before generating the Xcode
-project. It requires Node 22.12+ and pnpm as well as Xcode/xcodegen, and stops on a
-web build failure. Direct Xcode builds need `pnpm install --frozen-lockfile` and
-`pnpm build` in `ios/EveLink/Web` first. Generated bundles stay out of commits.
+The phone app no longer builds or bundles this page (2026-11-17): `sh
+ios/EveLink/build.sh` needs Xcode and xcodegen only. Node and pnpm are needed
+for eve lite's page (`pnpm build:web`) and for the generators.
 
 These changes apply the catalog, progressive rendering and fallback ideas in
 [OpenUI's Intelligent UI analysis](https://www.openui.com/blog/how-chatgpt-intelligent-ui-works)
@@ -1023,20 +990,30 @@ only an image URL from a tool result, the conversation or the owner, never an in
 
 Owner, 2026-11-16: "lets start by testing just json renderer for this week".
 
-The app can draw a card from two engines. One switch on the Mac says which
-one eve writes:
+There are two card formats. The iPhone app draws one of them, json-render,
+natively, and says so on every turn (`"cards": "json-render"` in the turn's
+body; `link_chat.turn_engine`), so eve writes that format for the app whatever
+the switch says. The switch on the Mac decides for a client that does not
+say, which today is eve lite's page:
 
 | `EVE_CARD_ENGINE` | What an app turn is told to write | What draws it |
 |---|---|---|
 | unset, or anything else (default) | an `openui-lang` block ([When a reply uses OpenUI](#when-a-reply-uses-openui)) | OpenUI's renderer (`GeneratedCard.tsx`) |
 | `json-render` | a `json-render` block | [json-render](https://github.com/vercel-labs/json-render)'s renderer (`JsonCard.tsx`) |
 
-**To try it:** add `EVE_CARD_ENGINE=json-render` to `~/.config/eve-bridge/env`
-and restart the daemon. **To go back:** remove the line and restart. The
-phone needs an Eve Link built from a commit that has `JsonCard.tsx`
-(`sh ios/EveLink/build.sh --install`); an older app shows a json-render block
-as a block of code. The app draws both kinds of block whatever the switch
-says, so cards from before a change still draw after it.
+**To set it:** add `EVE_CARD_ENGINE=json-render` to `~/.config/eve-bridge/env`
+and restart the daemon. **To go back:** remove the line and restart. eve
+lite's page draws both kinds of block whatever the switch says. An Eve Link
+built before 2026-11-17 names no format and follows the switch.
+
+**On the phone** the card is drawn by `EveCards`: json-render's Swift
+renderer decides what is on the card, and each part is a SwiftUI view of
+eve's (`Packages/EveCards/Sources/EveCardUI`), charts by Swift Charts. The
+catalog it accepts (`card-catalog.json`) is generated from the web catalog,
+and `pnpm check-swift-catalog` fails when it is stale. A card streams in as
+its lines arrive and never goes backwards (`selectCard`). The rules below
+(what a finished card requires, the one repair, the picture gradients, the
+two actions) are the same in Swift, held by the parity fixtures.
 
 **What changes with the switch, and what does not.** The decision of when to
 write a card is the same sentence for both engines (`link_chat.JSON_APP_RULE`
@@ -1447,8 +1424,11 @@ source's words escaped.
 - The Stop button stops the stream on the phone. It does not stop eve: the
   daemon has no cancel for a turn. The full reply is in the history.
 - A queued message cannot be edited or taken back before it goes. The queue
-  lives in the page: if iOS ends the web view's process before they go, the
-  messages still queued are lost (their words were never sent).
+  is in memory: if the app is ended before they go, the messages still queued
+  are lost (their words were never sent).
+- The native chat has no syntax colouring or copy button on code, selects
+  text a block at a time, and shows a card in the older OpenUI format as one
+  line rather than drawing it.
 - No voice notes from the composer, and no camera in the "+" menu.
 - Work cannot answer a chief's question; answer it in the chat.
 - No Apple push notifications (a free personal team cannot use them). eve

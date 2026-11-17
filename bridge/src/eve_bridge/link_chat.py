@@ -23,6 +23,9 @@ view and does all its networking natively (ios/EveLink); this module is the daem
   ``instant`` (the chat's model at low effort, no think_hard) or ``think`` (``EVE_APP_THINK_MODEL`` at
   ``EVE_APP_THINK_EFFORT``), applied by telegram.graded to every model call of the turn. Quick answers by code
   still answer first in each grade.
+* ``POST /api/link/turn`` also takes ``"cards"``: the card engine the client draws. The iPhone app draws cards
+  natively and sends ``"json-render"``; that turn writes json-render blocks whatever EVE_CARD_ENGINE says
+  (``turn_engine``, ``drawing``). Any other value, or none, follows the switch.
 * ``GET /api/link/jobs``: the chief's cards (chief.py) for the app's Work view, each ``Chief._as_data`` plus
   ``rev``, a status ``line``, the steps done, ``needs_you`` and the ``actions`` that apply now; open cards first
   (the ones that need the owner first), then the last ``FINISHED_SHOWN`` done. A dropped card is never listed. 503
@@ -167,6 +170,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import contextvars
 import json
 import logging
 import os
@@ -176,7 +180,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Collection, Optional
+from typing import Any, Callable, Collection, Iterator, Optional
 from urllib.parse import parse_qsl
 
 from . import app_registry, memory_sources, muse_pi
@@ -335,8 +339,39 @@ ENGINE_JSON = "json-render"
 JSON_PROMPT_PATH = Path(__file__).with_name("json_render_prompt.txt")
 
 
+# The Eve Link app on the iPhone draws its cards natively (json-render's Swift renderer, ios/EveLink/Packages/EveCards)
+# and says so with each turn: ``"cards": "json-render"`` in POST /api/link/turn. That turn is told to write the
+# engine its client draws, whatever the switch says; a turn that names none (eve lite's web app, an older app) follows
+# the switch. The set of values a turn may name is exactly ``TURN_ENGINES``.
+TURN_ENGINES = (ENGINE_JSON,)
+_TURN_ENGINE: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar("link_chat_turn_engine", default=None)
+
+
+def turn_engine(value: Any) -> Optional[str]:
+    """A turn request's ``cards`` as the engine that turn writes, or None (not named, or not one of TURN_ENGINES)."""
+    return value if isinstance(value, str) and value in TURN_ENGINES else None
+
+
+@contextlib.contextmanager
+def drawing(engine: Optional[str]) -> Iterator[None]:
+    """While this runs (and in the tasks it starts), ``card_engine()`` is ``engine``; None changes nothing."""
+    if engine not in TURN_ENGINES:
+        yield
+        return
+    mark = _TURN_ENGINE.set(engine)
+    try:
+        yield
+    finally:
+        _TURN_ENGINE.reset(mark)
+
+
 def card_engine(environ: Any = None) -> str:
-    """``ENGINE_JSON`` when EVE_CARD_ENGINE says json-render (case and "_" for "-" forgiven), else ``ENGINE_OPENUI``."""
+    """The engine this turn writes: the one its client named (``drawing``), else ``ENGINE_JSON`` when EVE_CARD_ENGINE
+    says json-render (case and "_" for "-" forgiven), else ``ENGINE_OPENUI``. With ``environ`` given, that alone."""
+    if environ is None:
+        named = _TURN_ENGINE.get()
+        if named is not None:
+            return named
     env = os.environ if environ is None else environ
     value = str(env.get(CARD_ENGINE_ENV) or "").strip().lower().replace("_", "-")
     return ENGINE_JSON if value in ("json-render", "jsonrender", "json") else ENGINE_OPENUI
@@ -1090,6 +1125,7 @@ class LinkChat:
         if not isinstance(grade, str) or grade not in GRADES:
             await self._json(writer, 400, {"ok": False, "error": "grade must be auto, instant or think"})
             return
+        cards = turn_engine(body.get("cards")) if isinstance(body, dict) else None
         self._prune()
         turn = self._by_client.get(client_id) if client_id else None
         if turn is not None:
@@ -1100,15 +1136,19 @@ class LinkChat:
             # This request is the turn's reader before the words are heard: a line said before the stream's first
             # write must go to the app, never to Telegram for want of a reader.
             turn.readers += 1
-            self._start(inlet, turn, text, grade, uploads)
+            self._start(inlet, turn, text, grade, uploads, cards)
         await self._stream(turn, reader, writer)
 
-    def _start(self, inlet: Any, turn: _Turn, text: str, grade: str = "auto", uploads: Optional[list[Any]] = None) -> None:
+    def _start(self, inlet: Any, turn: _Turn, text: str, grade: str = "auto", uploads: Optional[list[Any]] = None,
+               cards: Optional[str] = None) -> None:
         self._turns[turn.id] = turn
         if turn.client_id:
             self._by_client[turn.client_id] = turn
-        # only with attachments is the keyword passed, so an inlet without it (a test's) is called as before
-        extra = {"attachments": uploads} if uploads else {}
+        # only with attachments is the keyword passed, so an inlet without it (a test's) is called as before; the same
+        # for the engine the turn's client draws
+        extra: dict[str, Any] = {"attachments": uploads} if uploads else {}
+        if cards:
+            extra["cards"] = cards
         try:
             inlet.hear(text, on_call=False, app=turn.id, grade=grade, **extra)   # typed: answered in the app
         except Exception as e:  # noqa: BLE001 — the type only: a message can quote what was said

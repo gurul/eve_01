@@ -109,6 +109,11 @@ enum DesignHook {
     static var screen: String? { UserDefaults.standard.string(forKey: "eveScreen") }
     static var grade: String? { UserDefaults.standard.string(forKey: "eveGrade") }
     static var keyboard: Bool { UserDefaults.standard.bool(forKey: "eveKeyboard") }
+    /// -eveSend <words> (with -eveScreen chat): sends them as the owner once the chat has opened, to watch a reply
+    /// stream. Several messages: separate them with " | ", and each is sent a moment after the one before.
+    static var send: String? { UserDefaults.standard.string(forKey: "eveSend") }
+    /// -eveHistory YES (with -eveScreen chat): opens Horizontal History's row of topic cards.
+    static var history: Bool { UserDefaults.standard.bool(forKey: "eveHistory") }
     static var control: String? { UserDefaults.standard.string(forKey: "eveControl") }
     /// -eveMemoryQuery <words> (with -eveControl memory): runs that search in the Memory card, for screenshots.
     static var memoryQuery: String? { UserDefaults.standard.string(forKey: "eveMemoryQuery") }

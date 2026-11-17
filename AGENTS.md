@@ -382,8 +382,8 @@ are on) and `share: on`. Then send one message from the phone.
   `share.py`. The phone: `link_chat.py`, `phone_call.py`, `stick_link.py`,
   `link_uploads.py`, `link_reactions.py`, `notify.py`. Memory: `memory.py`,
   `transcripts.py`, `chat_log.py`, `mem0_memory.py`, `dream.py`. The iPhone app:
-  `ios/EveLink/App` (SwiftUI), `Shared` (logic tested on the Mac), `Web`
-  (the chat page, OpenUI). eve lite:
+  `ios/EveLink/App` (SwiftUI), `Shared` (logic tested on the Mac), `Packages`
+  (the native chat: `EveChat`, `EveMarkdown`, `EveCards`), `Web` (eve lite's chat page and the card catalog). eve lite:
   `profile.py` (the switch, what it turns off, the process firewall), `lite.py` (its
   daemon), `lite_web.py` (its two web doors), `lite_rtc.py` (WebRTC), `lite_tls.py`,
   `lan_net.py`, `web_auth.py`, `onboarding.py` (the two sign-ins), `composio_connect.py`;

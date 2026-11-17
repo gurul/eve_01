@@ -6930,7 +6930,7 @@ class TelegramInlet:
 
     def hear(self, text: str, *, answer_context: object = _UNCAPTURED_ANSWER, on_call: bool = True,
              call: Optional[Callable[[str], None]] = None, app: Optional[str] = None, grade: str = "auto",
-             attachments: Sequence[Any] = ()) -> None:
+             attachments: Sequence[Any] = (), cards: Optional[str] = None) -> None:
         """The owner's words from a call, handled exactly as a text from them, so the call can do everything the
         chat can. Not echoed into the chat (owner: no text unless it is needed); the transcript keeps them.
         What they start is marked as this call's (``_FROM_CALL``), so its answer is read out on this call.
@@ -6945,7 +6945,10 @@ class TelegramInlet:
         start is marked as that turn's (``_FROM_APP``), so its lines go to the app and not to Telegram.
         ``grade``: the app's speed dial for that turn (GRADES, ``graded``); anything else is "auto".
         ``attachments``: the app turn's photos and files (link_uploads.Upload): the words and they go as one
-        message with an image does in Telegram (``_image``), never as an answer to a waiting question."""
+        message with an image does in Telegram (``_image``), never as an answer to a waiting question.
+        ``cards``: the card engine that app turn's client draws (link_chat.turn_engine); None follows the switch."""
+        from .link_chat import drawing
+
         reader = None
         if on_call:
             if call is not None and self._call_say != call:
@@ -6955,10 +6958,11 @@ class TelegramInlet:
         app_mark = _FROM_APP.set(app)
         grade_mark = _APP_GRADE.set(grade if grade in GRADES else "auto")
         try:
-            if attachments:
-                self._hear_attached(text, tuple(attachments))
-            else:
-                self._hear(text, answer_context)
+            with drawing(cards):
+                if attachments:
+                    self._hear_attached(text, tuple(attachments))
+                else:
+                    self._hear(text, answer_context)
         finally:
             _APP_GRADE.reset(grade_mark)
             _FROM_APP.reset(app_mark)

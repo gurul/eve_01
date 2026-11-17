@@ -1,0 +1,770 @@
+{
+  "root": "Card",
+  "controls": [
+    "TextInput",
+    "Select",
+    "Chips"
+  ],
+  "components": [
+    {
+      "name": "Card",
+      "props": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "subtitle": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "slots": [
+        "default"
+      ],
+      "events": []
+    },
+    {
+      "name": "Stack",
+      "props": {
+        "type": "object",
+        "properties": {
+          "direction": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "column",
+                  "row"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "slots": [
+        "default"
+      ],
+      "events": []
+    },
+    {
+      "name": "Text",
+      "props": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ]
+      },
+      "slots": [],
+      "events": []
+    },
+    {
+      "name": "Callout",
+      "props": {
+        "type": "object",
+        "properties": {
+          "variant": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "info",
+                  "warning",
+                  "success",
+                  "neutral"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "slots": [],
+      "events": []
+    },
+    {
+      "name": "Table",
+      "props": {
+        "type": "object",
+        "properties": {
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": [
+                  "string",
+                  "number"
+                ]
+              }
+            }
+          }
+        },
+        "required": [
+          "columns",
+          "rows"
+        ]
+      },
+      "slots": [],
+      "events": []
+    },
+    {
+      "name": "Facts",
+      "props": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "label",
+                "value"
+              ]
+            }
+          }
+        },
+        "required": [
+          "rows"
+        ]
+      },
+      "slots": [],
+      "events": []
+    },
+    {
+      "name": "List",
+      "props": {
+        "type": "object",
+        "properties": {
+          "variant": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "number",
+                  "image"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "subtitle": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "image": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "src": {
+                          "type": "string"
+                        },
+                        "alt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "src",
+                        "alt"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "title"
+              ]
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "slots": [],
+      "events": []
+    },
+    {
+      "name": "Steps",
+      "props": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "title"
+              ]
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "slots": [],
+      "events": []
+    },
+    {
+      "name": "BarChart",
+      "props": {
+        "type": "object",
+        "properties": {
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "series": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "values": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                }
+              },
+              "required": [
+                "name",
+                "values"
+              ]
+            }
+          },
+          "variant": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "grouped",
+                  "stacked"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "xLabel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "yLabel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "labels",
+          "series"
+        ]
+      },
+      "slots": [],
+      "events": []
+    },
+    {
+      "name": "LineChart",
+      "props": {
+        "type": "object",
+        "properties": {
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "series": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "values": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                }
+              },
+              "required": [
+                "name",
+                "values"
+              ]
+            }
+          },
+          "xLabel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "yLabel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "labels",
+          "series"
+        ]
+      },
+      "slots": [],
+      "events": []
+    },
+    {
+      "name": "PieChart",
+      "props": {
+        "type": "object",
+        "properties": {
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "variant": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "pie",
+                  "donut"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "labels",
+          "values"
+        ]
+      },
+      "slots": [],
+      "events": []
+    },
+    {
+      "name": "Image",
+      "props": {
+        "type": "object",
+        "properties": {
+          "src": {
+            "type": "string"
+          },
+          "alt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "src",
+          "alt"
+        ]
+      },
+      "slots": [],
+      "events": []
+    },
+    {
+      "name": "Tags",
+      "props": {
+        "type": "object",
+        "properties": {
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "tags"
+        ]
+      },
+      "slots": [],
+      "events": []
+    },
+    {
+      "name": "Buttons",
+      "props": {
+        "type": "object",
+        "properties": {
+          "direction": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "row",
+                  "column"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "slots": [
+        "default"
+      ],
+      "events": []
+    },
+    {
+      "name": "Button",
+      "props": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "variant": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "primary",
+                  "secondary"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "label"
+        ]
+      },
+      "slots": [],
+      "events": [
+        "press"
+      ]
+    },
+    {
+      "name": "FollowUps",
+      "props": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "slots": [],
+      "events": []
+    },
+    {
+      "name": "Tabs",
+      "props": {
+        "type": "object",
+        "properties": {
+          "tabs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "tabs"
+        ]
+      },
+      "slots": [
+        "default"
+      ],
+      "events": []
+    },
+    {
+      "name": "Accordion",
+      "props": {
+        "type": "object",
+        "properties": {
+          "sections": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "sections"
+        ]
+      },
+      "slots": [
+        "default"
+      ],
+      "events": []
+    },
+    {
+      "name": "TextInput",
+      "props": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "placeholder": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "value": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "label"
+        ]
+      },
+      "slots": [],
+      "events": []
+    },
+    {
+      "name": "Select",
+      "props": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "value": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "label",
+          "options"
+        ]
+      },
+      "slots": [],
+      "events": []
+    },
+    {
+      "name": "Chips",
+      "props": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "value": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "options"
+        ]
+      },
+      "slots": [],
+      "events": []
+    }
+  ],
+  "actions": [
+    {
+      "name": "ask",
+      "params": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "data": {}
+        },
+        "required": [
+          "message"
+        ]
+      }
+    },
+    {
+      "name": "open_url",
+      "params": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ]
+      }
+    }
+  ]
+}

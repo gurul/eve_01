@@ -7,12 +7,11 @@ import { hoverOnlyWithPointer } from "./vite.config.ts";
 
 // eve lite's web app (docs/plans/eve-lite.md, M7): the second entry, web.html and src/web/, built into the
 // bridge's package (bridge/src/eve_bridge/web_lite/, generated and git-ignored), where lite_web.py serves it at
-// `/` and `/assets/*` on both of the Mac's doors. The iOS chat's build (vite.config.ts, ../App/ChatWeb) is
-// separate and unchanged.
+// `/` and `/assets/*` on both of the Mac's doors. It is the only build here: the iPhone app's chat is native.
 const root = fileURLToPath(new URL(".", import.meta.url));
 const outDir = fileURLToPath(new URL("../../../bridge/src/eve_bridge/web_lite", import.meta.url));
 
-// The entry is web.html (index.html is the iOS page's); the door serves index.html.
+// The entry is web.html; the door serves index.html.
 function servedAsIndex(): Plugin {
   return {
     name: "eve-web-index",

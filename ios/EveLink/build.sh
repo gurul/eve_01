@@ -3,9 +3,7 @@
 #   sh ios/EveLink/build.sh --install
 set -eu
 cd "$(dirname "$0")"
-# Always bundle the current chat source, including in a fresh worktree.
-# Fail before xcodegen if dependencies or the web build fail.
-(cd Web && pnpm install --frozen-lockfile && pnpm build)
+# The chat is native (Packages/): nothing from ios/EveLink/Web goes into the app. That folder is eve lite's browser chat.
 xcodegen generate --quiet
 # A free team's profile lasts 7 days and Xcode reuses it until it lapses, so an install on day 6 stopped opening the
 # next morning (2026-10-16). Before an install, set the cached Eve Link profiles aside so Xcode signs a fresh week.

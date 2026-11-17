@@ -242,3 +242,96 @@ def test_the_evals_made_up_environment_sets_the_engine_only_when_asked(ev: Any, 
     assert link_chat.CARD_ENGINE_ENV not in os.environ
     ev.environment("", "", tmp_path, "json-render")
     assert os.environ[link_chat.CARD_ENGINE_ENV] == "json-render"
+
+
+# ---- a turn names the engine its client draws (the iPhone app draws cards natively: json-render only) ---------
+
+@pytest.mark.parametrize(("value", "engine"), [
+    ("json-render", "json-render"), (None, None), ("", None), ("openui", None), ("JSON-RENDER", None),
+    (["json-render"], None), (1, None),
+])
+def test_a_turn_may_name_only_an_engine_in_the_set(value: Any, engine: Any) -> None:
+    assert link_chat.TURN_ENGINES == ("json-render",)
+    assert link_chat.turn_engine(value) == engine
+
+
+def test_a_named_engine_wins_over_the_switch_for_that_turn_only(monkeypatch: pytest.MonkeyPatch) -> None:
+    assert link_chat.card_engine() == "openui"
+    with link_chat.drawing("json-render"):
+        assert link_chat.card_engine() == "json-render"
+        assert link_chat.app_block() == link_chat.app_block(engine="json-render")
+        assert link_chat.card_words("an openui-lang block") == "a json-render block"
+        assert link_chat.history_text(JSON_REPLY, True) == JSON_REPLY
+        assert link_chat.card_engine({}) == "openui"                 # a given environment is read alone
+    assert link_chat.card_engine() == "openui"
+    with link_chat.drawing(None):                                    # no name: the switch, either way
+        assert link_chat.card_engine() == "openui"
+        monkeypatch.setenv(link_chat.CARD_ENGINE_ENV, "json-render")
+        assert link_chat.card_engine() == "json-render"
+    with link_chat.drawing("something else"):                        # not in the set: as if not named
+        assert link_chat.card_engine() == "json-render"
+
+
+def test_work_a_turn_starts_keeps_its_engine_after_the_turn_returns() -> None:
+    import asyncio
+
+    async def go() -> tuple[str, str]:
+        async def later() -> str:
+            await asyncio.sleep(0.01)
+            return link_chat.card_engine()
+
+        with link_chat.drawing("json-render"):
+            task = asyncio.ensure_future(later())
+        return await task, link_chat.card_engine()
+
+    assert asyncio.run(go()) == ("json-render", "openui")
+
+
+def test_the_turn_request_hands_its_engine_to_the_inlet_only_when_it_names_one(tmp_path: Path) -> None:
+    import asyncio
+
+    from test_link_chat import FakeInlet, http, serve, store_at
+
+    class Inlet(FakeInlet):
+        def __init__(self, store: Any) -> None:
+            super().__init__(store)
+            self.extras: list[dict[str, Any]] = []
+
+        def hear(self, text: str, *, on_call: bool = True, app: Any = None, grade: str = "auto",
+                 **extra: Any) -> None:
+            self.extras.append(extra)
+            super().hear(text, on_call=on_call, app=app, grade=grade)
+
+    async def go() -> list[dict[str, Any]]:
+        inlet = Inlet(store_at(tmp_path))
+        server, port, token = await serve(tmp_path, inlet, settle_secs=0.01)
+        for i, cards in enumerate(("json-render", None, "openui", 7)):
+            body: dict[str, Any] = {"text": "hi", "client_id": f"c{i}"}
+            if cards is not None:
+                body["cards"] = cards
+            assert (await http(port, "POST", link_chat.TURN_PATH, body, token=token))[0] == 200
+        await server.close()
+        return inlet.extras
+
+    assert asyncio.run(go()) == [{"cards": "json-render"}, {}, {}, {}]
+
+
+def test_a_native_app_turn_is_told_to_write_json_render_whatever_the_switch_says(tmp_path: Path) -> None:
+    import asyncio
+
+    from test_link_chat import events, http, real_rig, say, serve
+
+    rig, _ = real_rig(tmp_path, say("native"), say("web"))
+
+    async def go() -> None:
+        server, port, token = await serve(tmp_path, rig.inlet, settle_secs=0.01)
+        for client, extra in (("native", {"cards": "json-render"}), ("web", {})):
+            body = {"text": f"compare two phones, {client}", "client_id": client, **extra}
+            assert events((await http(port, "POST", link_chat.TURN_PATH, body, token=token))[2])[1]
+        await server.close()
+
+    asyncio.run(go())
+    native, web = (r["instructions"] for r in rig.create.requests)
+    assert link_chat.app_block(engine="json-render") in native and "```json-render" in native
+    assert "openui-lang" not in native                               # one engine's prompt never names the other
+    assert link_chat.app_block(engine="openui") in web and "json-render" not in web
